@@ -1,4 +1,6 @@
-﻿using Core.Infrastructure.DependencyInjection;
+﻿using Auth.Infrastructure.DependencyInjection;
+using Auth.Presentation.DependencyInjection;
+using Core.Infrastructure.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,8 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // configuration
 var configuration = builder.Configuration;
+
+builder.Services.AddAuthInfrastructure(configuration);
+builder.Services.AddAuthPresentation();
+
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 /*
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlServer(connectionString, b => b.MigrationsAssembly("Auth.Infrastructure")));

@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Repositories
 {
     public class EfRepository<T, TContext> : IRepository<T>
-          where T : BaseEntity
-          where TContext : DbContext
+        where T : BaseEntity
+        where TContext : DbContext
     {
         private readonly TContext _db;
         private readonly DbSet<T> _set;

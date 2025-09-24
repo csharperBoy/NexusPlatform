@@ -1,0 +1,1 @@
+﻿dotnet ef migrations add Initial_Auth \ --project Auth.Infrastructure/Auth.Infrastructure.csproj \--startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj \--context AuthDbContext \--output-dir Migrations

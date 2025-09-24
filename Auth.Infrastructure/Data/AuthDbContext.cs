@@ -1,27 +1,32 @@
 ﻿using Auth.Infrastructure.Identity;
+using Core.Application.Abstractions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Auth.Infrastructure.Data
 {
-    public class AuthDbContext : IdentityDbContext<ApplicationUser>
+    public class AuthDbContext : IdentityDbContext<ApplicationUser>, IUnitOfWork
     {
-        public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
+        public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
+        {
+        }
+
+        // پیاده‌سازی IUnitOfWork
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // تنظیم schema اختصاصی برای ماژول Auth
+            // جدا کردن شِمای دیتابیس برای Auth
             builder.HasDefaultSchema("auth");
 
-            // اگر نیاز به پیکربندی خاص دارین، اینجا اضافه کنید
-            // builder.Entity<ApplicationUser>().ToTable("Users");
+            // اگر نیاز به کانفیگ Fluent دارید همین‌جا اضافه کنید
         }
     }
 }
