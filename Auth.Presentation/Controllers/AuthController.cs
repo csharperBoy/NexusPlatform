@@ -23,7 +23,7 @@ namespace Auth.Presentation.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Auth.Application.DTOs.LoginRequest req)
         {
-            var cmd = new Auth.Application.Commands.LoginCommand(req.Email, req.Password);
+            var cmd = new LoginCommand(req.Email, req.Password);
             var res = await _mediator.Send(cmd);
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);
