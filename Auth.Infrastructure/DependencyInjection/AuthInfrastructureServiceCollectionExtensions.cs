@@ -21,9 +21,14 @@ namespace Auth.Infrastructure.DependencyInjection
             var migrationsAssembly = typeof(AuthDbContext).Assembly.GetName().Name;
 
             // DbContext
-            services.AddDbContext<AuthDbContext>(options =>
-                options.UseSqlServer(conn, b => b.MigrationsAssembly(migrationsAssembly)));
-
+            services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
+            {
+                options.UseSqlServer(conn, b =>
+                {
+                    b.MigrationsAssembly(migrationsAssembly);
+                    b.MigrationsHistoryTable("__AuthMigrationsHistory", "auth"); // جدول جداگانه برای تاریخچه مهاجرت
+                });
+            });
             // Identity
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {

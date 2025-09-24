@@ -11,6 +11,9 @@ namespace Auth.Presentation.DependencyInjection
                 .AddApplicationPart(typeof(AuthController).Assembly)
                 .AddControllersAsServices();
 
+            services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(typeof(AuthController).Assembly));
+
             return services;
         }
     }
