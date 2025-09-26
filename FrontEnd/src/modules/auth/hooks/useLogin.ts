@@ -1,8 +1,8 @@
 // modules/auth/hooks/useLogin.ts
 import { useState } from "react";
 import { authApi } from "../api/authApi";
-import { useAuth } from "@/core/hooks/useAuth";
-import { LoginRequest } from "../models/LoginRequest";
+import { useAuth } from "../../../core/hooks/useAuth";
+import type { LoginRequest } from "../models/LoginRequest";
 
 export const useLogin = () => {
   const { login } = useAuth();

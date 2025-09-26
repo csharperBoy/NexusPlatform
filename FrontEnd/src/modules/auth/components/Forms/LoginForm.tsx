@@ -1,7 +1,7 @@
 // modules/auth/components/LoginForm.tsx
 import React, { useState } from "react";
-import Button from "@/core/components/Button";
-import { useLogin } from "../hooks/useLogin";
+import Button from "../../../../core/components/Button";
+import { useLogin } from "../../hooks/useLogin";
 
 export type LoginFormProps = {
   onSuccess?: () => void; // اپ می‌تواند redirect انجام دهد
