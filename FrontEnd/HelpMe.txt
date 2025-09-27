@@ -1,0 +1,1 @@
+tree "D:\868\Projects\NexusPlatform\FrontEnd\src" /F > output.txt

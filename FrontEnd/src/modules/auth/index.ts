@@ -4,3 +4,5 @@ export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/useLogin";
 export * from "./api/authApi";
 export { default as authRoutes } from "./routes";
+export { AuthProvider, useAuth } from "./context/AuthProvider";
+export { default as ProtectedRoute } from "./components/ProtectedRoute";
