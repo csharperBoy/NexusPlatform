@@ -1,4 +1,4 @@
-// core/hooks/useAuth.ts
+// src/Modules/auth/hooks/useAuth.ts
 import { useAuthContext } from "../providers/AuthProvider";
 
 export const useAuth = () => {
