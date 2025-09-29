@@ -1,50 +1,44 @@
 //modules/auth/context/AuthProvider.tsx
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
-
-
+import React, { createContext, useState, useEffect, ReactNode } from "react";
+import { AuthResponse } from "../models/AuthResponse";
 import { storage } from "@/core/utils/storage";
-import { authApi } from "../api/authApi";
-import type { AuthResponse } from "../models/AuthResponse";
-import type { LoginRequest } from "../models/LoginRequest";
 
-type AuthContextType = {
+interface AuthContextType {
+  user: { email: string } | null;
   token: string | null;
-  user: { email?: string } | null;
-  login: (payload: LoginRequest) => Promise<AuthResponse>;
+  login: (data: AuthResponse) => void;
   logout: () => void;
-  isAuthenticated: boolean;
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(storage.getToken());
-  const [user, setUser] = useState<{ email?: string } | null>(token ? { email: undefined } : null);
+  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  const login = useCallback(async (payload: LoginRequest) => {
-    // use authApi (module-local) to perform login
-    const res = await authApi.login(payload); // { token, expires, email }
-    storage.setToken(res.token);
-    setToken(res.token);
-    setUser({ email: res.email });
-    return res;
+  useEffect(() => {
+    const savedToken = storage.getToken();
+    if (savedToken) {
+      setToken(savedToken);
+      // فعلاً فقط ایمیل رو از localStorage نمی‌گیریم چون ذخیره نمی‌شه
+    }
   }, []);
 
-  const logout = useCallback(() => {
-    storage.clearToken();
-    setToken(null);
+  const login = (data: AuthResponse) => {
+    setUser({ email: data.email });
+    setToken(data.token);
+    storage.setToken(data.token);
+  };
+
+  const logout = () => {
     setUser(null);
-  }, []);
+    setToken(null);
+    storage.clearToken();
+  };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
 };

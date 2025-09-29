@@ -1,27 +1,31 @@
 // modules/auth/hooks/useLogin.ts
 import { useState } from "react";
-import { useAuth } from "../context/AuthProvider";
-import type { LoginRequest } from "../models/LoginRequest";
-import type { AuthResponse } from "../models/AuthResponse";
+import { authApi } from "../api/authApi";
+import { LoginRequest } from "../models/LoginRequest";
+import { AuthResponse } from "../models/AuthResponse";
+import { useAuth } from "./useAuth";
 
 export const useLogin = () => {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const doLogin = async (payload: LoginRequest): Promise<AuthResponse | undefined> => {
+  const handleLogin = async (credentials: LoginRequest) => {
     try {
       setLoading(true);
       setError(null);
-      const res = await login(payload);
-      return res;
+      const response: AuthResponse = await authApi.login(credentials);
+      login(response);
     } catch (err: any) {
-      setError(err?.response?.data || err?.message || "خطایی رخ داد");
-      return undefined;
+      setError(err?.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  return { doLogin, loading, error };
+  return {
+    login: handleLogin,
+    loading,
+    error,
+  };
 };

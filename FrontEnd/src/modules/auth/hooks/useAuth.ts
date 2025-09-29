@@ -1,7 +1,11 @@
 // src/Modules/auth/hooks/useAuth.ts
-import { useAuthContext } from "../providers/AuthProvider";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthProvider";
 
 export const useAuth = () => {
-  const { token, login, logout } = useAuthContext();
-  return { token, login, logout, isAuthenticated: !!token };
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };

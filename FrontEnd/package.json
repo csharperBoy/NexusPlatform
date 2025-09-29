@@ -3,20 +3,19 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
- 
   "scripts": {
-  "dev:admin": "vite --config vite.config.admin.ts",
-  "dev:website": "vite --config vite.config.website.ts",
-  "build:admin": "vite build --config vite.config.admin.ts",
-  "build:website": "vite build --config vite.config.website.ts",
-  "preview:admin": "vite preview --config vite.config.admin.ts --port 5173",
-  "preview:website": "vite preview --config vite.config.website.ts --port 5174"
-},
-
+    "dev:admin": "vite --config vite.config.admin.ts",
+    "dev:website": "vite --config vite.config.website.ts",
+    "build:admin": "vite build --config vite.config.admin.ts",
+    "build:website": "vite build --config vite.config.website.ts",
+    "preview:admin": "vite preview --config vite.config.admin.ts --port 5173",
+    "preview:website": "vite preview --config vite.config.website.ts --port 5174"
+  },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.90.2",
     "axios": "^1.12.2",
+    "clsx": "^2.1.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.2",
