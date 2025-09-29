@@ -2,7 +2,8 @@
 export { default as LoginForm } from "./components/Forms/LoginForm";
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/useLogin";
+export { useAuth } from "./hooks/useAuth"; 
 export * from "./api/authApi";
 export { default as authRoutes } from "./routes";
-export { AuthProvider, useAuth } from "./context/AuthProvider";
+export { AuthProvider } from "./context/AuthProvider"; 
 export { default as ProtectedRoute } from "./components/ProtectedRoute";

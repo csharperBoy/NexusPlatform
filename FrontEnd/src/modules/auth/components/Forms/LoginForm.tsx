@@ -1,5 +1,5 @@
 // src/modules/auth/components/forms/LoginForm.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "@/core/components/Button";
 import Input from "@/core/components/Input";
 import Card from "@/core/components/Card";
@@ -10,50 +10,66 @@ export type LoginFormProps = {
   className?: string;
 };
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, className }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ 
+  onSuccess, 
+  className 
+}) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const { login, loading, error } = useLogin();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  await login({ email, password });
-  onSuccess?.();
-};
+  useEffect(() => {
+    if (hasSubmitted && !loading && !error) {
+      onSuccess?.();
+      setHasSubmitted(false);
+    }
+  }, [loading, error, hasSubmitted, onSuccess]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHasSubmitted(true);
+    await login({ email, password });
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-sm">
-        <h2 className="text-center text-2xl font-bold mb-6">ورود به سیستم</h2>
-
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm" padding="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="email"
+            placeholder="ایمیل"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="ایمیل"
+            required
+            disabled={loading}
+            className="w-full"
           />
 
           <Input
             type="password"
+            placeholder="رمز عبور"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="رمز عبور"
+            required
+            disabled={loading}
+            className="w-full"
           />
 
-          <Button type="submit" disabled={loading} className="w-full">
+          {error && (
+            <div className="text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={loading}
+          >
             {loading ? "در حال ورود..." : "ورود"}
           </Button>
-
-          {error && <p className="text-center text-sm text-red-500">{error}</p>}
-
-          <div className="text-center text-sm text-gray-500">
-            حساب کاربری ندارید؟{" "}
-            <a href="/register" className="text-blue-600 hover:underline">
-              ثبت‌نام
-            </a>
-          </div>
         </form>
       </Card>
     </div>

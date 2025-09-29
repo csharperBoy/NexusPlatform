@@ -1,9 +1,9 @@
 // src/core/context/UIProvider.tsx
+// src/core/context/UIProvider.tsx
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-// تعریف انواع
-export type Theme = "light" | "dark" | "admin";
-export type Style = "flat" | "3d" | "glass";
+export type Theme = "Light" | "Dark" | "Auto";
+export type Style = "Minimalist" | "MaterialDesign" | "Flat"  | "Glassmorphism" |  "Neumorphism";
 
 type UIConfig = {
   theme: Theme;
@@ -14,9 +14,19 @@ type UIConfig = {
 
 const UIContext = createContext<UIConfig | undefined>(undefined);
 
-export const UIProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [style, setStyle] = useState<Style>("flat");
+type UIProviderProps = {
+  children: ReactNode;
+  initialTheme?: Theme;
+  initialStyle?: Style;
+};
+
+export const UIProvider = ({
+  children,
+  initialTheme = "Light",
+  initialStyle = "Flat",
+}: UIProviderProps) => {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [style, setStyle] = useState<Style>(initialStyle);
 
   return (
     <UIContext.Provider value={{ theme, style, setTheme, setStyle }}>
@@ -30,3 +40,4 @@ export const useUIConfig = () => {
   if (!ctx) throw new Error("useUIConfig must be used inside UIProvider");
   return ctx;
 };
+

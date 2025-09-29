@@ -6,31 +6,57 @@ import { useUIConfig } from "@/core/context/UIProvider";
 type CardProps = {
   children: ReactNode;
   className?: string;
+  padding?: "none" | "sm" | "md" | "lg";
 };
 
-const Card: React.FC<CardProps> = ({ children, className }) => {
+const Card: React.FC<CardProps> = ({ 
+  children, 
+  className, 
+  padding = "md" 
+}) => {
   const { theme, style } = useUIConfig();
 
-  // رنگ و تم
-  const themeStyles: Record<string, string> = {
-    light: "bg-white text-gray-800 border-gray-200",
-    dark: "bg-gray-900 text-white border-gray-700",
-    admin: "bg-purple-900 text-white border-purple-700",
+  const baseStyles = "transition-all duration-200 rounded-lg";
+  
+  const paddings = {
+    none: "p-0",
+    sm: "p-3",
+    md: "p-6",
+    lg: "p-8"
   };
 
-  // استایل‌ها
-  const styleVariants: Record<string, string> = {
-    flat: "shadow-none",
-    "3d": "shadow-xl border rounded-xl",
-    glass: "backdrop-blur-md bg-white/30 border border-white/20 rounded-xl",
+  const themeStyles = {
+    Light: "bg-white text-gray-900 border border-gray-200",
+    Dark: "bg-gray-800 text-white border border-gray-700",
+    Auto: "bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
+  };
+
+  const styleVariants = {
+    Minimalist: "border-0 shadow-none bg-transparent",
+    MaterialDesign: "shadow-lg hover:shadow-xl",
+    Flat: "shadow-md border-0",
+    Glassmorphism: "backdrop-blur-lg bg-white/30 dark:bg-black/30 border border-white/40 dark:border-gray-600/40",
+    Neumorphism: {
+      Light: "bg-gray-100 border-0 shadow-[8px_8px_16px_#d1d1d1,-8px_-8px_16px_#ffffff]",
+      Dark: "bg-gray-800 border-0 shadow-[8px_8px_16px_#1f2937,-8px_-8px_16px_#374151]"
+    }
+  };
+
+  const getStyleVariant = () => {
+    if (style === "Neumorphism") {
+      const themeKey = theme === "Auto" ? "Light" : theme;
+      return styleVariants.Neumorphism[themeKey as keyof typeof styleVariants.Neumorphism];
+    }
+    return styleVariants[style as keyof typeof styleVariants];
   };
 
   return (
     <div
       className={clsx(
-        "p-6 border transition",
+        baseStyles,
+        paddings[padding],
         themeStyles[theme],
-        styleVariants[style],
+        getStyleVariant(),
         className
       )}
     >

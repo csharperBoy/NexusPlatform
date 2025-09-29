@@ -1,6 +1,8 @@
+//src/apps/MaharRayanesh/AdminPanel/App.tsx
 import { useRoutes } from "react-router-dom";
 import { authRoutes, ProtectedRoute } from "../../../modules/auth";
 import Dashboard from "./pages/Dashboard";
+import TailwindTest from "./pages/TailwindTest";
 
 export default function App() {
   const routes = useRoutes([
@@ -13,6 +15,10 @@ export default function App() {
         </ProtectedRoute>
       ),
     },
+    {
+  path: "/twtest",
+  element: <TailwindTest />,
+},
     { path: "*", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
   ]);
 
