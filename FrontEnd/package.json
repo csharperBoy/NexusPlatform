@@ -4,12 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:admin": "vite --config vite.config.admin.ts --mode mahar.adminpanel.development",
-    "dev:website": "vite --config vite.config.website.ts --mode mahar.website.development",
-    "build:admin": "vite build --config vite.config.admin.ts --mode mahar.adminpanel.production",
-    "build:website": "vite build --config vite.config.website.ts --mode mahar.website.production",
-    "preview:admin": "vite preview --config vite.config.admin.ts --port 5173",
-    "preview:website": "vite preview --config vite.config.website.ts --port 5174"
+    "dev:mahar.admin": "vite --config vite.config.mahar.adminpanel.ts --mode mahar.adminpanel.development",
+    "dev:mahar.website": "vite --config vite.config.mahar.website.ts --mode mahar.website.development",
+    "build:mahar.admin": "vite build --config vite.config.mahar.adminpanel.ts --mode mahar.adminpanel.production",
+    "build:mahar.website": "vite build --config vite.config.mahar.website.ts --mode mahar.website.production",
+    "preview:mahar.admin": "vite preview --config vite.config.mahar.adminpanel.ts --port 5173",
+    "preview:mahar.website": "vite preview --config vite.config.mahar.website.ts --port 5174",
+
+    
+    "dev:pmis": "vite --config vite.config.pmis.ts --mode pmis.development",
+    "build:pmis": "vite build --config vite.config.pmis.ts --mode pmis.production",
+    "preview:pmis": "vite preview --config vite.config.pmis.ts --port 5173"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
