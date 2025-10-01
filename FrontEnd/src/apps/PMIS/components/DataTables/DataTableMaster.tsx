@@ -1,0 +1,277 @@
+import //React, 
+{ useState, useEffect, ChangeEvent } from 'react';
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
+import dayjs from 'dayjs';
+import jalaliday from 'jalaliday';
+
+dayjs.extend(jalaliday);
+
+export interface Option {
+  id: string | number;
+  label: string;
+}
+
+export interface ColumnDef<T> {
+  field: keyof T;
+  header: string;
+  type?: 'text' | 'number' | 'date' | 'singleSelect';
+  options?: Option[]; // برای ستون‌های انتخابی (لیست)
+  width?: string;
+}
+
+export interface RowChange<T, ID = any> {
+  added: T[];
+  updated: T[];
+  deleted: ID[];
+}
+
+export interface DataTableMasterProps<T extends { id: any }> {
+  data: T[];
+  columns: ColumnDef<T>[];
+
+  enableAdd?: boolean;
+  enableExport?: boolean;
+  enableImport?: boolean;
+  enableOperations?: boolean;
+  enableSaveAll?: boolean;
+
+  onAddDrafts?: () => T[];
+  onEdit?: (row: T) => void;
+  onDelete?: (id: T['id']) => void;
+  onView?: (row: T) => void;
+  onSaveAll?: (changes: RowChange<T>) => void;
+}
+
+export default function DataTableMaster<T extends { id: any }>(
+  props: DataTableMasterProps<T>
+) {
+  const {
+    data,
+    columns,
+    enableAdd = true,
+    enableExport = true,
+    enableImport = true,
+    enableOperations = true,
+    enableSaveAll = true,
+    onAddDrafts,
+    onEdit,
+    onDelete,
+    onView,
+    onSaveAll,
+  } = props;
+
+  const [rows, setRows] = useState<T[]>([]);
+  const [addedRows, setAddedRows] = useState<T[]>([]);
+  const [updatedRows, setUpdatedRows] = useState<Map<T['id'], T>>(new Map());
+  const [deletedIds, setDeletedIds] = useState<Set<T['id']>>(new Set());
+
+  useEffect(() => {
+    setRows(data.filter(r => !deletedIds.has(r.id)));
+  }, [data, deletedIds]);
+
+  const handleAdd = () => {
+    if (!onAddDrafts) return;
+    const drafts = onAddDrafts();
+    setAddedRows(prev => {
+      setRows([...drafts, ...rows]);
+      return [...drafts, ...prev];
+    });
+  };
+
+  const handleCellChange = (id: T['id'], field: keyof T, value: any) => {
+    setRows(prev =>
+      prev.map(r => (r.id === id ? { ...r, [field]: value } : r))
+    );
+
+    const original = data.find(r => r.id === id);
+    if (original) {
+      const updated = { ...original, ...(rows.find(r => r.id === id) as any), [field]: value } as T;
+      setUpdatedRows(prev => new Map(prev).set(id, updated));
+      onEdit?.(updated);
+    }
+  };
+
+  const handleDelete = (id: T['id']) => {
+    setDeletedIds(prev => new Set(prev).add(id));
+    onDelete?.(id);
+  };
+
+  const handleView = (row: T) => {
+    onView?.(row);
+  };
+
+  const handleExport = () => {
+    const exportData = rows.map(r => {
+      const out: any = {};
+      columns.forEach(col => {
+        const val = r[col.field];
+        if (col.type === 'singleSelect' && col.options) {
+          const opt = col.options.find(o => o.id === val);
+          out[col.header] = opt ? opt.label : '';
+        } else if (col.type === 'date' && val) {
+          // تاریخ به صورت شمسی و فرمت YYYY/MM/DD برای خروجی اکسل
+          out[col.header] = dayjs(val as any).calendar('jalali').format('YYYY/MM/DD');
+        } else {
+          out[col.header] = val;
+        }
+      });
+      return out;
+    });
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([wbout], { type: 'application/octet-stream' }), 'export.xlsx');
+  };
+
+  const handleImport = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const bstr = evt.target?.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<any>(sheet);
+      // تبدیل به نوع T و نگاشت ستون‌ها
+      const imported: T[] = json.map(row => {
+        const obj: any = {};
+        columns.forEach(col => {
+          const cell = row[col.header];
+          if (col.type === 'singleSelect' && col.options) {
+            // نگاشت عنوان فارسی به id
+            const opt = col.options.find(o => o.label === cell);
+            obj[col.field] = opt ? opt.id : null;
+          } else if (col.type === 'date' && cell) {
+            // تبدیل تاریخ شمسی از اکسل به میلادی (Date)
+            // فرض می‌کنیم فرمت تاریخ شمسی ورودی 'YYYY/MM/DD' است
+            obj[col.field] = dayjs(cell, 'YYYY/MM/DD').toDate();
+          } else {
+            obj[col.field] = cell;
+          }
+        });
+        return obj as T;
+      });
+      setRows(prev => [...imported, ...prev]);
+      setAddedRows(prev => [...imported, ...prev]);
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  };
+
+  const handleSaveAll = () => {
+    const changes: RowChange<T> = {
+      added: addedRows,
+      updated: Array.from(updatedRows.values()),
+      deleted: Array.from(deletedIds.values()),
+    };
+    onSaveAll?.(changes);
+    setAddedRows([]);
+    setUpdatedRows(new Map());
+    setDeletedIds(new Set());
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        {enableAdd && (
+          <button className="btn btn-primary" onClick={handleAdd}>
+            افزودن
+          </button>
+        )}
+        {enableExport && (
+          <button className="btn btn-secondary" onClick={handleExport}>
+            خروجی اکسل
+          </button>
+        )}
+        {enableImport && (
+          <label className="btn btn-accent cursor-pointer">
+            بارگزاری از اکسل
+            <input
+              type="file"
+              accept=".xlsx, .xls"
+              className="hidden"
+              onChange={handleImport}
+            />
+          </label>
+        )}
+        {enableSaveAll && (
+          <button className="btn btn-success ml-auto" onClick={handleSaveAll}>
+            ثبت کلی
+          </button>
+        )}
+      </div>
+      <table className="table w-full">
+        <thead>
+          <tr>
+            {columns.map(col => (
+              <th key={String(col.field)} style={{ width: col.width }}>
+                {col.header}
+              </th>
+            ))}
+            {enableOperations && <th>عملیات</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(row => (
+            <tr key={row.id} className={deletedIds.has(row.id) ? 'opacity-50' : ''}>
+              {columns.map(col => (
+                <td key={String(col.field)}>
+                  {col.type === 'singleSelect' && col.options ? (
+                    <select
+                      value={row[col.field] as any}
+                      onChange={e => handleCellChange(row.id, col.field, e.target.value)}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="">انتخاب کنید</option>
+                      {col.options.map(opt => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : col.type === 'date' ? (
+                    <input
+                      type="date"
+                      value={
+                        row[col.field]
+                          ? dayjs(row[col.field] as any).format('YYYY-MM-DD')
+                          : ''
+                      }
+                      onChange={e => handleCellChange(row.id, col.field, new Date(e.target.value))}
+                      className="input input-bordered w-full"
+                    />
+                  ) : (
+                    <input
+                      type={col.type || 'text'}
+                      value={row[col.field] as any || ''}
+                      onChange={e => handleCellChange(row.id, col.field, e.target.value)}
+                      className="input input-bordered w-full"
+                    />
+                  )}
+                </td>
+              ))}
+              {enableOperations && (
+                <td className="flex gap-1">
+                  <button className="btn btn-xs btn-info" onClick={() => handleView(row)}>
+                    مشاهده
+                  </button>
+                  <button
+                    className="btn btn-xs btn-warning"
+                    onClick={() => onEdit && onEdit(row)}
+                  >
+                    ویرایش
+                  </button>
+                  <button className="btn btn-xs btn-error" onClick={() => handleDelete(row.id)}>
+                    حذف
+                  </button>
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
