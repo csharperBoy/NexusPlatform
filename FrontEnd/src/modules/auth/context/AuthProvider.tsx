@@ -18,22 +18,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const savedToken = storage.getToken();
+    const savedUser = storage.getUser(); // اضافه شد
     if (savedToken) {
       setToken(savedToken);
-      // فعلاً فقط ایمیل رو از localStorage نمی‌گیریم چون ذخیره نمی‌شه
+    }
+    if (savedUser) {
+      setUser(savedUser);
     }
   }, []);
 
   const login = (data: AuthResponse) => {
-    setUser({ email: data.email });
+    const userData = { email: data.email };
+    setUser(userData);
     setToken(data.token);
     storage.setToken(data.token);
+    storage.setUser(userData); // اضافه شد
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
     storage.clearToken();
+    storage.clearUser(); // اضافه شد
   };
 
   return (
@@ -42,3 +48,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+

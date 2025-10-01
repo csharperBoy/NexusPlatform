@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev:admin": "vite --config vite.config.admin.ts",
-    "dev:website": "vite --config vite.config.website.ts",
-    "build:admin": "vite build --config vite.config.admin.ts",
-    "build:website": "vite build --config vite.config.website.ts",
+    "dev:admin": "vite --config vite.config.admin.ts --mode mahar.adminpanel.development",
+    "dev:website": "vite --config vite.config.website.ts --mode mahar.website.development",
+    "build:admin": "vite build --config vite.config.admin.ts --mode mahar.adminpanel.production",
+    "build:website": "vite build --config vite.config.website.ts --mode mahar.website.production",
     "preview:admin": "vite preview --config vite.config.admin.ts --port 5173",
     "preview:website": "vite preview --config vite.config.website.ts --port 5174"
   },
