@@ -1,20 +1,22 @@
 {
-  "name": "frontend",
+  "name": "nexus-frontend",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "packageManager": "pnpm@8.9.0",
+  "workspaces": [
+    "src/apps/**",
+    "src/core"
+  ],
   "scripts": {
-    "dev:mahar.admin": "vite --config vite.config.mahar.adminpanel.ts --mode mahar.adminpanel.development",
-    "dev:mahar.website": "vite --config vite.config.mahar.website.ts --mode mahar.website.development",
-    "build:mahar.admin": "vite build --config vite.config.mahar.adminpanel.ts --mode mahar.adminpanel.production",
-    "build:mahar.website": "vite build --config vite.config.mahar.website.ts --mode mahar.website.production",
-    "preview:mahar.admin": "vite preview --config vite.config.mahar.adminpanel.ts --port 5173",
-    "preview:mahar.website": "vite preview --config vite.config.mahar.website.ts --port 5174",
-
-    
-    "dev:pmis": "vite --config vite.config.pmis.ts --mode pmis.development",
-    "build:pmis": "vite build --config vite.config.pmis.ts --mode pmis.production",
-    "preview:pmis": "vite preview --config vite.config.pmis.ts --port 5173"
+    "dev:admin": "pnpm --filter mahar-adminpanel run dev",
+    "build:admin": "pnpm --filter mahar-adminpanel run build",
+    "preview:admin": "pnpm --filter mahar-adminpanel run preview",
+    "dev:website": "pnpm --filter mahar-website run dev",
+    "build:website": "pnpm --filter mahar-website run build",
+    "preview:website": "pnpm --filter mahar-website run preview",
+    "dev:pmis": "pnpm --filter pmis run dev",
+    "build:pmis": "pnpm --filter pmis run build",
+    "preview:pmis": "pnpm --filter pmis run preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
@@ -29,8 +31,8 @@
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.5.2",
-    "@types/react": "^19.1.13",
-    "@types/react-dom": "^19.1.9",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.3",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",

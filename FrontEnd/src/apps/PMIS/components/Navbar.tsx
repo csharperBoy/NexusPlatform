@@ -1,15 +1,11 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { HiSearch, HiOutlineBell } from 'react-icons/hi';
 import { HiBars3CenterLeft } from 'react-icons/hi2';
 import { RxEnterFullScreen, RxExitFullScreen } from 'react-icons/rx';
-// import { DiReact } from 'react-icons/di';
-// import toast from 'react-hot-toast';
-import { useAuth } from '../contexts/AuthContext'; // بالای فایل
-
+import { useAuth } from '../contexts/AuthContext';
 import ChangeThemes from './ChangesThemes';
 import { getMenus } from '../api/SystemCollection';
-import type { MenuCatalogDto,MenuItemDto } from '../models/System/GetMenuResponse';
+import type { MenuCatalogDto, MenuItemDto } from '../models/System/GetMenuResponse';
 import MenuItem from './menu/MenuItem';
 import * as HiIcons from 'react-icons/hi2';
 import type { IconType } from 'react-icons';
@@ -29,37 +25,44 @@ const iconMap: Record<string, IconType> = {
 
 const Navbar = () => {
   const [menu, setMenu] = React.useState<MenuCatalogDto[]>([]);
-  const [isFullScreen, setIsFullScreen] = React.useState(true);
+  const [isFullScreen, setIsFullScreen] = React.useState(false); // تغییر به false
   const [isDrawerOpen, setDrawerOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
-   const { logout } = useAuth(); 
+  const { logout } = useAuth(); 
   const navigate = useNavigate();
 
   const toggleDrawer = () => setDrawerOpen(!isDrawerOpen);
-  const toggleFullScreen = () => setIsFullScreen((prev) => !prev);
+  
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        setIsFullScreen(true);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullScreen(false);
+      });
+    }
+  };
 
   React.useEffect(() => {
-      const fetchMenu = async () => {
-        try {
-          const data = await getMenus();
-          setMenu(data);
-        } catch (error) {
-          console.error('خطا در دریافت منو:', error);
-        }
-      };
+    const fetchMenu = async () => {
+      try {
+        const data = await getMenus();
+        setMenu(Array.isArray(data) ? data : []); // اضافه کردن بررسی آرایه
+      } catch (error) {
+        console.error('خطا در دریافت منو:', error);
+        setMenu([]); // تنظیم آرایه خالی در صورت خطا
+      }
+    };
 
-      fetchMenu();
-    const element = document.getElementById('root');
-        if (collapsed) {
-            console.log('Sidebar collapsed');
-            setCollapsed(collapsed); 
-          }
-    if (isFullScreen) {
-      document.exitFullscreen?.();
-    } else {
-      element?.requestFullscreen?.({ navigationUI: 'auto' });
+    fetchMenu();
+    
+    if (collapsed) {
+      console.log('Sidebar collapsed');
+      setCollapsed(collapsed); 
     }
-  }, [isFullScreen]);
+  }, [collapsed]);
 
   return (
     <div className="fixed z-[3] top-0 left-0 right-0 bg-base-100 shadow-md border-b border-base-300 w-full flex justify-between px-3 xl:px-4 py-3 xl:py-5 gap-4 xl:gap-0">
@@ -92,30 +95,30 @@ const Navbar = () => {
               <Link
                 to="/"
                 className="flex items-center gap-1 xl:gap-2 mt-1 mb-5"
+                onClick={toggleDrawer}
               >
-                {/* <DiReact className="text-3xl sm:text-4xl xl:text-4xl 2xl:text-6xl text-primary animate-spin-slow" /> */}
                 <img
-            src="/logo.png"
-            alt="PMIS Logo"
-            className="w-8 h-8 sm:w-10 sm:h-10 xl:w-10 xl:h-10 text-primary"
-          />
+                  src="/logo.png"
+                  alt="PMIS Logo"
+                  className="w-8 h-8 sm:w-10 sm:h-10 xl:w-10 xl:h-10 text-primary"
+                />
                 <span className="text-[16px] sm:text-lg xl:text-xl 2xl:text-2xl font-semibold">
                   PMIS
                 </span>
               </Link>
-              {menu.map((item, index) => (
+              {/* اضافه کردن بررسی وجود منو */}
+              {Array.isArray(menu) && menu.map((item, index) => (
                 <MenuItem
                   key={index}
                   catalog={item.catalog}
-                  listItems={item.listItems.map((item: MenuItemDto) => ({
-                                  ...item,
-                                  icon: iconMap[item.icon] ?? HiIcons.HiOutlineHome,
-                                }))}
+                  listItems={item.listItems?.map((item: MenuItemDto) => ({
+                    ...item,
+                    icon: iconMap[item.icon] ?? HiIcons.HiOutlineHome,
+                  })) || []}
                   onClick={toggleDrawer}
                   collapsed={collapsed}
                 />
               ))}
-
             </div>
           </div>
         </div>
@@ -135,30 +138,16 @@ const Navbar = () => {
 
       {/* Right navbar items */}
       <div className="flex items-center gap-0 xl:gap-1 2xl:gap-2 3xl:gap-5">
-        {/* <button
-          onClick={() => toast('Gaboleh cari!', { icon: '😠' })}
-          className="hidden sm:inline-flex btn btn-circle btn-ghost"
-        >
-          <HiSearch className="text-xl 2xl:text-2xl 3xl:text-3xl" />
-        </button> */}
-
         <button
           onClick={toggleFullScreen}
           className="hidden xl:inline-flex btn btn-circle btn-ghost"
         >
           {isFullScreen ? (
-            <RxEnterFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
-          ) : (
             <RxExitFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
+          ) : (
+            <RxEnterFullScreen className="xl:text-xl 2xl:text-2xl 3xl:text-3xl" />
           )}
         </button>
-
-        {/* <button
-          onClick={() => toast('Gaada notif!', { icon: '😠' })}
-          className="px-0 xl:px-auto btn btn-circle btn-ghost"
-        >
-          <HiOutlineBell className="text-xl 2xl:text-2xl 3xl:text-3xl" />
-        </button> */}
 
         <div className="px-0 xl:px-auto btn btn-circle btn-ghost xl:mr-1">
           <ChangeThemes />
@@ -181,25 +170,19 @@ const Navbar = () => {
             tabIndex={0}
             className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-40"
           >
-            {/* <Link to="/profile">
-              <li>
-                <a className="justify-between">پروفایل</a>
-              </li>
-            </Link> */}
-            <Link to="/ChangePassword">
-              <li>
-                <a className="justify-between">تغییر رمز عبور</a>
-              </li>
-            </Link>
-             <li
-              onClick={async () => {
+            <li>
+              <Link to="/ChangePassword" onClick={() => (document.activeElement as HTMLElement)?.blur()}>
+                تغییر رمز عبور
+              </Link>
+            </li>
+            <li>
+              <a onClick={async () => {
                 await logout();
                 navigate('/login');
-              }}
-            >
-              <a>خروج</a>
+              }}>
+                خروج
+              </a>
             </li>
-
           </ul>
         </div>
       </div>
