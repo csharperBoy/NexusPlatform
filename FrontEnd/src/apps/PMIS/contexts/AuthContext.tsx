@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { login as apiLogin, logout as apiLogout, validateToken as apiValidate } from '../api/AuthCollection';
 import type { LoginRequest } from '../models/auth';
@@ -15,9 +16,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [roles, setRoles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId]                 = useState<string | null>(null);
+  const [roles, setRoles]                   = useState<string[]>([]);
+  const [loading, setLoading]               = useState(true);  // ← اضافه شد
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -25,21 +26,17 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       apiValidate()
         .then(res => {
           setIsAuthenticated(true);
-          setUserId(res.userId || null);
-          setRoles(res.roles || []);
+          setUserId(res.userId);
+          setRoles(res.roles);
         })
-        .catch((error) => {
-          console.error('خطا در اعتبارسنجی توکن:', error);
+        .catch(() => {
           localStorage.removeItem('authToken');
-          setIsAuthenticated(false);
-          setUserId(null);
-          setRoles([]);
         })
         .finally(() => {
-          setLoading(false);
+          setLoading(false);  // ← اعتبارسنجی انجام شد
         });
     } else {
-      setLoading(false);
+      setLoading(false);  // ← اصلاً توکنی نیست، تمام
     }
   }, []);
 
@@ -49,21 +46,16 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
     const res = await apiValidate();
     setIsAuthenticated(true);
-    setUserId(res.userId || null);
-    setRoles(res.roles || []);
+    setUserId(res.userId);
+    setRoles(res.roles);
   };
 
   const logout = async () => {
-    try {
-      await apiLogout();
-    } catch (error) {
-      console.error('خطا در خروج:', error);
-    } finally {
-      localStorage.removeItem('authToken');
-      setIsAuthenticated(false);
-      setUserId(null);
-      setRoles([]);
-    }
+    await apiLogout();
+    localStorage.removeItem('authToken');
+    setIsAuthenticated(false);
+    setUserId(null);
+    setRoles([]);
   };
 
   return (

@@ -1,4 +1,4 @@
-// src\apps\PMIS\components\menu\data.ts
+// import toast from 'react-hot-toast';
 import {
   HiOutlineHome,
   HiOutlineUser,
