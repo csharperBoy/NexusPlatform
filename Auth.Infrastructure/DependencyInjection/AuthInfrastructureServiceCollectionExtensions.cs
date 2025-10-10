@@ -75,7 +75,9 @@ namespace Auth.Infrastructure.DependencyInjection
 
             services.AddAuthorization();
 
-           
+            // ثبت hosted service برای اجرای خودکار میگریشن و seed
+            services.AddHostedService<AuthModuleInitializer>();
+
             return services;
         }
     }

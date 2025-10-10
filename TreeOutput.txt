@@ -1,0 +1,87 @@
+NexusPlatform
+¦   .gitattributes
+¦   .gitignore
+¦   NexusPlatform.sln
+¦   .github
+¦   ¦   workflows
+¦   AkSteel Welfare Platform
+¦   ¦   AkSteel Welfare Platform.csproj
+¦   ¦   AkSteel Welfare Platform.csproj.user
+¦   ¦   AkSteel Welfare Platform.http
+¦   ¦   appsettings.Development.json
+¦   ¦   appsettings.json
+¦   ¦   Program.cs
+¦   ¦   Controllers
+¦   ¦   Properties
+¦   ¦   ¦   launchSettings.json
+¦   Auth.Application
+¦   ¦   Auth.Application.csproj
+¦   ¦   IAuthService.cs
+¦   ¦   Commands
+¦   ¦   ¦   LoginCommand.cs
+¦   ¦   ¦   RegisterCommand.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   AuthApplicationServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   ¦   AuthResponse.cs
+¦   ¦   ¦   LoginRequest.cs
+¦   ¦   ¦   RegisterRequest.cs
+¦   ¦   Handlers
+¦   ¦   ¦   LoginCommandHandler.cs
+¦   ¦   ¦   RegisterCommandHandler.cs
+¦   Auth.Domain
+¦   ¦   Auth.Domain.csproj
+¦   Auth.Infrastructure
+¦   ¦   Auth.Infrastructure.csproj
+¦   ¦   ReadMe.txt
+¦   ¦   Data
+¦   ¦   ¦   AuthDbContext.cs
+¦   ¦   ¦   AuthDbContextFactory.cs
+¦   ¦   ¦   SeedData.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   AuthInfrastructureServiceCollectionExtensions.cs
+¦   ¦   ¦   AuthModuleInitializer.cs
+¦   ¦   Identity
+¦   ¦   ¦   ApplicationUser.cs
+¦   ¦   Migrations
+¦   ¦   ¦   20250924073112_Initial_Auth.cs
+¦   ¦   ¦   20250924073112_Initial_Auth.Designer.cs
+¦   ¦   ¦   AuthDbContextModelSnapshot.cs
+¦   ¦   Services
+¦   ¦   ¦   AuthService.cs
+¦   ¦   ¦   ITokenService.cs
+¦   ¦   ¦   JwtTokenService.cs
+¦   Auth.Presentation
+¦   ¦   Auth.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   AuthController.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   AuthPresentationServiceCollectionExtensions.cs
+¦   Core.Application
+¦   ¦   Core.Application.csproj
+¦   ¦   Abstractions
+¦   ¦   ¦   IRepository.cs
+¦   ¦   ¦   IUnitOfWork.cs
+¦   Core.Domain
+¦   ¦   Core.Domain.csproj
+¦   ¦   Common
+¦   ¦   ¦   AuditableEntity.cs
+¦   ¦   ¦   BaseEntity.cs
+¦   Core.Infrastructure
+¦   ¦   Core.Infrastructure.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   CoreInfrastructureServiceCollectionExtensions.cs
+¦   ¦   Repositories
+¦   ¦   ¦   EfRepository.cs
+¦   Core.Shared
+¦   ¦   Core.Shared.csproj
+¦   ¦   Results
+¦   ¦   ¦   Result.cs
+¦   User.Application
+¦   ¦   User.Application.csproj
+¦   User.Domain
+¦   ¦   User.Domain.csproj
+¦   User.Infrastructure
+¦   ¦   User.Infrastructure.csproj
+¦   User.Presentation
+¦   ¦   User.Presentation.csproj

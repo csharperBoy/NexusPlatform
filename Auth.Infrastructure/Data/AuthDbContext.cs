@@ -2,9 +2,6 @@
 using Core.Application.Abstractions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Auth.Infrastructure.Data
 {
     public class AuthDbContext : IdentityDbContext<ApplicationUser>, IUnitOfWork

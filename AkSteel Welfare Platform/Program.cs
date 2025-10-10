@@ -52,5 +52,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await app.Services.SeedAuthModuleAsync();
 app.Run();
