@@ -24,13 +24,11 @@ namespace People.Infrastructure.Data.Configurations
             builder.Property(e => e.Visiblity).HasDefaultValue(true);
             builder.Property(e => e.Remove).HasDefaultValue(false);
 
-            builder.Property(e => e.WorkMobile).HasMaxLength(15);
-            builder.Property(e => e.WorkPhone).HasMaxLength(15);
+            builder.Property(e => e.Mobile).HasMaxLength(15);
+            builder.Property(e => e.Phone).HasMaxLength(15);
             builder.Property(e => e.EmergencyMobile).HasMaxLength(15);
-            builder.Property(e => e.InternalExtension).HasMaxLength(10);
             builder.Property(e => e.Mail).HasMaxLength(256);
             builder.Property(e => e.Address).HasMaxLength(500);
-            builder.Property(e => e.PrimaryContactMethod).HasMaxLength(20);
             builder.Property(e => e.PasswordEmergency).HasMaxLength(100);
 
             // Self-referencing relationships for versioning

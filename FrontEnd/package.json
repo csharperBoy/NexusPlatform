@@ -8,15 +8,22 @@
     "src/core"
   ],
   "scripts": {
-    "dev:admin": "pnpm --filter mahar-adminpanel run dev",
-    "build:admin": "pnpm --filter mahar-adminpanel run build",
-    "preview:admin": "pnpm --filter mahar-adminpanel run preview",
-    "dev:website": "pnpm --filter mahar-website run dev",
-    "build:website": "pnpm --filter mahar-website run build",
-    "preview:website": "pnpm --filter mahar-website run preview",
+    "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
+    "build:mahar.admin": "pnpm --filter mahar-adminpanel run build",
+    "preview:mahar.admin": "pnpm --filter mahar-adminpanel run preview",
+    "dev:mahar.website": "pnpm --filter mahar-website run dev",
+    "build:mahar.website": "pnpm --filter mahar-website run build",
+    "preview:mahar.website": "pnpm --filter mahar-website run preview",
     "dev:pmis": "pnpm --filter pmis run dev",
     "build:pmis": "pnpm --filter pmis run build",
-    "preview:pmis": "pnpm --filter pmis run preview"
+    "preview:pmis": "pnpm --filter pmis run preview",
+
+    "dev:akwp.admin": "pnpm --filter akwp-adminpanel run dev",
+    "build:akwp.admin": "pnpm --filter akwp-adminpanel run build",
+    "preview:akwp.admin": "pnpm --filter akwp-adminpanel run preview",
+    "dev:akwp.website": "pnpm --filter akwp-website run dev",
+    "build:akwp.website": "pnpm --filter akwp-website run build",
+    "preview:akwp.website": "pnpm --filter akwp-website run preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
