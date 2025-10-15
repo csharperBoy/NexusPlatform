@@ -2,6 +2,7 @@
 using MediatR;
 using Auth.Application.Commands;
 using Core.Shared.Results;
+using Auth.Application.DTOs;
 
 namespace Auth.Presentation.Controllers
 {
@@ -20,10 +21,18 @@ namespace Auth.Presentation.Controllers
             return Ok(res.Data);
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] Auth.Application.DTOs.LoginRequest req)
+        [HttpPost("login/username")]
+        public async Task<IActionResult> LoginUsernameBase([FromBody] LoginRequest req)
         {
-            var cmd = new LoginCommand(req.Email, req.Password);
+            var cmd = new LoginUsernameBaseCommand(req.Username, req.Password);
+            var res = await _mediator.Send(cmd);
+            if (!res.Succeeded) return BadRequest(res.Error);
+            return Ok(res.Data);
+        }
+        [HttpPost("login/email")]
+        public async Task<IActionResult> LoginEmailBase([FromBody] LoginRequest req)
+        {
+            var cmd = new LoginEmailBaseCommand(req.Username, req.Password);
             var res = await _mediator.Send(cmd);
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);

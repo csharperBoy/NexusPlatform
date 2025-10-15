@@ -10,18 +10,33 @@ using System.Threading.Tasks;
 
 namespace Auth.Application.Handlers
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
+    public class LoginUsernameBaseCommandHandler : IRequestHandler<LoginUsernameBaseCommand, Result<AuthResponse>>
     {
         private readonly IAuthService _authService;
 
-        public LoginCommandHandler(IAuthService authService)
+        public LoginUsernameBaseCommandHandler(IAuthService authService)
         {
             _authService = authService;
         }
 
-        public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<Result<AuthResponse>> Handle(LoginUsernameBaseCommand request, CancellationToken cancellationToken)
         {
-            return await _authService.LoginAsync(new LoginRequest(request.Email, request.Password));
+            return await _authService.LoginWithUserNameAsync(new LoginRequest(request.Usename, request.Password));
+
+        }
+    }
+    public class LoginEmailBaseCommandHandler : IRequestHandler<LoginEmailBaseCommand, Result<AuthResponse>>
+    {
+        private readonly IAuthService _authService;
+
+        public LoginEmailBaseCommandHandler(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+        public async Task<Result<AuthResponse>> Handle(LoginEmailBaseCommand request, CancellationToken cancellationToken)
+        {
+            return await _authService.LoginWithEmailAsync(new LoginRequest(request.Email, request.Password));
 
         }
     }

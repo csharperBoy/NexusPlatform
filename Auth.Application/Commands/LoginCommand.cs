@@ -4,8 +4,10 @@ using MediatR;
 
 namespace Auth.Application.Commands
 {
-    public record LoginCommand(string Email, string Password)
+    public record LoginUsernameBaseCommand(string Usename, string Password)
       : IRequest<Result<AuthResponse>>;
 
-    // خروجی: توکن JWT (یا می‌تونی DTO بسازی به جای string)
+    public record LoginEmailBaseCommand(string Email, string Password)
+      : IRequest<Result<AuthResponse>>;
+
 }

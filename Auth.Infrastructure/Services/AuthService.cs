@@ -53,9 +53,9 @@ namespace Auth.Infrastructure.Services
             return Result<AuthResponse>.Ok(response);
         }
 
-        public async Task<Result<AuthResponse>> LoginAsync(LoginRequest request)
+        public async Task<Result<AuthResponse>> LoginWithEmailAsync(LoginRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            var user = await _userManager.FindByEmailAsync(request.Username);
             if (user == null) return Result<AuthResponse>.Fail("کاربری با این ایمیل پیدا نشد.");
 
             var signRes = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
@@ -65,6 +65,26 @@ namespace Auth.Infrastructure.Services
             var token = _tokenService.CreateToken(user, roles);
 
             return Result<AuthResponse>.Ok(new AuthResponse(token, DateTime.UtcNow.AddMinutes(int.Parse(_tokenService is JwtTokenService ? 60.ToString() : "60")), user.Email ?? ""));
+        }
+        public async Task<Result<AuthResponse>> LoginWithUserNameAsync(LoginRequest request)
+        {
+            // پیدا کردن کاربر با نام کاربری
+            var user = await _userManager.FindByNameAsync(request.Username);
+            if (user == null)
+                return Result<AuthResponse>.Fail("کاربری با این نام کاربری پیدا نشد.");
+
+            var signRes = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+            if (!signRes.Succeeded)
+                return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = _tokenService.CreateToken(user, roles);
+
+            return Result<AuthResponse>.Ok(new AuthResponse(
+                token,
+                DateTime.UtcNow.AddMinutes(int.Parse(_tokenService is JwtTokenService ? 60.ToString() : "60")),
+                user.UserName ?? ""  // بازگشت نام کاربری به جای ایمیل
+            ));
         }
     }
 }

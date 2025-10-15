@@ -8,9 +8,19 @@ import type { AuthResponse } from "../models/AuthResponse";
 const API_MODULE = import.meta.env.VITE_API_MODULE || "auth";
 
 export const authApi = {
-  login: async (data: LoginRequest): Promise<AuthResponse> => {
+  loginWithEmail: async (data: LoginRequest): Promise<AuthResponse> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/login";
+    const url = "/api/auth/login/email";
+    
+    console.log(`[authApi] POST ${url}`, data);
+    console.log(`[authApi] BaseURL: ${axiosClient.defaults.baseURL}`);
+
+    const response = await axiosClient.post<AuthResponse>(url, data);
+    return response.data;
+  },
+  loginWithUsername: async (data: LoginRequest): Promise<AuthResponse> => {
+    const axiosClient = getAPI(API_MODULE);
+    const url = "/api/auth/login/username";
     
     console.log(`[authApi] POST ${url}`, data);
     console.log(`[authApi] BaseURL: ${axiosClient.defaults.baseURL}`);
