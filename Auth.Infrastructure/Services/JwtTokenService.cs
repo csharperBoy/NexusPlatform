@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Auth.Infrastructure.Services
 {
-    public class JwtTokenService : ITokenService
+    public class JwtTokenService : IJwtTokenService
     {
         private readonly IConfiguration _config;
         public JwtTokenService(IConfiguration config) => _config = config;
@@ -25,7 +25,7 @@ namespace Auth.Infrastructure.Services
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                //new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName ?? user.Email ?? ""),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? "")
             };
@@ -44,6 +44,26 @@ namespace Auth.Infrastructure.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public string GenerateAccessToken(ApplicationUser user, IEnumerable<string> roles, IEnumerable<Claim>? additionalClaims = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RefreshToken> GenerateRefreshTokenAsync(ApplicationUser user, string createdByIp, string? deviceInfo = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task RevokeRefreshTokenAsync(RefreshToken token, string revokedByIp, string? reason = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> ValidateRefreshTokenAsync(string token, ApplicationUser user)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -4,15 +4,18 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 namespace Auth.Infrastructure.Data
 {
-    public class AuthDbContext : IdentityDbContext<ApplicationUser>, IUnitOfWork
+    public class AuthDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
     {
         public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
         {
         }
 
-        // پیاده‌سازی IUnitOfWork
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
+
+        // IUnitOfWork implementation (if you keep it)
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
+            // Optionally: update UpdatedAt on ApplicationUser or other audit fields here
             return await base.SaveChangesAsync(cancellationToken);
         }
 
@@ -20,10 +23,44 @@ namespace Auth.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // جدا کردن شِمای دیتابیس برای Auth
+            // Use dedicated schema
             builder.HasDefaultSchema("auth");
 
-            // اگر نیاز به کانفیگ Fluent دارید همین‌جا اضافه کنید
+            // Rename Identity tables if you want custom names (optional)
+            builder.Entity<ApplicationUser>(b =>
+            {
+                b.ToTable("AspNetUsers", "auth");
+                b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
+                b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
+            });
+
+            builder.Entity<ApplicationRole>(b =>
+            {
+                b.ToTable("AspNetRoles", "auth");
+                b.HasIndex(r => r.NormalizedName).HasDatabaseName("RoleNameIndex").IsUnique();
+            });
+
+            // Remap other identity tables
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>().ToTable("AspNetUserRoles", "auth");
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserClaim<Guid>>().ToTable("AspNetUserClaims", "auth");
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<Guid>>().ToTable("AspNetUserLogins", "auth");
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "auth");
+            builder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<Guid>>().ToTable("AspNetRoleClaims", "auth");
+
+            // RefreshToken relation
+            builder.Entity<RefreshToken>(b =>
+            {
+                b.ToTable("RefreshTokens", "auth");
+                b.HasKey(r => r.Id);
+                b.Property(r => r.Token).IsRequired().HasMaxLength(450);
+                b.HasOne(r => r.User)
+                 .WithMany(u => u.RefreshTokens)
+                 .HasForeignKey(r => r.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Additional indexes
+            builder.Entity<RefreshToken>().HasIndex(r => r.Token).IsUnique(false);
         }
     }
 }

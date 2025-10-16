@@ -1,4 +1,5 @@
 ﻿using Auth.Application;
+using Auth.Infrastructure.Configuration;
 using Auth.Infrastructure.Data;
 using Auth.Infrastructure.Identity;
 using Auth.Infrastructure.Services;
@@ -26,33 +27,44 @@ namespace Auth.Infrastructure.DependencyInjection
                 options.UseSqlServer(conn, b =>
                 {
                     b.MigrationsAssembly(migrationsAssembly);
-                    b.MigrationsHistoryTable("__AuthMigrationsHistory", "auth"); // جدول جداگانه برای تاریخچه مهاجرت
+                    b.MigrationsHistoryTable("__AuthMigrationsHistory", "auth");
                 });
             });
-            // Identity
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+
+            // Identity (with ApplicationRole and Guid keys)
+            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
+                // Password policy
+                options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
-                options.Password.RequiredLength = 6;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false; // یا true برحسب نیاز
+                // Lockout
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.AllowedForNewUsers = true;
+                // User
+                options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
-            // UnitOfWork
-            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AuthDbContext>());
+            // Token settings via options pattern
+            services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
 
-            // Services
-            services.AddScoped<ITokenService, JwtTokenService>();
-            services.AddScoped<IAuthService, AuthService>();
+            // Register other infra services (to implement next)
+            //services.AddScoped<ISessionManager, SessionManager>();
+            //services.AddScoped<IPasswordPolicyService, PasswordPolicyService>();
+            //services.AddScoped<IIpRestrictionService, IpRestrictionService>();
+            //services.AddScoped<IAuditEventPublisher, AuditEventPublisher>();
 
-            // Repository برای ApplicationUser
-            //services.AddScoped<IRepository<ApplicationUser>, EfRepository<ApplicationUser, AuthDbContext>>();
-
-            // JWT setup
-            var jwtKey = configuration["Jwt:Key"];
-            var jwtIssuer = configuration["Jwt:Issuer"];
-            var jwtAudience = configuration["Jwt:Audience"];
+            // Authentication: JWT Bearer
+            var jwtSection = configuration.GetSection("Jwt");
+            var key = jwtSection["Key"];
+            var issuer = jwtSection["Issuer"];
+            var audience = jwtSection["Audience"];
 
             services.AddAuthentication(options =>
             {
@@ -61,21 +73,23 @@ namespace Auth.Infrastructure.DependencyInjection
             })
             .AddJwtBearer(options =>
             {
+                options.RequireHttpsMetadata = true;
+                options.SaveToken = true;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = jwtIssuer,
+                    ValidIssuer = issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtAudience,
+                    ValidAudience = audience,
                     ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!)),
                     ValidateIssuerSigningKey = true
                 };
             });
 
             services.AddAuthorization();
 
-            // ثبت hosted service برای اجرای خودکار میگریشن و seed
+            // Hosted service for migration + seed
             services.AddHostedService<AuthModuleInitializer>();
 
             return services;

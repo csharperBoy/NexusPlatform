@@ -31,7 +31,7 @@ namespace Auth.Infrastructure.Data
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
-                    DisplayName = "System Administrator",
+                    FullName = "System Administrator",
                     EmailConfirmed = true
                 };
 

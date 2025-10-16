@@ -33,7 +33,7 @@ namespace Auth.Infrastructure.Services
             {
                 UserName = request.Email,
                 Email = request.Email,
-                DisplayName = request.DisplayName
+                FullName = request.DisplayName
             };
 
             var createRes = await _userManager.CreateAsync(user, request.Password);
