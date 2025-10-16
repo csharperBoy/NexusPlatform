@@ -12,8 +12,7 @@ namespace Core.Infrastructure.DependencyInjection
         
         public static IServiceCollection AddCoreInfrastructure(this IServiceCollection services)
         {
-            //services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
-
+           
             return services;
         }
 

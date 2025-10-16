@@ -4,6 +4,7 @@ using Auth.Infrastructure.Data;
 using Auth.Infrastructure.Identity;
 using Auth.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -51,8 +52,10 @@ namespace Auth.Infrastructure.DependencyInjection
             .AddDefaultTokenProviders();
 
             // Token settings via options pattern
-            services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+            services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
+
+            services.AddScoped<IUnitOfWork, EfUnitOfWork<AuthDbContext>>();
 
             // Register other infra services (to implement next)
             //services.AddScoped<ISessionManager, SessionManager>();

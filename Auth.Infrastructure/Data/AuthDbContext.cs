@@ -12,6 +12,7 @@ namespace Auth.Infrastructure.Data
 
         public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
 
+        public DbSet<UserSession> UserSessions { get; set; } = default!;
         // IUnitOfWork implementation (if you keep it)
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -58,9 +59,22 @@ namespace Auth.Infrastructure.Data
                  .HasForeignKey(r => r.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
             });
-
+            
             // Additional indexes
             builder.Entity<RefreshToken>().HasIndex(r => r.Token).IsUnique(false);
+
+            builder.Entity<UserSession>(b =>
+            {
+                b.ToTable("UserSessions", "auth");
+                b.HasKey(s => s.Id);
+                b.Property(s => s.SessionToken).IsRequired().HasMaxLength(450);
+                b.HasOne(s => s.User)
+                 .WithMany(u => u.Sessions)
+                 .HasForeignKey(s => s.UserId)
+                 .OnDelete(DeleteBehavior.Cascade);
+
+                b.Property(s => s.ExpiresAt).IsRequired();
+            });
         }
     }
 }

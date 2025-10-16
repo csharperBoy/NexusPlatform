@@ -25,5 +25,7 @@ namespace Auth.Infrastructure.Identity
 
         // Navigation Properties
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        public ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
+
     }
 }
