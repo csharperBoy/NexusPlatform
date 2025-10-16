@@ -10,11 +10,16 @@ namespace Auth.Infrastructure.Identity
     {
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
-        public string RefreshToken { get; set; }
-        public string DeviceInfo { get; set; }
-        public string IpAddress { get; set; }
+        public string RefreshToken { get; set; } = default!;
+        public string DeviceInfo { get; set; } = string.Empty;
+        public string IpAddress { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public DateTime? RevokedAt { get; set; }
-        public bool IsActive => RevokedAt == null;
+        public DateTime ExpiresAt { get; set; }  
+
+        public bool IsActive => RevokedAt == null && ExpiresAt > DateTime.UtcNow;
+
+        public ApplicationUser User { get; set; } = default!;
     }
+
 }

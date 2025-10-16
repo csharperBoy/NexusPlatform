@@ -64,18 +64,97 @@ namespace Core.Infrastructure.Repositories
         #endregion
 
         #region Query Operations
-        public virtual async Task<IEnumerable<TEntity>> FindAsync(
-            Expression<Func<TEntity, bool>> predicate,
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null)
+       
+
+
+
+
+        public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
+             Expression<Func<TEntity, bool>>? predicate = null,
+             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+             int? pageIndex = null,
+             int? pageSize = null)
+                {
+                    IQueryable<TEntity> query = _dbSet;
+
+                    // فیلتر
+                    if (predicate != null)
+                        query = query.Where(predicate);
+
+                    // اینکلود
+                    if (include != null)
+                        query = include(query);
+
+                    // شمارش کل قبل از Paging
+                    var totalCount = await query.CountAsync();
+
+                    // مرتب‌سازی
+                    if (orderBy != null)
+                        query = orderBy(query);
+
+                    // Paging
+                    if (pageIndex.HasValue && pageSize.HasValue)
+                        query = query.Skip(pageIndex.Value * pageSize.Value)
+                                     .Take(pageSize.Value);
+
+                    var items = await query.ToListAsync();
+
+                    return (items, totalCount);
+                }
+
+        public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
+             Expression<Func<TEntity, bool>>? predicate = null,
+             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+             int? pageIndex = null,
+             int? pageSize = null,
+             params Expression<Func<TEntity, object>>[] includes
+            )
         {
             IQueryable<TEntity> query = _dbSet;
-            if (include != null)
+
+            // فیلتر
+            if (predicate != null)
+                query = query.Where(predicate);
+
+            // اینکلود
+            foreach (var include in includes)
             {
-                query = include(query);
+                query = query.Include(include);
             }
-            return await query.Where(predicate).ToListAsync();
+
+            // شمارش کل قبل از Paging
+            var totalCount = await query.CountAsync();
+
+            // مرتب‌سازی
+            if (orderBy != null)
+                query = orderBy(query);
+
+            // Paging
+            if (pageIndex.HasValue && pageSize.HasValue)
+                query = query.Skip(pageIndex.Value * pageSize.Value)
+                             .Take(pageSize.Value);
+
+            var items = await query.ToListAsync();
+
+            return (items, totalCount);
         }
 
+
+
+
+
+        public virtual async Task<TEntity?> FirstOrDefaultAsync(
+            Expression<Func<TEntity, bool>> predicate,
+             params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = _dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return await query.FirstOrDefaultAsync(predicate);
+        }
         public virtual async Task<TEntity?> FirstOrDefaultAsync(
             Expression<Func<TEntity, bool>> predicate,
             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null)
@@ -88,6 +167,20 @@ namespace Core.Infrastructure.Repositories
             return await query.FirstOrDefaultAsync(predicate);
         }
 
+
+
+
+        public virtual async Task<TEntity?> SingleOrDefaultAsync(
+           Expression<Func<TEntity, bool>> predicate,
+            params Expression<Func<TEntity, object>>[] includes)
+        {
+            IQueryable<TEntity> query = _dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return await query.SingleOrDefaultAsync(predicate);
+        }
         public virtual async Task<TEntity?> SingleOrDefaultAsync(
             Expression<Func<TEntity, bool>> predicate,
              Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null)
@@ -100,36 +193,21 @@ namespace Core.Infrastructure.Repositories
             return await query.SingleOrDefaultAsync(predicate);
         }
 
+
+
+
+
         public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate) =>
             await _dbSet.AnyAsync(predicate);
+
+
+
+
 
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null) =>
             predicate == null ? await _dbSet.CountAsync() : await _dbSet.CountAsync(predicate);
 
-        public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(
-            Expression<Func<TEntity, bool>>? predicate = null,
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-            int pageIndex = 0,
-            int pageSize = 20,
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null)
-        {
-            IQueryable<TEntity> query = _dbSet;
-            if (predicate != null) query = query.Where(predicate);
-
-            if (include != null)
-            {
-                query = include(query);
-            }
-            var totalCount = await query.CountAsync();
-            if (orderBy != null) query = orderBy(query);
-
-            var items = await query
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return (items, totalCount);
-        }
+       
 
         public virtual IQueryable<TEntity> AsQueryable() => _dbSet;
 

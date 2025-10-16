@@ -19,6 +19,7 @@ namespace Auth.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddAuthInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(AuthDbContext).Assembly.GetName().Name;
 
@@ -55,7 +56,7 @@ namespace Auth.Infrastructure.DependencyInjection
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
-            services.AddScoped<IUnitOfWork, EfUnitOfWork<AuthDbContext>>();
+            services.AddScoped<IUnitOfWork<AuthDbContext>, EfUnitOfWork<AuthDbContext>>();
 
             // Register other infra services (to implement next)
             //services.AddScoped<ISessionManager, SessionManager>();

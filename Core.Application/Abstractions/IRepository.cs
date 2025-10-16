@@ -1,4 +1,6 @@
 ﻿using Core.Domain.Common;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +26,19 @@ namespace Core.Application.Abstractions
         #endregion
 
         #region Query Operations
-        Task<IEnumerable<TEntity>> FindAsync(
-            Expression<Func<TEntity, bool>> predicate,
-             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null);
+        Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
+              Expression<Func<TEntity, bool>>? predicate = null,
+              Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
+              Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+              int? pageIndex = null,
+              int? pageSize = null);
+        Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
+             Expression<Func<TEntity, bool>>? predicate = null,
+             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
+             int? pageIndex = null,
+             int? pageSize = null,
+             params Expression<Func<TEntity, object>>[] includes
+            );
 
         Task<TEntity?> FirstOrDefaultAsync(
             Expression<Func<TEntity, bool>> predicate,
@@ -40,12 +52,6 @@ namespace Core.Application.Abstractions
 
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
 
-        Task<(IEnumerable<TEntity> Items, int TotalCount)> GetPagedAsync(
-            Expression<Func<TEntity, bool>>? predicate = null,
-            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-            int pageIndex = 0,
-            int pageSize = 20,
-             Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null);
 
         IQueryable<TEntity> AsQueryable();
         IQueryable<TEntity> AsNoTrackingQueryable();

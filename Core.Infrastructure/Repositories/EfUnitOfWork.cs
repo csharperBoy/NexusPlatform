@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Repositories
 {
-    public class EfUnitOfWork<TContext> : IUnitOfWork, IAsyncDisposable
-         where TContext : DbContext
+    public class EfUnitOfWork<TContext> : IUnitOfWork<TContext>
+        where TContext : DbContext
     {
         private readonly TContext _dbContext;
         private IDbContextTransaction? _transaction;

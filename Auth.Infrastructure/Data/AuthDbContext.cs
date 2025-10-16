@@ -32,6 +32,7 @@ namespace Auth.Infrastructure.Data
             {
                 b.ToTable("AspNetUsers", "auth");
                 b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
+                b.Property(u => u.FullName).HasMaxLength(200);
                 b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
             });
 
@@ -53,7 +54,7 @@ namespace Auth.Infrastructure.Data
             {
                 b.ToTable("RefreshTokens", "auth");
                 b.HasKey(r => r.Id);
-                b.Property(r => r.Token).IsRequired().HasMaxLength(450);
+                b.Property(r => r.Token).IsRequired().HasMaxLength(450).IsUnicode(false);
                 b.HasOne(r => r.User)
                  .WithMany(u => u.RefreshTokens)
                  .HasForeignKey(r => r.UserId)
@@ -67,7 +68,7 @@ namespace Auth.Infrastructure.Data
             {
                 b.ToTable("UserSessions", "auth");
                 b.HasKey(s => s.Id);
-                b.Property(s => s.SessionToken).IsRequired().HasMaxLength(450);
+                b.Property(s => s.RefreshToken).IsRequired().HasMaxLength(450);
                 b.HasOne(s => s.User)
                  .WithMany(u => u.Sessions)
                  .HasForeignKey(s => s.UserId)
