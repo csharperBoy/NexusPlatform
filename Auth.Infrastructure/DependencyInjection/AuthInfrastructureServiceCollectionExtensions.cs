@@ -55,15 +55,8 @@ namespace Auth.Infrastructure.DependencyInjection
             // Token settings via options pattern
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
-
             services.AddScoped<IUnitOfWork<AuthDbContext>, EfUnitOfWork<AuthDbContext>>();
-
-            // Register other infra services (to implement next)
-            //services.AddScoped<ISessionManager, SessionManager>();
-            //services.AddScoped<IPasswordPolicyService, PasswordPolicyService>();
-            //services.AddScoped<IIpRestrictionService, IpRestrictionService>();
-            //services.AddScoped<IAuditEventPublisher, AuditEventPublisher>();
-
+            
             // Authentication: JWT Bearer
             var jwtSection = configuration.GetSection("Jwt");
             var key = jwtSection["Key"];

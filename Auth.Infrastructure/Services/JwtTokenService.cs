@@ -2,6 +2,7 @@
 using Auth.Infrastructure.Data;
 using Auth.Infrastructure.Identity;
 using Core.Application.Abstractions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -23,19 +24,31 @@ namespace Auth.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IRepository<UserSession, Guid> _sessionRepository;
         private readonly IUnitOfWork<AuthDbContext> _unitOfWork;
-
+        private readonly IHttpContextAccessor _httpContextAccessor;
         public JwtTokenService(
             IOptions<JwtOptions> options,
             UserManager<ApplicationUser> userManager,
             IRepository<UserSession, Guid> sessionRepository,
-            IUnitOfWork<AuthDbContext> unitOfWork)
+            IUnitOfWork<AuthDbContext> unitOfWork,
+            IHttpContextAccessor httpContextAccessor)
         {
             _jwtOptions = options.Value;
             _userManager = userManager;
             _sessionRepository = sessionRepository;
             _unitOfWork = unitOfWork;
+            _httpContextAccessor = httpContextAccessor;
+        }
+        private string GetDeviceInfo()
+        {
+            return _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString()
+                   ?? "Unknown-Device";
         }
 
+        private string GetClientIp()
+        {
+            return _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString()
+                   ?? "Unknown-IP";
+        }
         public async Task<(string AccessToken, string RefreshToken)> GenerateTokensAsync(ApplicationUser user, IEnumerable<string> roles)
         {
             // Claims
@@ -70,7 +83,7 @@ namespace Auth.Infrastructure.Services
                 RefreshToken = refreshToken,
                 ExpiresAt = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
                 CreatedAt = DateTime.UtcNow,
-                DeviceInfo = "DefaultDevice"
+                DeviceInfo = GetDeviceInfo()
             };
 
             await _sessionRepository.AddAsync(session);

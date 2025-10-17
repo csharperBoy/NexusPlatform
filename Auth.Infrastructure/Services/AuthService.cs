@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Auth.Infrastructure.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Auth.Infrastructure.Services
 {
@@ -16,15 +18,17 @@ namespace Auth.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _tokenService;
-
+        private readonly JwtOptions _jwtOptions;
         public AuthService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IJwtTokenService tokenService)
+            IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
+
+            _jwtOptions = jwtOptions.Value;
         }
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
@@ -47,9 +51,12 @@ namespace Auth.Infrastructure.Services
             await _userManager.AddToRoleAsync(user, "User");
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _tokenService.GenerateTokensAsync(user, roles);
+            var token =await _tokenService.GenerateTokensAsync(user, roles);
 
-            var response = new AuthResponse(token.Result.AccessToken, DateTime.UtcNow.AddMinutes(int.Parse(_tokenService is JwtTokenService ? 60.ToString() : "60")), user.Email ?? "");
+            var response = new AuthResponse(
+                token.AccessToken,
+               DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes), 
+               user.UserName ?? "");
             return Result<AuthResponse>.Ok(response);
         }
 
@@ -62,9 +69,14 @@ namespace Auth.Infrastructure.Services
             if (!signRes.Succeeded) return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _tokenService.GenerateTokensAsync(user, roles);
+            var token = await _tokenService.GenerateTokensAsync(user, roles);
 
-            return Result<AuthResponse>.Ok(new AuthResponse(token.Result.AccessToken, DateTime.UtcNow.AddMinutes(int.Parse(_tokenService is JwtTokenService ? 60.ToString() : "60")), user.Email ?? ""));
+            var response = new AuthResponse(
+                token.AccessToken,
+               DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
+               user.Email ?? "");
+
+            return Result<AuthResponse>.Ok(response);
         }
         public async Task<Result<AuthResponse>> LoginWithUserNameAsync(LoginRequest request)
         {
@@ -78,13 +90,14 @@ namespace Auth.Infrastructure.Services
                 return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _tokenService.GenerateTokensAsync(user, roles);
+            var token = await _tokenService.GenerateTokensAsync(user, roles);
 
-            return Result<AuthResponse>.Ok(new AuthResponse(
-                token.Result.AccessToken,
-                DateTime.UtcNow.AddMinutes(int.Parse(_tokenService is JwtTokenService ? 60.ToString() : "60")),
-                user.UserName ?? ""  // بازگشت نام کاربری به جای ایمیل
-            ));
+            var response = new AuthResponse(
+                token.AccessToken,
+               DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
+               user.UserName ?? "");
+
+            return Result<AuthResponse>.Ok(response);
         }
     }
 }

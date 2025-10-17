@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 
 namespace Auth.Application.DTOs
 {
-    public record AuthResponse(string Token, DateTime ExpiresAt, string Email);
+    public record AuthResponse(string Token, DateTime ExpiresAt, string UserName);
 
 }

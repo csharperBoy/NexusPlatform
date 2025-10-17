@@ -6,7 +6,7 @@ namespace Auth.Infrastructure.Data
     public static class SeedData
     {
         public static async Task SeedRolesAndAdminAsync(
-            RoleManager<IdentityRole> roleManager,
+            RoleManager<ApplicationRole> roleManager,
             UserManager<ApplicationUser> userManager)
         {
             // --- ایجاد نقش‌ها ---
@@ -16,7 +16,7 @@ namespace Auth.Infrastructure.Data
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                    await roleManager.CreateAsync(new ApplicationRole() { Name = roleName });
                 }
             }
 
