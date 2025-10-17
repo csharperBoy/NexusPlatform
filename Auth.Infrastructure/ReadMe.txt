@@ -6,6 +6,8 @@ dotnet ef migrations add Initial_Auth_Guid --project Auth.Infrastructure/Auth.In
 dotnet ef migrations add <migration_name> --project Auth.Infrastructure/Auth.Infrastructure.csproj --startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj --context <target_dbContext> --output-dir Migrations
 
 dotnet ef migrations add Initial_Auth -p Auth.Infrastructure -s "AkSteel Welfare Platform"
+or
+Add-Migration EditAuth1 -Project Auth.Infrastructure -Context AuthDbContext -Start "AkSteel Welfare Platform"
 dotnet ef database update -p Auth.Infrastructure -s  "AkSteel Welfare Platform"
 
 

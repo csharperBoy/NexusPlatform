@@ -41,7 +41,7 @@ namespace Auth.Infrastructure.Services
             // Claims
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName ?? user.Email ?? ""),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? "")
             };
@@ -81,8 +81,9 @@ namespace Auth.Infrastructure.Services
 
         public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, string userId)
         {
+            var userGuid = Guid.Parse(userId);
             var session = await _sessionRepository.FirstOrDefaultAsync(
-                s => s.UserId == userId && s.RefreshToken == refreshToken && s.ExpiresAt > DateTime.UtcNow
+                s => s.UserId == userGuid && s.RefreshToken == refreshToken && s.ExpiresAt > DateTime.UtcNow
             );
 
             return session != null;
@@ -101,11 +102,13 @@ namespace Auth.Infrastructure.Services
 
         public async Task RevokeAllUserTokensAsync(string userId)
         {
-            var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId);
 
-            if (sessions.Any())
+            var userGuid = Guid.Parse(userId);
+            var sessions = await _sessionRepository.FindAsync(s => s.UserId == userGuid);
+
+            if (sessions.Items.Any())
             {
-                await _sessionRepository.RemoveRangeAsync(sessions);
+                await _sessionRepository.RemoveRangeAsync(sessions.Items);
                 await _unitOfWork.SaveChangesAsync();
             }
         }
