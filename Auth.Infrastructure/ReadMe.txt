@@ -8,8 +8,11 @@ dotnet ef migrations add <migration_name> --project Auth.Infrastructure/Auth.Inf
 dotnet ef migrations add Initial_Auth -p Auth.Infrastructure -s "AkSteel Welfare Platform"
 or
 Add-Migration EditAuth1 -Project Auth.Infrastructure -Context AuthDbContext -Start "AkSteel Welfare Platform"
-dotnet ef database update -p Auth.Infrastructure -s  "AkSteel Welfare Platform"
 
+3- for update database execute this command in developer powershell or package manager console 
+dotnet ef database update -p Auth.Infrastructure -s  "AkSteel Welfare Platform"
+or
+update-database -Project Auth.Infrastructure -Context AuthDbContext -Start "AkSteel Welfare Platform"
 
 3- for update database execute this command in developer PowerShell:
 dotnet ef database update --project Auth.Infrastructure/Auth.Infrastructure.csproj --startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj --context AuthDbContext
