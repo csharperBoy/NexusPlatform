@@ -9,11 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 // configuration
 var configuration = builder.Configuration;
 
-builder.Services.AddCoreInfrastructure();
-builder.Services.AddAuthApplication();
+builder.Services.AddCoreInfrastructure(configuration);
+builder.Services.AddAuthApplication(configuration);
 builder.Services.AddAuthInfrastructure(configuration);
 
-builder.Services.AddAuthPresentation();
+builder.Services.AddAuthPresentation(configuration);
 
 
 

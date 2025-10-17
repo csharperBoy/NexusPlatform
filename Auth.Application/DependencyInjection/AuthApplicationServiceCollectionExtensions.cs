@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace Auth.Application.DependencyInjection
 {
     public static class AuthApplicationServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthApplication(this IServiceCollection services)
+        public static IServiceCollection AddAuthApplication(this IServiceCollection services, IConfiguration configuration)
         {
             // رجیستر MediatR و هندلرها
             services.AddMediatR(cfg =>
