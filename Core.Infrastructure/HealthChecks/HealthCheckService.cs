@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,14 +37,14 @@ namespace Core.Infrastructure.HealthChecks
         {
             try
             {
-                var startTime = DateTime.UtcNow;
+                var stopwatch = Stopwatch.StartNew();
                 var canConnect = await _dbContext.Database.CanConnectAsync();
-                var responseTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                stopwatch.Stop();
 
                 return new DatabaseStatus(
                     canConnect,
                     canConnect ? "Database connection successful" : "Database connection failed",
-                    (long)responseTime
+                    stopwatch.ElapsedMilliseconds
                 );
             }
             catch (Exception ex)
@@ -58,7 +59,7 @@ namespace Core.Infrastructure.HealthChecks
             {
                 var testKey = "health_check_" + Guid.NewGuid();
                 var testValue = "test_value";
-                var startTime = DateTime.UtcNow;
+                var stopwatch = Stopwatch.StartNew();
 
                 // تست نوشتن
                 await _cacheService.SetAsync(testKey, testValue, TimeSpan.FromSeconds(5));
@@ -66,13 +67,13 @@ namespace Core.Infrastructure.HealthChecks
                 // تست خواندن
                 var result = await _cacheService.GetAsync<string>(testKey);
 
-                var responseTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                stopwatch.Stop();
 
                 var isHealthy = result == testValue;
                 return new CacheStatus(
                     isHealthy,
                     isHealthy ? "Cache service operational" : "Cache test failed",
-                    (long)responseTime
+                    stopwatch.ElapsedMilliseconds
                 );
             }
             catch (Exception ex)

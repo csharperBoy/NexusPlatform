@@ -7,6 +7,12 @@ using Core.Infrastructure.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// اضافه کردن Configuration
+builder.Configuration
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables();
 
 // configuration
 var configuration = builder.Configuration;
@@ -42,24 +48,36 @@ builder.Services.AddCors(options =>
 });
 var app = builder.Build();
 
-// 🔍 سلامت‌سنجی در startup
+
+// سلامت‌سنجی در Startup
 using (var scope = app.Services.CreateScope())
 {
-    var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
-
-    Console.WriteLine("🔍 Running system health checks...");
-
-    var systemStatus = await healthCheck.GetSystemStatusAsync();
-    var dbStatus = await healthCheck.GetDatabaseStatusAsync();
-    var cacheStatus = await healthCheck.GetCacheStatusAsync();
-
-    Console.WriteLine($"🏥 System Health: {(systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy")}");
-    Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
-    Console.WriteLine($"💾 Cache: {cacheStatus.Message} ({cacheStatus.ResponseTimeMs}ms)");
-
-    if (!systemStatus.IsHealthy)
+    try
     {
-        Console.WriteLine("⚠️  Warning: System has health issues");
+        var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+
+        Console.WriteLine("🔍 Running AkSteel Welfare Platform health checks...");
+
+        var systemStatus = await healthCheck.GetSystemStatusAsync();
+        var dbStatus = await healthCheck.GetDatabaseStatusAsync();
+        var cacheStatus = await healthCheck.GetCacheStatusAsync();
+
+        Console.WriteLine($"🏥 System Health: {(systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy")}");
+        Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
+        Console.WriteLine($"💾 Cache: {cacheStatus.Message} ({cacheStatus.ResponseTimeMs}ms)");
+
+        if (!systemStatus.IsHealthy)
+        {
+            Console.WriteLine("⚠️  Warning: System has health issues - check configuration");
+        }
+        else
+        {
+            Console.WriteLine("🎉 All systems are ready!");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Health check failed: {ex.Message}");
     }
 }
 
