@@ -26,63 +26,112 @@ namespace Core.Infrastructure.Database
             {
                 try
                 {
-                    using var scope = _serviceProvider.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<TContext>();
-
-                    _logger.LogInformation("🔄 Checking migrations for {DbContext}...", typeof(TContext).Name);
-
-                    // بررسی اتصال به دیتابیس
-                    if (!await context.Database.CanConnectAsync(cancellationToken))
-                    {
-                        _logger.LogWarning("Database not accessible. Attempting to create...");
-                        await context.Database.EnsureCreatedAsync(cancellationToken);
-                        _logger.LogInformation("✅ Database created successfully.");
-                        return;
-                    }
-
-                    // بررسی migrationهای pending
-                    var pendingMigrations = await context.Database.GetPendingMigrationsAsync(cancellationToken);
-                    var pendingList = pendingMigrations.ToList();
-
-                    if (!pendingList.Any())
-                    {
-                        _logger.LogInformation("✅ No pending migrations for {DbContext}.", typeof(TContext).Name);
-                        return;
-                    }
-
-                    _logger.LogInformation("📦 Found {Count} pending migrations for {DbContext}",
-                        pendingList.Count, typeof(TContext).Name);
-
-                    // اجرای migration
-                    await context.Database.MigrateAsync(cancellationToken);
-
-                    _logger.LogInformation("🎉 Successfully applied {Count} migrations for {DbContext}",
-                        pendingList.Count, typeof(TContext).Name);
-
+                    await AttemptMigration<TContext>(cancellationToken);
                     return; // موفقیت‌آمیز
                 }
-                catch (Exception ex) when (IsTransientError(ex) && retryCount < maxRetries - 1)
+                catch (Exception ex)
                 {
                     retryCount++;
-                    _logger.LogWarning(ex, "⚠️ Transient error during migration (Attempt {RetryCount}/{MaxRetries})",
-                        retryCount, maxRetries);
+                    var errorType = ClassifyError(ex);
+                    var shouldRetry = ShouldRetry(errorType, retryCount, maxRetries);
 
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), cancellationToken);
-                }
-                catch
-                {
-                    retryCount++;
-                    _logger.LogWarning( "⚠️ other error during migration (Attempt {RetryCount}/{MaxRetries})",
-                        retryCount, maxRetries);
+                    if (shouldRetry)
+                    {
+                        var delay = CalculateDelay(errorType, retryCount);
+                        _logger.LogWarning(ex,
+                            "⚠️ {ErrorType} error during migration (Attempt {RetryCount}/{MaxRetries}). Retrying in {Delay}s",
+                            errorType, retryCount, maxRetries, delay.TotalSeconds);
 
-                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), cancellationToken);
+                        await Task.Delay(delay, cancellationToken);
+                    }
+                    else
+                    {
+                        _logger.LogError(ex, "❌ {ErrorType} error - no more retries for {DbContext}",
+                            errorType, typeof(TContext).Name);
+                        break;
+                    }
                 }
             }
 
-            // آخرین تلاش
+            // آخرین تلاش نرم
             await FinalMigrationAttempt<TContext>(cancellationToken);
         }
 
+        private async Task AttemptMigration<TContext>(CancellationToken cancellationToken) where TContext : DbContext
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<TContext>();
+
+            _logger.LogInformation("🔄 Checking migrations for {DbContext}...", typeof(TContext).Name);
+
+            if (!await context.Database.CanConnectAsync(cancellationToken))
+            {
+                _logger.LogWarning("Database not accessible. Attempting to create...");
+                await context.Database.EnsureCreatedAsync(cancellationToken);
+                _logger.LogInformation("✅ Database created successfully.");
+                return;
+            }
+
+            var pendingMigrations = await context.Database.GetPendingMigrationsAsync(cancellationToken);
+            var pendingList = pendingMigrations.ToList();
+
+            if (!pendingList.Any())
+            {
+                _logger.LogInformation("✅ No pending migrations for {DbContext}.", typeof(TContext).Name);
+                return;
+            }
+
+            _logger.LogInformation("📦 Found {Count} pending migrations for {DbContext}",
+                pendingList.Count, typeof(TContext).Name);
+
+            await context.Database.MigrateAsync(cancellationToken);
+
+            _logger.LogInformation("🎉 Successfully applied {Count} migrations for {DbContext}",
+                pendingList.Count, typeof(TContext).Name);
+        }
+
+        private ErrorType ClassifyError(Exception ex)
+        {
+            if (IsTransientError(ex))
+                return ErrorType.Transient;
+            else if (ex.Message.Contains("There is already an object ", StringComparison.OrdinalIgnoreCase))
+                return ErrorType.AlreadyExists;
+            else if (ex.Message.Contains("permission", StringComparison.OrdinalIgnoreCase))
+                return ErrorType.Permission;
+            else
+                return ErrorType.Unknown;
+        }
+
+        private bool ShouldRetry(ErrorType errorType, int retryCount, int maxRetries)
+        {
+            return errorType switch
+            {
+                ErrorType.Transient => retryCount < maxRetries,
+                ErrorType.AlreadyExists => false, // نیازی به ریترای نیست
+                ErrorType.Permission => retryCount < 1, // فقط یکبار ریترای شود
+                ErrorType.Unknown => retryCount < maxRetries - 1,
+                _ => retryCount < maxRetries
+            };
+        }
+
+        private TimeSpan CalculateDelay(ErrorType errorType, int retryCount)
+        {
+            return errorType switch
+            {
+                ErrorType.Transient => TimeSpan.FromSeconds(Math.Pow(2, retryCount)),
+                ErrorType.Permission => TimeSpan.FromSeconds(5), // تاخیر ثابت برای خطاهای permission
+                ErrorType.Unknown => TimeSpan.FromSeconds(Math.Pow(3, retryCount)),
+                _ => TimeSpan.FromSeconds(Math.Pow(2, retryCount))
+            };
+        }
+
+        private enum ErrorType
+        {
+            Transient,
+            AlreadyExists,
+            Permission,
+            Unknown
+        }
         public async Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext
         {
             try
