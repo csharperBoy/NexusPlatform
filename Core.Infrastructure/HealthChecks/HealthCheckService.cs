@@ -85,5 +85,10 @@ namespace Core.Infrastructure.HealthChecks
                 return new CacheStatus(false, $"Cache error: {ex.Message}", 0);
             }
         }
+
+        public Task<DatabaseStatus> GetDatabaseStatusAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

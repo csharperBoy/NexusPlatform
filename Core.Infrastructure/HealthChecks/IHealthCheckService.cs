@@ -9,7 +9,7 @@ namespace Core.Infrastructure.HealthChecks
     public interface IHealthCheckService
     {
         Task<SystemStatus> GetSystemStatusAsync();
-     //   Task<DatabaseStatus> GetDatabaseStatusAsync();
+        Task<DatabaseStatus> GetDatabaseStatusAsync();
         Task<CacheStatus> GetCacheStatusAsync();
     }
 

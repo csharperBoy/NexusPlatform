@@ -29,8 +29,8 @@ namespace Auth.Infrastructure.DependencyInjection
                 _logger.LogInformation("Starting Auth module initialization...");
 
                 // اجرای میگریشن
-                var context = services.GetRequiredService<AuthDbContext>();
-                await context.Database.MigrateAsync(cancellationToken);
+                //var context = services.GetRequiredService<AuthDbContext>();
+                //await context.Database.MigrateAsync(cancellationToken);
 
                 // اجرای seed داده‌ها
                 var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();

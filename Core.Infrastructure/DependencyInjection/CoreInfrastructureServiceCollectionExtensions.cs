@@ -38,6 +38,8 @@ namespace Core.Infrastructure.DependencyInjection
 
             // Health Checks
             services.AddScoped<IHealthCheckService, HealthCheckService>();
+            // Database Services
+            services.AddDatabaseServices(configuration);
 
             // پیکربندی کش
             ConfigureCaching(services, configuration);

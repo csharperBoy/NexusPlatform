@@ -4,6 +4,8 @@ using Auth.Application.DependencyInjection;
 using Core.Infrastructure.DependencyInjection;
 using People.Infrastructure.DependencyInjection;
 using Core.Infrastructure.HealthChecks;
+using Auth.Infrastructure.Data;
+using Core.Infrastructure.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +50,8 @@ builder.Services.AddCors(options =>
 });
 var app = builder.Build();
 
+// اجرای Migrationهای هوشمند
+await RunSmartMigrations(app);
 
 // سلامت‌سنجی در Startup
 using (var scope = app.Services.CreateScope())
@@ -98,3 +102,65 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+
+async Task RunSmartMigrations(WebApplication app)
+{
+    using var scope = app.Services.CreateScope();
+    var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("🚀 Starting database migrations...");
+
+        // لیست DbContextها برای migration
+        var dbContextTypes = new[]
+        {
+            typeof(AuthDbContext),
+            //typeof(UserManagementDbContext)
+            // اضافه کردن بقیه
+        };
+
+        foreach (var dbContextType in dbContextTypes)
+        {
+            try
+            {
+                logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
+
+                // اجرای migration با reflection
+                var method = typeof(IMigrationManager).GetMethod(nameof(IMigrationManager.MigrateAsync));
+                var genericMethod = method.MakeGenericMethod(dbContextType);
+                await (Task)genericMethod.Invoke(migrationManager, new object[] { default(CancellationToken) });
+
+                logger.LogInformation("✅ {DbContext} migrated successfully", dbContextType.Name);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Failed to migrate {DbContext}", dbContextType.Name);
+
+                // در Production ادامه بده، در Development متوقف شو
+                if (app.Environment.IsDevelopment())
+                {
+                    throw;
+                }
+            }
+        }
+
+        logger.LogInformation("🎉 All migrations completed successfully");
+    }
+    catch (Exception ex)
+    {
+        logger.LogCritical(ex, "💥 Migration process failed");
+        if (app.Environment.IsProduction())
+        {
+            // در Production برنامه رو متوقف نکن
+            logger.LogWarning("Continuing in production despite migration failures");
+        }
+        else
+        {
+            throw;
+        }
+    }
+}
