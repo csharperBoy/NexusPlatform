@@ -1,5 +1,7 @@
 ﻿using Core.Application.Abstractions.Caching;
+using Core.Application.Models;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,41 +14,82 @@ namespace Core.Infrastructure.Caching
     public class RedisCacheService : ICacheService
     {
         private readonly IDistributedCache _cache;
+        private readonly CacheSettings _cacheSettings;
+        private readonly JsonSerializerOptions _jsonOptions;
 
-        public RedisCacheService(IDistributedCache cache)
+        public RedisCacheService(IDistributedCache cache, IOptions<CacheSettings> cacheSettings)
         {
             _cache = cache;
+            _cacheSettings = cacheSettings.Value;
+            _jsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false
+            };
         }
 
         public async Task<T?> GetAsync<T>(string key)
         {
-            var data = await _cache.GetStringAsync(key);
-            return data == null ? default : JsonSerializer.Deserialize<T>(data);
+            try
+            {
+                var data = await _cache.GetStringAsync(key);
+                return data == null ? default : JsonSerializer.Deserialize<T>(data, _jsonOptions);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis get error for key '{key}': {ex.Message}");
+                return default;
+            }
         }
 
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
         {
-            var options = new DistributedCacheEntryOptions();
+            try
+            {
+                var options = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_cacheSettings.DefaultExpirationMinutes)
+                };
 
-            if (expiration.HasValue)
-                options.SetAbsoluteExpiration(expiration.Value);
-
-            var data = JsonSerializer.Serialize(value);
-            await _cache.SetStringAsync(key, data, options);
+                var data = JsonSerializer.Serialize(value, _jsonOptions);
+                await _cache.SetStringAsync(key, data, options);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis set error for key '{key}': {ex.Message}");
+            }
         }
 
-        public Task RemoveAsync(string key) => _cache.RemoveAsync(key);
+        public async Task RemoveAsync(string key)
+        {
+            try
+            {
+                await _cache.RemoveAsync(key);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis remove error for key '{key}': {ex.Message}");
+            }
+        }
 
         public async Task<bool> ExistsAsync(string key)
         {
-            var data = await _cache.GetAsync(key);
-            return data != null;
+            try
+            {
+                var data = await _cache.GetAsync(key);
+                return data != null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Redis exists error for key '{key}': {ex.Message}");
+                return false;
+            }
         }
 
         public Task RemoveByPatternAsync(string pattern)
         {
-            // در ری‌دیس می‌شه با pattern کلیدها رو پاک کرد
-            // در صورت استفاده از کش دیگر، این متد رو پیاده‌سازی کن
+            // در Redis باید از SCAN و DEL استفاده کرد
+            // برای سادگی فعلاً پیاده‌سازی نمی‌کنیم
             return Task.CompletedTask;
         }
     }

@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 namespace Core.Infrastructure.Repositories
 {
     public class EfSpecificationRepository<TEntity, TKey> : ISpecificationRepository<TEntity, TKey>
-        where TEntity : class
-        where TKey : IEquatable<TKey>
+         where TEntity : class
+         where TKey : IEquatable<TKey>
     {
         protected readonly DbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
@@ -55,40 +55,61 @@ namespace Core.Infrastructure.Repositories
         {
             IQueryable<TEntity> query = _dbSet;
 
-            // اعمال فیلتر (Criteria)
+            // اعمال فیلتر
             if (specification.Criteria != null)
             {
                 query = query.Where(specification.Criteria);
             }
 
-            // اعمال Includes با استفاده از Expression
+            // اعمال Includes ساده
             query = specification.Includes
                 .Aggregate(query, (current, include) => current.Include(include));
 
-            // اعمال Includes با استفاده از رشته
+            // اعمال Includes پیچیده (با ThenInclude)
+            query = specification.IncludeFunctions
+                .Aggregate(query, (current, includeFunction) => includeFunction(current));
+
+            // اعمال Includes رشته‌ای
             query = specification.IncludeStrings
                 .Aggregate(query, (current, include) => current.Include(include));
 
             // اعمال مرتب‌سازی (اگر برای شمارش نیست)
             if (!forCount)
             {
-                if (specification.OrderBy != null)
-                {
-                    query = query.OrderBy(specification.OrderBy);
-                }
-                else if (specification.OrderByDescending != null)
-                {
-                    query = query.OrderByDescending(specification.OrderByDescending);
-                }
-
-                // اعمال GroupBy
-                if (specification.GroupBy != null)
-                {
-                    query = query.GroupBy(specification.GroupBy).SelectMany(x => x);
-                }
+                query = ApplyOrdering(query, specification);
             }
 
             return query;
+        }
+
+        private IQueryable<TEntity> ApplyOrdering(IQueryable<TEntity> query, ISpecification<TEntity> specification)
+        {
+            IOrderedQueryable<TEntity> orderedQuery = null;
+
+            // مرتب‌سازی اولیه
+            if (specification.OrderBy != null)
+            {
+                orderedQuery = query.OrderBy(specification.OrderBy);
+            }
+            else if (specification.OrderByDescending != null)
+            {
+                orderedQuery = query.OrderByDescending(specification.OrderByDescending);
+            }
+
+            // مرتب‌سازی‌های زنجیره‌ای (ThenOrderBy)
+            if (orderedQuery != null && specification.ThenOrderBy.Any())
+            {
+                foreach (var (keySelector, isDescending) in specification.ThenOrderBy)
+                {
+                    orderedQuery = isDescending ?
+                        orderedQuery.ThenByDescending(keySelector) :
+                        orderedQuery.ThenBy(keySelector);
+                }
+
+                return orderedQuery;
+            }
+
+            return orderedQuery ?? query;
         }
     }
 }

@@ -1,8 +1,9 @@
-using Auth.Infrastructure.DependencyInjection;
+﻿using Auth.Infrastructure.DependencyInjection;
 using Auth.Presentation.DependencyInjection;
 using Auth.Application.DependencyInjection;
 using Core.Infrastructure.DependencyInjection;
 using People.Infrastructure.DependencyInjection;
+using Core.Infrastructure.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,28 @@ builder.Services.AddCors(options =>
     });
 });
 var app = builder.Build();
+
+// 🔍 سلامت‌سنجی در startup
+using (var scope = app.Services.CreateScope())
+{
+    var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+
+    Console.WriteLine("🔍 Running system health checks...");
+
+    var systemStatus = await healthCheck.GetSystemStatusAsync();
+    var dbStatus = await healthCheck.GetDatabaseStatusAsync();
+    var cacheStatus = await healthCheck.GetCacheStatusAsync();
+
+    Console.WriteLine($"🏥 System Health: {(systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy")}");
+    Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
+    Console.WriteLine($"💾 Cache: {cacheStatus.Message} ({cacheStatus.ResponseTimeMs}ms)");
+
+    if (!systemStatus.IsHealthy)
+    {
+        Console.WriteLine("⚠️  Warning: System has health issues");
+    }
+}
+
 
 if (app.Environment.IsDevelopment())
 {

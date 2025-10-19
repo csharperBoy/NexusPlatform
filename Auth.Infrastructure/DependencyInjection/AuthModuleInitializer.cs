@@ -33,7 +33,7 @@ namespace Auth.Infrastructure.DependencyInjection
                 await context.Database.MigrateAsync(cancellationToken);
 
                 // اجرای seed داده‌ها
-                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                 await SeedData.SeedRolesAndAdminAsync(roleManager, userManager);
 
