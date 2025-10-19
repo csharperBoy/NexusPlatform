@@ -22,15 +22,15 @@ namespace Core.Infrastructure.DependencyInjection
         {
             // ثبت تنظیمات - روش صحیح
             services.Configure<CacheSettings>(configuration.GetSection("CacheSettings"));
-            services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
             // سرویس‌های پایه
             services.AddHttpContextAccessor();
 
-            // Repositoryها
-            services.AddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
+            // ثبت ساده و مستقیم
+            services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
+
             services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,>));
 
             // Event Bus

@@ -59,11 +59,11 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("🔍 Running AkSteel Welfare Platform health checks...");
 
         var systemStatus = await healthCheck.GetSystemStatusAsync();
-        var dbStatus = await healthCheck.GetDatabaseStatusAsync();
+        //var dbStatus = await healthCheck.GetDatabaseStatusAsync();
         var cacheStatus = await healthCheck.GetCacheStatusAsync();
 
         Console.WriteLine($"🏥 System Health: {(systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy")}");
-        Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
+        //Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
         Console.WriteLine($"💾 Cache: {cacheStatus.Message} ({cacheStatus.ResponseTimeMs}ms)");
 
         if (!systemStatus.IsHealthy)

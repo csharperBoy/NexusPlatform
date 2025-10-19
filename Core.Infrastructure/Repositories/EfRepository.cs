@@ -11,14 +11,15 @@ using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Repositories
 {
-    public class EfRepository<TEntity, TKey> : IRepository<TEntity, TKey>
-          where TEntity : class
-          where TKey : IEquatable<TKey>
+    public class EfRepository<TDbContext, TEntity, TKey> : IRepository<TDbContext, TEntity, TKey>
+       where TDbContext : DbContext
+       where TEntity : class
+       where TKey : IEquatable<TKey>
     {
-        protected readonly DbContext _dbContext;
+        protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
 
-        public EfRepository(DbContext dbContext)
+        public EfRepository(TDbContext dbContext)
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();

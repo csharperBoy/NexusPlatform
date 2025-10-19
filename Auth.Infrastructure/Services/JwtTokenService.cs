@@ -22,13 +22,13 @@ namespace Auth.Infrastructure.Services
     {
         private readonly JwtOptions _jwtOptions;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IRepository<UserSession, Guid> _sessionRepository;
+        private readonly IRepository<AuthDbContext , UserSession, Guid> _sessionRepository;
         private readonly IUnitOfWork<AuthDbContext> _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public JwtTokenService(
             IOptions<JwtOptions> options,
             UserManager<ApplicationUser> userManager,
-            IRepository<UserSession, Guid> sessionRepository,
+            IRepository<AuthDbContext, UserSession, Guid> sessionRepository,
             IUnitOfWork<AuthDbContext> unitOfWork,
             IHttpContextAccessor httpContextAccessor)
         {

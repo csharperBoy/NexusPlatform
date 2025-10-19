@@ -56,7 +56,7 @@ namespace Auth.Infrastructure.DependencyInjection
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IUnitOfWork<AuthDbContext>, EfUnitOfWork<AuthDbContext>>();
-            
+            services.AddScoped<IAuthService, AuthService>();
             // Authentication: JWT Bearer
             var jwtSection = configuration.GetSection("Jwt");
             var key = jwtSection["Key"];

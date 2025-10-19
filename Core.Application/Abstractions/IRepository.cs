@@ -10,9 +10,10 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions
 {
-    public interface IRepository<TEntity, TKey>
-        where TEntity : class
-        where TKey : IEquatable<TKey>
+    public interface IRepository<TDbContext, TEntity, TKey>
+       where TDbContext : DbContext
+       where TEntity : class
+       where TKey : IEquatable<TKey>
     {
         #region Basic CRUD
         Task<TEntity?> GetByIdAsync(TKey id);

@@ -11,29 +11,33 @@ namespace Core.Infrastructure.HealthChecks
 {
     public class HealthCheckService : IHealthCheckService
     {
-        private readonly DbContext _dbContext;
+        //private readonly DbContext _dbContext;
         private readonly ICacheService _cacheService;
 
-        public HealthCheckService(DbContext dbContext, ICacheService cacheService)
+        public HealthCheckService(//DbContext dbContext,
+            ICacheService cacheService)
         {
-            _dbContext = dbContext;
+         //   _dbContext = dbContext;
             _cacheService = cacheService;
         }
 
         public async Task<SystemStatus> GetSystemStatusAsync()
         {
-            var dbStatus = await GetDatabaseStatusAsync();
+            //var dbStatus = await GetDatabaseStatusAsync();
             var cacheStatus = await GetCacheStatusAsync();
 
-            var isHealthy = dbStatus.IsConnected && cacheStatus.IsConnected;
+            var isHealthy = //dbStatus.IsConnected && 
+                cacheStatus.IsConnected;
             var message = isHealthy ?
                 "All systems operational" :
-                $"Issues detected: DB: {dbStatus.IsConnected}, Cache: {cacheStatus.IsConnected}";
+               // $"Issues detected: DB: " +
+           //     $"{dbStatus.IsConnected}," +
+                $" Cache: {cacheStatus.IsConnected}";
 
             return new SystemStatus(isHealthy, message, DateTime.UtcNow);
         }
 
-        public async Task<DatabaseStatus> GetDatabaseStatusAsync()
+      /*  public async Task<DatabaseStatus> GetDatabaseStatusAsync()
         {
             try
             {
@@ -51,7 +55,7 @@ namespace Core.Infrastructure.HealthChecks
             {
                 return new DatabaseStatus(false, $"Database error: {ex.Message}", 0);
             }
-        }
+        }*/
 
         public async Task<CacheStatus> GetCacheStatusAsync()
         {
