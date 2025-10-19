@@ -54,7 +54,7 @@ namespace Core.Infrastructure.Database
                         pendingList.Count, typeof(TContext).Name);
 
                     // اجرای migration
-               //     await context.Database.MigrateAsync(cancellationToken);
+                    await context.Database.MigrateAsync(cancellationToken);
 
                     _logger.LogInformation("🎉 Successfully applied {Count} migrations for {DbContext}",
                         pendingList.Count, typeof(TContext).Name);
@@ -65,6 +65,14 @@ namespace Core.Infrastructure.Database
                 {
                     retryCount++;
                     _logger.LogWarning(ex, "⚠️ Transient error during migration (Attempt {RetryCount}/{MaxRetries})",
+                        retryCount, maxRetries);
+
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), cancellationToken);
+                }
+                catch
+                {
+                    retryCount++;
+                    _logger.LogWarning( "⚠️ other error during migration (Attempt {RetryCount}/{MaxRetries})",
                         retryCount, maxRetries);
 
                     await Task.Delay(TimeSpan.FromSeconds(Math.Pow(2, retryCount)), cancellationToken);
@@ -105,7 +113,7 @@ namespace Core.Infrastructure.Database
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Final migration attempt failed for {DbContext}", typeof(TContext).Name);
-                throw;
+               
             }
         }
 
