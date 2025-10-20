@@ -36,6 +36,7 @@ choco install redis-64
 # اتصال به Redis
 redis-cli
 
+# یا برو تو فولدر ردیس و ابتدا redis-server.exe رو اجرا کن و بعدش redis-cli.exe رو اجرا کن
 # در Redis CLI دستورات زیر رو اجرا کنید:
 127.0.0.1:6379> ping
 # باید پاسخ "PONG" بدهد
