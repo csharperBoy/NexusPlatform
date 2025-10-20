@@ -1,0 +1,45 @@
+﻿1. 📥 روش اول: نصب Redis با Docker (ساده‌ترین روش)
+
+# از سایت زیر Docker Desktop رو دانلود و نصب کنید:
+# https://www.docker.com/products/docker-desktop/
+
+# ترمینال یا Command Prompt رو باز کنید و دستور زیر رو اجرا کنید:
+docker run --name my-redis -p 6379:6379 -d redis
+
+# یا برای نسخه پایدار:
+docker run --name my-redis -p 6379:6379 -d redis:7-alpine
+
+
+# بررسی وضعیت container
+docker ps
+
+# اگر می‌خواهید لاگ‌ها رو ببینید:
+docker logs my-redis
+
+
+2. 📥 روش دوم: نصب Redis روی Windows (بدون Docker)
+# اول Chocolatey رو نصب کنید (اگر ندارید):
+# در PowerShell با دسترسی Administrator اجرا کنید:
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# سپس Redis رو نصب کنید:
+choco install redis-64
+
+# از لینک زیر Redis رو دانلود کنید:
+# https://github.com/microsoftarchive/releases/releases
+
+# یا از این لینک مستقیم:
+# https://github.com/microsoftarchive/redis/releases/download/win-3.0.504/Redis-x64-3.0.504.msi
+
+3. 🔧 تست اتصال به Redis
+تست ساده با Command Line:
+# اتصال به Redis
+redis-cli
+
+# در Redis CLI دستورات زیر رو اجرا کنید:
+127.0.0.1:6379> ping
+# باید پاسخ "PONG" بدهد
+
+127.0.0.1:6379> set test "hello"
+127.0.0.1:6379> get test
+# باید "hello" برگرداند
