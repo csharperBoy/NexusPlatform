@@ -10,6 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Auth.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
+using Core.Application.Abstractions.Events;
+using Auth.Domain.Events;
+using System.Net;
 
 namespace Auth.Infrastructure.Services
 {
@@ -19,15 +22,17 @@ namespace Auth.Infrastructure.Services
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _tokenService;
         private readonly JwtOptions _jwtOptions;
+        private readonly IEventBus _eventBus;
         public AuthService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
-            IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions)
+            IJwtTokenService tokenService, IOptions<JwtOptions> jwtOptions,
+            IEventBus eventBus)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
-
+            _eventBus = eventBus;
             _jwtOptions = jwtOptions.Value;
         }
 
@@ -75,6 +80,7 @@ namespace Auth.Infrastructure.Services
                 token.AccessToken,
                DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                user.Email ?? "");
+           
 
             return Result<AuthResponse>.Ok(response);
         }
