@@ -6,104 +6,114 @@ using People.Infrastructure.DependencyInjection;
 using Core.Infrastructure.HealthChecks;
 using Auth.Infrastructure.Data;
 using Core.Infrastructure.Database;
+using Core.Infrastructure.Logging;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// اضافه کردن Configuration
-builder.Configuration
-    .SetBasePath(builder.Environment.ContentRootPath)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
-
-// configuration
-var configuration = builder.Configuration;
-
-builder.Services.AddCoreInfrastructure(configuration);
-
-builder.Services.AddAuthApplication(configuration);
-builder.Services.AddAuthInfrastructure(configuration);
-builder.Services.AddAuthPresentation(configuration);
-
-builder.Services.AddPeopleInfrastructure(configuration);
-
-
-
-
-builder.Services.AddControllers();
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddOpenApi();
-
-var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-
-builder.Services.AddCors(options =>
+try
 {
-    options.AddPolicy("AppCorsPolicy", policy =>
+    Log.Information("🚀 Starting AkSteel Welfare Platform application...");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    // اضافه کردن Configuration
+    builder.Configuration
+        .SetBasePath(builder.Environment.ContentRootPath)
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables();
+
+    var configuration = builder.Configuration;
+
+    // Core Infrastructure (حالا شامل Serilog هست)
+    builder.Services.AddCoreInfrastructure(configuration);
+
+    // ماژول‌های برنامه
+    builder.Services.AddAuthApplication(configuration);
+    builder.Services.AddAuthInfrastructure(configuration);
+    builder.Services.AddAuthPresentation(configuration);
+    builder.Services.AddPeopleInfrastructure(configuration);
+
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddOpenApi();
+
+    //var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+    //builder.Services.AddCors(options =>
+    //{
+    //    options.AddPolicy("AppCorsPolicy", policy =>
+    //    {
+    //        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
+    //              .AllowAnyHeader()
+    //              .AllowAnyMethod()
+    //              .AllowCredentials();
+    //    });
+    //});
+
+    var app = builder.Build();
+
+    // استفاده از Correlation ID Middleware
+    app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // اجرای Migrationهای هوشمند
+    await RunSmartMigrations(app);
+
+    // سلامت‌سنجی در Startup
+    using (var scope = app.Services.CreateScope())
     {
-        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-var app = builder.Build();
-
-// اجرای Migrationهای هوشمند
-await RunSmartMigrations(app);
-
-// سلامت‌سنجی در Startup
-using (var scope = app.Services.CreateScope())
-{
-    try
-    {
-        var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
-
-        Console.WriteLine("🔍 Running AkSteel Welfare Platform health checks...");
-
-        var systemStatus = await healthCheck.GetSystemStatusAsync();
-        //var dbStatus = await healthCheck.GetDatabaseStatusAsync();
-        var cacheStatus = await healthCheck.GetCacheStatusAsync();
-
-        Console.WriteLine($"🏥 System Health: {(systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy")}");
-        //Console.WriteLine($"🗄️ Database: {dbStatus.Message} ({dbStatus.ResponseTimeMs}ms)");
-        Console.WriteLine($"💾 Cache: {cacheStatus.Message} ({cacheStatus.ResponseTimeMs}ms)");
-
-        if (!systemStatus.IsHealthy)
+        try
         {
-            Console.WriteLine("⚠️  Warning: System has health issues - check configuration");
+            var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+            logger.LogInformation("🔍 Running AkSteel Welfare Platform health checks...");
+
+            var systemStatus = await healthCheck.GetSystemStatusAsync();
+            var cacheStatus = await healthCheck.GetCacheStatusAsync();
+
+            logger.LogInformation("🏥 System Health: {IsHealthy}", systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy");
+            logger.LogInformation("💾 Cache: {Message} ({ResponseTimeMs}ms)", cacheStatus.Message, cacheStatus.ResponseTimeMs);
+
+            if (!systemStatus.IsHealthy)
+            {
+                logger.LogWarning("⚠️ Warning: System has health issues - check configuration");
+            }
+            else
+            {
+                logger.LogInformation("🎉 All systems are ready!");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("🎉 All systems are ready!");
+            Log.Fatal(ex, "❌ Health check failed during startup");
         }
     }
-    catch (Exception ex)
+
+    if (app.Environment.IsDevelopment())
     {
-        Console.WriteLine($"❌ Health check failed: {ex.Message}");
+        app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
+
+    app.UseHttpsRedirection();
+    app.UseRouting();
+    app.UseCors("AppCorsPolicy");
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+
+    Log.Information("🎉 AkSteel Welfare Platform started successfully");
+    app.Run();
 }
-
-
-if (app.Environment.IsDevelopment())
+catch (Exception ex)
 {
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    Log.Fatal(ex, "💥 Application terminated unexpectedly");
 }
-app.UseHttpsRedirection();
-
-app.UseRouting();
-app.UseCors("AppCorsPolicy");
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
-
-
+finally
+{
+    Log.CloseAndFlush();
+}
 
 async Task RunSmartMigrations(WebApplication app)
 {
@@ -115,12 +125,10 @@ async Task RunSmartMigrations(WebApplication app)
     {
         logger.LogInformation("🚀 Starting database migrations...");
 
-        // لیست DbContextها برای migration
         var dbContextTypes = new[]
         {
             typeof(AuthDbContext),
             //typeof(UserManagementDbContext)
-            // اضافه کردن بقیه
         };
 
         foreach (var dbContextType in dbContextTypes)
@@ -129,7 +137,6 @@ async Task RunSmartMigrations(WebApplication app)
             {
                 logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
 
-                // اجرای migration با reflection
                 var method = typeof(IMigrationManager).GetMethod(nameof(IMigrationManager.MigrateAsync));
                 var genericMethod = method.MakeGenericMethod(dbContextType);
                 await (Task)genericMethod.Invoke(migrationManager, new object[] { default(CancellationToken) });
@@ -140,7 +147,6 @@ async Task RunSmartMigrations(WebApplication app)
             {
                 logger.LogError(ex, "❌ Failed to migrate {DbContext}", dbContextType.Name);
 
-                // در Production ادامه بده، در Development متوقف شو
                 if (app.Environment.IsDevelopment())
                 {
                     throw;
@@ -155,7 +161,6 @@ async Task RunSmartMigrations(WebApplication app)
         logger.LogCritical(ex, "💥 Migration process failed");
         if (app.Environment.IsProduction())
         {
-            // در Production برنامه رو متوقف نکن
             logger.LogWarning("Continuing in production despite migration failures");
         }
         else
