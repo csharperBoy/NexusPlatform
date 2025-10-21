@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Auth.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
 using Core.Application.Abstractions.Events;
-using Auth.Domain.Events;
 using System.Net;
 
 namespace Auth.Infrastructure.Services
