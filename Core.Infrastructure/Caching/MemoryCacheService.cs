@@ -1,9 +1,11 @@
 ﻿using Core.Application.Abstractions.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Caching
@@ -46,10 +48,14 @@ namespace Core.Infrastructure.Caching
             return Task.FromResult(_memoryCache.TryGetValue(key, out _));
         }
 
+        private readonly ConcurrentDictionary<string, string> _keyPatterns = new();
+
         public Task RemoveByPatternAsync(string pattern)
         {
-            // در MemoryCache نمی‌شود بر اساس pattern پاک کرد
-            // باید کلیدها رو مدیریت دستی کنید
+            var keysToRemove = _keyPatterns.Where(k => Regex.IsMatch(k.Key, pattern))
+                                          .Select(k => k.Key);
+            foreach (var key in keysToRemove)
+                _memoryCache.Remove(key);
             return Task.CompletedTask;
         }
     }
