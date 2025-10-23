@@ -1,4 +1,5 @@
 ﻿using Auth.Application;
+using Auth.Application.Interfaces;
 using Auth.Infrastructure.Configuration;
 using Auth.Infrastructure.Data;
 using Auth.Infrastructure.Identity;
@@ -57,6 +58,8 @@ namespace Auth.Infrastructure.DependencyInjection
             // ✅ Register OutboxProcessor for Audit module
             //services.AddHostedService<OutboxProcessor<AuthDbContext>>();
             services.AddHostedService<HybridOutboxProcessor<AuthDbContext>>();
+
+            services.AddScoped<IUserRoleService, UserRoleService>();
             // Token settings via options pattern
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
