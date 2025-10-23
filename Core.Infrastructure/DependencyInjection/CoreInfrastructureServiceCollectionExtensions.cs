@@ -44,6 +44,8 @@ namespace Core.Infrastructure.DependencyInjection
             // Logging Services
             services.AddLoggingServices(configuration);
 
+            services.AddOutboxServices();
+
             // پیکربندی کش
             services.AddCachingServices(configuration);
 

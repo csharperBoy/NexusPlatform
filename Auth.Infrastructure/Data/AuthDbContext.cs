@@ -1,7 +1,10 @@
 ﻿using Auth.Infrastructure.Identity;
 using Core.Application.Abstractions;
+using Core.Domain.Common;
+using Core.Infrastructure.Database.Configurations;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 namespace Auth.Infrastructure.Data
 {
     public class AuthDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>
@@ -9,7 +12,7 @@ namespace Auth.Infrastructure.Data
         public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
         {
         }
-
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
 
         public DbSet<UserSession> UserSessions { get; set; } = default!;
@@ -26,6 +29,7 @@ namespace Auth.Infrastructure.Data
 
             // Use dedicated schema
             builder.HasDefaultSchema("auth");
+            builder.ApplyConfiguration(new OutboxMessageConfiguration("auth"));
 
             // Rename Identity tables if you want custom names (optional)
             builder.Entity<ApplicationUser>(b =>

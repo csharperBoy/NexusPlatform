@@ -4,6 +4,7 @@ using Auth.Infrastructure.Data;
 using Auth.Infrastructure.Identity;
 using Auth.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Infrastructure.Events;
 using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -52,6 +53,10 @@ namespace Auth.Infrastructure.DependencyInjection
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
+
+            // ✅ Register OutboxProcessor for Audit module
+            //services.AddHostedService<OutboxProcessor<AuthDbContext>>();
+            services.AddHostedService<HybridOutboxProcessor<AuthDbContext>>();
             // Token settings via options pattern
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();

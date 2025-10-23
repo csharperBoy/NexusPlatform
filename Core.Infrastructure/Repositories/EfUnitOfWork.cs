@@ -13,24 +13,23 @@ using System.Threading.Tasks;
 namespace Core.Infrastructure.Repositories
 {
     public class EfUnitOfWork<TContext> : IUnitOfWork<TContext>
-        where TContext : DbContext
+       where TContext : DbContext
     {
         private readonly TContext _dbContext;
+        private readonly IOutboxService<TContext> _outboxService;
         private readonly IEventBus _eventBus;
         private IDbContextTransaction? _transaction;
-        private List<IDomainEvent> _domainEvents = new();
         private readonly ILogger<EfUnitOfWork<TContext>> _logger;
-        public EfUnitOfWork(TContext dbContext, IEventBus eventBus, ILogger<EfUnitOfWork<TContext>> logger)
+
+        public EfUnitOfWork(TContext dbContext, IOutboxService<TContext> outboxService,
+            IEventBus eventBus, ILogger<EfUnitOfWork<TContext>> logger)
         {
             _dbContext = dbContext;
+            _outboxService = outboxService;
             _eventBus = eventBus;
             _logger = logger;
         }
 
-
-        /// <summary>
-        /// شروع یک تراکنش جدید
-        /// </summary>
         public async Task BeginTransactionAsync()
         {
             if (_transaction != null)
@@ -43,18 +42,21 @@ namespace Core.Infrastructure.Repositories
             _transaction = await _dbContext.Database.BeginTransactionAsync();
         }
 
-        /// <summary>
-        /// ذخیره تغییرات و Commit تراکنش (در صورت وجود)
-        /// </summary>
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            // 1. جمع‌آوری events از entities
-            CollectDomainEvents();
+            // 1. جمع‌آوری ایونت‌ها از entities
+            var domainEvents = CollectDomainEvents();
 
-            // 2. ذخیره تغییرات در دیتابیس
+            // 2. ذخیره ایونت‌ها در Outbox (در همان تراکنش)
+            if (domainEvents.Any())
+            {
+                await _outboxService.AddEventsAsync(domainEvents);
+            }
+
+            // 3. ذخیره همه تغییرات (دیتا + Outbox) در یک تراکنش
             var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
-            // 3. commit تراکنش
+            // 4. کامیت تراکنش
             if (_transaction != null)
             {
                 await _transaction.CommitAsync(cancellationToken);
@@ -62,58 +64,42 @@ namespace Core.Infrastructure.Repositories
                 _transaction = null;
             }
 
-            // 4. فقط بعد از موفقیت‌آمیز بودن commit، events رو publish کنیم
-            try
-            {
-                await PublishDomainEvents();
-            }
-            catch (Exception ex)
-            {
-                // اگر event publishing fail شد، سیستم نباید crash کند
-                // چون داده‌ها قبلاً commit شده‌اند
-                _logger.LogError(ex, "Error publishing domain events after transaction commit");
-                // می‌توانید به سیستم monitoring/reporting اطلاع دهید
-            }
+            _logger.LogInformation(
+                "Saved {Count} changes with {EventCount} events in outbox for {DbContext}",
+                result, domainEvents.Count, typeof(TContext).Name);
 
+            
             return result;
         }
-        private void CollectDomainEvents()
-        {
-            _domainEvents = _dbContext.ChangeTracker.Entries<BaseEntity>()
-          .SelectMany(x => x.Entity.DomainEvents)
-          .ToList();
 
-            // پاک کردن events از entities
+        private List<IDomainEvent> CollectDomainEvents()
+        {
+            var domainEvents = _dbContext.ChangeTracker.Entries<BaseEntity>()
+                .SelectMany(x => x.Entity.DomainEvents)
+                .ToList();
+
+            // پاک کردن ایونت‌ها از entities
             _dbContext.ChangeTracker.Entries<BaseEntity>()
                 .ToList()
                 .ForEach(entity => entity.Entity.ClearDomainEvents());
 
-            _logger.LogDebug("Collected {EventCount} domain events", _domainEvents.Count);
+            _logger.LogDebug("Collected {EventCount} domain events", domainEvents.Count);
+
+            return domainEvents;
         }
 
-        private async Task PublishDomainEvents()
-        {
-            if (_domainEvents.Any())
-            {
-                _logger.LogInformation("Publishing {EventCount} domain events", _domainEvents.Count);
-
-                foreach (var domainEvent in _domainEvents)
-                {
-                    _logger.LogDebug("Publishing event: {EventType}", domainEvent.GetType().Name);
-                    await _eventBus.PublishAsync(domainEvent);
-                }
-                _domainEvents.Clear();
-            }
-        }
         public async Task<int> SaveChangesWithoutCommitAsync(CancellationToken cancellationToken = default)
         {
-            var result = await _dbContext.SaveChangesAsync(cancellationToken);
+            var domainEvents = CollectDomainEvents();
 
-            return result;
+            if (domainEvents.Any())
+            {
+                await _outboxService.AddEventsAsync(domainEvents);
+            }
+
+            return await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        /// <summary>
-        /// Rollback تراکنش (در صورت وجود)
-        /// </summary>
+
         public async Task RollbackAsync()
         {
             if (_transaction != null)
@@ -129,18 +115,12 @@ namespace Core.Infrastructure.Repositories
             }
         }
 
-        /// <summary>
-        /// Dispose همزمان DbContext و Transaction
-        /// </summary>
         public void Dispose()
         {
             _transaction?.Dispose();
             _dbContext.Dispose();
         }
 
-        /// <summary>
-        /// نسخه async Dispose
-        /// </summary>
         public async ValueTask DisposeAsync()
         {
             if (_transaction != null)
@@ -151,9 +131,6 @@ namespace Core.Infrastructure.Repositories
             await _dbContext.DisposeAsync();
         }
 
-        /// <summary>
-        /// دسترسی به DbContext برای Repositoryها
-        /// </summary>
         public TContext Context => _dbContext;
     }
 }
