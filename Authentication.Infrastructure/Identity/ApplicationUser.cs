@@ -11,6 +11,9 @@ namespace Authentication.Infrastructure.Identity
      */
     public class ApplicationUser : IdentityUser<Guid>
     {
+        // لینک به Person اصلی
+        public Guid FkPersonId { get; private set; }
+
         public string? FullName { get; set; }
         public bool IsActive { get; set; } = true;
 
@@ -26,6 +29,22 @@ namespace Authentication.Infrastructure.Identity
         // Navigation Properties
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         public ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
+        // Constructor
+        protected ApplicationUser() { }
+
+        public ApplicationUser(Guid personId, string userName, string email)
+        {
+            FkPersonId = personId;
+            UserName = userName;
+            Email = email;
+            EmailConfirmed = true; // بعداً از طریق ایمیل تأیید شود
+        }
+
+        public void UpdateLoginInfo(string ipAddress)
+        {
+            LastLoginIp = ipAddress;
+            LastLoginTime = DateTime.UtcNow;
+        }
 
     }
 }

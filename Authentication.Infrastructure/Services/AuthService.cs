@@ -1,6 +1,5 @@
 ﻿using Authentication.Application.DTOs;
 using Authentication.Application;
-using Authentication.Infrastructure.Identity;
 using Core.Shared.Results;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -16,6 +15,7 @@ using Authentication.Application.Interfaces;
 using Authentication.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Authentication.Infrastructure.Data;
+using Core.Domain.Entities;
 
 namespace Authentication.Infrastructure.Services
 {

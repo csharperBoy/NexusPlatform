@@ -38,6 +38,10 @@ namespace Authentication.Infrastructure.Data
                 b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
                 b.Property(u => u.FullName).HasMaxLength(200);
                 b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
+                // ایندکس برای PersonId برای جوین‌های کارآمد
+                b.HasIndex(u => u.FkPersonId).IsUnique();
+
+                b.Property(u => u.FkPersonId).IsRequired();
             });
 
             builder.Entity<ApplicationRole>(b =>

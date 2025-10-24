@@ -2,6 +2,7 @@
 using Authentication.Infrastructure.Data;
 using Authentication.Infrastructure.Identity;
 using Core.Application.Abstractions;
+using Core.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;

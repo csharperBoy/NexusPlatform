@@ -2,9 +2,9 @@
 using Authentication.Application.Interfaces;
 using Authentication.Infrastructure.Configuration;
 using Authentication.Infrastructure.Data;
-using Authentication.Infrastructure.Identity;
 using Authentication.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Domain.Entities;
 using Core.Infrastructure.Events;
 using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -59,7 +59,6 @@ namespace Authentication.Infrastructure.DependencyInjection
             //services.AddHostedService<OutboxProcessor<AuthDbContext>>();
             services.AddHostedService<HybridOutboxProcessor<AuthDbContext>>();
 
-            services.AddScoped<IUserRoleService, UserRoleService>();
             // Token settings via options pattern
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();

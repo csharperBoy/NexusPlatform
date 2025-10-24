@@ -1,4 +1,4 @@
-﻿using Authentication.Infrastructure.Identity;
+﻿using Core.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Authentication.Infrastructure.Data

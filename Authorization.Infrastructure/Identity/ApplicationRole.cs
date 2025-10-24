@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNet.Identity.EntityFramework;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authentication.Infrastructure.Identity
+namespace Authorization.Infrastructure.Identity
 {
     /*
      اضافه شدن توضیحات و ترتیب نقش‌ها (برای پنل مدیریت نقش‌ها).
