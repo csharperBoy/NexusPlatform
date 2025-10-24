@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace User.Domain.Entities
-{
+{ 
     /// <summary>
     /// اطلاعات قابل تغییر افراد - با هر تغییر یک رکورد جدید ایجاد می‌شود
     /// مثل: تعداد فرزندان، آدرس، وضعیت تأهل
@@ -16,10 +16,11 @@ namespace User.Domain.Entities
         public Guid Id { get; private set; } = Guid.NewGuid();
 
         public Guid FkPersonId { get; set; }
-        // اطلاعات قابل تغییر
 
         public string? Address { get; private set; }
+
         public string? JobTitle { get; private set; }
+
         public string? EducationLevel { get; private set; }
 
         public short? PersonalCode { get; set; }
@@ -33,7 +34,9 @@ namespace User.Domain.Entities
         public short? MemberQty { get; set; }
 
         public short? DependantsQty { get; set; }
+
         public short? NumberOfChildren { get; private set; }
+
         public short? StudentChildCount { get; set; }
 
         public string? ZipCode { get; set; }
