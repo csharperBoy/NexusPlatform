@@ -1,10 +1,10 @@
-﻿using Auth.Infrastructure.DependencyInjection;
-using Auth.Presentation.DependencyInjection;
-using Auth.Application.DependencyInjection;
+﻿using Authentication.Infrastructure.DependencyInjection;
+using Authentication.Presentation.DependencyInjection;
+using Authentication.Application.DependencyInjection;
 using Core.Infrastructure.DependencyInjection;
 using People.Infrastructure.DependencyInjection;
 using Core.Infrastructure.HealthChecks;
-using Auth.Infrastructure.Data;
+using Authentication.Infrastructure.Data;
 using Core.Infrastructure.Database;
 using Core.Infrastructure.Logging;
 using Serilog;
@@ -31,7 +31,9 @@ try
     builder.Services.AddAuthApplication(configuration);
     builder.Services.AddAuthInfrastructure(configuration);
     builder.Services.AddAuthPresentation(configuration);
-    builder.Services.AddPeopleInfrastructure(configuration);
+    //builder.Services.AddPeopleInfrastructure(configuration);
+    builder.Services.AddAuthorizationApplication(configuration);
+    builder.Services.AddNotificationApplication(configuration);
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -98,7 +100,7 @@ try
 
     app.UseHttpsRedirection();
     app.UseRouting();
-    app.UseCors("AppCorsPolicy");
+    app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
@@ -128,7 +130,8 @@ async Task RunSmartMigrations(WebApplication app)
         var dbContextTypes = new[]
         {
             typeof(AuthDbContext),
-            //typeof(UserManagementDbContext)
+            typeof(UserManagementDbContext),
+            typeof(AuthorizationDbContext)
         };
 
         foreach (var dbContextType in dbContextTypes)
