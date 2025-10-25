@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Authentication.Application.DTOs
 {
-    public record LoginRequest(string Username, string Password);
+    public record LoginRequest(string UserIdentifier, string Password);
 }
