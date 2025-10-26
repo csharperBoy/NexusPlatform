@@ -10,12 +10,13 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions
 {
+    // Slimmed repository to avoid EF type leakage
     public interface IRepository<TDbContext, TEntity, TKey>
        where TDbContext : DbContext
        where TEntity : class
        where TKey : IEquatable<TKey>
     {
-        #region Basic CRUD
+        // Basic CRUD
         Task<TEntity?> GetByIdAsync(TKey id);
         Task<IEnumerable<TEntity>> GetAllAsync();
         Task AddAsync(TEntity entity);
@@ -24,38 +25,12 @@ namespace Core.Application.Abstractions
         Task DeleteAsync(TKey id);
         Task DeleteAsync(TEntity entity);
         Task RemoveRangeAsync(IEnumerable<TEntity> entities);
-        #endregion
 
-        #region Query Operations
-        Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
-              Expression<Func<TEntity, bool>>? predicate = null,
-              Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? include = null,
-              Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-              int? pageIndex = null,
-              int? pageSize = null);
-        Task<(IEnumerable<TEntity> Items, int TotalCount)> FindAsync(
-             Expression<Func<TEntity, bool>>? predicate = null,
-             Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-             int? pageIndex = null,
-             int? pageSize = null,
-             params Expression<Func<TEntity, object>>[] includes
-            );
-
-        Task<TEntity?> FirstOrDefaultAsync(
-            Expression<Func<TEntity, bool>> predicate,
-            Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null);
-
-        Task<TEntity?> SingleOrDefaultAsync(
-            Expression<Func<TEntity, bool>> predicate,
-           Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> include = null);
-
+        // Simple query ops
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
-
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
-
 
         IQueryable<TEntity> AsQueryable();
         IQueryable<TEntity> AsNoTrackingQueryable();
-        #endregion
     }
 }

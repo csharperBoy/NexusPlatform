@@ -9,27 +9,30 @@ namespace Core.Domain.Common
 {
     public class OutboxMessage : BaseEntity
     {
-        public string Type { get; set; } = string.Empty;       // نوع ایونت
-        public string Content { get; set; } = string.Empty;    // محتوای سریالایز شده
-        public DateTime OccurredOn { get; set; } = DateTime.UtcNow;
-        public DateTime? ProcessedOn { get; set; }            // زمان پردازش
-        public string? Error { get; set; }                    // خطا در صورت وجود
+        public string TypeName { get; private set; } = string.Empty;        // Simple type name
+        public string AssemblyQualifiedName { get; private set; } = string.Empty; // Full type resolution
+        public string Content { get; private set; } = string.Empty;         // Serialized payload
+        public DateTime OccurredOn { get; private set; } = DateTime.UtcNow;
+        public DateTime? ProcessedOn { get; private set; }
+        public string? Error { get; private set; }
+        public OutboxMessageStatus Status { get; private set; } = OutboxMessageStatus.Pending;
+        public int RetryCount { get; private set; }
 
-        // وضعیت پردازش
-        public OutboxMessageStatus Status { get; set; } = OutboxMessageStatus.Pending;
+        // Optimistic concurrency
+        public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
 
-        // تعداد تلاش‌های ناموفق
-        public int RetryCount { get; set; }
-
-        // Constructor for EF Core
+        // EF
         private OutboxMessage() { }
 
         public OutboxMessage(IDomainEvent domainEvent)
         {
-            Type = domainEvent.GetType().Name;
-            Content = System.Text.Json.JsonSerializer.Serialize(domainEvent, domainEvent.GetType());
+            var type = domainEvent.GetType();
+            TypeName = type.Name;
+            AssemblyQualifiedName = type.AssemblyQualifiedName ?? type.FullName ?? type.Name;
+            Content = System.Text.Json.JsonSerializer.Serialize(domainEvent, type);
             OccurredOn = domainEvent.OccurredOn;
             Status = OutboxMessageStatus.Pending;
+            RetryCount = 0;
         }
 
         public void MarkAsProcessing()
@@ -49,7 +52,6 @@ namespace Core.Domain.Common
             Error = error;
             RetryCount++;
         }
-
     }
 
     public enum OutboxMessageStatus

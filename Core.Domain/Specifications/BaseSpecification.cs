@@ -17,33 +17,21 @@ namespace Core.Domain.Specifications
 
         protected BaseSpecification() { }
 
-        public Expression<Func<T, bool>> Criteria { get; }
+        public Expression<Func<T, bool>> Criteria { get; } = _ => true;
         public List<Expression<Func<T, object>>> Includes { get; } = new();
         public List<Func<IQueryable<T>, IIncludableQueryable<T, object>>> IncludeFunctions { get; } = new();
         public List<string> IncludeStrings { get; } = new();
-        public Expression<Func<T, object>> OrderBy { get; private set; }
-        public Expression<Func<T, object>> OrderByDescending { get; private set; }
+        public Expression<Func<T, object>>? OrderBy { get; private set; }
+        public Expression<Func<T, object>>? OrderByDescending { get; private set; }
         public List<(Expression<Func<T, object>> KeySelector, bool IsDescending)> ThenOrderBy { get; } = new();
 
         public int Take { get; private set; }
         public int Skip { get; private set; }
         public bool IsPagingEnabled { get; private set; } = false;
 
-        // متدهای کمکی
-        protected virtual void AddInclude(Expression<Func<T, object>> includeExpression)
-        {
-            Includes.Add(includeExpression);
-        }
-
-        protected virtual void AddInclude(Func<IQueryable<T>, IIncludableQueryable<T, object>> includeFunction)
-        {
-            IncludeFunctions.Add(includeFunction);
-        }
-
-        protected virtual void AddInclude(string includeString)
-        {
-            IncludeStrings.Add(includeString);
-        }
+        protected virtual void AddInclude(Expression<Func<T, object>> includeExpression) => Includes.Add(includeExpression);
+        protected virtual void AddInclude(Func<IQueryable<T>, IIncludableQueryable<T, object>> includeFunction) => IncludeFunctions.Add(includeFunction);
+        protected virtual void AddInclude(string includeString) => IncludeStrings.Add(includeString);
 
         protected virtual void ApplyPaging(int skip, int take)
         {
@@ -52,19 +40,8 @@ namespace Core.Domain.Specifications
             IsPagingEnabled = true;
         }
 
-        protected virtual void ApplyOrderBy(Expression<Func<T, object>> orderByExpression)
-        {
-            OrderBy = orderByExpression;
-        }
-
-        protected virtual void ApplyOrderByDescending(Expression<Func<T, object>> orderByDescendingExpression)
-        {
-            OrderByDescending = orderByDescendingExpression;
-        }
-
-        protected virtual void ApplyThenOrderBy(Expression<Func<T, object>> thenOrderByExpression, bool isDescending = false)
-        {
-            ThenOrderBy.Add((thenOrderByExpression, isDescending));
-        }
+        protected virtual void ApplyOrderBy(Expression<Func<T, object>> orderByExpression) => OrderBy = orderByExpression;
+        protected virtual void ApplyOrderByDescending(Expression<Func<T, object>> orderByDescendingExpression) => OrderByDescending = orderByDescendingExpression;
+        protected virtual void ApplyThenOrderBy(Expression<Func<T, object>> thenOrderByExpression, bool isDescending = false) => ThenOrderBy.Add((thenOrderByExpression, isDescending));
     }
 }
