@@ -88,8 +88,8 @@ namespace Core.Infrastructure.Caching
 
         public Task RemoveByPatternAsync(string pattern)
         {
-            // در Redis باید از SCAN و DEL استفاده کرد
-            // برای سادگی فعلاً پیاده‌سازی نمی‌کنیم
+            // Note: SCAN/DEL for keyspace operations are optional and can be heavy; not implementing by default.
+            Console.WriteLine("RemoveByPatternAsync for Redis is not implemented to avoid heavy keyspace scans.");
             return Task.CompletedTask;
         }
     }

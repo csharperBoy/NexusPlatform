@@ -8,11 +8,15 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
+
 namespace Core.Infrastructure.Caching
 {
     public class MemoryCacheService : ICacheService
     {
         private readonly IMemoryCache _memoryCache;
+
+        // Track keys to support pattern removal
+        private static readonly ConcurrentDictionary<string, byte> _keys = new();
 
         public MemoryCacheService(IMemoryCache memoryCache)
         {
@@ -31,15 +35,17 @@ namespace Core.Infrastructure.Caching
             if (expiration.HasValue)
                 options.SetAbsoluteExpiration(expiration.Value);
             else
-                options.SetSlidingExpiration(TimeSpan.FromMinutes(30)); // پیش‌فرض
+                options.SetSlidingExpiration(TimeSpan.FromMinutes(30));
 
             _memoryCache.Set(key, value, options);
+            _keys.TryAdd(key, 0);
             return Task.CompletedTask;
         }
 
         public Task RemoveAsync(string key)
         {
             _memoryCache.Remove(key);
+            _keys.TryRemove(key, out _);
             return Task.CompletedTask;
         }
 
@@ -48,14 +54,15 @@ namespace Core.Infrastructure.Caching
             return Task.FromResult(_memoryCache.TryGetValue(key, out _));
         }
 
-        private readonly ConcurrentDictionary<string, string> _keyPatterns = new();
-
         public Task RemoveByPatternAsync(string pattern)
         {
-            var keysToRemove = _keyPatterns.Where(k => Regex.IsMatch(k.Key, pattern))
-                                          .Select(k => k.Key);
-            foreach (var key in keysToRemove)
+            var regex = new Regex(pattern, RegexOptions.Compiled);
+            var toRemove = _keys.Keys.Where(k => regex.IsMatch(k)).ToList();
+            foreach (var key in toRemove)
+            {
                 _memoryCache.Remove(key);
+                _keys.TryRemove(key, out _);
+            }
             return Task.CompletedTask;
         }
     }

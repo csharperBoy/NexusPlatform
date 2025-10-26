@@ -39,10 +39,8 @@ namespace Core.Infrastructure.Events
                 await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync(stoppingToken);
 
-                // ایجاد تریگر function در PostgreSQL (اگر وجود ندارد)
                 await CreateTriggerFunction(connection);
 
-                // گوش دادن به notifications
                 connection.Notification += OnPostgresNotification;
                 await using (var cmd = new NpgsqlCommand("LISTEN outbox_notification;", connection))
                 {
@@ -51,7 +49,6 @@ namespace Core.Infrastructure.Events
 
                 _logger.LogInformation("PostgreSQL LISTEN/NOTIFY started for Outbox");
 
-                // نگه داشتن اتصال و گوش دادن به notifications
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     await connection.WaitAsync(stoppingToken);
@@ -64,7 +61,7 @@ namespace Core.Infrastructure.Events
             }
         }
 
-        private async void OnPostgresNotification(object sender, NpgsqlNotificationEventArgs e)
+        private async void OnPostgresNotification(object? sender, NpgsqlNotificationEventArgs e)
         {
             _logger.LogDebug("Received PostgreSQL notification: {Payload}", e.Payload);
             await ProcessNewMessages();
@@ -80,48 +77,51 @@ namespace Core.Infrastructure.Events
 
             foreach (var message in messages)
             {
-                // ✅ اصلاح: استفاده از ProcessSingleMessageAsync به جای ProcessMessageAsync
                 await ProcessSingleMessageAsync(message, outboxService, eventBus);
             }
         }
 
-        // ✅ اضافه کردن متد ProcessSingleMessageAsync
         private async Task ProcessSingleMessageAsync(OutboxMessage message, IOutboxService<TDbContext> outboxService, IEventBus eventBus)
         {
             try
             {
                 await outboxService.MarkAsProcessingAsync(message.Id);
 
-                // پیدا کردن نوع ایونت
-                var eventType = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => a.GetTypes())
-                    .FirstOrDefault(t => t.Name == message.Type && typeof(IDomainEvent).IsAssignableFrom(t));
-
+                var eventType = ResolveEventType(message);
                 if (eventType == null)
-                {
-                    throw new InvalidOperationException($"Event type {message.Type} not found");
-                }
+                    throw new InvalidOperationException($"Event type {message.TypeName} not found");
 
-                // Deserialize ایونت
-                var domainEvent = System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType) as IDomainEvent;
+                var domainEvent = (IDomainEvent?)System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType);
                 if (domainEvent == null)
-                {
-                    throw new InvalidOperationException($"Failed to deserialize event {message.Type}");
-                }
+                    throw new InvalidOperationException($"Failed to deserialize event {message.TypeName}");
 
-                // انتشار ایونت
                 await eventBus.PublishAsync(domainEvent);
-
-                // علامت‌گذاری به عنوان تکمیل شده
                 await outboxService.MarkAsCompletedAsync(message.Id);
 
                 _logger.LogDebug("Processed outbox message {MessageId} via PostgreSQL processor", message.Id);
+            }
+            catch (DbUpdateConcurrencyException cex)
+            {
+                _logger.LogWarning(cex, "Concurrency conflict while processing message {MessageId}", message.Id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
                 await outboxService.MarkAsFailedAsync(message.Id, ex.Message);
             }
+        }
+
+        private static Type? ResolveEventType(OutboxMessage message)
+        {
+            var aqn = message.AssemblyQualifiedName;
+            if (!string.IsNullOrWhiteSpace(aqn))
+            {
+                return Type.GetType(aqn, throwOnError: false);
+            }
+
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .FirstOrDefault(t => t.Name == message.TypeName && typeof(IDomainEvent).IsAssignableFrom(t));
         }
 
         private async Task CreateTriggerFunction(NpgsqlConnection connection)

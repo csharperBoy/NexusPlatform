@@ -22,6 +22,9 @@ namespace Core.Infrastructure.Logging
             var correlationId = GetOrCreateCorrelationId(context);
             context.Response.Headers["X-Correlation-Id"] = correlationId;
 
+            // set into AsyncLocal for non-http enrichers/threads
+            Core.Infrastructure.Logging.CorrelationIdEnricher.SetCorrelationId(correlationId);
+
             using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId))
             {
                 await _next(context);
@@ -31,10 +34,8 @@ namespace Core.Infrastructure.Logging
         private static string GetOrCreateCorrelationId(HttpContext context)
         {
             if (context.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationId))
-                return correlationId;
-
+                return correlationId!;
             return Guid.NewGuid().ToString();
         }
     }
-
 }

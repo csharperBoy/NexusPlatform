@@ -21,11 +21,14 @@ namespace Core.Infrastructure.Database.Configurations
         public void Configure(EntityTypeBuilder<OutboxMessage> builder)
         {
             builder.ToTable("OutboxMessages", _schema);
-
             builder.HasKey(x => x.Id);
 
-            builder.Property(x => x.Type)
+            builder.Property(x => x.TypeName)
                 .HasMaxLength(255)
+                .IsRequired();
+
+            builder.Property(x => x.AssemblyQualifiedName)
+                .HasMaxLength(1024)
                 .IsRequired();
 
             builder.Property(x => x.Content)
@@ -46,10 +49,14 @@ namespace Core.Infrastructure.Database.Configurations
             builder.Property(x => x.Error)
                 .HasMaxLength(2000);
 
-            // Indexes for performance
+            // Concurrency token
+            builder.Property(x => x.RowVersion)
+                   .IsRowVersion()
+                   .IsConcurrencyToken();
+
             builder.HasIndex(x => new { x.Status, x.OccurredOn });
             builder.HasIndex(x => x.ProcessedOn);
-            builder.HasIndex(x => x.Type);
+            builder.HasIndex(x => x.TypeName);
         }
     }
 }

@@ -14,5 +14,4 @@ namespace Core.Infrastructure.Logging
         void LogDebug(string message, params object[] args);
         IDisposable BeginScope(string scopeName);
     }
-
 }

@@ -9,9 +9,7 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddDatabaseServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // ثبت ساده و مستقیم Migration Manager
             services.AddScoped<IMigrationManager, MigrationManager>();
-
             return services;
         }
     }

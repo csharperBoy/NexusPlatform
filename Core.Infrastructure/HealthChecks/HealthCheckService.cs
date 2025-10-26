@@ -11,84 +11,27 @@ namespace Core.Infrastructure.HealthChecks
 {
     public class HealthCheckService : IHealthCheckService
     {
-        //private readonly DbContext _dbContext;
-        private readonly ICacheService _cacheService;
+        private readonly IEnumerable<IHealthContributor> _contributors;
 
-        public HealthCheckService(//DbContext dbContext,
-            ICacheService cacheService)
+        public HealthCheckService(IEnumerable<IHealthContributor> contributors)
         {
-         //   _dbContext = dbContext;
-            _cacheService = cacheService;
+            _contributors = contributors;
         }
 
         public async Task<SystemStatus> GetSystemStatusAsync()
         {
-            //var dbStatus = await GetDatabaseStatusAsync();
-            var cacheStatus = await GetCacheStatusAsync();
-
-            var isHealthy = //dbStatus.IsConnected && 
-                cacheStatus.IsConnected;
-            var message = isHealthy ?
-                "All systems operational" :
-               // $"Issues detected: DB: " +
-           //     $"{dbStatus.IsConnected}," +
-                $" Cache: {cacheStatus.IsConnected}";
+            var results = await Task.WhenAll(_contributors.Select(c => c.CheckAsync()));
+            var isHealthy = results.All(r => r.IsHealthy);
+            var message = isHealthy ? "All systems operational" :
+                string.Join("; ", results.Select((r, i) => $"{_contributors.ElementAt(i).Name}: {r.IsHealthy}"));
 
             return new SystemStatus(isHealthy, message, DateTime.UtcNow);
         }
 
-      /*  public async Task<DatabaseStatus> GetDatabaseStatusAsync()
+        public async Task<IReadOnlyList<(string Name, bool IsHealthy, string Message, long ResponseTimeMs)>> GetDetailsAsync()
         {
-            try
-            {
-                var stopwatch = Stopwatch.StartNew();
-                var canConnect = await _dbContext.Database.CanConnectAsync();
-                stopwatch.Stop();
-
-                return new DatabaseStatus(
-                    canConnect,
-                    canConnect ? "Database connection successful" : "Database connection failed",
-                    stopwatch.ElapsedMilliseconds
-                );
-            }
-            catch (Exception ex)
-            {
-                return new DatabaseStatus(false, $"Database error: {ex.Message}", 0);
-            }
-        }*/
-
-        public async Task<CacheStatus> GetCacheStatusAsync()
-        {
-            try
-            {
-                var testKey = "health_check_" + Guid.NewGuid();
-                var testValue = "test_value";
-                var stopwatch = Stopwatch.StartNew();
-
-                // تست نوشتن
-                await _cacheService.SetAsync(testKey, testValue, TimeSpan.FromSeconds(5));
-
-                // تست خواندن
-                var result = await _cacheService.GetAsync<string>(testKey);
-
-                stopwatch.Stop();
-
-                var isHealthy = result == testValue;
-                return new CacheStatus(
-                    isHealthy,
-                    isHealthy ? "Cache service operational" : "Cache test failed",
-                    stopwatch.ElapsedMilliseconds
-                );
-            }
-            catch (Exception ex)
-            {
-                return new CacheStatus(false, $"Cache error: {ex.Message}", 0);
-            }
-        }
-
-        public Task<DatabaseStatus> GetDatabaseStatusAsync()
-        {
-            throw new NotImplementedException();
+            var results = await Task.WhenAll(_contributors.Select(c => c.CheckAsync()));
+            return results.Select((r, i) => (_contributors.ElementAt(i).Name, r.IsHealthy, r.Message, r.ResponseTimeMs)).ToList();
         }
     }
 }

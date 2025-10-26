@@ -13,7 +13,7 @@ namespace Core.Infrastructure.Events
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<OutboxProcessor<TDbContext>> _logger;
-        private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
+        private TimeSpan _interval = TimeSpan.FromSeconds(30);
 
         public OutboxProcessor(
             IServiceProvider serviceProvider,
@@ -32,6 +32,12 @@ namespace Core.Infrastructure.Events
                 try
                 {
                     await ProcessOutboxMessagesAsync(stoppingToken);
+
+                    // Adaptive interval based on workload (simple heuristic)
+                    _interval = TimeSpan.FromSeconds(_interval.TotalSeconds is > 5 and < 60
+                        ? _interval.TotalSeconds
+                        : 30);
+
                     await Task.Delay(_interval, stoppingToken);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
@@ -54,11 +60,11 @@ namespace Core.Infrastructure.Events
 
             if (!messages.Any())
             {
+                _interval = TimeSpan.FromSeconds(Math.Min(_interval.TotalSeconds * 2, 60));
                 return;
             }
 
-            _logger.LogDebug("Processing {Count} outbox messages for {DbContext}",
-                messages.Count, typeof(TDbContext).Name);
+            _interval = TimeSpan.FromSeconds(10);
 
             foreach (var message in messages)
             {
@@ -75,31 +81,42 @@ namespace Core.Infrastructure.Events
             {
                 await outboxService.MarkAsProcessingAsync(message.Id);
 
-                var eventType = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => a.GetTypes())
-                    .FirstOrDefault(t => t.Name == message.Type && typeof(IDomainEvent).IsAssignableFrom(t));
-
+                var eventType = ResolveEventType(message);
                 if (eventType == null)
-                {
-                    throw new InvalidOperationException($"Event type {message.Type} not found");
-                }
+                    throw new InvalidOperationException($"Event type {message.TypeName} not found");
 
-                var domainEvent = System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType) as IDomainEvent;
+                var domainEvent = (IDomainEvent?)System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType);
                 if (domainEvent == null)
-                {
-                    throw new InvalidOperationException($"Failed to deserialize event {message.Type}");
-                }
+                    throw new InvalidOperationException($"Failed to deserialize event {message.TypeName}");
 
                 await eventBus.PublishAsync(domainEvent);
                 await outboxService.MarkAsCompletedAsync(message.Id);
 
                 _logger.LogDebug("Successfully processed outbox message {MessageId}", message.Id);
             }
+            catch (DbUpdateConcurrencyException cex)
+            {
+                _logger.LogWarning(cex, "Concurrency conflict while processing message {MessageId}", message.Id);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
                 await outboxService.MarkAsFailedAsync(message.Id, ex.Message);
             }
+        }
+
+        private static Type? ResolveEventType(OutboxMessage message)
+        {
+            // Prefer AQN; fallback to scanning
+            var aqn = message.AssemblyQualifiedName;
+            if (!string.IsNullOrWhiteSpace(aqn))
+            {
+                return Type.GetType(aqn, throwOnError: false);
+            }
+
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .FirstOrDefault(t => t.Name == message.TypeName && typeof(IDomainEvent).IsAssignableFrom(t));
         }
     }
 }

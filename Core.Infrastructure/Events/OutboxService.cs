@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Events
-{
+{/*
     public class OutboxService<TDbContext> : IOutboxService<TDbContext>
         where TDbContext : DbContext
     {
@@ -85,4 +85,5 @@ namespace Core.Infrastructure.Events
                 deletedCount, olderThan);
         }
     }
+    */
 }

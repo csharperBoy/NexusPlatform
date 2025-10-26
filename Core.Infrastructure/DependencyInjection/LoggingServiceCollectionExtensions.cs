@@ -16,7 +16,6 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddLoggingServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // تنظیم Serilog - این باید اول از همه باشه
             Log.Logger = SerilogConfiguration.CreateConfiguration(configuration).CreateLogger();
 
             services.AddLogging(loggingBuilder =>
@@ -29,3 +28,4 @@ namespace Core.Infrastructure.DependencyInjection
         }
     }
 }
+

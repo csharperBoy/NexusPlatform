@@ -27,7 +27,7 @@ namespace Core.Infrastructure.Database
                 try
                 {
                     await AttemptMigration<TContext>(cancellationToken);
-                    return; // موفقیت‌آمیز
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -53,7 +53,6 @@ namespace Core.Infrastructure.Database
                 }
             }
 
-            // آخرین تلاش نرم
             await FinalMigrationAttempt<TContext>(cancellationToken);
         }
 
@@ -107,8 +106,8 @@ namespace Core.Infrastructure.Database
             return errorType switch
             {
                 ErrorType.Transient => retryCount < maxRetries,
-                ErrorType.AlreadyExists => false, // نیازی به ریترای نیست
-                ErrorType.Permission => retryCount < 1, // فقط یکبار ریترای شود
+                ErrorType.AlreadyExists => false,
+                ErrorType.Permission => retryCount < 1,
                 ErrorType.Unknown => retryCount < maxRetries - 1,
                 _ => retryCount < maxRetries
             };
@@ -119,7 +118,7 @@ namespace Core.Infrastructure.Database
             return errorType switch
             {
                 ErrorType.Transient => TimeSpan.FromSeconds(Math.Pow(2, retryCount)),
-                ErrorType.Permission => TimeSpan.FromSeconds(5), // تاخیر ثابت برای خطاهای permission
+                ErrorType.Permission => TimeSpan.FromSeconds(5),
                 ErrorType.Unknown => TimeSpan.FromSeconds(Math.Pow(3, retryCount)),
                 _ => TimeSpan.FromSeconds(Math.Pow(2, retryCount))
             };
@@ -132,6 +131,7 @@ namespace Core.Infrastructure.Database
             Permission,
             Unknown
         }
+
         public async Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext
         {
             try
@@ -162,20 +162,17 @@ namespace Core.Infrastructure.Database
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Final migration attempt failed for {DbContext}", typeof(TContext).Name);
-               
             }
         }
 
         private static bool IsTransientError(Exception ex)
         {
-            // بررسی خطاهای موقتی با Microsoft.Data.SqlClient
             if (ex is SqlException sqlEx)
             {
                 int[] transientErrors = { -2, 20, 64, 233, 1205, 11001, 4060, 18456, 40197, 40501 };
                 return transientErrors.Contains(sqlEx.Number);
             }
 
-            // بررسی خطاهای عمومی
             return ex.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
                    ex.Message.Contains("network", StringComparison.OrdinalIgnoreCase) ||
                    ex.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) ||

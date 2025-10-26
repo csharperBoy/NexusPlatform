@@ -12,6 +12,9 @@ namespace Core.Infrastructure.Logging
 {
     public class CorrelationIdEnricher : ILogEventEnricher
     {
+        // Fallback for non-HTTP contexts
+        private static readonly AsyncLocal<string?> _asyncCorrelationId = new();
+
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
             var correlationId = GetCorrelationId();
@@ -30,14 +33,14 @@ namespace Core.Infrastructure.Logging
             if (httpContext?.Request?.Headers != null)
             {
                 if (httpContext.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationId))
-                    return correlationId;
-
+                    return correlationId!;
                 if (httpContext.Request.Headers.TryGetValue("Request-Id", out var requestId))
-                    return requestId;
+                    return requestId!;
             }
 
-            return Guid.NewGuid().ToString();
+            return _asyncCorrelationId.Value ?? Guid.NewGuid().ToString();
         }
-    }
 
-  }
+        public static void SetCorrelationId(string id) => _asyncCorrelationId.Value = id;
+    }
+}

@@ -13,49 +13,33 @@ using Core.Infrastructure.Repositories;
 using MediatR;
 using Core.Application.Behaviors;
 
+
 namespace Core.Infrastructure.DependencyInjection
 {
     public static class CoreInfrastructureServiceCollectionExtensions
     {
-
         public static IServiceCollection AddCoreInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // ثبت تنظیمات - روش صحیح
             services.Configure<CacheSettings>(configuration.GetSection("CacheSettings"));
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
-            // سرویس‌های پایه
             services.AddHttpContextAccessor();
 
-            // ثبت ساده و مستقیم
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
-
             services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,>));
 
-            // Event Bus
             services.AddScoped<IEventBus, MediatorEventBus>();
 
-            // Health Checks
-            services.AddScoped<IHealthCheckService, HealthCheckService>();
-            // Database Services
+            services.AddScoped<IHealthCheckService, HealthCheckService>(); // orchestrator
             services.AddDatabaseServices(configuration);
-
-            // Logging Services
             services.AddLoggingServices(configuration);
-
             services.AddOutboxServices();
-
-            // پیکربندی کش
             services.AddCachingServices(configuration);
-
-            // پیکربندی CORS
             ConfigureCors(services, configuration);
 
-            // Validation Pipeline
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-            // MediatR
             services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
 

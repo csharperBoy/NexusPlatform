@@ -17,16 +17,16 @@ namespace Core.Infrastructure.Repositories
     {
         private readonly TContext _dbContext;
         private readonly IOutboxService<TContext> _outboxService;
-        private readonly IEventBus _eventBus;
-        private IDbContextTransaction? _transaction;
         private readonly ILogger<EfUnitOfWork<TContext>> _logger;
+        private IDbContextTransaction? _transaction;
 
-        public EfUnitOfWork(TContext dbContext, IOutboxService<TContext> outboxService,
-            IEventBus eventBus, ILogger<EfUnitOfWork<TContext>> logger)
+        public EfUnitOfWork(
+            TContext dbContext,
+            IOutboxService<TContext> outboxService,
+            ILogger<EfUnitOfWork<TContext>> logger)
         {
             _dbContext = dbContext;
             _outboxService = outboxService;
-            _eventBus = eventBus;
             _logger = logger;
         }
 
@@ -44,31 +44,28 @@ namespace Core.Infrastructure.Repositories
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            // 1. جمع‌آوری ایونت‌ها از entities
             var domainEvents = CollectDomainEvents();
 
-            // 2. ذخیره ایونت‌ها در Outbox (در همان تراکنش)
             if (domainEvents.Any())
-            {
                 await _outboxService.AddEventsAsync(domainEvents);
-            }
 
-            // 3. ذخیره همه تغییرات (دیتا + Outbox) در یک تراکنش
             var result = await _dbContext.SaveChangesAsync(cancellationToken);
 
-            // 4. کامیت تراکنش
             if (_transaction != null)
             {
                 await _transaction.CommitAsync(cancellationToken);
                 await _transaction.DisposeAsync();
                 _transaction = null;
             }
+            else
+            {
+                _logger.LogDebug("No active transaction; changes and outbox saved atomically by EF.");
+            }
 
             _logger.LogInformation(
                 "Saved {Count} changes with {EventCount} events in outbox for {DbContext}",
                 result, domainEvents.Count, typeof(TContext).Name);
 
-            
             return result;
         }
 
@@ -78,7 +75,6 @@ namespace Core.Infrastructure.Repositories
                 .SelectMany(x => x.Entity.DomainEvents)
                 .ToList();
 
-            // پاک کردن ایونت‌ها از entities
             _dbContext.ChangeTracker.Entries<BaseEntity>()
                 .ToList()
                 .ForEach(entity => entity.Entity.ClearDomainEvents());
@@ -93,9 +89,7 @@ namespace Core.Infrastructure.Repositories
             var domainEvents = CollectDomainEvents();
 
             if (domainEvents.Any())
-            {
                 await _outboxService.AddEventsAsync(domainEvents);
-            }
 
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }

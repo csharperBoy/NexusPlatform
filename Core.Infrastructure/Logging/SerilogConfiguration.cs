@@ -23,6 +23,7 @@ namespace Core.Infrastructure.Logging
                 .Enrich.WithMachineName()
                 .Enrich.WithThreadId()
                 .Enrich.FromLogContext()
+                .Enrich.With<CorrelationIdEnricher>()
                 .WriteTo.Console(
                     outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}")
                 .WriteTo.Debug()

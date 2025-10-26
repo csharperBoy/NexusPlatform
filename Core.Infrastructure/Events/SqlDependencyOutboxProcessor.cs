@@ -17,7 +17,7 @@ namespace Core.Infrastructure.Events
         private readonly string _connectionString;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<SqlDependencyOutboxProcessor<TDbContext>> _logger;
-        private SqlDependency _dependency;
+        private SqlDependency? _dependency;
 
         public SqlDependencyOutboxProcessor(
             IConfiguration configuration,
@@ -33,7 +33,6 @@ namespace Core.Infrastructure.Events
         {
             await InitializeSqlDependency();
 
-            // نگه داشتن سرویس فعال
             while (!stoppingToken.IsCancellationRequested)
             {
                 await Task.Delay(Timeout.Infinite, stoppingToken);
@@ -47,19 +46,15 @@ namespace Core.Infrastructure.Events
                 using var connection = new SqlConnection(_connectionString);
                 await connection.OpenAsync();
 
-                // فعال کردن Service Broker
                 await EnableServiceBroker(connection);
 
-                // ایجاد command
                 using var command = new SqlCommand(
                     "SELECT [Id] FROM [Audit].[OutboxMessages] WHERE [Status] = 0",
                     connection);
 
-                // ایجاد و تنظیم dependency
                 _dependency = new SqlDependency(command);
                 _dependency.OnChange += OnOutboxTableChanged;
 
-                // اجرای command برای شروع listening
                 using var reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection);
 
                 _logger.LogInformation("SQL Dependency initialized for Outbox table");
@@ -71,7 +66,7 @@ namespace Core.Infrastructure.Events
             }
         }
 
-        private async void OnOutboxTableChanged(object sender, SqlNotificationEventArgs e)
+        private async void OnOutboxTableChanged(object? sender, SqlNotificationEventArgs e)
         {
             _logger.LogInformation("Outbox table change detected. Type: {Type}", e.Type);
 
@@ -79,7 +74,6 @@ namespace Core.Infrastructure.Events
             {
                 await ProcessNewMessages();
 
-                // راه‌اندازی مجدد dependency
                 if (_dependency != null)
                 {
                     _dependency.OnChange -= OnOutboxTableChanged;
@@ -112,36 +106,41 @@ namespace Core.Infrastructure.Events
             {
                 await outboxService.MarkAsProcessingAsync(message.Id);
 
-                // پیدا کردن نوع ایونت
-                var eventType = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => a.GetTypes())
-                    .FirstOrDefault(t => t.Name == message.Type && typeof(IDomainEvent).IsAssignableFrom(t));
-
+                var eventType = ResolveEventType(message);
                 if (eventType == null)
-                {
-                    throw new InvalidOperationException($"Event type {message.Type} not found");
-                }
+                    throw new InvalidOperationException($"Event type {message.TypeName} not found");
 
-                // Deserialize ایونت
-                var domainEvent = System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType) as IDomainEvent;
+                var domainEvent = (IDomainEvent?)System.Text.Json.JsonSerializer.Deserialize(message.Content, eventType);
                 if (domainEvent == null)
-                {
-                    throw new InvalidOperationException($"Failed to deserialize event {message.Type}");
-                }
+                    throw new InvalidOperationException($"Failed to deserialize event {message.TypeName}");
 
-                // انتشار ایونت
                 await eventBus.PublishAsync(domainEvent);
-
-                // علامت‌گذاری به عنوان تکمیل شده
                 await outboxService.MarkAsCompletedAsync(message.Id);
 
                 _logger.LogDebug("Processed outbox message {MessageId}", message.Id);
+            }
+            catch (DbUpdateConcurrencyException cex)
+            {
+                _logger.LogWarning(cex, "Concurrency conflict while processing message {MessageId}", message.Id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
                 await outboxService.MarkAsFailedAsync(message.Id, ex.Message);
             }
+        }
+
+        private static Type? ResolveEventType(OutboxMessage message)
+        {
+            var aqn = message.AssemblyQualifiedName;
+            if (!string.IsNullOrWhiteSpace(aqn))
+            {
+                return Type.GetType(aqn, throwOnError: false);
+            }
+
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .FirstOrDefault(t => t.Name == message.TypeName && typeof(IDomainEvent).IsAssignableFrom(t));
         }
 
         private async Task EnableServiceBroker(SqlConnection connection)
@@ -157,7 +156,8 @@ namespace Core.Infrastructure.Events
         private async Task StartFallbackProcessor()
         {
             _logger.LogInformation("Starting fallback polling processor");
-            // راه‌اندازی پردازش‌کننده معمولی
+            var fallbackProcessor = ActivatorUtilities.CreateInstance<OutboxProcessor<TDbContext>>(_serviceProvider);
+            await fallbackProcessor.StartAsync(CancellationToken.None);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

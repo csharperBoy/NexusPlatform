@@ -13,10 +13,7 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddOutboxServices(this IServiceCollection services)
         {
-            // ثبت سرویس Outbox پایه
             services.AddTransient(typeof(IOutboxService<>), typeof(OutboxService<>));
-
-
             return services;
         }
     }

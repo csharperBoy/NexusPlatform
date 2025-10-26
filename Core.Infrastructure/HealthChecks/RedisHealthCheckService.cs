@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Core.Infrastructure.HealthChecks
 {
+    /*
     public class RedisHealthCheckService : IHealthCheckService
     {
         private readonly IDistributedCache _distributedCache;
@@ -75,4 +76,5 @@ namespace Core.Infrastructure.HealthChecks
             }
         }
     }
+*/
 }

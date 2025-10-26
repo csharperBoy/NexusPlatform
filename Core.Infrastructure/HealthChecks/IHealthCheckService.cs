@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Infrastructure.HealthChecks;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,11 +10,8 @@ namespace Core.Infrastructure.HealthChecks
     public interface IHealthCheckService
     {
         Task<SystemStatus> GetSystemStatusAsync();
-        Task<DatabaseStatus> GetDatabaseStatusAsync();
-        Task<CacheStatus> GetCacheStatusAsync();
+        Task<IReadOnlyList<(string Name, bool IsHealthy, string Message, long ResponseTimeMs)>> GetDetailsAsync();
     }
-
     public record SystemStatus(bool IsHealthy, string Message, DateTime CheckedAt);
-    public record DatabaseStatus(bool IsConnected, string Message, long ResponseTimeMs);
-    public record CacheStatus(bool IsConnected, string Message, long ResponseTimeMs);
 }
+

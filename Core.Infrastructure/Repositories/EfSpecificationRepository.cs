@@ -34,13 +34,15 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindBySpecAsync(ISpecification<TEntity> specification)
         {
-            var query = ApplySpecification(specification, true);
-            var totalCount = await query.CountAsync();
+            // Count with filter only to avoid heavy includes
+            var countQuery = _dbSet.AsQueryable();
+            if (specification.Criteria != null)
+                countQuery = countQuery.Where(specification.Criteria);
+            var totalCount = await countQuery.CountAsync();
 
+            var query = ApplySpecification(specification);
             if (specification.IsPagingEnabled)
-            {
                 query = query.Skip(specification.Skip).Take(specification.Take);
-            }
 
             var items = await query.ToListAsync();
             return (items, totalCount);
@@ -48,55 +50,37 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
         {
-            return await ApplySpecification(specification, true).CountAsync();
+            var query = _dbSet.AsQueryable();
+            if (specification.Criteria != null)
+                query = query.Where(specification.Criteria);
+            return await query.CountAsync();
         }
 
-        private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> specification, bool forCount = false)
+        private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> specification)
         {
             IQueryable<TEntity> query = _dbSet;
 
-            // اعمال فیلتر
             if (specification.Criteria != null)
-            {
                 query = query.Where(specification.Criteria);
-            }
 
-            // اعمال Includes ساده
-            query = specification.Includes
-                .Aggregate(query, (current, include) => current.Include(include));
+            query = specification.Includes.Aggregate(query, (current, include) => current.Include(include));
+            query = specification.IncludeFunctions.Aggregate(query, (current, includeFunction) => includeFunction(current));
+            query = specification.IncludeStrings.Aggregate(query, (current, include) => current.Include(include));
 
-            // اعمال Includes پیچیده (با ThenInclude)
-            query = specification.IncludeFunctions
-                .Aggregate(query, (current, includeFunction) => includeFunction(current));
-
-            // اعمال Includes رشته‌ای
-            query = specification.IncludeStrings
-                .Aggregate(query, (current, include) => current.Include(include));
-
-            // اعمال مرتب‌سازی (اگر برای شمارش نیست)
-            if (!forCount)
-            {
-                query = ApplyOrdering(query, specification);
-            }
+            query = ApplyOrdering(query, specification);
 
             return query;
         }
 
         private IQueryable<TEntity> ApplyOrdering(IQueryable<TEntity> query, ISpecification<TEntity> specification)
         {
-            IOrderedQueryable<TEntity> orderedQuery = null;
+            IOrderedQueryable<TEntity>? orderedQuery = null;
 
-            // مرتب‌سازی اولیه
             if (specification.OrderBy != null)
-            {
                 orderedQuery = query.OrderBy(specification.OrderBy);
-            }
             else if (specification.OrderByDescending != null)
-            {
                 orderedQuery = query.OrderByDescending(specification.OrderByDescending);
-            }
 
-            // مرتب‌سازی‌های زنجیره‌ای (ThenOrderBy)
             if (orderedQuery != null && specification.ThenOrderBy.Any())
             {
                 foreach (var (keySelector, isDescending) in specification.ThenOrderBy)
@@ -105,7 +89,6 @@ namespace Core.Infrastructure.Repositories
                         orderedQuery.ThenByDescending(keySelector) :
                         orderedQuery.ThenBy(keySelector);
                 }
-
                 return orderedQuery;
             }
 

@@ -17,7 +17,6 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddCachingServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // تنظیم Serilog - این باید اول از همه باشه
             var cacheSettings = configuration.GetSection("CacheSettings").Get<CacheSettings>() ?? new CacheSettings();
             var redisConnection = configuration.GetConnectionString("Redis");
 
@@ -47,6 +46,7 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
+
         private static void ConfigureMemoryCache(IServiceCollection services)
         {
             services.AddMemoryCache();

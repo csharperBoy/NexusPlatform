@@ -13,7 +13,7 @@ namespace Core.Infrastructure.Events
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<HybridOutboxProcessor<TDbContext>> _logger;
         private readonly IConfiguration _configuration;
-        private BackgroundService _activeProcessor;
+        private BackgroundService? _activeProcessor;
 
         public HybridOutboxProcessor(
             IServiceProvider serviceProvider,
@@ -35,7 +35,7 @@ namespace Core.Infrastructure.Events
                 {
                     "sqlserver" => CreateSqlServerProcessor(),
                     "postgresql" => CreatePostgresProcessor(),
-                    _ => CreatePollingProcessor() // fallback
+                    _ => CreatePollingProcessor()
                 };
 
                 if (_activeProcessor != null)
@@ -56,14 +56,12 @@ namespace Core.Infrastructure.Events
 
         private BackgroundService CreateSqlServerProcessor()
         {
-            // ایجاد instance با پارامترهای مورد نیاز
             return ActivatorUtilities.CreateInstance<SqlDependencyOutboxProcessor<TDbContext>>(
                 _serviceProvider, _configuration);
         }
 
         private BackgroundService CreatePostgresProcessor()
         {
-            // فعلاً از polling استفاده می‌کنیم چون LISTEN/NOTIFY نیاز به پیاده‌سازی جدا دارد
             _logger.LogWarning("PostgreSQL real-time processor not implemented, using polling");
             return CreatePollingProcessor();
         }
