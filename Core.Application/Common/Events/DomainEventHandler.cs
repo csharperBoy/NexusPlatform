@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Core.Application.Common.Events
 {
     public abstract class DomainEventHandler<TEvent> : IEventHandler<TEvent>

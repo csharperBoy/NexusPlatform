@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 namespace Core.Application.Abstractions
 {
     public interface ISpecificationRepository<TEntity, TKey>
