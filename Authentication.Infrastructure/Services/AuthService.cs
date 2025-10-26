@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Authentication.Infrastructure.Data;
 using Authentication.Domain.Entities;
 using Core.Application.Abstractions.Security;
+using Core.Domain.Events;
 
 namespace Authentication.Infrastructure.Services
 {

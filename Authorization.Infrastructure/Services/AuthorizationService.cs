@@ -1,25 +1,34 @@
 ﻿using Authorization.Application.Interfaces;
+using Authorization.Infrastructure.Data;
+using Authorization.Infrastructure.Identity;
+using Core.Application.Abstractions;
 using Core.Shared.Results;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Authorization.Infrastructure.Services
 {
     public class AuthorizationService : IAuthorizationService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IRepository<AuthorizationDbContext, IdentityUserRole<Guid>, Guid> _userRoleRepository;
+        private readonly RoleManager<ApplicationRole> _roleManager;
+        private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<AuthorizationService> _logger;
 
         public AuthorizationService(
-            UserManager<ApplicationUser> userManager,
+            IRepository<AuthorizationDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
+            RoleManager<ApplicationRole> roleManager,
+            IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<AuthorizationService> logger)
         {
-            _userManager = userManager;
+            _userRoleRepository = userRoleRepository;
+            _roleManager = roleManager;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -27,29 +36,21 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
-                if (user == null)
-                {
-                    return Result.Fail("User not found.");
-                }
+                var role = await _roleManager.FindByNameAsync(roleName);
+                if (role == null)
+                    return Result.Fail("Role not found.");
 
-                if (await _userManager.IsInRoleAsync(user, roleName))
+                var userRole = new IdentityUserRole<Guid>
                 {
-                    return Result.Ok(); // یا می‌توانید خطا برگردانید
-                }
+                    UserId = userId,
+                    RoleId = role.Id
+                };
 
-                var result = await _userManager.AddToRoleAsync(user, roleName);
+                await _userRoleRepository.AddAsync(userRole);
+                await _unitOfWork.SaveChangesAsync();
 
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("Assigned role {RoleName} to user {UserId}", roleName, userId);
-                    return Result.Ok();
-                }
-                else
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    return Result.Fail($"Failed to assign role: {errors}");
-                }
+                _logger.LogInformation("Assigned role {RoleName} to user {UserId}", roleName, userId);
+                return Result.Ok();
             }
             catch (Exception ex)
             {
@@ -63,6 +64,43 @@ namespace Authorization.Infrastructure.Services
             const string defaultRole = "User";
             return await AssignRoleToUserAsync(userId, defaultRole);
         }
+        public async Task<Result> RemoveRoleFromUserAsync(Guid userId, string roleName)
+        {
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null) return Result.Fail("Role not found.");
+
+            var userRole = await _userRoleRepository.AsQueryable()
+                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == role.Id);
+
+            if (userRole == null) return Result.Fail("User does not have this role.");
+
+            await _userRoleRepository.DeleteAsync(userRole);
+            await _unitOfWork.SaveChangesAsync();
+            return Result.Ok();
+        }
+
+        public async Task<bool> UserHasRoleAsync(Guid userId, string roleName)
+        {
+            var roles = await GetUserRolesAsync(userId);
+            return roles.Contains(roleName);
+        }
+
+        public async Task<IList<string>> GetUserRolesAsync(Guid userId)
+        {
+            var query = from ur in _userRoleRepository.AsQueryable()
+                        join r in _roleManager.Roles on ur.RoleId equals r.Id
+                        where ur.UserId == userId
+                        select r.Name!;
+            return await query.ToListAsync();
+        }
+
+        // Permissions (فعلاً پیاده‌سازی نشده)
+        public Task<bool> UserHasPermissionAsync(Guid userId, string permission)
+            => throw new NotImplementedException();
+
+        public Task<Result> AssignPermissionToUserAsync(Guid userId, string permission)
+            => throw new NotImplementedException();
 
     }
+
 }
