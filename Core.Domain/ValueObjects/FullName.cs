@@ -12,20 +12,20 @@ namespace Core.Domain.ValueObjects
         public string FirstName { get; }
         public string LastName { get; }
 
-        private Name(string firstName, string lastName)
+        private FullName(string firstName, string lastName)
         {
             FirstName = firstName;
             LastName = lastName;
         }
 
-        public static Name Create(string firstName, string lastName)
+        public static FullName Create(string firstName, string lastName)
         {
             if (string.IsNullOrWhiteSpace(firstName))
                 throw new ArgumentException("First name cannot be empty", nameof(firstName));
             if (string.IsNullOrWhiteSpace(lastName))
                 throw new ArgumentException("Last name cannot be empty", nameof(lastName));
 
-            return new Name(firstName.Trim(), lastName.Trim());
+            return new FullName(firstName.Trim(), lastName.Trim());
         }
 
         protected override IEnumerable<object?> GetEqualityComponents()

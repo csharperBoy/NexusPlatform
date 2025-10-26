@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.Interfaces;
 using Core.Shared.Results;
-using Microsoft.AspNet.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;

@@ -43,3 +43,4 @@ namespace Authentication.Application.Handlers
     }
 
 }
+
