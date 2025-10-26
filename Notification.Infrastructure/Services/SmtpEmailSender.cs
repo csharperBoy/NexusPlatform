@@ -7,16 +7,16 @@ using System.Text;
 using System.Threading.Tasks;
 using Notification.Application.Interfaces;
 using Notification.Infrastructure.Models;
-
+using Microsoft.Extensions.Options;
 namespace Notification.Infrastructure.Services
 {
     public class SmtpEmailSender : IEmailSender
     {
         private readonly SmtpOptions _options;
 
-        public SmtpEmailSender(SmtpOptions options)
+        public SmtpEmailSender(IOptions<SmtpOptions> options)
         {
-            _options = options;
+            _options = options.Value;
         }
 
         public async Task SendEmailAsync(string to, string subject, string body)
@@ -26,7 +26,6 @@ namespace Notification.Infrastructure.Services
                 Credentials = new NetworkCredential(_options.Username, _options.Password),
                 EnableSsl = _options.EnableSsl
             };
-
             var mail = new MailMessage(_options.From, to, subject, body);
             await client.SendMailAsync(mail);
         }

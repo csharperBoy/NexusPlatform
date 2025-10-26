@@ -9,7 +9,7 @@ namespace Notification.Application.DependencyInjection
         public static IServiceCollection AddNotificationApplication(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(WelcomeEmailEventHandler).Assembly));
-            
+            // قراردادها فقط رجیستر نمی‌شن؛ پیاده‌سازی‌ها در Infrastructure رجیستر می‌شن.
             return services;
         }
     }

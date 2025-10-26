@@ -106,6 +106,7 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
+    app.UseNotificationPresentation();
     Log.Information("🎉 AkSteel Welfare Platform started successfully");
     app.Run();
 }
