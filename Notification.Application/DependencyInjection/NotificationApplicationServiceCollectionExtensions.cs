@@ -1,9 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Notification.Application.EventHandlers;
 
 namespace Notification.Application.DependencyInjection
 {
@@ -12,8 +9,7 @@ namespace Notification.Application.DependencyInjection
         public static IServiceCollection AddNotificationApplication(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(WelcomeEmailEventHandler).Assembly));
-            services.AddScoped<IEmailSender, SmtpEmailSender>();
-
+            
             return services;
         }
     }

@@ -1,6 +1,7 @@
 ﻿using Core.Domain.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Notification.Application.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,7 +23,7 @@ namespace Notification.Application.EventHandlers
 
         public async Task Handle(UserRegisteredEvent notification, CancellationToken cancellationToken)
         {
-            await _emailSender.SendAsync(notification.Email,
+            await _emailSender.SendEmailAsync(notification.Email,
                 "Welcome!",
                 $"سلام {notification.Username}، خوش آمدی!");
 
