@@ -1,11 +1,13 @@
 ﻿
 namespace Core.Shared.Results
 {
+
     public record Result(bool Succeeded, string? Error = null)
     {
         public static Result Ok() => new(true);
         public static Result Fail(string error) => new(false, error);
     }
+
 
     public record Result<T>(bool Succeeded, T? Data = default, string? Error = null) : Result(Succeeded, Error)
     {
