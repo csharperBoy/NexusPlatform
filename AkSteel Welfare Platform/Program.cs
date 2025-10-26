@@ -8,6 +8,7 @@ using Authentication.Infrastructure.Data;
 using Core.Infrastructure.Database;
 using Core.Infrastructure.Logging;
 using Serilog;
+using Authorization.Application.DependencyInjection;
 
 try
 {
