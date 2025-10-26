@@ -24,7 +24,7 @@ namespace Authentication.Presentation.Controllers
         [HttpPost("login/username")]
         public async Task<IActionResult> LoginUsernameBase([FromBody] LoginRequest req)
         {
-            var cmd = new LoginUsernameBaseCommand(req.Username, req.Password);
+            var cmd = new LoginUsernameBaseCommand(req.UserIdentifier, req.Password);
             var res = await _mediator.Send(cmd);
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);
@@ -32,7 +32,7 @@ namespace Authentication.Presentation.Controllers
         [HttpPost("login/email")]
         public async Task<IActionResult> LoginEmailBase([FromBody] LoginRequest req)
         {
-            var cmd = new LoginEmailBaseCommand(req.Username, req.Password);
+            var cmd = new LoginEmailBaseCommand(req.UserIdentifier, req.Password);
             var res = await _mediator.Send(cmd);
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);

@@ -15,7 +15,8 @@ using Authentication.Application.Interfaces;
 using Authentication.Domain.Events;
 using Microsoft.Extensions.Logging;
 using Authentication.Infrastructure.Data;
-using Core.Domain.Entities;
+using Authentication.Domain.Entities;
+using Core.Application.Abstractions.Security;
 
 namespace Authentication.Infrastructure.Services
 {
@@ -26,8 +27,8 @@ namespace Authentication.Infrastructure.Services
         private readonly IJwtTokenService _tokenService;
         private readonly JwtOptions _jwtOptions;
         private readonly IOutboxService<AuthDbContext> _outboxService;
-        private readonly IUserRoleService _userRoleService; // اضافه شده
         private readonly ILogger<AuthService> _logger;
+        private readonly IRoleResolver _roleResolver; // abstraction برای گرفتن نقش‌ها
 
         public AuthService(
             UserManager<ApplicationUser> userManager,
@@ -35,7 +36,7 @@ namespace Authentication.Infrastructure.Services
             IJwtTokenService tokenService,
             IOptions<JwtOptions> jwtOptions,
             IOutboxService<AuthDbContext> outboxService,
-            IUserRoleService userRoleService, // اضافه شده
+            IRoleResolver roleResolver,
             ILogger<AuthService> logger)
         {
             _userManager = userManager;
@@ -43,16 +44,14 @@ namespace Authentication.Infrastructure.Services
             _tokenService = tokenService;
             _jwtOptions = jwtOptions.Value;
             _outboxService = outboxService;
-            _userRoleService = userRoleService;
+            _roleResolver = roleResolver;
             _logger = logger;
         }
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser
+            var user = new ApplicationUser(Guid.NewGuid() , request.Username , request.Email)
             {
-                UserName = request.Email,
-                Email = request.Email,
                 FullName = request.DisplayName
             };
 
@@ -64,7 +63,7 @@ namespace Authentication.Infrastructure.Services
                 return Result<AuthResponse>.Fail(err);
             }
 
-            // 2. ایجاد Event برای ثبت‌نام کاربر
+            // 2. انتشار Event
             var userRegisteredEvent = new UserRegisteredEvent(
                 user.Id,
                 user.UserName ?? "",
@@ -72,8 +71,8 @@ namespace Authentication.Infrastructure.Services
 
             await _outboxService.AddEventsAsync(new[] { userRegisteredEvent });
 
-            // 3. دریافت نقش‌های کاربر (ممکن است هنوز نقش نداشته باشد)
-            var roles = await _userRoleService.GetUserRolesAsync(user.Id);
+            // 3. نقش‌ها (ممکن است هنوز خالی باشد)
+            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
             var token = await _tokenService.GenerateTokensAsync(user, roles);
 
             var response = new AuthResponse(
@@ -81,35 +80,33 @@ namespace Authentication.Infrastructure.Services
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.UserName ?? "");
 
-            _logger.LogInformation("User {Email} registered successfully. Event published for role assignment.",
-                user.Email);
+            _logger.LogInformation("User {Email} registered successfully. Event published.", user.Email);
 
             return Result<AuthResponse>.Ok(response);
         }
 
         public async Task<Result<AuthResponse>> LoginWithEmailAsync(LoginRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Username);
+            var user = await _userManager.FindByEmailAsync(request.UserIdentifier);
             if (user == null) return Result<AuthResponse>.Fail("کاربری با این ایمیل پیدا نشد.");
 
             var signRes = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
             if (!signRes.Succeeded) return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
             var token = await _tokenService.GenerateTokensAsync(user, roles);
 
             var response = new AuthResponse(
                 token.AccessToken,
-               DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
-               user.Email ?? "");
-           
+                DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
+                user.Email ?? "");
 
             return Result<AuthResponse>.Ok(response);
         }
+
         public async Task<Result<AuthResponse>> LoginWithUserNameAsync(LoginRequest request)
         {
-            // پیدا کردن کاربر با نام کاربری
-            var user = await _userManager.FindByNameAsync(request.Username);
+            var user = await _userManager.FindByNameAsync(request.UserIdentifier);
             if (user == null)
                 return Result<AuthResponse>.Fail("کاربری با این نام کاربری پیدا نشد.");
 
@@ -117,13 +114,13 @@ namespace Authentication.Infrastructure.Services
             if (!signRes.Succeeded)
                 return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
             var token = await _tokenService.GenerateTokensAsync(user, roles);
 
             var response = new AuthResponse(
                 token.AccessToken,
-               DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
-               user.UserName ?? "");
+                DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
+                user.UserName ?? "");
 
             return Result<AuthResponse>.Ok(response);
         }

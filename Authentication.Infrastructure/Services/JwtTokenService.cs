@@ -1,10 +1,10 @@
-﻿using Authentication.Infrastructure.Configuration;
+﻿using Authentication.Domain.Entities;
+using Authentication.Infrastructure.Configuration;
 using Authentication.Infrastructure.Data;
-using Authentication.Infrastructure.Identity;
 using Core.Application.Abstractions;
-using Core.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -23,7 +23,7 @@ namespace Authentication.Infrastructure.Services
     {
         private readonly JwtOptions _jwtOptions;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IRepository<AuthDbContext , UserSession, Guid> _sessionRepository;
+        private readonly IRepository<AuthDbContext, UserSession, Guid> _sessionRepository;
         private readonly IUnitOfWork<AuthDbContext> _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public JwtTokenService(
@@ -96,16 +96,18 @@ namespace Authentication.Infrastructure.Services
         public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, string userId)
         {
             var userGuid = Guid.Parse(userId);
-            var session = await _sessionRepository.FirstOrDefaultAsync(
-                s => s.UserId == userGuid && s.RefreshToken == refreshToken && s.ExpiresAt > DateTime.UtcNow
-            );
+            var session = await _sessionRepository.AsQueryable()
+                                .FirstOrDefaultAsync(s => s.UserId == userGuid &&
+                               s.RefreshToken == refreshToken &&
+                               s.ExpiresAt > DateTime.UtcNow);
+
 
             return session != null;
         }
 
         public async Task RevokeRefreshTokenAsync(string refreshToken)
         {
-            var session = await _sessionRepository.FirstOrDefaultAsync(s => s.RefreshToken == refreshToken);
+            var session = await _sessionRepository.AsQueryable().FirstOrDefaultAsync(s => s.RefreshToken == refreshToken);
 
             if (session != null)
             {
@@ -118,13 +120,16 @@ namespace Authentication.Infrastructure.Services
         {
 
             var userGuid = Guid.Parse(userId);
-            var sessions = await _sessionRepository.FindAsync(s => s.UserId == userGuid);
+            var sessions = await _sessionRepository.AsQueryable()
+                                                     .Where(s => s.UserId == userGuid)
+                                                     .ToListAsync();
 
-            if (sessions.Items.Any())
+            if (sessions.Any())
             {
-                await _sessionRepository.RemoveRangeAsync(sessions.Items);
+                await _sessionRepository.RemoveRangeAsync(sessions);
                 await _unitOfWork.SaveChangesAsync();
             }
+
         }
 
     }

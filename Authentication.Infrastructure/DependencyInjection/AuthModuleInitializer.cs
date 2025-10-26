@@ -1,5 +1,5 @@
-﻿using Authentication.Infrastructure.Data;
-using Core.Domain.Entities;
+﻿using Authentication.Domain.Entities;
+using Authentication.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,9 +33,9 @@ namespace Authentication.Infrastructure.DependencyInjection
                 //await context.Database.MigrateAsync(cancellationToken);
 
                 // اجرای seed داده‌ها
-                var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+            
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-                await SeedData.SeedRolesAndAdminAsync(roleManager, userManager);
+                await AuthenticationSeedData.SeedAdminUserAsync( userManager);
 
                 _logger.LogInformation("Auth module initialization completed successfully.");
             }

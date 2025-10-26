@@ -1,10 +1,10 @@
 ﻿using Authentication.Application;
 using Authentication.Application.Interfaces;
+using Authentication.Domain.Entities;
 using Authentication.Infrastructure.Configuration;
 using Authentication.Infrastructure.Data;
 using Authentication.Infrastructure.Services;
 using Core.Application.Abstractions;
-using Core.Domain.Entities;
 using Core.Infrastructure.Events;
 using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -21,11 +21,10 @@ namespace Authentication.Infrastructure.DependencyInjection
     {
         public static IServiceCollection AddAuthInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(AuthDbContext).Assembly.GetName().Name;
 
-            // DbContext
+            // DbContext برای Userها
             services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
@@ -35,36 +34,31 @@ namespace Authentication.Infrastructure.DependencyInjection
                 });
             });
 
-            // Identity (with ApplicationRole and Guid keys)
-            services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            // Identity فقط برای User
+            services.AddIdentityCore<ApplicationUser>(options =>
             {
-                // Password policy
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = false; // یا true برحسب نیاز
-                // Lockout
+                options.Password.RequireNonAlphanumeric = false;
+                options.User.RequireUniqueEmail = true;
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.AllowedForNewUsers = true;
-                // User
-                options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
-
-            // ✅ Register OutboxProcessor for Audit module
-            //services.AddHostedService<OutboxProcessor<AuthDbContext>>();
+            // Outbox Processor
             services.AddHostedService<HybridOutboxProcessor<AuthDbContext>>();
 
-            // Token settings via options pattern
+            // JWT
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IUnitOfWork<AuthDbContext>, EfUnitOfWork<AuthDbContext>>();
             services.AddScoped<IAuthService, AuthService>();
-            // Authentication: JWT Bearer
+
             var jwtSection = configuration.GetSection("Jwt");
             var key = jwtSection["Key"];
             var issuer = jwtSection["Issuer"];
@@ -90,11 +84,6 @@ namespace Authentication.Infrastructure.DependencyInjection
                     ValidateIssuerSigningKey = true
                 };
             });
-
-            services.AddAuthorization();
-
-            // Hosted service for migration + seed
-            services.AddHostedService<AuthModuleInitializer>();
 
             return services;
         }

@@ -18,7 +18,7 @@ namespace Authentication.Application.Handlers
 
         public async Task<Result<AuthResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
-            var dto = new RegisterRequest(request.Email, request.Password, request.DisplayName);
+            var dto = new RegisterRequest(request.Username, request.Email, request.Password, request.DisplayName);
             return await _authService.RegisterAsync(dto);
         }
     }
