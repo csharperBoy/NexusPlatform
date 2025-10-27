@@ -1,10 +1,11 @@
 ﻿using Core.Domain.Interfaces;
+using Core.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Xml.Linq;
 namespace User.Domain.Entities
 {
     /// <summary>
@@ -16,40 +17,43 @@ namespace User.Domain.Entities
         public Guid Id { get; private set; } = Guid.NewGuid();
 
         // اطلاعات ثابت (هرگز تغییر نمی‌کنند)
-        public string NationalCode { get; private set; } = string.Empty;
-        public string? FirstName { get; private set; } = string.Empty;
-        public string? LastName { get; private set; } = string.Empty;
+        public NationalCode NationalCode { get; private set; } = null!;
+        public FullName FullName { get; private set; } = null!;
         public DateTime? BirthDate { get; private set; }
-        public string? BirthPlace { get; private set; } = string.Empty;
-
+        public string? BirthPlace { get; private set; }
 
         public string? FatherName { get; private set; }
-
         public Gender? Gender { get; private set; }
 
-
         public string? OneTimePassword { get; set; }
+
         // Audit
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public string CreatedBy { get; private set; } = string.Empty;
 
-        // Constructor
-        protected Person() { } // For EF Core
+        // Constructor for EF
+        protected Person() { }
 
-        public Person(string nationalCode, string firstName, string lastName,
-                     DateTime birthDate, string birthPlace, string createdBy)
+        public Person(NationalCode nationalCode, FullName fullName,
+                      DateTime birthDate, string birthPlace, string createdBy)
         {
-            NationalCode = nationalCode;
-            FirstName = firstName;
-            LastName = lastName;
+            NationalCode = nationalCode ?? throw new ArgumentNullException(nameof(nationalCode));
+            FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
             BirthDate = birthDate;
             BirthPlace = birthPlace;
             CreatedBy = createdBy;
         }
 
         // روش‌های کسب اطلاعات
-        public string GetFullName() => $"{FirstName} {LastName}";
-        public int GetAge() => DateTime.Now.Year - (BirthDate ?? DateTime.Now).Year;
+        public string GetFullName() => FullName.ToString();
+        public int GetAge()
+        {
+            if (!BirthDate.HasValue) return 0;
+            var today = DateTime.Today;
+            var age = today.Year - BirthDate.Value.Year;
+            if (BirthDate.Value.Date > today.AddYears(-age)) age--;
+            return age;
+        }
     }
 
     public enum Gender

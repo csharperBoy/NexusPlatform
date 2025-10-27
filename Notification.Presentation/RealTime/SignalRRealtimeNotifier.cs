@@ -1,13 +1,14 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Notification.Application.Interfaces;
 using Notification.Application.Models;
+using Notification.Presentation.Hubs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Notification.Infrastructure.RealTime
+namespace Notification.Presentation.RealTime
 {
     public class SignalRRealtimeNotifier : IRealtimeNotifier
     {
@@ -28,4 +29,5 @@ namespace Notification.Infrastructure.RealTime
             await _hubContext.Clients.All.SendAsync("notifications/new", message, ct);
         }
     }
+
 }

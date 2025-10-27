@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Notification.Application.Interfaces;
+using Notification.Presentation.Hubs;
+using Notification.Presentation.RealTime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,16 +16,15 @@ namespace Notification.Presentation.DependencyInjection
         public static IServiceCollection AddNotificationPresentation(this IServiceCollection services)
         {
             services.AddSignalR();
+
+            // SignalR notifier
+            services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
             return services;
         }
 
         public static IApplicationBuilder UseNotificationPresentation(this IApplicationBuilder app)
         {
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapHub<NotificationHub>("/hubs/notifications");
-            });
-            return app;
+           return app;
         }
     }
 }

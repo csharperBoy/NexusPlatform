@@ -9,6 +9,10 @@ using Core.Infrastructure.Database;
 using Core.Infrastructure.Logging;
 using Serilog;
 using Authorization.Application.DependencyInjection;
+using Notification.Application.DependencyInjection;
+
+using Notification.Presentation.DependencyInjection;
+using Notification.Presentation.Hubs;
 
 try
 {
@@ -41,18 +45,6 @@ try
     builder.Services.AddSwaggerGen();
     builder.Services.AddOpenApi();
 
-    //var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
-    //builder.Services.AddCors(options =>
-    //{
-    //    options.AddPolicy("AppCorsPolicy", policy =>
-    //    {
-    //        policy.WithOrigins(allowedOrigins ?? Array.Empty<string>())
-    //              .AllowAnyHeader()
-    //              .AllowAnyMethod()
-    //              .AllowCredentials();
-    //    });
-    //});
-
     var app = builder.Build();
 
     // استفاده از Correlation ID Middleware
@@ -72,10 +64,8 @@ try
             logger.LogInformation("🔍 Running AkSteel Welfare Platform health checks...");
 
             var systemStatus = await healthCheck.GetSystemStatusAsync();
-            var cacheStatus = await healthCheck.GetCacheStatusAsync();
 
             logger.LogInformation("🏥 System Health: {IsHealthy}", systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy");
-            logger.LogInformation("💾 Cache: {Message} ({ResponseTimeMs}ms)", cacheStatus.Message, cacheStatus.ResponseTimeMs);
 
             if (!systemStatus.IsHealthy)
             {
@@ -106,7 +96,9 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
-    app.UseNotificationPresentation();
+    //app.UseNotificationPresentation();
+    app.MapHub<NotificationHub>("/hubs/notifications");
+
     Log.Information("🎉 AkSteel Welfare Platform started successfully");
     app.Run();
 }
@@ -132,8 +124,8 @@ async Task RunSmartMigrations(WebApplication app)
         var dbContextTypes = new[]
         {
             typeof(AuthDbContext),
-            typeof(UserManagementDbContext),
-            typeof(AuthorizationDbContext)
+            //typeof(UserManagementDbContext),
+            //typeof(AuthorizationDbContext)
         };
 
         foreach (var dbContextType in dbContextTypes)

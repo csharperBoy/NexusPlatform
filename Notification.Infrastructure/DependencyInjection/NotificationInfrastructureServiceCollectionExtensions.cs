@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Interfaces;
 using Notification.Infrastructure.Models;
-using Notification.Infrastructure.RealTime;
 using Notification.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
@@ -20,8 +19,6 @@ namespace Notification.Infrastructure.DependencyInjection
             services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
             services.AddScoped<IEmailSender, SmtpEmailSender>();
 
-            // SignalR notifier
-            services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
 
             return services;
         }
