@@ -13,6 +13,10 @@ using Notification.Application.DependencyInjection;
 
 using Notification.Presentation.DependencyInjection;
 using Notification.Presentation.Hubs;
+using Core.Infrastructure.Middlewares;
+using User.Infrastructure.Data;
+using Authorization.Infrastructure.Data;
+using Audit.Infrastructure.Data;
 
 try
 {
@@ -49,7 +53,7 @@ try
 
     // استفاده از Correlation ID Middleware
     app.UseMiddleware<CorrelationIdMiddleware>();
-
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
     // اجرای Migrationهای هوشمند
     await RunSmartMigrations(app);
 
@@ -124,8 +128,9 @@ async Task RunSmartMigrations(WebApplication app)
         var dbContextTypes = new[]
         {
             typeof(AuthDbContext),
-            //typeof(UserManagementDbContext),
-            //typeof(AuthorizationDbContext)
+            typeof(UserManagementDbContext),
+            typeof(AuthorizationDbContext),
+            typeof(AuditDbContext),
         };
 
         foreach (var dbContextType in dbContextTypes)

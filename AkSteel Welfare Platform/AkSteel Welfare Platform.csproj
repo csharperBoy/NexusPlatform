@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Audit.Infrastructure\Audit.Infrastructure.csproj" />
     <ProjectReference Include="..\Authentication.Application\Authentication.Application.csproj" />
     <ProjectReference Include="..\Authentication.Infrastructure\Authentication.Infrastructure.csproj" />
     <ProjectReference Include="..\Authentication.Presentation\Authentication.Presentation.csproj" />
@@ -31,6 +32,7 @@
     <ProjectReference Include="..\Notification.Infrastructure\Notification.Infrastructure.csproj" />
     <ProjectReference Include="..\Notification.Presentation\Notification.Presentation.csproj" />
     <ProjectReference Include="..\People.Infrastructure\People.Infrastructure.csproj" />
+    <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
