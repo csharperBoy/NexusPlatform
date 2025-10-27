@@ -1,4 +1,6 @@
 ﻿using Audit.Application.Interfaces;
+using Audit.Application.Query;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -13,18 +15,16 @@ namespace Audit.Presentation.Controllers
     [Route("api/[controller]")]
     public class AuditLogsController : ControllerBase
     {
-        private readonly IAuditQueryService _auditQueryService;
+        private readonly IMediator _mediator;
+        public AuditLogsController(IMediator mediator) => _mediator = mediator;
 
-        public AuditLogsController(IAuditQueryService auditQueryService)
-        {
-            _auditQueryService = auditQueryService;
-        }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromServices] IMediator mediator)
         {
-            var logs = await _auditQueryService.GetRecentLogsAsync(100);
+            var logs = await _mediator.Send(new GetRecentAuditLogsQuery(100));
             return Ok(logs);
         }
+
     }
 }
