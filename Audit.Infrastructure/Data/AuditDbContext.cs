@@ -20,7 +20,7 @@ namespace Audit.Infrastructure.Data
             modelBuilder.HasDefaultSchema("audit");
 
             modelBuilder.Entity<AuditLog>(entity =>
-            {
+            { 
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Action).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.EntityName).IsRequired().HasMaxLength(200);
