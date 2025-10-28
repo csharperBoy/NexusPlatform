@@ -45,58 +45,11 @@ try
     var configuration = builder.Configuration;
 
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
-    /*
-    builder.Services.Core_AddInfrastructure(configuration);
-    builder.Services.Core_AddHealthChecks(configuration);
-    builder.Services.Core_AddPresentation(configuration);
   
-    builder.Services.Cach_AddApplication(configuration);
-    builder.Services.Cach_AddInfrastructure(configuration);
-    builder.Services.Cach_AddPresentation(configuration);
-    builder.Services.Cach_AddHealthChecks(configuration);
-
-    builder.Services.Audit_AddApplication(configuration);
-    builder.Services.Audit_AddInfrastructure(configuration);
-    builder.Services.Audit_AddPresentation(configuration);
-    builder.Services.Audit_AddHealthChecks(configuration);
-
-
-    builder.Services.Auth_AddApplication(configuration);
-    builder.Services.Auth_AddInfrastructure(configuration);
-    builder.Services.Auth_AddPresentation(configuration);
-    builder.Services.Auth_AddHealthChecks(configuration);
-
-    builder.Services.Authorization_AddApplication(configuration);
-    builder.Services.Authorization_AddInfrastructure(configuration);
-    builder.Services.Authorization_AddPresentation(configuration);
-    builder.Services.Authorization_AddHealthChecks(configuration);
-
-    builder.Services.Notification_AddApplication(configuration);
-    builder.Services.Notification_AddInfrastructure(configuration);
-    builder.Services.Notification_AddPresentation(configuration);
-    builder.Services.Notification_AddHealthChecks(configuration);
-
-    builder.Services.User_AddApplication(configuration);
-    builder.Services.User_AddInfrastructure(configuration);
-    builder.Services.User_AddPresentation(configuration);
-    builder.Services.User_AddHealthChecks(configuration);
-
-    builder.Services.AddControllers();
-    builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
-    builder.Services.AddOpenApi();
-    */
     var app = builder.Build();
 
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);
 
-    //await app.Core_UseInfrastructure();
-    //await app.Audit_UseInfrastructure();
-    //await app.Auth_UseInfrastructure();
-    //await app.Authorization_UseInfrastructure();
-    //await app.Cach_UseInfrastructure();
-    //await app.Notification_UseInfrastructure();
-    //await app.User_UseInfrastructure();
 
     if (app.Environment.IsDevelopment())
     {
@@ -112,7 +65,6 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
-    //app.UseNotificationPresentation();
     app.MapHub<NotificationHub>("/hubs/notifications");
 
     Log.Information("🎉 AkSteel Welfare Platform started successfully");
