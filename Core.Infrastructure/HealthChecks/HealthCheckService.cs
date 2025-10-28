@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Infrastructure.HealthChecks
-{
+{/*
     public class HealthCheckService : IHealthCheckService
     {
         private readonly IEnumerable<IHealthContributor> _contributors;
@@ -34,4 +34,4 @@ namespace Core.Infrastructure.HealthChecks
             return results.Select((r, i) => (_contributors.ElementAt(i).Name, r.IsHealthy, r.Message, r.ResponseTimeMs)).ToList();
         }
     }
-}
+*/}

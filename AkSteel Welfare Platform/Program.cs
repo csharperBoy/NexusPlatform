@@ -17,6 +17,8 @@ using Core.Infrastructure.Middlewares;
 using User.Infrastructure.Data;
 using Authorization.Infrastructure.Data;
 using Audit.Infrastructure.Data;
+using Cach.Infrastructure.DependencyInjection;
+using Audit.Infrastructure.DependencyInjection;
 
 try
 {
@@ -37,6 +39,12 @@ try
     builder.Services.AddCoreInfrastructure(configuration);
 
     // ماژول‌های برنامه
+    builder.Services.Cach_AddInfrastructure(configuration);
+    builder.Services.Cach_AddHealthChecks(configuration);
+
+    builder.Services.Audit_AddInfrastructure(configuration);
+    builder.Services.Audit_AddHealthChecks(configuration);
+
     builder.Services.AddAuthApplication(configuration);
     builder.Services.AddAuthInfrastructure(configuration);
     builder.Services.AddAuthPresentation(configuration);
@@ -58,11 +66,11 @@ try
     await RunSmartMigrations(app);
 
     // سلامت‌سنجی در Startup
-    using (var scope = app.Services.CreateScope())
+   /* using (var scope = app.Services.CreateScope())
     {
         try
         {
-            var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+            //var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
             logger.LogInformation("🔍 Running AkSteel Welfare Platform health checks...");
@@ -85,6 +93,7 @@ try
             Log.Fatal(ex, "❌ Health check failed during startup");
         }
     }
+*/
 
     if (app.Environment.IsDevelopment())
     {
