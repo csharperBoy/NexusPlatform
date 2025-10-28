@@ -22,15 +22,13 @@ namespace User.Infrastructure.DependencyInjection
             var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-            // چون کلاس static است، از ILoggerFactory برای ساخت لاگر با دسته‌بندی سفارشی استفاده کن
-            var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
-            var logger = loggerFactory.CreateLogger("Migrations");
+            var dbContextType = typeof(UserManagementDbContext);
 
+            var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
             try
             {
                 logger.LogInformation("🚀 Starting database migrations...");
-
-                var dbContextType = typeof(UserManagementDbContext);
 
                 try
                 {

@@ -18,12 +18,19 @@ namespace Authorization.Infrastructure.Data
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    await roleManager.CreateAsync(new ApplicationRole
+                    var role = new ApplicationRole
                     {
                         Name = roleName,
                         Description = $"{roleName} role",
                         CreatedAt = DateTime.UtcNow
-                    });
+                    };
+
+                    var result = await roleManager.CreateAsync(role);
+                    if (!result.Succeeded)
+                    {
+                        throw new Exception($"Failed to create role {roleName}: " +
+                            string.Join(", ", result.Errors.Select(e => e.Description)));
+                    }
                 }
             }
         }

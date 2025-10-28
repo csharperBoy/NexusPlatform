@@ -2,9 +2,11 @@
 using Authentication.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Data.Entity;
 
 namespace Authentication.Infrastructure.DependencyInjection
 {
@@ -12,10 +14,11 @@ namespace Authentication.Infrastructure.DependencyInjection
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<AuthModuleInitializer> _logger;
-
-        public AuthModuleInitializer(IServiceProvider serviceProvider, ILogger<AuthModuleInitializer> logger)
+        private readonly IConfiguration _configuration;
+        public AuthModuleInitializer(IServiceProvider serviceProvider, ILogger<AuthModuleInitializer> logger, IConfiguration configuration)
         {
             _serviceProvider = serviceProvider;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -28,15 +31,10 @@ namespace Authentication.Infrastructure.DependencyInjection
             {
                 _logger.LogInformation("Starting Auth module initialization...");
 
-                // اجرای میگریشن
-                //var context = services.GetRequiredService<AuthDbContext>();
-                //await context.Database.MigrateAsync(cancellationToken);
-
                 // اجرای seed داده‌ها
             
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-                await AuthenticationSeedData.SeedAdminUserAsync( userManager);
-
+                await AuthenticationSeedData.SeedAdminUserAsync(userManager, _configuration);
                 _logger.LogInformation("Auth module initialization completed successfully.");
             }
             catch (Exception ex)

@@ -1,16 +1,17 @@
 ﻿using Authentication.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 
 namespace Authentication.Infrastructure.Data
 {
     public static class AuthenticationSeedData
     {
-        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager)
+        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IConfiguration config)
         {
-            var adminUserName = "admin";
-            var adminEmail = "admin@mahar.local";
-            var adminPassword = "Admin@123";
+            var adminEmail = config["Seed:AdminEmail"] ?? "admin@local";
+            var adminPassword = config["Seed:AdminPassword"] ?? "ChangeMe123!";
+            var adminUserName = config["Seed:AdminUserName"] ?? "admin";
 
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
@@ -27,7 +28,6 @@ namespace Authentication.Infrastructure.Data
                     throw new Exception("Failed to create default admin user: " +
                         string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
-
             }
         }
     }
