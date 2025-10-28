@@ -1,5 +1,4 @@
-﻿using Audit.Infrastructure.Data;
-using Authentication.Infrastructure.Data;
+﻿using Authentication.Infrastructure.Data;
 using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;

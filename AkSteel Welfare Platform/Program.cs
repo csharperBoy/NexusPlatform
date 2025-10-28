@@ -24,7 +24,6 @@ using Audit.Application.DependencyInjection;
 using Audit.Presentation.DependencyInjection;
 
 using Authorization.Infrastructure.DependencyInjection;
-using Authorization.Application.DependencyInjection;
 using Authorization.Presentation.DependencyInjection;
 using Notification.Infrastructure.DependencyInjection;
 using User.Application.DependencyInjection;
@@ -37,7 +36,6 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // اضافه کردن Configuration
     builder.Configuration
         .SetBasePath(builder.Environment.ContentRootPath)
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -46,11 +44,12 @@ try
 
     var configuration = builder.Configuration;
 
-    // Core Infrastructure (حالا شامل Serilog هست)
+    builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
+    /*
     builder.Services.Core_AddInfrastructure(configuration);
     builder.Services.Core_AddHealthChecks(configuration);
     builder.Services.Core_AddPresentation(configuration);
-    // ماژول‌های برنامه
+  
     builder.Services.Cach_AddApplication(configuration);
     builder.Services.Cach_AddInfrastructure(configuration);
     builder.Services.Cach_AddPresentation(configuration);
@@ -66,7 +65,7 @@ try
     builder.Services.Auth_AddInfrastructure(configuration);
     builder.Services.Auth_AddPresentation(configuration);
     builder.Services.Auth_AddHealthChecks(configuration);
-    
+
     builder.Services.Authorization_AddApplication(configuration);
     builder.Services.Authorization_AddInfrastructure(configuration);
     builder.Services.Authorization_AddPresentation(configuration);
@@ -86,42 +85,18 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
     builder.Services.AddOpenApi();
-
+    */
     var app = builder.Build();
-    app.Core_UseInfrastructure();
-    // استفاده از Correlation ID Middleware
-    // اجرای Migrationهای هوشمند
-    //await RunSmartMigrations(app);
 
-    // سلامت‌سنجی در Startup
-   /* using (var scope = app.Services.CreateScope())
-    {
-        try
-        {
-            //var healthCheck = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    await app.UseEnableModulesApplicationBuilderExtensions(configuration);
 
-            logger.LogInformation("🔍 Running AkSteel Welfare Platform health checks...");
-
-            var systemStatus = await healthCheck.GetSystemStatusAsync();
-
-            logger.LogInformation("🏥 System Health: {IsHealthy}", systemStatus.IsHealthy ? "✅ Healthy" : "❌ Unhealthy");
-
-            if (!systemStatus.IsHealthy)
-            {
-                logger.LogWarning("⚠️ Warning: System has health issues - check configuration");
-            }
-            else
-            {
-                logger.LogInformation("🎉 All systems are ready!");
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "❌ Health check failed during startup");
-        }
-    }
-*/
+    //await app.Core_UseInfrastructure();
+    //await app.Audit_UseInfrastructure();
+    //await app.Auth_UseInfrastructure();
+    //await app.Authorization_UseInfrastructure();
+    //await app.Cach_UseInfrastructure();
+    //await app.Notification_UseInfrastructure();
+    //await app.User_UseInfrastructure();
 
     if (app.Environment.IsDevelopment())
     {

@@ -2,8 +2,10 @@
 using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace Audit.Infrastructure.DependencyInjection
 {
@@ -69,5 +71,7 @@ namespace Audit.Infrastructure.DependencyInjection
 
             return app;
         }
+    
+
     }
 }

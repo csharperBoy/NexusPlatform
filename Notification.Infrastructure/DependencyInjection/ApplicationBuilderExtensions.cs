@@ -1,5 +1,4 @@
-﻿using Audit.Infrastructure.Data;
-using Core.Infrastructure.Database;
+﻿using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
