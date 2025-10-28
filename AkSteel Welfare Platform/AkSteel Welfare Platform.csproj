@@ -18,22 +18,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Audit.Application\Audit.Application.csproj" />
     <ProjectReference Include="..\Audit.Infrastructure\Audit.Infrastructure.csproj" />
-    <ProjectReference Include="..\Authentication.Application\Authentication.Application.csproj" />
+    <ProjectReference Include="..\Audit.Presentation\Audit.Presentation.csproj" />
     <ProjectReference Include="..\Authentication.Infrastructure\Authentication.Infrastructure.csproj" />
     <ProjectReference Include="..\Authentication.Presentation\Authentication.Presentation.csproj" />
     <ProjectReference Include="..\Authorization.Application\Authorization.Application.csproj" />
     <ProjectReference Include="..\Authorization.Infrastructure\Authorization.Infrastructure.csproj" />
     <ProjectReference Include="..\Authorization.Presentation\Authorization.Presentation.csproj" />
     <ProjectReference Include="..\Cach.Infrastructure\Cach.Infrastructure.csproj" />
+    <ProjectReference Include="..\Cach.Presentation\Cach.Presentation.csproj" />
     <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\Core.Presentation\Core.Presentation.csproj" />
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
     <ProjectReference Include="..\Notification.Application\Notification.Application.csproj" />
     <ProjectReference Include="..\Notification.Infrastructure\Notification.Infrastructure.csproj" />
     <ProjectReference Include="..\Notification.Presentation\Notification.Presentation.csproj" />
     <ProjectReference Include="..\People.Infrastructure\People.Infrastructure.csproj" />
+    <ProjectReference Include="..\User.Application\User.Application.csproj" />
     <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
+    <ProjectReference Include="..\User.Presentation\User.Presentation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

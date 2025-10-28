@@ -10,7 +10,7 @@ namespace Audit.Application.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Auth_AddApplication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Audit_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             return services;
         }

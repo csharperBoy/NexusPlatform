@@ -15,6 +15,7 @@ using Core.Infrastructure.Logging;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Core.Infrastructure.Database;
+using Microsoft.AspNetCore.Builder;
 
 
 namespace Core.Infrastructure.DependencyInjection
@@ -47,7 +48,6 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
-
         private static void ConfigureCors(IServiceCollection services, IConfiguration configuration)
         {
             var corsSettings = configuration.GetSection("Cors").Get<CorsSettings>();

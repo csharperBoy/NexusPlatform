@@ -11,7 +11,7 @@ namespace Notification.Infrastructure.DependencyInjection
 {
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection AddNotificationHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection Notification_AddHealthChecks(this IServiceCollection services, IConfiguration config)
         {
             var conn = config.GetConnectionString("DefaultConnection");
 

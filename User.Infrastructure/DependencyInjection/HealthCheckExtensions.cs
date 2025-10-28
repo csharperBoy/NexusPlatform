@@ -7,7 +7,7 @@ namespace User.Infrastructure.DependencyInjection
 {
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection Audit_AddHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection User_AddHealthChecks(this IServiceCollection services, IConfiguration config)
         {
             var conn = config.GetConnectionString("DefaultConnection");
 

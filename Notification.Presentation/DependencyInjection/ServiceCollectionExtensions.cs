@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Interfaces;
 using Notification.Presentation.Hubs;
@@ -13,7 +14,7 @@ namespace Notification.Presentation.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Notification_AddPresentation(this IServiceCollection services)
+        public static IServiceCollection Notification_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddSignalR();
 
@@ -24,6 +25,7 @@ namespace Notification.Presentation.DependencyInjection
 
         public static IApplicationBuilder UseNotificationPresentation(this IApplicationBuilder app)
         {
+
            return app;
         }
     }

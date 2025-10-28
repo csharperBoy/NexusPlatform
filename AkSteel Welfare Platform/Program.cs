@@ -2,7 +2,7 @@
 using Authentication.Presentation.DependencyInjection;
 using Authentication.Application.DependencyInjection;
 using Core.Infrastructure.DependencyInjection;
-using People.Infrastructure.DependencyInjection;
+using Core.Presentation.DependencyInjection;
 using Core.Infrastructure.HealthChecks;
 using Authentication.Infrastructure.Data;
 using Core.Infrastructure.Database;
@@ -10,15 +10,26 @@ using Core.Infrastructure.Logging;
 using Serilog;
 using Authorization.Application.DependencyInjection;
 using Notification.Application.DependencyInjection;
-
 using Notification.Presentation.DependencyInjection;
 using Notification.Presentation.Hubs;
 using Core.Infrastructure.Middlewares;
 using User.Infrastructure.Data;
 using Authorization.Infrastructure.Data;
-using Audit.Infrastructure.Data;
 using Cach.Infrastructure.DependencyInjection;
+using Cach.Application.DependencyInjection;
+using Cach.Presentation.DependencyInjection;
+using Audit.Infrastructure.Data;
 using Audit.Infrastructure.DependencyInjection;
+using Audit.Application.DependencyInjection;
+using Audit.Presentation.DependencyInjection;
+
+using Authorization.Infrastructure.DependencyInjection;
+using Authorization.Application.DependencyInjection;
+using Authorization.Presentation.DependencyInjection;
+using Notification.Infrastructure.DependencyInjection;
+using User.Application.DependencyInjection;
+using User.Infrastructure.DependencyInjection;
+using User.Presentation.DependencyInjection;
 
 try
 {
@@ -37,20 +48,39 @@ try
 
     // Core Infrastructure (حالا شامل Serilog هست)
     builder.Services.Core_AddInfrastructure(configuration);
-
+    builder.Services.Core_AddHealthChecks(configuration);
+    builder.Services.Core_AddPresentation(configuration);
     // ماژول‌های برنامه
+    builder.Services.Cach_AddApplication(configuration);
     builder.Services.Cach_AddInfrastructure(configuration);
+    builder.Services.Cach_AddPresentation(configuration);
     builder.Services.Cach_AddHealthChecks(configuration);
 
+    builder.Services.Audit_AddApplication(configuration);
     builder.Services.Audit_AddInfrastructure(configuration);
+    builder.Services.Audit_AddPresentation(configuration);
     builder.Services.Audit_AddHealthChecks(configuration);
+
 
     builder.Services.Auth_AddApplication(configuration);
     builder.Services.Auth_AddInfrastructure(configuration);
     builder.Services.Auth_AddPresentation(configuration);
-    //builder.Services.AddPeopleInfrastructure(configuration);
-    builder.Services.AddAuthorizationApplication(configuration);
-    builder.Services.AddNotificationApplication(configuration);
+    builder.Services.Auth_AddHealthChecks(configuration);
+    
+    builder.Services.Authorization_AddApplication(configuration);
+    builder.Services.Authorization_AddInfrastructure(configuration);
+    builder.Services.Authorization_AddPresentation(configuration);
+    builder.Services.Authorization_AddHealthChecks(configuration);
+
+    builder.Services.Notification_AddApplication(configuration);
+    builder.Services.Notification_AddInfrastructure(configuration);
+    builder.Services.Notification_AddPresentation(configuration);
+    builder.Services.Notification_AddHealthChecks(configuration);
+
+    builder.Services.User_AddApplication(configuration);
+    builder.Services.User_AddInfrastructure(configuration);
+    builder.Services.User_AddPresentation(configuration);
+    builder.Services.User_AddHealthChecks(configuration);
 
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
@@ -58,12 +88,10 @@ try
     builder.Services.AddOpenApi();
 
     var app = builder.Build();
-
+    app.Core_UseInfrastructure();
     // استفاده از Correlation ID Middleware
-    app.UseMiddleware<CorrelationIdMiddleware>();
-    app.UseMiddleware<ExceptionHandlingMiddleware>();
     // اجرای Migrationهای هوشمند
-    await RunSmartMigrations(app);
+    //await RunSmartMigrations(app);
 
     // سلامت‌سنجی در Startup
    /* using (var scope = app.Services.CreateScope())
@@ -122,61 +150,4 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
-}
-
-async Task RunSmartMigrations(WebApplication app)
-{
-    using var scope = app.Services.CreateScope();
-    var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-
-    try
-    {
-        logger.LogInformation("🚀 Starting database migrations...");
-
-        var dbContextTypes = new[]
-        {
-            typeof(AuthDbContext),
-            typeof(UserManagementDbContext),
-            typeof(AuthorizationDbContext),
-            typeof(AuditDbContext),
-        };
-
-        foreach (var dbContextType in dbContextTypes)
-        {
-            try
-            {
-                logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
-
-                var method = typeof(IMigrationManager).GetMethod(nameof(IMigrationManager.MigrateAsync));
-                var genericMethod = method.MakeGenericMethod(dbContextType);
-                await (Task)genericMethod.Invoke(migrationManager, new object[] { default(CancellationToken) });
-
-                logger.LogInformation("✅ {DbContext} migrated successfully", dbContextType.Name);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "❌ Failed to migrate {DbContext}", dbContextType.Name);
-
-                if (app.Environment.IsDevelopment())
-                {
-                    throw;
-                }
-            }
-        }
-
-        logger.LogInformation("🎉 All migrations completed successfully");
-    }
-    catch (Exception ex)
-    {
-        logger.LogCritical(ex, "💥 Migration process failed");
-        if (app.Environment.IsProduction())
-        {
-            logger.LogWarning("Continuing in production despite migration failures");
-        }
-        else
-        {
-            throw;
-        }
-    }
 }
