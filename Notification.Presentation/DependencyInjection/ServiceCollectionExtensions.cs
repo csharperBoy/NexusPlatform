@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace Notification.Presentation.DependencyInjection
 {
-    public static class NotificationPresentationExtensions
+    public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddNotificationPresentation(this IServiceCollection services)
+        public static IServiceCollection Notification_AddPresentation(this IServiceCollection services)
         {
             services.AddSignalR();
 

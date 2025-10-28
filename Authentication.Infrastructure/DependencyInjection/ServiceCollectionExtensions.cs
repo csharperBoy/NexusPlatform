@@ -17,9 +17,9 @@ using System.Text;
 
 namespace Authentication.Infrastructure.DependencyInjection
 {
-    public static class AuthInfrastructureServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Auth_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(AuthDbContext).Assembly.GetName().Name;

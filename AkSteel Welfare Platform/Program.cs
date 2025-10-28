@@ -36,7 +36,7 @@ try
     var configuration = builder.Configuration;
 
     // Core Infrastructure (حالا شامل Serilog هست)
-    builder.Services.AddCoreInfrastructure(configuration);
+    builder.Services.Core_AddInfrastructure(configuration);
 
     // ماژول‌های برنامه
     builder.Services.Cach_AddInfrastructure(configuration);
@@ -45,9 +45,9 @@ try
     builder.Services.Audit_AddInfrastructure(configuration);
     builder.Services.Audit_AddHealthChecks(configuration);
 
-    builder.Services.AddAuthApplication(configuration);
-    builder.Services.AddAuthInfrastructure(configuration);
-    builder.Services.AddAuthPresentation(configuration);
+    builder.Services.Auth_AddApplication(configuration);
+    builder.Services.Auth_AddInfrastructure(configuration);
+    builder.Services.Auth_AddPresentation(configuration);
     //builder.Services.AddPeopleInfrastructure(configuration);
     builder.Services.AddAuthorizationApplication(configuration);
     builder.Services.AddNotificationApplication(configuration);

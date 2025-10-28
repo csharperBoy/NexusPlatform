@@ -15,9 +15,9 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {
-    public static class AuthorizationInfrastructureServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthorizationInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Authorization_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(AuthorizationDbContext).Assembly.GetName().Name;

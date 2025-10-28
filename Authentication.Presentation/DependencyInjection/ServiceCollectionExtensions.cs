@@ -4,9 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Authentication.Presentation.DependencyInjection
 {
-    public static class AuthPresentationServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthPresentation(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Auth_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers()
                 .AddApplicationPart(typeof(AuthController).Assembly)

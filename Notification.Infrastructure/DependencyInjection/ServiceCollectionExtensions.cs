@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace Notification.Infrastructure.DependencyInjection
 {
-  public static  class NotificationInfrastructureServiceCollectionExtensions
+  public static  class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddNotificationInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Notification_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
             services.AddScoped<IEmailSender, SmtpEmailSender>();

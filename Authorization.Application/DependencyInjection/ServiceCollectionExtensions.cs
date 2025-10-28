@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.DependencyInjection
 {
-    public static class AuthorizationApplicationServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddAuthorizationApplication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Authorization_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
 
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignDefaultRoleEventHandler).Assembly));
