@@ -1,12 +1,10 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Data.Entity;
 
 namespace Authentication.Infrastructure.DependencyInjection
 {
