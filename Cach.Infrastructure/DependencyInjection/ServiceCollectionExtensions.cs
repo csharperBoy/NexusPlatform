@@ -19,7 +19,9 @@ namespace Cach.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Cach_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Cach_AddInfrastructure(this IServiceCollection services
+            , IConfiguration configuration
+            )
         {
             services.Configure<CacheSettings>(configuration.GetSection("CacheSettings"));
             services.ConfigureCachingServices(configuration);
@@ -33,8 +35,7 @@ namespace Cach.Infrastructure.DependencyInjection
 
             // برای گرفتن ILogger باید ServiceProvider ساخته بشه
             using var provider = services.BuildServiceProvider();
-            var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("Caching");
-
+            
             if (cacheSettings.UseRedis && !string.IsNullOrEmpty(redisConnection))
             {
                 try
@@ -43,19 +44,18 @@ namespace Cach.Infrastructure.DependencyInjection
                 }
                 catch (Exception ex)
                 {
-                    ConfigureMemoryCache(services, logger);
-                    logger.LogError(ex, "❌ Redis configuration failed. Falling back to MemoryCache.");
-                }
+                    ConfigureMemoryCache(services);
+                 }
             }
             else
             {
-                ConfigureMemoryCache(services, logger);
+                ConfigureMemoryCache(services);
             }
 
             return services;
         }
 
-        private static void ConfigureRedisCache(IServiceCollection services, CacheSettings cacheSettings, string redisConnection, ILogger logger)
+        private static void ConfigureRedisCache(IServiceCollection services, CacheSettings cacheSettings, string redisConnection)
         {
             services.AddStackExchangeRedisCache(options =>
             {
@@ -64,15 +64,13 @@ namespace Cach.Infrastructure.DependencyInjection
             });
             services.AddScoped<ICacheService, RedisCacheService>();
 
-            logger.LogInformation("✅ Redis Cache configured successfully (Instance: {InstanceName})", cacheSettings.RedisInstanceName);
-        }
+         }
 
-        private static void ConfigureMemoryCache(IServiceCollection services, ILogger logger)
+        private static void ConfigureMemoryCache(IServiceCollection services )
         {
             services.AddMemoryCache();
             services.AddScoped<ICacheService, MemoryCacheService>();
 
-            logger.LogInformation("✅ In-Memory Cache configured");
         }
     }
 }
