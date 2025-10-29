@@ -2,6 +2,8 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Notification.Application.Interfaces;
+using Polly;
+using Polly.Registry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,19 +17,27 @@ namespace Notification.Application.EventHandlers
         private readonly IEmailSender _emailSender;
         private readonly ILogger<WelcomeEmailEventHandler> _logger;
 
-        public WelcomeEmailEventHandler(IEmailSender emailSender, ILogger<WelcomeEmailEventHandler> logger)
+        private readonly IReadOnlyPolicyRegistry<string> _policies;
+        public WelcomeEmailEventHandler(IEmailSender emailSender,
+            ILogger<WelcomeEmailEventHandler> logger
+            , IReadOnlyPolicyRegistry<string> policies)
         {
             _emailSender = emailSender;
             _logger = logger;
+            _policies = policies;
         }
 
         public async Task Handle(UserRegisteredEvent notification, CancellationToken cancellationToken)
         {
-            await _emailSender.SendEmailAsync(notification.Email,
+            var policy = _policies.Get<IAsyncPolicy>("DefaultRetry");
+            await policy.ExecuteAsync(async ct =>
+            {
+                await _emailSender.SendEmailAsync(notification.Email,
                 "Welcome!",
                 $"سلام {notification.Username}، خوش آمدی!");
 
-            _logger.LogInformation("Welcome email sent to {Email}", notification.Email);
+                _logger.LogInformation("Welcome email sent to {Email}", notification.Email);
+            }, cancellationToken);
         }
     }
 }

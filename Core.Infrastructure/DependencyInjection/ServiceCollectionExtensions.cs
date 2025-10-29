@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
+using Core.Infrastructure.Resilience;
 
 
 namespace Core.Infrastructure.DependencyInjection
@@ -43,6 +44,7 @@ namespace Core.Infrastructure.DependencyInjection
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+            services.AddResiliencePolicies(configuration);
             services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
 
