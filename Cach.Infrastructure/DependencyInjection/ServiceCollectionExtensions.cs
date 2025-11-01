@@ -40,7 +40,7 @@ namespace Cach.Infrastructure.DependencyInjection
             {
                 try
                 {
-                    ConfigureRedisCache(services, cacheSettings, redisConnection, logger);
+                    ConfigureRedisCache(services, cacheSettings, redisConnection);
                 }
                 catch (Exception ex)
                 {
