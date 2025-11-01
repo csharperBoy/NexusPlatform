@@ -49,14 +49,7 @@ try
     var app = builder.Build();
 
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);
-
-
-    if (app.Environment.IsDevelopment())
-    {
-        app.MapOpenApi();
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    await app.UseSwaggerApplicationBuilderExtensions(configuration);
 
     app.UseHttpsRedirection();
     app.UseRouting();
