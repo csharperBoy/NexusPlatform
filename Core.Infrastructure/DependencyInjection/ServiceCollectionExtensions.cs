@@ -33,13 +33,8 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
             services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,>));
 
-            services.AddScoped<IEventBus, MediatorEventBus>();
 
-            //services.AddScoped<IHealthCheckService, HealthCheckService>(); // orchestrator
-           
             services.AddLoggingServices(configuration);
-            services.AddOutboxServices();
-            //services.AddCachingServices(configuration);
             ConfigureCors(services, configuration);
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
@@ -65,11 +60,6 @@ namespace Core.Infrastructure.DependencyInjection
                           .AllowCredentials();
                 });
             });
-        }
-        private static IServiceCollection AddOutboxServices(this IServiceCollection services)
-        {
-            services.AddTransient(typeof(IOutboxService<>), typeof(OutboxService<>));
-            return services;
         }
         private static IServiceCollection AddLoggingServices(this IServiceCollection services, IConfiguration configuration)
         {

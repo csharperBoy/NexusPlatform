@@ -11,7 +11,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Core.Infrastructure.Events
+namespace Event.Infrastructure.Processor
 {
     public class PostgresOutboxProcessor<TDbContext> : BackgroundService
         where TDbContext : DbContext

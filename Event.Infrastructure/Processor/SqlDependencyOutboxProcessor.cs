@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Data;
 
-namespace Core.Infrastructure.Events
+namespace Event.Infrastructure.Processor
 {
     public class SqlDependencyOutboxProcessor<TDbContext> : BackgroundService
         where TDbContext : DbContext

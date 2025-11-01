@@ -1,11 +1,10 @@
-﻿// Core.Infrastructure/Events/HybridOutboxProcessor.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Core.Infrastructure.Events
+namespace Event.Infrastructure.Processor
 {
     public class HybridOutboxProcessor<TDbContext> : BackgroundService
         where TDbContext : DbContext

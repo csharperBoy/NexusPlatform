@@ -1,4 +1,4 @@
-﻿// Core.Infrastructure/Events/OutboxProcessor.cs
+﻿// Core.Infrastructure/Events/TriggerBasedOutboxProcessor.cs
 using Core.Application.Abstractions.Events;
 using Core.Domain.Common;
 using Microsoft.EntityFrameworkCore;
@@ -6,18 +6,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Core.Infrastructure.Events
+namespace Event.Infrastructure.Processor
 {
-    public class OutboxProcessor<TDbContext> : BackgroundService
+    public class TriggerBasedOutboxProcessor<TDbContext> : BackgroundService
         where TDbContext : DbContext
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<OutboxProcessor<TDbContext>> _logger;
-        private TimeSpan _interval = TimeSpan.FromSeconds(30);
+        private readonly ILogger<TriggerBasedOutboxProcessor<TDbContext>> _logger;
+        private readonly TimeSpan _pollingInterval = TimeSpan.FromSeconds(5);
 
-        public OutboxProcessor(
+        public TriggerBasedOutboxProcessor(
             IServiceProvider serviceProvider,
-            ILogger<OutboxProcessor<TDbContext>> logger)
+            ILogger<TriggerBasedOutboxProcessor<TDbContext>> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
@@ -25,53 +25,39 @@ namespace Core.Infrastructure.Events
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Outbox Processor for {DbContext} started", typeof(TDbContext).Name);
+            _logger.LogInformation("Trigger-based Outbox Processor started");
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    await ProcessOutboxMessagesAsync(stoppingToken);
-
-                    // Adaptive interval based on workload (simple heuristic)
-                    _interval = TimeSpan.FromSeconds(_interval.TotalSeconds is > 5 and < 60
-                        ? _interval.TotalSeconds
-                        : 30);
-
-                    await Task.Delay(_interval, stoppingToken);
+                    await CheckForNewMessagesAsync(stoppingToken);
+                    await Task.Delay(_pollingInterval, stoppingToken);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    _logger.LogError(ex, "Error processing outbox messages for {DbContext}", typeof(TDbContext).Name);
+                    _logger.LogError(ex, "Error in trigger-based outbox processor");
                     await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
                 }
             }
-
-            _logger.LogInformation("Outbox Processor for {DbContext} stopped", typeof(TDbContext).Name);
         }
 
-        private async Task ProcessOutboxMessagesAsync(CancellationToken cancellationToken)
+        private async Task CheckForNewMessagesAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
             var outboxService = scope.ServiceProvider.GetRequiredService<IOutboxService<TDbContext>>();
             var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
 
-            var messages = (await outboxService.GetPendingMessagesAsync(50)).ToList();
+            var messages = await outboxService.GetPendingMessagesAsync(100);
 
-            if (!messages.Any())
+            if (messages.Any())
             {
-                _interval = TimeSpan.FromSeconds(Math.Min(_interval.TotalSeconds * 2, 60));
-                return;
-            }
+                _logger.LogDebug("Found {Count} new messages to process", messages.Count());
 
-            _interval = TimeSpan.FromSeconds(10);
-
-            foreach (var message in messages)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-
-                await ProcessSingleMessageAsync(message, outboxService, eventBus);
+                foreach (var message in messages)
+                {
+                    await ProcessSingleMessageAsync(message, outboxService, eventBus);
+                }
             }
         }
 
@@ -92,7 +78,7 @@ namespace Core.Infrastructure.Events
                 await eventBus.PublishAsync(domainEvent);
                 await outboxService.MarkAsCompletedAsync(message.Id);
 
-                _logger.LogDebug("Successfully processed outbox message {MessageId}", message.Id);
+                _logger.LogDebug("Processed outbox message {MessageId}", message.Id);
             }
             catch (DbUpdateConcurrencyException cex)
             {
@@ -107,7 +93,6 @@ namespace Core.Infrastructure.Events
 
         private static Type? ResolveEventType(OutboxMessage message)
         {
-            // Prefer AQN; fallback to scanning
             var aqn = message.AssemblyQualifiedName;
             if (!string.IsNullOrWhiteSpace(aqn))
             {

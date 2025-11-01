@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Infrastructure.Events
+namespace Event.Infrastructure.Services
 {
     public class OutboxService<TDbContext> : IOutboxService<TDbContext>
         where TDbContext : DbContext
@@ -38,7 +38,7 @@ namespace Core.Infrastructure.Events
         {
             return await _dbContext.Set<OutboxMessage>()
                 .Where(x => x.Status == OutboxMessageStatus.Pending)
-                .OrderBy(x => x.OccurredOn)
+                .OrderBy(x => x.OccurredOnUtc)
                 .Take(batchSize)
                 .AsNoTracking()
                 .ToListAsync();
@@ -64,12 +64,12 @@ namespace Core.Infrastructure.Events
             }
         }
 
-        public async Task MarkAsFailedAsync(Guid messageId, string error)
+        public async Task MarkAsFailedAsync(Guid messageId, Exception ex)
         {
             var message = await _dbContext.Set<OutboxMessage>().FindAsync(messageId);
             if (message != null)
             {
-                message.MarkAsFailed(error);
+                message.MarkAsFailed(ex);
                 await _dbContext.SaveChangesAsync();
             }
         }
@@ -78,7 +78,7 @@ namespace Core.Infrastructure.Events
         {
             var deletedCount = await _dbContext.Set<OutboxMessage>()
                 .Where(x => x.Status == OutboxMessageStatus.Completed &&
-                           x.ProcessedOn < olderThan)
+                           x.ProcessedOnUtc < olderThan)
                 .ExecuteDeleteAsync();
 
             _logger.LogInformation("Cleaned up {Count} processed outbox messages older than {OlderThan}",
