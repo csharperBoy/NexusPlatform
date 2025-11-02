@@ -1,4 +1,7 @@
-﻿using Core.Application.Abstractions.Caching;
+﻿using Cach.Infrastructure.HealthChecks;
+using Core.Application.Abstractions.Caching;
+using FluentAssertions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Moq;
 using System;
 using System.Collections.Generic;

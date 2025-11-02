@@ -114,8 +114,10 @@ namespace Event.Test
             foreach (var m in msgs)
             {
                 m.MarkAsCompleted();
-                // backdate one
-                m.ProcessedOnUtc = DateTime.UtcNow.AddMinutes(-30);
+                typeof(OutboxMessage)
+                    .GetProperty("ProcessedOnUtc")!
+                    .SetValue(m, DateTime.UtcNow.AddMinutes(-30));
+
             }
             await ctx.SaveChangesAsync();
 

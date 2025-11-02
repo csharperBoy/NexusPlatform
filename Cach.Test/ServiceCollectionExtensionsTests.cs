@@ -1,4 +1,7 @@
-﻿using Core.Application.Abstractions.Caching;
+﻿using Cach.Infrastructure.DependencyInjection;
+using Core.Application.Abstractions.Caching;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

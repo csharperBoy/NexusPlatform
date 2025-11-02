@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core.Application.Abstractions.Events;
 using Core.Domain.Common;
+using Core.Infrastructure.Database.Configurations;
 using Event.Infrastructure.Processor;
 using Event.Infrastructure.Services;
 using FluentAssertions;
@@ -23,7 +24,7 @@ namespace Event.Test
             public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
             protected override void OnModelCreating(ModelBuilder modelBuilder)
             {
-                modelBuilder.ApplyConfiguration(new Core.Infrastructure.Database.Configurations.OutboxMessageConfiguration("Test"));
+                modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("Test"));
             }
         }
 
@@ -40,14 +41,13 @@ namespace Event.Test
             var services = new ServiceCollection();
 
             services.AddLogging();
-            services.AddSingleton<IEventBus>(sp =>
-            {
-                var mock = new Mock<IEventBus>();
-                mock.Setup(b => b.PublishAsync(It.IsAny<IDomainEvent>()))
-                    .Returns(Task.CompletedTask)
-                    .Verifiable();
-                return mock.Object;
-            });
+
+            var eventBusMock = new Mock<IEventBus>();
+            eventBusMock.Setup(b => b.PublishAsync(It.IsAny<IDomainEvent>()))
+                        .Returns(Task.CompletedTask)
+                        .Verifiable();
+
+            services.AddSingleton<IEventBus>(eventBusMock.Object);
 
             services.AddDbContext<TestDbContext>(o => o.UseInMemoryDatabase(Guid.NewGuid().ToString()));
             services.AddTransient(typeof(IOutboxService<>), typeof(OutboxService<>));
@@ -82,9 +82,7 @@ namespace Event.Test
                    .Should().BeTrue();
             }
 
-            var bus = provider.GetRequiredService<IEventBus>() as Mock<IEventBus>?.Object;
-            // If you keep the mock separately, you can verify:
-            // mock.Verify(b => b.PublishAsync(It.IsAny<IDomainEvent>()), Times.AtLeast(2));
+            eventBusMock.Verify(b => b.PublishAsync(It.IsAny<IDomainEvent>()), Times.AtLeast(2));
         }
     }
 }
