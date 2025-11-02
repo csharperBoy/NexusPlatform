@@ -34,10 +34,10 @@ namespace Core.Infrastructure.Database.Configurations
             builder.Property(x => x.Content)
                 .IsRequired();
 
-            builder.Property(x => x.OccurredOn)
+            builder.Property(x => x.OccurredOnUtc)
                 .IsRequired();
 
-            builder.Property(x => x.ProcessedOn);
+            builder.Property(x => x.ProcessedOnUtc);
 
             builder.Property(x => x.Status)
                 .HasConversion<int>()
@@ -46,16 +46,18 @@ namespace Core.Infrastructure.Database.Configurations
             builder.Property(x => x.RetryCount)
                 .IsRequired();
 
-            builder.Property(x => x.Error)
+            builder.Property(x => x.ErrorMessage)
                 .HasMaxLength(2000);
 
+            builder.Property(x => x.ErrorStackTrace)
+                .HasMaxLength(2000);
             // Concurrency token
             builder.Property(x => x.RowVersion)
                    .IsRowVersion()
                    .IsConcurrencyToken();
 
-            builder.HasIndex(x => new { x.Status, x.OccurredOn });
-            builder.HasIndex(x => x.ProcessedOn);
+            builder.HasIndex(x => new { x.Status, x.OccurredOnUtc });
+            builder.HasIndex(x => x.ProcessedOnUtc);
             builder.HasIndex(x => x.TypeName);
         }
     }

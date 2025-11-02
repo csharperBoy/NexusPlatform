@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.Domain.Common;
+using Core.Infrastructure.Database.Configurations;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +14,7 @@ namespace User.Infrastructure.Data
     public class UserManagementDbContext : DbContext
     {
         public UserManagementDbContext(DbContextOptions<UserManagementDbContext> options) : base(options) { }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         public DbSet<Person> Persons { get; set; } = null!;
         public DbSet<PersonProfile> PersonProfiles { get; set; } = null!;
@@ -19,6 +22,7 @@ namespace User.Infrastructure.Data
         {
             modelBuilder.HasDefaultSchema("user");
 
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("user"));
             // Person
             modelBuilder.Entity<Person>(entity =>
             {

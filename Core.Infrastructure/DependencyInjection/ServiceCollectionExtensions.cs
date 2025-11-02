@@ -6,7 +6,6 @@ using Core.Application.Models;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
-using Core.Infrastructure.Events;
 using Core.Infrastructure.HealthChecks;
 using Core.Infrastructure.Repositories;
 using MediatR;
@@ -17,7 +16,7 @@ using Serilog;
 using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Core.Infrastructure.Resilience;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace Core.Infrastructure.DependencyInjection
 {
@@ -73,5 +72,6 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
+        
     }
 }

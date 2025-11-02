@@ -5,7 +5,8 @@ using Authentication.Infrastructure.Configuration;
 using Authentication.Infrastructure.Data;
 using Authentication.Infrastructure.Services;
 using Core.Application.Abstractions;
-using Core.Infrastructure.Events;
+using Core.Application.Abstractions.Events;
+using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -50,8 +51,10 @@ namespace Authentication.Infrastructure.DependencyInjection
             .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
-            // Outbox Processor
-            services.AddHostedService<HybridOutboxProcessor<AuthDbContext>>();
+            // Resolve از DI
+            var registration = services.BuildServiceProvider()
+                                       .GetRequiredService<IOutboxProcessorRegistration>();
+            registration.AddOutboxProcessor<AuthDbContext>(services);
 
             // JWT
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));

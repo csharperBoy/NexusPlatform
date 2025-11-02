@@ -14,7 +14,7 @@ namespace Core.Application.Abstractions.Events
         Task<IEnumerable<OutboxMessage>> GetPendingMessagesAsync(int batchSize = 100);
         Task MarkAsProcessingAsync(System.Guid messageId);
         Task MarkAsCompletedAsync(System.Guid messageId);
-        Task MarkAsFailedAsync(System.Guid messageId, string error);
+        Task MarkAsFailedAsync(System.Guid messageId, Exception ex);
         Task CleanupProcessedMessagesAsync(System.DateTime olderThan);
     }
 }

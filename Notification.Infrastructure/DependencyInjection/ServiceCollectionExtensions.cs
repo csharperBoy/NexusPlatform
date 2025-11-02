@@ -1,5 +1,4 @@
-﻿using Core.Infrastructure.Events;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Notification.Application.Interfaces;
 using Notification.Infrastructure.Models;

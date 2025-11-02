@@ -101,7 +101,7 @@ namespace Event.Infrastructure.Processor
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
-                await outboxService.MarkAsFailedAsync(message.Id, ex.Message);
+                await outboxService.MarkAsFailedAsync(message.Id, ex);
             }
         }
 

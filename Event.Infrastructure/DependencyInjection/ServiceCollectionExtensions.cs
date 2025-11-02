@@ -6,7 +6,6 @@ using Core.Application.Models;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
-using Core.Infrastructure.Events;
 using Core.Infrastructure.HealthChecks;
 using Core.Infrastructure.Repositories;
 using MediatR;
