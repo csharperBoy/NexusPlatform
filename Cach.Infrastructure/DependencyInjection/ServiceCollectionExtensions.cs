@@ -33,8 +33,6 @@ namespace Cach.Infrastructure.DependencyInjection
             var cacheSettings = configuration.GetSection("CacheSettings").Get<CacheSettings>() ?? new CacheSettings();
             var redisConnection = configuration.GetConnectionString("Redis");
 
-            // برای گرفتن ILogger باید ServiceProvider ساخته بشه
-            using var provider = services.BuildServiceProvider();
             
             if (cacheSettings.UseRedis && !string.IsNullOrEmpty(redisConnection))
             {
