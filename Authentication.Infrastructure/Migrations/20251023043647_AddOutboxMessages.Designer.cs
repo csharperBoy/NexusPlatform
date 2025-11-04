@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Authentication.Infrastructure.Migrations
 {
-    [DbContext(typeof(AuthDbContext))]
+    [DbContext(typeof(AuthenticationDbContext))]
     [Migration("20251023043647_AddOutboxMessages")]
     partial class AddOutboxMessages
     {

@@ -17,7 +17,7 @@ namespace Authentication.Infrastructure.DependencyInjection
             var conn = config.GetConnectionString("DefaultConnection");
 
             services.AddHealthChecks()
-                    .AddDbContextCheck<AuthDbContext>("AuthenticationDatabase");
+                    .AddDbContextCheck<AuthenticationDbContext>("AuthenticationDatabase");
 
 
             return services;

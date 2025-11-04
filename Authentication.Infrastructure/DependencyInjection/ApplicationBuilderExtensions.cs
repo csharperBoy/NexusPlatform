@@ -24,7 +24,7 @@ namespace Authentication.Infrastructure.DependencyInjection
 
 
 
-            var dbContextType = typeof(AuthDbContext);
+            var dbContextType = typeof(AuthenticationDbContext);
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
             try

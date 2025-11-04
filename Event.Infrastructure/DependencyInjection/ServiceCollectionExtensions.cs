@@ -25,6 +25,7 @@ namespace Event.Infrastructure.DependencyInjection
     {
         public static IServiceCollection Event_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddSingleton<IOutboxProcessorRegistration, OutboxProcessorRegistration>();
             services.AddScoped<IEventBus, MediatorEventBus>();
             services.AddOutboxServices();
             return services;

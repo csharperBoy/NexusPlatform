@@ -27,7 +27,7 @@ namespace Authentication.Infrastructure.Services
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _tokenService;
         private readonly JwtOptions _jwtOptions;
-        private readonly IOutboxService<AuthDbContext> _outboxService;
+        private readonly IOutboxService<AuthenticationDbContext> _outboxService;
         private readonly ILogger<AuthService> _logger;
         private readonly IRoleResolver _roleResolver; // abstraction برای گرفتن نقش‌ها
 
@@ -36,7 +36,7 @@ namespace Authentication.Infrastructure.Services
             SignInManager<ApplicationUser> signInManager,
             IJwtTokenService tokenService,
             IOptions<JwtOptions> jwtOptions,
-            IOutboxService<AuthDbContext> outboxService,
+            IOutboxService<AuthenticationDbContext> outboxService,
             IRoleResolver roleResolver,
             ILogger<AuthService> logger)
         {

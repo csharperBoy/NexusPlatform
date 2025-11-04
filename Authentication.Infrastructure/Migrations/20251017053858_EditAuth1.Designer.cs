@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Authentication.Infrastructure.Migrations
 {
-    [DbContext(typeof(AuthDbContext))]
+    [DbContext(typeof(AuthenticationDbContext))]
     [Migration("20251017053858_EditAuth1")]
     partial class EditAuth1
     {

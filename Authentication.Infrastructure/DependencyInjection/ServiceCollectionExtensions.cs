@@ -20,13 +20,13 @@ namespace Authentication.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Auth_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Authentication_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
-            var migrationsAssembly = typeof(AuthDbContext).Assembly.GetName().Name;
-
+            var migrationsAssembly = typeof(AuthenticationDbContext).Assembly.GetName().Name;
+            services.AddDataProtection();
             // DbContext برای Userها
-            services.AddDbContext<AuthDbContext>((serviceProvider, options) =>
+            services.AddDbContext<AuthenticationDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
                 {
@@ -35,7 +35,7 @@ namespace Authentication.Infrastructure.DependencyInjection
                 });
             });
 
-            // Identity فقط برای User
+             //Identity فقط برای User
             services.AddIdentityCore<ApplicationUser>(options =>
             {
                 options.Password.RequiredLength = 8;
@@ -48,18 +48,33 @@ namespace Authentication.Infrastructure.DependencyInjection
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.AllowedForNewUsers = true;
             })
-            .AddEntityFrameworkStores<AuthDbContext>()
+                .AddSignInManager<SignInManager<ApplicationUser>>()
+            .AddEntityFrameworkStores<AuthenticationDbContext>()
             .AddDefaultTokenProviders();
+            //services.AddIdentity<ApplicationUser, IdentityRole<Guid>>(options =>
+            //{
+            //    options.Password.RequiredLength = 8;
+            //    options.Password.RequireDigit = true;
+            //    options.Password.RequireLowercase = true;
+            //    options.Password.RequireUppercase = true;
+            //    options.Password.RequireNonAlphanumeric = false;
+            //    options.User.RequireUniqueEmail = true;
+            //    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            //    options.Lockout.MaxFailedAccessAttempts = 5;
+            //    options.Lockout.AllowedForNewUsers = true;
+            //})
+            //.AddEntityFrameworkStores<AuthenticationDbContext>()
+            //.AddDefaultTokenProviders();
 
             // Resolve از DI
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
-            registration.AddOutboxProcessor<AuthDbContext>(services);
+            registration.AddOutboxProcessor<AuthenticationDbContext>(services);
 
             // JWT
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
-            services.AddScoped<IUnitOfWork<AuthDbContext>, EfUnitOfWork<AuthDbContext>>();
+            services.AddScoped<IUnitOfWork<AuthenticationDbContext>, EfUnitOfWork<AuthenticationDbContext>>();
             services.AddScoped<IAuthService, AuthService>();
 
             var jwtSection = configuration.GetSection("Jwt");

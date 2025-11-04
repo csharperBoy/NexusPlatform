@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -7,11 +7,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authentication.Infrastructure.Data
+namespace Audit.Infrastructure.Data
 {
-    public class AuthDbContextFactory : IDesignTimeDbContextFactory<AuthDbContext>
+    public class AuditDbContextFactory : IDesignTimeDbContextFactory<AuditDbContext>
     {
-        public AuthDbContext CreateDbContext(string[] args)
+        public AuditDbContext CreateDbContext(string[] args)
         {
             var basePath = Directory.GetCurrentDirectory();
 
@@ -24,14 +24,14 @@ namespace Authentication.Infrastructure.Data
 
             var conn = config.GetConnectionString("DefaultConnection");
 
-            var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<AuditDbContext>();
             optionsBuilder.UseSqlServer(conn, b =>
             {
-                b.MigrationsAssembly(typeof(AuthDbContext).Assembly.GetName().Name);
-                b.MigrationsHistoryTable("__AuthMigrationsHistory", "auth");
+                b.MigrationsAssembly(typeof(AuditDbContext).Assembly.GetName().Name);
+                b.MigrationsHistoryTable("__AuditMigrationsHistory", "audit");
             });
 
-            return new AuthDbContext(optionsBuilder.Options);
+            return new AuditDbContext(optionsBuilder.Options);
         }
     }
 }

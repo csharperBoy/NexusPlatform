@@ -23,14 +23,14 @@ namespace Authentication.Infrastructure.Services
     {
         private readonly JwtOptions _jwtOptions;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IRepository<AuthDbContext, UserSession, Guid> _sessionRepository;
-        private readonly IUnitOfWork<AuthDbContext> _unitOfWork;
+        private readonly IRepository<AuthenticationDbContext, UserSession, Guid> _sessionRepository;
+        private readonly IUnitOfWork<AuthenticationDbContext> _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
         public JwtTokenService(
             IOptions<JwtOptions> options,
             UserManager<ApplicationUser> userManager,
-            IRepository<AuthDbContext, UserSession, Guid> sessionRepository,
-            IUnitOfWork<AuthDbContext> unitOfWork,
+            IRepository<AuthenticationDbContext, UserSession, Guid> sessionRepository,
+            IUnitOfWork<AuthenticationDbContext> unitOfWork,
             IHttpContextAccessor httpContextAccessor)
         {
             _jwtOptions = options.Value;

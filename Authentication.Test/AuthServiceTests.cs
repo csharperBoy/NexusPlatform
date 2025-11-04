@@ -41,7 +41,7 @@ namespace Authentication.Test
                     It.IsAny<IEnumerable<string>>()))
                 .ReturnsAsync(("fake-jwt", "fake-refresh"));
 
-            var outbox = new Mock<IOutboxService<AuthDbContext>>();
+            var outbox = new Mock<IOutboxService<AuthenticationDbContext>>();
             var roleResolver = new Mock<IRoleResolver>();
             roleResolver.Setup(r => r.GetUserRolesAsync(It.IsAny<Guid>()))
                         .ReturnsAsync(new List<string> { "User" });

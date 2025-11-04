@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Identity;
 namespace Authentication.Infrastructure.Data
 {
     // فقط User-centric tables در این DbContext
-    public class AuthDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class AuthenticationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
-        public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
+        public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options) { }
 
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;

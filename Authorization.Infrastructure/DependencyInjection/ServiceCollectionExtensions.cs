@@ -2,7 +2,9 @@
 using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.Identity;
 using Authorization.Infrastructure.Services;
+using Core.Application.Abstractions;
 using Core.Application.Abstractions.Security;
+using Core.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,8 +39,13 @@ namespace Authorization.Infrastructure.DependencyInjection
                 .AddRoles<ApplicationRole>()
                 .AddEntityFrameworkStores<AuthorizationDbContext>()
                 .AddDefaultTokenProviders();
+            //services.AddIdentity<IdentityUser<Guid>, ApplicationRole>(options => { })
+            //        .AddEntityFrameworkStores<AuthorizationDbContext>()
+            //        .AddDefaultTokenProviders();
 
             // سرویس‌های Authorization
+
+            services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IRoleResolver, RoleResolver>();
 
