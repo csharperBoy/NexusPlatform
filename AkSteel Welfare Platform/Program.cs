@@ -63,6 +63,20 @@ try
     app.MapHub<NotificationHub>("/hubs/notifications");
 
     Log.Information("🎉 AkSteel Welfare Platform started successfully");
+
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        var server = app.Services.GetRequiredService<
+            Microsoft.AspNetCore.Hosting.Server.IServer>();
+        var addresses = server.Features
+            .Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>();
+
+        Console.WriteLine("🚀 Application started. Listening on:");
+        foreach (var address in addresses!.Addresses)
+        {
+            Console.WriteLine($"   {address}");
+        }
+    });
     app.Run();
 }
 catch (Exception ex)
