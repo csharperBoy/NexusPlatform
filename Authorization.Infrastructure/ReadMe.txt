@@ -16,3 +16,8 @@ update-database -Project Authorization.Infrastructure -Context AuthorizationDbCo
 
 3- for update database execute this command in developer PowerShell:
 dotnet ef database update --project Authorization.Infrastructure/Authorization.Infrastructure.csproj --startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj --context AuthorizationDbContext
+
+
+ Remove-Migration
+ 4- delete database
+ drop-database -Project Authentication.Infrastructure -Context AuthenticationDbContext -Start "AkSteel Welfare Platform"

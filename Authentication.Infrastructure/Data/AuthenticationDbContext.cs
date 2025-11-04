@@ -7,16 +7,16 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Authentication.Infrastructure.Data
 {
-    // فقط User-centric tables در این DbContext
-    public class AuthenticationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+    public class AuthenticationDbContext
+       : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
     {
         public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options) { }
 
+        // DbSets مخصوص Authentication
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
         public DbSet<UserSession> UserSessions { get; set; } = null!;
 
-        // IUnitOfWork implementation
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             return await base.SaveChangesAsync(cancellationToken);
@@ -26,7 +26,6 @@ namespace Authentication.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // اسکیمای Authentication
             builder.HasDefaultSchema("auth");
             builder.ApplyConfiguration(new OutboxMessageConfiguration("auth"));
 
@@ -42,7 +41,6 @@ namespace Authentication.Infrastructure.Data
             });
 
             // جداول مرتبط با User
-            builder.Entity<IdentityUserRole<Guid>>().ToTable("AspNetUserRoles", "auth");
             builder.Entity<IdentityUserClaim<Guid>>().ToTable("AspNetUserClaims", "auth");
             builder.Entity<IdentityUserLogin<Guid>>().ToTable("AspNetUserLogins", "auth");
             builder.Entity<IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "auth");
@@ -58,7 +56,6 @@ namespace Authentication.Infrastructure.Data
                  .HasForeignKey(r => r.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
             });
-            builder.Entity<RefreshToken>().HasIndex(r => r.Token).IsUnique(false);
 
             // UserSession
             builder.Entity<UserSession>(b =>

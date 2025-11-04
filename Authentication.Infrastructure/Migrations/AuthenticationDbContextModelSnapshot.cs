@@ -4,7 +4,6 @@ using Authentication.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -12,58 +11,19 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authentication.Infrastructure.Migrations
 {
     [DbContext(typeof(AuthenticationDbContext))]
-    [Migration("20251023043647_AddOutboxMessages")]
-    partial class AddOutboxMessages
+    partial class AuthenticationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("auth")
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.ApplicationRole", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<int?>("OrderNum")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", "auth");
-                });
-
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.ApplicationUser", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -85,6 +45,9 @@ namespace Authentication.Infrastructure.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<Guid>("FkPersonId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("FullName")
                         .HasMaxLength(200)
@@ -140,6 +103,9 @@ namespace Authentication.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FkPersonId")
+                        .IsUnique();
+
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -151,7 +117,7 @@ namespace Authentication.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", "auth");
                 });
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.RefreshToken", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -186,14 +152,12 @@ namespace Authentication.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Token");
-
                     b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens", "auth");
                 });
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.UserSession", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.UserSession", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -237,40 +201,86 @@ namespace Authentication.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AssemblyQualifiedName")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Error")
+                    b.Property<string>("ErrorMessage")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<DateTime>("OccurredOn")
+                    b.Property<string>("ErrorStackTrace")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("EventVersion")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OccurredOnUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("ProcessedOn")
+                    b.Property<DateTime?>("ProcessedOnUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("RetryCount")
                         .HasColumnType("int");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("Type")
+                    b.Property<string>("TypeName")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessedOn");
+                    b.HasIndex("ProcessedOnUtc");
 
-                    b.HasIndex("Type");
+                    b.HasIndex("TypeName");
 
-                    b.HasIndex("Status", "OccurredOn");
+                    b.HasIndex("Status", "OccurredOnUtc");
 
                     b.ToTable("OutboxMessages", "auth");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", "auth");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -376,9 +386,9 @@ namespace Authentication.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", "auth");
                 });
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.RefreshToken", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", "User")
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", "User")
                         .WithMany("RefreshTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -387,9 +397,9 @@ namespace Authentication.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.UserSession", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.UserSession", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", "User")
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", "User")
                         .WithMany("Sessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -400,7 +410,7 @@ namespace Authentication.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -409,7 +419,7 @@ namespace Authentication.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", null)
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -418,7 +428,7 @@ namespace Authentication.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", null)
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -427,13 +437,13 @@ namespace Authentication.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationRole", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", null)
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -442,14 +452,14 @@ namespace Authentication.Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("Authentication.Infrastructure.Identity.ApplicationUser", null)
+                    b.HasOne("Authentication.Domain.Entities.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Authentication.Infrastructure.Identity.ApplicationUser", b =>
+            modelBuilder.Entity("Authentication.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("RefreshTokens");
 

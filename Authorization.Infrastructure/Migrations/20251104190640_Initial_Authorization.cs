@@ -3,24 +3,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Authentication.Infrastructure.Migrations
+namespace Authorization.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial_Auth : Migration
+    public partial class Initial_Authorization : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "auth");
+                name: "authz");
 
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     OrderNum = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -34,17 +34,10 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AspNetUsers",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    LastLoginIp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastLoginTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsLocked = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -66,8 +59,31 @@ namespace Authentication.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                schema: "authz",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TypeName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    AssemblyQualifiedName = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OccurredOnUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProcessedOnUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    ErrorStackTrace = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    RetryCount = table.Column<int>(type: "int", nullable: false),
+                    EventVersion = table.Column<int>(type: "int", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -82,7 +98,7 @@ namespace Authentication.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
                         column: x => x.RoleId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -90,7 +106,7 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AspNetUserClaims",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -105,7 +121,7 @@ namespace Authentication.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserClaims_AspNetUsers_UserId",
                         column: x => x.UserId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -113,7 +129,7 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AspNetUserLogins",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -127,7 +143,7 @@ namespace Authentication.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserLogins_AspNetUsers_UserId",
                         column: x => x.UserId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -135,7 +151,7 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AspNetUserRoles",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -147,14 +163,14 @@ namespace Authentication.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
                         column: x => x.RoleId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetRoles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AspNetUserRoles_AspNetUsers_UserId",
                         column: x => x.UserId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -162,7 +178,7 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "AspNetUserTokens",
-                schema: "auth",
+                schema: "authz",
                 columns: table => new
                 {
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -176,34 +192,7 @@ namespace Authentication.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_AspNetUserTokens_AspNetUsers_UserId",
                         column: x => x.UserId,
-                        principalSchema: "auth",
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RefreshTokens",
-                schema: "auth",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Token = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsRevoked = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedByIp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DeviceInfo = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ReplacedByToken = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RefreshTokens_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalSchema: "auth",
+                        principalSchema: "authz",
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -211,13 +200,13 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
                 name: "RoleNameIndex",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetRoles",
                 column: "NormalizedName",
                 unique: true,
@@ -225,47 +214,53 @@ namespace Authentication.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetUserClaims",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserLogins_UserId",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetUserLogins",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserRoles_RoleId",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetUserRoles",
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
-                schema: "auth",
+                schema: "authz",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_Token",
-                schema: "auth",
-                table: "RefreshTokens",
-                column: "Token");
+                name: "IX_OutboxMessages_ProcessedOnUtc",
+                schema: "authz",
+                table: "OutboxMessages",
+                column: "ProcessedOnUtc");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefreshTokens_UserId",
-                schema: "auth",
-                table: "RefreshTokens",
-                column: "UserId");
+                name: "IX_OutboxMessages_Status_OccurredOnUtc",
+                schema: "authz",
+                table: "OutboxMessages",
+                columns: new[] { "Status", "OccurredOnUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_TypeName",
+                schema: "authz",
+                table: "OutboxMessages",
+                column: "TypeName");
         }
 
         /// <inheritdoc />
@@ -273,35 +268,35 @@ namespace Authentication.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserClaims",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserLogins",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserRoles",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
-                name: "RefreshTokens",
-                schema: "auth");
+                name: "OutboxMessages",
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles",
-                schema: "auth");
+                schema: "authz");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers",
-                schema: "auth");
+                schema: "authz");
         }
     }
 }

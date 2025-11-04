@@ -9,7 +9,7 @@ namespace Authentication.Infrastructure.DependencyInjection
 {
     public static class ApplicationBuilderExtensions
     {
-        public static async Task<IApplicationBuilder> Auth_UseInfrastructure(this IApplicationBuilder app)
+        public static async Task<IApplicationBuilder> Authentication_UseInfrastructure(this IApplicationBuilder app)
         {
             await app.RunSmartMigrations();
             return app;
