@@ -12,7 +12,7 @@ namespace User.Infrastructure.DependencyInjection
             var conn = config.GetConnectionString("DefaultConnection");
 
             services.AddHealthChecks()
-                    .AddDbContextCheck<UserManagementDbContext>("UserDatabase");
+                    .AddDbContextCheck<UserDbContext>("UserDatabase");
 
 
             return services;

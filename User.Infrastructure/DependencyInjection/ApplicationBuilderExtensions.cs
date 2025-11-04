@@ -22,7 +22,7 @@ namespace User.Infrastructure.DependencyInjection
             var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-            var dbContextType = typeof(UserManagementDbContext);
+            var dbContextType = typeof(UserDbContext);
 
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");

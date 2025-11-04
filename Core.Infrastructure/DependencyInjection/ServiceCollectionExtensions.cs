@@ -24,6 +24,7 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection Core_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
@@ -31,7 +32,6 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddScoped<IMigrationManager, MigrationManager>();
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
             services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,>));
-
 
             services.AddLoggingServices(configuration);
             ConfigureCors(services, configuration);

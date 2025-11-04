@@ -11,9 +11,9 @@ using User.Domain.Entities;
 
 namespace User.Infrastructure.Data
 {
-    public class UserManagementDbContext : DbContext
+    public class UserDbContext : DbContext
     {
-        public UserManagementDbContext(DbContextOptions<UserManagementDbContext> options) : base(options) { }
+        public UserDbContext(DbContextOptions<UserDbContext> options) : base(options) { }
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         public DbSet<Person> Persons { get; set; } = null!;

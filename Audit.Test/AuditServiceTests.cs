@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Audit.Test
 {
-    {
+    
     public class AuditServiceTests
     {
         [Fact]

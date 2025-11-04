@@ -15,8 +15,8 @@ namespace Notification.Infrastructure.DependencyInjection
     {
         public static IServiceCollection Notification_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
             services.AddScoped<IEmailSender, SmtpEmailSender>();
+            services.Configure<SmtpOptions>(configuration.GetSection("Smtp"));
 
 
             return services;
