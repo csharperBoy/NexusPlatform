@@ -67,6 +67,7 @@ namespace Identity.Infrastructure.DependencyInjection
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IRoleResolver, RoleResolver>();
+            services.AddHostedService<IdentityModuleInitializer>();
 
             var jwtSection = configuration.GetSection("Jwt");
             var key = jwtSection["Key"]!;
