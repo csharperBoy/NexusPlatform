@@ -7,7 +7,7 @@ using Identity.Application.DTOs;
 namespace Identity.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/identity/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly IMediator _mediator;

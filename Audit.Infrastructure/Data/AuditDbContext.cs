@@ -1,4 +1,6 @@
 ﻿using Audit.Domain.Entities;
+using Core.Domain.Common;
+using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -14,11 +16,13 @@ namespace Audit.Infrastructure.Data
         public AuditDbContext(DbContextOptions<AuditDbContext> options) : base(options) { }
 
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasDefaultSchema("audit");
 
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("audit"));
             modelBuilder.Entity<AuditLog>(entity =>
             { 
                 entity.HasKey(e => e.Id);

@@ -25,6 +25,7 @@ namespace Core.Infrastructure.DependencyInjection
         public static IServiceCollection Core_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
 
+            services.AddSwaggerGen();
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 

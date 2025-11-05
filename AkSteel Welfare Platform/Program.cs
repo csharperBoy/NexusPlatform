@@ -17,8 +17,7 @@ try
 
     var configuration = builder.Configuration;
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
-    //builder.Services.User_AddInfrastructure(configuration);
-  
+
     var app = builder.Build();
 
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);

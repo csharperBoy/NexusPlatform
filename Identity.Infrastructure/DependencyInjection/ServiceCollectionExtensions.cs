@@ -64,7 +64,7 @@ namespace Identity.Infrastructure.DependencyInjection
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
-            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IRoleResolver, RoleResolver>();
             services.AddHostedService<IdentityModuleInitializer>();

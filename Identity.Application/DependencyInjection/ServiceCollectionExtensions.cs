@@ -11,14 +11,14 @@ namespace Identity.Application.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Auth_AddApplication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Identity_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             // رجیستر MediatR و هندلرها
             services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
             });
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignDefaultRoleEventHandler).Assembly));
+            //services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignDefaultRoleEventHandler).Assembly));
 
             return services;
         }

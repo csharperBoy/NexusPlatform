@@ -1,14 +1,8 @@
 ﻿
-using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
-using Core.Infrastructure.DependencyInjection;
-using Core.Infrastructure.Repositories;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using User.Infrastructure.Data;
 namespace User.Infrastructure.DependencyInjection
 {
