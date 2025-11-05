@@ -1,17 +1,16 @@
-﻿using Authentication.Domain.Entities;
-using Core.Domain.Common;
-using Core.Infrastructure.Database.Configurations;
+﻿using Core.Domain.Common;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Identity.Domain.Entities;
 
 namespace Authentication.Infrastructure.Data
 {
     // فقط User-centric
-    public class AuthenticationDbContext
-          : IdentityUserContext<ApplicationUser, Guid>
+    public class IdentityDbContext
+          : IdentityDbContext<ApplicationUser , ApplicationRole, Guid>
     {
-        public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options) { }
+        public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options) { }
 
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
@@ -25,12 +24,12 @@ namespace Authentication.Infrastructure.Data
             base.OnModelCreating(builder);
 
             builder.HasDefaultSchema("auth");
-            builder.ApplyConfiguration(new OutboxMessageConfiguration("auth"));
+            builder.ApplyConfiguration(new OutboxMessageConfiguration("identity"));
 
             // User
             builder.Entity<ApplicationUser>(b =>
             {
-                b.ToTable("AspNetUsers", "auth");
+                b.ToTable("AspNetUsers", "identity");
                 b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
                 b.Property(u => u.FullName).HasMaxLength(200);
                 b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
@@ -39,14 +38,14 @@ namespace Authentication.Infrastructure.Data
             });
 
             // جداول مرتبط با User (IdentityUserContext این‌ها را پشتیبانی می‌کند)
-            builder.Entity<IdentityUserClaim<Guid>>().ToTable("AspNetUserClaims", "auth");
-            builder.Entity<IdentityUserLogin<Guid>>().ToTable("AspNetUserLogins", "auth");
-            builder.Entity<IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "auth");
+            builder.Entity<IdentityUserClaim<Guid>>().ToTable("AspNetUserClaims", "identity");
+            builder.Entity<IdentityUserLogin<Guid>>().ToTable("AspNetUserLogins", "identity");
+            builder.Entity<IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "identity");
 
             // RefreshToken
             builder.Entity<RefreshToken>(b =>
             {
-                b.ToTable("RefreshTokens", "auth");
+                b.ToTable("RefreshTokens", "identity");
                 b.HasKey(r => r.Id);
                 b.Property(r => r.Token).IsRequired().HasMaxLength(450).IsUnicode(false);
                 b.HasOne(r => r.User)
@@ -58,7 +57,7 @@ namespace Authentication.Infrastructure.Data
             // UserSession
             builder.Entity<UserSession>(b =>
             {
-                b.ToTable("UserSessions", "auth");
+                b.ToTable("UserSessions", "identity");
                 b.HasKey(s => s.Id);
                 b.Property(s => s.RefreshToken).IsRequired().HasMaxLength(450);
                 b.HasOne(s => s.User)
