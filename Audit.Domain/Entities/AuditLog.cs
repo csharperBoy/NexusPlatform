@@ -14,12 +14,12 @@ namespace Audit.Domain.Entities
         public string Action { get; private set; } = string.Empty;
         public string EntityName { get; private set; } = string.Empty;
         public string EntityId { get; private set; } = string.Empty;
-        public string? UserId { get; private set; }
+        public Guid? UserId { get; private set; }
         public string? Changes { get; private set; }
 
         protected AuditLog() { }
 
-        public AuditLog(string action, string entityName, string entityId, string? userId, string? changes = null)
+        public AuditLog(string action, string entityName, string entityId, Guid? userId, string? changes = null)
         {
             Action = action;
             EntityName = entityName;

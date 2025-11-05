@@ -28,7 +28,7 @@ namespace Audit.Infrastructure.Services
         }
 
 
-        public async Task LogAsync(string action, string entityName, string entityId, string? userId, object? changes = null)
+        public async Task LogAsync(string action, string entityName, string entityId, Guid? userId, object? changes = null)
         {
             string? serializedChanges = null;
 

@@ -16,19 +16,19 @@ namespace Identity.Infrastructure.Services
     public class AuthorizationService : IAuthorizationService
     {
         private readonly IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> _userRoleRepository;
-        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<AuthorizationService> _logger;
 
         public AuthorizationService(
             IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
-            RoleManager<ApplicationRole> roleManager,
             IUnitOfWork<IdentityDbContext> unitOfWork,
+            RoleManager<ApplicationRole> roleManager,
             ILogger<AuthorizationService> logger)
         {
             _userRoleRepository = userRoleRepository;
-            _roleManager = roleManager;
             _unitOfWork = unitOfWork;
+            _roleManager = roleManager;
             _logger = logger;
         }
 

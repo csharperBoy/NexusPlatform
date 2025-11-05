@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Repositories
 {
-    public class EfSpecificationRepository<TEntity, TKey> : ISpecificationRepository<TEntity, TKey>
+    public class EfSpecificationRepository<TDbContext, TEntity, TKey> : ISpecificationRepository< TEntity, TKey>
+        where TDbContext : DbContext
          where TEntity : class
          where TKey : IEquatable<TKey>
     {
-        protected readonly DbContext _dbContext;
+        protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
 
-        public EfSpecificationRepository(DbContext dbContext)
+        public EfSpecificationRepository(TDbContext dbContext)
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();

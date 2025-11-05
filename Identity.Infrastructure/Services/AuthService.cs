@@ -1,21 +1,24 @@
-﻿using Core.Shared.Results;
+﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.Security;
+using Core.Domain.Events;
+using Core.Shared.Results;
+using Identity.Application.DTOs;
+using Identity.Application.Interfaces;
+using Identity.Domain.Entities;
+using Identity.Domain.Specifications;
+using Identity.Infrastructure.Configuration;
+using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
-using Core.Application.Abstractions.Events;
-using System.Net;
-using Microsoft.Extensions.Logging;
-using Core.Application.Abstractions.Security;
-using Core.Domain.Events;
-using Identity.Infrastructure.Data;
-using Identity.Infrastructure.Configuration;
-using Identity.Application.Interfaces;
-using Identity.Domain.Entities;
-using Identity.Application.DTOs;
 
 namespace Identity.Infrastructure.Services
 {
@@ -27,8 +30,12 @@ namespace Identity.Infrastructure.Services
         private readonly JwtOptions _jwtOptions;
         private readonly IOutboxService<IdentityDbContext> _outboxService;
         private readonly ILogger<AuthService> _logger;
-        private readonly IRoleResolver _roleResolver; // abstraction برای گرفتن نقش‌ها
+        private readonly IRoleResolver _roleResolver;
 
+        private readonly IRepository<IdentityDbContext, RefreshToken, Guid> _refreshTokenRepository;
+        private readonly ISpecificationRepository<RefreshToken, Guid> _refreshTokenSpecRepository;
+
+        private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
         public AuthService(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
@@ -36,6 +43,9 @@ namespace Identity.Infrastructure.Services
             IOptions<JwtOptions> jwtOptions,
             IOutboxService<IdentityDbContext> outboxService,
             IRoleResolver roleResolver,
+            IRepository<IdentityDbContext, RefreshToken, Guid> refreshTokenRepository,
+             ISpecificationRepository<RefreshToken, Guid> refreshTokenSpecRepository,
+            IUnitOfWork<IdentityDbContext> unitOfWork,
             ILogger<AuthService> logger)
         {
             _userManager = userManager;
@@ -44,17 +54,19 @@ namespace Identity.Infrastructure.Services
             _jwtOptions = jwtOptions.Value;
             _outboxService = outboxService;
             _roleResolver = roleResolver;
+            _refreshTokenRepository = refreshTokenRepository;
+            _refreshTokenSpecRepository = refreshTokenSpecRepository;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser(Guid.NewGuid() , request.Username , request.Email)
+            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email)
             {
                 FullName = request.DisplayName
             };
 
-            // 1. ایجاد کاربر
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)
             {
@@ -62,7 +74,6 @@ namespace Identity.Infrastructure.Services
                 return Result<AuthResponse>.Fail(err);
             }
 
-            // 2. انتشار Event
             var userRegisteredEvent = new UserRegisteredEvent(
                 user.Id,
                 user.UserName ?? "",
@@ -70,12 +81,23 @@ namespace Identity.Infrastructure.Services
 
             await _outboxService.AddEventsAsync(new[] { userRegisteredEvent });
 
-            // 3. نقش‌ها (ممکن است هنوز خالی باشد)
             var roles = await _roleResolver.GetUserRolesAsync(user.Id);
-            var token = await _tokenService.GenerateTokensAsync(user, roles);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+
+            // ذخیره RefreshToken در دیتابیس
+            var refreshEntity = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = tokens.RefreshToken,
+                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                CreatedByIp = "system", // TODO: از HttpContext بگیر
+                DeviceInfo = "unknown"
+            };
+            await _refreshTokenRepository.AddAsync(refreshEntity);
+            await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                token.AccessToken,
+                tokens.AccessToken,tokens.RefreshToken,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.UserName ?? "");
 
@@ -93,10 +115,22 @@ namespace Identity.Infrastructure.Services
             if (!signRes.Succeeded) return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
             var roles = await _roleResolver.GetUserRolesAsync(user.Id);
-            var token = await _tokenService.GenerateTokensAsync(user, roles);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+
+            // ذخیره RefreshToken
+            var refreshEntity = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = tokens.RefreshToken,
+                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                CreatedByIp = "system",
+                DeviceInfo = "unknown"
+            };
+            await _refreshTokenRepository.AddAsync(refreshEntity);
+            await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                token.AccessToken,
+                tokens.AccessToken,tokens.RefreshToken,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.Email ?? "");
 
@@ -114,14 +148,77 @@ namespace Identity.Infrastructure.Services
                 return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
             var roles = await _roleResolver.GetUserRolesAsync(user.Id);
-            var token = await _tokenService.GenerateTokensAsync(user, roles);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+
+            // ذخیره RefreshToken
+            var refreshEntity = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = tokens.RefreshToken,
+                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                CreatedByIp = "system",
+                DeviceInfo = "unknown"
+            };
+            await _refreshTokenRepository.AddAsync(refreshEntity);
+            await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                token.AccessToken,
+                tokens.AccessToken,tokens.RefreshToken,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.UserName ?? "");
 
             return Result<AuthResponse>.Ok(response);
+        }
+
+        public async Task<Result<AuthTokens>> RefreshTokenAsync(RefreshTokenRequest request)
+        {
+            var spec = new RefreshTokenByValueSpec(request.RefreshToken);
+            var refresh = await _refreshTokenSpecRepository.GetBySpecAsync(spec);
+
+
+            if (refresh == null || refresh.IsRevoked || refresh.ExpiryDate < DateTime.UtcNow)
+                return Result<AuthTokens>.Fail("Refresh token نامعتبر یا منقضی است.");
+
+            var user = await _userManager.FindByIdAsync(refresh.UserId.ToString());
+            if (user == null)
+                return Result<AuthTokens>.Fail("کاربر یافت نشد.");
+
+            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+
+            // revoke قبلی
+            refresh.IsRevoked = true;
+            refresh.ReplacedByToken = tokens.RefreshToken;
+
+            // ذخیره جدید
+            var newRefresh = new RefreshToken
+            {
+                UserId = user.Id,
+                Token = tokens.RefreshToken,
+                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                CreatedByIp = "system",
+                DeviceInfo = "unknown"
+            };
+            await _refreshTokenRepository.UpdateAsync(refresh);
+            await _refreshTokenRepository.AddAsync(newRefresh);
+            await _unitOfWork.SaveChangesAsync();
+
+            return Result<AuthTokens>.Ok(new AuthTokens(tokens.AccessToken, tokens.RefreshToken));
+        }
+
+        public async Task<Result> LogoutAsync(LogoutRequest request)
+        {
+            var spec = new RefreshTokenByValueSpec(request.RefreshToken);
+            var refresh = await _refreshTokenSpecRepository.GetBySpecAsync(spec);
+
+            if (refresh == null)
+                return Result.Fail("Refresh token یافت نشد.");
+
+            refresh.IsRevoked = true;
+
+            await _refreshTokenRepository.UpdateAsync(refresh);
+            await _unitOfWork.SaveChangesAsync();
+            return Result.Ok();
         }
     }
 }

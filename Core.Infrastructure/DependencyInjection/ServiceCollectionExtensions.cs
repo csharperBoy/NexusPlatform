@@ -17,6 +17,8 @@ using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Core.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
+using Core.Application.Abstractions.Security;
+using Core.Infrastructure.Security;
 
 namespace Core.Infrastructure.DependencyInjection
 {
@@ -30,9 +32,10 @@ namespace Core.Infrastructure.DependencyInjection
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
             services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMigrationManager, MigrationManager>();
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
-            services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,>));
+            services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));
 
             services.AddLoggingServices(configuration);
             ConfigureCors(services, configuration);

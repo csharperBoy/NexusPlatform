@@ -30,14 +30,14 @@ namespace Audit.Test
                 action: "UserRegistered",
                 entityName: "ApplicationUser",
                 entityId: Guid.NewGuid().ToString(),
-                userId: "123",
+                userId: new Guid("123"),
                 changes: new { Username = "ali", Email = "ali@test.com" });
 
             // Assert
             repo.Verify(r => r.AddAsync(It.Is<AuditLog>(log =>
                 log.Action == "UserRegistered" &&
                 log.EntityName == "ApplicationUser" &&
-                log.UserId == "123")), Times.Once);
+                log.UserId == new Guid("123"))), Times.Once);
 
             uow.Verify(u => u.SaveChangesAsync(default), Times.Once);
         }

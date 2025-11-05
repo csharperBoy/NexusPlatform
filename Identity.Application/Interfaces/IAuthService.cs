@@ -13,5 +13,7 @@ namespace Identity.Application.Interfaces
         Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request);
         Task<Result<AuthResponse>> LoginWithUserNameAsync(LoginRequest request);
         Task<Result<AuthResponse>> LoginWithEmailAsync(LoginRequest request);
+        Task<Result<AuthTokens>> RefreshTokenAsync(RefreshTokenRequest request);
+        Task<Result> LogoutAsync(LogoutRequest request);
     }
 }

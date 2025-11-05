@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace Identity.Infrastructure.DependencyInjection
@@ -93,7 +95,10 @@ namespace Identity.Infrastructure.DependencyInjection
                         ValidAudience = audience,
                         ValidateLifetime = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
-                        ValidateIssuerSigningKey = true
+                        ValidateIssuerSigningKey = true,
+
+                        NameClaimType = JwtRegisteredClaimNames.Sub, // اینجا مهمه
+                        RoleClaimType = ClaimTypes.Role
                     };
                 });
 

@@ -14,7 +14,7 @@ namespace Audit.Application.Handlers
     public class GetRecentAuditLogsHandler
     : IRequestHandler<GetRecentAuditLogsQuery, IEnumerable<AuditLog>>
     {
-        private readonly ISpecificationRepository<AuditLog, Guid> _repo;
+        private readonly ISpecificationRepository< AuditLog, Guid> _repo;
 
         public GetRecentAuditLogsHandler(ISpecificationRepository<AuditLog, Guid> repo)
         {

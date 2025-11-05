@@ -8,6 +8,6 @@ namespace Core.Application.Abstractions.Auditing
 {
     public interface IAuditService
     {
-        Task LogAsync(string action, string entityName, string entityId, string? userId, object? changes = null);
+        Task LogAsync(string action, string entityName, string entityId, Guid? userId, object? changes = null);
     }
 }

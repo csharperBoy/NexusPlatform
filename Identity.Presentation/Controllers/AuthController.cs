@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MediatR;
-using Core.Shared.Results;
+﻿using Core.Shared.Results;
 using Identity.Application.Commands;
 using Identity.Application.DTOs;
+using Identity.Application.Interfaces;
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Presentation.Controllers
 {
@@ -11,7 +12,13 @@ namespace Identity.Presentation.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IMediator _mediator;
-        public AuthController(IMediator mediator) => _mediator = mediator;
+        private readonly IAuthService _authService;
+
+        public AuthController(IMediator mediator, IAuthService authService)
+        {
+            _mediator = mediator;
+            _authService = authService;
+        }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterCommand command)
@@ -29,6 +36,7 @@ namespace Identity.Presentation.Controllers
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);
         }
+
         [HttpPost("login/email")]
         public async Task<IActionResult> LoginEmailBase([FromBody] LoginRequest req)
         {
@@ -36,6 +44,22 @@ namespace Identity.Presentation.Controllers
             var res = await _mediator.Send(cmd);
             if (!res.Succeeded) return BadRequest(res.Error);
             return Ok(res.Data);
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+            var res = await _authService.RefreshTokenAsync(request);
+            if (!res.Succeeded) return BadRequest(res.Error);
+            return Ok(res.Data);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+        {
+            var res = await _authService.LogoutAsync(request);
+            if (!res.Succeeded) return BadRequest(res.Error);
+            return Ok();
         }
     }
 }

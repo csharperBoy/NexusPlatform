@@ -8,7 +8,8 @@ namespace Core.Application.Abstractions.Security
 {
     public interface ICurrentUserService
     {
-        string? UserId { get; }
+        Guid? UserId { get; }
+        //string? UserId { get; }
         string? UserName { get; }
         bool IsAuthenticated { get; }
         IEnumerable<string> Roles { get; }
