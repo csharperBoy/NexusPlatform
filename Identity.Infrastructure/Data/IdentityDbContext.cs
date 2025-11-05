@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Identity.Domain.Entities;
+using Core.Infrastructure.Database.Configurations;
 
-namespace Authentication.Infrastructure.Data
+namespace Identity.Infrastructure.Data
 {
-    // فقط User-centric
     public class IdentityDbContext
-          : IdentityDbContext<ApplicationUser , ApplicationRole, Guid>
+            : IdentityDbContext<ApplicationUser, ApplicationRole, Guid,
+                                IdentityUserClaim<Guid>, IdentityUserRole<Guid>, IdentityUserLogin<Guid>,
+                                IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
     {
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options) : base(options) { }
 
@@ -23,23 +25,35 @@ namespace Authentication.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            builder.HasDefaultSchema("auth");
+            // یکپارچه: همه‌چیز در "identity"
+            builder.HasDefaultSchema("identity");
             builder.ApplyConfiguration(new OutboxMessageConfiguration("identity"));
 
-            // User
+            // Users
             builder.Entity<ApplicationUser>(b =>
             {
                 b.ToTable("AspNetUsers", "identity");
                 b.HasIndex(u => u.NormalizedUserName).HasDatabaseName("UserNameIndex").IsUnique();
-                b.Property(u => u.FullName).HasMaxLength(200);
                 b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
+                b.Property(u => u.FullName).HasMaxLength(200);
                 b.HasIndex(u => u.FkPersonId).IsUnique();
                 b.Property(u => u.FkPersonId).IsRequired();
             });
 
-            // جداول مرتبط با User (IdentityUserContext این‌ها را پشتیبانی می‌کند)
+            // Roles
+            builder.Entity<ApplicationRole>(b =>
+            {
+                b.ToTable("AspNetRoles", "identity");
+                b.Property(r => r.Description).HasMaxLength(500);
+                b.Property(r => r.OrderNum).HasDefaultValue(0);
+                b.Property(r => r.CreatedAt).HasDefaultValueSql("getutcdate()");
+            });
+
+            // Identity tables
+            builder.Entity<IdentityUserRole<Guid>>().ToTable("AspNetUserRoles", "identity");
             builder.Entity<IdentityUserClaim<Guid>>().ToTable("AspNetUserClaims", "identity");
             builder.Entity<IdentityUserLogin<Guid>>().ToTable("AspNetUserLogins", "identity");
+            builder.Entity<IdentityRoleClaim<Guid>>().ToTable("AspNetRoleClaims", "identity");
             builder.Entity<IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "identity");
 
             // RefreshToken
@@ -52,6 +66,7 @@ namespace Authentication.Infrastructure.Data
                  .WithMany(u => u.RefreshTokens)
                  .HasForeignKey(r => r.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
+                b.HasIndex(r => r.Token);
             });
 
             // UserSession

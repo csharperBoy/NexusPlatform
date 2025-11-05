@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using Authentication.Application.Commands;
 using Core.Shared.Results;
-using Authentication.Application.DTOs;
+using Identity.Application.Commands;
+using Identity.Application.DTOs;
 
 namespace Identity.Presentation.Controllers
 {

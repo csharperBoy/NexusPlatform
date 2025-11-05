@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authentication.Infrastructure.Data
+namespace Identity.Infrastructure.Data
 {
     public class IdentityDbContextFactory : IDesignTimeDbContextFactory<IdentityDbContext>
     {

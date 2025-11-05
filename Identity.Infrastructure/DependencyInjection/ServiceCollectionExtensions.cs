@@ -6,9 +6,13 @@ using Core.Infrastructure.Repositories;
 using Identity.Application;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entities;
+using Identity.Infrastructure.Configuration;
+using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.JwtBearer;
+//using Microsoft.AspNetCore.Identity.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +27,10 @@ namespace Identity.Infrastructure.DependencyInjection
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(IdentityDbContext).Assembly.GetName().Name;
+
             services.AddDataProtection();
-            // DbContext برای Userها
+
+            // DbContext
             services.AddDbContext<IdentityDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
@@ -34,8 +40,7 @@ namespace Identity.Infrastructure.DependencyInjection
                 });
             });
 
-             //Identity فقط برای User
-           
+            // Identity (User + Role)
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequiredLength = 8;
@@ -51,44 +56,45 @@ namespace Identity.Infrastructure.DependencyInjection
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddDefaultTokenProviders();
 
-            // Resolve از DI
-            var registration = services.BuildServiceProvider()
-                                       .GetRequiredService<IOutboxProcessorRegistration>();
+            // Outbox registration
+            var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
             registration.AddOutboxProcessor<IdentityDbContext>(services);
 
             // JWT
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
-            services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IRoleResolver, RoleResolver>();
 
             var jwtSection = configuration.GetSection("Jwt");
-            var key = jwtSection["Key"];
-            var issuer = jwtSection["Issuer"];
-            var audience = jwtSection["Audience"];
+            var key = jwtSection["Key"]!;
+            var issuer = jwtSection["Issuer"]!;
+            var audience = jwtSection["Audience"]!;
 
-            services.AddIdentity(options =>
-            {
-                options.DefaultIdentityenticateScheme = JwtBearerDefaults.IdentityScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.IdentityScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = true;
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
+            // Authentication + JwtBearer (درست)
+            services
+                .AddAuthentication(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidIssuer = issuer,
-                    ValidateAudience = true,
-                    ValidAudience = audience,
-                    ValidateLifetime = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!)),
-                    ValidateIssuerSigningKey = true
-                };
-            });
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.RequireHttpsMetadata = true;
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
+                        ValidateAudience = true,
+                        ValidAudience = audience,
+                        ValidateLifetime = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
+                        ValidateIssuerSigningKey = true
+                    };
+                });
 
             return services;
         }

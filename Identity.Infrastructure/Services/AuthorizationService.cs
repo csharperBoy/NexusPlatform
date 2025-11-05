@@ -1,8 +1,8 @@
-﻿using Authorization.Application.Interfaces;
-using Authorization.Infrastructure.Data;
-using Authorization.Infrastructure.Identity;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
 using Core.Shared.Results;
+using Identity.Application.Interfaces;
+using Identity.Domain.Entities;
+using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,13 +17,13 @@ namespace Identity.Infrastructure.Services
     {
         private readonly IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> _userRoleRepository;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
+        private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
         private readonly ILogger<AuthorizationService> _logger;
 
         public AuthorizationService(
-            IRepository<AuthorizationDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
+            IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
             RoleManager<ApplicationRole> roleManager,
-            IUnitOfWork<AuthorizationDbContext> unitOfWork,
+            IUnitOfWork<IdentityDbContext> unitOfWork,
             ILogger<AuthorizationService> logger)
         {
             _userRoleRepository = userRoleRepository;

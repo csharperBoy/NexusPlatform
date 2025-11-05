@@ -1,8 +1,4 @@
-﻿using Authentication.Infrastructure.DependencyInjection;
-using Authentication.Presentation.DependencyInjection;
-using Authentication.Application.DependencyInjection;
-using Core.Infrastructure.DependencyInjection;
-
+﻿
 var builder = WebApplication.CreateBuilder(args);
 
 

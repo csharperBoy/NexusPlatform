@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 
 
-namespace Authentication.Infrastructure.Data
+namespace Identity.Infrastructure.Data
 {
     public static class IdentitySeedData
     {

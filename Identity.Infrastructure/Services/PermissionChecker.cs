@@ -1,5 +1,5 @@
-﻿using Authorization.Application.Interfaces;
-using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Security;
+using Identity.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;

@@ -1,4 +1,4 @@
-﻿using Authentication.Domain.Entities;
+﻿using Identity.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

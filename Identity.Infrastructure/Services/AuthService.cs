@@ -1,23 +1,21 @@
-﻿using Authentication.Application.DTOs;
-using Authentication.Application;
-using Core.Shared.Results;
+﻿using Core.Shared.Results;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Authentication.Infrastructure.Configuration;
 using Microsoft.Extensions.Options;
 using Core.Application.Abstractions.Events;
 using System.Net;
-using Authentication.Application.Interfaces;
-using Authentication.Domain.Events;
 using Microsoft.Extensions.Logging;
-using Authentication.Infrastructure.Data;
-using Authentication.Domain.Entities;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Events;
+using Identity.Infrastructure.Data;
+using Identity.Infrastructure.Configuration;
+using Identity.Application.Interfaces;
+using Identity.Domain.Entities;
+using Identity.Application.DTOs;
 
 namespace Identity.Infrastructure.Services
 {

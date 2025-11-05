@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Authentication.Infrastructure.Data;
 
 namespace Identity.Infrastructure.DependencyInjection
 {

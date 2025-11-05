@@ -22,12 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Authentication.Application\Authentication.Application.csproj" />
-    <ProjectReference Include="..\Authentication.Infrastructure\Authentication.Infrastructure.csproj" />
-    <ProjectReference Include="..\Authentication.Presentation\Authentication.Presentation.csproj" />
-    <ProjectReference Include="..\Authorization.Application\Authorization.Application.csproj" />
-    <ProjectReference Include="..\Authorization.Infrastructure\Authorization.Infrastructure.csproj" />
-    <ProjectReference Include="..\Authorization.Presentation\Authorization.Presentation.csproj" />
     <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />

@@ -1,7 +1,7 @@
-﻿using Authentication.Domain.Entities;
-using Authentication.Infrastructure.Configuration;
-using Authentication.Infrastructure.Data;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
+using Identity.Domain.Entities;
+using Identity.Infrastructure.Configuration;
+using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

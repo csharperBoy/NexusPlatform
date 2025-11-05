@@ -1,5 +1,4 @@
-﻿using Authentication.Application.DTOs;
-using Core.Shared.Results;
+﻿using Core.Shared.Results;
 using Identity.Application.Commands;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
