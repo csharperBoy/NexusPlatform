@@ -12,7 +12,7 @@ namespace Identity.Infrastructure.DependencyInjection
 {
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection Authentication_AddHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection Identity_AddHealthChecks(this IServiceCollection services, IConfiguration config)
         {
             var conn = config.GetConnectionString("DefaultConnection");
 
