@@ -3,7 +3,7 @@ using Sample.Domain.Entities;
 
 namespace Sample.Domain.Specifications
 {
-    public class SampleGetSpec : BaseSpecification<Entities.Sample>
+    public class SampleGetSpec : BaseSpecification<SampleEntity>
     {
         public SampleGetSpec(string property1)
             : base(r => r.property1 == property1)
