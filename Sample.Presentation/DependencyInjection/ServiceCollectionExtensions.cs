@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Sample.Presentation.Controllers;
-
-namespace Identity.Presentation.DependencyInjection
+namespace Sample.Presentation.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {

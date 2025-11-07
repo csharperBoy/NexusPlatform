@@ -1,6 +1,4 @@
-﻿using Audit.Domain.Entities;
-using Audit.Infrastructure.Data;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
 using Core.Domain.Interfaces;
 using Core.Infrastructure.Repositories;
