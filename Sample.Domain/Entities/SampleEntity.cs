@@ -1,10 +1,17 @@
-﻿namespace Sample.Domain.Entities
+﻿using Core.Domain.Common;
+
+namespace Sample.Domain.Entities
 {
-    public class SampleEntity
+    public class SampleEntity : AuditableEntity
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
-        public string property1 { get; set; }
-       
+        public string property1 { get; set; } = default!;
+
+        // مثال از تولید رویداد دامنه
+        public void MarkSample(string value)
+        {
+            property1 = value;
+            AddDomainEvent(new Sample.Domain.Events.SampleActionEvent(value));
+        }
     }
 
 }

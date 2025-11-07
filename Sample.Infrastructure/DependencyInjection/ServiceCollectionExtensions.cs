@@ -27,6 +27,7 @@ namespace Sample.Infrastructure.DependencyInjection
             });
             services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
 
+            services.AddHostedService<ModuleInitializer>();
             // Resolve از DI
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();

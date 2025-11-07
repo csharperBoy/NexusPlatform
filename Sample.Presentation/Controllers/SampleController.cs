@@ -7,7 +7,7 @@ using Sample.Application.Interfaces;
 namespace Sample.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/identity/[controller]")]
+    [Route("api/sample/[controller]")]
     public class SampleController : ControllerBase
     {
         private readonly IMediator _mediator;

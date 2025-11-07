@@ -21,6 +21,7 @@ namespace Core.Infrastructure.DependencyInjection
                 {
                     $"{module.Name}_AddInfrastructure",
                     $"{module.Name}_AddApplication",
+                    $"{module.Name}_AddDomain",
                     $"{module.Name}_AddPresentation",
                     $"{module.Name}_AddHealthChecks"
                 };
@@ -80,6 +81,7 @@ namespace Core.Infrastructure.DependencyInjection
             var candidateAssemblies = new[]
             {
                 $"{moduleName}.Infrastructure",
+                $"{moduleName}.Domain",
                 $"{moduleName}.Application",
                 $"{moduleName}.Presentation"
             };

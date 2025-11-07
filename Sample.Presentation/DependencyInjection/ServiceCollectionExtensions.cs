@@ -5,7 +5,7 @@ namespace Sample.Presentation.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Identity_AddPresentation(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Sample_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers()
                 .AddApplicationPart(typeof(SampleController).Assembly)
