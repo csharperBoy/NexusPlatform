@@ -1,4 +1,4 @@
-﻿using Core.Domain.Events;
+﻿using Identity.Shared.Events;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Notification.Application.EventHandlers;

@@ -5,7 +5,7 @@ using Sample.Application.Commands;
 using Sample.Application.DTOs;
 using Sample.Application.Interfaces;
 
-namespace Sample.Application.Handlers
+namespace Sample.Application.Handlers.Commands
 {
     public class SampleApiCommandHandler : IRequestHandler<SampleApiCommand, Result<SampleApiResponse>>
     {

@@ -3,13 +3,13 @@ using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Common;
-using Core.Domain.Events;
 using FluentAssertions;
 using Identity.Application.DTOs;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Configuration;
 using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Services;
+using Identity.Shared.Events;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -81,7 +81,7 @@ namespace Identity.Test
 
             // ایونت منتشر شده
             outbox.Verify(o => o.AddEventsAsync(
-                It.Is<IEnumerable<IDomainEvent>>(evts => evts.Any(e => e is Core.Domain.Events.UserRegisteredEvent))),
+                It.Is<IEnumerable<IDomainEvent>>(evts => evts.Any(e => e is UserRegisteredEvent))),
                 Times.Once);
 
             // توکن ساخته شده

@@ -1,7 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
-using Core.Domain.Events;
 using Core.Shared.Results;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
@@ -9,6 +8,7 @@ using Identity.Domain.Entities;
 using Identity.Domain.Specifications;
 using Identity.Infrastructure.Configuration;
 using Identity.Infrastructure.Data;
+using Identity.Shared.Events;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

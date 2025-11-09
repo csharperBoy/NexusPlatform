@@ -1,4 +1,4 @@
-﻿using Core.Domain.Events;
+﻿using Identity.Shared.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Notification.Application.Interfaces;

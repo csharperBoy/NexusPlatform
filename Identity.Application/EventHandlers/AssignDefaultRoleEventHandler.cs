@@ -1,5 +1,5 @@
-﻿using Core.Domain.Events;
-using Identity.Application.Interfaces;
+﻿using Identity.Application.Interfaces;
+using Identity.Shared.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

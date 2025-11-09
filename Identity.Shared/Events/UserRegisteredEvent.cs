@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Domain.Events
+namespace Identity.Shared.Events
 {
     public class UserRegisteredEvent : IDomainEvent
     {

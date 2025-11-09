@@ -1,5 +1,4 @@
-﻿using Core.Domain.Events;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Registry;
