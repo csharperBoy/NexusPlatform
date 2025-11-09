@@ -14,9 +14,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Sample.Test.Services
 {
+    /*
+     📌 SampleServiceTests
+     ---------------------
+     این کلاس تست واحد (Unit Test) برای SampleService است.
+     هدف آن اطمینان از صحت رفتار سرویس Command در سناریوهای مختلف است.
+
+     ✅ نکات کلیدی:
+     - از Moq برای شبیه‌سازی وابستگی‌ها استفاده می‌کنیم:
+       1. IRepository → شبیه‌سازی عملیات CRUD روی دیتابیس.
+       2. IUnitOfWork → شبیه‌سازی ذخیره تغییرات و Outbox.
+       3. ICurrentUserService → شبیه‌سازی اطلاعات کاربر فعلی.
+       4. ICacheService → شبیه‌سازی کش و invalidation.
+       5. ILogger → شبیه‌سازی لاگ.
+     - سرویس اصلی (ISampleService) با این Mockها ساخته می‌شود.
+     - دو تست اصلی وجود دارد:
+       1. بررسی افزودن موجودیت و ذخیره تغییرات.
+       2. بررسی افزودن موجودیت، ذخیره تغییرات و پاک کردن کش.
+
+     📌 نتیجه:
+     این تست‌ها تضمین می‌کنند که SampleService هم از نظر منطق نوشتن
+     و هم از نظر مدیریت کش درست کار می‌کند.
+    */
+
     public class SampleServiceTests
     {
         private readonly Mock<IRepository<SampleDbContext, SampleEntity, Guid>> _repositoryMock;
@@ -35,6 +57,7 @@ namespace Sample.Test.Services
             _cacheMock = new Mock<ICacheService>();
             _loggerMock = new Mock<ILogger<SampleService>>();
 
+            // 📌 ساخت سرویس اصلی با Mockها
             _service = new SampleService(
                 _repositoryMock.Object,
                 _uowMock.Object,
@@ -47,6 +70,12 @@ namespace Sample.Test.Services
         [Fact]
         public async Task SampleApiMethodAsync_Should_AddEntity_And_SaveChanges()
         {
+            /*
+             📌 هدف تست:
+             بررسی اینکه متد SampleApiMethodAsync یک موجودیت جدید اضافه می‌کند
+             و تغییرات را ذخیره می‌کند.
+             */
+
             // Arrange
             var request = new SampleApiRequest("value1", "value2");
 
@@ -62,6 +91,12 @@ namespace Sample.Test.Services
         [Fact]
         public async Task SampleApiMethodWithCacheAsync_Should_AddEntity_SaveChanges_And_InvalidateCache()
         {
+            /*
+             📌 هدف تست:
+             بررسی اینکه متد SampleApiMethodWithCacheAsync علاوه بر افزودن موجودیت و ذخیره تغییرات،
+             کش مرتبط با property1 را پاک می‌کند.
+             */
+
             // Arrange
             var request = new SampleApiRequest("value1", "value2");
 
