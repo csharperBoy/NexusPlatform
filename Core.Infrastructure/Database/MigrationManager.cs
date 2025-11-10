@@ -3,9 +3,64 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection; // استفاده از Microsoft.Data.SqlClient
-
 namespace Core.Infrastructure.Database
 {
+    /*
+     📌 MigrationManager
+     -------------------
+     این کلاس پیاده‌سازی اینترفیس IMigrationManager است و مسئول مدیریت **Database Migrations**
+     در EF Core می‌باشد. هدف آن اجرای خودکار Migrationها، مدیریت خطاها و افزایش قابلیت اطمینان
+     در فرآیند به‌روزرسانی دیتابیس است.
+
+     ✅ نکات کلیدی:
+     - وابستگی‌ها:
+       • IServiceProvider → برای ساخت Scope و Resolve کردن DbContext.
+       • ILogger<MigrationManager> → برای لاگ‌گذاری وضعیت و خطاها.
+
+     - MigrateAsync<TContext>:
+       • اجرای Migrationها با مکانیزم Retry (حداکثر ۳ بار).
+       • مدیریت خطاها با دسته‌بندی (ErrorType).
+       • در صورت خطاهای موقت (Transient) → Retry با Delay افزایشی (Exponential Backoff).
+       • در صورت خطاهای غیرقابل رفع (AlreadyExists, Permission) → عدم Retry.
+
+     - AttemptMigration<TContext>:
+       • بررسی اتصال به دیتابیس (CanConnectAsync).
+       • در صورت عدم دسترسی → ایجاد دیتابیس جدید (EnsureCreatedAsync).
+       • بررسی Migrationهای Pending.
+       • اجرای MigrateAsync در صورت وجود Migrationهای جدید.
+       • لاگ‌گذاری وضعیت قبل و بعد از اعمال Migrationها.
+
+     - ClassifyError(Exception ex):
+       • دسته‌بندی خطاها به Transient, AlreadyExists, Permission, Unknown.
+
+     - ShouldRetry / CalculateDelay:
+       • تصمیم‌گیری برای Retry بر اساس نوع خطا.
+       • محاسبه Delay مناسب برای Retry.
+
+     - HasPendingMigrationsAsync<TContext>:
+       • بررسی وجود Migrationهای اعمال‌نشده.
+       • در صورت عدم اتصال یا خطا → true برمی‌گرداند (یعنی دیتابیس نیاز به بررسی دارد).
+
+     - FinalMigrationAttempt<TContext>:
+       • آخرین تلاش برای اجرای Migrationها پس از شکست Retryها.
+       • اگر باز هم خطا رخ دهد، لاگ Error ثبت می‌شود.
+
+     - IsTransientError(Exception ex):
+       • بررسی خطاهای موقت (مثل Timeout, Network, Deadlock).
+       • بررسی کدهای خطای SQL Server که معمولاً موقت هستند.
+
+     🛠 جریان کار:
+     1. در زمان راه‌اندازی برنامه، MigrateAsync فراخوانی می‌شود.
+     2. اگر دیتابیس در دسترس نباشد → ایجاد می‌شود.
+     3. اگر Migrationهای Pending وجود داشته باشد → اعمال می‌شوند.
+     4. در صورت خطا، Retry با Delay مناسب انجام می‌شود.
+     5. در نهایت، اگر همه تلاش‌ها شکست بخورد → FinalMigrationAttempt اجرا می‌شود.
+
+     📌 نتیجه:
+     این کلاس پایه‌ی مکانیزم **Resilient Database Migration** در معماری ماژولار است
+     و تضمین می‌کند که دیتابیس همیشه با مدل دامنه همگام باشد، حتی در شرایط خطاهای موقت.
+    */
+
     public class MigrationManager : IMigrationManager
     {
         private readonly IServiceProvider _serviceProvider;
@@ -89,6 +144,7 @@ namespace Core.Infrastructure.Database
                 pendingList.Count, typeof(TContext).Name);
         }
 
+        // 📌 دسته‌بندی خطاها
         private ErrorType ClassifyError(Exception ex)
         {
             if (IsTransientError(ex))

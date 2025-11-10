@@ -19,14 +19,58 @@ using Core.Infrastructure.Resilience;
 using Microsoft.EntityFrameworkCore;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.Security;
-
 namespace Core.Infrastructure.DependencyInjection
 {
+    /*
+     📌 ServiceCollectionExtensions
+     ------------------------------
+     این کلاس مجموعه‌ای از **Extension Methods** برای IServiceCollection است
+     که وظیفه‌ی ثبت سرویس‌های زیرساختی (Infrastructure Services) در DI Container را بر عهده دارد.
+
+     ✅ نکات کلیدی:
+     - Core_AddInfrastructure:
+       • نقطه‌ی ورودی برای ثبت همه‌ی سرویس‌های زیرساختی.
+       • شامل موارد زیر:
+         1. Swagger → برای مستندسازی و تست API.
+         2. CorsSettings / HealthCheckSettings → تنظیمات امنیتی و مانیتورینگ.
+         3. HttpContextAccessor → دسترسی به HttpContext در سرویس‌ها.
+         4. CurrentUserService → سرویس برای شناسایی کاربر جاری.
+         5. MigrationManager → مدیریت Migrationهای دیتابیس.
+         6. Repositoryها:
+            - IRepository<,,> → پیاده‌سازی عمومی با EF Core.
+            - ISpecificationRepository<,> → پیاده‌سازی با Specification Pattern.
+         7. LoggingServices → پیکربندی Serilog برای لاگ‌گذاری.
+         8. Cors → پیکربندی سیاست‌های CORS بر اساس تنظیمات.
+         9. ValidationBehavior → Pipeline Behavior برای اعتبارسنجی درخواست‌ها (MediatR).
+         10. ResiliencePolicies → سیاست‌های تحمل خطا (Resilience).
+         11. MediatR → ثبت همه‌ی Handlerها از Assemblies جاری.
+
+     - ConfigureCors:
+       • خواندن تنظیمات CORS از IConfiguration.
+       • تعریف سیاست پیش‌فرض با Origins مجاز.
+       • اجازه‌ی Headerها، Methodها و Credentials.
+
+     - AddLoggingServices:
+       • پیکربندی Serilog به عنوان Logger اصلی.
+       • پاک‌سازی Providerهای پیش‌فرض و جایگزینی با Serilog.
+       • استفاده از تنظیمات موجود در IConfiguration.
+
+     🛠 جریان کار:
+     1. در زمان راه‌اندازی اپلیکیشن (Program.cs یا Startup.cs)، این متد فراخوانی می‌شود:
+        services.Core_AddInfrastructure(Configuration);
+     2. همه‌ی سرویس‌های زیرساختی در DI ثبت می‌شوند.
+     3. سایر لایه‌ها (Application, Domain, Presentation) می‌توانند این سرویس‌ها را استفاده کنند.
+
+     📌 نتیجه:
+     این کلاس پایه‌ی مکانیزم **Infrastructure Bootstrapping** در معماری ماژولار است
+     و تضمین می‌کند که سرویس‌های زیرساختی به صورت استاندارد و یکپارچه در DI Container ثبت شوند.
+    */
+
     public static class ServiceCollectionExtensions
     {
         public static IServiceCollection Core_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-
+            // 📌 ثبت سرویس‌های زیرساختی
             services.AddSwaggerGen();
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
@@ -48,6 +92,8 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
+
+        // 📌 پیکربندی CORS
         private static void ConfigureCors(IServiceCollection services, IConfiguration configuration)
         {
             var corsSettings = configuration.GetSection("Cors").Get<CorsSettings>();
@@ -64,6 +110,8 @@ namespace Core.Infrastructure.DependencyInjection
                 });
             });
         }
+
+        // 📌 پیکربندی Logging با Serilog
         private static IServiceCollection AddLoggingServices(this IServiceCollection services, IConfiguration configuration)
         {
             Log.Logger = SerilogConfiguration.CreateConfiguration(configuration).CreateLogger();
@@ -76,6 +124,5 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
-        
     }
 }

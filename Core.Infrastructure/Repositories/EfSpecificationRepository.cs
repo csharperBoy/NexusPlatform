@@ -6,13 +6,56 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace Core.Infrastructure.Repositories
 {
-    public class EfSpecificationRepository<TDbContext, TEntity, TKey> : ISpecificationRepository< TEntity, TKey>
+    /*
+     📌 EfSpecificationRepository<TDbContext, TEntity, TKey>
+     -------------------------------------------------------
+     این کلاس پیاده‌سازی عمومی (Generic Implementation) برای **Specification Repository Pattern**
+     با استفاده از EF Core است. هدف آن جداسازی منطق Queryهای پیچیده از سرویس‌ها و
+     فراهم کردن یک API استاندارد برای اعمال Specification روی موجودیت‌ها می‌باشد.
+
+     ✅ نکات کلیدی:
+     - Generic Parameters:
+       • TDbContext → نوع DbContext که دیتابیس را مدیریت می‌کند.
+       • TEntity → نوع موجودیت (Entity) که روی آن عملیات انجام می‌شود.
+       • TKey → نوع کلید اصلی موجودیت (مثلاً int, Guid).
+
+     - سازنده:
+       • DbContext تزریق می‌شود و DbSet<TEntity> ساخته می‌شود.
+       • این طراحی باعث می‌شود Repository مستقل از نوع موجودیت باشد.
+
+     - متدها:
+       • GetBySpecAsync → دریافت اولین موجودیت که با Specification مطابقت دارد.
+       • ListBySpecAsync → دریافت لیست موجودیت‌ها بر اساس Specification.
+       • FindBySpecAsync → دریافت لیست موجودیت‌ها + شمارش کل (برای Paging).
+       • CountBySpecAsync → شمارش موجودیت‌ها بر اساس Specification.
+       • ApplySpecification → اعمال Criteria, Includes, IncludeFunctions, IncludeStrings و Ordering روی Query.
+       • ApplyOrdering → اعمال OrderBy, OrderByDescending و ThenOrderBy روی Query.
+
+     - ویژگی‌ها:
+       • پشتیبانی از Criteria (فیلترها).
+       • پشتیبانی از Includes (برای eager loading).
+       • پشتیبانی از IncludeFunctions (برای custom include).
+       • پشتیبانی از IncludeStrings (برای include با نام رشته‌ای).
+       • پشتیبانی از Paging (Skip/Take).
+       • پشتیبانی از Ordering و ThenOrdering.
+
+     🛠 جریان کار:
+     1. سرویس‌های Application یا Domain یک Specification تعریف می‌کنند (مثلاً "کاربران فعال با نقش Admin").
+     2. این Specification شامل Criteria, Includes و Ordering است.
+     3. Repository این Specification را اعمال می‌کند و Query نهایی ساخته می‌شود.
+     4. نتیجه به صورت لیست، موجودیت واحد یا همراه با شمارش کل بازگردانده می‌شود.
+
+     📌 نتیجه:
+     این کلاس پایه‌ی مکانیزم **Specification Pattern with EF Core** در معماری ماژولار است
+     و تضمین می‌کند که Queryهای پیچیده به صورت قابل تست، قابل استفاده مجدد و قابل نگهداری مدیریت شوند.
+    */
+
+    public class EfSpecificationRepository<TDbContext, TEntity, TKey> : ISpecificationRepository<TEntity, TKey>
         where TDbContext : DbContext
-         where TEntity : class
-         where TKey : IEquatable<TKey>
+        where TEntity : class
+        where TKey : IEquatable<TKey>
     {
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
@@ -35,7 +78,7 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindBySpecAsync(ISpecification<TEntity> specification)
         {
-            // Count with filter only to avoid heavy includes
+            // 📌 شمارش فقط با Criteria برای جلوگیری از بارگذاری سنگین Includes
             var countQuery = _dbSet.AsQueryable();
             if (specification.Criteria != null)
                 countQuery = countQuery.Where(specification.Criteria);
@@ -86,9 +129,9 @@ namespace Core.Infrastructure.Repositories
             {
                 foreach (var (keySelector, isDescending) in specification.ThenOrderBy)
                 {
-                    orderedQuery = isDescending ?
-                        orderedQuery.ThenByDescending(keySelector) :
-                        orderedQuery.ThenBy(keySelector);
+                    orderedQuery = isDescending
+                        ? orderedQuery.ThenByDescending(keySelector)
+                        : orderedQuery.ThenBy(keySelector);
                 }
                 return orderedQuery;
             }
