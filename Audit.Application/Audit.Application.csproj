@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Handlers\Commands\" />
+  </ItemGroup>
+
 </Project>

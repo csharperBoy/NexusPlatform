@@ -9,6 +9,6 @@ namespace Audit.Application.Interfaces
 {
     public interface IAuditQueryService
     {
-        Task<IEnumerable<AuditLog>> GetRecentLogsAsync(int count = 100);
+        Task<IReadOnlyList<AuditLog>> GetRecentLogsAsync(int count = 100);
     }
 }

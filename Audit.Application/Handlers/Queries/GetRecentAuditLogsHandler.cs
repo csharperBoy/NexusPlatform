@@ -2,6 +2,7 @@
 using Audit.Domain.Entities;
 using Audit.Domain.Specifications;
 using Core.Application.Abstractions;
+using Core.Shared.Results;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -9,10 +10,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Audit.Application.Handlers
+namespace Audit.Application.Handlers.Queries
 {
     public class GetRecentAuditLogsHandler
-    : IRequestHandler<GetRecentAuditLogsQuery, IEnumerable<AuditLog>>
+    //: IRequestHandler<GetRecentAuditLogsQuery, IEnumerable<AuditLog>>
+        
+       : IRequestHandler<GetRecentAuditLogsQuery, Result<IReadOnlyList<AuditLog>>>
+
     {
         private readonly ISpecificationRepository< AuditLog, Guid> _repo;
 
@@ -21,10 +25,11 @@ namespace Audit.Application.Handlers
             _repo = repo;
         }
 
-        public async Task<IEnumerable<AuditLog>> Handle(GetRecentAuditLogsQuery request, CancellationToken ct)
+
+       async Task<Result<IReadOnlyList<AuditLog>>> IRequestHandler<GetRecentAuditLogsQuery, Result<IReadOnlyList<AuditLog>>>.Handle(GetRecentAuditLogsQuery request, CancellationToken cancellationToken)
         {
             var spec = new RecentAuditLogsSpec(request.Count);
-            return await _repo.ListBySpecAsync(spec);
+            return await _repo.GetBySpecAsync(spec);
         }
     }
 

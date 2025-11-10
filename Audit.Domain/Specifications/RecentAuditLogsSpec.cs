@@ -10,10 +10,12 @@ namespace Audit.Domain.Specifications
 {
     public class RecentAuditLogsSpec : BaseSpecification<AuditLog>
     {
-        public RecentAuditLogsSpec(int count)
+        public RecentAuditLogsSpec(int page = 1, int pageSize = 10)
         {
             ApplyOrderByDescending(l => l.Timestamp);
-            ApplyPaging(0, count);
+
+            var skip = (page - 1) * pageSize;
+            ApplyPaging(skip, pageSize);
         }
     }
 }
