@@ -1,4 +1,5 @@
 ﻿using Audit.Domain.Entities;
+using Core.Shared.Results;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,6 @@ namespace Audit.Application.Interfaces
 {
     public interface IAuditQueryService
     {
-        Task<IReadOnlyList<AuditLog>> GetRecentLogsAsync(int count = 100);
+        Task<Result<IReadOnlyList<AuditLog>>> GetRecentLogsAsync(int page = 1, int pageSize = 100);
     }
 }

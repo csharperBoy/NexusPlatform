@@ -32,17 +32,16 @@ namespace Audit.Infrastructure.Services
         }
 
 
-        public async Task<IReadOnlyList<AuditLog>> GetRecentLogsAsync(int page = 1, int pageSize = 100)
+        public async Task<Result<IReadOnlyList<AuditLog>>> GetRecentLogsAsync(int page = 1, int pageSize = 100)
         {
             var spec = new RecentAuditLogsSpec(page,pageSize);
             var (items, totalCount) = await _repository.FindBySpecAsync(spec);
-
 
             // ثبت لاگ
             _logger.LogInformation("Spec results: Total={Total}, Page={Page}, PageSize={PageSize}, Returned={Returned}",
                 totalCount, page, pageSize,0);
 
-            return Result<IReadOnlyList<AuditLog>>.Ok(paged);
+            return Result<IReadOnlyList<AuditLog>>.Ok(items.ToList());
         }
     }
 

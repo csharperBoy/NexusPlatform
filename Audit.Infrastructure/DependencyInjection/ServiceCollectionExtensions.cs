@@ -1,6 +1,9 @@
-﻿using Audit.Domain.Entities;
+﻿using Audit.Application.Interfaces;
+using Audit.Domain.Entities;
 using Audit.Infrastructure.Data;
+using Audit.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Events;
 using Core.Domain.Interfaces;
 using Core.Infrastructure.Repositories;
@@ -26,6 +29,8 @@ namespace Audit.Infrastructure.DependencyInjection
                 });
             });
             services.AddScoped<ISpecificationRepository<AuditLog, Guid>, EfSpecificationRepository<AuditDbContext, AuditLog, Guid>>();
+            services.AddScoped<IAuditService, AuditService>();
+            services.AddScoped<IAuditQueryService, AuditQueryService>();
 
             // Resolve از DI
             var registration = services.BuildServiceProvider()

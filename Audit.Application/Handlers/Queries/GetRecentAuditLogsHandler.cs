@@ -1,4 +1,5 @@
-﻿using Audit.Application.Query;
+﻿using Audit.Application.Interfaces;
+using Audit.Application.Query;
 using Audit.Domain.Entities;
 using Audit.Domain.Specifications;
 using Core.Application.Abstractions;
@@ -18,18 +19,21 @@ namespace Audit.Application.Handlers.Queries
        : IRequestHandler<GetRecentAuditLogsQuery, Result<IReadOnlyList<AuditLog>>>
 
     {
-        private readonly ISpecificationRepository< AuditLog, Guid> _repo;
+        //private readonly ISpecificationRepository< AuditLog, Guid> _repo;
+        private readonly IAuditQueryService _service;
 
-        public GetRecentAuditLogsHandler(ISpecificationRepository<AuditLog, Guid> repo)
+        public GetRecentAuditLogsHandler(
+            //ISpecificationRepository<AuditLog, Guid> repo
+            IAuditQueryService service
+            )
         {
-            _repo = repo;
+            _service = service;
         }
 
 
        async Task<Result<IReadOnlyList<AuditLog>>> IRequestHandler<GetRecentAuditLogsQuery, Result<IReadOnlyList<AuditLog>>>.Handle(GetRecentAuditLogsQuery request, CancellationToken cancellationToken)
         {
-            var spec = new RecentAuditLogsSpec(request.Count);
-            return await _repo.GetBySpecAsync(spec);
+            return await _service.GetRecentLogsAsync(1,request.Count);
         }
     }
 
