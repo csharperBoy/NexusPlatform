@@ -58,6 +58,7 @@ namespace Identity.Infrastructure.DependencyInjection
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddDefaultTokenProviders();
 
+            services.AddScoped<ISpecificationRepository<RefreshToken, Guid>, EfSpecificationRepository<IdentityDbContext, RefreshToken, Guid>>();
             // Outbox registration
             var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
             registration.AddOutboxProcessor<IdentityDbContext>(services);
