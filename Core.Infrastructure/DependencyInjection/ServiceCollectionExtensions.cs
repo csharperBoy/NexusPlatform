@@ -79,7 +79,7 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMigrationManager, MigrationManager>();
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
-            services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));
+            //services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));
 
             services.AddLoggingServices(configuration);
             ConfigureCors(services, configuration);

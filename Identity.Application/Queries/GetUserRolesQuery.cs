@@ -6,7 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Identity.Application.Commands
+namespace Identity.Application.Queries
 {
-    public record AssignRoleCommand(Guid UserId, string RoleName) : IRequest<Result>;
-  }
+    public record GetUserRolesQuery(Guid UserId) : IRequest<Result<IList<string>>>;
+
+}

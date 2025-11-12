@@ -33,11 +33,6 @@ namespace Sample.Application.DependencyInjection
             services.AddMediatR(cfg =>
                cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
 
-            // اضافه کردن Pipeline Behaviors برای همه Requestها
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
             return services;
         }
     }

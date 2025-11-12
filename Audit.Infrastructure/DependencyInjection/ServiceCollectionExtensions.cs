@@ -28,6 +28,8 @@ namespace Audit.Infrastructure.DependencyInjection
                     b.MigrationsHistoryTable("__AuditMigrationsHistory", "audit");
                 });
             });
+            services.AddScoped<IUnitOfWork<AuditDbContext>, EfUnitOfWork<AuditDbContext>>();
+
             services.AddScoped<ISpecificationRepository<AuditLog, Guid>, EfSpecificationRepository<AuditDbContext, AuditLog, Guid>>();
             services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IAuditQueryService, AuditQueryService>();

@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Identity.Application.Handlers
+namespace Identity.Application.Handlers.Commands
 {
     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, Result<AuthResponse>>
     {

@@ -12,6 +12,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BackEnd", "BackEnd", "{9189
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D385AB44-BCEE-4B05-92E6-7A023C73D8C9}"
+	ProjectSection(SolutionItems) = preProject
+		Core.Application\DependencyInjection\ServiceCollectionExtensions.cs = Core.Application\DependencyInjection\ServiceCollectionExtensions.cs
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{16B897DC-B605-42EF-9154-779F6C5698B1}"
 EndProject
