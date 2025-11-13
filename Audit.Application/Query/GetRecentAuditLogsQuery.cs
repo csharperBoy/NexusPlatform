@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 
 namespace Audit.Application.Query
 {
-    public record GetRecentAuditLogsQuery(int Count) //: IRequest<IEnumerable<AuditLog>>;
-    : IRequest<Result<IReadOnlyList<AuditLog>>>;
+    public record GetRecentAuditLogsQuery(int Count) : IRequest<Result<IReadOnlyList<AuditLog>>>;
 
 }

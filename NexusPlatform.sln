@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BackEnd", "BackEnd", "{91890010-50D0-450C-B44A-8199E65B5A86}"
 	ProjectSection(SolutionItems) = preProject
 		Export-Modules.ps1 = Export-Modules.ps1
+		Export-Projects.ps1 = Export-Projects.ps1
 		Export-SolutionTree.ps1 = Export-SolutionTree.ps1
 	EndProjectSection
 EndProject

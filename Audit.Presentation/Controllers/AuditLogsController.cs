@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Audit.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/audit/[controller]")]
     public class AuditLogsController : ControllerBase
     {
         private readonly IMediator _mediator;
