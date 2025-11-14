@@ -1,4 +1,5 @@
-﻿using Core.Domain.ValueObjects;
+﻿using Core.Domain.Interfaces;
+using Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -15,42 +16,74 @@ namespace Identity.Domain.Entities
 
     RefreshTokens برای مدیریت سشن‌ها.
      */
-    public class ApplicationUser : IdentityUser<Guid>
+    public class ApplicationUser : IdentityUser<Guid>, IAggregateRoot
     {
-        // لینک به Person اصلی
         public Guid FkPersonId { get; private set; }
 
-        public string? FullName { get; set; }
-        public bool IsActive { get; set; } = true;
+        public FullName? FullName { get; private set; }
+        public bool IsActive { get; private set; } = true;
 
-        // اطلاعات اضافی برای کنترل امنیت
-        public string? LastLoginIp { get; set; }
-        public DateTime? LastLoginTime { get; set; }
-        public bool IsLocked { get; set; }
+        public string? LastLoginIp { get; private set; }
+        public DateTime? LastLoginTime { get; private set; }
+        public bool IsLocked { get; private set; }
 
-        // برای audit
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; private set; }
 
-        // Navigation Properties
-        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
-        public ICollection<UserSession> Sessions { get; set; } = new List<UserSession>();
-        // Constructor
-        protected ApplicationUser() { }
+        public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
+        public ICollection<UserSession> Sessions { get; private set; } = new List<UserSession>();
+
+        protected ApplicationUser() : base() { }
 
         public ApplicationUser(Guid personId, string userName, string email)
+            : base(userName)
         {
             FkPersonId = personId;
             UserName = userName;
             Email = email;
-            EmailConfirmed = true; // بعداً از طریق ایمیل تأیید شود
+            EmailConfirmed = true;
+
+            NormalizedUserName = userName.ToUpperInvariant();
+            NormalizedEmail = email.ToUpperInvariant();
         }
 
-        public void UpdateLoginInfo(string ipAddress)
+        private void Touch() => UpdatedAt = DateTime.UtcNow;
+
+        public void SetFullName(FullName fullName)
         {
-            LastLoginIp = ipAddress;
-            LastLoginTime = DateTime.UtcNow;
+            FullName = fullName;
+            Touch();
         }
 
+        public void UpdateLoginInfo(string ip)
+        {
+            LastLoginIp = ip;
+            LastLoginTime = DateTime.UtcNow;
+            Touch();
+        }
+
+        public void Lock()
+        {
+            IsLocked = true;
+            Touch();
+        }
+
+        public void Unlock()
+        {
+            IsLocked = false;
+            Touch();
+        }
+
+        public void Deactivate()
+        {
+            IsActive = false;
+            Touch();
+        }
+
+        public void Activate()
+        {
+            IsActive = true;
+            Touch();
+        }
     }
 }

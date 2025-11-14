@@ -1,16 +1,9 @@
-﻿using Authorization.Infrastructure.Data;
+﻿using Identity.Infrastructure.Data;
 using Core.Infrastructure.Database;
-using Core.Infrastructure.Logging;
-using Core.Infrastructure.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {
@@ -29,15 +22,16 @@ namespace Authorization.Infrastructure.DependencyInjection
             var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-            var dbContextType = typeof(AuthorizationDbContext);
 
+
+            var dbContextType = typeof(AuthorizationDbContext);
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
             try
             {
                 logger.LogInformation("🚀 Starting database migrations...");
 
-               
+
                 try
                 {
                     logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
@@ -75,6 +69,5 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             return app;
         }
-
     }
 }

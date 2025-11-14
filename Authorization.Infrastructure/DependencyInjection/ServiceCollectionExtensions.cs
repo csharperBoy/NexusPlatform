@@ -1,19 +1,28 @@
 ﻿using Authorization.Application.Interfaces;
-using Authorization.Infrastructure.Data;
-using Authorization.Infrastructure.Identity;
+using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
+using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
+using Identity.Application;
+using Identity.Application.Interfaces;
+using Identity.Domain.Entities;
+using Identity.Infrastructure.Configuration;
+using Identity.Infrastructure.Data;
+using Identity.Infrastructure.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+//using Microsoft.AspNetCore.Identity.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {
@@ -24,30 +33,27 @@ namespace Authorization.Infrastructure.DependencyInjection
             var conn = configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(AuthorizationDbContext).Assembly.GetName().Name;
 
-            // DbContext برای Roleها
-            services.AddDbContext<AuthorizationDbContext>(options =>
+            services.AddDataProtection();
+
+            // DbContext
+            services.AddDbContext<AuthorizationDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
                 {
                     b.MigrationsAssembly(migrationsAssembly);
-                    b.MigrationsHistoryTable("__AuthzMigrationsHistory", "authz");
+                    b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "authorization");
                 });
             });
+            // Outbox registration
+            var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
+            registration.AddOutboxProcessor<AuthorizationDbContext>(services);
 
-            // Identity فقط برای Role
-            services.AddIdentityCore<IdentityUser<Guid>>() // فقط برای سازگاری
-                .AddRoles<ApplicationRole>()
-                .AddEntityFrameworkStores<AuthorizationDbContext>()
-                .AddDefaultTokenProviders();
-            //services.AddIdentity<IdentityUser<Guid>, ApplicationRole>(options => { })
-            //        .AddEntityFrameworkStores<AuthorizationDbContext>()
-            //        .AddDefaultTokenProviders();
+            services.AddHostedService<ModuleInitializer>();
 
-            // سرویس‌های Authorization
+            services.AddScoped<IPermissionService, PermissionService>();
 
-            services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
-            services.AddScoped<IRoleResolver, RoleResolver>();
+            // discover IPermissionDefinitionProvider via DI (modules register their providers)
+            services.AddHostedService<PermissionRegistrarHostedService>();
 
             return services;
         }

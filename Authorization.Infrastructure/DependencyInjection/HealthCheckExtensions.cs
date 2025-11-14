@@ -1,6 +1,7 @@
-﻿using Authorization.Infrastructure.Data;
+﻿using Identity.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;

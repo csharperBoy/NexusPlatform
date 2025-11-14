@@ -1,41 +1,38 @@
-﻿using Core.Domain.Common;
-using Core.Infrastructure.Database.Configurations;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Authorization.Domain.Entities;
+using Identity.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Authorization.Infrastructure.Identity;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-
-namespace Authorization.Infrastructure.Data
+namespace Identity.Infrastructure.Data
 {
-    // فقط Role-centric: جدول‌های نقش و RoleClaims
-    public class AuthorizationDbContext
-        : IdentityConte<ApplicationRole, Guid>
+    public class AuthorizationDbContext : DbContext
     {
-        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options) : base(options) { }
+        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
+            : base(options)
+        {
+        }
 
-        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+        public DbSet<Resource> Resources { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
+        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+        public DbSet<UserPermission> UserPermissions { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.HasDefaultSchema("authz");
-            builder.ApplyConfiguration(new OutboxMessageConfiguration("authz"));
+            builder.HasDefaultSchema("authorization");
 
-            // Role
-            builder.Entity<ApplicationRole>(b =>
-            {
-                b.ToTable("AspNetRoles", "authz");
-                b.Property(r => r.Description).HasMaxLength(500);
-            });
-
-            // RoleClaims
-            builder.Entity<IdentityRoleClaim<Guid>>().ToTable("AspNetRoleClaims", "authz");
-
-            // اگر می‌خواهی رابطه‌ی User↔Role داشته باشی (AspNetUserRoles)،
-            // می‌توانی جدول را در authz بسازی. توجه: FK بین اسکیمای authz و auth را یا به صورت غیر-اجرایی نگه دار یا اگر یک دیتابیس است، FK را تنظیم کن.
-            builder.Entity<IdentityUserRole<Guid>>().ToTable("AspNetUserRoles", "authz");
+            // apply configurations manually or by scanning assembly
+            builder.ApplyConfiguration(new Configurations.ResourceConfiguration());
+            builder.ApplyConfiguration(new Configurations.PermissionConfiguration());
+            builder.ApplyConfiguration(new Configurations.RolePermissionConfiguration());
+            builder.ApplyConfiguration(new Configurations.UserPermissionConfiguration());
         }
     }
 
