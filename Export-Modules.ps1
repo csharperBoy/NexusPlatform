@@ -49,8 +49,9 @@ foreach ($group in $modules) {
         # فایل‌های cs و فقط jsonهایی که با appsettings شروع می‌شوند
         Get-ChildItem -Path $proj.Path -Recurse |
             Where-Object {
-                $_.Extension -eq ".cs" -or
-                ($_.Extension -eq ".json" -and $_.BaseName -like "appsettings*")
+               ($_.Extension -eq ".cs" -or
+             ($_.Extension -eq ".json" -and $_.BaseName -like "appsettings*")) -and
+            ($_.FullName -notmatch "\\bin\\" -and $_.FullName -notmatch "\\obj\\")
             } |
             Sort-Object FullName |                # برای خروجی پایدار و قابل مقایسه
             ForEach-Object {

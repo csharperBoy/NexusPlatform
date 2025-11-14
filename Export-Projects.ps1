@@ -10,7 +10,6 @@
 #Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned # دائم
 
 
-
 param(
     [string]$Root = "",        # مسیر ریشه پروژه
     [string]$Output = "exports"   # مسیر خروجی
@@ -39,8 +38,9 @@ foreach ($proj in $projects) {
     # فایل‌های cs و فقط jsonهایی که با appsettings شروع می‌شوند
     Get-ChildItem -Path $proj.FullName -Recurse |
         Where-Object {
-            $_.Extension -eq ".cs" -or
-            ($_.Extension -eq ".json" -and $_.BaseName -like "appsettings*")
+            ($_.Extension -eq ".cs" -or
+             ($_.Extension -eq ".json" -and $_.BaseName -like "appsettings*")) -and
+            ($_.FullName -notmatch "\\bin\\" -and $_.FullName -notmatch "\\obj\\")
         } |
         Sort-Object FullName |
         ForEach-Object {
