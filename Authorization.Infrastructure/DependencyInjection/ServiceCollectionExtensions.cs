@@ -1,4 +1,5 @@
 ﻿using Authorization.Application.Interfaces;
+using Authorization.Infrastructure.Authorization;
 using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
@@ -14,6 +15,7 @@ using Identity.Infrastructure.Data;
 using Identity.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 //using Microsoft.AspNetCore.Identity.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -51,6 +53,8 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddHostedService<ModuleInitializer>();
 
             services.AddScoped<IPermissionService, PermissionService>();
+            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
             // discover IPermissionDefinitionProvider via DI (modules register their providers)
             services.AddHostedService<PermissionRegistrarHostedService>();
