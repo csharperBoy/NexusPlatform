@@ -1,6 +1,8 @@
-﻿using Authorization.Application.Interfaces;
+﻿using Authorization.Application.DTOs;
+using Authorization.Application.Interfaces;
 using Authorization.Application.Security;
 using Authorization.Domain.Entities;
+using Core.Application.Abstractions;
 using Identity.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,119 +17,198 @@ namespace Authorization.Infrastructure.Services
 {
     public class PermissionService : IPermissionService
     {
-        private readonly AuthorizationDbContext _db;
+        private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissions;
+        private readonly IRepository<AuthorizationDbContext, RolePermission, Guid>  _rolePermissions;
+        private readonly IRepository<AuthorizationDbContext, UserPermission, Guid> _userPermissions;
+        private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resources;
         private readonly IMemoryCache _cache;
-        private readonly ILogger<PermissionService> _logger;
-        private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(30);
 
-        public PermissionService(AuthorizationDbContext db, IMemoryCache cache, ILogger<PermissionService> logger)
+        private const string USER_CACHE_PREFIX = "perm_user_";
+        private const string ROLE_CACHE_PREFIX = "perm_role_";
+
+        public PermissionService(
+             IRepository<AuthorizationDbContext, Permission, Guid> permissions,
+             IRepository<AuthorizationDbContext, RolePermission, Guid> rolePermissions,
+             IRepository<AuthorizationDbContext, UserPermission, Guid> userPermissions,
+             IRepository<AuthorizationDbContext, Resource, Guid> resources,
+             IMemoryCache cache
         {
-            _db = db;
+            _permissions = permissions;
+            _rolePermissions = rolePermissions;
+            _userPermissions = userPermissions;
+            _resources = resources;
             _cache = cache;
-            _logger = logger;
         }
+
+        // ===================================================================
+        // 1) Permission Registration (Old API) -------------------------------
+        // ===================================================================
 
         public async Task RegisterPermissionsAsync(IEnumerable<PermissionDescriptor> descriptors, CancellationToken ct = default)
         {
-            // upsert resources + permissions transactionally
-            foreach (var d in descriptors)
+            var all = descriptors.ToList();
+
+            foreach (var d in all)
             {
-                // ensure resource exists (resource code can be like "Identity.Users")
-                var resource = await _db.Resources.FirstOrDefaultAsync(r => r.Code == d.ResourceCode, ct);
+                var exists = await _permissions
+                    .AsQueryable()
+                    .AnyAsync(p => p.Code == d.Code, ct);
+
+                if (exists)
+                    continue;
+
+                // Ensure Resource exists
+                var resource = await _resources.AsQueryable()
+                    .FirstOrDefaultAsync(r => r.Code == d.ResourceCode, ct);
+
                 if (resource == null)
                 {
-                    resource = new Resource
-                    {
-                        Id = Guid.NewGuid(),
-                        Code = d.ResourceCode,
-                        Name = d.ResourceCode,
-                        Type = "Action"
-                    };
-                    _db.Resources.Add(resource);
+                    resource = new Resource(d.ResourceCode, d.ResourceName, d.ResourceType, d.ParentResourceCode);
+                    await _resources.AddAsync(resource, ct);
                 }
 
-                var existingPerm = await _db.Permissions.FirstOrDefaultAsync(p => p.Code == d.Code, ct);
-                if (existingPerm == null)
-                {
-                    var perm = new Permission
-                    {
-                        Id = Guid.NewGuid(),
-                        Code = d.Code,
-                        Name = d.Name,
-                        Resource = resource
-                    };
-                    _db.Permissions.Add(perm);
-                }
-                else
-                {
-                    existingPerm.Name = d.Name;
-                    existingPerm.ResourceId = resource.Id;
-                }
+                var p = new Permission(resource.Id, d.PermissionCode, d.PermissionName, d.Description);
+                await _permissions.AddAsync(p, ct);
             }
-
-            await _db.SaveChangesAsync(ct);
-            _logger.LogInformation("Registered {Count} permissions", descriptors.Count());
         }
+
+        // ===================================================================
+        // 2) Effective User Permissions (Old API + New Combined) -------------
+        // ===================================================================
 
         public async Task<IEnumerable<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken ct = default)
         {
-            var cacheKey = $"auth:user:{userId}:perms";
-            if (_cache.TryGetValue<IEnumerable<string>>(cacheKey, out var cached))
-                return cached!;
+            return await _cache.GetOrCreateAsync($"{USER_CACHE_PREFIX}{userId}", async entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
 
-            // get role ids for the user from AspNetUserRoles table in Identity DB
-            // NOTE: This service assumes Identity tables are in a different DbContext
-            // So we query AspNetUserRoles via raw query or a shared repo. Here we'll perform a raw SQL join
-            // to read role ids using a connection (simplest is to rely on IdentityDbContext in caller).
-            // For now: we only collect role-based permissions present in this Authorization DB (role ids must match)
-            var rolePerms = await (from rp in _db.RolePermissions
-                                   join p in _db.Permissions on rp.PermissionId equals p.Id
-                                   select new { rp.RoleId, PermissionCode = p.Code })
-                                  .ToListAsync(ct);
+                // role permissions
+                var rolePermCodes = await (
+                    from rp in _rolePermissions.AsQueryable()
+                    join p in _permissions.AsQueryable() on rp.PermissionId equals p.Id
+                    select p.Code
+                ).ToListAsync(ct);
 
-            // rolePerms grouped by role - caller will filter by real user roles; here we return all role mappings
-            // For simplicity in this MVP, we will assume the caller (AuthorizationPolicyHandler) will check user roles and combine.
-            var allRolePermissionCodes = rolePerms.Select(x => x.PermissionCode).Distinct().ToList();
+                // user overrides
+                var overrides = await (
+                    from up in _userPermissions.AsQueryable()
+                    join p in _permissions.AsQueryable() on up.PermissionId equals p.Id
+                    where up.UserId == userId
+                    select new { p.Code, up.Granted }
+                ).ToListAsync(ct);
 
-            // user-specific grants/denies
-            var userGrants = await (from up in _db.UserPermissions
-                                    where up.UserId == userId && up.Granted
-                                    join p in _db.Permissions on up.PermissionId equals p.Id
-                                    select p.Code).Distinct().ToListAsync(ct);
+                var set = new HashSet<string>(rolePermCodes);
 
-            var userDenies = await (from up in _db.UserPermissions
-                                    where up.UserId == userId && !up.Granted
-                                    join p in _db.Permissions on up.PermissionId equals p.Id
-                                    select p.Code).Distinct().ToListAsync(ct);
+                foreach (var ov in overrides)
+                {
+                    if (ov.Granted)
+                        set.Add(ov.Code);
+                    else
+                        set.Remove(ov.Code);
+                }
 
-            // merge: role-based (we do not filter rolePerms by user roles here) + user grants - user denies
-            var merged = allRolePermissionCodes.Union(userGrants).Except(userDenies).Distinct().ToList();
-
-            _cache.Set(cacheKey, merged, CacheTtl);
-            return merged;
+                return set.AsEnumerable();
+            });
         }
+
+        // ===================================================================
+        // 3) UserHasPermissionAsync (Old API) -------------------------------
+        // ===================================================================
 
         public async Task<bool> UserHasPermissionAsync(Guid userId, string permissionCode, CancellationToken ct = default)
         {
-            var perms = await GetEffectivePermissionsAsync(userId, ct);
-            return perms.Contains(permissionCode);
+            var effective = await GetEffectivePermissionsAsync(userId, ct);
+            return effective.Contains(permissionCode);
         }
+
+        // ===================================================================
+        // 4) Cache Invalidate (Old API) -------------------------------------
+        // ===================================================================
 
         public Task InvalidateUserCacheAsync(Guid userId)
         {
-            var cacheKey = $"auth:user:{userId}:perms";
-            _cache.Remove(cacheKey);
+            _cache.Remove($"{USER_CACHE_PREFIX}{userId}");
             return Task.CompletedTask;
         }
 
         public Task InvalidateRoleCacheAsync(Guid roleId)
         {
-            // For simplicity we invalidate all user caches (could be improved by tracking role->users)
-            // In a production system you'd map role->users to invalidate only affected users.
-            // Here we keep it simple.
-            _logger.LogInformation("InvalidateRoleCache called for role {RoleId} - clearing all auth cache", roleId);
-            // No global IMemoryCache clear available; you can use a cache key prefix or use Redis with key patterns.
+            _cache.Remove($"{ROLE_CACHE_PREFIX}{roleId}");
             return Task.CompletedTask;
+        }
+
+        // ===================================================================
+        // 5) Permission DTO List (New API) ----------------------------------
+        // ===================================================================
+
+        public async Task<List<PermissionDto>> GetAllAsync(CancellationToken ct)
+        {
+            var query =
+                from p in _permissions.AsQueryable()
+                join r in _resources.AsQueryable() on p.ResourceId equals r.Id
+                select new PermissionDto
+                {
+                    Id = p.Id,
+                    Code = p.Code,
+                    Name = p.Name,
+                    ResourceCode = r.Code,
+                    Description = p.Description
+                };
+
+            return await query.ToListAsync(ct);
+        }
+
+        // ===================================================================
+        // 6) Role Permission IDs (New API) ----------------------------------
+        // ===================================================================
+
+        public async Task<List<Guid>> GetRolePermissionIdsAsync(Guid roleId, CancellationToken ct)
+        {
+            return await _rolePermissions
+                .AsQueryable()
+                .Where(x => x.RoleId == roleId)
+                .Select(x => x.PermissionId)
+                .ToListAsync(ct);
+        }
+
+        // ===================================================================
+        // 7) Update Role Permissions (New API) -------------------------------
+        // ===================================================================
+
+        public async Task UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionIds, CancellationToken ct)
+        {
+            var old = await _rolePermissions
+                .AsQueryable()
+                .Where(x => x.RoleId == roleId)
+                .ToListAsync(ct);
+
+            foreach (var o in old)
+                await _rolePermissions.DeleteAsync(o.Id, ct);
+
+            foreach (var pid in permissionIds)
+            {
+                var rp = new RolePermission(roleId, pid);
+                await _rolePermissions.AddAsync(rp, ct);
+            }
+
+            await InvalidateRoleCacheAsync(roleId);
+        }
+
+        // ===================================================================
+        // 8) User Overrides (New API) ----------------------------------------
+        // ===================================================================
+
+        public async Task AddUserOverrideAsync(Guid userId, Guid permissionId, bool granted, string? scope, CancellationToken ct)
+        {
+            var entity = new UserPermission(userId, permissionId, granted, scope);
+            await _userPermissions.AddAsync(entity, ct);
+            await InvalidateUserCacheAsync(userId);
+        }
+
+        public async Task RemoveUserOverrideAsync(Guid userId, Guid overrideId, CancellationToken ct)
+        {
+            await _userPermissions.DeleteAsync(overrideId, ct);
+            await InvalidateUserCacheAsync(userId);
         }
     }
 }
