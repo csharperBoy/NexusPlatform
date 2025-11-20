@@ -24,7 +24,6 @@ namespace OrganizationManagement.Domain.Entities
         //public virtual PersonProfile PersonProfile { get; private set; } = null!;
         public virtual Position Position { get; private set; } = null!;
 
-
         protected Assignment() { }
 
         public Assignment(Guid personId, Guid positionId, DateTime startDate, string createdBy, bool isActive = true, DateTime? endDate = null)
