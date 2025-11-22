@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Enums
 {
-    public enum ResourceType : byte
+    public enum AssigneeType : byte
     {
-        Ui = 1,    // صفحات، دکمه‌ها، گریدها
-        Data = 2   // داده‌ها برای Scoping
+        Role = 1,
+        Position = 2,
+        Person = 3  // اولویت بالاتر
     }
 }

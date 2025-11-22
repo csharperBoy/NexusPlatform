@@ -5,39 +5,41 @@ using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
-    public class Permission : AuditableEntity, IAggregateRoot
+    public class DataScope : AuditableEntity, IAggregateRoot
     {
         public Guid ResourceId { get; private set; }
         public AssigneeType AssigneeType { get; private set; }
         public Guid AssigneeId { get; private set; }
-        public PermissionAction Action { get; private set; }
-        public bool IsAllow { get; private set; } = true;
+        public ScopeType Scope { get; private set; }
+        public Guid? SpecificUnitId { get; private set; }  // فقط برای SpecificUnit
 
         // Navigation
         public virtual Resource Resource { get; private set; } = null!;
 
-        protected Permission() { }  // EF Core
+        protected DataScope() { }  // EF Core
 
-        public Permission(Guid resourceId, AssigneeType assigneeType, Guid assigneeId,
-                          PermissionAction action, bool isAllow = true, string createdBy = "system")
+        public DataScope(Guid resourceId, AssigneeType assigneeType, Guid assigneeId,
+                         ScopeType scope, Guid? specificUnitId = null, string createdBy = "system")
         {
             ResourceId = resourceId;
             AssigneeType = assigneeType;
             AssigneeId = assigneeId;
-            Action = action;
-            IsAllow = isAllow;
+            Scope = scope;
+            SpecificUnitId = specificUnitId;
             CreatedBy = createdBy;
         }
 
         // Domain Behavior
-        public void ToggleAllow(bool isAllow)
+        public void UpdateScope(ScopeType newScope, Guid? newSpecificUnitId = null)
         {
-            IsAllow = isAllow;
+            Scope = newScope;
+            SpecificUnitId = newSpecificUnitId;
             ModifiedAt = DateTime.UtcNow;
         }
     }

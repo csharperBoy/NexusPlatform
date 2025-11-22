@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Enums
 {
-    public enum PermissionLevel
+    public enum PermissionAction : byte
     {
-        None = 0,
-        Read = 1,
-        Write = 2,
-        Delete = 3,
-        Admin = 4
+        View = 1,
+        Add = 2,
+        Edit = 3,
+        Delete = 4,
+        Full = 99  // همه دسترسی‌ها
     }
 }
