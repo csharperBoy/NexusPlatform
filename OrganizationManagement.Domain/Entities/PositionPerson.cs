@@ -8,21 +8,21 @@ using System.Threading.Tasks;
 
 namespace OrganizationManagement.Domain.Entities
 {
-    public class PositionRole : AuditableEntity, IAggregateRoot
+    public class PositionPerson : AuditableEntity, IAggregateRoot
     {
         public Guid FkPositionId { get; private set; }
-        public Guid FkRoleId { get; private set; }
+        public Guid FkPersonId { get; private set; }
 
         // Navigation
         public virtual Position Position { get; private set; } = null!;
         //public virtual ApplicationRole Role { get; private set; } = null!;
 
-        protected PositionRole() { }
+        protected PositionPerson() { }
 
-        public PositionRole(Guid positionId, Guid roleId, string createdBy)
+        public PositionPerson(Guid positionId, Guid personId, string createdBy)
         {
             FkPositionId = positionId;
-            FkRoleId = roleId;
+            FkPersonId = personId;
             CreatedBy = createdBy;
         }
     }
