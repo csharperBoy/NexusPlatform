@@ -15,7 +15,6 @@ namespace OrganizationManagement.Domain.Entities
 
         // Navigation
         public virtual Position Position { get; private set; } = null!;
-        //public virtual ApplicationRole Role { get; private set; } = null!;
 
         protected PositionPerson() { }
 
