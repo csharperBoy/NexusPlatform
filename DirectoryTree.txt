@@ -1,0 +1,974 @@
+NexusPlatform
+¦   .gitattributes
+¦   .gitignore
+¦   ContactInfo.txt
+¦   DirectoryTree.txt
+¦   Export-Modules.ps1
+¦   Export-Projects.ps1
+¦   Export-Solurion.ps1
+¦   Export-SolutionTree.ps1
+¦   NexusPlatform.sln
+¦   .github
+¦   ¦   workflows
+¦   AkSteel Welfare Platform
+¦   ¦   AkSteel Welfare Platform.csproj
+¦   ¦   AkSteel Welfare Platform.csproj.user
+¦   ¦   AkSteel Welfare Platform.http
+¦   ¦   appsettings.Development.json
+¦   ¦   appsettings.json
+¦   ¦   appsettings.Production.json
+¦   ¦   Program.cs
+¦   ¦   Logs
+¦   ¦   ¦   app-20251021.log
+¦   ¦   ¦   app-20251104.log
+¦   ¦   ¦   app-20251105.log
+¦   ¦   ¦   app-20251112.log
+¦   ¦   ¦   app-20251113.log
+¦   ¦   Properties
+¦   ¦   ¦   launchSettings.json
+¦   Audit.Application
+¦   ¦   Audit.Application.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Handlers
+¦   ¦   ¦   Commands
+¦   ¦   ¦   Queries
+¦   ¦   ¦   ¦   GetRecentAuditLogsHandler.cs
+¦   ¦   Interfaces
+¦   ¦   ¦   IAuditQueryService.cs
+¦   ¦   Query
+¦   ¦   ¦   GetRecentAuditLogsQuery.cs
+¦   Audit.Domain
+¦   ¦   Audit.Domain.csproj
+¦   ¦   Entities
+¦   ¦   ¦   AuditLog.cs
+¦   ¦   Specifications
+¦   ¦   ¦   RecentAuditLogsSpec.cs
+¦   Audit.Infrastructure
+¦   ¦   Audit.Infrastructure.csproj
+¦   ¦   ReadMe.txt
+¦   ¦   Data
+¦   ¦   ¦   AuditDbContext.cs
+¦   ¦   ¦   AuditDbContextFactory.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Migrations
+¦   ¦   ¦   20251105071824_Initial_Audit.cs
+¦   ¦   ¦   20251105071824_Initial_Audit.Designer.cs
+¦   ¦   ¦   AuditDbContextModelSnapshot.cs
+¦   ¦   Services
+¦   ¦   ¦   AuditQueryService.cs
+¦   ¦   ¦   AuditService.cs
+¦   Audit.Presentation
+¦   ¦   Audit.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   AuditLogsController.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Audit.Test
+¦   ¦   Audit.Test.csproj
+¦   ¦   AuditServiceTests.cs
+¦   Authentication.Test
+¦   Authorization.Application
+¦   ¦   Authorization.Application.csproj
+¦   ¦   Attributes
+¦   ¦   ¦   AuthorizeResourceAttribute.cs
+¦   ¦   Commands
+¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   AssignDataScopeCommand.cs
+¦   ¦   ¦   ¦   UpdateDataScopeCommand.cs
+¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   AssignPermissionCommand.cs
+¦   ¦   ¦   ¦   RevokePermissionCommand.cs
+¦   ¦   ¦   ¦   TogglePermissionCommand.cs
+¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   CreateResourceCommand.cs
+¦   ¦   ¦   ¦   DeleteResourceCommand.cs
+¦   ¦   ¦   ¦   UpdateResourceCommand.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   DataScopeDto.cs
+¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   EffectivePermissionDto.cs
+¦   ¦   ¦   ¦   PermissionDto.cs
+¦   ¦   ¦   ¦   UserAccessDto.cs
+¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   ResourceDto.cs
+¦   ¦   ¦   ¦   ResourceFlatDto.cs
+¦   ¦   ¦   ¦   ResourceTreeDto.cs
+¦   ¦   ¦   Users
+¦   ¦   ¦   ¦   UserPermissionsSummaryDto.cs
+¦   ¦   Handlers
+¦   ¦   ¦   Commands
+¦   ¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   ¦   AssignDataScopeCommandHandler.cs
+¦   ¦   ¦   ¦   ¦   UpdateDataScopeCommandHandler.cs
+¦   ¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   ¦   AssignPermissionCommandHandler.cs
+¦   ¦   ¦   ¦   ¦   RevokePermissionCommandHandler.cs
+¦   ¦   ¦   ¦   ¦   TogglePermissionCommandHandler.cs
+¦   ¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   ¦   CreateResourceCommandHandler.cs
+¦   ¦   ¦   Queries
+¦   ¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   ¦   GetDataScopeByResourceQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetDataScopesByUserQueryHandler.cs
+¦   ¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   ¦   GetPermissionsByResourceQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetPermissionsByUserQueryHandler.cs
+¦   ¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   ¦   GetResourceByIdQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetResourceByKeyQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetResourceTreeQueryHandler.cs
+¦   ¦   ¦   ¦   Users
+¦   ¦   ¦   ¦   ¦   GetUserEffectiveAccessQueryHandler.cs
+¦   ¦   Interfaces
+¦   ¦   ¦   IAuthorizationService.cs
+¦   ¦   ¦   IDataScopeEvaluator.cs
+¦   ¦   ¦   IDataScopeService.cs
+¦   ¦   ¦   IPermissionEvaluator.cs
+¦   ¦   ¦   IPermissionMergeHelper.cs
+¦   ¦   ¦   IResourceTreeBuilder.cs
+¦   ¦   Queries
+¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   GetDataScopeByResourceQuery.cs
+¦   ¦   ¦   ¦   GetDataScopesByUserQuery.cs
+¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   GetPermissionsByResourceQuery.cs
+¦   ¦   ¦   ¦   GetPermissionsByUserQuery.cs
+¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   GetResourceByIdQuery.cs
+¦   ¦   ¦   ¦   GetResourceByKeyQuery.cs
+¦   ¦   ¦   ¦   GetResourceTreeQuery.cs
+¦   ¦   ¦   Users
+¦   ¦   ¦   ¦   GetUserEffectiveAccessQuery.cs
+¦   ¦   Validator
+¦   ¦   ¦   Resource
+¦   ¦   ¦   ¦   CreateResourceValidator.cs
+¦   Authorization.Domain
+¦   ¦   Authorization.Domain.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Entities
+¦   ¦   ¦   DataScope.cs
+¦   ¦   ¦   Permission.cs
+¦   ¦   ¦   Resource.cs
+¦   ¦   Enums
+¦   ¦   ¦   AssigneeType.cs
+¦   ¦   ¦   PermissionAction.cs
+¦   ¦   ¦   ResourceCategory.cs
+¦   ¦   ¦   ResourceType.cs
+¦   ¦   ¦   ScopeType.cs
+¦   ¦   Events
+¦   ¦   ¦   DataScopeChangedEvent.cs
+¦   ¦   ¦   PermissionAssignedEvent.cs
+¦   ¦   Specifications
+¦   ¦   ¦   DataScopesByUserSpec.cs
+¦   ¦   ¦   PermissionsByAssigneeSpec.cs
+¦   ¦   ¦   PermissionsByUserSpec.cs
+¦   ¦   ¦   ResourceByKeySpec.cs
+¦   ¦   ValueObjects
+¦   ¦   ¦   GeographicScope.cs
+¦   ¦   ¦   HierarchicalScope.cs
+¦   ¦   ¦   OrganizationalScope.cs
+¦   ¦   ¦   TemporalScope.cs
+¦   Authorization.Infrastructure
+¦   ¦   Authorization.Infrastructure.csproj
+¦   ¦   Configurations
+¦   ¦   ¦   DataScopeConfiguration.cs
+¦   ¦   ¦   PermissionConfiguration.cs
+¦   ¦   ¦   ResourceConfiguration.cs
+¦   ¦   Data
+¦   ¦   ¦   AuthorizationDbContext.cs
+¦   ¦   ¦   AuthorizationDbContextFactory.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ModuleInitializer.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   HostedServices
+¦   ¦   ¦   ResourceRegistrarHostedService.cs
+¦   ¦   Mappings
+¦   ¦   ¦   AuthorizationProfile.cs
+¦   ¦   Services
+¦   ¦   ¦   AuthorizationService.cs
+¦   ¦   ¦   CachedAuthorizationService.cs
+¦   ¦   ¦   DataScopeEvaluator.cs
+¦   ¦   ¦   DataScopeService.cs
+¦   ¦   ¦   PermissionEvaluator.cs
+¦   ¦   ¦   PermissionMergeHelper.cs
+¦   ¦   ¦   ResourceTreeBuilder.cs
+¦   ¦   ¦   Caching
+¦   ¦   ¦   ¦   PermissionCacheInvalidator.cs
+¦   ¦   ¦   ¦   PermissionCacheKeys.cs
+¦   Authorization.Presentation
+¦   ¦   Authorization.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   Admin
+¦   ¦   ¦   ¦   DataScopesController.cs
+¦   ¦   ¦   ¦   PermissionsController.cs
+¦   ¦   ¦   ¦   ResourcesController .cs
+¦   ¦   ¦   Client
+¦   ¦   ¦   ¦   AccessController.cs
+¦   ¦   ¦   ¦   AuthorizationController.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Cach.Application
+¦   ¦   Cach.Application.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Models
+¦   ¦   ¦   CacheSettings.cs
+¦   Cach.Domain
+¦   ¦   Cach.Domain.csproj
+¦   Cach.Infrastructure
+¦   ¦   Cach.Infrastructure.csproj
+¦   ¦   HelpMe_Redis.txt
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   HealthChecks
+¦   ¦   ¦   CacheHealthCheck.cs
+¦   ¦   Services
+¦   ¦   ¦   MemoryCacheService.cs
+¦   ¦   ¦   RedisCacheService.cs
+¦   Cach.Presentation
+¦   ¦   Cach.Presentation.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Cach.Test
+¦   ¦   Cach.Test.csproj
+¦   ¦   CacheHealthCheckTests.cs
+¦   ¦   MemoryCacheServiceTests.cs
+¦   ¦   RedisCacheServiceTests.cs
+¦   ¦   ServiceCollectionExtensionsTests.cs
+¦   Core.Application
+¦   ¦   Core.Application.csproj
+¦   ¦   Abstractions
+¦   ¦   ¦   IRepository.cs
+¦   ¦   ¦   ISpecificationRepository.cs
+¦   ¦   ¦   IUnitOfWork.cs
+¦   ¦   ¦   Auditing
+¦   ¦   ¦   ¦   IAuditService.cs
+¦   ¦   ¦   Caching
+¦   ¦   ¦   ¦   ICacheService.cs
+¦   ¦   ¦   Events
+¦   ¦   ¦   ¦   IEventBus.cs
+¦   ¦   ¦   ¦   IEventHandler.cs
+¦   ¦   ¦   ¦   IOutboxProcessorRegistration.cs
+¦   ¦   ¦   ¦   IOutboxService.cs
+¦   ¦   ¦   Security
+¦   ¦   ¦   ¦   ICurrentUserService.cs
+¦   ¦   ¦   ¦   IPermissionChecker.cs
+¦   ¦   ¦   ¦   IRoleResolver.cs
+¦   ¦   Behaviors
+¦   ¦   ¦   AuditBehavior.cs
+¦   ¦   ¦   LoggingBehavior.cs
+¦   ¦   ¦   RetryBehavior.cs
+¦   ¦   ¦   ValidationBehavior.cs
+¦   ¦   Common
+¦   ¦   ¦   Events
+¦   ¦   ¦   ¦   DomainEventHandler.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Models
+¦   ¦   ¦   CorsSettings.cs
+¦   ¦   ¦   HealthCheckSettings.cs
+¦   ¦   ¦   MigrationSettings.cs
+¦   Core.Domain
+¦   ¦   Core.Domain.csproj
+¦   ¦   Common
+¦   ¦   ¦   AuditableEntity.cs
+¦   ¦   ¦   BaseEntity.cs
+¦   ¦   ¦   DomainEventBase.cs
+¦   ¦   ¦   IDomainEvent.cs
+¦   ¦   ¦   OutboxMessage.cs
+¦   ¦   ¦   ValueObject.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Events
+¦   ¦   Interfaces
+¦   ¦   ¦   IAggregateRoot.cs
+¦   ¦   ¦   IEntity.cs
+¦   ¦   Specifications
+¦   ¦   ¦   BaseSpecification.cs
+¦   ¦   ¦   ISpecification.cs
+¦   ¦   ValueObjects
+¦   ¦   ¦   Email.cs
+¦   ¦   ¦   FullName.cs
+¦   ¦   ¦   Money.cs
+¦   ¦   ¦   NationalCode.cs
+¦   ¦   ¦   PhoneNumber.cs
+¦   Core.Infrastructure
+¦   ¦   Core.Infrastructure.csproj
+¦   ¦   Data
+¦   ¦   Database
+¦   ¦   ¦   IMigrationManager.cs
+¦   ¦   ¦   MigrationManager.cs
+¦   ¦   ¦   Configurations
+¦   ¦   ¦   ¦   OutboxMessageConfiguration.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ModuleLoaderExtensions.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   HealthChecks
+¦   ¦   ¦   DatabaseHealthCheck.cs
+¦   ¦   ¦   HealthCheckService.cs
+¦   ¦   ¦   IHealthCheckService.cs
+¦   ¦   ¦   IHealthContributor.cs
+¦   ¦   ¦   RedisHealthCheckService.cs
+¦   ¦   Logging
+¦   ¦   ¦   CorrelationIdEnricher.cs
+¦   ¦   ¦   CorrelationIdMiddleware.cs
+¦   ¦   ¦   ILoggingService.cs
+¦   ¦   ¦   SerilogConfiguration.cs
+¦   ¦   ¦   SerilogLoggingService.cs
+¦   ¦   Middlewares
+¦   ¦   ¦   ExceptionHandlingMiddleware.cs
+¦   ¦   ¦   ExceptionHandlingMiddlewareExtensions.cs
+¦   ¦   Repositories
+¦   ¦   ¦   EfRepository.cs
+¦   ¦   ¦   EfSpecificationRepository.cs
+¦   ¦   ¦   EfUnitOfWork.cs
+¦   ¦   Resilience
+¦   ¦   ¦   ResilienceExtensions.cs
+¦   ¦   Security
+¦   ¦   ¦   CurrentUserService.cs
+¦   Core.Presentation
+¦   ¦   Core.Presentation.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Core.Shared
+¦   ¦   Core.Shared.csproj
+¦   ¦   Results
+¦   ¦   ¦   Result.cs
+¦   ¦   Time
+¦   ¦   ¦   ITimeProvider.cs
+¦   ¦   ¦   SystemTimeProvider.cs
+¦   Event.Application
+¦   ¦   Event.Application.csproj
+¦   Event.Domain
+¦   ¦   Event.Domain.csproj
+¦   Event.Infrastructure
+¦   ¦   Event.Infrastructure.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   OutboxProcessorRegistration.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Processor
+¦   ¦   ¦   HybridOutboxProcessor.cs
+¦   ¦   ¦   OutboxProcessor.cs
+¦   ¦   ¦   PostgresOutboxProcessor.cs
+¦   ¦   ¦   SqlDependencyOutboxProcessor.cs
+¦   ¦   ¦   TriggerBasedOutboxProcessor.cs
+¦   ¦   Services
+¦   ¦   ¦   MediatorEventBus.cs
+¦   ¦   ¦   OutboxService.cs
+¦   Event.Presentation
+¦   ¦   Event.Presentation.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Event.Test
+¦   ¦   DomainEventHandlerTests.cs
+¦   ¦   Event.Test.csproj
+¦   ¦   HybridOutboxProcessorSelectionTests.cs
+¦   ¦   OutboxMessageTests.cs
+¦   ¦   OutboxProcessorTests.cs
+¦   ¦   OutboxServiceTests.cs
+¦   exports
+¦   ¦   .cs
+¦   ¦   .github.cs
+¦   ¦   AkSteel Welfare Platform.cs
+¦   ¦   AllCode.cs
+¦   ¦   Audit.Application.cs
+¦   ¦   Audit.cs
+¦   ¦   Audit.Domain.cs
+¦   ¦   Audit.Infrastructure.cs
+¦   ¦   Audit.Presentation.cs
+¦   ¦   Audit.Test.cs
+¦   ¦   Authentication.cs
+¦   ¦   Authentication.Test.cs
+¦   ¦   Authorization.Application.cs
+¦   ¦   Authorization.cs
+¦   ¦   Authorization.Domain.cs
+¦   ¦   Authorization.Infrastructure.cs
+¦   ¦   Authorization.Presentation.cs
+¦   ¦   Cach.Application.cs
+¦   ¦   Cach.cs
+¦   ¦   Cach.Domain.cs
+¦   ¦   Cach.Infrastructure.cs
+¦   ¦   Cach.Presentation.cs
+¦   ¦   Cach.Test.cs
+¦   ¦   Core.Application.cs
+¦   ¦   Core.cs
+¦   ¦   Core.Domain.cs
+¦   ¦   Core.Infrastructure.cs
+¦   ¦   Core.Presentation.cs
+¦   ¦   Core.Shared.cs
+¦   ¦   Event.Application.cs
+¦   ¦   Event.cs
+¦   ¦   Event.Domain.cs
+¦   ¦   Event.Infrastructure.cs
+¦   ¦   Event.Presentation.cs
+¦   ¦   Event.Test.cs
+¦   ¦   FrontEnd.cs
+¦   ¦   Identity.Application.cs
+¦   ¦   Identity.cs
+¦   ¦   Identity.Domain.cs
+¦   ¦   Identity.Infrastructure.cs
+¦   ¦   Identity.Presentation.cs
+¦   ¦   Identity.Shared.cs
+¦   ¦   Identity.Test.cs
+¦   ¦   MaharRayanesh.cs
+¦   ¦   MaharRayanesh.WebApi.cs
+¦   ¦   Notification.Application.cs
+¦   ¦   Notification.cs
+¦   ¦   Notification.Domain.cs
+¦   ¦   Notification.Infrastructure.cs
+¦   ¦   Notification.Presentation.cs
+¦   ¦   Notification.Test.cs
+¦   ¦   obj.cs
+¦   ¦   Sample.Application.cs
+¦   ¦   Sample.cs
+¦   ¦   Sample.Domain.cs
+¦   ¦   Sample.Infrastructure.cs
+¦   ¦   Sample.Presentation.cs
+¦   ¦   Sample.Shared.cs
+¦   ¦   Sample.Test.cs
+¦   ¦   User.Application.cs
+¦   ¦   User.cs
+¦   ¦   User.Domain.cs
+¦   ¦   User.Infrastructure.cs
+¦   ¦   User.Presentation.cs
+¦   FrontEnd
+¦   ¦   .gitignore
+¦   ¦   eslint.config.js
+¦   ¦   index.html
+¦   ¦   package-lock.json
+¦   ¦   package.json
+¦   ¦   pnpm-lock.yaml
+¦   ¦   pnpm-workspace.yaml
+¦   ¦   README.md
+¦   ¦   tsconfig.app.json
+¦   ¦   tsconfig.json
+¦   ¦   tsconfig.node.json
+¦   ¦   tsconfig.tsbuildinfo
+¦   ¦   vite.config.akwp.adminpanel.ts
+¦   ¦   vite.config.akwp.website.ts
+¦   ¦   vite.config.mahar.adminpanel.ts
+¦   ¦   vite.config.mahar.website.ts
+¦   ¦   vite.config.pmis.ts
+¦   ¦   vite.config.ts
+¦   ¦   .vscode
+¦   ¦   ¦   settings.json
+¦   ¦   dist
+¦   ¦   ¦   admin
+¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   assets
+¦   ¦   ¦   ¦   ¦   index-DoVTs1TY.css
+¦   ¦   ¦   ¦   ¦   index-_gJLfDsG.js
+¦   ¦   HelpMe
+¦   ¦   ¦   HelpMe.txt
+¦   ¦   ¦   HelpMe_AddNewProject.md
+¦   ¦   ¦   HelpMe_WorkspacesAndDependencies.md
+¦   ¦   ¦   tree-filtered.ps1
+¦   ¦   public
+¦   ¦   ¦   vite.svg
+¦   ¦   src
+¦   ¦   ¦   index.css
+¦   ¦   ¦   apps
+¦   ¦   ¦   ¦   AkSteel Welfare Platform
+¦   ¦   ¦   ¦   ¦   AdminPanel
+¦   ¦   ¦   ¦   ¦   ¦   .env.akwp.adminpanel.development
+¦   ¦   ¦   ¦   ¦   ¦   .env.akwp.adminpanel.production
+¦   ¦   ¦   ¦   ¦   ¦   App.tsx
+¦   ¦   ¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   ¦   ¦   main.tsx
+¦   ¦   ¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Dashboard.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginPage.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   TailwindTest.tsx
+¦   ¦   ¦   ¦   ¦   WebSite
+¦   ¦   ¦   ¦   ¦   ¦   .env.akwp.adminpanel.production
+¦   ¦   ¦   ¦   ¦   ¦   .env.akwp.website.development
+¦   ¦   ¦   ¦   ¦   ¦   App.tsx
+¦   ¦   ¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   ¦   ¦   main.tsx
+¦   ¦   ¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Dashboard.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   HomePage.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginPage.tsx
+¦   ¦   ¦   ¦   MaharRayanesh
+¦   ¦   ¦   ¦   ¦   AdminPanel
+¦   ¦   ¦   ¦   ¦   ¦   .env.mahar.adminpanel.development
+¦   ¦   ¦   ¦   ¦   ¦   .env.mahar.adminpanel.production
+¦   ¦   ¦   ¦   ¦   ¦   App.tsx
+¦   ¦   ¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   ¦   ¦   main.tsx
+¦   ¦   ¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Dashboard.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   TailwindTest.tsx
+¦   ¦   ¦   ¦   ¦   WebSite
+¦   ¦   ¦   ¦   ¦   ¦   .env.mahar.website.development
+¦   ¦   ¦   ¦   ¦   ¦   .env.mahar.website.production
+¦   ¦   ¦   ¦   ¦   ¦   App.tsx
+¦   ¦   ¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   ¦   ¦   main.tsx
+¦   ¦   ¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Dashboard.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   HomePage.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginPage.tsx
+¦   ¦   ¦   ¦   PMIS
+¦   ¦   ¦   ¦   ¦   .env.pmis.development
+¦   ¦   ¦   ¦   ¦   .env.pmis.production
+¦   ¦   ¦   ¦   ¦   .eslintrc.cjs
+¦   ¦   ¦   ¦   ¦   .gitignore
+¦   ¦   ¦   ¦   ¦   App.tsx
+¦   ¦   ¦   ¦   ¦   index.css
+¦   ¦   ¦   ¦   ¦   index.html
+¦   ¦   ¦   ¦   ¦   main.tsx
+¦   ¦   ¦   ¦   ¦   package-lock.json
+¦   ¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   ¦   postcss.config.js
+¦   ¦   ¦   ¦   ¦   README.md
+¦   ¦   ¦   ¦   ¦   tailwind.config.js
+¦   ¦   ¦   ¦   ¦   tsconfig.json
+¦   ¦   ¦   ¦   ¦   tsconfig.node.json
+¦   ¦   ¦   ¦   ¦   vercel.json
+¦   ¦   ¦   ¦   ¦   vite-env.d.ts
+¦   ¦   ¦   ¦   ¦   vite.config.ts
+¦   ¦   ¦   ¦   ¦   api
+¦   ¦   ¦   ¦   ¦   ¦   apiClient.ts
+¦   ¦   ¦   ¦   ¦   ¦   ApiCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   AuthCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   CategoryCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   LookUpCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   SystemCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   UserCollection.tsx
+¦   ¦   ¦   ¦   ¦   ¦   mock
+¦   ¦   ¦   ¦   ¦   ¦   ¦   AuthCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   CategoryCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   IndicatorCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LookUpCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   SystemCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   UserCollectionMock.tsx
+¦   ¦   ¦   ¦   ¦   assets
+¦   ¦   ¦   ¦   ¦   ¦   logo.png
+¦   ¦   ¦   ¦   ¦   ¦   react.svg
+¦   ¦   ¦   ¦   ¦   components
+¦   ¦   ¦   ¦   ¦   ¦   AddData.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ChangesThemes.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Footer.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Navbar.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ProtectedRoute.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ToasterProvider.tsx
+¦   ¦   ¦   ¦   ¦   ¦   calendar
+¦   ¦   ¦   ¦   ¦   ¦   ¦   CalendarBox.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   CalendarUtils.tsx
+¦   ¦   ¦   ¦   ¦   ¦   charts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ChartBox.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   data.ts
+¦   ¦   ¦   ¦   ¦   ¦   DataTables
+¦   ¦   ¦   ¦   ¦   ¦   ¦   BaseDataTable.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DataTable.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DataTableMaster.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DataTableMasterMUI.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DataTableWithInlineAdd.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DataTableWithInlineSingleAdd.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Inputs
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ComboBox
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ¦   ComboBox.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ¦   MultiSelectComboBox.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   DatePicker
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ¦   JalaliDatePicker.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Grid
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ¦   NumericInputCell.tsx
+¦   ¦   ¦   ¦   ¦   ¦   menu
+¦   ¦   ¦   ¦   ¦   ¦   ¦   data.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   Menu.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ¦   MenuItem.tsx
+¦   ¦   ¦   ¦   ¦   ¦   notes
+¦   ¦   ¦   ¦   ¦   ¦   ¦   data.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   NoteCard.tsx
+¦   ¦   ¦   ¦   ¦   ¦   topDealsBox
+¦   ¦   ¦   ¦   ¦   ¦   ¦   data.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   TopDealsBox.tsx
+¦   ¦   ¦   ¦   ¦   contexts
+¦   ¦   ¦   ¦   ¦   ¦   AuthContext.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ThemeContext.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ThemeProvider.tsx
+¦   ¦   ¦   ¦   ¦   ¦   useTheme.ts
+¦   ¦   ¦   ¦   ¦   models
+¦   ¦   ¦   ¦   ¦   ¦   ExtendedGridColDef.ts
+¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   Option.ts
+¦   ¦   ¦   ¦   ¦   ¦   auth
+¦   ¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginRequest.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginResponse.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ValidateTokenResponse.ts
+¦   ¦   ¦   ¦   ¦   ¦   Category
+¦   ¦   ¦   ¦   ¦   ¦   ¦   CategoryModel.ts
+¦   ¦   ¦   ¦   ¦   ¦   Claim
+¦   ¦   ¦   ¦   ¦   ¦   Indicator
+¦   ¦   ¦   ¦   ¦   ¦   ¦   GetIndicatorDraft.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   GetIndicatorList.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   GetIndicatorValue.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   IndicatorModel.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   SaveIndicatorCategories.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   SaveIndicatorChange.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   SaveIndicatorClaims.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   SaveIndicatorValueChange.ts
+¦   ¦   ¦   ¦   ¦   ¦   Lookup
+¦   ¦   ¦   ¦   ¦   ¦   ¦   GetLookupList.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   System
+¦   ¦   ¦   ¦   ¦   ¦   ¦   GetMenuResponse.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   User
+¦   ¦   ¦   ¦   ¦   ¦   ¦   ChangePassword.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   ¦   ¦   UserModel.ts
+¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   Calendar.tsx
+¦   ¦   ¦   ¦   ¦   ¦   ChangePassword.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Charts.tsx
+¦   ¦   ¦   ¦   ¦   ¦   EditProfile.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Error.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Home.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorAssignToCategory.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorAssignToClaim.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorForm.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorValueInput.tsx
+¦   ¦   ¦   ¦   ¦   ¦   IndicatorWizardStepper.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Login.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Logs.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Notes.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Orders.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Posts.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Product.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Products.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Profile.tsx
+¦   ¦   ¦   ¦   ¦   ¦   RegisterIndicatorForm.tsx
+¦   ¦   ¦   ¦   ¦   ¦   User.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Users.tsx
+¦   ¦   ¦   ¦   ¦   public
+¦   ¦   ¦   ¦   ¦   ¦   AkSteel-Logo.png
+¦   ¦   ¦   ¦   ¦   ¦   communication-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   corrugated-box.jpg
+¦   ¦   ¦   ¦   ¦   ¦   e-commerce-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   icons8-apple-black.svg
+¦   ¦   ¦   ¦   ¦   ¦   icons8-apple-white.svg
+¦   ¦   ¦   ¦   ¦   ¦   icons8-google.svg
+¦   ¦   ¦   ¦   ¦   ¦   icons8-microsoft.svg
+¦   ¦   ¦   ¦   ¦   ¦   logo.png
+¦   ¦   ¦   ¦   ¦   ¦   MAHAR-Logo.png
+¦   ¦   ¦   ¦   ¦   ¦   marketing-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   PMISWithLogo.png
+¦   ¦   ¦   ¦   ¦   ¦   Portrait_Placeholder.png
+¦   ¦   ¦   ¦   ¦   ¦   productivity-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   React-icon.svg
+¦   ¦   ¦   ¦   ¦   ¦   SEO-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   social-media-vector.png
+¦   ¦   ¦   ¦   ¦   ¦   vite.svg
+¦   ¦   ¦   ¦   ¦   ¦   web.config
+¦   ¦   ¦   ¦   ¦   utils
+¦   ¦   ¦   ¦   ¦   ¦   date.ts
+¦   ¦   ¦   ¦   ¦   ¦   optionUtils.ts
+¦   ¦   ¦   assets
+¦   ¦   ¦   ¦   react.svg
+¦   ¦   ¦   core
+¦   ¦   ¦   ¦   package.json
+¦   ¦   ¦   ¦   api
+¦   ¦   ¦   ¦   ¦   axiosClient.ts
+¦   ¦   ¦   ¦   components
+¦   ¦   ¦   ¦   ¦   Button.tsx
+¦   ¦   ¦   ¦   ¦   Card.tsx
+¦   ¦   ¦   ¦   ¦   Input.tsx
+¦   ¦   ¦   ¦   context
+¦   ¦   ¦   ¦   ¦   UIProvider.tsx
+¦   ¦   ¦   ¦   hooks
+¦   ¦   ¦   ¦   styles
+¦   ¦   ¦   ¦   ¦   index.css
+¦   ¦   ¦   ¦   utils
+¦   ¦   ¦   ¦   ¦   storage.ts
+¦   ¦   ¦   modules
+¦   ¦   ¦   ¦   auth
+¦   ¦   ¦   ¦   ¦   index.ts
+¦   ¦   ¦   ¦   ¦   routes.tsx
+¦   ¦   ¦   ¦   ¦   api
+¦   ¦   ¦   ¦   ¦   ¦   authApi.ts
+¦   ¦   ¦   ¦   ¦   components
+¦   ¦   ¦   ¦   ¦   ¦   ProtectedRoute.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Buttons
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LogoutButton.tsx
+¦   ¦   ¦   ¦   ¦   ¦   Forms
+¦   ¦   ¦   ¦   ¦   ¦   ¦   LoginForm.tsx
+¦   ¦   ¦   ¦   ¦   context
+¦   ¦   ¦   ¦   ¦   ¦   AuthProvider.tsx
+¦   ¦   ¦   ¦   ¦   hooks
+¦   ¦   ¦   ¦   ¦   ¦   useAuth.ts
+¦   ¦   ¦   ¦   ¦   ¦   Forms
+¦   ¦   ¦   ¦   ¦   ¦   ¦   useLoginForm.ts
+¦   ¦   ¦   ¦   ¦   models
+¦   ¦   ¦   ¦   ¦   ¦   AuthResponse.ts
+¦   ¦   ¦   ¦   ¦   ¦   LoginRequest.ts
+¦   ¦   ¦   ¦   ¦   ¦   RegisterRequest.ts
+¦   ¦   ¦   ¦   ¦   pages
+¦   ¦   ¦   ¦   ¦   ¦   LoginPage.tsx
+¦   ¦   ¦   ¦   ¦   ¦   RegisterPage.tsx
+¦   Identity.Application
+¦   ¦   Identity.Application.csproj
+¦   ¦   Commands
+¦   ¦   ¦   AuthExtendedCommands.cs
+¦   ¦   ¦   LoginCommand.cs
+¦   ¦   ¦   RegisterCommand.cs
+¦   ¦   ¦   RoleCommands.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   ¦   AssignRoleRequest.cs
+¦   ¦   ¦   AuthResponse.cs
+¦   ¦   ¦   AuthTokens.cs
+¦   ¦   ¦   LoginRequest.cs
+¦   ¦   ¦   LogoutRequest.cs
+¦   ¦   ¦   RefreshTokenRequest.cs
+¦   ¦   ¦   RegisterRequest.cs
+¦   ¦   EventHandlers
+¦   ¦   ¦   AssignDefaultRoleEventHandler.cs
+¦   ¦   Handlers
+¦   ¦   ¦   Commands
+¦   ¦   ¦   ¦   AssignRoleCommandHandler.cs
+¦   ¦   ¦   ¦   LoginCommandHandler.cs
+¦   ¦   ¦   ¦   RefreshLogoutHandlers.cs
+¦   ¦   ¦   ¦   RegisterCommandHandler.cs
+¦   ¦   ¦   Queries
+¦   ¦   ¦   ¦   GetUserRolesQueryHandler.cs
+¦   ¦   Interfaces
+¦   ¦   ¦   IAuthorizationService.cs
+¦   ¦   ¦   IAuthService.cs
+¦   ¦   Queries
+¦   ¦   ¦   GetUserRolesQuery.cs
+¦   Identity.Domain
+¦   ¦   Identity.Domain.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Entities
+¦   ¦   ¦   ApplicationRole.cs
+¦   ¦   ¦   ApplicationUser.cs
+¦   ¦   ¦   RefreshToken.cs
+¦   ¦   ¦   UserSession.cs
+¦   ¦   Events
+¦   ¦   ¦   UserLoggedInEvent.cs
+¦   ¦   Specifications
+¦   ¦   ¦   RefreshTokenByValueSpec.cs
+¦   Identity.Infrastructure
+¦   ¦   Identity.Infrastructure.csproj
+¦   ¦   ReadMe.txt
+¦   ¦   Configuration
+¦   ¦   ¦   ApplicationRoleConfiguration.cs
+¦   ¦   ¦   ApplicationUserConfiguration.cs
+¦   ¦   ¦   JwtOptions.cs
+¦   ¦   ¦   RefreshTokenConfiguration.cs
+¦   ¦   ¦   UserSessionConfiguration.cs
+¦   ¦   Data
+¦   ¦   ¦   IdentityDbContext.cs
+¦   ¦   ¦   IdentityDbContextFactory.cs
+¦   ¦   ¦   IdentitySeedData.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   IdentityModuleInitializer.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Migrations
+¦   ¦   ¦   20251105054515_Initial_Identity.cs
+¦   ¦   ¦   20251105054515_Initial_Identity.Designer.cs
+¦   ¦   ¦   IdentityDbContextModelSnapshot.cs
+¦   ¦   Services
+¦   ¦   ¦   AuthorizationService.cs
+¦   ¦   ¦   AuthService.cs
+¦   ¦   ¦   IJwtTokenService.cs
+¦   ¦   ¦   JwtTokenService.cs
+¦   ¦   ¦   PermissionChecker.cs
+¦   ¦   ¦   RoleResolver.cs
+¦   Identity.Presentation
+¦   ¦   Identity.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   AuthController.cs
+¦   ¦   ¦   RolesController.cs
+¦   ¦   ¦   UsersController.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Identity.Shared
+¦   ¦   Identity.Shared.csproj
+¦   ¦   Events
+¦   ¦   ¦   UserRegisteredEvent.cs
+¦   Identity.Test
+¦   ¦   AuthServiceTests.cs
+¦   ¦   Identity.Test.csproj
+¦   MaharRayanesh.WebApi
+¦   ¦   appsettings.Development.json
+¦   ¦   appsettings.json
+¦   ¦   MaharRayanesh.WebApi.csproj
+¦   ¦   MaharRayanesh.WebApi.csproj.user
+¦   ¦   MaharRayanesh.WebApi.http
+¦   ¦   Program.cs
+¦   ¦   Controllers
+¦   ¦   Properties
+¦   ¦   ¦   launchSettings.json
+¦   Notification.Application
+¦   ¦   Notification.Application.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   EventHandlers
+¦   ¦   ¦   WelcomeEmailEventHandler.cs
+¦   ¦   ¦   WelcomeInAppNotificationHandler.cs
+¦   ¦   Interfaces
+¦   ¦   ¦   IEmailSender.cs
+¦   ¦   ¦   IRealtimeNotifier.cs
+¦   ¦   Models
+¦   ¦   ¦   NotificationMessage.cs
+¦   Notification.Domain
+¦   ¦   Notification.Domain.csproj
+¦   Notification.Infrastructure
+¦   ¦   Notification.Infrastructure.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   HealthChecks
+¦   ¦   ¦   SmtpHealthCheck.cs
+¦   ¦   Models
+¦   ¦   ¦   SmtpOptions.cs
+¦   ¦   Services
+¦   ¦   ¦   SmtpEmailSender.cs
+¦   Notification.Presentation
+¦   ¦   Notification.Presentation.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Hubs
+¦   ¦   ¦   NotificationHub.cs
+¦   ¦   RealTime
+¦   ¦   ¦   SignalRRealtimeNotifier.cs
+¦   Notification.Test
+¦   ¦   Notification.Test.csproj
+¦   ¦   WelcomeEmailEventHandlerTests.cs
+¦   ¦   WelcomeInAppNotificationHandlerTests.cs
+¦   OrganizationManagement.Domain
+¦   ¦   OrganizationManagement.Domain.csproj
+¦   ¦   Entities
+¦   ¦   ¦   Assignment.cs
+¦   ¦   ¦   JobFamily.cs
+¦   ¦   ¦   OrganizationUnit.cs
+¦   ¦   ¦   Position.cs
+¦   ¦   ¦   PositionPerson.cs
+¦   Sample.Application
+¦   ¦   Sample.Application.csproj
+¦   ¦   Commands
+¦   ¦   ¦   SampleApiCommand.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   ¦   SampleApiRequest.cs
+¦   ¦   ¦   SampleApiResponse.cs
+¦   ¦   EventHandlers
+¦   ¦   ¦   SampleEventHandler.cs
+¦   ¦   Handlers
+¦   ¦   ¦   Commands
+¦   ¦   ¦   ¦   SampleApiCommandHandler.cs
+¦   ¦   ¦   Queries
+¦   ¦   ¦   ¦   GetSamplesByPropertyQueryHandler.cs
+¦   ¦   Interfaces
+¦   ¦   ¦   ISampleQueryService.cs
+¦   ¦   ¦   ISampleService.cs
+¦   ¦   Queries
+¦   ¦   ¦   GetSamplesByPropertyQuery.cs
+¦   ¦   Validators
+¦   ¦   ¦   SampleApiCommandValidator.cs
+¦   Sample.Domain
+¦   ¦   Sample.Domain.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Entities
+¦   ¦   ¦   SampleEntity.cs
+¦   ¦   Events
+¦   ¦   ¦   SampleActionEvent.cs
+¦   ¦   Specifications
+¦   ¦   ¦   SampleGetSpec.cs
+¦   Sample.Infrastructure
+¦   ¦   ReadMe.txt
+¦   ¦   Sample.Infrastructure.csproj
+¦   ¦   Data
+¦   ¦   ¦   SampleDbContext.cs
+¦   ¦   ¦   SampleDbContextFactory.cs
+¦   ¦   ¦   SampleSeedData.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ModuleInitializer.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Services
+¦   ¦   ¦   SampleQueryService.cs
+¦   ¦   ¦   SampleService.cs
+¦   Sample.Presentation
+¦   ¦   Sample.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   SampleController.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   Sample.Shared
+¦   ¦   Sample.Shared.csproj
+¦   ¦   DTOs
+¦   ¦   Events
+¦   ¦   ¦   SampleCreatedIntegrationEvent.cs
+¦   Sample.Test
+¦   ¦   Sample.Test.csproj
+¦   ¦   Services
+¦   ¦   ¦   SampleQueryServiceTests.cs
+¦   ¦   ¦   SampleServiceTests.cs
+¦   User.Application
+¦   ¦   User.Application.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   User.Domain
+¦   ¦   User.Domain.csproj
+¦   ¦   Entities
+¦   ¦   ¦   Person.cs
+¦   ¦   ¦   PersonProfile.cs
+¦   ¦   Events
+¦   ¦   ¦   PersonProfileCreatedEvent.cs
+¦   ¦   ¦   PersonProfileUpdatedEvent.cs
+¦   User.Infrastructure
+¦   ¦   ReadMe.txt
+¦   ¦   User.Infrastructure.csproj
+¦   ¦   Data
+¦   ¦   ¦   UserDbContext.cs
+¦   ¦   ¦   UserDbContextFactory.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Migrations
+¦   ¦   ¦   20251104160121_Initial_User_db.cs
+¦   ¦   ¦   20251104160121_Initial_User_db.Designer.cs
+¦   ¦   ¦   UserDbContextModelSnapshot.cs
+¦   User.Presentation
+¦   ¦   User.Presentation.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   User.Shared
+¦   ¦   User.Shared.csproj
+¦   ¦   Entities

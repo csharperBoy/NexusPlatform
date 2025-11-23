@@ -1,4 +1,6 @@
 ﻿using Authorization.Presentation.Controllers;
+using Authorization.Presentation.Controllers.Admin;
+using Authorization.Presentation.Controllers.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,12 +43,21 @@ namespace Authorization.Presentation.DependencyInjection
         {
             // 📌 رجیستر کنترلرهای API
             services.AddControllers()
-                .AddApplicationPart(typeof(SampleController).Assembly) // اسمبلی کنترلرهای Sample
+                .AddApplicationPart(typeof(ResourcesController).Assembly) // اسمبلی کنترلرهای Sample
+                .AddApplicationPart(typeof(PermissionsController).Assembly) // اسمبلی کنترلرهای Sample
+                .AddApplicationPart(typeof(DataScopesController).Assembly) // اسمبلی کنترلرهای Sample
+                .AddApplicationPart(typeof(AuthorizationController).Assembly) // اسمبلی کنترلرهای Sample
+                .AddApplicationPart(typeof(AccessController).Assembly) // اسمبلی کنترلرهای Sample
                 .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
 
             // 📌 رجیستر MediatR برای مدیریت Command/Queryها
             services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(SampleController).Assembly));
+                cfg.RegisterServicesFromAssembly(typeof(ResourcesController).Assembly)
+                .RegisterServicesFromAssembly(typeof(PermissionsController).Assembly)
+                .RegisterServicesFromAssembly(typeof(DataScopesController).Assembly)
+                .RegisterServicesFromAssembly(typeof(AuthorizationController).Assembly)
+                .RegisterServicesFromAssembly(typeof(AccessController).Assembly)
+                );
 
             return services;
         }

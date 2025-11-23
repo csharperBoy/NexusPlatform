@@ -17,6 +17,14 @@ namespace Authorization.Domain.Entities
         public Guid AssigneeId { get; private set; }
         public PermissionAction Action { get; private set; }
         public bool IsAllow { get; private set; } = true;
+        public DateTime? ExpiresAt { get; private set; } // دسترسی موقت
+        public DateTime? EffectiveFrom { get; private set; }
+        public string Description { get; private set; }
+        public int Order { get; private set; } // برای ترتیب نمایش
+        public bool IsActive { get; private set; } = true;
+
+        public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
+        public bool IsEffective => !EffectiveFrom.HasValue || EffectiveFrom <= DateTime.UtcNow;
 
         // Navigation
         public virtual Resource Resource { get; private set; } = null!;

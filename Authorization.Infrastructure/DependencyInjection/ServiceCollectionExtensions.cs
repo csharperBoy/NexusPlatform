@@ -25,6 +25,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {
@@ -52,12 +53,10 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddHostedService<ModuleInitializer>();
 
-            services.AddScoped<IPermissionService, PermissionService>();
-            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-            services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
 
             // discover IPermissionDefinitionProvider via DI (modules register their providers)
-            services.AddHostedService<PermissionRegistrarHostedService>();
+            services.AddHostedService<ResourceRegistrarHostedService>();
 
             return services;
         }

@@ -8,7 +8,7 @@
 #Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned # دائم
 
 param (
-    [string]$RootPath = "C:\Users\Mahar\source\repos\csharperBoy\NexusPlatform",
+    [string]$RootPath = "D:\868\Projects\NexusPlatform",
     [string]$OutputPath = "$RootPath\DirectoryTree.txt"
 )
 
