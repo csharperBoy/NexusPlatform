@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Authorization.Application.DTOs.Users;
+using Core.Shared.Results;
+using MediatR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +9,11 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Queries.Permissions
 {
-    internal class GetPermissionsByUserQuery
-    {
-    }
+    /*
+     📌 GetPermissionsByUserQuery
+     ----------------------------
+     Query برای دریافت خلاصه دسترسی های کاربر.
+    */
+    public record GetPermissionsByUserQuery(Guid UserId)
+        : IRequest<Result<UserPermissionsSummaryDto>>;
 }

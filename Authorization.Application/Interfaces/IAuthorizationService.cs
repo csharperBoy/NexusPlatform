@@ -1,25 +1,35 @@
-﻿using Authorization.Application.DTOs;
-using Authorization.Application.Security;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Authorization.Application.DTOs.Permissions;
+using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
 {
+    /*
+    📌 IAuthorizationService
+    ------------------------
+    سرویس تجمیعی سطح بالا که برای کنترل دسترسی API استفاده می‌شود.
+
+    این سرویس:
+    - PermissionEvaluator و DataScopeEvaluator را ترکیب می‌کند
+    - نتیجه نهایی را در قالب UserAccessDto برمی‌گرداند
+    - امکان استفاده در Attribute ها یا Middleware فراهم می‌شود
+
+    🛠 متدها:
+    1. GetUserEffectiveAccessAsync
+       - دسترسی نهایی (Permission + DataScope) کاربر برای کل سیستم
+
+    2. HasAccessAsync
+       - بررسی دسترسی کاربر برای یک ResourceKey
+   */
+
     public interface IAuthorizationService
     {
-        Task RegisterPermissionsAsync(IEnumerable<PermissionDescriptor> descriptors, CancellationToken ct = default);
-        Task<IEnumerable<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken ct = default);
-        Task<bool> UserHasPermissionAsync(Guid userId, string permissionCode, CancellationToken ct = default);
-        Task InvalidateUserCacheAsync(Guid userId);
-        Task InvalidateRoleCacheAsync(Guid roleId);
+        Task<Result<UserAccessDto>> GetUserEffectiveAccessAsync(
+            Guid userId,
+            CancellationToken ct = default);
 
-        Task<List<PermissionDto>> GetAllAsync(CancellationToken ct);
-        Task<List<Guid>> GetRolePermissionIdsAsync(Guid roleId, CancellationToken ct);
-        Task UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionIds, CancellationToken ct);
-        Task AddUserOverrideAsync(Guid userId, Guid permissionId, bool granted, string? scope, CancellationToken ct);
-        Task RemoveUserOverrideAsync(Guid userId, Guid overrideId, CancellationToken ct);
+        Task<Result<bool>> HasAccessAsync(
+            Guid userId,
+            string resourceKey,
+            CancellationToken ct = default);
     }
 }
