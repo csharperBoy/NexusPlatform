@@ -9,20 +9,17 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Events
 {
-    /*
-    📌 PermissionAssignedEvent
-    ---------------------------
-    هنگام ثبت یا تغییر Permission اجرا می‌شود.
-    */
-
-    public class PermissionAssignedEvent : IDomainEvent
+    // 📌 وقتی دسترسی کاربر به یک منبع تغییر می‌کند
+    public class PermissionChangedEvent : IDomainEvent
     {
-        public Permission Permission { get; }
+        public Guid UserId { get; }
+        public Guid ResourceId { get; }
         public DateTime OccurredOn { get; }
 
-        public PermissionAssignedEvent(Permission permission)
+        public PermissionChangedEvent(Guid userId, Guid resourceId)
         {
-            Permission = permission;
+            UserId = userId;
+            ResourceId = resourceId;
             OccurredOn = DateTime.UtcNow;
         }
     }

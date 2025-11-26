@@ -1,5 +1,4 @@
-﻿using Authorization.Domain.Entities;
-using Core.Domain.Common;
+﻿using Core.Domain.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,16 +7,14 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Events
 {
-    // 📌 وقتی محدوده داده کاربر برای یک منبع تغییر می‌کند
-    public class DataScopeChangedEvent : IDomainEvent
+    // 📌 وقتی ساختار سلسله مراتب منابع تغییر می‌کند (تأثیر روی ارث‌بری)
+    public class ResourceHierarchyChangedEvent : IDomainEvent
     {
-        public Guid UserId { get; }
         public Guid ResourceId { get; }
         public DateTime OccurredOn { get; }
 
-        public DataScopeChangedEvent(Guid userId, Guid resourceId)
+        public ResourceHierarchyChangedEvent(Guid resourceId)
         {
-            UserId = userId;
             ResourceId = resourceId;
             OccurredOn = DateTime.UtcNow;
         }
