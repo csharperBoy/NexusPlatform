@@ -37,7 +37,7 @@ namespace Identity.Domain.Entities
         public void Revoke()
         {
             RevokedAt = DateTime.UtcNow;
-            LastModifiedOn = DateTime.UtcNow;
+            ModifiedAt = DateTime.UtcNow;
         }
     }
 }

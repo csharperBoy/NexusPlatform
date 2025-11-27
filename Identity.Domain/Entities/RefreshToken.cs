@@ -41,7 +41,7 @@ namespace Identity.Domain.Entities
         {
             IsRevoked = true;
             ReplacedByToken = replacedBy;
-            LastModifiedOn = DateTime.UtcNow;
+            ModifiedAt = DateTime.UtcNow;
         }
     }
 }
