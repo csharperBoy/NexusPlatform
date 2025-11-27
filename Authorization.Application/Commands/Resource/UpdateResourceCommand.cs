@@ -15,8 +15,13 @@ namespace Authorization.Application.Commands.Resource
       Command برای به‌روزرسانی Resource.
      */
     public record UpdateResourceCommand(
-        Guid Id,
-        string Name,
-        ResourceType Type
-    ) : IRequest<Result<bool>>;
+      Guid Id, // تغییر از ResourceId به Id
+      string Name,
+      string Description,
+      ResourceType Type,
+      ResourceCategory Category,
+      int DisplayOrder,
+      string Icon,
+      string Route
+  ) : IRequest<Result<bool>>;
 }

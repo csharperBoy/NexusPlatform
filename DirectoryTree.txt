@@ -131,13 +131,15 @@ NexusPlatform
 ¦   ¦   ¦   IDataScopeEvaluator.cs
 ¦   ¦   ¦   IDataScopeService.cs
 ¦   ¦   ¦   IPermissionEvaluator.cs
-¦   ¦   ¦   IPermissionMergeHelper.cs
+¦   ¦   ¦   IPermissionService.cs
+¦   ¦   ¦   IResourceService.cs
 ¦   ¦   ¦   IResourceTreeBuilder.cs
 ¦   ¦   Queries
 ¦   ¦   ¦   DataScopes
 ¦   ¦   ¦   ¦   GetDataScopeByResourceQuery.cs
 ¦   ¦   ¦   ¦   GetDataScopesByUserQuery.cs
 ¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   CheckPermissionQuery.cs
 ¦   ¦   ¦   ¦   GetPermissionsByResourceQuery.cs
 ¦   ¦   ¦   ¦   GetPermissionsByUserQuery.cs
 ¦   ¦   ¦   Resource
@@ -147,8 +149,15 @@ NexusPlatform
 ¦   ¦   ¦   Users
 ¦   ¦   ¦   ¦   GetUserEffectiveAccessQuery.cs
 ¦   ¦   Validator
+¦   ¦   ¦   DataScopes
+¦   ¦   ¦   ¦   AssignDataScopeCommandValidator.cs
+¦   ¦   ¦   ¦   UpdateDataScopeCommandValidator.cs
+¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   AssignPermissionCommandValidator.cs
+¦   ¦   ¦   ¦   RevokePermissionCommandValidator.cs
 ¦   ¦   ¦   Resource
 ¦   ¦   ¦   ¦   CreateResourceValidator.cs
+¦   ¦   ¦   ¦   UpdateResourceValidator.cs
 ¦   Authorization.Domain
 ¦   ¦   Authorization.Domain.csproj
 ¦   ¦   DependencyInjection
@@ -165,17 +174,14 @@ NexusPlatform
 ¦   ¦   ¦   ScopeType.cs
 ¦   ¦   Events
 ¦   ¦   ¦   DataScopeChangedEvent.cs
-¦   ¦   ¦   PermissionAssignedEvent.cs
+¦   ¦   ¦   PermissionChangedEvent.cs
+¦   ¦   ¦   ResourceHierarchyChangedEvent.cs
 ¦   ¦   Specifications
 ¦   ¦   ¦   DataScopesByUserSpec.cs
 ¦   ¦   ¦   PermissionsByAssigneeSpec.cs
 ¦   ¦   ¦   PermissionsByUserSpec.cs
 ¦   ¦   ¦   ResourceByKeySpec.cs
 ¦   ¦   ValueObjects
-¦   ¦   ¦   GeographicScope.cs
-¦   ¦   ¦   HierarchicalScope.cs
-¦   ¦   ¦   OrganizationalScope.cs
-¦   ¦   ¦   TemporalScope.cs
 ¦   Authorization.Infrastructure
 ¦   ¦   Authorization.Infrastructure.csproj
 ¦   ¦   Configurations
@@ -196,15 +202,12 @@ NexusPlatform
 ¦   ¦   ¦   AuthorizationProfile.cs
 ¦   ¦   Services
 ¦   ¦   ¦   AuthorizationService.cs
-¦   ¦   ¦   CachedAuthorizationService.cs
 ¦   ¦   ¦   DataScopeEvaluator.cs
 ¦   ¦   ¦   DataScopeService.cs
 ¦   ¦   ¦   PermissionEvaluator.cs
-¦   ¦   ¦   PermissionMergeHelper.cs
+¦   ¦   ¦   PermissionService.cs
+¦   ¦   ¦   ResourceService.cs
 ¦   ¦   ¦   ResourceTreeBuilder.cs
-¦   ¦   ¦   Caching
-¦   ¦   ¦   ¦   PermissionCacheInvalidator.cs
-¦   ¦   ¦   ¦   PermissionCacheKeys.cs
 ¦   Authorization.Presentation
 ¦   ¦   Authorization.Presentation.csproj
 ¦   ¦   Controllers
@@ -435,6 +438,7 @@ NexusPlatform
 ¦   ¦   Notification.Presentation.cs
 ¦   ¦   Notification.Test.cs
 ¦   ¦   obj.cs
+¦   ¦   OrganizationManagement.Domain.cs
 ¦   ¦   Sample.Application.cs
 ¦   ¦   Sample.cs
 ¦   ¦   Sample.Domain.cs
@@ -447,6 +451,7 @@ NexusPlatform
 ¦   ¦   User.Domain.cs
 ¦   ¦   User.Infrastructure.cs
 ¦   ¦   User.Presentation.cs
+¦   ¦   User.Shared.cs
 ¦   FrontEnd
 ¦   ¦   .gitignore
 ¦   ¦   eslint.config.js

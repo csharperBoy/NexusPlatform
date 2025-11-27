@@ -1,4 +1,5 @@
 ﻿using Authorization.Domain.Enums;
+using Authorization.Domain.Events;
 using Core.Domain.Common;
 using Core.Domain.Interfaces;
 using System;
@@ -117,7 +118,7 @@ namespace Authorization.Domain.Entities
                 ModifiedAt = DateTime.UtcNow;
             }
 
-            private void GeneratePath()
+            public void GeneratePath()
             {
                 if (ParentId.HasValue && Parent != null)
                 {

@@ -22,18 +22,13 @@ namespace Authorization.Application.DTOs.Permissions
 
     public class EffectivePermissionDto
     {
-        public Guid ResourceId { get; init; }
         public string ResourceKey { get; init; } = string.Empty;
-
-        // لیست اکشن‌هایی که کاربر اجازه دارد
-        public IReadOnlyList<PermissionAction> AllowedActions { get; init; } =
-            Array.Empty<PermissionAction>();
-
-        // اگر حتی یک Deny وجود داشته باشد، این Resource قفل می‌شود
-        public bool IsDenied { get; init; }
-
-        // برای UI
-        public bool HasFullAccess =>
-            AllowedActions.Contains(PermissionAction.Full);
+        public bool CanView { get; init; }
+        public bool CanCreate { get; init; }
+        public bool CanEdit { get; init; }
+        public bool CanDelete { get; init; }
+        public DateTime EvaluatedAt { get; init; }
+        public int PermissionCount { get; init; }
+        public bool HasExplicitDeny { get; init; }
     }
 }

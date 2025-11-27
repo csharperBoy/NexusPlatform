@@ -15,8 +15,11 @@ namespace Authorization.Application.Commands.DataScopes
        Command برای بروزرسانی DataScope موجود.
       */
     public record UpdateDataScopeCommand(
-        Guid DataScopeId,
-        ScopeType Scope,
-        Guid? SpecificUnitId = null
-    ) : IRequest<Result<bool>>;
+      Guid DataScopeId,
+      ScopeType Scope,
+      Guid? SpecificUnitId = null,
+      string CustomFilter = "",
+      int Depth = 1,
+      string Description = ""
+  ) : IRequest<Result>;
 }

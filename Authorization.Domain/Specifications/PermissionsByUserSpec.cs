@@ -18,11 +18,10 @@ namespace Authorization.Domain.Specifications
     public class PermissionsByUserSpec : BaseSpecification<Permission>
     {
         public PermissionsByUserSpec(Guid userId)
-            : base(p => p.AssigneeType == AssigneeType.User &&
+            : base(p => p.AssigneeType == AssigneeType.Person && // تغییر از User به Person
                         p.AssigneeId == userId)
         {
             AddInclude(p => p.Resource);
-
             ApplyOrderBy(p => p.ResourceId);
             ApplyThenOrderBy(p => p.Action);
         }

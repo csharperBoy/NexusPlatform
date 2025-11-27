@@ -21,16 +21,22 @@ namespace Authorization.Application.DTOs.DataScopes
 
     public class DataScopeDto
     {
+        public Guid Id { get; init; }
         public Guid ResourceId { get; init; }
         public string ResourceKey { get; init; } = string.Empty;
-
-        public ScopeType Scope { get; init; }
-
-        // فقط برای ScopeType.SpecificUnit
-        public Guid? SpecificUnitId { get; init; }
-
-        // منبع اختصاص این DataScope (Role / Position / Person)
         public AssigneeType AssigneeType { get; init; }
         public Guid AssigneeId { get; init; }
+        public ScopeType Scope { get; init; }
+        public Guid? SpecificUnitId { get; init; }
+        public string CustomFilter { get; init; } = string.Empty;
+        public int Depth { get; init; } = 1;
+        public bool IsActive { get; init; }
+        public DateTime? EffectiveFrom { get; init; }
+        public DateTime? ExpiresAt { get; init; }
+        public string Description { get; init; } = string.Empty;
+        public DateTime CreatedAt { get; init; }
+        public string CreatedBy { get; init; } = string.Empty;
+        public DateTime? EvaluatedAt { get; init; }
+        public int? DataScopeCount { get; init; }
     }
 }

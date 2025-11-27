@@ -1,5 +1,5 @@
 ﻿using Authorization.Domain.Enums;
-using Authorization.Domain.ValueObjects;
+using Authorization.Domain.Events;
 using Core.Domain.Common;
 using Core.Domain.Interfaces;
 using System;

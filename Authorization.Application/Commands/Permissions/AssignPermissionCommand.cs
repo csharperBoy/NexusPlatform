@@ -15,7 +15,7 @@ namespace Authorization.Application.Commands.Permissions
      Command برای ایجاد یک Permission جدید.
     */
     public record AssignPermissionCommand(
-        Guid ResourceId,
+        Guid ResourceId,                    
         AssigneeType AssigneeType,
         Guid AssigneeId,
         PermissionAction Action,
@@ -23,6 +23,8 @@ namespace Authorization.Application.Commands.Permissions
         DateTime? EffectiveFrom = null,
         DateTime? ExpiresAt = null,
         string? Description = null,
-        int Order = 0
+        int Order = 0,
+        int Priority = 1,
+        string Condition = ""
     ) : IRequest<Result<Guid>>;
 }

@@ -43,7 +43,7 @@ namespace Core.Domain.Common
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly(); // 📌 دسترسی فقط خواندنی
 
         // 📌 افزودن رویداد دامنه به موجودیت
-        protected void AddDomainEvent(IDomainEvent eventItem)
+        public void AddDomainEvent(IDomainEvent eventItem)
         {
             _domainEvents.Add(eventItem);
         }

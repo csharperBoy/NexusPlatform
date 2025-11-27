@@ -1,214 +1,181 @@
 ﻿using Authorization.Application.DTOs;
+using Authorization.Application.DTOs.DataScopes;
+using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
-using Authorization.Application.Security;
-using Authorization.Domain.Entities;
-using Core.Application.Abstractions;
-using Identity.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Security;
+using Core.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Services
 {
     public class AuthorizationService : IAuthorizationService
     {
-        private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissions;
-        private readonly IRepository<AuthorizationDbContext, RolePermission, Guid>  _rolePermissions;
-        private readonly IRepository<AuthorizationDbContext, UserPermission, Guid> _userPermissions;
-        private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resources;
-        private readonly IMemoryCache _cache;
-
-        private const string USER_CACHE_PREFIX = "perm_user_";
-        private const string ROLE_CACHE_PREFIX = "perm_role_";
+        private readonly IPermissionEvaluator _permissionEvaluator;
+        private readonly IDataScopeEvaluator _dataScopeEvaluator;
+        private readonly ILogger<AuthorizationService> _logger;
+        private readonly ICacheService _cache;
 
         public AuthorizationService(
-             IRepository<AuthorizationDbContext, Permission, Guid> permissions,
-             IRepository<AuthorizationDbContext, RolePermission, Guid> rolePermissions,
-             IRepository<AuthorizationDbContext, UserPermission, Guid> userPermissions,
-             IRepository<AuthorizationDbContext, Resource, Guid> resources,
-             IMemoryCache cache
+            IPermissionEvaluator permissionEvaluator,
+            IDataScopeEvaluator dataScopeEvaluator,
+            ILogger<AuthorizationService> logger,
+            ICacheService cache)
         {
-            _permissions = permissions;
-            _rolePermissions = rolePermissions;
-            _userPermissions = userPermissions;
-            _resources = resources;
+            _permissionEvaluator = permissionEvaluator;
+            _dataScopeEvaluator = dataScopeEvaluator;
+            _logger = logger;
             _cache = cache;
         }
 
-        // ===================================================================
-        // 1) Permission Registration (Old API) -------------------------------
-        // ===================================================================
-
-        public async Task RegisterPermissionsAsync(IEnumerable<PermissionDescriptor> descriptors, CancellationToken ct = default)
+        public async Task<bool> CheckAccessAsync(Guid userId, string resourceKey, string action)
         {
-            var all = descriptors.ToList();
+            var cacheKey = $"auth:access:{userId}:{resourceKey}:{action}";
 
-            foreach (var d in all)
+            try
             {
-                var exists = await _permissions
-                    .AsQueryable()
-                    .AnyAsync(p => p.Code == d.Code, ct);
-
-                if (exists)
-                    continue;
-
-                // Ensure Resource exists
-                var resource = await _resources.AsQueryable()
-                    .FirstOrDefaultAsync(r => r.Code == d.ResourceCode, ct);
-
-                if (resource == null)
+                // بررسی کش
+                var cached = await _cache.GetAsync<bool?>(cacheKey);
+                if (cached.HasValue)
                 {
-                    resource = new Resource(d.ResourceCode, d.ResourceName, d.ResourceType, d.ParentResourceCode);
-                    await _resources.AddAsync(resource, ct);
+                    _logger.LogDebug("Cache hit for access check: {Key}", cacheKey);
+                    return cached.Value;
                 }
 
-                var p = new Permission(resource.Id, d.PermissionCode, d.PermissionName, d.Description);
-                await _permissions.AddAsync(p, ct);
+                // ارزیابی دسترسی
+                var hasAccess = await _permissionEvaluator.HasPermissionAsync(userId, resourceKey, action);
+
+                // ذخیره در کش
+                await _cache.SetAsync(cacheKey, hasAccess, TimeSpan.FromMinutes(10));
+
+                _logger.LogInformation(
+                    "Access check for user {UserId} to {Resource}:{Action} = {Result}",
+                    userId, resourceKey, action, hasAccess ? "GRANTED" : "DENIED");
+
+                return hasAccess;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in access check for user {UserId} to {Resource}:{Action}",
+                    userId, resourceKey, action);
+                return false; // Fail secure
             }
         }
 
-        // ===================================================================
-        // 2) Effective User Permissions (Old API + New Combined) -------------
-        // ===================================================================
-
-        public async Task<IEnumerable<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken ct = default)
+        public async Task<AccessResult> CheckAccessAsync(AccessRequest request)
         {
-            return await _cache.GetOrCreateAsync($"{USER_CACHE_PREFIX}{userId}", async entry =>
+            try
             {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
+                var hasAccess = await CheckAccessAsync(request.UserId, request.ResourceKey, request.Action);
 
-                // role permissions
-                var rolePermCodes = await (
-                    from rp in _rolePermissions.AsQueryable()
-                    join p in _permissions.AsQueryable() on rp.PermissionId equals p.Id
-                    select p.Code
-                ).ToListAsync(ct);
-
-                // user overrides
-                var overrides = await (
-                    from up in _userPermissions.AsQueryable()
-                    join p in _permissions.AsQueryable() on up.PermissionId equals p.Id
-                    where up.UserId == userId
-                    select new { p.Code, up.Granted }
-                ).ToListAsync(ct);
-
-                var set = new HashSet<string>(rolePermCodes);
-
-                foreach (var ov in overrides)
+                if (hasAccess)
                 {
-                    if (ov.Granted)
-                        set.Add(ov.Code);
-                    else
-                        set.Remove(ov.Code);
+                    _logger.LogDebug(
+                        "Advanced access check GRANTED for user {UserId} to {Resource}:{Action}",
+                        request.UserId, request.ResourceKey, request.Action);
+                    return AccessResult.Grant();
                 }
 
-                return set.AsEnumerable();
-            });
-        }
+                // بررسی جزئیات دلیل رد دسترسی
+                var permissions = await _permissionEvaluator.EvaluateUserPermissionsAsync(request.UserId, request.ResourceKey);
+                var dataScopes = await _dataScopeEvaluator.EvaluateDataScopeAsync(request.UserId, request.ResourceKey);
 
-        // ===================================================================
-        // 3) UserHasPermissionAsync (Old API) -------------------------------
-        // ===================================================================
-
-        public async Task<bool> UserHasPermissionAsync(Guid userId, string permissionCode, CancellationToken ct = default)
-        {
-            var effective = await GetEffectivePermissionsAsync(userId, ct);
-            return effective.Contains(permissionCode);
-        }
-
-        // ===================================================================
-        // 4) Cache Invalidate (Old API) -------------------------------------
-        // ===================================================================
-
-        public Task InvalidateUserCacheAsync(Guid userId)
-        {
-            _cache.Remove($"{USER_CACHE_PREFIX}{userId}");
-            return Task.CompletedTask;
-        }
-
-        public Task InvalidateRoleCacheAsync(Guid roleId)
-        {
-            _cache.Remove($"{ROLE_CACHE_PREFIX}{roleId}");
-            return Task.CompletedTask;
-        }
-
-        // ===================================================================
-        // 5) Permission DTO List (New API) ----------------------------------
-        // ===================================================================
-
-        public async Task<List<PermissionDto>> GetAllAsync(CancellationToken ct)
-        {
-            var query =
-                from p in _permissions.AsQueryable()
-                join r in _resources.AsQueryable() on p.ResourceId equals r.Id
-                select new PermissionDto
+                var denyReason = "User does not have required permissions";
+                var details = new Dictionary<string, object>
                 {
-                    Id = p.Id,
-                    Code = p.Code,
-                    Name = p.Name,
-                    ResourceCode = r.Code,
-                    Description = p.Description
+                    ["UserId"] = request.UserId,
+                    ["ResourceKey"] = request.ResourceKey,
+                    ["Action"] = request.Action,
+                    ["HasPermissions"] = permissions != null,
+                    ["HasDataScopes"] = dataScopes != null,
+                    ["CheckedAt"] = DateTime.UtcNow
                 };
 
-            return await query.ToListAsync(ct);
-        }
+                _logger.LogWarning(
+                    "Advanced access check DENIED for user {UserId} to {Resource}:{Action}. Reason: {Reason}",
+                    request.UserId, request.ResourceKey, request.Action, denyReason);
 
-        // ===================================================================
-        // 6) Role Permission IDs (New API) ----------------------------------
-        // ===================================================================
-
-        public async Task<List<Guid>> GetRolePermissionIdsAsync(Guid roleId, CancellationToken ct)
-        {
-            return await _rolePermissions
-                .AsQueryable()
-                .Where(x => x.RoleId == roleId)
-                .Select(x => x.PermissionId)
-                .ToListAsync(ct);
-        }
-
-        // ===================================================================
-        // 7) Update Role Permissions (New API) -------------------------------
-        // ===================================================================
-
-        public async Task UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionIds, CancellationToken ct)
-        {
-            var old = await _rolePermissions
-                .AsQueryable()
-                .Where(x => x.RoleId == roleId)
-                .ToListAsync(ct);
-
-            foreach (var o in old)
-                await _rolePermissions.DeleteAsync(o.Id, ct);
-
-            foreach (var pid in permissionIds)
-            {
-                var rp = new RolePermission(roleId, pid);
-                await _rolePermissions.AddAsync(rp, ct);
+                return AccessResult.Deny(denyReason);
             }
-
-            await InvalidateRoleCacheAsync(roleId);
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in advanced access check for user {UserId} to {Resource}:{Action}",
+                    request.UserId, request.ResourceKey, request.Action);
+                return AccessResult.Deny("Authorization system error");
+            }
         }
 
-        // ===================================================================
-        // 8) User Overrides (New API) ----------------------------------------
-        // ===================================================================
-
-        public async Task AddUserOverrideAsync(Guid userId, Guid permissionId, bool granted, string? scope, CancellationToken ct)
+        public async Task<UserAccessDto> GetUserEffectiveAccessAsync(Guid userId)
         {
-            var entity = new UserPermission(userId, permissionId, granted, scope);
-            await _userPermissions.AddAsync(entity, ct);
-            await InvalidateUserCacheAsync(userId);
+            var cacheKey = $"auth:useraccess:{userId}";
+
+            try
+            {
+                // بررسی کش
+                var cached = await _cache.GetAsync<UserAccessDto>(cacheKey);
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for user access: {Key}", cacheKey);
+                    return cached;
+                }
+
+                // محاسبه دسترسی‌های مؤثر
+                var permissions = await _permissionEvaluator.EvaluateAllUserPermissionsAsync(userId);
+                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+
+                var userAccess = new UserAccessDto
+                {
+                    UserId = userId,
+                    Permissions = permissions?.ToList() ?? new List<EffectivePermissionDto>(),
+                    DataScopes = dataScopes?.ToList() ?? new List<DataScopeDto>(),
+                };
+
+                // ذخیره در کش
+                await _cache.SetAsync(cacheKey, userAccess, TimeSpan.FromMinutes(5));
+
+                _logger.LogInformation(
+                    "Generated effective access for user {UserId} with {PermissionCount} permissions and {DataScopeCount} data scopes",
+                    userId, userAccess.Permissions.Count, userAccess.DataScopes.Count);
+
+                return userAccess;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating effective access for user {UserId}", userId);
+                throw;
+            }
         }
 
-        public async Task RemoveUserOverrideAsync(Guid userId, Guid overrideId, CancellationToken ct)
+        public async Task<bool> CheckMultipleAccessAsync(Guid userId, IEnumerable<(string Resource, string Action)> permissions)
         {
-            await _userPermissions.DeleteAsync(overrideId, ct);
-            await InvalidateUserCacheAsync(userId);
+            try
+            {
+                foreach (var (resource, action) in permissions)
+                {
+                    var hasAccess = await CheckAccessAsync(userId, resource, action);
+                    if (!hasAccess)
+                    {
+                        _logger.LogWarning(
+                            "Multiple access check FAILED: User {UserId} missing access to {Resource}:{Action}",
+                            userId, resource, action);
+                        return false;
+                    }
+                }
+
+                _logger.LogInformation(
+                    "Multiple access check PASSED: User {UserId} has all {PermissionCount} required permissions",
+                    userId, permissions.Count());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in multiple access check for user {UserId}", userId);
+                return false;
+            }
         }
     }
 }

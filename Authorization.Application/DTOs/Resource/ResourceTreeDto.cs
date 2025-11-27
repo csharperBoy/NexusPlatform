@@ -23,12 +23,11 @@ namespace Authorization.Application.DTOs.Resource
         public Guid Id { get; init; }
         public string Key { get; init; } = string.Empty;
         public string Name { get; init; } = string.Empty;
-
         public ResourceType Type { get; init; }
         public ResourceCategory Category { get; init; }
-
         public Guid? ParentId { get; init; }
 
-        public List<ResourceTreeDto> Children { get; init; } = new();
+        // تغییر به IReadOnlyList - حرفه‌ای‌تر و امن‌تر
+        public IReadOnlyList<ResourceTreeDto> Children { get; init; } = Array.Empty<ResourceTreeDto>();
     }
 }

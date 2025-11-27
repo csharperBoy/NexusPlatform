@@ -14,10 +14,15 @@ namespace Authorization.Application.Commands
      Command برای ایجاد Resource جدید.
     */
     public record CreateResourceCommand(
-        string Key,
-        string Name,
-        ResourceType Type,
-        ResourceCategory Category,
-        Guid? ParentId = null
-    ) : IRequest<Result<Guid>>;
+      string Key,
+      string Name,
+      ResourceType Type,
+      ResourceCategory Category,
+      Guid? ParentId = null,
+      string Description = "",
+      int DisplayOrder = 0,
+      string Icon = "",
+      string Route = ""
+  ) : IRequest<Result<Guid>>;
+
 }

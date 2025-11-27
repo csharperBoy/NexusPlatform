@@ -16,10 +16,15 @@ namespace Authorization.Application.Commands.DataScopes
      Command برای اختصاص DataScope به Assignee (Role/Position/Person).
     */
     public record AssignDataScopeCommand(
-        Guid ResourceId,
-        AssigneeType AssigneeType,
-        Guid AssigneeId,
-        ScopeType Scope,
-        Guid? SpecificUnitId = null
-    ) : IRequest<Result<Guid>>;
+    Guid ResourceId,
+    AssigneeType AssigneeType,
+    Guid AssigneeId,
+    ScopeType Scope,
+    Guid? SpecificUnitId = null,
+    string CustomFilter = "",
+    int Depth = 1,
+    DateTime? EffectiveFrom = null,
+    DateTime? ExpiresAt = null,
+    string Description = ""
+) : IRequest<Result<Guid>>;
 }
