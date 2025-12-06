@@ -16,4 +16,6 @@ namespace Authorization.Application.Queries.Resource
     */
     public record GetResourceTreeQuery(Guid? RootId = null)
         : IRequest<Result<ResourceTreeDto>>;
+
+
 }

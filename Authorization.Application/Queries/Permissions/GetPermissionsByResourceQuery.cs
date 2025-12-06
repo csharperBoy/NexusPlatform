@@ -16,4 +16,6 @@ namespace Authorization.Application.Queries.Permissions
   */
     public record GetPermissionsByResourceQuery(Guid ResourceId)
         : IRequest<Result<IReadOnlyList<PermissionDto>>>;
+
+
 }

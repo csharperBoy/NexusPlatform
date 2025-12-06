@@ -120,6 +120,7 @@ NexusPlatform
 ¦   ¦   ¦   ¦   ¦   GetDataScopeByResourceQueryHandler.cs
 ¦   ¦   ¦   ¦   ¦   GetDataScopesByUserQueryHandler.cs
 ¦   ¦   ¦   ¦   Permissions
+¦   ¦   ¦   ¦   ¦   CheckPermissionQueryHandler.cs
 ¦   ¦   ¦   ¦   ¦   GetPermissionsByResourceQueryHandler.cs
 ¦   ¦   ¦   ¦   ¦   GetPermissionsByUserQueryHandler.cs
 ¦   ¦   ¦   ¦   Resource
@@ -149,7 +150,10 @@ NexusPlatform
 ¦   ¦   ¦   ¦   GetResourceByKeyQuery.cs
 ¦   ¦   ¦   ¦   GetResourceTreeQuery.cs
 ¦   ¦   ¦   Users
+¦   ¦   ¦   ¦   GetUserDataScopeByResourceQuery.cs
 ¦   ¦   ¦   ¦   GetUserEffectiveAccessQuery.cs
+¦   ¦   ¦   ¦   GetUserPermissionsByResourceQuery.cs
+¦   ¦   ¦   ¦   GetUserResourceTreeQuery.cs
 ¦   ¦   Validator
 ¦   ¦   ¦   DataScopes
 ¦   ¦   ¦   ¦   AssignDataScopeCommandValidator.cs
