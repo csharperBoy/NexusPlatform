@@ -3,6 +3,7 @@ using Authorization.Application.Interfaces;
 using Core.Application.Abstractions.Security;
 using Core.Shared.Results;
 using MediatR;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,27 +12,44 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Commands
 {
-    public class CreateResourceCommandHandler : IRequestHandler<CreateResourceCommand, Result<ResourceDto>>
+    public class CreateResourceCommandHandler : IRequestHandler<CreateResourceCommand, Result<Guid>>
     {
-        private readonly IAuthorizationService _authorizationService;
-        private readonly IPermissionChecker _permissionChecker;
+        private readonly IResourceService _resourceService;
+        private readonly ILogger<CreateResourceCommandHandler> _logger;
 
-        public CreateResourceCommandHandler(IAuthorizationService authorizationService, IPermissionChecker permissionChecker)
+        public CreateResourceCommandHandler(
+            IResourceService resourceService,
+            ILogger<CreateResourceCommandHandler> logger)
         {
-            _authorizationService = authorizationService;
-            _permissionChecker = permissionChecker;
+            _resourceService = resourceService;
+            _logger = logger;
         }
 
-        public async Task<Result<ResourceDto>> Handle(CreateResourceCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreateResourceCommand request, CancellationToken cancellationToken)
         {
-            if (!await _permissionChecker.HasPermissionAsync("Authorization.Resource.Create"))
-                return Result<ResourceDto>.Fail("اجازه دسترسی وجود ندارد.");
+            try
+            {
+                _logger.LogInformation(
+                    "Creating resource: {ResourceKey} ({ResourceName})",
+                    request.Key, request.Name);
 
-            var created = await _authorizationService.CreateResourceAsync(request, cancellationToken);
-            if (!created.Succeeded)
-                return Result<ResourceDto>.Fail(created.Error);
+                var resourceId = await _resourceService.CreateResourceAsync(request);
 
-            return Result<ResourceDto>.Ok(created.Data);
+                _logger.LogInformation(
+                    "Resource created successfully: {ResourceId} ({ResourceKey})",
+                    resourceId, request.Key);
+
+                return Result<Guid>.Ok(resourceId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to create resource: {ResourceKey} ({ResourceName})",
+                    request.Key, request.Name);
+
+                return Result<Guid>.Fail(ex.Message);
+            }
         }
     }
 }

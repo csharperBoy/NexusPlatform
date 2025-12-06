@@ -113,6 +113,8 @@ NexusPlatform
 ¦   ¦   ¦   ¦   ¦   TogglePermissionCommandHandler.cs
 ¦   ¦   ¦   ¦   Resource
 ¦   ¦   ¦   ¦   ¦   CreateResourceCommandHandler.cs
+¦   ¦   ¦   ¦   ¦   DeleteResourceCommandHandler.cs
+¦   ¦   ¦   ¦   ¦   UpdateResourceCommandHandler.cs
 ¦   ¦   ¦   Queries
 ¦   ¦   ¦   ¦   DataScopes
 ¦   ¦   ¦   ¦   ¦   GetDataScopeByResourceQueryHandler.cs
@@ -177,10 +179,16 @@ NexusPlatform
 ¦   ¦   ¦   PermissionChangedEvent.cs
 ¦   ¦   ¦   ResourceHierarchyChangedEvent.cs
 ¦   ¦   Specifications
+¦   ¦   ¦   ActivePermissionsSpec.cs
 ¦   ¦   ¦   DataScopesByUserSpec.cs
+¦   ¦   ¦   EffectiveDataScopesSpec.cs
+¦   ¦   ¦   PermissionConflictSpec.cs
 ¦   ¦   ¦   PermissionsByAssigneeSpec.cs
 ¦   ¦   ¦   PermissionsByUserSpec.cs
+¦   ¦   ¦   ResourceByCategorySpec.cs
+¦   ¦   ¦   ResourceByIdSpec.cs
 ¦   ¦   ¦   ResourceByKeySpec.cs
+¦   ¦   ¦   ResourcesByParentIdSpec.cs
 ¦   ¦   ValueObjects
 ¦   Authorization.Infrastructure
 ¦   ¦   Authorization.Infrastructure.csproj
