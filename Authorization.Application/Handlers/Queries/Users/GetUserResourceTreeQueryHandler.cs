@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Authorization.Application.Handlers.Queries.Users
 {
     public class GetUserResourceTreeQueryHandler
-       : IRequestHandler<GetUserResourceTreeQuery, Result<IReadOnlyList<ResourceTreeDto>>>
+        : IRequestHandler<GetUserResourceTreeQuery, Result<IReadOnlyList<ResourceTreeDto>>>
     {
         private readonly IResourceTreeBuilder _resourceTreeBuilder;
         private readonly ILogger<GetUserResourceTreeQueryHandler> _logger;
