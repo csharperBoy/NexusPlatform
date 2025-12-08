@@ -8,10 +8,12 @@ namespace Authorization.Domain.Enums
 {
     public enum ResourceCategory : byte
     {
-        Module = 1,
-        Menu = 2,
-        Page = 3,  // خودش + زیرمجموعه‌ها (با CTE)
-        Component = 4,
-        DatabaseTable = 5
+        General = 0,
+        System = 1,
+        Module = 2,
+        Menu = 3,
+        Page = 4,  
+        Component = 5,
+        DatabaseTable = 6
     }
 }

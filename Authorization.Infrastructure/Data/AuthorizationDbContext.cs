@@ -1,7 +1,9 @@
 ﻿using Authorization.Domain.Entities;
-using Identity.Domain.Entities;
+using Authorization.Infrastructure.Configurations;
+using Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,29 +12,32 @@ using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Data
 {
-    public class AuthorizationDbContext : DbContext
+    public class AuthorizationDbContext : BaseDbContext
     {
-        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
-            : base(options)
+        public AuthorizationDbContext(
+            DbContextOptions<AuthorizationDbContext> options,
+            IServiceProvider serviceProvider)
+            : base(options, serviceProvider)
         {
         }
-
-        public DbSet<Resource> Resources { get; set; } = null!;
-        public DbSet<Permission> Permissions { get; set; } = null!;
-        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
-        public DbSet<UserPermission> UserPermissions { get; set; } = null!;
-
-        protected override void OnModelCreating(ModelBuilder builder)
+        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
+      : base(options, new ServiceCollection().BuildServiceProvider()) // ServiceProvider خالی
         {
-            base.OnModelCreating(builder);
+        }
+        public DbSet<Resource> Resources { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<DataScope> DataScopes { get; set; }
 
-            builder.HasDefaultSchema("authorization");
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-            // apply configurations manually or by scanning assembly
-            builder.ApplyConfiguration(new Configurations.ResourceConfiguration());
-            builder.ApplyConfiguration(new Configurations.PermissionConfiguration());
-            builder.ApplyConfiguration(new Configurations.RolePermissionConfiguration());
-            builder.ApplyConfiguration(new Configurations.UserPermissionConfiguration());
+            modelBuilder.ApplyConfiguration(new ResourceConfiguration());
+            modelBuilder.ApplyConfiguration(new PermissionConfiguration());
+            modelBuilder.ApplyConfiguration(new DataScopeConfiguration());
+
+            // اعمال اسکیما
+            modelBuilder.HasDefaultSchema("authorization");
         }
     }
 

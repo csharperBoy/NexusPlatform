@@ -15,48 +15,95 @@ namespace Authorization.Infrastructure.HostedServices
 {
     public class ResourceRegistrarHostedService : IHostedService
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ResourceRegistrarHostedService> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private Timer? _timer;
+        private bool _isInitialized = false;
 
-        public ResourceRegistrarHostedService(IServiceProvider serviceProvider, ILogger<ResourceRegistrarHostedService> logger)
+        public ResourceRegistrarHostedService(
+            ILogger<ResourceRegistrarHostedService> logger,
+            IServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
-            var providers = scope.ServiceProvider.GetServices<IPermissionDefinitionProvider>().ToList();
-            var permissionService = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
+            _logger.LogInformation("Resource Registrar Hosted Service is starting...");
 
-            var bag = new ConcurrentBag<PermissionDescriptor>();
-            var ctx = new PermissionDefinitionContext(bag);
-
-            foreach (var p in providers)
+            try
             {
-                try
-                {
-                    p.Define(ctx);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error in permission provider {Provider}", p.GetType().FullName);
-                }
+                // ثبت اولیه منابع
+                await InitializeResourcesAsync();
+                _isInitialized = true;
+
+                // تنظیم تایمر برای sync دوره‌ای (هر 24 ساعت)
+                _timer = new Timer(
+                    callback: async _ => await SyncResourcesAsync(),
+                    state: null,
+                    dueTime: TimeSpan.FromHours(24),
+                    period: TimeSpan.FromHours(24)
+                );
+
+                _logger.LogInformation("Resource Registrar Hosted Service started successfully");
             }
-
-            var descriptors = bag.ToArray();
-            if (descriptors.Any())
+            catch (Exception ex)
             {
-                _logger.LogInformation("Registering {Count} permissions from {ProvidersCount} providers", descriptors.Length, providers.Count);
-                await permissionService.RegisterPermissionsAsync(descriptors, cancellationToken);
-            }
-            else
-            {
-                _logger.LogInformation("No permission descriptors found from providers");
+                _logger.LogError(ex, "Failed to start Resource Registrar Hosted Service");
+                throw;
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        private async Task InitializeResourcesAsync()
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resourceService = scope.ServiceProvider.GetRequiredService<IResourceService>();
+
+            _logger.LogInformation("Initial resource registration started...");
+
+            await resourceService.RegisterAllModulesResourcesAsync();
+
+            // همگام‌سازی برای اطمینان از consistency
+            await resourceService.SyncResourcesWithDefinitionsAsync();
+
+            _logger.LogInformation("Initial resource registration completed");
+        }
+
+        private async Task SyncResourcesAsync()
+        {
+            if (!_isInitialized) return;
+
+            try
+            {
+                _logger.LogInformation("Periodic resource synchronization started...");
+
+                using var scope = _serviceProvider.CreateScope();
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourceService>();
+
+                await resourceService.SyncResourcesWithDefinitionsAsync();
+
+                _logger.LogInformation("Periodic resource synchronization completed");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during periodic resource synchronization");
+            }
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Resource Registrar Hosted Service is stopping...");
+
+            _timer?.Change(Timeout.Infinite, 0);
+
+            // انجام sync نهایی قبل از shutdown
+            if (_isInitialized)
+            {
+                await SyncResourcesAsync();
+            }
+
+            _logger.LogInformation("Resource Registrar Hosted Service stopped");
+        }
     }
 }

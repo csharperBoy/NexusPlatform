@@ -18,10 +18,9 @@ namespace Identity.Infrastructure.Data
             {
                 adminUser = new ApplicationUser(Guid.NewGuid(), adminUserName, adminEmail)
                 {
-                    FullName = "System Administrator",
                     EmailConfirmed = true
                 };
-
+                adminUser.SetFullName("System", "Administrator");
                 var result = await userManager.CreateAsync(adminUser, adminPassword);
                 if (!result.Succeeded)
                 {
@@ -39,11 +38,10 @@ namespace Identity.Infrastructure.Data
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
                     var role = new ApplicationRole
-                    {
-                        Name = roleName,
-                        Description = $"{roleName} role",
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    (
+                         roleName,
+                         $"{roleName} role"
+                    );
 
                     var result = await roleManager.CreateAsync(role);
                     if (!result.Succeeded)

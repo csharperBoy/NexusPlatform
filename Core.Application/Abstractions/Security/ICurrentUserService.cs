@@ -34,7 +34,6 @@ namespace Core.Application.Abstractions.Security
     public interface ICurrentUserService
     {
         Guid? UserId { get; }          // 📌 شناسه کاربر فعلی
-        //string? UserId { get; }      // 📌 جایگزین احتمالی اگر شناسه کاربر رشته‌ای باشد
         string? UserName { get; }      // 📌 نام کاربری فعلی
         bool IsAuthenticated { get; }  // 📌 وضعیت احراز هویت
         IEnumerable<string> Roles { get; } // 📌 نقش‌های کاربر فعلی

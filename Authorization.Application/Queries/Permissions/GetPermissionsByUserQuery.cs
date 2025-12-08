@@ -1,4 +1,5 @@
-﻿using Authorization.Application.DTOs.Users;
+﻿using Authorization.Application.DTOs.Permissions;
+using Authorization.Application.DTOs.Users;
 using Core.Shared.Results;
 using MediatR;
 using System;
@@ -15,5 +16,5 @@ namespace Authorization.Application.Queries.Permissions
      Query برای دریافت خلاصه دسترسی های کاربر.
     */
     public record GetPermissionsByUserQuery(Guid UserId)
-        : IRequest<Result<UserPermissionsSummaryDto>>;
+        : IRequest<Result<IReadOnlyList<PermissionDto>>>;
 }

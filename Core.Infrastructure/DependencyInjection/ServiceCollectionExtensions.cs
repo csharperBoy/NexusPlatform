@@ -76,6 +76,7 @@ namespace Core.Infrastructure.DependencyInjection
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
             services.AddHttpContextAccessor();
+
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IMigrationManager, MigrationManager>();
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));

@@ -64,8 +64,6 @@ namespace Core.Infrastructure.Security
             }
         }
 
-        // 📌 جایگزین ساده‌تر (غیرفعال شده برای شفافیت بیشتر)
-        // public string? UserId => _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value;
 
         public string? UserName => _httpContextAccessor.HttpContext?.User?.Identity?.Name;
 

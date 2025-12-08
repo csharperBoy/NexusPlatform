@@ -81,13 +81,13 @@ namespace Identity.Infrastructure.Services
 
             // ذخیره RefreshToken در UserSession
             var session = new UserSession
-            {
-                UserId = user.Id,
-                RefreshToken = refreshToken,
-                ExpiresAt = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
-                CreatedAt = DateTime.UtcNow,
-                DeviceInfo = GetDeviceInfo()
-            };
+            (
+                 user.Id,
+                 refreshToken,
+                 GetDeviceInfo(),
+                 "",
+                 DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays)
+            );
 
             await _sessionRepository.AddAsync(session);
             await _unitOfWork.SaveChangesAsync();

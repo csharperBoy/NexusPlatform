@@ -6,25 +6,93 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Infrastructure.Database.Configurations;
 
 namespace Authorization.Infrastructure.Configurations
 {
-    public class DataScopeConfiguration : IEntityTypeConfiguration<RolePermission>
+    public class DataScopeConfiguration : AuditableEntityConfiguration<DataScope>
     {
-        public void Configure(EntityTypeBuilder<RolePermission> b)
+        public override void Configure(EntityTypeBuilder<DataScope> builder)
         {
-            b.ToTable("RolePermissions", "authorization");
+            base.Configure(builder);
 
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Scope).HasMaxLength(50).IsRequired(false);
-            b.Property(x => x.CreatedAt).IsRequired();
+            builder.ToTable("DataScopes", "authorization");
 
-            b.HasIndex(x => new { x.RoleId, x.PermissionId }).IsUnique();
+            builder.HasKey(ds => ds.Id);
+            builder.HasIndex(ds => ds.Id).IsUnique();
 
-            b.HasOne(x => x.Permission)
-             .WithMany(p => p.RolePermissions)
-             .HasForeignKey(x => x.PermissionId)
-             .OnDelete(DeleteBehavior.Cascade);
+            // Properties
+            builder.Property(ds => ds.ResourceId)
+                .IsRequired();
+
+            builder.Property(ds => ds.AssigneeType)
+                .HasConversion<string>()
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(ds => ds.AssigneeId)
+                .IsRequired();
+
+            builder.Property(ds => ds.Scope)
+                .HasConversion<string>()
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(ds => ds.SpecificUnitId)
+                .IsRequired(false);
+
+            builder.Property(ds => ds.CustomFilter)
+                .HasMaxLength(1000)
+                .IsRequired(false);
+
+            builder.Property(ds => ds.Depth)
+                .IsRequired()
+                .HasDefaultValue(1);
+
+            builder.Property(ds => ds.EffectiveFrom)
+                .IsRequired(false);
+
+            builder.Property(ds => ds.ExpiresAt)
+                .IsRequired(false);
+
+            builder.Property(ds => ds.Description)
+                .HasMaxLength(500)
+                .IsRequired(false);
+
+            builder.Property(ds => ds.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            // Computed properties (if needed for querying)
+            builder.Property(ds => ds.IsValid)
+                .HasComputedColumnSql(
+                    "CASE WHEN IsActive = 1 AND " +
+                    "(ExpiresAt IS NULL OR ExpiresAt > GETUTCDATE()) AND " +
+                    "(EffectiveFrom IS NULL OR EffectiveFrom <= GETUTCDATE()) " +
+                    "THEN 1 ELSE 0 END",
+                    stored: true);
+
+            // Indexes
+            builder.HasIndex(ds => new { ds.ResourceId, ds.AssigneeType, ds.AssigneeId })
+                .HasDatabaseName("IX_DataScopes_Resource_Assignee");
+
+            builder.HasIndex(ds => new { ds.AssigneeType, ds.AssigneeId })
+                .HasDatabaseName("IX_DataScopes_Assignee");
+
+            builder.HasIndex(ds => ds.ResourceId)
+                .HasDatabaseName("IX_DataScopes_Resource");
+
+            builder.HasIndex(ds => new { ds.AssigneeId, ds.IsActive, ds.IsValid })
+                .HasDatabaseName("IX_DataScopes_ActiveValid");
+
+            builder.HasIndex(ds => new { ds.Scope, ds.SpecificUnitId })
+                .HasDatabaseName("IX_DataScopes_Scope_SpecificUnit");
+
+            // Relationships
+            builder.HasOne(ds => ds.Resource)
+                .WithMany(r => r.DataScopes)
+                .HasForeignKey(ds => ds.ResourceId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

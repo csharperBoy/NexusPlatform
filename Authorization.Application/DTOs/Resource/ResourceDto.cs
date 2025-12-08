@@ -28,6 +28,7 @@ namespace Authorization.Application.DTOs.Resource
         public string Icon { get; init; } = string.Empty;
         public string Route { get; init; } = string.Empty;
         public Guid? ParentId { get; init; }
+        public string ParentKey { get; set; }
         public string Path { get; init; } = string.Empty;
         public DateTime CreatedAt { get; init; }
         public string CreatedBy { get; init; } = string.Empty;

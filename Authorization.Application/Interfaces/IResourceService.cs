@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.Commands;
 using Authorization.Application.Commands.Resource;
 using Authorization.Application.DTOs.Resource;
+using Core.Application.Abstractions.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,14 @@ namespace Authorization.Application.Interfaces
         // منطق کسب‌وکار پیچیده  
         Task<bool> ValidateResourceHierarchyAsync(Guid resourceId, Guid? newParentId);
         Task RebuildResourceTreeAsync();
+
+        // متدهای جدید برای ثبت خودکار منابع
+        Task RegisterModuleResourcesAsync(string moduleKey);
+        Task RegisterAllModulesResourcesAsync();
+        Task SyncResourcesWithDefinitionsAsync();
+
+        // متد کمکی برای کار با ResourceDefinition
+        Task<Guid> CreateOrUpdateResourceFromDefinitionAsync(ResourceDefinition definition);
+
     }
 }

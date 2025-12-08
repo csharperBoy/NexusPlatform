@@ -1,5 +1,4 @@
 ﻿using Authorization.Application.Interfaces;
-using Authorization.Infrastructure.Authorization;
 using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
@@ -7,14 +6,8 @@ using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
-using Identity.Application;
-using Identity.Application.Interfaces;
-using Identity.Domain.Entities;
-using Identity.Infrastructure.Configuration;
 using Identity.Infrastructure.Data;
-using Identity.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 //using Microsoft.AspNetCore.Identity.JwtBearer;
@@ -55,6 +48,10 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<IAuthorizationService, AuthorizationService>();
 
+            // Resource Definition Providers
+            services.AddSingleton<AuthorizationResourceDefinitionProvider>();
+            services.AddSingleton<IResourceDefinitionProvider>(sp =>
+                sp.GetRequiredService<AuthorizationResourceDefinitionProvider>());
             // discover IPermissionDefinitionProvider via DI (modules register their providers)
             services.AddHostedService<ResourceRegistrarHostedService>();
 
