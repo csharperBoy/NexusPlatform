@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
+using Core.Domain.ValueObjects;
 using Core.Shared.Results;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
@@ -62,11 +63,8 @@ namespace Identity.Infrastructure.Services
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email)
-            {
-                FullName = request.DisplayName
-            };
-
+            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email);
+            user.SetFullName(request.DisplayName, "");
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)
             {
@@ -86,13 +84,13 @@ namespace Identity.Infrastructure.Services
 
             // ذخیره RefreshToken در دیتابیس
             var refreshEntity = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = tokens.RefreshToken,
-                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
-                CreatedByIp = "system", // TODO: از HttpContext بگیر
-                DeviceInfo = "unknown"
-            };
+            (
+                 user.Id,
+                 tokens.RefreshToken,
+                 DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                 "system", // TODO: از HttpContext بگیر
+                 "unknown"
+            );
             await _refreshTokenRepository.AddAsync(refreshEntity);
             await _unitOfWork.SaveChangesAsync();
 
@@ -118,14 +116,13 @@ namespace Identity.Infrastructure.Services
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
             // ذخیره RefreshToken
-            var refreshEntity = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = tokens.RefreshToken,
-                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
-                CreatedByIp = "system",
-                DeviceInfo = "unknown"
-            };
+            var refreshEntity = new RefreshToken(
+                user.Id,
+                 tokens.RefreshToken,
+                 DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                 "system",
+                "unknown"
+            );
             await _refreshTokenRepository.AddAsync(refreshEntity);
             await _unitOfWork.SaveChangesAsync();
 
@@ -152,13 +149,13 @@ namespace Identity.Infrastructure.Services
 
             // ذخیره RefreshToken
             var refreshEntity = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = tokens.RefreshToken,
-                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
-                CreatedByIp = "system",
-                DeviceInfo = "unknown"
-            };
+            (
+                user.Id,
+                tokens.RefreshToken,
+                DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                "system",
+                "unknown"
+           );
             await _refreshTokenRepository.AddAsync(refreshEntity);
             await _unitOfWork.SaveChangesAsync();
 
@@ -186,19 +183,17 @@ namespace Identity.Infrastructure.Services
             var roles = await _roleResolver.GetUserRolesAsync(user.Id);
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
-            // revoke قبلی
-            refresh.IsRevoked = true;
-            refresh.ReplacedByToken = tokens.RefreshToken;
+            refresh.Revoke(replacedBy: tokens.RefreshToken);
 
             // ذخیره جدید
             var newRefresh = new RefreshToken
-            {
-                UserId = user.Id,
-                Token = tokens.RefreshToken,
-                ExpiryDate = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
-                CreatedByIp = "system",
-                DeviceInfo = "unknown"
-            };
+            (
+                 user.Id,
+                 tokens.RefreshToken,
+                 DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenExpiryDays),
+                 "system",
+                 "unknown"
+            );
             await _refreshTokenRepository.UpdateAsync(refresh);
             await _refreshTokenRepository.AddAsync(newRefresh);
             await _unitOfWork.SaveChangesAsync();
@@ -214,7 +209,8 @@ namespace Identity.Infrastructure.Services
             if (refresh == null)
                 return Result.Fail("Refresh token یافت نشد.");
 
-            refresh.IsRevoked = true;
+
+            refresh.Revoke(replacedBy: null);
 
             await _refreshTokenRepository.UpdateAsync(refresh);
             await _unitOfWork.SaveChangesAsync();

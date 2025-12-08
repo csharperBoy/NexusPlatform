@@ -54,7 +54,11 @@ namespace Identity.Domain.Entities
             FullName = fullName;
             Touch();
         }
-
+        public void SetFullName(string firstName , string lastName)
+        {
+            FullName = FullName.Create(firstName , lastName);
+            Touch();
+        }
         public void UpdateLoginInfo(string ip)
         {
             LastLoginIp = ip;
