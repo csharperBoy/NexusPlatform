@@ -32,20 +32,20 @@ namespace Authorization.Application.Handlers.Queries.Resource
         {
             try
             {
-                _logger.LogDebug("Getting resource by ID: {ResourceId}", request.ResourceId);
+                _logger.LogDebug("Getting resource by ID: {ResourceId}", request.Id);
 
-                var resource = await _resourceService.GetResourceAsync(request.ResourceId);
+                var resource = await _resourceService.GetResourceAsync(request.Id);
 
                 if (resource == null)
                 {
-                    return Result<ResourceDto>.Fail($"Resource with ID {request.ResourceId} not found");
+                    return Result<ResourceDto>.Fail($"Resource with ID {request.Id} not found");
                 }
 
                 return Result<ResourceDto>.Ok(resource);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to get resource by ID: {ResourceId}", request.ResourceId);
+                _logger.LogError(ex, "Failed to get resource by ID: {ResourceId}", request.Id);
                 return Result<ResourceDto>.Fail(ex.Message);
             }
         }

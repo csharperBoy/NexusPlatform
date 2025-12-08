@@ -10,7 +10,7 @@ namespace Authorization.Application.Attributes
     /// اعمال کنترل دسترسی بر اساس Resource و Action
     /// از ServiceFilterAttribute استفاده می‌کند تا بتواند Dependency Injection داشته باشد
     /// </summary>
-    public class AuthorizeResourceAttribute : ServiceFilterAttribute  // 📍 از Microsoft.AspNetCore.Mvc
+    public class AuthorizeResourceAttribute : ServiceFilterAttribute  
     {
         public AuthorizeResourceAttribute(string resourceKey, string action = "View")
             : base(typeof(AuthorizeResourceFilter))
