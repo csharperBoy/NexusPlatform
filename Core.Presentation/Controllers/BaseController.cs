@@ -12,53 +12,32 @@ using System.Threading.Tasks;
 namespace Core.Presentation.Controllers
 {
     [ApiController]
+    [Route("api/[controller]")]
     public abstract class BaseController : ControllerBase
     {
         private IMediator? _mediator;
+
         protected IMediator Mediator =>
             _mediator ??= HttpContext.RequestServices.GetRequiredService<IMediator>();
 
         protected IActionResult HandleResult<T>(Result<T> result)
         {
-            if (result.IsSuccess)
+            if (!result.Succeeded)
             {
-                if (result.Value == null)
-                    return NoContent();
-
-                return Ok(result.Value);
+                return BadRequest(result.Error);
             }
 
-            return BadRequest(new
+            if (result.Data == null)
             {
-                success = false,
-                error = result.Error,
-                errors = result.Errors
-            });
+                return NoContent();
+            }
+
+            return Ok(result.Data);
         }
 
         protected IActionResult HandleResult(Result result)
         {
-            if (result.IsSuccess)
-            {
-                return Ok(new { success = true });
-            }
-
-            return BadRequest(new
-            {
-                success = false,
-                error = result.Error,
-                errors = result.Errors
-            });
-        }
-
-        protected Guid? GetCurrentUserId()
-        {
-            var userIdClaim = User.FindFirst("sub")?.Value;
-            if (Guid.TryParse(userIdClaim, out var userId))
-            {
-                return userId;
-            }
-            return null;
+            return result.Succeeded ? Ok() : BadRequest(result.Error);
         }
     }
 }
