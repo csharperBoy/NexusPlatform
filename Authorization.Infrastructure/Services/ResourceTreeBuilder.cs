@@ -163,10 +163,21 @@ namespace Authorization.Infrastructure.Services
                     Id = resource.Id,
                     Key = resource.Key,
                     Name = resource.Name,
+                    Description = resource.Description,
                     Type = resource.Type,
                     Category = resource.Category,
                     ParentId = resource.ParentId,
-                    Children = BuildTreeFromList(resources, resource.Id) // بدون تبدیل - کاملاً type-safe
+                    ParentKey = resource.Parent?.Key ?? string.Empty,
+                    IsActive = resource.IsActive,
+                    DisplayOrder = resource.DisplayOrder,
+                    Icon = resource.Icon,
+                    Route = resource.Route,
+                    Path = resource.Path,
+                    CreatedAt = resource.CreatedAt,
+                    CreatedBy = resource.CreatedBy,
+                    ModifiedAt = resource.ModifiedAt,
+                    ModifiedBy = resource.ModifiedBy,
+                    Children = BuildTreeFromList(resources, resource.Id)
                 })
                 .ToList();
 
@@ -184,13 +195,16 @@ namespace Authorization.Infrastructure.Services
                 Type = resource.Type,
                 Category = resource.Category,
                 ParentId = resource.ParentId,
+                ParentKey = resource.Parent?.Key ?? string.Empty,
                 IsActive = resource.IsActive,
                 DisplayOrder = resource.DisplayOrder,
                 Icon = resource.Icon,
                 Route = resource.Route,
                 Path = resource.Path,
                 CreatedAt = resource.CreatedAt,
-                CreatedBy = resource.CreatedBy
+                CreatedBy = resource.CreatedBy,
+                ModifiedAt = resource.ModifiedAt,
+                ModifiedBy = resource.ModifiedBy
             };
         }
     }

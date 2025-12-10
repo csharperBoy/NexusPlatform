@@ -48,13 +48,15 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<IAuthorizationService, AuthorizationService>();
 
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddScoped<IAuthorizationChecker, AuthorizationService>();
+            
             // Resource Definition Providers
             services.AddSingleton<AuthorizationResourceDefinitionProvider>();
             services.AddSingleton<IResourceDefinitionProvider>(sp =>
                 sp.GetRequiredService<AuthorizationResourceDefinitionProvider>());
             // discover IPermissionDefinitionProvider via DI (modules register their providers)
             services.AddHostedService<ResourceRegistrarHostedService>();
-
             return services;
         }
     }

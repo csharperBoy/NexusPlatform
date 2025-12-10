@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Authorization.Application.Attributes
 {
+    /*
     /// <summary>
     /// اعمال کنترل دسترسی بر اساس Resource و Action
     /// از ServiceFilterAttribute استفاده می‌کند تا بتواند Dependency Injection داشته باشد
@@ -72,5 +73,5 @@ namespace Authorization.Application.Attributes
                 context.Result = new ForbidResult();  // 📍 از Microsoft.AspNetCore.Mvc
             }
         }
-    }
+    }*/
 }

@@ -1,5 +1,4 @@
-﻿using Identity.Domain.Entities;
-using Identity.Infrastructure.Data;
+﻿using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

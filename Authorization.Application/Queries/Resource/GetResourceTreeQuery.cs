@@ -15,7 +15,7 @@ namespace Authorization.Application.Queries.Resource
      Query برای دریافت درخت Resource. RootId اختیاری است.
     */
     public record GetResourceTreeQuery(Guid? RootId = null)
-        : IRequest<Result<ResourceTreeDto>>;
+    : IRequest<Result<IReadOnlyList<ResourceTreeDto>>>;
 
 
 }

@@ -1,5 +1,4 @@
 ﻿using Authorization.Application.Interfaces;
-using Authorization.Application.Security;
 using Authorization.Infrastructure.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Core.Presentation.Filters;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
 namespace Core.Presentation.DependencyInjection
 {
     /*
@@ -39,6 +41,9 @@ namespace Core.Presentation.DependencyInjection
     {
         public static IServiceCollection Core_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
+           
+
+            services.AddScoped<AuthorizeResourceFilter>();
             // 📌 در آینده می‌توان سرویس‌های Presentation را اینجا ثبت کرد
             return services;
         }

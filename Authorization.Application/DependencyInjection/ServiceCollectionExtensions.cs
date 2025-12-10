@@ -14,8 +14,6 @@ namespace Authorization.Application.DependencyInjection
         public static IServiceCollection Authorization_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             
-            // ثبت فیلتر برای استفاده در Attribute
-            services.AddScoped<AuthorizeResourceFilter>();
             // رجیستر MediatR و همه Handlerهای موجود در اسمبلی Application
             services.AddMediatR(cfg =>
                cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));

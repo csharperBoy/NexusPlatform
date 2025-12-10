@@ -12,35 +12,6 @@ namespace Authorization.Presentation.Controllers.Admin
     [Route("api/authorization/[controller]")]
     public class DataScopesController : ControllerBase
     {
-        private readonly IMediator _mediator;
-
-        public DataScopesController(IMediator mediator)
-        {
-            _mediator = mediator;
-        }
-
-        [HttpGet("{roleId:guid}/permissions")]
-        public async Task<IActionResult> GetRolePermissions(Guid roleId)
-        {
-            var res = await _mediator.Send(new GetRolePermissionsQuery(roleId));
-
-            if (!res.Succeeded)
-                return BadRequest(res.Error);
-
-            return Ok(res.Data);
-        }
-
-        [HttpPost("{roleId:guid}/permissions")]
-        public async Task<IActionResult> UpdateRolePermissions(Guid roleId, UpdateRolePermissionsCommand cmd)
-        {
-            cmd.RoleId = roleId;
-
-            var res = await _mediator.Send(cmd);
-
-            if (!res.Succeeded)
-                return BadRequest(res.Error);
-
-            return Ok(res.Data);
-        }
+        
     }
 }

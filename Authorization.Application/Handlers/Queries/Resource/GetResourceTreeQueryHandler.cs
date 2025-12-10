@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Authorization.Application.Handlers.Queries.Resource
 {
     public class GetResourceTreeQueryHandler
-        : IRequestHandler<GetResourceTreeQuery, Result<ResourceTreeDto>>
+      : IRequestHandler<GetResourceTreeQuery, Result<IReadOnlyList<ResourceTreeDto>>>
     {
         private readonly IResourceTreeBuilder _resourceTreeBuilder;
         private readonly ILogger<GetResourceTreeQueryHandler> _logger;
@@ -26,7 +26,7 @@ namespace Authorization.Application.Handlers.Queries.Resource
             _logger = logger;
         }
 
-        public async Task<Result<ResourceTreeDto>> Handle(
+        public async Task<Result<IReadOnlyList<ResourceTreeDto>>> Handle(
             GetResourceTreeQuery request,
             CancellationToken cancellationToken)
         {
@@ -34,57 +34,47 @@ namespace Authorization.Application.Handlers.Queries.Resource
             {
                 _logger.LogDebug("Building resource tree with root: {RootId}", request.RootId?.ToString() ?? "null");
 
-                // این متد نیاز به پیاده‌سازی جدید در IResourceTreeBuilder دارد
-                // یا می‌توانیم از BuildTreeAsync استفاده کنیم و سپس درخت را فیلتر کنیم
                 var allTrees = await _resourceTreeBuilder.BuildTreeAsync();
 
                 if (request.RootId.HasValue)
                 {
-                    // پیدا کردن درخت با ریشه مشخص
                     var rootTree = FindTreeByRootId(allTrees, request.RootId.Value);
-                    if (rootTree == null)
+                    if (rootTree is null)
                     {
-                        return Result<ResourceTreeDto>.Fail($"Root resource with ID {request.RootId} not found");
+                        return Result<IReadOnlyList<ResourceTreeDto>>.Fail($"Root resource with ID {request.RootId} not found");
                     }
-                    return Result<ResourceTreeDto>.Ok(rootTree);
+
+                    // Return the found subtree as a single-item list to match the signature
+                    return Result<IReadOnlyList<ResourceTreeDto>>.Ok(new List<ResourceTreeDto> { rootTree });
                 }
                 else
                 {
-                    // اگر RootId مشخص نشده، کل درخت را برمی‌گردانیم
-                    // این نیاز به یک ResourceTreeDto ریشه مجازی دارد
-                    var virtualRoot = new ResourceTreeDto
-                    {
-                        Id = Guid.Empty,
-                        Key = "root",
-                        Name = "All Resources",
-                        Children = allTrees.ToList()
-                    };
-                    return Result<ResourceTreeDto>.Ok(virtualRoot);
+                    // Return the full forest (list of root trees)
+                    return Result<IReadOnlyList<ResourceTreeDto>>.Ok(allTrees);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to build resource tree with root: {RootId}", request.RootId?.ToString() ?? "null");
-                return Result<ResourceTreeDto>.Fail(ex.Message);
+                return Result<IReadOnlyList<ResourceTreeDto>>.Fail(ex.Message);
             }
         }
 
-        private ResourceTreeDto FindTreeByRootId(IReadOnlyList<ResourceTreeDto> trees, Guid rootId)
+        private ResourceTreeDto? FindTreeByRootId(IReadOnlyList<ResourceTreeDto> trees, Guid rootId)
         {
             foreach (var tree in trees)
             {
                 if (tree.Id == rootId)
-                {
                     return tree;
-                }
 
-                // جستجو در فرزندان
-                var foundInChildren = FindTreeByRootId(tree.Children, rootId);
-                if (foundInChildren != null)
+                if (tree.Children is { Count: > 0 })
                 {
-                    return foundInChildren;
+                    var foundInChildren = FindTreeByRootId(tree.Children, rootId);
+                    if (foundInChildren != null)
+                        return foundInChildren;
                 }
             }
+
             return null;
         }
     }

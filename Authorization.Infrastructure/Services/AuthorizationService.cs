@@ -9,24 +9,34 @@ using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
 {
-    public class AuthorizationService : IAuthorizationService
+    /// <summary>
+    /// پیاده‌سازی همزمان IAuthorizationService (کامل) و IAuthorizationChecker (سبک)
+    /// </summary>
+    public class AuthorizationService : IAuthorizationService, IAuthorizationChecker
     {
         private readonly IPermissionEvaluator _permissionEvaluator;
         private readonly IDataScopeEvaluator _dataScopeEvaluator;
+        private readonly ICurrentUserService _currentUserService;
         private readonly ILogger<AuthorizationService> _logger;
         private readonly ICacheService _cache;
 
         public AuthorizationService(
             IPermissionEvaluator permissionEvaluator,
             IDataScopeEvaluator dataScopeEvaluator,
+            ICurrentUserService currentUserService,
             ILogger<AuthorizationService> logger,
             ICacheService cache)
         {
             _permissionEvaluator = permissionEvaluator;
             _dataScopeEvaluator = dataScopeEvaluator;
+            _currentUserService = currentUserService;
             _logger = logger;
             _cache = cache;
         }
+
+        // ================================================
+        // پیاده‌سازی IAuthorizationChecker (برای Core و ماژول‌های دیگر)
+        // ================================================
 
         public async Task<bool> CheckAccessAsync(Guid userId, string resourceKey, string action)
         {
@@ -63,6 +73,23 @@ namespace Authorization.Infrastructure.Services
                 return false; // Fail secure
             }
         }
+
+        public async Task<bool> CheckAccessAsync(string resourceKey, string action)
+        {
+            var userId = _currentUserService.UserId;
+            if (userId == null || userId == Guid.Empty)
+            {
+                _logger.LogWarning("No current user found when checking access to {Resource}:{Action}",
+                    resourceKey, action);
+                return false;
+            }
+
+            return await CheckAccessAsync(userId.Value, resourceKey, action);
+        }
+
+        // ================================================
+        // پیاده‌سازی IAuthorizationService (کامل)
+        // ================================================
 
         public async Task<AccessResult> CheckAccessAsync(AccessRequest request)
         {
