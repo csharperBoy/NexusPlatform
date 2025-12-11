@@ -1,6 +1,7 @@
 ﻿using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Configurations;
 using Core.Infrastructure.Data;
+using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,13 +32,14 @@ namespace Identity.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            // اعمال اسکیما
+            modelBuilder.HasDefaultSchema("authorization");
 
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("authorization"));
             modelBuilder.ApplyConfiguration(new ResourceConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
             modelBuilder.ApplyConfiguration(new DataScopeConfiguration());
 
-            // اعمال اسکیما
-            modelBuilder.HasDefaultSchema("authorization");
         }
     }
 
