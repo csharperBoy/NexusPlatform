@@ -69,13 +69,13 @@ namespace Authorization.Infrastructure.Configurations
                 .HasDefaultValue(0);
 
             // Computed properties
-            builder.Property(p => p.IsValid)
+          /*  builder.Property(p => p.IsValid)
                 .HasComputedColumnSql(
                     "CASE WHEN IsActive = 1 AND " +
                     "(ExpiresAt IS NULL OR ExpiresAt > GETUTCDATE()) AND " +
                     "(EffectiveFrom IS NULL OR EffectiveFrom <= GETUTCDATE()) " +
                     "THEN 1 ELSE 0 END",
-                    stored: true);
+                    stored: true);*/
 
             // Indexes
             builder.HasIndex(p => new { p.ResourceId, p.AssigneeType, p.AssigneeId, p.Action })
@@ -88,8 +88,8 @@ namespace Authorization.Infrastructure.Configurations
             builder.HasIndex(p => p.ResourceId)
                 .HasDatabaseName("IX_Permissions_Resource");
 
-            builder.HasIndex(p => new { p.AssigneeId, p.IsActive, p.IsValid, p.Priority })
-                .HasDatabaseName("IX_Permissions_ActiveValidPriority");
+            builder.HasIndex(p => new { p.AssigneeId, p.IsActive,  p.Priority })
+                .HasDatabaseName("IX_Permissions_ActivePriority");
 
             builder.HasIndex(p => new { p.Action, p.ResourceId })
                 .HasDatabaseName("IX_Permissions_Action_Resource");

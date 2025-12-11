@@ -4,6 +4,7 @@ using Core.Domain.Common;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
@@ -29,10 +30,13 @@ namespace Authorization.Domain.Entities
             public string Description { get; private set; }
             public bool IsActive { get; private set; } = true;
 
-            // Computed Properties
-            public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
-            public bool IsEffective => !EffectiveFrom.HasValue || EffectiveFrom <= DateTime.UtcNow;
-            public bool IsValid => IsActive && !IsExpired && IsEffective;
+        // Computed Properties
+        [NotMapped]
+        public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
+        [NotMapped]
+        public bool IsEffective => !EffectiveFrom.HasValue || EffectiveFrom <= DateTime.UtcNow;
+        [NotMapped]
+        public bool IsValid => IsActive && !IsExpired && IsEffective;
 
             // Navigation Properties
             public virtual Resource Resource { get; private set; } = null!;
@@ -125,10 +129,12 @@ namespace Authorization.Domain.Entities
                 if (depth < 1 || depth > 10)
                     throw new ArgumentException("Depth must be between 1 and 10.");
             }
-
-            public bool RequiresSpecificUnit => Scope == ScopeType.SpecificUnit;
-            public bool IsHierarchical => Scope == ScopeType.Subtree;
-            public bool IsUnrestricted => Scope == ScopeType.All;
+        [NotMapped]
+        public bool RequiresSpecificUnit => Scope == ScopeType.SpecificUnit;
+        [NotMapped]
+        public bool IsHierarchical => Scope == ScopeType.Subtree;
+        [NotMapped]
+        public bool IsUnrestricted => Scope == ScopeType.All;
 
             public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
             {

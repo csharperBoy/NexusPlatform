@@ -4,6 +4,7 @@ using Core.Domain.Common;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -129,10 +130,12 @@ namespace Authorization.Domain.Entities
                     Path = Id.ToString();
                 }
             }
-
-            public bool IsUiResource => Type == ResourceType.Ui;
-            public bool IsDataResource => Type == ResourceType.Data;
-            public bool IsRoot => !ParentId.HasValue;
+        [NotMapped]
+        public bool IsUiResource => Type == ResourceType.Ui;
+        [NotMapped]
+        public bool IsDataResource => Type == ResourceType.Data;
+        [NotMapped]
+        public bool IsRoot => !ParentId.HasValue;
         }
     
 }

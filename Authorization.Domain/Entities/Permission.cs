@@ -4,6 +4,7 @@ using Core.Domain.Common;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,10 +30,13 @@ namespace Authorization.Domain.Entities
             public bool IsActive { get; private set; } = true;
             public int Order { get; private set; }
 
-            // Computed Properties
-            public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
-            public bool IsEffective => !EffectiveFrom.HasValue || EffectiveFrom <= DateTime.UtcNow;
-            public bool IsValid => IsActive && !IsExpired && IsEffective;
+        // Computed Properties
+        [NotMapped]
+        public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
+        [NotMapped]
+        public bool IsEffective => !EffectiveFrom.HasValue || EffectiveFrom <= DateTime.UtcNow;
+        [NotMapped]
+        public bool IsValid => IsActive && !IsExpired && IsEffective;
 
             // Navigation Properties
             public virtual Resource Resource { get; private set; } = null!;
