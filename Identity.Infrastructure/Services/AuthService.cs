@@ -64,7 +64,8 @@ namespace Identity.Infrastructure.Services
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
             var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email);
-            user.SetFullName(request.DisplayName, "");
+            user.SetFullName(request.DisplayName, request.DisplayName);
+            
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)
             {

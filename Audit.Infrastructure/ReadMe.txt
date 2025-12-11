@@ -7,7 +7,7 @@ dotnet ef migrations add <migration_name> --project Audit.Infrastructure/Audit.I
 
 dotnet ef migrations add Initial_Audit -p Audit.Infrastructure -s "AkSteel Welfare Platform"
 or
-Add-Migration Initial_Audit -Project Audit.Infrastructure -Context AuditDbContext -Start "AkSteel Welfare Platform"
+Add-Migration Edit_Audit1 -Project Audit.Infrastructure -Context AuditDbContext -Start "AkSteel Welfare Platform"
 
 3- for update database execute this command in developer powershell or package manager console 
 dotnet ef database update -p Audit.Infrastructure -s  "AkSteel Welfare Platform"

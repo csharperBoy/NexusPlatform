@@ -19,7 +19,7 @@ namespace Authorization.Presentation.Controllers.Admin
 {
     [ApiController]
     [Route("api/authorization/admin/[controller]")]
-    [Authorize(Policy = "RequireAdminRole")]
+    //[Authorize(Policy = "RequireAdminRole")]
     public class DataScopesController : BaseController
     {
         /// <summary>

@@ -21,7 +21,7 @@ namespace Identity.Presentation.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize]
+        //[Authorize]
         public IActionResult Me()
         {
             if (!_currentUser.IsAuthenticated)

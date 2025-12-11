@@ -1,0 +1,1390 @@
+{
+  "info": {
+    "_postman_id": "b35781f8-7117-4085-9b4d-cf2363baee28",
+    "name": "AkSteel Welfare Platform",
+    "description": "Postman collection for AkSteel Welfare Platform backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "49813295",
+    "_collection_link": "https://maharplatform-2395729.postman.co/workspace/mahar-platform~b30c8e05-4398-4fcb-816a-3d1e62e78afd/collection/49813295-b35781f8-7117-4085-9b4d-cf2363baee28?action=share&source=collection_link&creator=49813295"
+  },
+  "item": [
+    {
+      "name": "BackEnd",
+      "item": [
+        {
+          "name": "Identity",
+          "item": [
+            {
+              "name": "AuthController",
+              "item": [
+                {
+                  "name": "Register User",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@example.com\",\n  \"password\": \"Test@123\",\n  \"displayName\": \"Test User\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/auth/register",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "auth",
+                        "register"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Login with Username",
+                  "event": [
+                    {
+                      "listen": "test",
+                      "script": {
+                        "exec": [
+                          "let json = pm.response.json();",
+                          "if(json.token){ pm.environment.set(\"accessToken\", json.token); }",
+                          "if(json.refreshToken){ pm.environment.set(\"refreshToken\", json.refreshToken); }",
+                          "if(json.userId){ pm.environment.set(\"userId\", json.userId); }"
+                        ],
+                        "type": "text/javascript"
+                      }
+                    }
+                  ],
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userIdentifier\": \"testuser\",\n  \"password\": \"Test@123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/auth/login/username",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "auth",
+                        "login",
+                        "username"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Login with Email",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userIdentifier\": \"testuser@example.com\",\n  \"password\": \"Test@123\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/auth/login/email",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "auth",
+                        "login",
+                        "email"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Refresh Token",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/auth/refresh",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "auth",
+                        "refresh"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Logout",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/auth/logout",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "auth",
+                        "logout"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "UsersController",
+              "item": [
+                {
+                  "name": "Get Current User",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/users/me",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "users",
+                        "me"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "RolesController",
+              "item": [
+                {
+                  "name": "Assign Role",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"roleName\": \"Admin\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/roles/assign",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "roles",
+                        "assign"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get User Roles",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/identity/roles/{{userId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "identity",
+                        "roles",
+                        "{{userId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Audit",
+          "item": [
+            {
+              "name": "AuditLogsController",
+              "item": [
+                {
+                  "name": "AuditLogs",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/audit/AuditLogs",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "audit",
+                        "AuditLogs"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Authorization",
+          "item": [
+            {
+              "name": "AccessController",
+              "item": [
+                {
+                  "name": "Get My Resources",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-resources",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-resources"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Resources By Type",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-resources/type/{type}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-resources",
+                        "type",
+                        "{type}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "type",
+                          "value": "ui"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Resources By Category",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-resources/category/{category}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-resources",
+                        "category",
+                        "{category}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "category",
+                          "value": "General"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Data Scopes",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-data-scopes",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-data-scopes"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Data Scope By Resource",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-data-scopes/resource/{resourceKey}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-data-scopes",
+                        "resource",
+                        "{resourceKey}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "resourceKey",
+                          "value": "authorization.resources"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Access Settings",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/my-access-settings",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "my-access-settings"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Check Page Access",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"requiredPermissions\": [\n    {\n      \"resourceKey\": \"authorization.resources\",\n      \"action\": \"View\"\n    },\n    {\n      \"resourceKey\": \"authorization.permissions\",\n      \"action\": \"View\"\n    }\n  ]\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/access/check-page-access",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "access",
+                        "check-page-access"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "AuthorizationController",
+              "item": [
+                {
+                  "name": "Check Permission",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"resourceKey\": \"authorization.resources\",\n  \"action\": \"View\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/check",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "check"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Permissions",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/my-permissions",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "my-permissions"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get My Permissions Summary",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/my-permissions/summary",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "my-permissions",
+                        "summary"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Check By Route",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"resourceKey\": \"authorization.resources\",\n  \"action\": \"View\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/check-by-route",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "check-by-route"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Admin - DataScopes",
+              "item": [
+                {
+                  "name": "Get DataScopes By User",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/user/{{userId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "user",
+                        "{{userId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get DataScope By Resource",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/resource/{resourceId}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "resource",
+                        "{resourceId}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "resourceId",
+                          "value": "00000000-0000-0000-0000-000000000000"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Assign Data Scope",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"resourceId\": \"{{resourceId}}\",\n  \"assigneeType\": \"Person\",\n  \"assigneeId\": \"{{userId}}\",\n  \"scope\": \"All\",\n  \"description\": \"Full access data scope\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/assign",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "assign"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Data Scope",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"dataScopeId\": \"{dataScopeId}\",\n  \"scope\": \"Self\",\n  \"description\": \"Limited access data scope\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/update",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "update"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Evaluate Data Scope",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"resourceKey\": \"authorization.resources\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/evaluate",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "evaluate"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get User Effective Data Scopes",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/DataScopes/user/{{userId}}/effective",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "DataScopes",
+                        "user",
+                        "{{userId}}",
+                        "effective"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Admin - Permissions",
+              "item": [
+                {
+                  "name": "Get Permissions By User",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/user/{{userId}}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "user",
+                        "{{userId}}"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Permissions By Resource",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/resource/{resourceId}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "resource",
+                        "{resourceId}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "resourceId",
+                          "value": "00000000-0000-0000-0000-000000000000"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Assign Permission",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"resourceId\": \"{{resourceId}}\",\n  \"assigneeType\": \"Person\",\n  \"assigneeId\": \"{{userId}}\",\n  \"action\": \"View\",\n  \"isAllow\": true,\n  \"description\": \"View permission for testing\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/assign",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "assign"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Revoke Permission",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"permissionId\": \"{permissionId}\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/revoke",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "revoke"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Toggle Permission",
+                  "request": {
+                    "method": "PATCH",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"permissionId\": \"{permissionId}\",\n  \"isAllow\": false\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/toggle",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "toggle"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Check Permission",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"resourceKey\": \"authorization.resources\",\n  \"action\": \"View\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/check",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "check"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get User Permissions Summary",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Permissions/user/{{userId}}/summary",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Permissions",
+                        "user",
+                        "{{userId}}",
+                        "summary"
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            },
+            {
+              "name": "Admin - Resources",
+              "item": [
+                {
+                  "name": "Get Resource Tree",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/tree",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "tree"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Resource By ID",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/{id}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "{id}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "00000000-0000-0000-0000-000000000000"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Resource By Key",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/key/{key}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "key",
+                        "{key}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "key",
+                          "value": "authorization.resources"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Create Resource",
+                  "request": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"key\": \"test.module\",\n  \"name\": \"Test Module\",\n  \"type\": \"Ui\",\n  \"category\": \"General\",\n  \"parentId\": null,\n  \"description\": \"A test resource\",\n  \"displayOrder\": 1,\n  \"icon\": \"test-icon\",\n  \"route\": \"/test\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources"
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Update Resource",
+                  "request": {
+                    "method": "PUT",
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"id\": \"{id}\",\n  \"name\": \"Updated Test Module\",\n  \"description\": \"Updated description\",\n  \"type\": \"Ui\",\n  \"category\": \"General\",\n  \"displayOrder\": 2,\n  \"icon\": \"updated-icon\",\n  \"route\": \"/updated-test\"\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/{id}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "{id}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "00000000-0000-0000-0000-000000000000"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Delete Resource",
+                  "request": {
+                    "method": "DELETE",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/{id}",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "{id}"
+                      ],
+                      "variable": [
+                        {
+                          "key": "id",
+                          "value": "00000000-0000-0000-0000-000000000000"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Resources By Category",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/category/General?page=1&pageSize=20",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "category",
+                        "General"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "1"
+                        },
+                        {
+                          "key": "pageSize",
+                          "value": "20"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                },
+                {
+                  "name": "Get Resources By Type",
+                  "request": {
+                    "method": "GET",
+                    "header": [
+                      {
+                        "key": "Authorization",
+                        "value": "Bearer {{accessToken}}"
+                      }
+                    ],
+                    "url": {
+                      "raw": "{{baseUrl}}/api/authorization/admin/Resources/type/Ui?page=1&pageSize=20",
+                      "host": [
+                        "{{baseUrl}}"
+                      ],
+                      "path": [
+                        "api",
+                        "authorization",
+                        "admin",
+                        "Resources",
+                        "type",
+                        "Ui"
+                      ],
+                      "query": [
+                        {
+                          "key": "page",
+                          "value": "1"
+                        },
+                        {
+                          "key": "pageSize",
+                          "value": "20"
+                        }
+                      ]
+                    }
+                  },
+                  "response": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5001"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "resourceId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "console.log('Request to:', pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Status code is successful', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});"
+        ]
+      }
+    }
+  ]
+}

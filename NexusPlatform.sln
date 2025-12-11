@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BackEnd", "BackEnd", "{9189
 		Export-Projects.ps1 = Export-Projects.ps1
 		Export-Solurion.ps1 = Export-Solurion.ps1
 		Export-SolutionTree.ps1 = Export-SolutionTree.ps1
+		postman_collection.json = postman_collection.json
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D385AB44-BCEE-4B05-92E6-7A023C73D8C9}"
