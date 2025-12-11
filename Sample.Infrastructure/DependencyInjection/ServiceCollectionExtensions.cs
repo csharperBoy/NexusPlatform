@@ -59,6 +59,7 @@ namespace Sample.Infrastructure.DependencyInjection
                 });
             });
 
+            services.AddScoped<IUnitOfWork<SampleDbContext>, EfUnitOfWork<SampleDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
 

@@ -1,4 +1,5 @@
 ﻿using Authorization.Application.Interfaces;
+using Authorization.Domain.Entities;
 using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
@@ -40,13 +41,23 @@ namespace Authorization.Infrastructure.DependencyInjection
                     b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "authorization");
                 });
             });
+            services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
+            services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<ISpecificationRepository<DataScope, Guid>, EfSpecificationRepository<AuthorizationDbContext, DataScope, Guid>>();
+
+            services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
             // Outbox registration
             var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
             registration.AddOutboxProcessor<AuthorizationDbContext>(services);
 
             services.AddHostedService<ModuleInitializer>();
 
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
+            services.AddScoped<IDataScopeService, DataScopeService>();
+            services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
+            services.AddScoped<IPermissionService, PermissionService>();
+            services.AddScoped<IResourceService, ResourceService>();
+            services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
 
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IAuthorizationChecker, AuthorizationService>();
