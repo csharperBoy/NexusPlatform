@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.Security;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System;
@@ -11,25 +12,50 @@ namespace Core.Presentation.Filters
 {
     public class AuthorizeResourceFilter : IAsyncAuthorizationFilter
     {
+        private readonly IAuthorizationChecker _authorizationChecker;
+        private readonly ICurrentUserService _currentUserService;
         private readonly string _resourceKey;
         private readonly string _action;
-        private readonly IAuthorizationChecker _authorizationChecker; // ✅ تغییر به IAuthorizationChecker
-        private readonly ICurrentUserService _currentUserService;
 
+        // Constructor برای استفاده توسط Factory
         public AuthorizeResourceFilter(
+            IAuthorizationChecker authorizationChecker,
+            ICurrentUserService currentUserService,
             string resourceKey,
-            string action,
-            IAuthorizationChecker authorizationChecker, // ✅ تغییر
-            ICurrentUserService currentUserService)
+            string action)
         {
-            _resourceKey = resourceKey;
-            _action = action;
             _authorizationChecker = authorizationChecker;
             _currentUserService = currentUserService;
+            _resourceKey = resourceKey;
+            _action = action;
         }
+
+        // Constructor دوم برای استفاده توسط DI (بدون پارامترهای string)
+       /* public AuthorizeResourceFilter(
+            IAuthorizationChecker authorizationChecker,
+            ICurrentUserService currentUserService)
+        {
+            _authorizationChecker = authorizationChecker;
+            _currentUserService = currentUserService;
+            _resourceKey = string.Empty;
+            _action = string.Empty;
+        }*/
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
+            // اگر resourceKey و action خالی باشند، از metadata endpoint بگیر
+         /*   if (string.IsNullOrEmpty(_resourceKey))
+            {
+                var endpoint = context.HttpContext.GetEndpoint();
+                var attribute = endpoint?.Metadata.GetMetadata<AuthorizeResourceAttribute>();
+
+                if (attribute != null)
+                {
+                    //_resourceKey = attribute.ResourceKey;
+                    //_action = attribute.Action;
+                }
+            }
+         */
             var userId = _currentUserService.UserId;
             if (userId == null || userId == Guid.Empty)
             {

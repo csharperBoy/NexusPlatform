@@ -99,7 +99,10 @@ NexusPlatform
 ¦   ¦   ¦   Resource
 ¦   ¦   ¦   ¦   ResourceDto.cs
 ¦   ¦   ¦   ¦   ResourceFlatDto.cs
+¦   ¦   ¦   ¦   ResourceRegistrationDto.cs
 ¦   ¦   ¦   ¦   ResourceTreeDto.cs
+¦   ¦   ¦   ¦   Extensions
+¦   ¦   ¦   ¦   ¦   ResourceDefinitionExtensions.cs
 ¦   ¦   ¦   Users
 ¦   ¦   ¦   ¦   UserPermissionsSummaryDto.cs
 ¦   ¦   Handlers
@@ -128,7 +131,10 @@ NexusPlatform
 ¦   ¦   ¦   ¦   ¦   GetResourceByKeyQueryHandler.cs
 ¦   ¦   ¦   ¦   ¦   GetResourceTreeQueryHandler.cs
 ¦   ¦   ¦   ¦   Users
+¦   ¦   ¦   ¦   ¦   GetUserDataScopeByResourceQueryHandler .cs
 ¦   ¦   ¦   ¦   ¦   GetUserEffectiveAccessQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetUserPermissionsByResourceQueryHandler.cs
+¦   ¦   ¦   ¦   ¦   GetUserResourceTreeQueryHandler.cs
 ¦   ¦   Interfaces
 ¦   ¦   ¦   IAuthorizationService.cs
 ¦   ¦   ¦   IDataScopeEvaluator.cs
@@ -213,6 +219,7 @@ NexusPlatform
 ¦   ¦   Mappings
 ¦   ¦   ¦   AuthorizationProfile.cs
 ¦   ¦   Services
+¦   ¦   ¦   AuthorizationResourceDefinitionProvider.cs
 ¦   ¦   ¦   AuthorizationService.cs
 ¦   ¦   ¦   DataScopeEvaluator.cs
 ¦   ¦   ¦   DataScopeService.cs
@@ -278,9 +285,12 @@ NexusPlatform
 ¦   ¦   ¦   ¦   IOutboxProcessorRegistration.cs
 ¦   ¦   ¦   ¦   IOutboxService.cs
 ¦   ¦   ¦   Security
+¦   ¦   ¦   ¦   IAuthorizationChecker.cs
 ¦   ¦   ¦   ¦   ICurrentUserService.cs
 ¦   ¦   ¦   ¦   IPermissionChecker.cs
+¦   ¦   ¦   ¦   IResourceDefinitionProvider.cs
 ¦   ¦   ¦   ¦   IRoleResolver.cs
+¦   ¦   ¦   ¦   ResourceDefinition.cs
 ¦   ¦   Behaviors
 ¦   ¦   ¦   AuditBehavior.cs
 ¦   ¦   ¦   LoggingBehavior.cs
@@ -322,10 +332,12 @@ NexusPlatform
 ¦   Core.Infrastructure
 ¦   ¦   Core.Infrastructure.csproj
 ¦   ¦   Data
+¦   ¦   ¦   BaseDbContext.cs
 ¦   ¦   Database
 ¦   ¦   ¦   IMigrationManager.cs
 ¦   ¦   ¦   MigrationManager.cs
 ¦   ¦   ¦   Configurations
+¦   ¦   ¦   ¦   AuditableEntityConfiguration.cs
 ¦   ¦   ¦   ¦   OutboxMessageConfiguration.cs
 ¦   ¦   DependencyInjection
 ¦   ¦   ¦   ApplicationBuilderExtensions.cs
@@ -357,8 +369,13 @@ NexusPlatform
 ¦   ¦   ¦   CurrentUserService.cs
 ¦   Core.Presentation
 ¦   ¦   Core.Presentation.csproj
+¦   ¦   Controllers
+¦   ¦   ¦   BaseController.cs
 ¦   ¦   DependencyInjection
 ¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Filters
+¦   ¦   ¦   AuthorizeResourceAttribute.cs
+¦   ¦   ¦   AuthorizeResourceFilter.cs
 ¦   Core.Shared
 ¦   ¦   Core.Shared.csproj
 ¦   ¦   Results

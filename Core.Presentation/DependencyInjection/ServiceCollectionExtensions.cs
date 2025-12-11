@@ -43,7 +43,7 @@ namespace Core.Presentation.DependencyInjection
         {
            
 
-            services.AddScoped<AuthorizeResourceFilter>();
+            //services.AddScoped<AuthorizeResourceFilter>();
             // 📌 در آینده می‌توان سرویس‌های Presentation را اینجا ثبت کرد
             return services;
         }

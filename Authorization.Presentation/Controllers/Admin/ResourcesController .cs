@@ -8,10 +8,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+
+using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+
+
 namespace Authorization.Presentation.Controllers.Admin
 {
     [ApiController]
-    [Route("api/admin/resources")]
+    [Route("api/authorization/admin/[controller]")]
     [Authorize(Policy = "RequireAdminRole")]
     public class ResourcesController : BaseController
     {
