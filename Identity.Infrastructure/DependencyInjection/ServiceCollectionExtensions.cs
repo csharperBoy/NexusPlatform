@@ -42,6 +42,21 @@ namespace Identity.Infrastructure.DependencyInjection
                 });
             });
 
+           
+
+            services.AddScoped<ISpecificationRepository<RefreshToken, Guid>, EfSpecificationRepository<IdentityDbContext, RefreshToken, Guid>>();
+            // Outbox registration
+            var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
+            registration.AddOutboxProcessor<IdentityDbContext>(services);
+
+            // JWT
+            services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddScoped<IRoleResolver, RoleResolver>();
+            services.AddHostedService<IdentityModuleInitializer>();
             // Identity (User + Role)
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
@@ -57,26 +72,11 @@ namespace Identity.Infrastructure.DependencyInjection
             })
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddDefaultTokenProviders();
-
-            services.AddScoped<ISpecificationRepository<RefreshToken, Guid>, EfSpecificationRepository<IdentityDbContext, RefreshToken, Guid>>();
-            // Outbox registration
-            var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
-            registration.AddOutboxProcessor<IdentityDbContext>(services);
-
-            // JWT
-            services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
-            services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
-            services.AddScoped<IRoleResolver, RoleResolver>();
-            services.AddHostedService<IdentityModuleInitializer>();
-
             var jwtSection = configuration.GetSection("Jwt");
             var key = jwtSection["Key"]!;
             var issuer = jwtSection["Issuer"]!;
             var audience = jwtSection["Audience"]!;
-
+            
             // Authentication + JwtBearer (درست)
             services
                 .AddAuthentication(options =>
@@ -98,8 +98,11 @@ namespace Identity.Infrastructure.DependencyInjection
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                         ValidateIssuerSigningKey = true,
 
-                        NameClaimType = JwtRegisteredClaimNames.Sub, // اینجا مهمه
-                        RoleClaimType = ClaimTypes.Role
+                        NameClaimType = ClaimTypes.Name, // بهتر است اینجا بگذارید
+                        RoleClaimType = ClaimTypes.Role // ✅ این درست است
+
+                        //NameClaimType = JwtRegisteredClaimNames.Sub, 
+                        //RoleClaimType = ClaimTypes.Role
                     };
                 });
 

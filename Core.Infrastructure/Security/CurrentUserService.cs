@@ -69,7 +69,11 @@ namespace Core.Infrastructure.Security
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
+      //  public IEnumerable<string> Roles =>
+        //    _httpContextAccessor.HttpContext?.User?.FindAll("role").Select(r => r.Value) ?? Enumerable.Empty<string>();
+
         public IEnumerable<string> Roles =>
-            _httpContextAccessor.HttpContext?.User?.FindAll("role").Select(r => r.Value) ?? Enumerable.Empty<string>();
+    _httpContextAccessor.HttpContext?.User?.FindAll(ClaimTypes.Role).Select(r => r.Value)
+    ?? Enumerable.Empty<string>();
     }
 }

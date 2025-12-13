@@ -18,7 +18,7 @@ namespace Identity.Application.DependencyInjection
             {
                 cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
             });
-            //services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignDefaultRoleEventHandler).Assembly));
+           services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssignDefaultRoleEventHandler).Assembly));
 
             return services;
         }
