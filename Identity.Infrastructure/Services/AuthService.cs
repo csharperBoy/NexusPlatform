@@ -96,7 +96,7 @@ namespace Identity.Infrastructure.Services
             await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                tokens.AccessToken,tokens.RefreshToken,
+                tokens.AccessToken,tokens.RefreshToken,user.Id,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.UserName ?? "");
 
@@ -128,7 +128,7 @@ namespace Identity.Infrastructure.Services
             await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                tokens.AccessToken,tokens.RefreshToken,
+                tokens.AccessToken,tokens.RefreshToken,user.Id,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.Email ?? "");
 
@@ -161,7 +161,7 @@ namespace Identity.Infrastructure.Services
             await _unitOfWork.SaveChangesAsync();
 
             var response = new AuthResponse(
-                tokens.AccessToken,tokens.RefreshToken,
+                tokens.AccessToken,tokens.RefreshToken,user.Id,
                 DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenExpiryMinutes),
                 user.UserName ?? "");
 

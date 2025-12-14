@@ -26,7 +26,8 @@ namespace Authorization.Presentation.Controllers.Admin
         /// 👤 دریافت محدوده‌های داده کاربر
         /// </summary>
         [HttpGet("user/{userId:guid}")]
-        [AuthorizeResource("authorization.datascopes", "View")]
+        //[AuthorizeResource("authorization.datascopes", "View")]
+        [AuthorizeResource("authorization", "View")]
         public async Task<IActionResult> GetDataScopesByUser(Guid userId)
         {
             var query = new GetDataScopesByUserQuery(userId);

@@ -16,7 +16,8 @@ namespace Authorization.Domain.Specifications
                        p.AssigneeId == assigneeId &&
                        p.ResourceId == resourceId &&
                        p.Action == action &&
-                       p.IsValid)
+                       (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow) && // !IsExpired
+                       (p.EffectiveFrom == null || p.EffectiveFrom <= DateTime.UtcNow)) // IsEffective
         {
             AddInclude(p => p.Resource);
         }

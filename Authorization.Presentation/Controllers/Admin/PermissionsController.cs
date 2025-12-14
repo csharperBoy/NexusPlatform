@@ -20,14 +20,15 @@ namespace Authorization.Presentation.Controllers.Admin
 {
     [ApiController]
     [Route("api/authorization/admin/[controller]")]
-    [Authorize(Policy = "RequireAdminRole")]
+    //[Authorize(Policy = "RequireAdminRole")]
     public class PermissionsController : BaseController
     {
         /// <summary>
         /// 👤 دریافت دسترسی‌های یک کاربر
         /// </summary>
         [HttpGet("user/{userId:guid}")]
-        [AuthorizeResource("authorization.permissions", "View")]
+        //[AuthorizeResource("authorization.permissions", "View")]
+        [AuthorizeResource("authorization", "View")]
         public async Task<IActionResult> GetPermissionsByUser(Guid userId)
         {
             var query = new GetPermissionsByUserQuery(userId);
@@ -51,7 +52,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// ➕ اختصاص دسترسی جدید
         /// </summary>
         [HttpPost("assign")]
-        [AuthorizeResource("authorization.permissions", "Create")]
+        //[AuthorizeResource("authorization.permissions", "Create")]
         public async Task<IActionResult> AssignPermission([FromBody] AssignPermissionCommand command)
         {
             var result = await Mediator.Send(command);
