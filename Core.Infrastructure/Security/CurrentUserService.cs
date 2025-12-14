@@ -74,7 +74,6 @@ namespace Core.Infrastructure.Security
             }
         }
 
-
         public string? UserName => _httpContextAccessor.HttpContext?.User?.Identity?.Name;
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
@@ -83,7 +82,7 @@ namespace Core.Infrastructure.Security
         //    _httpContextAccessor.HttpContext?.User?.FindAll("role").Select(r => r.Value) ?? Enumerable.Empty<string>();
 
         public IEnumerable<string> Roles =>
-    _httpContextAccessor.HttpContext?.User?.FindAll(ClaimTypes.Role).Select(r => r.Value)
-    ?? Enumerable.Empty<string>();
-    }
+                _httpContextAccessor.HttpContext?.User?.FindAll(ClaimTypes.Role).Select(r => r.Value)
+                ?? Enumerable.Empty<string>();
+                }
 }
