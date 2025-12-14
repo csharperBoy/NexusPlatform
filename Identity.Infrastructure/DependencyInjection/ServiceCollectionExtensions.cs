@@ -100,7 +100,6 @@ namespace Identity.Infrastructure.DependencyInjection
 
                         NameClaimType = ClaimTypes.Name, // بهتر است اینجا بگذارید
                         RoleClaimType = ClaimTypes.Role // ✅ این درست است
-
                         //NameClaimType = JwtRegisteredClaimNames.Sub, 
                         //RoleClaimType = ClaimTypes.Role
                     };

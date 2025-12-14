@@ -59,8 +59,34 @@ namespace Core.Infrastructure.Security
         {
             get
             {
-                var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub);
-                return string.IsNullOrEmpty(userId) ? null : Guid.Parse(userId);
+                try
+                {
+
+
+                    var userId2 = _httpContextAccessor.HttpContext?.User?.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+                    var userId = _httpContextAccessor.HttpContext?.User?
+                        .FindFirst("nameidentifier")?.Value;
+
+                    var user = _httpContextAccessor.HttpContext?.User;
+
+                    var claims = user.Claims.Select(c => new
+                    {
+                        Type = c.Type,
+                        Value = c.Value
+                    }).ToList();
+
+                    // استفاده از نام claimها دقیقاً به همان صورتی که در token هستند
+                    var sub = user.FindFirst("sub")?.Value; // با حروف کوچک
+                    var uniqueName = user.FindFirst("unique_name")?.Value; // با underline و حروف کوچک
+                    var email = user.FindFirst("email")?.Value; // با حروف کوچک
+                    var role = user.FindFirst("http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+                    return string.IsNullOrEmpty(userId) ? null : Guid.Parse(userId);
+                }
+                catch
+                {
+                    return null;
+                }
             }
         }
 
@@ -69,7 +95,7 @@ namespace Core.Infrastructure.Security
 
         public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
-      //  public IEnumerable<string> Roles =>
+        //  public IEnumerable<string> Roles =>
         //    _httpContextAccessor.HttpContext?.User?.FindAll("role").Select(r => r.Value) ?? Enumerable.Empty<string>();
 
         public IEnumerable<string> Roles =>
