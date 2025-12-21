@@ -16,4 +16,8 @@
     <Folder Include="Events\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
+  </ItemGroup>
+
 </Project>

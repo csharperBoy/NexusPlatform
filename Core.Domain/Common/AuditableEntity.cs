@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Core.Shared.Extensions;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,5 +43,35 @@ namespace Core.Domain.Common
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+
+
+        // Property اضافی برای دسترسی راحت‌تر
+        [NotMapped]
+        public Guid? CreatedByGuid => CreatedBy?.TryParseGuid();
+
+        [NotMapped]
+        public Guid? ModifiedByGuid => ModifiedBy?.TryParseGuid();
+
+        // متد برای تنظیم CreatedBy با Guid
+        public void SetCreatedBy(Guid userId)
+        {
+            CreatedBy = userId.ToString();
+        }
+
+        public void SetModifiedBy(Guid userId)
+        {
+            ModifiedBy = userId.ToString();
+        }
+
+        // متد برای تنظیم با string (برای backward compatibility)
+        public void SetCreatedBy(string user)
+        {
+            CreatedBy = user;
+        }
+
+        public void SetModifiedBy(string user)
+        {
+            ModifiedBy = user;
+        }
     }
 }
