@@ -56,7 +56,7 @@ namespace Authorization.Infrastructure.Services
                 // اعتبارسنجی وجود Resource
                 var resource = await _resourceRepository.GetByIdAsync(command.ResourceId);
                 if (resource == null)
-                {
+                { 
                     throw new ArgumentException($"Resource with ID {command.ResourceId} not found");
                 }
 
