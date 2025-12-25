@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Core.Infrastructure.Database.Configurations;
 
 namespace Authorization.Infrastructure.Configurations
-{
+{/*
     public class DataScopeConfiguration : AuditableEntityConfiguration<DataScope>
     {
         public override void Configure(EntityTypeBuilder<DataScope> builder)
@@ -95,4 +95,4 @@ namespace Authorization.Infrastructure.Configurations
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
-}
+*/}

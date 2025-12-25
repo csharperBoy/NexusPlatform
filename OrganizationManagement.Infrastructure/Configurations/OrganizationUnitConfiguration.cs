@@ -10,18 +10,30 @@ using OrganizationManagement.Domain.Entities;
 
 namespace OrganizationManagement.Infrastructure.Services
 {
-    public class OrganizationUnitConfiguration : AuditableEntityConfiguration< OrganizationUnit>
+    
+    }
+    public class OrganizationUnitConfiguration : AuditableEntityConfiguration<OrganizationUnit>
     {
-        public override void Configure(EntityTypeBuilder< OrganizationUnit> builder)
+        public override void Configure(EntityTypeBuilder<OrganizationUnit> builder)
         {
             base.Configure(builder);
+            builder.ToTable("OrganizationUnits", "organization");
 
-            builder.ToTable(" OrganizationUnits", "OrganizationManagement");
+            builder.Property(ou => ou.Name).IsRequired().HasMaxLength(200);
+            builder.Property(ou => ou.Code).IsRequired().HasMaxLength(50);
 
-            builder.HasKey(r => r.Id);
-            builder.HasIndex(r => r.Id).IsUnique();
+            // مسیر سلسله‌مراتبی (مثلا: /1/5/12/) برای کوئری‌های سریع
+            builder.Property(ou => ou.Path).HasMaxLength(1000).IsUnicode(false);
 
-            
+            // ایندکس‌ها
+            builder.HasIndex(ou => ou.Code).IsUnique();
+            builder.HasIndex(ou => ou.Path); // بسیار حیاتی برای Scoping
+
+            // رابطه خود-ارجاعی
+            builder.HasOne(ou => ou.Parent)
+                .WithMany(ou => ou.Children)
+                .HasForeignKey(ou => ou.ParentId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

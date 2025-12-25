@@ -16,13 +16,18 @@ namespace OrganizationManagement.Infrastructure.Services
         public override void Configure(EntityTypeBuilder<Position> builder)
         {
             base.Configure(builder);
+            builder.ToTable("Positions", "organization");
 
-            builder.ToTable("Positions", "OrganizationManagement");
+            builder.Property(p => p.Title).IsRequired().HasMaxLength(200);
 
-            builder.HasKey(ds => ds.Id);
-            builder.HasIndex(ds => ds.Id).IsUnique();
+            // هر پست متعلق به یک واحد سازمانی است
+            builder.HasOne(p => p.OrganizationUnit)
+                .WithMany(ou => ou.Positions)
+                .HasForeignKey(p => p.FkOrganizationUnitId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-           
+            // ایندکس برای جستجوی سریع پست‌ها در یک واحد
+            builder.HasIndex(p => p.FkOrganizationUnitId);
         }
     }
 }
