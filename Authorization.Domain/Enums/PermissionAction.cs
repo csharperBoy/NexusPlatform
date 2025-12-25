@@ -8,10 +8,18 @@ namespace Authorization.Domain.Enums
 {
     public enum PermissionAction : byte
     {
+        // CRUD پایه
         View = 1,
         Create = 2,
         Edit = 3,
         Delete = 4,
-        Full = 99  // همه دسترسی‌ها
+
+        // عملیات بیزینسی (مثال)
+        Approve = 5,
+        Reject = 6,
+        Export = 7,
+
+        // دسترسی کامل
+        Full = 99
     }
 }

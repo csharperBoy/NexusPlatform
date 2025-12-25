@@ -8,8 +8,9 @@ namespace Authorization.Domain.Enums
 {
     public enum AssigneeType : byte
     {
-        Role = 1,
-        Position = 2,
-        Person = 3  // اولویت بالاتر
+        Person = 1,      // اولویت ۱: تنظیم خاص برای شخص
+        Position = 2,    // اولویت ۲: پست سازمانی
+        Role = 3         // اولویت ۳: نقش کاربری
     }
+
 }

@@ -45,6 +45,8 @@ namespace Identity.Domain.Entities
 
             NormalizedUserName = userName.ToUpperInvariant();
             NormalizedEmail = email.ToUpperInvariant();
+
+            SecurityStamp = Guid.NewGuid().ToString();
         }
 
         private void Touch() => UpdatedAt = DateTime.UtcNow;

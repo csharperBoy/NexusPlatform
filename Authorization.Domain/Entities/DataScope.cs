@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
-    
+    /*
         public class DataScope : AuditableEntity, IAggregateRoot
         {
             public Guid ResourceId { get; private set; }
@@ -141,5 +141,5 @@ namespace Authorization.Domain.Entities
                 return AssigneeType == assigneeType && AssigneeId == assigneeId;
             }
         }
-    
+    */
 }
