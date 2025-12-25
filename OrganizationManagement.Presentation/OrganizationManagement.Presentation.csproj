@@ -7,13 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core.Domain\Core.Domain.csproj" />
+    <ProjectReference Include="..\Core.Presentation\Core.Presentation.csproj" />
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
-    <ProjectReference Include="..\User.Shared\User.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Events\" />
+    <ProjectReference Include="..\OrganizationManagement.Application\OrganizationManagement.Application.csproj" />
   </ItemGroup>
 
 </Project>

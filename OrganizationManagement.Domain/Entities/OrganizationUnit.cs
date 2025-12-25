@@ -14,6 +14,7 @@ namespace OrganizationManagement.Domain.Entities
         public string Name { get; private set; } = string.Empty;
         public string Code { get; private set; } = string.Empty;
 
+        public string? Path { get; set; }
         public Guid? ParentId { get; private set; }
         public string? Description { get; private set; }
 
