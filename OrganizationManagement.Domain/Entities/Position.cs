@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace OrganizationManagement.Domain.Entities
 {
-    public class Position : AuditableEntity, IAggregateRoot
+    public class Position : AuditableEntity, IAggregateRoot//, IEntity<Guid>
     {
 
         public string Title { get; private set; } = string.Empty;
