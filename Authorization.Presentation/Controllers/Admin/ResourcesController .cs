@@ -32,7 +32,7 @@ namespace Authorization.Presentation.Controllers.Admin
         }
 
         /// <summary>
-        /// 🔍 دریافت منبع براساس ID
+        /// 🔍 دریافت منبع براساس ID 
         /// </summary>
         [HttpGet("{id:guid}")]
         [AuthorizeResource("authorization.resources", "View")]
