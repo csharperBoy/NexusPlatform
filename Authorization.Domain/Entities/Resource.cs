@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
-        public class Resource : DataScopedEntityBase, IAggregateRoot
+        public class Resource : AuditableEntity, IAggregateRoot
         {
             public string Key { get; private set; }
             public string Name { get; private set; }
@@ -24,7 +24,7 @@ namespace Authorization.Domain.Entities
             public string Route { get; private set; }
 
             public Guid? ParentId { get; private set; }
-            public string ResourcePath { get; private set; }
+            public string Path { get; private set; }
 
             // Navigation Properties
             public virtual Resource? Parent { get; private set; }
@@ -123,11 +123,11 @@ namespace Authorization.Domain.Entities
             {
                 if (ParentId.HasValue && Parent != null)
                 {
-                    ResourcePath = $"{Parent.ResourcePath}/{Id}";
+                    Path = $"{Parent.Path}/{Id}";
                 }
                 else
                 {
-                ResourcePath = Id.ToString();
+                    Path = Id.ToString();
                 }
             }
         [NotMapped]
