@@ -1,4 +1,5 @@
 ﻿using Authorization.Domain.Enums;
+using Core.Domain.Enums;
 using Core.Shared.Results;
 using MediatR;
 using System;
@@ -17,7 +18,7 @@ namespace Authorization.Application.Commands.DataScopes
     public record UpdateDataScopeCommand(
       Guid DataScopeId,
       ScopeType Scope,
-      Guid? SpecificUnitId = null,
+      Guid? SpecificProperty = null,
       string CustomFilter = "",
       int Depth = 1,
       string Description = ""

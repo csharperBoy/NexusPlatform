@@ -11,7 +11,7 @@ using OrganizationManagement.Domain.Entities;
 namespace OrganizationManagement.Infrastructure.Services
 {
     
-    }
+    
     public class OrganizationUnitConfiguration : AuditableEntityConfiguration<OrganizationUnit>
     {
         public override void Configure(EntityTypeBuilder<OrganizationUnit> builder)

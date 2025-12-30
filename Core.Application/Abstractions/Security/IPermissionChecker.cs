@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,5 +45,6 @@ namespace Core.Application.Abstractions.Security
         /// 📌 بررسی می‌کند که آیا کاربر فعلی حداقل یکی از مجوزهای داده‌شده را دارد یا نه.
         /// </summary>
         Task<bool> HasAnyPermissionAsync(params string[] permissions);
+
     }
 }

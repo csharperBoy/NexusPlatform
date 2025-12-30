@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OrganizationManagement.Infrastructure.Data;
-using Sample.Domain.Entities;
 namespace OrganizationManagement.Infrastructure.DependencyInjection
 {
     /*
@@ -58,9 +57,9 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
                 _logger.LogInformation("Starting sample module initialization...");
 
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                var repo = scope.ServiceProvider.GetRequiredService<IRepository<SampleDbContext, SampleEntity, Guid>>();
-                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
-                await OrganizationManagementSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
+                //var repo = scope.ServiceProvider.GetRequiredService<IRepository<OrganizationManagementDbContext, SampleEntity, Guid>>();
+                //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
+                //await OrganizationManagementSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
 
                 _logger.LogInformation("Sample module initialization completed successfully.");
             }

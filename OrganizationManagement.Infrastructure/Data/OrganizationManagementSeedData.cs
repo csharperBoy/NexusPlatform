@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Sample.Application.Interfaces;
-using Sample.Domain.Entities;
 
 namespace OrganizationManagement.Infrastructure.Data
 {
@@ -36,10 +34,10 @@ namespace OrganizationManagement.Infrastructure.Data
     */
 
     public static class OrganizationManagementSeedData
-    {
+    {/*
         public static async Task SeedEntityAsync(
-            IRepository<SampleDbContext, SampleEntity, Guid> repository,
-            IUnitOfWork<SampleDbContext> unitOfWork,
+            IRepository<OrganizationManagementDbContext, SampleEntity, Guid> repository,
+            IUnitOfWork<OrganizationManagementDbContext> unitOfWork,
             IConfiguration config,
             ILogger logger)
         {
@@ -69,6 +67,6 @@ namespace OrganizationManagement.Infrastructure.Data
                 // 📌 اگر داده وجود داشت، صرف‌نظر از درج مجدد
                 logger.LogInformation("ℹ️ Sample seed data already exists, skipping.");
             }
-        }
+        }*/
     }
 }

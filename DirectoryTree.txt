@@ -8,6 +8,7 @@ NexusPlatform
 ¦   Export-Solurion.ps1
 ¦   Export-SolutionTree.ps1
 ¦   NexusPlatform.sln
+¦   postman_collection.json
 ¦   .github
 ¦   ¦   workflows
 ¦   AkSteel Welfare Platform
@@ -19,11 +20,13 @@ NexusPlatform
 ¦   ¦   appsettings.Production.json
 ¦   ¦   Program.cs
 ¦   ¦   Logs
-¦   ¦   ¦   app-20251021.log
-¦   ¦   ¦   app-20251104.log
-¦   ¦   ¦   app-20251105.log
 ¦   ¦   ¦   app-20251112.log
 ¦   ¦   ¦   app-20251113.log
+¦   ¦   ¦   app-20251211.log
+¦   ¦   ¦   app-20251213.log
+¦   ¦   ¦   app-20251214.log
+¦   ¦   ¦   app-20251215.log
+¦   ¦   ¦   app-20251225.log
 ¦   ¦   Properties
 ¦   ¦   ¦   launchSettings.json
 ¦   Audit.Application
@@ -57,6 +60,8 @@ NexusPlatform
 ¦   ¦   Migrations
 ¦   ¦   ¦   20251105071824_Initial_Audit.cs
 ¦   ¦   ¦   20251105071824_Initial_Audit.Designer.cs
+¦   ¦   ¦   20251211105157_Edit_Audit1.cs
+¦   ¦   ¦   20251211105157_Edit_Audit1.Designer.cs
 ¦   ¦   ¦   AuditDbContextModelSnapshot.cs
 ¦   ¦   Services
 ¦   ¦   ¦   AuditQueryService.cs
@@ -181,6 +186,7 @@ NexusPlatform
 ¦   ¦   Enums
 ¦   ¦   ¦   AssigneeType.cs
 ¦   ¦   ¦   PermissionAction.cs
+¦   ¦   ¦   PermissionType.cs
 ¦   ¦   ¦   ResourceCategory.cs
 ¦   ¦   ¦   ResourceType.cs
 ¦   ¦   ¦   ScopeType.cs
@@ -202,6 +208,7 @@ NexusPlatform
 ¦   ¦   ValueObjects
 ¦   Authorization.Infrastructure
 ¦   ¦   Authorization.Infrastructure.csproj
+¦   ¦   ReadMe.txt
 ¦   ¦   Configurations
 ¦   ¦   ¦   DataScopeConfiguration.cs
 ¦   ¦   ¦   PermissionConfiguration.cs
@@ -218,10 +225,17 @@ NexusPlatform
 ¦   ¦   ¦   ResourceRegistrarHostedService.cs
 ¦   ¦   Mappings
 ¦   ¦   ¦   AuthorizationProfile.cs
+¦   ¦   Migrations
+¦   ¦   ¦   20251211092049_Initial_Authorization.cs
+¦   ¦   ¦   20251211092049_Initial_Authorization.Designer.cs
+¦   ¦   ¦   20251211095252_Add_OutBoxMessageTable_Authorization.cs
+¦   ¦   ¦   20251211095252_Add_OutBoxMessageTable_Authorization.Designer.cs
+¦   ¦   ¦   AuthorizationDbContextModelSnapshot.cs
 ¦   ¦   Services
 ¦   ¦   ¦   AuthorizationResourceDefinitionProvider.cs
 ¦   ¦   ¦   AuthorizationService.cs
 ¦   ¦   ¦   DataScopeEvaluator.cs
+¦   ¦   ¦   DataScopeProcessor.cs
 ¦   ¦   ¦   DataScopeService.cs
 ¦   ¦   ¦   PermissionEvaluator.cs
 ¦   ¦   ¦   PermissionService.cs
@@ -284,9 +298,11 @@ NexusPlatform
 ¦   ¦   ¦   ¦   IEventHandler.cs
 ¦   ¦   ¦   ¦   IOutboxProcessorRegistration.cs
 ¦   ¦   ¦   ¦   IOutboxService.cs
+¦   ¦   ¦   HR
 ¦   ¦   ¦   Security
 ¦   ¦   ¦   ¦   IAuthorizationChecker.cs
 ¦   ¦   ¦   ¦   ICurrentUserService.cs
+¦   ¦   ¦   ¦   IDataScopeProcessor.cs
 ¦   ¦   ¦   ¦   IPermissionChecker.cs
 ¦   ¦   ¦   ¦   IResourceDefinitionProvider.cs
 ¦   ¦   ¦   ¦   IRoleResolver.cs
@@ -301,15 +317,20 @@ NexusPlatform
 ¦   ¦   ¦   ¦   DomainEventHandler.cs
 ¦   ¦   DependencyInjection
 ¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   ¦   HR
 ¦   ¦   Models
 ¦   ¦   ¦   CorsSettings.cs
 ¦   ¦   ¦   HealthCheckSettings.cs
 ¦   ¦   ¦   MigrationSettings.cs
 ¦   Core.Domain
 ¦   ¦   Core.Domain.csproj
+¦   ¦   Attributes
+¦   ¦   ¦   SecuredResourceAttribute.cs
 ¦   ¦   Common
 ¦   ¦   ¦   AuditableEntity.cs
 ¦   ¦   ¦   BaseEntity.cs
+¦   ¦   ¦   DataScopedEntity.cs
 ¦   ¦   ¦   DomainEventBase.cs
 ¦   ¦   ¦   IDomainEvent.cs
 ¦   ¦   ¦   OutboxMessage.cs
@@ -338,6 +359,7 @@ NexusPlatform
 ¦   ¦   ¦   MigrationManager.cs
 ¦   ¦   ¦   Configurations
 ¦   ¦   ¦   ¦   AuditableEntityConfiguration.cs
+¦   ¦   ¦   ¦   DataScopedEntityConfiguration.cs
 ¦   ¦   ¦   ¦   OutboxMessageConfiguration.cs
 ¦   ¦   DependencyInjection
 ¦   ¦   ¦   ApplicationBuilderExtensions.cs
@@ -830,6 +852,8 @@ NexusPlatform
 ¦   ¦   Migrations
 ¦   ¦   ¦   20251105054515_Initial_Identity.cs
 ¦   ¦   ¦   20251105054515_Initial_Identity.Designer.cs
+¦   ¦   ¦   20251211093848_Change_Identity2.cs
+¦   ¦   ¦   20251211093848_Change_Identity2.Designer.cs
 ¦   ¦   ¦   IdentityDbContextModelSnapshot.cs
 ¦   ¦   Services
 ¦   ¦   ¦   AuthorizationService.cs
@@ -901,14 +925,58 @@ NexusPlatform
 ¦   ¦   Notification.Test.csproj
 ¦   ¦   WelcomeEmailEventHandlerTests.cs
 ¦   ¦   WelcomeInAppNotificationHandlerTests.cs
+¦   OrganizationManagement.Application
+¦   ¦   OrganizationManagement.Application.csproj
+¦   ¦   Commands
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   DTOs
+¦   ¦   EventHandlers
+¦   ¦   Handlers
+¦   ¦   ¦   Commands
+¦   ¦   ¦   Queries
+¦   ¦   Interfaces
+¦   ¦   Queries
+¦   ¦   Validators
 ¦   OrganizationManagement.Domain
 ¦   ¦   OrganizationManagement.Domain.csproj
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ServiceCollectionExtensions.cs
 ¦   ¦   Entities
 ¦   ¦   ¦   Assignment.cs
 ¦   ¦   ¦   JobFamily.cs
 ¦   ¦   ¦   OrganizationUnit.cs
 ¦   ¦   ¦   Position.cs
-¦   ¦   ¦   PositionPerson.cs
+¦   ¦   Events
+¦   ¦   Specifications
+¦   ¦   ¦   ActiveAssignmentsByPersonSpec .cs
+¦   ¦   ¦   ActiveAssignmentsByPositionsSpec .cs
+¦   ¦   ¦   OrganizationUnitByIdsSpec .cs
+¦   ¦   ¦   OrganizationUnitsByParentSpec .cs
+¦   ¦   ¦   PositionsByUnitManagerialSpec .cs
+¦   ¦   ¦   PositionsByUnitSpec .cs
+¦   ¦   ¦   PositionsByUnitWithAssignmentsSpec .cs
+¦   OrganizationManagement.Infrastructure
+¦   ¦   OrganizationManagement.Infrastructure.csproj
+¦   ¦   ReadMe.txt
+¦   ¦   Configurations
+¦   ¦   ¦   AssignmentConfiguration.cs
+¦   ¦   ¦   JobFamilyConfiguration.cs
+¦   ¦   ¦   OrganizationUnitConfiguration.cs
+¦   ¦   ¦   PositionConfiguration.cs
+¦   ¦   Data
+¦   ¦   ¦   OrganizationManagementDbContext.cs
+¦   ¦   ¦   OrganizationManagementDbContextFactory.cs
+¦   ¦   ¦   OrganizationManagementSeedData.cs
+¦   ¦   DependencyInjection
+¦   ¦   ¦   ApplicationBuilderExtensions.cs
+¦   ¦   ¦   HealthCheckExtensions.cs
+¦   ¦   ¦   ModuleInitializer.cs
+¦   ¦   ¦   ServiceCollectionExtensions.cs
+¦   ¦   Services
+¦   ¦   ¦   OrganizationService .cs
+¦   OrganizationManagement.Presentation
+¦   ¦   OrganizationManagement.Presentation.csproj
 ¦   Sample.Application
 ¦   ¦   Sample.Application.csproj
 ¦   ¦   Commands

@@ -45,5 +45,4 @@ namespace OrganizationManagement.Domain.Entities
                    : $"{parentPath}{Id}/";
         }
     }
-
 }

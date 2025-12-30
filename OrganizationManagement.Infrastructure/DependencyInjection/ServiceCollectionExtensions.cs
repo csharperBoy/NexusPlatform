@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrganizationManagement.Infrastructure.Data;
-using Sample.Domain.Entities;
 
 namespace OrganizationManagement.Infrastructure.DependencyInjection
 {
@@ -44,10 +43,10 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
         {
             // 📌 گرفتن Connection String از تنظیمات
             var conn = configuration.GetConnectionString("DefaultConnection");
-            var migrationsAssembly = typeof(SampleDbContext).Assembly.GetName().Name;
+            var migrationsAssembly = typeof(OrganizationManagementDbContext).Assembly.GetName().Name;
 
             // 📌 رجیستر DbContext برای ماژول Sample
-            services.AddDbContext<SampleDbContext>((serviceProvider, options) =>
+            services.AddDbContext<OrganizationManagementDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
                 {
@@ -55,13 +54,13 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
                     b.MigrationsAssembly(migrationsAssembly);
 
                     // تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
-                    b.MigrationsHistoryTable("__SampleMigrationsHistory", "sample");
+                    b.MigrationsHistoryTable("__OrganizationManagementHistory", "organization");
                 });
             });
 
-            services.AddScoped<IUnitOfWork<SampleDbContext>, EfUnitOfWork<SampleDbContext>>();
+            services.AddScoped<IUnitOfWork<OrganizationManagementDbContext>, EfUnitOfWork<OrganizationManagementDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
-            services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
+            //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();
@@ -69,7 +68,7 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
-            registration.AddOutboxProcessor<SampleDbContext>(services);
+            registration.AddOutboxProcessor<OrganizationManagementDbContext>(services);
 
             return services;
         }

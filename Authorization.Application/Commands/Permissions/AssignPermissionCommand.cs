@@ -1,4 +1,5 @@
 ﻿using Authorization.Domain.Enums;
+using Core.Domain.Enums;
 using Core.Shared.Results;
 using MediatR;
 using System;
@@ -15,16 +16,16 @@ namespace Authorization.Application.Commands.Permissions
      Command برای ایجاد یک Permission جدید.
     */
     public record AssignPermissionCommand(
-        Guid ResourceId,                    
+
+        Guid ResourceId,
         AssigneeType AssigneeType,
         Guid AssigneeId,
         PermissionAction Action,
-        bool IsAllow = true,
+         ScopeType scope = ScopeType.None,
+            Guid? specificScopeId = null,
+            PermissionType type = PermissionType.allow,
         DateTime? EffectiveFrom = null,
         DateTime? ExpiresAt = null,
-        string? Description = null,
-        int Order = 0,
-        int Priority = 1,
-        string Condition = ""
+        string? Description = null
     ) : IRequest<Result<Guid>>;
 }

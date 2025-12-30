@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Specifications
 {
-    public class EffectiveDataScopesSpec : BaseSpecification<DataScope>
+   /* public class EffectiveDataScopesSpec : BaseSpecification<DataScope>
     {
         public EffectiveDataScopesSpec()
             : base(d => d.IsActive &&
@@ -19,5 +19,5 @@ namespace Authorization.Domain.Specifications
             ApplyOrderBy(d => d.AssigneeType);
             ApplyThenOrderBy(d => d.AssigneeId);
         }
-    }
+    }*/
 }

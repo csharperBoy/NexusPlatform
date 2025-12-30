@@ -43,7 +43,6 @@ namespace Authorization.Infrastructure.DependencyInjection
             });
             services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
-            services.AddScoped<ISpecificationRepository<DataScope, Guid>, EfSpecificationRepository<AuthorizationDbContext, DataScope, Guid>>();
 
             services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
             // Outbox registration
@@ -53,7 +52,6 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddHostedService<ModuleInitializer>();
 
             services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
-            services.AddScoped<IDataScopeService, DataScopeService>();
             services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
             services.AddScoped<IPermissionService, PermissionService>();
             services.AddScoped<IResourceService, ResourceService>();

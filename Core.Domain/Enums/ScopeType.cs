@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Domain.Enums
+namespace Core.Domain.Enums
 {
-  /*  public enum ScopeType : byte
+    public enum ScopeType : byte
     {
         // سطح ۱: هیچ داده‌ای (برای مواقعی که فقط دکمه را می‌بیند اما داده‌ای لود نمی‌شود)
         None = 0,
@@ -25,5 +25,5 @@ namespace Authorization.Domain.Enums
 
         // سطح ۶: همه داده‌ها (گلوبال)
         All = 99
-    }*/
+    }
 }

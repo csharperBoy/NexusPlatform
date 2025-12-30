@@ -12,6 +12,7 @@ namespace Identity.Infrastructure.Services
 {
     public class PermissionChecker : IPermissionChecker
     {
+
         private readonly IAuthorizationService _authorizationService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<PermissionChecker> _logger;

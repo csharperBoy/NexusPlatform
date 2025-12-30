@@ -84,5 +84,13 @@ namespace Core.Infrastructure.Security
         public IEnumerable<string> Roles =>
                 _httpContextAccessor.HttpContext?.User?.FindAll(ClaimTypes.Role).Select(r => r.Value)
                 ?? Enumerable.Empty<string>();
-                }
+
+        public IEnumerable<Guid> RolesId => Enumerable.Empty<Guid>();
+
+        public Guid? PersonId => Guid.Empty;
+
+        public Guid? OrganizationUnitId => Guid.Empty;
+
+        public Guid? PositionId => Guid.Empty;
+    }
 }

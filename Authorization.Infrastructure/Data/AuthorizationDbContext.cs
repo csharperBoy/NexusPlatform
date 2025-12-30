@@ -27,7 +27,6 @@ namespace Identity.Infrastructure.Data
         }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<Permission> Permissions { get; set; }
-        public DbSet<DataScope> DataScopes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,7 +37,6 @@ namespace Identity.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("authorization"));
             modelBuilder.ApplyConfiguration(new ResourceConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
-            modelBuilder.ApplyConfiguration(new DataScopeConfiguration());
 
         }
     }

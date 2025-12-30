@@ -64,15 +64,14 @@ namespace Authorization.Infrastructure.Configurations
                 .HasDefaultValue(true);
 
             // Computed properties (if needed for querying)
-          /*  builder.Property(ds => ds.IsValid)
+           builder.Property(ds => ds.IsValid)
                 .HasComputedColumnSql(
                     "CASE WHEN IsActive = 1 AND " +
                     "(ExpiresAt IS NULL OR ExpiresAt > GETUTCDATE()) AND " +
                     "(EffectiveFrom IS NULL OR EffectiveFrom <= GETUTCDATE()) " +
                     "THEN 1 ELSE 0 END",
-                    stored: true);*/
+                    stored: true);
 
-            // Indexes
             builder.HasIndex(ds => new { ds.ResourceId, ds.AssigneeType, ds.AssigneeId })
                 .HasDatabaseName("IX_DataScopes_Resource_Assignee");
 
@@ -88,11 +87,11 @@ namespace Authorization.Infrastructure.Configurations
             builder.HasIndex(ds => new { ds.Scope, ds.SpecificUnitId })
                 .HasDatabaseName("IX_DataScopes_Scope_SpecificUnit");
 
-            // Relationships
             builder.HasOne(ds => ds.Resource)
                 .WithMany(r => r.DataScopes)
                 .HasForeignKey(ds => ds.ResourceId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
-*/}
+*/
+    }

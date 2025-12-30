@@ -30,32 +30,11 @@ namespace Core.Presentation.Filters
             _action = action;
         }
 
-        // Constructor دوم برای استفاده توسط DI (بدون پارامترهای string)
-       /* public AuthorizeResourceFilter(
-            IAuthorizationChecker authorizationChecker,
-            ICurrentUserService currentUserService)
-        {
-            _authorizationChecker = authorizationChecker;
-            _currentUserService = currentUserService;
-            _resourceKey = string.Empty;
-            _action = string.Empty;
-        }*/
+        
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-            // اگر resourceKey و action خالی باشند، از metadata endpoint بگیر
-         /*   if (string.IsNullOrEmpty(_resourceKey))
-            {
-                var endpoint = context.HttpContext.GetEndpoint();
-                var attribute = endpoint?.Metadata.GetMetadata<AuthorizeResourceAttribute>();
-
-                if (attribute != null)
-                {
-                    //_resourceKey = attribute.ResourceKey;
-                    //_action = attribute.Action;
-                }
-            }
-         */
+       
             var userId = _currentUserService.UserId;
             if (userId == null || userId == Guid.Empty)
             {

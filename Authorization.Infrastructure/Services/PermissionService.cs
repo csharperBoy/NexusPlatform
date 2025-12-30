@@ -74,14 +74,10 @@ namespace Authorization.Infrastructure.Services
                     command.ResourceId,
                     command.AssigneeType,
                     command.AssigneeId,
-                    command.Action,
-                    command.IsAllow,
-                    command.Priority,
-                    command.Condition,
+                    command.Action,command.scope,command.specificScopeId,command.type,
                     command.EffectiveFrom,
                     command.ExpiresAt,
                     command.Description,
-                    order: await GetNextOrderValue(command.AssigneeType, command.AssigneeId, command.ResourceId),
                     createdBy: _currentUser.UserId?.ToString() ?? "system"
                 );
 
@@ -307,20 +303,11 @@ namespace Authorization.Infrastructure.Services
                     var permissions = group.ToList();
                     if (permissions.Count <= 1) continue;
 
-                    // پیدا کردن دسترسی با بالاترین اولویت
-                    var highestPriority = permissions.Max(p => p.Priority);
-                    var bestPermission = permissions.FirstOrDefault(p => p.Priority == highestPriority);
 
-                    // غیرفعال کردن سایر دسترسی‌ها
-                    foreach (var permission in permissions.Where(p => p.Id != bestPermission?.Id))
-                    {
-                        permission.Deactivate();
-                        permission.AddDomainEvent(new PermissionChangedEvent(userId, permission.ResourceId));
-                    }
 
                     _logger.LogInformation(
                         "Resolved conflicts for action {Action} on resource {Resource}, keeping permission {PermissionId}",
-                        group.Key, resourceKey, bestPermission?.Id);
+                        group.Key, resourceKey);
                 }
 
                 // ذخیره تغییرات
@@ -343,18 +330,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        private async Task<int> GetNextOrderValue(AssigneeType assigneeType, Guid assigneeId, Guid resourceId)
-        {
-            var spec = new PermissionsByAssigneeSpec(assigneeType, assigneeId);
-            var existingPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
-
-            var resourcePermissions = existingPermissions
-                .Where(p => p.ResourceId == resourceId)
-                .ToList();
-
-            return resourcePermissions.Any() ? resourcePermissions.Max(p => p.Order) + 1 : 0;
-        }
-
+        
         private async Task InvalidatePermissionCachesAsync(Guid assigneeId, Guid resourceId)
         {
             try
@@ -381,14 +357,11 @@ namespace Authorization.Infrastructure.Services
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
-                IsAllow = permission.IsAllow,
+                
                 IsActive = permission.IsActive,
-                Priority = permission.Priority,
-                Condition = permission.Condition,
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                Order = permission.Order,
                 CreatedAt = permission.CreatedAt,
                 CreatedBy = permission.CreatedBy
             };

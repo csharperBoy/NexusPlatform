@@ -25,12 +25,6 @@ namespace Authorization.Application.Validator.Permissions
             RuleFor(x => x.Action)
                 .IsInEnum().WithMessage("Invalid permission action");
 
-            RuleFor(x => x.Priority)
-                .InclusiveBetween(1, 3).WithMessage("Priority must be between 1 and 3");
-
-            RuleFor(x => x.Condition)
-                .MaximumLength(500).WithMessage("Condition cannot exceed 500 characters");
-
             RuleFor(x => x.Description)
                 .MaximumLength(500).WithMessage("Description cannot exceed 500 characters");
 
@@ -38,8 +32,6 @@ namespace Authorization.Application.Validator.Permissions
                 .LessThan(x => x.ExpiresAt).When(x => x.EffectiveFrom.HasValue && x.ExpiresAt.HasValue)
                 .WithMessage("Effective from date must be before expiration date");
 
-            RuleFor(x => x.Order)
-                .GreaterThanOrEqualTo(0).WithMessage("Order must be a positive number");
-        }
+            }
     }
 }

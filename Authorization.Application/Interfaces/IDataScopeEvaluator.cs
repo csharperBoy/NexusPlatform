@@ -1,10 +1,20 @@
 ﻿using Authorization.Application.DTOs.DataScopes;
+using Core.Domain.Enums;
 using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
 {
     public interface IDataScopeEvaluator
     {
+        /// <summary>
+        /// پارامتر action اضافه شد
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="resourceKey"></param>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        Task<ScopeType> EvaluateScopeAsync(Guid userId, string resourceKey, PermissionAction action);
+
         /// <summary>
         /// ارزیابی محدوده داده کاربر برای یک منبع
         /// </summary>

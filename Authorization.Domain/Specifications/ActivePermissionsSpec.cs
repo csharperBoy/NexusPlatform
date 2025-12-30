@@ -11,7 +11,7 @@ namespace Authorization.Domain.Specifications
     public class ActivePermissionsSpec : BaseSpecification<Permission>
     {
         public ActivePermissionsSpec()
-            : base(p => p.IsActive &&
+            : base(p => 
                        (!p.EffectiveFrom.HasValue || p.EffectiveFrom <= DateTime.UtcNow) &&
                        (!p.ExpiresAt.HasValue || p.ExpiresAt > DateTime.UtcNow))
         {

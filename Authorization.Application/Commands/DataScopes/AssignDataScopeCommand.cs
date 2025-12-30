@@ -1,4 +1,5 @@
 ﻿using Authorization.Domain.Enums;
+using Core.Domain.Enums;
 using Core.Shared.Results;
 using MediatR;
 using System;
@@ -20,7 +21,7 @@ namespace Authorization.Application.Commands.DataScopes
     AssigneeType AssigneeType,
     Guid AssigneeId,
     ScopeType Scope,
-    Guid? SpecificUnitId = null,
+    Guid? SpecificPropertyId = null,
     string CustomFilter = "",
     int Depth = 1,
     DateTime? EffectiveFrom = null,

@@ -1,8 +1,7 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.HR;
-using Core.Application.DTOs.HR;
 using Core.Domain.Specifications;
 using Microsoft.Extensions.Logging;
+using OrganizationManagement.Application.Interfaces;
 using OrganizationManagement.Domain.Entities;
 using OrganizationManagement.Domain.Specifications;
 using OrganizationManagement.Infrastructure.Data;
@@ -42,7 +41,7 @@ namespace OrganizationManagement.Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<PositionDto?> GetUserPositionAsync(Guid userId)
+        public async Task<Position?> GetUserPositionAsync(Guid userId)
         {
             try
             {
@@ -66,7 +65,8 @@ namespace OrganizationManagement.Infrastructure.Services
                     return null;
                 }
 
-                return new PositionDto
+                return position;
+                    /*new PositionDto
                 {
                     Id = position.Id,
                     Title = position.Title,
@@ -76,7 +76,7 @@ namespace OrganizationManagement.Infrastructure.Services
                     OrganizationUnitCode = position.OrganizationUnit?.Code ?? string.Empty,
                     IsManagerial = position.IsManagerial,
                     ReportsToPositionId = position.ReportsToPositionId
-                };
+                };*/
             }
             catch (Exception ex)
             {
@@ -95,7 +95,7 @@ namespace OrganizationManagement.Infrastructure.Services
                 if (position == null)
                     return new List<Guid>();
 
-                var unitId = position.OrganizationUnitId;
+                var unitId = position.FkOrganizationUnitId;
                 var units = new List<Guid> { unitId };
 
                 if (position.IsManagerial)
@@ -231,7 +231,7 @@ namespace OrganizationManagement.Infrastructure.Services
             }
         }
 
-        public async Task<OrganizationUnitDto?> GetUnitAsync(Guid unitId)
+        public async Task<OrganizationUnit?> GetUnitAsync(Guid unitId)
         {
             try
             {
@@ -247,23 +247,7 @@ namespace OrganizationManagement.Infrastructure.Services
                 var childCount = await GetUnitChildCountAsync(unitId);
                 var userCount = await GetUnitUserCountAsync(unitId);
 
-                return new OrganizationUnitDto
-                {
-                    Id = unit.Id,
-                    Name = unit.Name,
-                    Code = unit.Code,
-                    Description = unit.Description,
-                    ParentId = unit.ParentId,
-                    ParentName = parent?.Name,
-                    Path = unit.Path,
-                    Level = CalculatePathLevel(unit.Path),
-                    IsActive = true,
-                    CreatedAt = unit.CreatedAt,
-                    ManagerId = manager?.Id,
-                    ManagerName = manager?.Title,
-                    UserCount = userCount,
-                    ChildCount = childCount
-                };
+                return unit;
             }
             catch (Exception ex)
             {
@@ -272,7 +256,7 @@ namespace OrganizationManagement.Infrastructure.Services
             }
         }
 
-        public async Task<PositionDto?> GetUnitManagerAsync(Guid unitId)
+        public async Task<Position?> GetUnitManagerAsync(Guid unitId)
         {
             try
             {
@@ -285,17 +269,8 @@ namespace OrganizationManagement.Infrastructure.Services
                 if (manager == null)
                     return null;
 
-                return new PositionDto
-                {
-                    Id = manager.Id,
-                    Title = manager.Title,
-                    Code = manager.Code,
-                    OrganizationUnitId = unitId,
-                    OrganizationUnitName = manager.OrganizationUnit?.Name ?? string.Empty,
-                    OrganizationUnitCode = manager.OrganizationUnit?.Code ?? string.Empty,
-                    IsManagerial = true,
-                    ReportsToPositionId = manager.ReportsToPositionId
-                };
+                return manager;
+                
             }
             catch (Exception ex)
             {

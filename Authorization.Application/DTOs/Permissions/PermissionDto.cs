@@ -1,4 +1,5 @@
 ﻿using Authorization.Domain.Enums;
+using Core.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;

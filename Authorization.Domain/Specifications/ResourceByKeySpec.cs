@@ -21,7 +21,6 @@ namespace Authorization.Domain.Specifications
         {
             // بارگذاری Permissions و DataScopes
             AddInclude(r => r.Permissions);
-            AddInclude(r => r.DataScopes);
 
             // بارگذاری Parent و Children
             AddInclude(r => r.Parent);

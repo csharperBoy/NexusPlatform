@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OrganizationManagement.Domain.Entities;
 using OrganizationManagement.Infrastructure.Services;
-using Sample.Domain;
-using Sample.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,23 +27,19 @@ namespace OrganizationManagement.Infrastructure.Data
         {
         }
         public DbSet<Assignment> Assignment { get; set; }
-        public DbSet<JobFamily> JobFamily { get; set; }
         public DbSet<OrganizationUnit> OrganizationUnit { get; set; }
         public DbSet<Position> Position { get; set; }
-        public DbSet<PositionPerson> PositionPerson { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             // اعمال اسکیما
-            modelBuilder.HasDefaultSchema("OrganizationManagement");
+            modelBuilder.HasDefaultSchema("organization");
 
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("OrganizationManagement"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("organization"));
             modelBuilder.ApplyConfiguration(new AssignmentConfiguration());
-            modelBuilder.ApplyConfiguration(new JobFamilyConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PositionConfiguration());
-            modelBuilder.ApplyConfiguration(new PositionPersonConfiguration());
 
         }
     }

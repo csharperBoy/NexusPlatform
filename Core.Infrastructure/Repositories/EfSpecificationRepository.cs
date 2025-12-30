@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Security;
 using Core.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -59,50 +60,20 @@ namespace Core.Infrastructure.Repositories
     {
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
-
-        public EfSpecificationRepository(TDbContext dbContext)
+        protected readonly IDataScopeProcessor _scopeProcessor;
+        public EfSpecificationRepository(TDbContext dbContext, IDataScopeProcessor scopeProcessor)
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();
+            _scopeProcessor = scopeProcessor;
         }
-
-        public virtual async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> specification)
-        {
-            return await ApplySpecification(specification).FirstOrDefaultAsync();
-        }
-
-        public virtual async Task<IEnumerable<TEntity>> ListBySpecAsync(ISpecification<TEntity> specification)
-        {
-            return await ApplySpecification(specification).ToListAsync();
-        }
-
-        public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindBySpecAsync(ISpecification<TEntity> specification)
-        {
-            // 📌 شمارش فقط با Criteria برای جلوگیری از بارگذاری سنگین Includes
-            var countQuery = _dbSet.AsQueryable();
-            if (specification.Criteria != null)
-                countQuery = countQuery.Where(specification.Criteria);
-            var totalCount = await countQuery.CountAsync();
-
-            var query = ApplySpecification(specification);
-            if (specification.IsPagingEnabled)
-                query = query.Skip(specification.Skip).Take(specification.Take);
-
-            var items = await query.ToListAsync();
-            return (items, totalCount);
-        }
-
-        public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
-        {
-            var query = _dbSet.AsQueryable();
-            if (specification.Criteria != null)
-                query = query.Where(specification.Criteria);
-            return await query.CountAsync();
-        }
-
-        private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> specification)
+        private async Task<IQueryable<TEntity>> ApplySpecification(ISpecification<TEntity> specification)
         {
             IQueryable<TEntity> query = _dbSet;
+
+            // ***** اعمال امنیت همین اول کار *****
+            // اگر Specification خاصی نباید فیلتر شود، می‌توان پراپرتی IgnoreSecurity به Specification اضافه کرد
+            query = await _scopeProcessor.ApplyScope(query);
 
             if (specification.Criteria != null)
                 query = query.Where(specification.Criteria);
@@ -115,6 +86,46 @@ namespace Core.Infrastructure.Repositories
 
             return query;
         }
+       
+        public virtual async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> specification)
+        {
+            var result = await ApplySpecification(specification);
+            return await result.FirstOrDefaultAsync();
+        }
+
+        public virtual async Task<IEnumerable<TEntity>> ListBySpecAsync(ISpecification<TEntity> specification)
+        {
+            var result = await ApplySpecification(specification);
+            return await result.ToListAsync();
+        }
+
+        public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindBySpecAsync(ISpecification<TEntity> specification)
+        {
+            // 📌 شمارش فقط با Criteria برای جلوگیری از بارگذاری سنگین Includes
+            var countQuery = _dbSet.AsQueryable();
+            countQuery = await _scopeProcessor.ApplyScope(countQuery);
+            if (specification.Criteria != null)
+                countQuery = countQuery.Where(specification.Criteria);
+            var totalCount = await countQuery.CountAsync();
+
+            var query = await ApplySpecification(specification);
+            if (specification.IsPagingEnabled)
+                query = query.Skip(specification.Skip).Take(specification.Take);
+
+            var items = await query.ToListAsync();
+            return (items, totalCount);
+        }
+
+        public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
+        {
+            var query = _dbSet.AsQueryable();
+            query =await _scopeProcessor.ApplyScope(query);
+            if (specification.Criteria != null)
+                query = query.Where(specification.Criteria);
+            return await query.CountAsync();
+        }
+
+       
 
         private IQueryable<TEntity> ApplyOrdering(IQueryable<TEntity> query, ISpecification<TEntity> specification)
         {

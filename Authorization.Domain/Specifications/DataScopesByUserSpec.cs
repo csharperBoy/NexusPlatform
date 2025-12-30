@@ -14,7 +14,7 @@ namespace Authorization.Domain.Specifications
      -----------------------
      DataScopeهای مستقیم یک کاربر را برمی‌گرداند.
      */
-
+    /*
     public class DataScopesByUserSpec : BaseSpecification<DataScope>
     {
         public DataScopesByUserSpec(Guid userId)
@@ -26,5 +26,5 @@ namespace Authorization.Domain.Specifications
             ApplyOrderBy(d => d.ResourceId);
             ApplyThenOrderBy(d => d.Scope);
         }
-    }
+    }*/
 }

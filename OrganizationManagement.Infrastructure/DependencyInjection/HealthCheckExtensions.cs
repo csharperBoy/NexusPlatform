@@ -45,7 +45,7 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
 
             // 📌 اضافه کردن Health Check برای دیتابیس SampleDbContext
             services.AddHealthChecks()
-                    .AddDbContextCheck<SampleDbContext>("SampleDatabase");
+                    .AddDbContextCheck<OrganizationManagementDbContext>("OrganizationManagementDatabase");
 
             return services;
         }

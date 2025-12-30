@@ -8,16 +8,15 @@ using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
+using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Identity.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
 {
-    public class DataScopeService : IDataScopeService
+  /*  public class DataScopeService : IDataScopeService
     {
-        private readonly IRepository<AuthorizationDbContext, DataScope, Guid> _dataScopeRepository;
-        private readonly ISpecificationRepository<DataScope, Guid> _dataScopeSpecRepository;
         private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resourceRepository;
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<DataScopeService> _logger;
@@ -26,8 +25,6 @@ namespace Authorization.Infrastructure.Services
         private readonly IDataScopeEvaluator _dataScopeEvaluator;
 
         public DataScopeService(
-            IRepository<AuthorizationDbContext, DataScope, Guid> dataScopeRepository,
-            ISpecificationRepository<DataScope, Guid> dataScopeSpecRepository,
             IRepository<AuthorizationDbContext, Resource, Guid> resourceRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<DataScopeService> logger,
@@ -35,8 +32,6 @@ namespace Authorization.Infrastructure.Services
             ICacheService cache,
             IDataScopeEvaluator dataScopeEvaluator) // اضافه شد
         {
-            _dataScopeRepository = dataScopeRepository;
-            _dataScopeSpecRepository = dataScopeSpecRepository;
             _resourceRepository = resourceRepository;
             _unitOfWork = unitOfWork;
             _logger = logger;
@@ -301,4 +296,5 @@ namespace Authorization.Infrastructure.Services
             };
         }
     }
+*/
 }

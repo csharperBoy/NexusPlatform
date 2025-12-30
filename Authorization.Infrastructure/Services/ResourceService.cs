@@ -414,7 +414,7 @@ namespace Authorization.Infrastructure.Services
                 DisplayOrder = resource.DisplayOrder,
                 Icon = resource.Icon,
                 Route = resource.Route,
-                Path = resource.Path,
+                Path = resource.ResourcePath,
                 CreatedAt = resource.CreatedAt,
                 CreatedBy = resource.CreatedBy,
                 ModifiedAt = resource.ModifiedAt,

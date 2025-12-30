@@ -11,12 +11,11 @@ namespace Authorization.Domain.Specifications
     public class ResourceByIdSpec : BaseSpecification<Resource>
     {
         public ResourceByIdSpec(Guid resourceId)
-            : base(r => r.Id == resourceId && r.IsActive)
+            : base(r => r.Id == resourceId )
         {
             AddInclude(r => r.Parent);
             AddInclude(r => r.Children);
             AddInclude(r => r.Permissions);
-            AddInclude(r => r.DataScopes);
         }
     }
 }

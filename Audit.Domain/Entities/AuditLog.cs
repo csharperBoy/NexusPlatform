@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common;
+using Core.Domain.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +9,8 @@ using System.Threading.Tasks;
 
 namespace Audit.Domain.Entities
 {
-    public class AuditLog
+    [SecuredResource("Audit.AuditLog")]
+    public class AuditLog : DataScopedEntity, IAggregateRoot
     {
         public Guid Id { get; private set; } = Guid.NewGuid();
         public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
@@ -26,6 +30,7 @@ namespace Audit.Domain.Entities
             EntityId = entityId;
             UserId = userId;
             Changes = changes;
+            OwnerPersonId = userId;            
         }
     }
 }

@@ -12,13 +12,11 @@ namespace Authorization.Domain.Specifications
     public class ResourceByCategorySpec : BaseSpecification<Resource>
     {
         public ResourceByCategorySpec(ResourceCategory? category = null)
-            : base(r => r.IsActive && (!category.HasValue || r.Category == category.Value))
+            : base(r => (!category.HasValue || r.Category == category.Value))
         {
             AddInclude(r => r.Permissions);
-            AddInclude(r => r.DataScopes);
             AddInclude(r => r.Parent);
             AddInclude(r => r.Children);
-            ApplyOrderBy(r => r.DisplayOrder);
             ApplyThenOrderBy(r => r.Name);
         }
     }

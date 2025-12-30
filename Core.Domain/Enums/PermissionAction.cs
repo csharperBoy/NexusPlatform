@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Domain.Enums
+namespace Core.Domain.Enums
 {
-   /* public enum PermissionAction : byte
+    public enum PermissionAction : byte
     {
         // CRUD پایه
         View = 1,
@@ -21,5 +21,5 @@ namespace Authorization.Domain.Enums
 
         // دسترسی کامل
         Full = 99
-    }*/
+    }
 }

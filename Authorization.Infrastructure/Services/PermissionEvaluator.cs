@@ -5,6 +5,7 @@ using Authorization.Domain.Enums;
 using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
+using Core.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
@@ -161,16 +162,16 @@ namespace Authorization.Infrastructure.Services
             }
 
             // محاسبه دسترسی‌های پایه
-            var canView = permissions.Any(p => p.IsAllow && p.Action == PermissionAction.View);
-            var canCreate = permissions.Any(p => p.IsAllow && p.Action == PermissionAction.Create);
-            var canEdit = permissions.Any(p => p.IsAllow && p.Action == PermissionAction.Edit);
-            var canDelete = permissions.Any(p => p.IsAllow && p.Action == PermissionAction.Delete);
+            var canView = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.View);
+            var canCreate = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Create);
+            var canEdit = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Edit);
+            var canDelete = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Delete);
 
             // اعمال منطق deny - اگر حتی یک deny وجود داشته باشد
-            var denyView = permissions.Any(p => !p.IsAllow && p.Action == PermissionAction.View);
-            var denyCreate = permissions.Any(p => !p.IsAllow && p.Action == PermissionAction.Create);
-            var denyEdit = permissions.Any(p => !p.IsAllow && p.Action == PermissionAction.Edit);
-            var denyDelete = permissions.Any(p => !p.IsAllow && p.Action == PermissionAction.Delete);
+            var denyView = permissions.Any(p => p.Type != PermissionType.allow && p.Action == PermissionAction.View);
+            var denyCreate = permissions.Any(p => p.Type != PermissionType.allow && p.Action == PermissionAction.Create);
+            var denyEdit = permissions.Any(p => p.Type != PermissionType.allow && p.Action == PermissionAction.Edit);
+            var denyDelete = permissions.Any(p => p.Type != PermissionType.allow && p.Action == PermissionAction.Delete);
 
             // اعمال deny rules
             if (denyView) canView = false;
@@ -186,8 +187,8 @@ namespace Authorization.Infrastructure.Services
                 CanEdit = canEdit,
                 CanDelete = canDelete,
                 EvaluatedAt = DateTime.UtcNow,
-                PermissionCount = permissions.Count,
-                HasExplicitDeny = permissions.Any(p => !p.IsAllow)
+                PermissionCount = permissions.Count
+                
             };
         }
     }

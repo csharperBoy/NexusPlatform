@@ -4,6 +4,7 @@ using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
+using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -32,6 +33,40 @@ namespace Authorization.Infrastructure.Services
             _currentUserService = currentUserService;
             _logger = logger;
             _cache = cache;
+        }
+        public async Task<ScopeType> GetPermissionScopeAsync(Guid userId, string resourceKey, PermissionAction action)
+        {
+            // کلید کش شامل اکشن هم می‌شود
+            var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
+
+            try
+            {
+                // 1. بررسی کش
+                var cached = await _cache.GetAsync<ScopeType?>(cacheKey);
+                if (cached.HasValue)
+                {
+                    _logger.LogDebug("Cache hit for scope check: {Key} -> {Scope}", cacheKey, cached.Value);
+                    return cached.Value;
+                }
+
+                // 2. واگذاری محاسبه به Evaluator
+                // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود
+                var scope = await _dataScopeEvaluator.EvaluateScopeAsync(userId, resourceKey, action);
+
+                // 3. ذخیره در کش
+                await _cache.SetAsync(cacheKey, scope, TimeSpan.FromMinutes(10));
+
+                _logger.LogInformation(
+                    "Scope calculated for user {UserId} on {Resource}:{Action} = {Scope}",
+                    userId, resourceKey, action, scope);
+
+                return scope;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating scope for user {UserId}", userId);
+                return ScopeType.None; // Fail Secure
+            }
         }
 
         // ================================================
@@ -202,6 +237,20 @@ namespace Authorization.Infrastructure.Services
             {
                 _logger.LogError(ex, "Error in multiple access check for user {UserId}", userId);
                 return false;
+            }
+        }
+
+        public async Task<List<ScopeType>> GetScopeForUser(Guid userId, string resourceKey)
+        {
+            try
+            {
+                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+                return dataScopes.Select(d => d.Scope).ToList();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
             }
         }
     }
