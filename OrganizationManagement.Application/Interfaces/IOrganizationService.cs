@@ -13,6 +13,7 @@ namespace OrganizationManagement.Application.Interfaces
          Task<Position?> GetUserPositionAsync(Guid userId);
 
          Task<IReadOnlyList<Guid>> GetUserUnitsAsync(Guid userId);
+         Task<Person> GetUserPersonAsync(Guid userId);
 
          Task<IReadOnlyList<Guid>> GetAvailableUnitsAsync(Guid userId);
 

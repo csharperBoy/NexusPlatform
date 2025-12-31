@@ -53,7 +53,7 @@ namespace Authorization.Infrastructure.Services
 
                 // 3. دریافت دسترسی‌های کاربر
                 var scopes = await permissionChecker.GetScopeForUser(userId.Value, attribute.ResourceKey);
-
+                if(scopes.Count() ==0) return query;
                 // 4. اعمال فیلتر (کد قبلی شما)
                 if (scopes.Contains(ScopeType.All)) return query;
 

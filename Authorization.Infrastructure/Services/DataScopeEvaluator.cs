@@ -14,134 +14,153 @@ using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
 {
-    /*
-    public class DataScopeEvaluator : IDataScopeEvaluator
-    {
-
-        private readonly IRepository<DbContext, Permission, Guid> _permissionRepository;
-        private readonly IRepository<DbContext, Resource, Guid> _resourceRepository;
-
-        private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
-        private readonly ISpecificationRepository<Resource, Guid> _resourceSpecRepository;
-
-
-        private readonly ILogger<DataScopeEvaluator> _logger;
-        private readonly ICacheService _cache;
-
-        public DataScopeEvaluator(
-         IRepository<DbContext, Permission, Guid> permissionRepository,
-         IRepository<DbContext, Resource, Guid> resourceRepository,
-         ISpecificationRepository<Permission, Guid> permissionSpecRepository,
-         ISpecificationRepository<Resource, Guid> resourceSpecRepository,
-        ILogger<DataScopeEvaluator> logger,
-            ICacheService cache)
-        {
-            _permissionRepository = permissionRepository;
-            _resourceRepository = resourceRepository;
-            _permissionSpecRepository = permissionSpecRepository;
-            _resourceSpecRepository = resourceSpecRepository;
-            _logger = logger;
-            _cache = cache;
-        }
-
-        public Task<string> BuildDataFilterAsync(Guid userId, string resourceKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync(Guid userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<DataScopeDto> EvaluateDataScopeAsync(Guid userId, string resourceKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ScopeType> EvaluateScopeAsync(Guid userId, string resourceKey, PermissionAction action)
-        {
-            throw new NotImplementedException();
-        }
-    }
-*/
 
     public class DataScopeEvaluator : IDataScopeEvaluator
     {
-        private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
+        // استفاده از ریپازیتوری اسپسیفیکیشن برای کوئری‌های بهینه
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
-        private readonly ICurrentUserService _currentUserService; // برای دریافت اطلاعات پست و نقش فعلی
+        private readonly ICurrentUserService _currentUserService;
         private readonly ILogger<DataScopeEvaluator> _logger;
 
         public DataScopeEvaluator(
-            IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
-            ISpecificationRepository<Permission, Guid> permissionSpecRepository, 
+            ISpecificationRepository<Permission, Guid> permissionSpecRepository,
             ICurrentUserService currentUserService,
             ILogger<DataScopeEvaluator> logger)
         {
             _permissionSpecRepository = permissionSpecRepository;
-            _permissionRepository = permissionRepository;
             _currentUserService = currentUserService;
             _logger = logger;
         }
 
-        /// <summary>
-        /// متد اصلی برای محاسبه اسکوپ یک اکشن خاص بر روی یک ریسورس
-        /// </summary>
+        // ----------------------------------------------------------------
+        // 1. محاسبه اسکوپ برای یک اکشن خاص (مثلا Edit)
+        // ----------------------------------------------------------------
         public async Task<ScopeType> EvaluateScopeAsync(Guid userId, string resourceKey, PermissionAction action)
         {
             try
             {
-                // 1. دریافت کانتکست امنیتی کاربر (پست سازمانی و نقش ها)
-                // این اطلاعات معمولا در Claim ها هستند و توسط CurrentUserService ارائه می‌شوند
-                var positionId = _currentUserService.PositionId;
-                var roleIds = _currentUserService.RolesId ?? new List<Guid>();
-                var personId = _currentUserService.PersonId;
+                var (personId, positionId, roleIds) = GetUserContext();
 
-                var spec = new EffectivePermissionsSpec(personId, positionId, roleIds.ToList(), resourceKey, action);
+                // استفاده از اسپک فیلتر شده (Specific Resource & Action)
+                var spec = new EffectivePermissionsSpec(personId, positionId, roleIds, resourceKey, action);
                 var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
-                if (permissions == null || !permissions.Any())
-                {
-                    _logger.LogDebug("No permissions found for user {UserId} on {Resource}:{Action}", userId, resourceKey, action);
-                    return ScopeType.None;
-                }
-
-                // ۳. پیاده سازی سلسله مراتب اولویت ها (Priority Logic)
-
-                // اولویت اول: شخص (Person) - اگر تنظیم مستقیمی برای خود فرد وجود داشته باشد
-                var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
-                if (personPerm != null)
-                {
-                    return personPerm.Type == PermissionType.Deny ? ScopeType.None : personPerm.Scope;
-                }
-
-                // اولویت دوم: منع دسترسی (Deny) - اگر در سطح نقش یا پست سازمانی Deny شده باشد
-                if (permissions.Any(p => p.Type == PermissionType.Deny))
-                {
-                    return ScopeType.None;
-                }
-
-                // اولویت سوم: وسیع ترین دسترسی (Max Scope) بین نقش ها و پست های سازمانی
-                // چون Enum ها مقدار عددی دارند (Self=1, Unit=2, All=99)، Max() درست عمل می کند
-                var maxScope = permissions
-                    .Where(p => p.Type == PermissionType.allow)
-                    .Select(p => p.Scope)
-                    .DefaultIfEmpty(ScopeType.None)
-                    .Max();
-
-                return maxScope;
+                return CalculateScopeFromList(permissions);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error evaluating scope for user {UserId} on {Resource}:{Action}", userId, resourceKey, action);
+                _logger.LogError(ex, "Error evaluating scope for {Resource}:{Action}", resourceKey, action);
                 return ScopeType.None;
             }
         }
 
-        // متدهای دیگر که فعلاً طبق خواسته شما به آن‌ها نیاز نداریم و پیاده‌سازی نمی‌شوند
-        public Task<DataScopeDto> EvaluateDataScopeAsync(Guid userId, string resourceKey) => throw new NotImplementedException();
-        public Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync(Guid userId) => throw new NotImplementedException();
-        public Task<string> BuildDataFilterAsync(Guid userId, string resourceKey) => throw new NotImplementedException();
+        // ----------------------------------------------------------------
+        // 2. محاسبه اسکوپ داده (پیش‌فرض روی View) برای یک ریسورس
+        // ----------------------------------------------------------------
+        public async Task<DataScopeDto> EvaluateDataScopeAsync(Guid userId, string resourceKey)
+        {
+            // وقتی صحبت از Data Scope است، یعنی کاربر چه چیزی را می‌تواند ببیند (View)
+            var scope = await EvaluateScopeAsync(userId, resourceKey, PermissionAction.View);
+
+            return new DataScopeDto
+            {
+                ResourceKey = resourceKey,
+                Scope = scope
+            };
+        }
+
+        // ----------------------------------------------------------------
+        // 3. محاسبه تمام اسکوپ‌های کاربر (برای کش کردن یا استفاده در GetScopeForUser)
+        // ----------------------------------------------------------------
+        public async Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync(Guid userId)
+        {
+            try
+            {
+                var (personId, positionId, roleIds) = GetUserContext();
+
+                // دریافت کل پرمیشن‌های کاربر (بدون فیلتر ریسورس)
+                var spec = new UserPermissionsSpec(personId, positionId, roleIds);
+                var allPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+                // گروه‌بندی بر اساس ریسورس
+                // هدف: برای هر ریسورس، اسکوپ نهایی View را محاسبه کنیم
+                var resourceGroups = allPermissions
+                    .GroupBy(p => p.Resource.Key)
+                    .Select(g => new DataScopeDto
+                    {
+                        ResourceKey = g.Key,
+                        // فقط پرمیشن‌های View را برای اسکوپ داده لحاظ می‌کنیم
+                        Scope = CalculateScopeFromList(g.Where(p => p.Action == PermissionAction.View).ToList())
+                    })
+                    .ToList();
+
+                return resourceGroups;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error evaluating all data scopes for user {UserId}", userId);
+                return new List<DataScopeDto>();
+            }
+        }
+
+        // ----------------------------------------------------------------
+        // 4. ساخت فیلتر SQL (اختیاری - اگر برای Dapper یا Raw SQL نیاز دارید)
+        // ----------------------------------------------------------------
+        public async Task<string> BuildDataFilterAsync(Guid userId, string resourceKey)
+        {
+            var scope = await EvaluateScopeAsync(userId, resourceKey, PermissionAction.View);
+
+            // بازگشت شرط SQL بر اساس اسکوپ
+            return scope switch
+            {
+                ScopeType.All => "1=1", // همه چیز
+                ScopeType.None => "1=0", // هیچ چیز
+                ScopeType.Self => $"OwnerPersonId = '{userId}'",
+                ScopeType.Unit => $"OwnerOrganizationUnitId = '{_currentUserService.OrganizationUnitId}'",
+                // نکته: برای UnitAndBelow نیاز به لاجیک پیچیده‌تر SQL (Like) است
+                ScopeType.UnitAndBelow => $"OwnerOrganizationUnitId IN (SELECT Id FROM OrganizationUnits WHERE Path LIKE ...)",
+                _ => "1=0"
+            };
+        }
+
+        // ================================================================
+        // Private Helpers
+        // ================================================================
+
+        /// <summary>
+        /// منطق مرکزی اولویت‌بندی (Priority Logic)
+        /// </summary>
+        private ScopeType CalculateScopeFromList(IEnumerable<Permission> permissions)
+        {
+            if (permissions == null || !permissions.Any()) return ScopeType.None;
+
+            // اولویت ۱: شخص
+            var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
+            if (personPerm != null)
+            {
+                return personPerm.Type == PermissionType.Deny ? ScopeType.None : personPerm.Scope;
+            }
+
+            // اولویت ۲: وجود Deny در نقش/پست
+            if (permissions.Any(p => p.Type == PermissionType.Deny))
+            {
+                return ScopeType.None;
+            }
+
+            // اولویت ۳: Max Scope
+            return permissions
+                .Where(p => p.Type == PermissionType.allow)
+                .Select(p => p.Scope)
+                .DefaultIfEmpty(ScopeType.None)
+                .Max();
+        }
+
+        private (Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
+        {
+            var posId = _currentUserService.PositionId;
+            var roleIds = _currentUserService.RolesId ?? new List<Guid>(); // اصلاح نام پراپرتی بر اساس ICurrentUserService شما
+            var personId = _currentUserService.PersonId;
+            return (personId??Guid.Empty, posId, roleIds.ToList());
+        }
     }
 }
