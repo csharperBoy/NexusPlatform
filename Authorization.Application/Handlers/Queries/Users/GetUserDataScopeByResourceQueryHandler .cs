@@ -37,7 +37,7 @@ namespace Authorization.Application.Handlers.Queries.Users
                     request.UserId, request.ResourceKey);
 
                 var dataScope = await _dataScopeEvaluator.EvaluateDataScopeAsync(
-                    request.UserId, request.ResourceKey);
+                    request.ResourceKey);
 
                 return Result<DataScopeDto>.Ok(dataScope);
             }

@@ -34,10 +34,10 @@ namespace Authorization.Infrastructure.Services
             _logger = logger;
             _cache = cache;
         }
-        public async Task<ScopeType> GetPermissionScopeAsync(Guid userId, string resourceKey, PermissionAction action)
+        public async Task<ScopeType> GetPermissionScopeAsync(Guid personId, string resourceKey, PermissionAction action)
         {
             // کلید کش شامل اکشن هم می‌شود
-            var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
+            var cacheKey = $"auth:scope:{personId}:{resourceKey}:{action}";
 
             try
             {
@@ -51,20 +51,20 @@ namespace Authorization.Infrastructure.Services
 
                 // 2. واگذاری محاسبه به Evaluator
                 // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود
-                var scope = await _dataScopeEvaluator.EvaluateScopeAsync(userId, resourceKey, action);
+                var scope = await _dataScopeEvaluator.EvaluateScopeAsync( resourceKey, action);
 
                 // 3. ذخیره در کش
                 await _cache.SetAsync(cacheKey, scope, TimeSpan.FromMinutes(10));
 
                 _logger.LogInformation(
-                    "Scope calculated for user {UserId} on {Resource}:{Action} = {Scope}",
-                    userId, resourceKey, action, scope);
+                    "Scope calculated for user  on {Resource}:{Action} = {Scope}",
+                     resourceKey, action, scope);
 
                 return scope;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating scope for user {UserId}", userId);
+                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.PersonId);
                 return ScopeType.None; // Fail Secure
             }
         }
@@ -142,7 +142,7 @@ namespace Authorization.Infrastructure.Services
 
                 // بررسی جزئیات دلیل رد دسترسی
                 var permissions = await _permissionEvaluator.EvaluateUserPermissionsAsync(request.UserId, request.ResourceKey);
-                var dataScopes = await _dataScopeEvaluator.EvaluateDataScopeAsync(request.UserId, request.ResourceKey);
+                var dataScopes = await _dataScopeEvaluator.EvaluateDataScopeAsync( request.ResourceKey);
 
                 var denyReason = "User does not have required permissions";
                 var details = new Dictionary<string, object>
@@ -187,7 +187,7 @@ namespace Authorization.Infrastructure.Services
 
                 // محاسبه دسترسی‌های مؤثر
                 var permissions = await _permissionEvaluator.EvaluateAllUserPermissionsAsync(userId);
-                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync();
 
                 var userAccess = new UserAccessDto
                 {
@@ -244,7 +244,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+                var dataScopes = await _dataScopeEvaluator.EvaluateAllDataScopesAsync();
                 return dataScopes.Select(d => d.Scope).ToList();
             }
             catch (Exception ex)

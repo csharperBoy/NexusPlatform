@@ -81,7 +81,7 @@ namespace Authorization.Presentation.Controllers.Admin
                 .GetRequiredService<IDataScopeEvaluator>();
 
             var dataScope = await dataScopeEvaluator.EvaluateDataScopeAsync(
-                request.UserId,
+               
                 request.ResourceKey);
 
             return Ok(dataScope);
@@ -97,7 +97,7 @@ namespace Authorization.Presentation.Controllers.Admin
             var dataScopeEvaluator = HttpContext.RequestServices
                 .GetRequiredService<IDataScopeEvaluator>();
 
-            var dataScopes = await dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+            var dataScopes = await dataScopeEvaluator.EvaluateAllDataScopesAsync();
             return Ok(dataScopes);
         }
 

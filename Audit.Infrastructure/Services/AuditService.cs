@@ -2,6 +2,7 @@
 using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
+using Core.Application.Abstractions.Security;
 using Core.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 using System;
@@ -19,8 +20,7 @@ namespace Audit.Infrastructure.Services
         private readonly IRepository<AuditDbContext, AuditLog, Guid> _repository;
         private readonly IUnitOfWork<AuditDbContext> _uow;
         private readonly ILogger<AuditService> _logger;
-
-        public AuditService(IRepository<AuditDbContext, AuditLog, Guid> repository, IUnitOfWork<AuditDbContext> uow, ILogger<AuditService> logger)
+        public AuditService(IRepository<AuditDbContext, AuditLog, Guid> repository, IUnitOfWork<AuditDbContext> uow, ILogger<AuditService> logger, ICurrentUserService currentUserService)
         {
             _repository = repository;
             _uow = uow;

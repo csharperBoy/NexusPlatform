@@ -26,21 +26,22 @@ namespace Identity.Infrastructure.Services
         private readonly IRepository<IdentityDbContext, UserSession, Guid> _sessionRepository;
         private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IOrganizationService _organizationService;
+        //private readonly IOrganizationService _organizationService;
         public JwtTokenService(
             IOptions<JwtOptions> options,
             UserManager<ApplicationUser> userManager,
             IRepository<IdentityDbContext, UserSession, Guid> sessionRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
-            IHttpContextAccessor httpContextAccessor,
-            IOrganizationService organizationService)
+            IHttpContextAccessor httpContextAccessor
+            //,IOrganizationService organizationService
+            )
         {
             _jwtOptions = options.Value;
             _userManager = userManager;
             _sessionRepository = sessionRepository;
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;
-            _organizationService = organizationService;
+            //_organizationService = organizationService;
         }
         private string GetDeviceInfo()
         {

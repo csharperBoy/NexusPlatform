@@ -87,10 +87,10 @@ namespace Core.Infrastructure.Security
 
         public IEnumerable<Guid> RolesId => Enumerable.Empty<Guid>();
 
-        public Guid? PersonId => Guid.Empty;
+        public Guid? PersonId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        public Guid? OrganizationUnitId => Guid.Empty;
+        public Guid? OrganizationUnitId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        public Guid? PositionId => Guid.Empty;
+        public Guid? PositionId => Guid.Parse("00000000-0000-0000-0000-000000000001");
     }
 }

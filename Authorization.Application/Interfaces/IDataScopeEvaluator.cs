@@ -13,21 +13,21 @@ namespace Authorization.Application.Interfaces
         /// <param name="resourceKey"></param>
         /// <param name="action"></param>
         /// <returns></returns>
-        Task<ScopeType> EvaluateScopeAsync(Guid userId, string resourceKey, PermissionAction action);
+        Task<ScopeType> EvaluateScopeAsync(string resourceKey, PermissionAction action);
 
         /// <summary>
         /// ارزیابی محدوده داده کاربر برای یک منبع
         /// </summary>
-        Task<DataScopeDto> EvaluateDataScopeAsync(Guid userId, string resourceKey);
+        Task<DataScopeDto> EvaluateDataScopeAsync( string resourceKey);
 
         /// <summary>
         /// ارزیابی تمام محدوده‌های داده کاربر
         /// </summary>
-        Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync(Guid userId);
+        Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync();
 
         /// <summary>
         /// ساخت شرط WHERE برای فیلتر داده‌ها بر اساس محدوده کاربر
         /// </summary>
-        Task<string> BuildDataFilterAsync(Guid userId, string resourceKey);
+        Task<string> BuildDataFilterAsync( string resourceKey);
     }
 }

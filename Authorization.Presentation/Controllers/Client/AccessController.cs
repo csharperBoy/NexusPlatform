@@ -94,7 +94,7 @@ namespace Authorization.Presentation.Controllers.Client
                 .GetRequiredService<IDataScopeEvaluator>();
 
             var dataScopes = await dataScopeEvaluator.EvaluateAllDataScopesAsync(
-                currentUserService.UserId.Value);
+              );
 
             return Ok(dataScopes);
         }
@@ -142,7 +142,7 @@ namespace Authorization.Presentation.Controllers.Client
 
             // اجرای موازی دو task
             var userAccessTask = authorizationService.GetUserEffectiveAccessAsync(userId);
-            var dataScopesTask = dataScopeEvaluator.EvaluateAllDataScopesAsync(userId);
+            var dataScopesTask = dataScopeEvaluator.EvaluateAllDataScopesAsync();
 
             await Task.WhenAll(userAccessTask, dataScopesTask);
 

@@ -43,8 +43,8 @@ namespace Authorization.Infrastructure.Services
             if (attribute == null)
                 return query;
 
-            var userId = _currentUserService.UserId;
-            if (userId == null) return query;
+            var personId = _currentUserService.PersonId;
+            if (personId == null) return query;
 
             // تغییر ۲: دریافت سرویس فقط در زمان نیاز (شکستن حلقه وابستگی)
             using (var scope = _serviceProvider.CreateScope())
@@ -52,7 +52,7 @@ namespace Authorization.Infrastructure.Services
                 var permissionChecker = scope.ServiceProvider.GetRequiredService<IAuthorizationChecker>();
 
                 // 3. دریافت دسترسی‌های کاربر
-                var scopes = await permissionChecker.GetScopeForUser(userId.Value, attribute.ResourceKey);
+                var scopes = await permissionChecker.GetScopeForUser(personId.Value, attribute.ResourceKey);
                 if(scopes.Count() ==0) return query;
                 // 4. اعمال فیلتر (کد قبلی شما)
                 if (scopes.Contains(ScopeType.All)) return query;
@@ -73,7 +73,7 @@ namespace Authorization.Infrastructure.Services
                 }
                 if (maxScope == ScopeType.Self)
                 {
-                    return query.Where(e => ((IDataScopedEntity)e).OwnerPersonId == userId);
+                    return query.Where(e => ((IDataScopedEntity)e).OwnerPersonId == personId);
                 }
             }
 

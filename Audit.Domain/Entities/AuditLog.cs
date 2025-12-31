@@ -29,8 +29,7 @@ namespace Audit.Domain.Entities
             EntityName = entityName;
             EntityId = entityId;
             UserId = userId;
-            Changes = changes;
-            OwnerPersonId = userId;            
+            Changes = changes;           
         }
     }
 }

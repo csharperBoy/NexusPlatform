@@ -35,7 +35,7 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 1. محاسبه اسکوپ برای یک اکشن خاص (مثلا Edit)
         // ----------------------------------------------------------------
-        public async Task<ScopeType> EvaluateScopeAsync(Guid userId, string resourceKey, PermissionAction action)
+        public async Task<ScopeType> EvaluateScopeAsync(/*Guid userId,*/ string resourceKey, PermissionAction action)
         {
             try
             {
@@ -57,10 +57,10 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 2. محاسبه اسکوپ داده (پیش‌فرض روی View) برای یک ریسورس
         // ----------------------------------------------------------------
-        public async Task<DataScopeDto> EvaluateDataScopeAsync(Guid userId, string resourceKey)
+        public async Task<DataScopeDto> EvaluateDataScopeAsync(/*Guid userId,*/ string resourceKey)
         {
             // وقتی صحبت از Data Scope است، یعنی کاربر چه چیزی را می‌تواند ببیند (View)
-            var scope = await EvaluateScopeAsync(userId, resourceKey, PermissionAction.View);
+            var scope = await EvaluateScopeAsync( resourceKey, PermissionAction.View);
 
             return new DataScopeDto
             {
@@ -72,7 +72,7 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 3. محاسبه تمام اسکوپ‌های کاربر (برای کش کردن یا استفاده در GetScopeForUser)
         // ----------------------------------------------------------------
-        public async Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync(Guid userId)
+        public async Task<IReadOnlyList<DataScopeDto>> EvaluateAllDataScopesAsync()
         {
             try
             {
@@ -98,7 +98,7 @@ namespace Authorization.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error evaluating all data scopes for user {UserId}", userId);
+                _logger.LogError(ex, "Error evaluating all data scopes for user {UserId}", _currentUserService.PersonId);
                 return new List<DataScopeDto>();
             }
         }
@@ -106,16 +106,16 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 4. ساخت فیلتر SQL (اختیاری - اگر برای Dapper یا Raw SQL نیاز دارید)
         // ----------------------------------------------------------------
-        public async Task<string> BuildDataFilterAsync(Guid userId, string resourceKey)
+        public async Task<string> BuildDataFilterAsync( string resourceKey)
         {
-            var scope = await EvaluateScopeAsync(userId, resourceKey, PermissionAction.View);
+            var scope = await EvaluateScopeAsync( resourceKey, PermissionAction.View);
 
             // بازگشت شرط SQL بر اساس اسکوپ
             return scope switch
             {
                 ScopeType.All => "1=1", // همه چیز
                 ScopeType.None => "1=0", // هیچ چیز
-                ScopeType.Self => $"OwnerPersonId = '{userId}'",
+                ScopeType.Self => $"OwnerPersonId = '{_currentUserService.PersonId}'",
                 ScopeType.Unit => $"OwnerOrganizationUnitId = '{_currentUserService.OrganizationUnitId}'",
                 // نکته: برای UnitAndBelow نیاز به لاجیک پیچیده‌تر SQL (Like) است
                 ScopeType.UnitAndBelow => $"OwnerOrganizationUnitId IN (SELECT Id FROM OrganizationUnits WHERE Path LIKE ...)",
