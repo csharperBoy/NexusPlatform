@@ -3,6 +3,7 @@ using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Domain.Specifications;
+using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
@@ -67,13 +68,13 @@ namespace Authorization.Infrastructure.Services
 
     public class DataScopeEvaluator : IDataScopeEvaluator
     {
-        private readonly IRepository<DbContext, Permission, Guid> _permissionRepository;
+        private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
         private readonly ICurrentUserService _currentUserService; // برای دریافت اطلاعات پست و نقش فعلی
         private readonly ILogger<DataScopeEvaluator> _logger;
 
         public DataScopeEvaluator(
-            IRepository<DbContext, Permission, Guid> permissionRepository,
+            IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
             ISpecificationRepository<Permission, Guid> permissionSpecRepository, 
             ICurrentUserService currentUserService,
             ILogger<DataScopeEvaluator> logger)

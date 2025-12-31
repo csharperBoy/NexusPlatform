@@ -1,4 +1,4 @@
-﻿using Identity.Infrastructure.Data;
+﻿using Authorization.Infrastructure.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;

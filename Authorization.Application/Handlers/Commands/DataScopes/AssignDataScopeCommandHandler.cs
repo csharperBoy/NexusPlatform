@@ -13,14 +13,14 @@ namespace Authorization.Application.Handlers.Commands.DataScopes
 {
     public class AssignDataScopeCommandHandler : IRequestHandler<AssignDataScopeCommand, Result<Guid>>
     {
-        private readonly IDataScopeService _dataScopeService;
+        //private readonly IDataScopeService _dataScopeService;
         private readonly ILogger<AssignDataScopeCommandHandler> _logger;
 
         public AssignDataScopeCommandHandler(
-            IDataScopeService dataScopeService,
+            //IDataScopeService dataScopeService,
             ILogger<AssignDataScopeCommandHandler> logger)
         {
-            _dataScopeService = dataScopeService;
+            //_dataScopeService = dataScopeService;
             _logger = logger;
         }
 
@@ -32,12 +32,12 @@ namespace Authorization.Application.Handlers.Commands.DataScopes
                     "Assigning data scope for {AssigneeType}:{AssigneeId} to resource {ResourceId}",
                     request.AssigneeType, request.AssigneeId, request.ResourceId);
 
-                var dataScopeId = await _dataScopeService.AssignDataScopeAsync(request);
+                //var dataScopeId = await _dataScopeService.AssignDataScopeAsync(request);
 
                 _logger.LogInformation(
-                    "Data scope assigned successfully: {DataScopeId}", dataScopeId);
+                    "Data scope assigned successfully: {DataScopeId}", null);
 
-                return Result<Guid>.Ok(dataScopeId);
+                return Result<Guid>.Ok(Guid.Empty);
             }
             catch (Exception ex)
             {

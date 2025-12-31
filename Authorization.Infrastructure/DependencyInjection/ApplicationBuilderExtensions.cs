@@ -1,9 +1,9 @@
-﻿using Identity.Infrastructure.Data;
-using Core.Infrastructure.Database;
+﻿using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Authorization.Infrastructure.Data;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {

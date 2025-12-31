@@ -5,11 +5,11 @@ using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
+using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
-using Identity.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services

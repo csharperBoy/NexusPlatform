@@ -10,11 +10,11 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
-using Identity.Infrastructure.Data;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 using Authorization.Application.DTOs.Resource.Extensions;
+using Authorization.Infrastructure.Data;
 
 namespace Authorization.Infrastructure.Services
 {

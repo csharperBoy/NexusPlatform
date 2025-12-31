@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
+using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
@@ -7,7 +8,6 @@ using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
-using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -41,8 +41,21 @@ namespace Authorization.Infrastructure.DependencyInjection
                     b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "authorization");
                 });
             });
+            services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
+            //services.AddScoped<IDataScopeService, DataScopeService>();
+
+            // سرویس‌های دیگری که احتمالاً نیاز دارید و باید چک کنید ثبت شده باشند:
+            services.AddScoped<IAuthorizationChecker, AuthorizationService>();
+            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
+            services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
+
+            services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
+            services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
+           
             services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
+            
 
             services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
             // Outbox registration

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Interfaces
-{
+{/*
     public interface IDataScopeService
     {
         // عملیات Write با منطق پیچیده
@@ -22,5 +22,6 @@ namespace Authorization.Application.Interfaces
         // منطق کسب‌وکار پیچیده
         Task<string> BuildDataFilterAsync(Guid userId, string resourceKey);
         Task ValidateDataScopeHierarchyAsync(AssignDataScopeCommand command);
-    }
+    }*/
 }
+    

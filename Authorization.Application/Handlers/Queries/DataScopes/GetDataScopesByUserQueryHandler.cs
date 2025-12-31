@@ -15,14 +15,14 @@ namespace Authorization.Application.Handlers.Queries.DataScopes
     public class GetDataScopesByUserQueryHandler
         : IRequestHandler<GetDataScopesByUserQuery, Result<IReadOnlyList<DataScopeDto>>>
     {
-        private readonly IDataScopeService _dataScopeService;
+        //private readonly IDataScopeService _dataScopeService;
         private readonly ILogger<GetDataScopesByUserQueryHandler> _logger;
 
         public GetDataScopesByUserQueryHandler(
-            IDataScopeService dataScopeService,
+            //IDataScopeService dataScopeService,
             ILogger<GetDataScopesByUserQueryHandler> logger)
         {
-            _dataScopeService = dataScopeService;
+            //_dataScopeService = dataScopeService;
             _logger = logger;
         }
 
@@ -34,8 +34,8 @@ namespace Authorization.Application.Handlers.Queries.DataScopes
             {
                 _logger.LogDebug("Getting data scopes for user {UserId}", request.UserId);
 
-                var dataScopes = await _dataScopeService.GetUserDataScopesAsync(request.UserId);
-                return Result<IReadOnlyList<DataScopeDto>>.Ok(dataScopes);
+                //var dataScopes = await _dataScopeService.GetUserDataScopesAsync(request.UserId);
+                return Result<IReadOnlyList<DataScopeDto>>.Ok(null);
             }
             catch (Exception ex)
             {

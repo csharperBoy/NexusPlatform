@@ -1,4 +1,4 @@
-﻿using Identity.Infrastructure.Data;
+﻿using Authorization.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

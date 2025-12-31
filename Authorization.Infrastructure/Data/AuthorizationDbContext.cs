@@ -11,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Identity.Infrastructure.Data
+namespace Authorization.Infrastructure.Data
 {
     public class AuthorizationDbContext : BaseDbContext
     {

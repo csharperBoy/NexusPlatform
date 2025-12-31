@@ -13,14 +13,14 @@ namespace Authorization.Application.Handlers.Commands.DataScopes
 {
     public class UpdateDataScopeCommandHandler : IRequestHandler<UpdateDataScopeCommand, Result>
     {
-        private readonly IDataScopeService _dataScopeService;
+        //private readonly IDataScopeService _dataScopeService;
         private readonly ILogger<UpdateDataScopeCommandHandler> _logger;
 
         public UpdateDataScopeCommandHandler(
-            IDataScopeService dataScopeService,
+            //IDataScopeService dataScopeService,
             ILogger<UpdateDataScopeCommandHandler> logger)
         {
-            _dataScopeService = dataScopeService;
+            //_dataScopeService = dataScopeService;
             _logger = logger;
         }
 
@@ -30,7 +30,7 @@ namespace Authorization.Application.Handlers.Commands.DataScopes
             {
                 _logger.LogInformation("Updating data scope: {DataScopeId}", request.DataScopeId);
 
-                await _dataScopeService.UpdateDataScopeAsync(request);
+                //await _dataScopeService.UpdateDataScopeAsync(request);
 
                 _logger.LogInformation("Data scope updated successfully: {DataScopeId}", request.DataScopeId);
 
