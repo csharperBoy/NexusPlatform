@@ -54,14 +54,14 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
 
             try
             {
-                _logger.LogInformation("Starting sample module initialization...");
+                _logger.LogInformation("Starting OrganizationManagement module initialization...");
 
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
                 //var repo = scope.ServiceProvider.GetRequiredService<IRepository<OrganizationManagementDbContext, SampleEntity, Guid>>();
                 //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
                 //await OrganizationManagementSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
 
-                _logger.LogInformation("Sample module initialization completed successfully.");
+                _logger.LogInformation("OrganizationManagement module initialization completed successfully.");
             }
             catch (Exception ex)
             {

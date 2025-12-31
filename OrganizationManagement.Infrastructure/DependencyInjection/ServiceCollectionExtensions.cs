@@ -39,7 +39,7 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
 
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Sample_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection OrganizationManagement_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 گرفتن Connection String از تنظیمات
             var conn = configuration.GetConnectionString("DefaultConnection");

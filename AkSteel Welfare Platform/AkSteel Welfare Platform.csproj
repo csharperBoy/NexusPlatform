@@ -36,6 +36,9 @@
     <ProjectReference Include="..\Notification.Application\Notification.Application.csproj" />
     <ProjectReference Include="..\Notification.Infrastructure\Notification.Infrastructure.csproj" />
     <ProjectReference Include="..\Notification.Presentation\Notification.Presentation.csproj" />
+    <ProjectReference Include="..\OrganizationManagement.Application\OrganizationManagement.Application.csproj" />
+    <ProjectReference Include="..\OrganizationManagement.Infrastructure\OrganizationManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\OrganizationManagement.Presentation\OrganizationManagement.Presentation.csproj" />
     <ProjectReference Include="..\User.Application\User.Application.csproj" />
     <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
     <ProjectReference Include="..\User.Presentation\User.Presentation.csproj" />

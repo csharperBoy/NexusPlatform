@@ -35,7 +35,7 @@ namespace Authorization.Infrastructure.Data
                 b.MigrationsAssembly(typeof(AuthorizationDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "Authorization"
-                b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "Authorization");
+                b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "authorization");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده
