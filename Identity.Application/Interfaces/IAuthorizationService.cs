@@ -19,5 +19,6 @@ namespace Identity.Application.Interfaces
         // مدیریت permissions (برای آینده)
         Task<bool> UserHasPermissionAsync(Guid userId, string permission);
         Task<Result> AssignPermissionToUserAsync(Guid userId, string permission);
+        Task<Guid> GetRoleId(string roleName);
     }
 }

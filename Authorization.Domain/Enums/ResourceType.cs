@@ -8,6 +8,7 @@ namespace Authorization.Domain.Enums
 {
     public enum ResourceType : byte
     {
+        Module = 0, // ماژول اصلی
         Ui = 1,    // صفحات، دکمه‌ها، گریدها
         Data = 2   // داده‌ها برای Scoping
     }

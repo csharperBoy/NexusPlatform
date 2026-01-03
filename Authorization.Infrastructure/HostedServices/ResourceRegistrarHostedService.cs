@@ -34,7 +34,7 @@ namespace Authorization.Infrastructure.HostedServices
             try
             {
                 // ثبت اولیه منابع
-                await InitializeResourcesAsync();
+                //await InitializeResourcesAsync();
                 _isInitialized = true;
 
                 // تنظیم تایمر برای sync دوره‌ای (هر 24 ساعت)

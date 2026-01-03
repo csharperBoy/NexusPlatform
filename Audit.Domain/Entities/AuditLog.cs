@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Audit.Domain.Entities
 {
-    [SecuredResource("Audit.AuditLog")]
+    [SecuredResource("audit.auditlog")]
     public class AuditLog : DataScopedEntity, IAggregateRoot
     {
         public Guid Id { get; private set; } = Guid.NewGuid();

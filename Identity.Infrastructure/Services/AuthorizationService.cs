@@ -101,6 +101,17 @@ namespace Identity.Infrastructure.Services
         public Task<Result> AssignPermissionToUserAsync(Guid userId, string permission)
             => throw new NotImplementedException();
 
+        public async Task<Guid> GetRoleId(string roleName)
+        {
+            var role = await _roleManager.FindByNameAsync(roleName);
+
+            if (role == null)
+            {
+                throw new Exception($"Role with name '{roleName}' not found.");
+            }
+
+            return role.Id;
+        }
     }
 
 }

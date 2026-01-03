@@ -7,27 +7,11 @@ namespace Identity.Infrastructure.Data
 {
     public static class IdentitySeedData
     {
-        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IConfiguration config)
+        public static async Task StartSeedAsync(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, IConfiguration config)
         {
-            var adminEmail = config["Seed:AdminEmail"] ?? "admin@local";
-            var adminPassword = config["Seed:AdminPassword"] ?? "ChangeMe123!";
-            var adminUserName = config["Seed:AdminUserName"] ?? "admin";
-
-            var adminUser = await userManager.FindByEmailAsync(adminEmail);
-            if (adminUser == null)
-            {
-                adminUser = new ApplicationUser(Guid.NewGuid(), adminUserName, adminEmail)
-                {
-                    EmailConfirmed = true
-                };
-                adminUser.SetFullName("System", "Administrator");
-                var result = await userManager.CreateAsync(adminUser, adminPassword);
-                if (!result.Succeeded)
-                {
-                    throw new Exception("Failed to create default admin user: " +
-                        string.Join(", ", result.Errors.Select(e => e.Description)));
-                }
-            }
+            await SeedRolesAsync(roleManager);
+            await SeedAdminUserAsync(userManager, config); 
+            await AssignAdminRoleToAdminUserAsync(userManager, config);
         }
         public static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager)
         {
@@ -49,6 +33,52 @@ namespace Identity.Infrastructure.Data
                         throw new Exception($"Failed to create role {roleName}: " +
                             string.Join(", ", result.Errors.Select(e => e.Description)));
                     }
+                }
+            }
+        }
+
+        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IConfiguration config)
+        {
+            var adminEmail = config["Seed:AdminEmail"] ?? "admin@local";
+            var adminPassword = config["Seed:AdminPassword"] ?? "ChangeMe123!";
+            var adminUserName = config["Seed:AdminUserName"] ?? "admin";
+
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            if (adminUser == null)
+            {
+                adminUser = new ApplicationUser(Guid.Empty, adminUserName, adminEmail)
+                {
+                    EmailConfirmed = true
+                };
+                adminUser.SetFullName("System", "Administrator");
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
+                if (!result.Succeeded)
+                {
+                    throw new Exception("Failed to create default admin user: " +
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+            }
+        }
+        public static async Task AssignAdminRoleToAdminUserAsync(
+                                     UserManager<ApplicationUser> userManager,
+                                     IConfiguration config)
+        {
+            var adminEmail = config["Seed:AdminEmail"] ?? "admin@local";
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+            if (adminUser == null)
+            {
+                throw new Exception("Admin user not found, cannot assign role.");
+            }
+
+            // بررسی می‌کند آیا کاربر در حال حاضر نقش Admin را دارد یا خیر
+            if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+            {
+                var result = await userManager.AddToRoleAsync(adminUser, "Admin");
+                if (!result.Succeeded)
+                {
+                    throw new Exception("Failed to assign Admin role to admin user: " +
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
         }

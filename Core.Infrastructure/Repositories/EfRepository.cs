@@ -118,6 +118,7 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task AddAsync(TEntity entity)
         {
             SetOwnerDefaults(entity);
+
             await CheckPermissionAsync(entity, PermissionAction.Create);
             await _dbSet.AddAsync(entity);
         }
@@ -183,7 +184,7 @@ namespace Core.Infrastructure.Repositories
 
             var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
             if (resourceAttr == null) return;
-
+            if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
             if (entity is not IDataScopedEntity dataScopedEntity) return;
 
             var personId = _currentUserService.PersonId;

@@ -33,8 +33,7 @@ namespace Identity.Infrastructure.DependencyInjection
             
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-                await IdentitySeedData.SeedRolesAsync(roleManager);
-                await IdentitySeedData.SeedAdminUserAsync(userManager, _configuration);
+                await IdentitySeedData.StartSeedAsync(roleManager, userManager, _configuration);
                 _logger.LogInformation("Identity module initialization completed successfully.");
             }
             catch (Exception ex)

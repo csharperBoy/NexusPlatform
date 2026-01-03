@@ -19,5 +19,8 @@ namespace Core.Application.Abstractions.Security
         public string Route { get; set; }
         public string[] Permissions { get; set; }
         public string[] RequiredFeatures { get; set; }
+
+
+
     }
 }

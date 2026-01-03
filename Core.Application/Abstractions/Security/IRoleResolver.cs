@@ -31,5 +31,6 @@ namespace Core.Application.Abstractions.Security
     public interface IRoleResolver
     {
         Task<IList<string>> GetUserRolesAsync(Guid userId); // 📌 دریافت نقش‌های کاربر بر اساس UserId
+        Task<Guid> GetAdminRoleIdAsync();
     }
 }
