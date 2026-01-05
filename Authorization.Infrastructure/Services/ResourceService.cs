@@ -92,8 +92,9 @@ namespace Authorization.Infrastructure.Services
                         var newResource = new Resource(
                             def.Key,
                             def.Name,
-                            ParseResourceType(def.Type),
-                            ParseResourceCategory(def.Category),
+                             def.Type.ToEnumOrDefault(ResourceType.Ui),
+                            def.Category.ToEnumOrDefault(ResourceCategory.System),
+
                             parentId,
                             def.Description,
                             def.Order,
@@ -123,8 +124,8 @@ namespace Authorization.Infrastructure.Services
                             existingResource.Update(
                                 def.Name,
                                 def.Description,
-                                ParseResourceType(def.Type),
-                                ParseResourceCategory(def.Category),
+                                def.Type.ToEnumOrDefault(ResourceType.Ui),
+                                def.Category.ToEnumOrDefault(ResourceCategory.System),
                                 def.Order,
                                 def.Icon,
                                 null // Route فعلا نداریم در Definition
@@ -294,10 +295,11 @@ namespace Authorization.Infrastructure.Services
         }
 
         // تبدیل رشته به Enum (چون Definition استرینگ دارد ولی دیتابیس Enum)
-        private ResourceType ParseResourceType(string typeStr) =>
-            Enum.TryParse<ResourceType>(typeStr, true, out var val) ? val : ResourceType.Ui; // پیش‌فرض
+        /*  private ResourceType ParseResourceType(string typeStr) =>
+              Enum.TryParse<ResourceType>(typeStr, true, out var val) ? val : ResourceType.Ui; // پیش‌فرض
 
-        private ResourceCategory ParseResourceCategory(string catStr) =>
-            Enum.TryParse<ResourceCategory>(catStr, true, out var val) ? val : ResourceCategory.System;
+          private ResourceCategory ParseResourceCategory(string catStr) =>
+              Enum.TryParse<ResourceCategory>(catStr, true, out var val) ? val : ResourceCategory.System;
+     */
     }
 }
