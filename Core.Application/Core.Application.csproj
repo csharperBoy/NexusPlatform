@@ -20,8 +20,4 @@
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Abstractions\Authorization\" />
-  </ItemGroup>
-
 </Project>

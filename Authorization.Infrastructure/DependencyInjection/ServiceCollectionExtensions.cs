@@ -67,7 +67,7 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
             services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
             services.AddScoped<IPermissionService, PermissionService>();
-            services.AddScoped<IResourceService, ResourceService>();
+            services.AddScoped<IResourceInternalService, ResourceService>();
             services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
 
             services.AddScoped<IAuthorizationService, AuthorizationService>();

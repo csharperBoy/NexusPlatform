@@ -57,7 +57,7 @@ namespace Authorization.Infrastructure.HostedServices
         private async Task InitializeResourcesAsync()
         {
             using var scope = _serviceProvider.CreateScope();
-            var resourceService = scope.ServiceProvider.GetRequiredService<IResourceService>();
+            var resourceService = scope.ServiceProvider.GetRequiredService<IResourceInternalService>();
 
             _logger.LogInformation("Initial resource registration started...");
 
@@ -78,7 +78,7 @@ namespace Authorization.Infrastructure.HostedServices
                 _logger.LogInformation("Periodic resource synchronization started...");
 
                 using var scope = _serviceProvider.CreateScope();
-                var resourceService = scope.ServiceProvider.GetRequiredService<IResourceService>();
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourceInternalService>();
 
                 await resourceService.SyncResourcesWithDefinitionsAsync();
 

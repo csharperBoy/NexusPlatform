@@ -20,7 +20,7 @@ namespace Audit.Infrastructure.Services
         private readonly IRepository<AuditDbContext, AuditLog, Guid> _repository;
         private readonly IUnitOfWork<AuditDbContext> _uow;
         private readonly ILogger<AuditService> _logger;
-        public AuditService(IRepository<AuditDbContext, AuditLog, Guid> repository, IUnitOfWork<AuditDbContext> uow, ILogger<AuditService> logger, ICurrentUserService currentUserService)
+        public AuditService(IRepository<AuditDbContext, AuditLog, Guid> repository, IUnitOfWork<AuditDbContext> uow, ILogger<AuditService> logger)
         {
             _repository = repository;
             _uow = uow;

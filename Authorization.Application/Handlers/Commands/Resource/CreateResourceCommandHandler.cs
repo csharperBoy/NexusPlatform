@@ -14,11 +14,11 @@ namespace Authorization.Application.Commands
 {
     public class CreateResourceCommandHandler : IRequestHandler<CreateResourceCommand, Result<Guid>>
     {
-        private readonly IResourceService _resourceService;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<CreateResourceCommandHandler> _logger;
 
         public CreateResourceCommandHandler(
-            IResourceService resourceService,
+            IResourceInternalService resourceService,
             ILogger<CreateResourceCommandHandler> logger)
         {
             _resourceService = resourceService;

@@ -12,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Resource
 {
-    public class GetResourceByIdQueryHandler
+ /*   public class GetResourceByIdQueryHandler
         : IRequestHandler<GetResourceByIdQuery, Result<ResourceDto>>
     {
-        private readonly IResourceService _resourceService;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<GetResourceByIdQueryHandler> _logger;
 
         public GetResourceByIdQueryHandler(
-            IResourceService resourceService,
+            IResourceInternalService resourceService,
             ILogger<GetResourceByIdQueryHandler> logger)
         {
             _resourceService = resourceService;
@@ -50,4 +50,4 @@ namespace Authorization.Application.Handlers.Queries.Resource
             }
         }
     }
-}
+*/}

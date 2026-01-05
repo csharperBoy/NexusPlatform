@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Audit.Infrastructure.DefinitionProvider
 {
-    public class AuditResourceDefinitionProvider : IResourceDefinitionProvider
+   /* public class AuditResourceDefinitionProvider : IResourceDefinitionProvider
     {
         public string ModuleKey => "audit";
         public string ModuleName => "audit Management";
@@ -45,5 +46,5 @@ namespace Audit.Infrastructure.DefinitionProvider
                 },
             };
         }
-    }
+    }*/
 }

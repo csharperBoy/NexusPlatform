@@ -13,11 +13,11 @@ namespace Authorization.Application.Handlers.Commands.Resource
 {
     public class DeleteResourceCommandHandler : IRequestHandler<DeleteResourceCommand, Result<bool>>
     {
-        private readonly IResourceService _resourceService;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<DeleteResourceCommandHandler> _logger;
 
         public DeleteResourceCommandHandler(
-            IResourceService resourceService,
+            IResourceInternalService resourceService,
             ILogger<DeleteResourceCommandHandler> logger)
         {
             _resourceService = resourceService;

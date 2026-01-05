@@ -13,11 +13,11 @@ namespace Authorization.Application.Handlers.Commands.Resource
 {
     public class UpdateResourceCommandHandler : IRequestHandler<UpdateResourceCommand, Result<bool>>
     {
-        private readonly IResourceService _resourceService;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<UpdateResourceCommandHandler> _logger;
 
         public UpdateResourceCommandHandler(
-            IResourceService resourceService,
+            IResourceInternalService resourceService,
             ILogger<UpdateResourceCommandHandler> logger)
         {
             _resourceService = resourceService;

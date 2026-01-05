@@ -1,5 +1,5 @@
 ﻿using Authorization.Domain.Enums;
-using Core.Application.Abstractions.Security;
+using Core.Application.Abstractions.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.DTOs.Resource.Extensions
-{
+{/*
     public static class ResourceDefinitionExtensions
     {
         public static ResourceDto ToResourceDto(this ResourceDefinition definition)
@@ -51,4 +51,4 @@ namespace Authorization.Application.DTOs.Resource.Extensions
             };
         }
     }
-}
+*/}
