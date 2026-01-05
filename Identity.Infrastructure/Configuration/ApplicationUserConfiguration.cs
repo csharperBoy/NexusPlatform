@@ -20,8 +20,8 @@ namespace Identity.Infrastructure.Configuration
             b.HasIndex(u => u.NormalizedEmail).HasDatabaseName("EmailIndex");
 
             // Person link
-            b.HasIndex(u => u.FkPersonId).IsUnique();
-            b.Property(u => u.FkPersonId).IsRequired();
+            //b.HasIndex(u => u.FkPersonId).IsUnique();
+            //b.Property(u => u.FkPersonId).IsRequired();
 
             // Audit fields
             b.Property(u => u.CreatedAt).IsRequired();

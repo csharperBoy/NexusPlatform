@@ -24,10 +24,8 @@ namespace Authorization.Domain.Entities
         public bool IsActive { get; private set; } = true;
         public int DisplayOrder { get; private set; }
         public string Icon { get; private set; }
-        public string Route { get; private set; }
-        // سلسله مراتب ریسورس‌ها (مثل منوهای تودرتو)
         public Guid? ParentId { get; private set; }
-        public string? ResourcePath { get; private set; } // "/Guid/Guid"
+        public string? ResourcePath { get; private set; } // سلسله مراتب ریسورس‌ها (مثل منوهای تودرتو)
 
         // Navigation
         public virtual Resource? Parent { get; private set; }
@@ -63,7 +61,6 @@ namespace Authorization.Domain.Entities
             Description = description;
             DisplayOrder = displayOrder;
             Icon = icon;
-            Route = route;
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
             GeneratePath();
@@ -77,8 +74,7 @@ namespace Authorization.Domain.Entities
             ResourceType type,
             ResourceCategory category,
             int displayOrder,
-            string icon,
-            string route)
+            string icon)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Resource name cannot be empty.");
 
@@ -88,7 +84,6 @@ namespace Authorization.Domain.Entities
             Category = category;
             DisplayOrder = displayOrder;
             Icon = icon;
-            Route = route;
             ModifiedAt = DateTime.UtcNow;
         }
 
@@ -130,11 +125,11 @@ namespace Authorization.Domain.Entities
         {
             if (ParentId.HasValue && Parent != null)
             {
-                ResourcePath = $"{Parent.ResourcePath}/{Id}";
+                ResourcePath = $"{Parent.ResourcePath}/{Key}";
             }
             else
             {
-                ResourcePath = Id.ToString();
+                ResourcePath = Key;
             }
         }
         [NotMapped]

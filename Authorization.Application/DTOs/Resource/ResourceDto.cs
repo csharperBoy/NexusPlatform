@@ -26,7 +26,6 @@ namespace Authorization.Application.DTOs.Resource
         public bool IsActive { get; init; }
         public int DisplayOrder { get; init; }
         public string Icon { get; init; } = string.Empty;
-        public string Route { get; init; } = string.Empty;
         public Guid? ParentId { get; init; }
         public string ParentKey { get; set; }
         public string Path { get; init; } = string.Empty;

@@ -31,7 +31,6 @@ namespace Authorization.Application.DTOs.Resource
         public bool IsActive { get; init; }
         public int DisplayOrder { get; init; }
         public string Icon { get; init; } = string.Empty;
-        public string Route { get; init; } = string.Empty;
         public string Path { get; init; } = string.Empty;
         public DateTime CreatedAt { get; init; }
         public string CreatedBy { get; init; } = string.Empty;

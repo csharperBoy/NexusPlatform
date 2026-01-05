@@ -98,10 +98,9 @@ namespace Authorization.Infrastructure.Services
                             parentId,
                             def.Description,
                             def.Order,
-                            def.Icon,
-                            def.Path
+                            def.Icon
                         );
-
+                        newResource.GeneratePath();
                         // تنظیم Creator
                         // چون Seed است معمولاً System می‌زنیم، مگر اینکه در Context کاربر باشد
                         // newResource.SetCreatedBy("System"); 
@@ -127,21 +126,20 @@ namespace Authorization.Infrastructure.Services
                                 def.Type.ToEnumOrDefault(ResourceType.Ui),
                                 def.Category.ToEnumOrDefault(ResourceCategory.System),
                                 def.Order,
-                                def.Icon,
-                                null // Route فعلا نداریم در Definition
+                                def.Icon
                             );
-
                             // اگر والد تغییر کرده
                             if (existingResource.ParentId != parentId)
                             {
                                 existingResource.ChangeParent(parentId);
                             }
+                            existingResource.GeneratePath();
 
                             // اگر Path تغییر کرده (مهم برای Hierarchy)
-                            if (!string.IsNullOrEmpty(def.Path))
-                            {
-                                existingResource.SetPath(def.Path);
-                            }
+                            //if (!string.IsNullOrEmpty(def.Path))
+                            //{
+                            //    existingResource.SetPath(def.Path);
+                            //}
 
                             await _resourceRepository.UpdateAsync(existingResource);
                             _logger.LogDebug("✏️ Updated resource: {Key}", def.Key);
@@ -218,8 +216,7 @@ namespace Authorization.Infrastructure.Services
                 command.Type,
                 command.Category,
                 command.DisplayOrder,
-                command.Icon,
-                command.Route
+                command.Icon
             );
 
             // تغییر والد با منطق خاص

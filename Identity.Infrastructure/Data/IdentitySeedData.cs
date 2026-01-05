@@ -66,7 +66,7 @@ namespace Identity.Infrastructure.Data
                     EmailConfirmed = true
                 };
                 adminUser.SetFullName("System", "intitializer");
-                var result = await userManager.CreateAsync(initializerUser, null);
+                var result = await userManager.CreateAsync(initializerUser, "Init@123456789");
                 if (!result.Succeeded)
                 {
                     throw new Exception("Failed to create default initializer user: " +

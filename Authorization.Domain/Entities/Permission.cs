@@ -35,7 +35,7 @@ namespace Authorization.Domain.Entities
         public DateTime? EffectiveFrom { get; private set; }
         public DateTime? ExpiresAt { get; private set; }
 
-        public string Description { get; private set; }
+        public string? Description { get; private set; }
         public bool IsActive { get; private set; } = true;
 
         // Navigation
@@ -76,7 +76,7 @@ namespace Authorization.Domain.Entities
             PermissionType type = PermissionType.allow,            
             DateTime? effectiveFrom = null,
             DateTime? expiresAt = null,
-            string description = "",            
+            string? description = null,            
             string createdBy = "system")
         {
             if (resourceId == Guid.Empty) throw new ArgumentException("Resource ID cannot be empty.");

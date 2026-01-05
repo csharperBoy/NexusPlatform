@@ -30,7 +30,7 @@ namespace Audit.Infrastructure.Data
                     Description = "Audit management module",
                     Order = 2000,
                     Icon = "shield",
-                    Path = "/audit",
+                    //Path = "/audit",
                     Children = new List<ResourceDefinition>
                     {
                         new()
@@ -42,7 +42,7 @@ namespace Audit.Infrastructure.Data
                             Description = "Audit log management",
                             Order = 2001,
                             Icon = "list",
-                            Path = "/audit/logs"
+                            //Path = "/audit/logs"
                         }
                     }
                 }

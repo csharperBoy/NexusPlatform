@@ -334,7 +334,7 @@ namespace Authorization.Infrastructure.Data
             {
                 // 1. دریافت RoleId نقش Admin
                 var adminRoleId = await roleService.GetAdminRoleIdAsync();
-                var initializerUserId = await userService.GetUserId("initializer");
+                var initializerUserId = await userService.GetUserId("intitializer");
                 logger.LogInformation($"Admin Role ID: {adminRoleId}");
 
                 // 2. دریافت تعاریف پرمیژن‌ها

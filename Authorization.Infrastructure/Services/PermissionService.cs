@@ -377,7 +377,7 @@ namespace Authorization.Infrastructure.Services
 
         public async Task SeedRolePermissionsAsync(List<PermissionDefinition> permissions, CancellationToken cancellationToken = default)
         {
-            var initializeruser = await _userService.GetUserId("intializer");
+            var initializeruser = await _userService.GetUserId("intitializer");
             foreach (var permissionDefinition in permissions) 
             {
                 ResourceByKeySpec specByKey = new ResourceByKeySpec(permissionDefinition.ResourceKey);

@@ -218,7 +218,6 @@ namespace Authorization.Presentation.Controllers.Admin
                 IsActive = node.IsActive,
                 DisplayOrder = node.DisplayOrder,
                 Icon = node.Icon,
-                Route = node.Route,
                 Path = node.Path,
                 CreatedAt = node.CreatedAt,
                 CreatedBy = node.CreatedBy,
