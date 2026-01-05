@@ -13,11 +13,11 @@ namespace Authorization.Application.Handlers.Commands.Permissions
 {
     public class AssignPermissionCommandHandler : IRequestHandler<AssignPermissionCommand, Result<Guid>>
     {
-        private readonly IPermissionService _permissionService;
+        private readonly IPermissionInternalService _permissionService;
         private readonly ILogger<AssignPermissionCommandHandler> _logger;
 
         public AssignPermissionCommandHandler(
-            IPermissionService permissionService,
+            IPermissionInternalService permissionService,
             ILogger<AssignPermissionCommandHandler> logger)
         {
             _permissionService = permissionService;

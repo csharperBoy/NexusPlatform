@@ -34,10 +34,10 @@ namespace Authorization.Infrastructure.Services
             _logger = logger;
             _cache = cache;
         }
-        public async Task<ScopeType> GetPermissionScopeAsync(Guid personId, string resourceKey, PermissionAction action)
+        public async Task<ScopeType> GetPermissionScopeAsync(Guid userId, string resourceKey, PermissionAction action)
         {
             // کلید کش شامل اکشن هم می‌شود
-            var cacheKey = $"auth:scope:{personId}:{resourceKey}:{action}";
+            var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
 
             try
             {

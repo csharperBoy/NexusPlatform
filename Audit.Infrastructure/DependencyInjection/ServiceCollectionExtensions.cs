@@ -35,6 +35,7 @@ namespace Audit.Infrastructure.DependencyInjection
             services.AddScoped<ISpecificationRepository<AuditLog, Guid>, EfSpecificationRepository<AuditDbContext, AuditLog, Guid>>();
             services.AddScoped<IAuditService, AuditService>();
             services.AddScoped<IAuditQueryService, AuditQueryService>();
+            services.AddHostedService<ModuleInitializer>();
 
             // Resolve از DI
             var registration = services.BuildServiceProvider()
@@ -42,7 +43,7 @@ namespace Audit.Infrastructure.DependencyInjection
 
             //services.AddSingleton<AuditResourceDefinitionProvider>();
             //services.AddSingleton<IResourceDefinitionProvider>(sp =>
-                //sp.GetRequiredService<AuditResourceDefinitionProvider>());
+            //sp.GetRequiredService<AuditResourceDefinitionProvider>());
 
             registration.AddOutboxProcessor<AuditDbContext>(services);
             return services;

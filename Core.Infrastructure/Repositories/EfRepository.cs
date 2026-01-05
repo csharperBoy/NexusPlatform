@@ -187,17 +187,17 @@ namespace Core.Infrastructure.Repositories
             if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
             if (entity is not IDataScopedEntity dataScopedEntity) return;
 
-            var personId = _currentUserService.PersonId;
-            if (personId == null) return;
+            var userId = _currentUserService.UserId;
+            if (userId == null) return;
 
             // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
             // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
             // و Circular Dependency در استارتاپ حل شود.
             var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
 
-            var scope = await authorizationChecker.GetPermissionScopeAsync(personId.Value, resourceAttr.ResourceKey, action);
+            var scope = await authorizationChecker.GetPermissionScopeAsync(userId.Value, resourceAttr.ResourceKey, action);
 
-            bool isAllowed = IsEntityInScope(dataScopedEntity, scope, personId.Value);
+            bool isAllowed = IsEntityInScope(dataScopedEntity, scope, userId.Value);
 
             if (!isAllowed)
             {
@@ -212,7 +212,10 @@ namespace Core.Infrastructure.Repositories
             {
                 case ScopeType.All:
                     return true;
+                case ScopeType.Account:
+                    return entity.OwnerUserId == userId;
                 case ScopeType.Self:
+                    var userPersonId = _currentUserService.PersonId;
                     return entity.OwnerPersonId == userId;
                 case ScopeType.Unit:
                     var userUnitId = _currentUserService.OrganizationUnitId;

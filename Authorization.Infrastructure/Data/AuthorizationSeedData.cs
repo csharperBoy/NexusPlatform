@@ -134,7 +134,6 @@ namespace Authorization.Infrastructure.Data
                         definition.Icon,
                         definition.Path
                     );
-
                     newResources.Add(resource);
                 }
 
@@ -295,36 +294,29 @@ namespace Authorization.Infrastructure.Data
         }
 
 
-        private class localPermissionDefinition
-        {
-            public string ResourceKey { get; set; }
-            public PermissionAction Action { get; set; }
-            public ScopeType Scope { get; set; } = ScopeType.All;
-            public PermissionType Type { get; set; } = PermissionType.allow;
-            public string Description { get; set; }
-        }
-
+        
         // لیست پرمیژن‌های پیش‌فرض برای نقش Admin
-        private static List<localPermissionDefinition> GetAdminlocalPermissionDefinitions()
+        private static List<PermissionDefinition> GetAdminPermissionDefinitions()
         {
-            return new List<localPermissionDefinition>
+            return new List<PermissionDefinition>
         {
             new()
             {
                 ResourceKey = "authorization.resource", // فرض می‌کنیم این کلید وجود دارد
-                Action = PermissionAction.Full,
-                Scope = ScopeType.All,
-                Type = PermissionType.allow,
+                Action = "Full",
+                Scope = "All",
+                Type = "allow",
                 Description = "Full access to all authorization resources"
-            },
-            new()
-            {
-                ResourceKey = "audit.auditlog", // فرض می‌کنیم این کلید وجود دارد
-                Action = PermissionAction.Full,
-                Scope = ScopeType.All,
-                Type = PermissionType.allow,
-                Description = "Full access to audit logs"
             }
+            //,
+            //new()
+            //{
+            //    ResourceKey = "audit.auditlog", // فرض می‌کنیم این کلید وجود دارد
+            //    Action = "Full",
+            //    Scope = "All",
+            //    Type = "allow",
+            //    Description = "Full access to audit logs"
+            //}
             // می‌توانید پرمیژن‌های بیشتری اضافه کنید
         };
         }
@@ -333,6 +325,7 @@ namespace Authorization.Infrastructure.Data
         public static async Task SeedPermissionsAsync(
             AuthorizationDbContext dbContext,
             IRolePublicService roleService,
+            IUserPublicService userService,
             ILogger logger)
         {
             logger.LogInformation("🚀 Starting permission seeding for admin role...");
@@ -341,13 +334,14 @@ namespace Authorization.Infrastructure.Data
             {
                 // 1. دریافت RoleId نقش Admin
                 var adminRoleId = await roleService.GetAdminRoleIdAsync();
+                var initializerUserId = await userService.GetUserId("initializer");
                 logger.LogInformation($"Admin Role ID: {adminRoleId}");
 
                 // 2. دریافت تعاریف پرمیژن‌ها
-                var localPermissionDefinitions = GetAdminlocalPermissionDefinitions();
+                var PermissionDefinitions = GetAdminPermissionDefinitions();
 
                 // 3. دریافت کلیدهای مورد نیاز
-                var resourceKeys = localPermissionDefinitions
+                var resourceKeys = PermissionDefinitions
                     .Select(p => p.ResourceKey)
                     .Distinct()
                     .ToList();
@@ -373,7 +367,7 @@ namespace Authorization.Infrastructure.Data
 
                 // 6. ایجاد پرمیژن‌ها
                 var permissionsCreated = 0;
-                foreach (var definition in localPermissionDefinitions)
+                foreach (var definition in PermissionDefinitions)
                 {
                     var resourceId = resources[definition.ResourceKey];
 
@@ -383,9 +377,9 @@ namespace Authorization.Infrastructure.Data
                             p.AssigneeType == AssigneeType.Role &&
                             p.AssigneeId == adminRoleId &&
                             p.ResourceId == resourceId &&
-                            p.Action == definition.Action &&
-                            p.Scope == definition.Scope &&
-                            p.Type == definition.Type);
+                            p.Action == definition.Action.ToEnumOrDefault(PermissionAction.View) &&
+                            p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.Self) &&
+                            p.Type == definition.Type.ToEnumOrDefault(PermissionType.allow));
 
                     if (existingPermission != null)
                     {
@@ -398,10 +392,10 @@ namespace Authorization.Infrastructure.Data
                         resourceId: resourceId,
                         assigneeType: AssigneeType.Role,
                         assigneeId: adminRoleId,
-                        action: definition.Action,
-                        scope: definition.Scope,
+                        action: definition.Action.ToEnumOrDefault(PermissionAction.View),
+                        scope: definition.Scope.ToEnumOrDefault(ScopeType.Self),
                         specificScopeId: null, // چون ScopeType.All است
-                        type: definition.Type,
+                        type: definition.Type.ToEnumOrDefault(PermissionType.allow),
                         effectiveFrom: DateTime.UtcNow,
                         expiresAt: null, // بدون انقضا
                         description: definition.Description,
@@ -414,8 +408,51 @@ namespace Authorization.Infrastructure.Data
                     logger.LogInformation($"✅ Created permission for Admin on resource '{definition.ResourceKey}'");
                 }
 
-                // 7. ذخیره تغییرات
-                if (permissionsCreated > 0)
+                // 7. ایجاد پرمیژن‌های initializer
+                var permissionsInitializerCreated = 0;
+                foreach (var definition in PermissionDefinitions)
+                {
+                    var resourceId = resources[definition.ResourceKey];
+
+                    // بررسی وجود پرمیژن تکراری
+                    var existingPermission = await dbContext.Set<Permission>()
+                        .FirstOrDefaultAsync(p =>
+                            p.AssigneeType == AssigneeType.User &&
+                            p.AssigneeId == initializerUserId &&
+                            p.ResourceId == resourceId &&
+                            p.Action == definition.Action.ToEnumOrDefault(PermissionAction.Full) &&
+                            p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.All) &&
+                            p.Type == definition.Type.ToEnumOrDefault(PermissionType.allow));
+
+                    if (existingPermission != null)
+                    {
+                        logger.LogDebug($"ℹ️ Permission already exists for resource '{definition.ResourceKey}', skipping...");
+                        continue;
+                    }
+
+                    // ایجاد پرمیژن جدید
+                    var permission = new Permission(
+                        resourceId: resourceId,
+                        assigneeType: AssigneeType.Role,
+                        assigneeId: initializerUserId,
+                        action: definition.Action.ToEnumOrDefault(PermissionAction.Full),
+                        scope: definition.Scope.ToEnumOrDefault(ScopeType.All),
+                        specificScopeId: null, // چون ScopeType.All است
+                        type: definition.Type.ToEnumOrDefault(PermissionType.allow),
+                        effectiveFrom: DateTime.UtcNow,
+                        expiresAt: null, // بدون انقضا
+                        description: definition.Description,
+                        createdBy: "system"
+                    );
+
+                    await dbContext.Set<Permission>().AddAsync(permission);
+                    permissionsInitializerCreated++;
+
+                    logger.LogInformation($"✅ Created permission for Admin on resource '{definition.ResourceKey}'");
+                }
+
+                // 8. ذخیره تغییرات
+                if (permissionsCreated > 0 || permissionsInitializerCreated > 0)
                 {
                     await dbContext.SaveChangesAsync();
                     logger.LogInformation($"✅ Created {permissionsCreated} permissions for Admin role");
@@ -436,6 +473,7 @@ namespace Authorization.Infrastructure.Data
         public static async Task SeedAuthorizationDataAsync(
             AuthorizationDbContext dbContext,
             IRolePublicService roleService,
+            IUserPublicService userService,
             IConfiguration config,
             ILogger logger)
         {
@@ -445,7 +483,7 @@ namespace Authorization.Infrastructure.Data
             await SeedResourcesAsync(dbContext, config, logger);
 
             // 2. Seed پرمیژن‌ها
-            await SeedPermissionsAsync(dbContext, roleService, logger);
+            await SeedPermissionsAsync(dbContext, roleService, userService, logger);
 
             logger.LogInformation("✅ Authorization data seeding completed!");
         }

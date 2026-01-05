@@ -50,7 +50,7 @@ namespace Audit.Infrastructure.Data
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDefinition> GetAuditPermissionDefinitions()
+        private static List<PermissionDefinition> GetAuditPermissionDefinitions(Guid roleId)
         {
             return new List<PermissionDefinition>
             {
@@ -60,6 +60,9 @@ namespace Audit.Infrastructure.Data
                     Action = "Full", // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
                     Scope = "All",
                     Type = "allow",
+                    AssignType="Role",
+                    AssignId = roleId,
+
                     Description = "Full access to audit logs"
                 }
             };
@@ -87,8 +90,8 @@ namespace Audit.Infrastructure.Data
                 // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
                 var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
-                var permissions = GetAuditPermissionDefinitions();
-                await permissionService.SeedRolePermissionsAsync(adminRoleId, permissions, cancellationToken);
+                var permissions = GetAuditPermissionDefinitions(adminRoleId);
+                await permissionService.SeedRolePermissionsAsync( permissions, cancellationToken);
                 logger.LogInformation("✅ Audit permissions seeded successfully.");
             }
             catch (Exception ex)

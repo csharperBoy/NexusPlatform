@@ -58,6 +58,21 @@ namespace Identity.Infrastructure.Data
                         string.Join(", ", result.Errors.Select(e => e.Description)));
                 }
             }
+            var initializerUser = await userManager.FindByEmailAsync("intitializer@info.com");
+            if (initializerUser == null)
+            {
+                initializerUser = new ApplicationUser(Guid.Empty, "intitializer", "intitializer@info.com")
+                {
+                    EmailConfirmed = true
+                };
+                adminUser.SetFullName("System", "intitializer");
+                var result = await userManager.CreateAsync(initializerUser, null);
+                if (!result.Succeeded)
+                {
+                    throw new Exception("Failed to create default initializer user: " +
+                        string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+            }
         }
         public static async Task AssignAdminRoleToAdminUserAsync(
                                      UserManager<ApplicationUser> userManager,

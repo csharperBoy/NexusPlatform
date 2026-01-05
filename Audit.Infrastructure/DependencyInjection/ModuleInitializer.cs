@@ -1,6 +1,7 @@
-﻿using Authorization.Domain.Entities;
-using Authorization.Infrastructure.Data;
+﻿using Audit.Domain.Entities;
+using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Microsoft.AspNetCore.Identity;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Authorization.Infrastructure.DependencyInjection
+namespace Audit.Infrastructure.DependencyInjection
 {
     public class ModuleInitializer : IHostedService
     {
@@ -30,19 +31,17 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             try
             {
-                _logger.LogInformation("Starting identity module initialization...");
+                _logger.LogInformation("Starting Audit module initialization...");
 
                 // اجرای seed داده‌ها
-                var dbContext = scope.ServiceProvider.GetRequiredService<AuthorizationDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserPublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
-                await AuthorizationSeedData.SeedAuthorizationDataAsync(
-                    dbContext,
-                    roleService,
-                    userService,
-                    _configuration,
+                await AuditSeedData.SeedAsync(
+                    resourceService, permissionService, roleService,
                     _logger);
                 
 

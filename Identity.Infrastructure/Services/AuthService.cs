@@ -31,7 +31,7 @@ namespace Identity.Infrastructure.Services
         private readonly JwtOptions _jwtOptions;
         private readonly IOutboxService<IdentityDbContext> _outboxService;
         private readonly ILogger<AuthService> _logger;
-        private readonly IRoleResolver _roleResolver;
+        private readonly IRoleInternalService _roleService;
 
         private readonly IRepository<IdentityDbContext, RefreshToken, Guid> _refreshTokenRepository;
         private readonly ISpecificationRepository<RefreshToken, Guid> _refreshTokenSpecRepository;
@@ -43,7 +43,7 @@ namespace Identity.Infrastructure.Services
             IJwtTokenService tokenService,
             IOptions<JwtOptions> jwtOptions,
             IOutboxService<IdentityDbContext> outboxService,
-            IRoleResolver roleResolver,
+            IRoleInternalService roleService,
             IRepository<IdentityDbContext, RefreshToken, Guid> refreshTokenRepository,
              ISpecificationRepository<RefreshToken, Guid> refreshTokenSpecRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
@@ -54,7 +54,7 @@ namespace Identity.Infrastructure.Services
             _tokenService = tokenService;
             _jwtOptions = jwtOptions.Value;
             _outboxService = outboxService;
-            _roleResolver = roleResolver;
+            _roleService = roleService;
             _refreshTokenRepository = refreshTokenRepository;
             _refreshTokenSpecRepository = refreshTokenSpecRepository;
             _unitOfWork = unitOfWork;
@@ -80,7 +80,7 @@ namespace Identity.Infrastructure.Services
 
             await _outboxService.AddEventsAsync(new[] { userRegisteredEvent });
 
-            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
+            var roles = await _roleService.GetUserRolesAsync(user.Id);
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
             // ذخیره RefreshToken در دیتابیس
@@ -113,7 +113,7 @@ namespace Identity.Infrastructure.Services
             var signRes = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
             if (!signRes.Succeeded) return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
-            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
+            var roles = await _roleService.GetUserRolesAsync(user.Id);
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
             // ذخیره RefreshToken
@@ -145,7 +145,7 @@ namespace Identity.Infrastructure.Services
             if (!signRes.Succeeded)
                 return Result<AuthResponse>.Fail("اطلاعات ورود نامعتبر است.");
 
-            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
+            var roles = await _roleService.GetUserRolesAsync(user.Id);
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
             // ذخیره RefreshToken
@@ -181,7 +181,7 @@ namespace Identity.Infrastructure.Services
             if (user == null)
                 return Result<AuthTokens>.Fail("کاربر یافت نشد.");
 
-            var roles = await _roleResolver.GetUserRolesAsync(user.Id);
+            var roles = await _roleService.GetUserRolesAsync(user.Id);
             var tokens = await _tokenService.GenerateTokensAsync(user, roles);
 
             refresh.Revoke(replacedBy: tokens.RefreshToken);

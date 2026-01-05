@@ -49,7 +49,8 @@ namespace Authorization.Domain.Entities
             int displayOrder = 0,
             string icon = "",
             string route = "",
-            string createdBy = "system")
+            string createdBy = "system"
+            )
         {
             if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Resource key cannot be empty.");
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Resource name cannot be empty.");
@@ -65,7 +66,6 @@ namespace Authorization.Domain.Entities
             Route = route;
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
-
             GeneratePath();
         }
 

@@ -16,6 +16,8 @@ namespace Core.Domain.Common
 
         // مشخص می‌کند این رکورد متعلق به کدام شخص است (برای اسکوپ Self)
         Guid? OwnerPersonId { get; }
+
+         Guid? OwnerUserId { get;  }
     }
 
     public abstract class DataScopedEntity : AuditableEntity, IDataScopedEntity
@@ -23,9 +25,11 @@ namespace Core.Domain.Common
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
         public Guid? OwnerPersonId { get; protected set; }
+        public Guid? OwnerUserId { get; protected set; }
 
-        public void SetOwners(Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
         {
+            OwnerUserId = userId;
             OwnerPersonId = personId;
             OwnerPositionId = positiontId;
             OwnerOrganizationUnitId = orgUnitId;
@@ -33,6 +37,10 @@ namespace Core.Domain.Common
         public void SetPersonOwner(Guid personId)
         {
             OwnerPersonId = personId;
+        }
+        public void SetUserOwner(Guid userId)
+        {
+            OwnerUserId = userId;
         }
         public void SetPositionOwner(Guid positiontId)
         {

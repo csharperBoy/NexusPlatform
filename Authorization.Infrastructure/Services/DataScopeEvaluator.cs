@@ -39,10 +39,10 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (personId, positionId, roleIds) = GetUserContext();
+                var (userId,personId, positionId, roleIds) = GetUserContext();
 
                 // استفاده از اسپک فیلتر شده (Specific Resource & Action)
-                var spec = new EffectivePermissionsSpec(personId, positionId, roleIds, resourceKey, action);
+                var spec = new EffectivePermissionsSpec(userId,personId, positionId, roleIds, resourceKey, action);
                 var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
                 return CalculateScopeFromList(permissions);
@@ -76,10 +76,10 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (personId, positionId, roleIds) = GetUserContext();
+                var (userId,personId, positionId, roleIds) = GetUserContext();
 
                 // دریافت کل پرمیشن‌های کاربر (بدون فیلتر ریسورس)
-                var spec = new UserPermissionsSpec(personId, positionId, roleIds);
+                var spec = new UserPermissionsSpec(userId,personId, positionId, roleIds);
                 var allPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
                 // گروه‌بندی بر اساس ریسورس
@@ -155,12 +155,13 @@ namespace Authorization.Infrastructure.Services
                 .Max();
         }
 
-        private (Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
+        private (Guid UserId, Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
         {
             var posId = _currentUserService.PositionId;
             var roleIds = _currentUserService.RolesId ?? new List<Guid>(); // اصلاح نام پراپرتی بر اساس ICurrentUserService شما
             var personId = _currentUserService.PersonId;
-            return (personId??Guid.Empty, posId, roleIds.ToList());
+            var userId = _currentUserService.UserId;
+            return (userId ?? Guid.Empty , personId ?? Guid.Empty, posId, roleIds.ToList());
         }
     }
 }

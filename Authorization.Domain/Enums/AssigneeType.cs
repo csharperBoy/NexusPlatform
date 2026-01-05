@@ -10,7 +10,8 @@ namespace Authorization.Domain.Enums
     {
         Person = 1,      // اولویت ۱: تنظیم خاص برای شخص
         Position = 2,    // اولویت ۲: پست سازمانی
-        Role = 3         // اولویت ۳: نقش کاربری
+        Role = 3 ,        // اولویت ۳: نقش کاربری
+        User = 4
     }
 
 }

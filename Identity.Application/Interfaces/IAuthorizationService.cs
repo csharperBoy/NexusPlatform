@@ -20,5 +20,6 @@ namespace Identity.Application.Interfaces
         Task<bool> UserHasPermissionAsync(Guid userId, string permission);
         Task<Result> AssignPermissionToUserAsync(Guid userId, string permission);
         Task<Guid> GetRoleId(string roleName);
+
     }
 }

@@ -5,6 +5,7 @@ using Core.Application.Abstractions.Security;
 using Core.Domain.Common;
 using FluentAssertions;
 using Identity.Application.DTOs;
+using Identity.Application.Interfaces;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Configuration;
 using Identity.Infrastructure.Data;
@@ -41,7 +42,7 @@ namespace Identity.Test
                 .ReturnsAsync(("fake-jwt", "fake-refresh"));
 
             var outbox = new Mock<IOutboxService<IdentityDbContext>>();
-            var roleResolver = new Mock<IRoleResolver>();
+            var roleResolver = new Mock<IRoleInternalService>();
             roleResolver.Setup(r => r.GetUserRolesAsync(It.IsAny<Guid>()))
                         .ReturnsAsync(new List<string> { "User" });
 

@@ -7,14 +7,18 @@ using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.ComponentModel.Design;
 
 namespace Authorization.Infrastructure.Services
 {
-    public class PermissionService : IPermissionService
+    public class PermissionService : IPermissionInternalService
     {
         private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
@@ -24,6 +28,8 @@ namespace Authorization.Infrastructure.Services
         private readonly ILogger<PermissionService> _logger;
         private readonly ICurrentUserService _currentUser;
         private readonly ICacheService _cache;
+        private readonly IRolePublicService _roleService;
+        private readonly IUserPublicService _userService;
 
         public PermissionService(
             IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
@@ -32,7 +38,7 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-            ICurrentUserService currentUser,
+            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService,
             ICacheService cache)
         {
             _permissionRepository = permissionRepository;
@@ -43,6 +49,8 @@ namespace Authorization.Infrastructure.Services
             _logger = logger;
             _currentUser = currentUser;
             _cache = cache;
+            _roleService = roleService;
+            _userService = userService;
         }
 
         public async Task<Guid> AssignPermissionAsync(AssignPermissionCommand command)
@@ -365,6 +373,29 @@ namespace Authorization.Infrastructure.Services
                 CreatedAt = permission.CreatedAt,
                 CreatedBy = permission.CreatedBy
             };
+        }
+
+        public async Task SeedRolePermissionsAsync(List<PermissionDefinition> permissions, CancellationToken cancellationToken = default)
+        {
+            var initializeruser = await _userService.GetUserId("intializer");
+            foreach (var permissionDefinition in permissions) 
+            {
+                ResourceByKeySpec specByKey = new ResourceByKeySpec(permissionDefinition.ResourceKey);
+                var specRet =await _resourceSpecRepository.FindBySpecAsync(specByKey);
+                Permission permission = new Permission(
+                    specRet.Items.FirstOrDefault().Id , permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
+                    permissionDefinition.AssignId,
+                    permissionDefinition.Action.ToEnumOrDefault(Core.Domain.Enums.PermissionAction.View),
+                    permissionDefinition.Scope.ToEnumOrDefault(Core.Domain.Enums.ScopeType.Self),
+                    null,
+                    permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
+                    
+                    );
+                permission.SetUserOwner(initializeruser);
+                await _permissionRepository.AddAsync(permission);
+                
+            }
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

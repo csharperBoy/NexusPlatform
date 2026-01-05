@@ -15,11 +15,11 @@ namespace Authorization.Application.Handlers.Queries.Permissions
     public class GetPermissionsByUserQueryHandler
          : IRequestHandler<GetPermissionsByUserQuery, Result<IReadOnlyList<PermissionDto>>>
     {
-        private readonly IPermissionService _permissionService;
+        private readonly IPermissionInternalService _permissionService;
         private readonly ILogger<GetPermissionsByUserQueryHandler> _logger;
 
         public GetPermissionsByUserQueryHandler(
-            IPermissionService permissionService,
+            IPermissionInternalService permissionService,
             ILogger<GetPermissionsByUserQueryHandler> logger)
         {
             _permissionService = permissionService;

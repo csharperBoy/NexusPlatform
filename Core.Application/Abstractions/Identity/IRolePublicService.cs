@@ -9,5 +9,8 @@ namespace Core.Application.Abstractions.Identity
     public interface IRolePublicService
     {
         Task<Guid> GetAdminRoleIdAsync(CancellationToken cancellationToken = default);
+        // 📌 دریافت نقش‌های کاربر بر اساس UserId
+        Task<IList<string>> GetUserRolesAsync(Guid userId); 
+
     }
 }

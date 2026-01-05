@@ -4,6 +4,7 @@ using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.DependencyInjection;
@@ -41,6 +42,20 @@ namespace Authorization.Infrastructure.DependencyInjection
                     b.MigrationsHistoryTable("__AuthorizationMigrationsHistory", "authorization");
                 });
             });
+
+            // 1. ثبت خودِ سرویس (Implementation)
+            services.AddScoped<ResourceService>();
+            services.AddScoped<PermissionService>();
+            // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
+            // ارجاع می‌دهیم به همان Instance بالایی
+            services.AddScoped<IResourceInternalService>(sp => sp.GetRequiredService<ResourceService>());
+            services.AddScoped<IPermissionInternalService>(sp => sp.GetRequiredService<PermissionService>());
+            // 3. ثبت اینترفیس عمومی (برای استفاده بقیه ماژول‌ها)
+            // این هم ارجاع می‌شود به همان Instance
+            services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
+            services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
+
+
             services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
             //services.AddScoped<IDataScopeService, DataScopeService>();
 
@@ -66,7 +81,7 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
             services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
-            services.AddScoped<IPermissionService, PermissionService>();
+            services.AddScoped<IPermissionInternalService, PermissionService>();
             services.AddScoped<IResourceInternalService, ResourceService>();
             services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
 

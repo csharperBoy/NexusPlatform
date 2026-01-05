@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Security;
 using Identity.Application.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -8,16 +9,17 @@ using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Services
 {
-    public class RoleResolver : IRoleResolver
+    public class RoleService : IRoleInternalService, IRolePublicService
     {
         private readonly IAuthorizationService _authorizationService;
 
-        public RoleResolver(IAuthorizationService authorizationService)
+        public RoleService(IAuthorizationService authorizationService)
         {
             _authorizationService = authorizationService;
         }
 
-        public async Task<Guid> GetAdminRoleIdAsync()
+
+        public async Task<Guid> GetAdminRoleIdAsync(CancellationToken cancellationToken = default)
         {
             return await _authorizationService.GetRoleId("Admin");
         }

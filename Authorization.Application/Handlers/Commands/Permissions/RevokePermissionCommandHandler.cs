@@ -13,11 +13,11 @@ namespace Authorization.Application.Handlers.Commands.Permissions
 {
     public class RevokePermissionCommandHandler : IRequestHandler<RevokePermissionCommand, Result<bool>>
     {
-        private readonly IPermissionService _permissionService;
+        private readonly IPermissionInternalService _permissionService;
         private readonly ILogger<RevokePermissionCommandHandler> _logger;
 
         public RevokePermissionCommandHandler(
-            IPermissionService permissionService,
+            IPermissionInternalService permissionService,
             ILogger<RevokePermissionCommandHandler> logger)
         {
             _permissionService = permissionService;

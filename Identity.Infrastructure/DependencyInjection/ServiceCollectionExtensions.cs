@@ -1,5 +1,7 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
@@ -42,7 +44,16 @@ namespace Identity.Infrastructure.DependencyInjection
                 });
             });
 
-           
+            // 1. ثبت خودِ سرویس (Implementation)
+            services.AddScoped<RoleService>();
+            // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
+            // ارجاع می‌دهیم به همان Instance بالایی
+            services.AddScoped<IRoleInternalService>(sp => sp.GetRequiredService<RoleService>());
+            // 3. ثبت اینترفیس عمومی (برای استفاده بقیه ماژول‌ها)
+            // این هم ارجاع می‌شود به همان Instance
+            services.AddScoped<IRolePublicService>(sp => sp.GetRequiredService<RoleService>());
+
+
 
             services.AddScoped<ISpecificationRepository<RefreshToken, Guid>, EfSpecificationRepository<IdentityDbContext, RefreshToken, Guid>>();
             // Outbox registration
@@ -55,7 +66,6 @@ namespace Identity.Infrastructure.DependencyInjection
             services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
-            services.AddScoped<IRoleResolver, RoleResolver>();
             services.AddHostedService<IdentityModuleInitializer>();
             // Identity (User + Role)
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>

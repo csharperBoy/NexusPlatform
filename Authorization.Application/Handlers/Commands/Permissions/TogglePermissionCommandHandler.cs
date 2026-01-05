@@ -13,11 +13,11 @@ namespace Authorization.Application.Handlers.Commands.Permissions
 {
     public class TogglePermissionCommandHandler : IRequestHandler<TogglePermissionCommand, Result<bool>>
     {
-        private readonly IPermissionService _permissionService;
+        private readonly IPermissionInternalService _permissionService;
         private readonly ILogger<TogglePermissionCommandHandler> _logger;
 
         public TogglePermissionCommandHandler(
-            IPermissionService permissionService,
+            IPermissionInternalService permissionService,
             ILogger<TogglePermissionCommandHandler> logger)
         {
             _permissionService = permissionService;
