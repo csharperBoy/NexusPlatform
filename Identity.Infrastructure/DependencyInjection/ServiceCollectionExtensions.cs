@@ -46,12 +46,15 @@ namespace Identity.Infrastructure.DependencyInjection
 
             // 1. ثبت خودِ سرویس (Implementation)
             services.AddScoped<RoleService>();
+            services.AddScoped<UserService>();
             // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
             // ارجاع می‌دهیم به همان Instance بالایی
             services.AddScoped<IRoleInternalService>(sp => sp.GetRequiredService<RoleService>());
+            services.AddScoped<IUserInternalService>(sp => sp.GetRequiredService<UserService>());
             // 3. ثبت اینترفیس عمومی (برای استفاده بقیه ماژول‌ها)
             // این هم ارجاع می‌شود به همان Instance
             services.AddScoped<IRolePublicService>(sp => sp.GetRequiredService<RoleService>());
+            services.AddScoped<IUserPublicService>(sp => sp.GetRequiredService<UserService>());
 
 
 
