@@ -74,11 +74,11 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddScoped<IAuthorizationChecker, AuthorizationService>();
             
             // Resource Definition Providers
-            services.AddSingleton<AuthorizationResourceDefinitionProvider>();
-            services.AddSingleton<IResourceDefinitionProvider>(sp =>
-                sp.GetRequiredService<AuthorizationResourceDefinitionProvider>());
+            //services.AddSingleton<AuthorizationResourceDefinitionProvider>();
+            //services.AddSingleton<IResourceDefinitionProvider>(sp =>
+                //sp.GetRequiredService<AuthorizationResourceDefinitionProvider>());
             // discover IPermissionDefinitionProvider via DI (modules register their providers)
-            services.AddHostedService<ResourceRegistrarHostedService>();
+            //services.AddHostedService<ResourceRegistrarHostedService>();
             return services;
         }
     }

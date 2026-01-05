@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.HostedServices
 {
+    /*
     public class ResourceRegistrarHostedService : IHostedService
     {
         private readonly ILogger<ResourceRegistrarHostedService> _logger;
@@ -105,4 +106,5 @@ namespace Authorization.Infrastructure.HostedServices
             _logger.LogInformation("Resource Registrar Hosted Service stopped");
         }
     }
+*/
 }

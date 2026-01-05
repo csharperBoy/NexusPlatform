@@ -13,7 +13,6 @@ using Core.Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
-using Authorization.Application.DTOs.Resource.Extensions;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions.Authorization;
 

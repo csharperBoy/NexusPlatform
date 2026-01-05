@@ -3,6 +3,8 @@ using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -15,70 +17,31 @@ namespace Authorization.Infrastructure.Data
 
     public static class AuthorizationSeedData
     {
-        // ساختار داده‌ای برای نگهداری تعریف منابع با سلسله مراتب
-        private class localResourceDefinition
-        {
-            public string Key { get; set; }
-            public string Name { get; set; }
-            public ResourceType Type { get; set; }
-            public ResourceCategory Category { get; set; }
-            public string ParentKey { get; set; }
-            public string Description { get; set; }
-            public int Order { get; set; }
-            public string Icon { get; set; }
-            public string Path { get; set; }
-            public List<localResourceDefinition> Children { get; set; } = new();
-        }
-
-        // تعریف منابع به صورت درختی (Hierarchical)
-        private static List<localResourceDefinition> GetlocalResourceDefinitions()
+       // تعریف منابع به صورت درختی (Hierarchical)
+        private static List<ResourceDefinition> GetResourceDefinitions()
         {
             // ساختار درختی منابع
-            return new List<localResourceDefinition>
+            return new List<ResourceDefinition>
         {
-            new()
-            {
-                Key = "audit",
-                Name = "Audit",
-                Type = ResourceType.Module,
-                Category = ResourceCategory.System,
-                Description = "Audit management module",
-                Order = 2000,
-                Icon = "shield",
-                Path = "/audit",
-                Children = new List<localResourceDefinition>
-                {
-                    new()
-                    {
-                        Key = "audit.auditlog",
-                        Name = "Audit Logs",
-                        Type = ResourceType.Data,
-                        Category = ResourceCategory.System,
-                        Description = "Audit log management",
-                        Order = 2001,
-                        Icon = "list",
-                        Path = "/audit/logs"
-                    }
-                }
-            },
+            
             new()
             {
                 Key = "authorization",
                 Name = "Authorization",
-                Type = ResourceType.Module,
-                Category = ResourceCategory.System,
+                Type = "Module",
+                Category = "System",
                 Description = "Authorization System administration",
                 Order = 1000,
                 Icon = "settings",
                 Path = "/authorization",
-                Children = new List<localResourceDefinition>
+                Children = new List<ResourceDefinition>
                 {
                     new()
                     {
                         Key = "authorization.resource",
                         Name = "resource Management",
-                        Type = ResourceType.Data,
-                        Category = ResourceCategory.System,
+                        Type = "Data",
+                        Category = "System",
                         Description = "Manage resource",
                         Order = 1001,
                         Icon = "users",
@@ -91,10 +54,10 @@ namespace Authorization.Infrastructure.Data
         }
 
         // تبدیل ساختار درختی به لیست مسطح با حفظ سلسله مراتب
-        private static List<(localResourceDefinition Definition, int Level)> FlattenResourceTree(
-            List<localResourceDefinition> definitions, int level = 0)
+        private static List<(ResourceDefinition Definition, int Level)> FlattenResourceTree(
+            List<ResourceDefinition> definitions, int level = 0)
         {
-            var result = new List<(localResourceDefinition, int)>();
+            var result = new List<(ResourceDefinition, int)>();
 
             foreach (var def in definitions)
             {
@@ -126,7 +89,7 @@ namespace Authorization.Infrastructure.Data
 
             try
             {
-                var flatDefinitions = FlattenResourceTree(GetlocalResourceDefinitions());
+                var flatDefinitions = FlattenResourceTree(GetResourceDefinitions());
 
                 // 1. دریافت تمام کلیدهای موجود
                 var existingKeys = await dbContext.Set<Resource>()
@@ -163,9 +126,9 @@ namespace Authorization.Infrastructure.Data
                     var resource = new Resource(
                         definition.Key,
                         definition.Name,
-                        definition.Type,
-                        definition.Category,
-                        parentId,
+                        definition.Type.ToEnumOrDefault(ResourceType.Ui),
+                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
+                            parentId,
                         definition.Description,
                         definition.Order,
                         definition.Icon,
@@ -190,8 +153,8 @@ namespace Authorization.Infrastructure.Data
         }
 
         // پردازش یک تعریف Resource
-        private static async Task ProcesslocalResourceDefinition(
-            localResourceDefinition definition,
+        private static async Task ProcessResourceDefinition(
+            ResourceDefinition definition,
             int level,
             Dictionary<string, Resource> existingResources,
             Dictionary<string, Guid?> parentKeyToIdMap,
@@ -235,9 +198,9 @@ namespace Authorization.Infrastructure.Data
                 var resource = new Resource(
                     definition.Key,
                     definition.Name,
-                    definition.Type,
-                    definition.Category,
-                    parentId,
+                    definition.Type.ToEnumOrDefault(ResourceType.Ui),
+                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
+                            parentId,
                     definition.Description,
                     definition.Order,
                     definition.Icon,
@@ -271,8 +234,8 @@ namespace Authorization.Infrastructure.Data
             try
             {
                 var existingResources = await GetExistingResourcesMap(dbContext);
-                var rootDefinitions = GetlocalResourceDefinitions();
-                var queue = new Queue<(localResourceDefinition Definition, Guid? ParentId)>();
+                var rootDefinitions = GetResourceDefinitions();
+                var queue = new Queue<(ResourceDefinition Definition, Guid? ParentId)>();
 
                 // اول تمام ریشه‌ها را به صف اضافه می‌کنیم
                 foreach (var root in rootDefinitions)
@@ -290,8 +253,8 @@ namespace Authorization.Infrastructure.Data
                         var resource = new Resource(
                             definition.Key,
                             definition.Name,
-                            definition.Type,
-                            definition.Category,
+                            definition.Type.ToEnumOrDefault(ResourceType.Ui),
+                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
                             parentId,
                             definition.Description,
                             definition.Order,
@@ -369,7 +332,7 @@ namespace Authorization.Infrastructure.Data
         // متد اصلی برای ایجاد پرمیژن‌ها
         public static async Task SeedPermissionsAsync(
             AuthorizationDbContext dbContext,
-            IRoleResolver roleResolver,
+            IRolePublicService roleService,
             ILogger logger)
         {
             logger.LogInformation("🚀 Starting permission seeding for admin role...");
@@ -377,7 +340,7 @@ namespace Authorization.Infrastructure.Data
             try
             {
                 // 1. دریافت RoleId نقش Admin
-                var adminRoleId = await roleResolver.GetAdminRoleIdAsync();
+                var adminRoleId = await roleService.GetAdminRoleIdAsync();
                 logger.LogInformation($"Admin Role ID: {adminRoleId}");
 
                 // 2. دریافت تعاریف پرمیژن‌ها
@@ -472,7 +435,7 @@ namespace Authorization.Infrastructure.Data
         // متد یکپارچه برای seed کردن هم منابع و هم پرمیژن‌ها
         public static async Task SeedAuthorizationDataAsync(
             AuthorizationDbContext dbContext,
-            IRoleResolver roleResolver,
+            IRolePublicService roleService,
             IConfiguration config,
             ILogger logger)
         {
@@ -482,7 +445,7 @@ namespace Authorization.Infrastructure.Data
             await SeedResourcesAsync(dbContext, config, logger);
 
             // 2. Seed پرمیژن‌ها
-            await SeedPermissionsAsync(dbContext, roleResolver, logger);
+            await SeedPermissionsAsync(dbContext, roleService, logger);
 
             logger.LogInformation("✅ Authorization data seeding completed!");
         }
