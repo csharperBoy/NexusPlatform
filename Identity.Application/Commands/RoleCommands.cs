@@ -9,4 +9,4 @@ using System.Threading.Tasks;
 namespace Identity.Application.Commands
 {
     public record AssignRoleCommand(Guid UserId, string RoleName) : IRequest<Result>;
-  }
+}

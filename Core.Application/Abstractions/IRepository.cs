@@ -58,7 +58,6 @@ namespace Core.Application.Abstractions
        where TEntity : class
        where TKey : IEquatable<TKey>
     {
-        // 📌 Basic CRUD
         Task<TEntity?> GetByIdAsync(TKey id);
         Task<IEnumerable<TEntity>> GetAllAsync();
         Task AddAsync(TEntity entity);
@@ -68,11 +67,9 @@ namespace Core.Application.Abstractions
         Task DeleteAsync(TEntity entity);
         Task RemoveRangeAsync(IEnumerable<TEntity> entities);
 
-        // 📌 Simple query ops
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
 
-        // 📌 Queryable access
         IQueryable<TEntity> AsQueryable();
         IQueryable<TEntity> AsNoTrackingQueryable();
     }

@@ -143,45 +143,7 @@ namespace Authorization.Presentation.Controllers.Admin
             return HandleResult(result);
         }
 
-        // ========== APIهای نیازمند توسعه (کامنت شده) ==========
-
-        /*
-        /// <summary>
-        /// 🌳 تغییر والد یک منبع
-        /// </summary>
-        [HttpPatch("{id:guid}/parent")]
-        [AuthorizeResource("authorization.resources", "Edit")]
-        public async Task<IActionResult> ChangeParent(Guid id, [FromBody] ChangeParentRequest request)
-        {
-            // ⚠️ نیاز به کامند جدید: ChangeResourceParentCommand
-            return BadRequest("این API در حال توسعه است");
-        }
-
-        /// <summary>
-        /// ⚙️ فعال/غیرفعال کردن منبع
-        /// </summary>
-        [HttpPatch("{id:guid}/active")]
-        [AuthorizeResource("authorization.resources", "Edit")]
-        public async Task<IActionResult> ToggleActive(Guid id, [FromBody] ToggleActiveRequest request)
-        {
-            // ⚠️ نیاز به کامند جدید: ToggleResourceActiveCommand
-            return BadRequest("این API در حال توسعه است");
-        }
-
-        /// <summary>
-        /// 🔄 بازسازی درخت منابع
-        /// </summary>
-        [HttpPost("rebuild-tree")]
-        [AuthorizeResource("authorization.resources", "Admin")]
-        public async Task<IActionResult> RebuildTree()
-        {
-            // ⚠️ نیاز به کامند جدید: RebuildResourceTreeCommand
-            return BadRequest("این API در حال توسعه است");
-        }
-        */
-
-        // ========== متدهای کمکی ==========
-
+  
         private List<ResourceDto> FilterResourcesByCategory(IReadOnlyList<ResourceTreeDto> forest, string category)
         {
             var all = FlattenForest(forest);

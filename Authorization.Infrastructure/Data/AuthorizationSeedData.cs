@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
 
 namespace Authorization.Infrastructure.Data
 {
@@ -302,7 +303,7 @@ namespace Authorization.Infrastructure.Data
         {
             new()
             {
-                ResourceKey = "authorization.resource", // فرض می‌کنیم این کلید وجود دارد
+                ResourceKey = "authorization.resources", // فرض می‌کنیم این کلید وجود دارد
                 Action = "Full",
                 Scope = "All",
                 Type = "allow",
