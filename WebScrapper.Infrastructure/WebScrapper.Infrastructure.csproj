@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\WebScrapper.Application\WebScrapper.Application.csproj" />
+    <ProjectReference Include="..\WebScrapper.Domain\WebScrapper.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
