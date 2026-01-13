@@ -10,10 +10,10 @@ const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => {
   // env مخصوص WebSite
-  const env = loadEnv(mode, resolve(__dirname, "src/apps/AkSteel Welfare Platform/WebSite"));
+  const env = loadEnv(mode, resolve(__dirname, "src/apps/AkSteelWelfarePlatform/WebSite"));
 
   return {
-    root: resolve(__dirname, "src/apps/AkSteel Welfare Platform/WebSite"),
+    root: resolve(__dirname, "src/apps/AkSteelWelfarePlatform/WebSite"),
     plugins: [tailwindcss(), react()],
     resolve: {
       alias: {
@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
       outDir: resolve(__dirname, "dist/website"),
       emptyOutDir: true,
       rollupOptions: {
-        input: resolve(__dirname, "src/apps/AkSteel Welfare Platform/WebSite/index.html"),
+        input: resolve(__dirname, "src/apps/AkSteelWelfarePlatform/WebSite/index.html"),
       },
     },
     define: {

@@ -17,7 +17,6 @@
     "dev:pmis": "pnpm --filter pmis run dev",
     "build:pmis": "pnpm --filter pmis run build",
     "preview:pmis": "pnpm --filter pmis run preview",
-
     "dev:akwp.admin": "pnpm --filter akwp-adminpanel run dev",
     "build:akwp.admin": "pnpm --filter akwp-adminpanel run build",
     "preview:akwp.admin": "pnpm --filter akwp-adminpanel run preview",

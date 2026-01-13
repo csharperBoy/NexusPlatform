@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+# نصب pnpm
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# کپی فایل‌های مدیریت پکیج (لاک‌فایل اضافه شد)
+COPY package.json .
+COPY pnpm-workspace.yaml .
+COPY pnpm-lock.yaml . 
+
+# نصب وابستگی‌ها
+# نکته: استفاده از --frozen-lockfile برای اطمینان از نصب دقیق نسخه‌ها
+RUN pnpm install --frozen-lockfile
+
+# کپی بقیه فایل‌ها
+COPY . .
+
+EXPOSE 5173
+
+CMD ["pnpm", "run", "dev:akwp.admin"]

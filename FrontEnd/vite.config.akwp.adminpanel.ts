@@ -10,10 +10,10 @@ const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => {
   // env مخصوص AdminPanel
-  const env = loadEnv(mode, resolve(__dirname, "src/apps/AkSteel Welfare Platform/AdminPanel"));
+  const env = loadEnv(mode, resolve(__dirname, "src/apps/AkSteelWelfarePlatform/AdminPanel"));
 
   return {
-    root: resolve(__dirname, "src/apps/AkSteel Welfare Platform/AdminPanel"),
+    root: resolve(__dirname, "src/apps/AkSteelWelfarePlatform/AdminPanel"),
     plugins: [tailwindcss(), react()],
     resolve: {
       alias: {
@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
       outDir: resolve(__dirname, "dist/admin"),
       emptyOutDir: true,
       rollupOptions: {
-        input: resolve(__dirname, "src/apps/AkSteel Welfare Platform/AdminPanel/index.html"),
+        input: resolve(__dirname, "src/apps/AkSteelWelfarePlatform/AdminPanel/index.html"),
       },
     },
     define: {

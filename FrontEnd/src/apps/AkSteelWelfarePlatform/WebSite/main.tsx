@@ -1,4 +1,4 @@
-//src/apps/AkSteel Welfare Platform/WebSite/main.tsx
+//src/apps/AkSteelWelfarePlatform/WebSite/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
