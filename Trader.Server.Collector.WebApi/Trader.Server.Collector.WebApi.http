@@ -1,0 +1,6 @@
+@Trader.Server.Collector.WebApi_HostAddress = http://localhost:5127
+
+GET {{Trader.Server.Collector.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

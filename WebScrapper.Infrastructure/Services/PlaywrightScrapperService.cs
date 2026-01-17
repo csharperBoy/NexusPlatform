@@ -13,8 +13,10 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
+using WebScrapper.Domain.Enums;
 
 namespace WebScrapper.Infrastructure.Services
 {
@@ -44,17 +46,37 @@ namespace WebScrapper.Infrastructure.Services
         }
         public async Task Fill(ElementAccessPath elementPath, string value)
         {
-            await _page.FillAsync(elementPath.FullXpath, value);
-
+            //await _page.FillAsync(elementPath.FullXpath, value);
+            var element = await FindElement(elementPath);
+            await element.FillAsync(value);
         }
         public async Task Click(ElementAccessPath elementPath)
         {
-            await _page.ClickAsync(elementPath.FullXpath);
-
+            //await _page.ClickAsync(elementPath.FullXpath);
+            var element = await FindElement(elementPath);
+            await element.ClickAsync();
         }
         public async Task<IElement> FindElement(ElementAccessPath elementPath)
         {
-            var element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+            IElement element;
+            switch (elementPath.DefaultAccessPath)
+            {
+                case ElementPathEnum.FullXpath:
+                     element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                    break;
+                case ElementPathEnum.SelectorXpath:
+                     element = await _page.QuerySelectorAsync(elementPath.SelectorXpath);
+                    break;
+                case ElementPathEnum.JSpath:
+                     element = await _page.QuerySelectorAsync(elementPath.JSpath);
+                    break;
+                case ElementPathEnum.localXpath:
+                     element = await _page.QuerySelectorAsync(elementPath.localXpath);
+                    break;
+                default:
+                     element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                    break;
+            }
             if (element == null)
             {
                 throw new Exception("Element not found!!!");
@@ -67,7 +89,7 @@ namespace WebScrapper.Infrastructure.Services
             try
             {
              
-                var element = await FindElement(elementPath.FullXpath);
+                var element = await FindElement(elementPath);
 
                 return await element.InnerTextAsync();
                 
