@@ -175,33 +175,47 @@ namespace Core.Infrastructure.Repositories
             // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
             // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
             // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
-           /* if (typeof(TEntity) == typeof(Permission) ||
-                typeof(TEntity) == typeof(Resource) ||
-                typeof(TEntity) == typeof(UserSession)) // UserSession هم در زنجیره لاگین است
-            {
-                return;
-            }*/
+            /* if (typeof(TEntity) == typeof(Permission) ||
+                 typeof(TEntity) == typeof(Resource) ||
+                 typeof(TEntity) == typeof(UserSession)) // UserSession هم در زنجیره لاگین است
+             {
+                 return;
+             }*/
 
             var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
             if (resourceAttr == null) return;
             if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
-            if (entity is not IDataScopedEntity dataScopedEntity) return;
 
             var userId = _currentUserService.UserId;
             if (userId == null) return;
 
-            // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
-            // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
-            // و Circular Dependency در استارتاپ حل شود.
             var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
-
-            var scope = await authorizationChecker.GetPermissionScopeAsync(userId.Value, resourceAttr.ResourceKey, action);
-
-            bool isAllowed = IsEntityInScope(dataScopedEntity, scope, userId.Value);
-
-            if (!isAllowed)
+            if (entity is IResourcedEntity resource && action != PermissionAction.Create)
             {
-                throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to data scope restrictions.");
+                //اگر رکورد های موجودیت بعنوان ریسورس هم تعریف شده بود
+                var scope = await authorizationChecker.GetPermissionScopeAsync(userId.Value, resource.EquivalentResourceId ?? Guid.Empty, action);
+                if (scope == ScopeType.None)
+                {
+                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to Row Level Security restrictions.");
+                }
+            }
+
+            if (entity is IDataScopedEntity dataScopedEntity)
+            {
+                // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
+                // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
+                // و Circular Dependency در استارتاپ حل شود.
+                //var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
+
+                var scope = await authorizationChecker.GetPermissionScopeAsync(userId.Value, resourceAttr.ResourceKey, action);
+
+                bool isAllowed = IsEntityInScope(dataScopedEntity, scope, userId.Value);
+
+                if (!isAllowed)
+                {
+                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to data scope restrictions.");
+                }
+
             }
         }
 

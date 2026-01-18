@@ -17,6 +17,7 @@ namespace Authorization.Infrastructure.Services
     {
         private readonly IPermissionEvaluator _permissionEvaluator;
         private readonly IDataScopeEvaluator _dataScopeEvaluator;
+        private readonly IResourceInternalService _resourceService;
         private readonly ICurrentUserService _currentUserService;
         private readonly ILogger<AuthorizationService> _logger;
         private readonly ICacheService _cache;
@@ -24,23 +25,25 @@ namespace Authorization.Infrastructure.Services
         public AuthorizationService(
             IPermissionEvaluator permissionEvaluator,
             IDataScopeEvaluator dataScopeEvaluator,
+             IResourceInternalService resourceService,
             ICurrentUserService currentUserService,
             ILogger<AuthorizationService> logger,
             ICacheService cache)
         {
             _permissionEvaluator = permissionEvaluator;
             _dataScopeEvaluator = dataScopeEvaluator;
+            _resourceService = resourceService;
             _currentUserService = currentUserService;
             _logger = logger;
             _cache = cache;
         }
         public async Task<ScopeType> GetPermissionScopeAsync(Guid userId, string resourceKey, PermissionAction action)
         {
-            // کلید کش شامل اکشن هم می‌شود
-            var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
-
             try
             {
+                // کلید کش شامل اکشن هم می‌شود
+                var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
+
                 // 1. بررسی کش
                 var cached = await _cache.GetAsync<ScopeType?>(cacheKey);
                 if (cached.HasValue)
@@ -51,7 +54,45 @@ namespace Authorization.Infrastructure.Services
 
                 // 2. واگذاری محاسبه به Evaluator
                 // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود
-                var scope = await _dataScopeEvaluator.EvaluateScopeAsync( resourceKey, action);
+                var scope = await _dataScopeEvaluator.EvaluateScopeAsync(resourceKey, action);
+
+                // 3. ذخیره در کش
+                await _cache.SetAsync(cacheKey, scope, TimeSpan.FromMinutes(10));
+
+                _logger.LogInformation(
+                    "Scope calculated for user  on {Resource}:{Action} = {Scope}",
+                     resourceKey, action, scope);
+
+                return scope;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.PersonId);
+                return ScopeType.None; // Fail Secure
+            }
+        }
+        public async Task<ScopeType> GetPermissionScopeAsync(Guid userId, Guid resourceId, PermissionAction action)
+        {
+            try
+            {
+                if (resourceId == Guid.Empty)
+                    return ScopeType.None;
+                string resourceKey = await _resourceService.GetKeyById(resourceId);
+                // کلید کش شامل اکشن هم می‌شود
+                var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
+
+
+                // 1. بررسی کش
+                var cached = await _cache.GetAsync<ScopeType?>(cacheKey);
+                if (cached.HasValue)
+                {
+                    _logger.LogDebug("Cache hit for scope check: {Key} -> {Scope}", cacheKey, cached.Value);
+                    return cached.Value;
+                }
+
+                // 2. واگذاری محاسبه به Evaluator
+                // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود
+                var scope = await _dataScopeEvaluator.EvaluateScopeAsync(resourceKey, action);
 
                 // 3. ذخیره در کش
                 await _cache.SetAsync(cacheKey, scope, TimeSpan.FromMinutes(10));
@@ -142,7 +183,7 @@ namespace Authorization.Infrastructure.Services
 
                 // بررسی جزئیات دلیل رد دسترسی
                 var permissions = await _permissionEvaluator.EvaluateUserPermissionsAsync(request.UserId, request.ResourceKey);
-                var dataScopes = await _dataScopeEvaluator.EvaluateDataScopeAsync( request.ResourceKey);
+                var dataScopes = await _dataScopeEvaluator.EvaluateDataScopeAsync(request.ResourceKey);
 
                 var denyReason = "User does not have required permissions";
                 var details = new Dictionary<string, object>

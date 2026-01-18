@@ -6,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Sample.Infrastructure.Data;
 using Serilog;
+using Trader.Server.Collector.Infrastructure.Data;
 namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 {
     public static class ApplicationBuilderExtensions

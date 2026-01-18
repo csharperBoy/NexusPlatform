@@ -6,15 +6,16 @@ using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
+using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
-using Authorization.Infrastructure.Data;
-using Core.Application.Abstractions.Authorization;
 
 namespace Authorization.Infrastructure.Services
 {
@@ -250,7 +251,12 @@ namespace Authorization.Infrastructure.Services
             await _unitOfWork.SaveChangesAsync();
             await InvalidateResourceCachesAsync();
         }
-
+        public async Task<string> GetKeyById(Guid resourceId)
+        {
+            var spec = new ResourceByIdSpec(resourceId);
+            var resource = await _resourceSpecRepository.GetBySpecAsync(spec);
+            return resource.Key;
+        }
         // ========================================================================
         // Private Helpers
         // ========================================================================
@@ -290,6 +296,8 @@ namespace Authorization.Infrastructure.Services
         {
             await _cache.RemoveByPatternAsync("auth:resource:*");
         }
+
+        
 
         // تبدیل رشته به Enum (چون Definition استرینگ دارد ولی دیتابیس Enum)
         /*  private ResourceType ParseResourceType(string typeStr) =>

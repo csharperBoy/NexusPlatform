@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Sample.Domain.Events;
 namespace Sample.Domain.Entities
@@ -30,7 +31,7 @@ namespace Sample.Domain.Entities
      و می‌توانند از Value Objectها برای مدل‌سازی دقیق‌تر داده‌های تجاری استفاده کنند.
     */
 
-    public class SampleEntity : AuditableEntity
+    public class SampleEntity : DataScopedEntity,IAggregateRoot
     {
         // ویژگی ساده برای نگهداری وضعیت
         public string property1 { get; set; } = default!;

@@ -1,4 +1,5 @@
-﻿using Authorization.Domain.Entities;
+﻿using Authorization.Application.Interfaces;
+using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Attributes;
@@ -33,7 +34,18 @@ namespace Authorization.Infrastructure.Services
             {
                 return query;
             }
-
+            if (typeof(IResourcedEntity).IsAssignableFrom(typeof(TEntity)))
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    Guid userId = _currentUserService.UserId ?? Guid.Empty;
+                    if(userId == Guid.Empty)
+                        return query.Where(x => false);
+                    var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionInternalService>();
+                    var permissions = await permissionService.GetUserPermissionsAsync(userId);
+                    query = query.Where(e => permissions.Any(p=>p.ResourceId == ((IResourcedEntity)e).EquivalentResourceId));
+                }
+            }
             // 1. اگر موجودیت DataScoped نیست، کاری نداشته باش
             if (!typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
                 return query;
@@ -53,7 +65,7 @@ namespace Authorization.Infrastructure.Services
 
                 // 3. دریافت دسترسی‌های کاربر
                 var scopes = await permissionChecker.GetScopeForUser(personId.Value, attribute.ResourceKey);
-                if(scopes.Count() ==0) return query;
+                if (scopes.Count() == 0) return query;
                 // 4. اعمال فیلتر (کد قبلی شما)
                 if (scopes.Contains(ScopeType.All)) return query;
 

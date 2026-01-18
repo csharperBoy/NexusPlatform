@@ -16,19 +16,20 @@ namespace Authorization.Application.Interfaces
         Task<Guid> CreateResourceAsync(CreateResourceCommand command);
         Task UpdateResourceAsync(UpdateResourceCommand command);
         Task DeleteResourceAsync(Guid resourceId);
+        Task<string> GetKeyById(Guid resourceId);
         //Task SyncResourcesWithDefinitionsAsync();
 
         // عملیات Read
-      /*  Task<ResourceDto> GetResourceAsync(Guid resourceId);
-        Task<ResourceDto> GetResourceByKeyAsync(string key);
+        /*  Task<ResourceDto> GetResourceAsync(Guid resourceId);
+          Task<ResourceDto> GetResourceByKeyAsync(string key);
 
-        // منطق کسب‌وکار پیچیده  
-        Task<bool> ValidateResourceHierarchyAsync(Guid resourceId, Guid? newParentId);
-        Task RebuildResourceTreeAsync();
+          // منطق کسب‌وکار پیچیده  
+          Task<bool> ValidateResourceHierarchyAsync(Guid resourceId, Guid? newParentId);
+          Task RebuildResourceTreeAsync();
 
-        // متدهای جدید برای ثبت خودکار منابع
-        Task RegisterModuleResourcesAsync(string moduleKey);
-        Task RegisterAllModulesResourcesAsync();*/
+          // متدهای جدید برای ثبت خودکار منابع
+          Task RegisterModuleResourcesAsync(string moduleKey);
+          Task RegisterAllModulesResourcesAsync();*/
 
         // متد کمکی برای کار با ResourceDefinition
         //Task<Guid> CreateOrUpdateResourceFromDefinitionAsync(ResourceDefinition definition);

@@ -19,6 +19,7 @@ namespace Core.Application.Abstractions.Security
         /// متدی که اسکوپ کاربر برای یک اکشن خاص روی یک ریسورس را برمی‌گرداند
         /// </summary>
         Task<ScopeType> GetPermissionScopeAsync(Guid userId, string resourceKey, PermissionAction action);
+        Task<ScopeType> GetPermissionScopeAsync(Guid userId, Guid resourceId, PermissionAction action);
         Task<List<ScopeType>> GetScopeForUser(Guid userId, string resourceKey);
     }
 }

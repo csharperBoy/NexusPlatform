@@ -1,13 +1,16 @@
 ﻿using Core.Domain.Common;
+using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Sample.Domain;
+using Sample.Domain.Entities;
+using Sample.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Sample.Domain;
-using Sample.Domain.Entities;
 namespace Sample.Infrastructure.Data
 {
     /*
@@ -38,10 +41,18 @@ namespace Sample.Infrastructure.Data
      و چطور اسکیمای جداگانه برای ماژول‌ها داشته باشیم تا معماری ماژولار حفظ شود.
     */
 
-    public class SampleDbContext : DbContext
+    public class SampleDbContext : BaseDbContext
     {
-        public SampleDbContext(DbContextOptions<SampleDbContext> options) : base(options) { }
-
+        public SampleDbContext(
+              DbContextOptions<SampleDbContext> options,
+              IServiceProvider serviceProvider)
+              : base(options, serviceProvider)
+        {
+        }
+        public SampleDbContext(DbContextOptions<SampleDbContext> options)
+      : base(options, new ServiceCollection().BuildServiceProvider())
+        {
+        }
         // 📌 جدول مربوط به موجودیت SampleEntity
         public DbSet<SampleEntity> Sample { get; set; } = null!;
 
@@ -56,14 +67,8 @@ namespace Sample.Infrastructure.Data
             // 📌 اعمال تنظیمات OutboxMessageConfiguration
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("sample"));
 
-            // 📌 تنظیمات Fluent API برای SampleEntity
-            modelBuilder.Entity<SampleEntity>(entity =>
-            {
-                entity.HasKey(e => e.Id); // کلید اصلی
-                entity.Property(e => e.property1)
-                      .IsRequired()
-                      .HasMaxLength(200); // محدودیت طول
-            });
+            modelBuilder.ApplyConfiguration(new SampleEntityConfiguration());
+
         }
     }
 }

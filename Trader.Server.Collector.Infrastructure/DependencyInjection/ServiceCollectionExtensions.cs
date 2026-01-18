@@ -4,6 +4,7 @@ using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Trader.Server.Collector.Infrastructure.Data;
 
 namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 {

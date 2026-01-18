@@ -14,6 +14,7 @@ namespace Authorization.Domain.Enums
         Menu = 3,
         Page = 4,  
         Component = 5,
-        DatabaseTable = 6
+        DatabaseTable = 6,
+        RowInTable = 7 // سطر داخل جدول مخصوص موجودیت های دارای فیلد resourceId
     }
 }
