@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BrokerageOperations.Domain\BrokerageOperations.Domain.csproj" />
+    <ProjectReference Include="..\BrokerageOperations.Shared\BrokerageOperations.Shared.csproj" />
     <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
   </ItemGroup>
 

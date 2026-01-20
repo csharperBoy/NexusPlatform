@@ -17,16 +17,19 @@ using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
 using WebScrapper.Domain.Enums;
+using Microsoft.Playwright;
+using WebScrapper.Domain.Common;
 
 namespace WebScrapper.Infrastructure.Services
 {
-    public class PlaywrightScrapperService : IWebScrapperService
+    public class PlaywrightScrapperService : IWebScrapperServicee
+       
     {
         private IPlaywright _playwright;
         private IBrowser _browser;
         private IBrowserContext _context;
         private IPage _page;
-
+        private IEnumerable<PlaywrightWindowDto> _windows;
         public PlaywrightScrapperService(
          IPlaywright playwright,
          IBrowser browser,
@@ -37,73 +40,7 @@ namespace WebScrapper.Infrastructure.Services
             _browser = browser;
             _context = context;
             _page = page;
-        }
-
-        public async Task NewPage(string url)
-        {
-            _page = await _context.NewPageAsync();
-            await _page.GotoAsync(url);
-        }
-        public async Task Fill(ElementAccessPath elementPath, string value)
-        {
-            //await _page.FillAsync(elementPath.FullXpath, value);
-            var element = await FindElement(elementPath);
-            await element.FillAsync(value);
-        }
-        public async Task Click(ElementAccessPath elementPath)
-        {
-            //await _page.ClickAsync(elementPath.FullXpath);
-            var element = await FindElement(elementPath);
-            await element.ClickAsync();
-        }
-        public async Task<IElement> FindElement(ElementAccessPath elementPath)
-        {
-            IElement element;
-            switch (elementPath.DefaultAccessPath)
-            {
-                case ElementPathEnum.FullXpath:
-                     element = await _page.QuerySelectorAsync(elementPath.FullXpath);
-                    break;
-                case ElementPathEnum.SelectorXpath:
-                     element = await _page.QuerySelectorAsync(elementPath.SelectorXpath);
-                    break;
-                case ElementPathEnum.JSpath:
-                     element = await _page.QuerySelectorAsync(elementPath.JSpath);
-                    break;
-                case ElementPathEnum.localXpath:
-                     element = await _page.QuerySelectorAsync(elementPath.localXpath);
-                    break;
-                default:
-                     element = await _page.QuerySelectorAsync(elementPath.FullXpath);
-                    break;
-            }
-            if (element == null)
-            {
-                throw new Exception("Element not found!!!");
-            }
-            return element;
-        }
-
-        public async Task<string> InnerText(ElementAccessPath elementPath )
-        {
-            try
-            {
-             
-                var element = await FindElement(elementPath);
-
-                return await element.InnerTextAsync();
-                
-            }
-            catch(Exception ex)
-            {
-                throw;
-            }
-        }
-        public async Task Wait(ElementAccessPath elementPath)
-        {
-            //await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-            await Task.Delay(2000);
+            _windows = new List<PlaywrightWindowDto>();
         }
 
         public async Task InitializeAsync()
@@ -134,6 +71,124 @@ namespace WebScrapper.Infrastructure.Services
 
                 throw;
             }
+        }
+
+        public async Task NewTabPage<TPage, TWindow>(string url , TPage page , TWindow? window) 
+            where TPage : IPageContract
+            where TWindow : IWindowContract<TPage>
+        {
+            _page = await _context.NewPageAsync();
+            await _page.GotoAsync(url);
+        }
+       
+        public async Task Wait(int millisecond)
+        {
+            //await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            await Task.Delay(millisecond);
+        }
+        public async Task<string> GetCurrentUrl()
+            where TPage : IPageContract
+            where TWindow : IWindowContract<TPage>
+        {
+            //await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            return _page.Url;
+        }
+        public async Task WaitForLoad(ElementAccessPath elementPath)
+            where TPage : IPageContract
+            where TWindow : IWindowContract<TPage>
+        {
+            //await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+            await Task.Delay(2000);
+        }
+        public async Task<bool> ElementIsExist(ElementAccessPath elementPath)
+            
+        {
+            try
+            {
+
+                var element = await FindElement(elementPath);
+
+                if (element == null)
+                    return false;
+                else
+                    return true;
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+
+        public Task NewWindow<TWindow>(string url, TWindow window) where TWindow : IWindowContract<IPageContract>
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task Fill(ElementAccessPath elementPath, string value)
+        {
+            //await _page.FillAsync(elementPath.FullXpath, value);
+            var element = await FindElement(elementPath);
+            await element.FillAsync(value);
+        }
+
+        public async Task Click(ElementAccessPath elementPath)
+        { 
+            //await _page.ClickAsync(elementPath.FullXpath);
+            var element = await FindElement(elementPath);
+            await element.ClickAsync();
+        }
+
+        public async Task<string> InnerText(ElementAccessPath elementPath)
+        {
+            try
+            {
+
+                var element = await FindElement(elementPath);
+
+                return await element.InnerTextAsync();
+
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+        /// <summary>
+        /// یافتن المنت
+        /// </summary>
+        /// <param name="elementPath"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private async Task<IElement> FindElement(ElementAccessPath elementPath)
+           
+        {
+            IElement element;
+            switch (elementPath.DefaultAccessPath)
+            {
+                case ElementPathEnum.FullXpath:
+                    element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                    break;
+                case ElementPathEnum.SelectorXpath:
+                    element = await _page.QuerySelectorAsync(elementPath.SelectorXpath);
+                    break;
+                case ElementPathEnum.JSpath:
+                    element = await _page.QuerySelectorAsync(elementPath.JSpath);
+                    break;
+                case ElementPathEnum.localXpath:
+                    element = await _page.QuerySelectorAsync(elementPath.localXpath);
+                    break;
+                default:
+                    element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                    break;
+            }
+            if (element == null)
+            {
+                throw new Exception("Element not found!!!");
+            }
+            return element;
         }
     }
 }

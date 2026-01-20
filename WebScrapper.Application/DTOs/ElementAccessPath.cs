@@ -16,5 +16,9 @@ namespace WebScrapper.Application.DTOs
         public string localXpath { get; set; }
         public string SelectorXpath { get; set; }
         public string JSpath { get; set; }
+
+        public string windowsCode { get; set; } = "default";
+
+        public string pageCode { get; set; } = "default";
     }
 }
