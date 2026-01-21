@@ -10,6 +10,7 @@
     <ProjectReference Include="..\BrokerageOperations.Application\BrokerageOperations.Application.csproj" />
     <ProjectReference Include="..\BrokerageOperations.Domain\BrokerageOperations.Domain.csproj" />
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\WebScrapper.Application\WebScrapper.Application.csproj" />
   </ItemGroup>
 
 </Project>

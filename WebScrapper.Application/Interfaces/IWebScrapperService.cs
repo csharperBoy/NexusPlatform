@@ -33,6 +33,14 @@ namespace WebScrapper.Application.Interfaces
         Task NewWindow<TWindow>(string url, TWindow window)
             where TWindow : IWindowContract<IPageContract>;
         /// <summary>
+        /// رفتن به آدرس
+        /// </summary>
+        /// <param name="url">آدرس</param>
+        /// <param name="windowCode">کد پنجره</param>
+        /// <param name="pageCode">کد پیج</param>
+        /// <returns></returns>
+        Task GoToUrl(string url, string windowCode = "default", string pageCode = "default");
+        /// <summary>
         /// پر کردن فیلد
         /// </summary>
         /// <param name="elementPath">دسترسی به المنت</param>
@@ -62,7 +70,7 @@ namespace WebScrapper.Application.Interfaces
         /// دریافت آدرس فعلی
         /// </summary>
         /// <returns>آدرس url</returns>
-        Task<string> GetCurrentUrl();
+        Task<string> GetCurrentUrl(string windowCode = "default", string pageCode = "default");
         /// <summary>
         /// تعلیق تا لود المنت
         /// </summary>
@@ -80,5 +88,11 @@ namespace WebScrapper.Application.Interfaces
         /// </summary>
         /// <returns></returns>
         Task InitializeAsync();
+        /// <summary>
+        /// دریافت رکورد های داخل یک جدول بصورت json
+        /// </summary>
+        /// <param name="elementPath"></param>
+        /// <returns></returns>
+        Task<List<string>> GetTableElementRows(ElementAccessPath elementPath);
     }
 }

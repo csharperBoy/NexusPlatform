@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core.Domain\Core.Domain.csproj" />
+    <ProjectReference Include="..\WebScrapper.Application\WebScrapper.Application.csproj" />
   </ItemGroup>
 
 </Project>

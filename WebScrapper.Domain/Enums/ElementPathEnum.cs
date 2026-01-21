@@ -9,9 +9,10 @@ namespace WebScrapper.Domain.Enums
     public enum ElementPathEnum
     {
         FullXpath = 1,
-        localXpath = 2,
-        SelectorXpath = 3,
-        JSpath = 4,
+        Xpath = 2,
+        localXpath = 3,
+        SelectorXpath = 4,
+        JSpath = 5,
     }
 
 }
