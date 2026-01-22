@@ -144,7 +144,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task WaitForLoad(ElementAccessPath elementPath)
+        public async Task WaitForLoad(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {
@@ -160,12 +160,12 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<bool> ElementIsExist(ElementAccessPath elementPath)
+        public async Task<bool> ElementIsExist(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {
 
-                var element = await FindElement(elementPath);
+                var element = await FindElement(elementPath, BaseElement);
 
                 if (element == null)
                     return false;
@@ -181,13 +181,13 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Fill(ElementAccessPath elementPath, string value)
+        public async Task Fill(ElementAccessPath elementPath, string value, IElement? BaseElement = null)
         {
             try
             {
 
                 //await _page.FillAsync(elementPath.FullXpath, value);
-                var element = await FindElement(elementPath);
+                var element = await FindElement(elementPath, BaseElement);
                 await element.FillAsync(value);
             }
             catch (Exception ex)
@@ -198,13 +198,13 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Click(ElementAccessPath elementPath)
+        public async Task Click(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {
 
                 //await _page.ClickAsync(elementPath.FullXpath);
-                var element = await FindElement(elementPath);
+                var element = await FindElement(elementPath, BaseElement);
                 await element.ClickAsync();
             }
             catch (Exception ex)
@@ -213,13 +213,13 @@ namespace WebScrapper.Infrastructure.Services
 
                 throw;
             }
-        }        
-        public async Task<string> InnerText(ElementAccessPath elementPath)
+        }
+        public async Task<string> InnerText(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {
 
-                var element = await FindElement(elementPath);
+                var element = await FindElement(elementPath, BaseElement);
 
                 return await element.InnerTextAsync();
 
@@ -232,47 +232,77 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task<List<string>> GetTableElementRows(ElementAccessPath elementPath)
+        public async Task<TableDto> GetTableContent(TableElementAccessPath tableElementPath)
         {
             try
             {
-                List<string> result = new List<string>();
-                var table = await FindElement(elementPath);
-                var rowPath = elementPath.Children.FirstOrDefault(c => c.ElementType == ElementTypeEnum.Table);
-                var rows = FindElements(rowPath , table);
+                TableDto tableContent = new TableDto();
+                var table = await FindElement(tableElementPath);
+                var rowPath = tableElementPath.rowAccessPath;
+                var rows = FindElements(rowPath, table);
                 foreach (var row in rows)
                 {
-                    string rowJson = "";
-                    foreach (var columnPath in rowPath.Children.Where(c=>c.ElementType == ElementTypeEnum.TableColumn))
+                    TableRowDto tableRow = new TableRowDto();
+                    foreach (var columnPath in rowPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.TableColumn))
                     {
-                        var value = await InnerText(columnPath);
-                        rowJson = AddColumnsToRowJson(rowJson , columnPath.Code, value);
+                        TableColumnDto column = new TableColumnDto();
+                        column.value = await InnerText(columnPath);
+                        column.key = columnPath.Code;
+                        tableRow.columns.Add(column);
                     }
-                    result.Add(rowJson);
+                    tableContent.rows.Add(tableRow);
                 }
-                return result;
+                return tableContent;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetTableElementRows error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
+                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
 
                 throw;
             }
         }
-
-        private string AddColumnsToRowJson(string rowJson, string ColumnName, string Value)
+        public async Task ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null)
         {
             try
             {
+                var table = await FindElement(tableElementPath);
+                var rowPath = tableElementPath.rowAccessPath;
+                var rows = FindElements(rowPath, table);
+                foreach (var row in rows)
+                {
+                    TableRowDto tableRow = new TableRowDto();
+                    if (filterValues != null)
+                    {
 
-               return $"{rowJson} {ColumnName} = {Value}";
+                        foreach (var columnPath in rowPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.TableColumn))
+                        {
+                            TableColumnDto column = new TableColumnDto();
+                            column.value = await InnerText(columnPath);
+                            column.key = columnPath.Code;
+                            tableRow.columns.Add(column);
+                        }
+                    }
+                    if (filterValues == null || !tableRow.columns.Any(r => filterValues.columns.Any(f => f.key == r.key && f.value != r.value)))
+                    {
+                        /// اگر همه شروط برقرار باشد
+                        foreach (var columnPath in rowPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.Button))
+                        {
+                            if (columnPath.Code == buttonColumnKey)
+                            {
+                                await Click(columnPath, row);
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
 
                 throw;
             }
         }
+       
 
         /// <summary>
         /// یافتن المنت
@@ -280,7 +310,7 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<IElement> FindElement(ElementAccessPath elementPath , IElement? BaseElement = null)
+        private async Task<IElement> FindElement(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {
@@ -288,7 +318,7 @@ namespace WebScrapper.Infrastructure.Services
                 switch (elementPath.DefaultAccessPath)
                 {
                     case ElementPathEnum.FullXpath:
-                        if(BaseElement == null)
+                        if (BaseElement == null)
                             element = await _page.QuerySelectorAsync(elementPath.FullXpath);
                         else
                             element = await BaseElement.QuerySelectorAsync(elementPath.FullXpath);
@@ -328,7 +358,7 @@ namespace WebScrapper.Infrastructure.Services
                 }
                 if (element == null)
                 {
-                   
+
                     throw new Exception("Element not found!!!");
                 }
                 return element;
@@ -347,7 +377,7 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<IEnumerable< IElement>> FindElements(ElementAccessPath elementPath, IElement? BaseElement = null)
+        private async Task<IEnumerable<IElement>> FindElements(ElementAccessPath elementPath, IElement? BaseElement = null)
         {
             try
             {

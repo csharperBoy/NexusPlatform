@@ -22,8 +22,8 @@ namespace WebScrapper.Application.DTOs
                                  string? _SelectorXpath = null,
                                  string? _JSpath = null,
                                  string _windowCode = "default",
-                                 string _pageCode = "default",
-                                 List<ElementAccessPath>? _children = null
+                                 string _pageCode = "default"//,
+                                 //List<ElementAccessPath>? _children = null
                                 )
         {
             Code = _Code;
@@ -38,7 +38,7 @@ namespace WebScrapper.Application.DTOs
             JSpath = _JSpath;
             windowCode = _windowCode;
             pageCode = _pageCode;
-            Children = _children;
+            //Children = _children;
             ElementType = _ElementType;
         }
         public ElementPathEnum? DefaultAccessPath { get; set; } = null;
@@ -58,12 +58,12 @@ namespace WebScrapper.Application.DTOs
         public string windowCode { get; set; } = "default";
 
         public string pageCode { get; set; } = "default";
-        public List<ElementAccessPath>? Children { get; set; } = null;
+        //public List<ElementAccessPath>? Children { get; set; } = null;
 
 
-        public string GenerateMixedXpath(string parentXpath , string param)
-        {
-            return $"{parentXpath}{localXpathPart1}{param}{localXpathPart2}";
-        }
+        //public string GenerateMixedXpath(string parentXpath , string param)
+        //{
+        //    return $"{parentXpath}{localXpathPart1}{param}{localXpathPart2}";
+        //}
     }
 }

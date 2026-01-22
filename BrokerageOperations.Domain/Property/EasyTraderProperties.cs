@@ -68,22 +68,20 @@ namespace BrokerageOperations.Domain.Property
         //public static ElementAccessPath TodayOrdersBox = new ElementAccessPath("کادر سفارشات روز", "/html/body/app-root/main-layout/main/div[3]/d-order-list/div/div[2]" ,"این المنت شامل تمام سفارشات روز داخل خودش است");
         //public static ElementAccessPath TodayOrder = new ElementAccessPath("سفارش داخل کادر سفارشات روز", "/html/body/app-root/main-layout/main/div[3]/d-order-list/div/div[2]/div[1]/div/div", "این المنت شامل تمام سفارشات روز داخل خودش است" , WebScrapper.Domain.Enums.ElementPathEnum.localXpath , "xpath=./div[contains(@class,'row-list__item-content')]", "/div[" , "]/div/div");
 
-        public static ElementAccessPath TodayOrdersBox = new ElementAccessPath(
+        public static TableElementAccessPath TodayOrdersTable = new TableElementAccessPath(
             "کادر سفارشات روز",
-            "/html/body/app-root/main-layout/main/div[3]/d-order-list/div/div[2]", 
-            "این المنت شامل تمام سفارشات روز داخل خودش است" ,
+            _FullXpath: "/html/body/app-root/main-layout/main/div[3]/d-order-list/div/div[2]",
+            _Description:  "این المنت شامل تمام سفارشات روز داخل خودش است",
             _Code: "table",
             _ElementType: ElementTypeEnum.Table,
-            _children: new List<ElementAccessPath>()
-            {
-                new ElementAccessPath("سفارش داخل کادر سفارشات روز",        
+            _rowAccessPath: new TableRowElementAccessPath("سفارش داخل کادر سفارشات روز",
                     _Code: "rows",
                     _ElementType: ElementTypeEnum.TableRow,
-                    _Description: "این المنت شامل تمام سفارشات روز داخل خودش است" ,
-                   _DefaultAccessPath: ElementPathEnum.Xpath ,
-                   _xpath : "xpath=./div[contains(@class,'row-list__item-content')]",
-                   _localXpathPart1: "/div[" , _localXpathPart2: "]/div/div",
-                   _children: new List<ElementAccessPath>()
+                    _Description: "این المنت شامل تمام سفارشات روز داخل خودش است",
+                   _DefaultAccessPath: ElementPathEnum.Xpath,
+                   _xpath: "xpath=./div[contains(@class,'row-list__item-content')]",
+                   _localXpathPart1: "/div[", _localXpathPart2: "]/div/div",
+                   _columnsAccessPath: new List<ElementAccessPath>()
                    {
                        new ElementAccessPath("عنوان سهم",
                            _Code: "StockTitle",
@@ -111,15 +109,18 @@ namespace BrokerageOperations.Domain.Property
                            ),
                        new ElementAccessPath("دکمه حذف سفارش",
                            _Code: "delete",
-                           _ElementType: ElementTypeEnum.TableColumn,
+                           _ElementType: ElementTypeEnum.Button,
                            _DefaultAccessPath: ElementPathEnum.Xpath ,
                            _xpath: "xpath=./div[1]/div[2]/div/svg-icon[3]"
                            ),
+                        new ElementAccessPath("دکمه ویرایش سفارش",
+                           _Code: "edit",
+                           _ElementType: ElementTypeEnum.Button,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[1]/div[2]/div/svg-icon[2]"
+                           ),
                    }
-                   ),
-                
-
-            }
+                   )
             );
 
         #endregion
