@@ -78,6 +78,7 @@ namespace BrokerageOperations.Infrastructure.Service
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, $"CancelOrders error in EasyTraderService - stockTitle= {stock.Title} - price = {price} - quantity = {quantity} ");
 
                 throw;
             }

@@ -231,8 +231,10 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
+        
+        #region عملیات های مربوط به جداول
 
-        public async Task<TableDto> GetTableContent(TableElementAccessPath tableElementPath)
+        public async Task<TableDto> Table_GetTableContent(TableElementAccessPath tableElementPath, TableRowDto? filterValues = null)
         {
             try
             {
@@ -246,22 +248,25 @@ namespace WebScrapper.Infrastructure.Services
                     foreach (var columnPath in rowPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.TableColumn))
                     {
                         TableColumnDto column = new TableColumnDto();
-                        column.value = await InnerText(columnPath);
+                        column.value = await InnerText(columnPath, row);
                         column.key = columnPath.Code;
                         tableRow.columns.Add(column);
                     }
-                    tableContent.rows.Add(tableRow);
+                    if (filterValues == null || !tableRow.columns.Any(r => filterValues.columns.Any(f => f.key == r.key && f.value != r.value)))
+                    {
+                        tableContent.rows.Add(tableRow);
+                    }
                 }
                 return tableContent;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
+                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {tableElementPath.Title} - page = {tableElementPath.pageCode} - window = {tableElementPath.windowCode}");
 
                 throw;
             }
         }
-        public async Task ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null)
+        public async Task Table_ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null)
         {
             try
             {
@@ -297,12 +302,65 @@ namespace WebScrapper.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
+                _logger.LogError(ex, $"GetTableContent error in PlaywrightScrapperService - element = {tableElementPath.Title} - page = {tableElementPath.pageCode} - window = {tableElementPath.windowCode}");
 
                 throw;
             }
         }
-       
+      
+        public async Task<TableRowDto> Table_GetTableRowContent(TableRowElementAccessPath tableRowElementPath)
+        {
+            try
+            {
+                TableRowDto rowContent = new TableRowDto();
+                var row = FindElement(tableRowElementPath);
+
+                foreach (var columnPath in tableRowElementPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.TableColumn))
+                {
+                    TableColumnDto column = new TableColumnDto();
+                    column.value = await InnerText(columnPath, row);
+                    column.key = columnPath.Code;
+                    rowContent.columns.Add(column);
+                }
+
+                return rowContent;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"GetTableRowContent error in PlaywrightScrapperService - element = {tableRowElementPath.Title} - page = {tableRowElementPath.pageCode} - window = {tableRowElementPath.windowCode}");
+
+                throw;
+            }
+        }
+        public async Task Table_ClickOnTableRowSubElement(TableRowElementAccessPath tableRowElementPath, string buttonColumnKey)
+        {
+            try
+            {
+                var rows = FindElement(tableRowElementPath);
+                foreach (var row in rows)
+                {
+                    TableRowDto tableRow = new TableRowDto();
+
+                    foreach (var columnPath in tableRowElementPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.Button))
+                    {
+                        if (columnPath.Code == buttonColumnKey)
+                        {
+                            await Click(columnPath, row);
+                        }
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"ClickOnTableRowSubElement error in PlaywrightScrapperService - element = {tableRowElementPath.Title} - page = {tableRowElementPath.pageCode} - window = {tableRowElementPath.windowCode}");
+
+                throw;
+            }
+        }
+        #endregion
+
+        #region اختصاصی همین کلاس
 
         /// <summary>
         /// یافتن المنت
@@ -437,6 +495,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
+        #endregion
 
     }
 }

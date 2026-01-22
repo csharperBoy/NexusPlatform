@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Domain.Common;
+using WebScrapper.Domain.Enums;
 using static System.Net.Mime.MediaTypeNames;
 namespace WebScrapper.Application.Interfaces
 {
@@ -89,29 +90,43 @@ namespace WebScrapper.Application.Interfaces
         /// </summary>
         /// <returns></returns>
         Task InitializeAsync();
+
+
+
+        #region عملیات های مربوط به جداول
+        
         /// <summary>
         /// دریافت رکورد های داخل یک جدول بصورت ساختار تعریف شده
         ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
         /// </summary>
         /// <param name="tableElementPath">مشخصات دسترسی به جدول</param>
+        /// <param name="filterValues">فیلتر برای اعمال روی نتیجه</param>
         /// <returns></returns>
-        Task<TableDto> GetTableContent(TableElementAccessPath tableElementPath);
+        Task<TableDto> Table_GetTableContent(TableElementAccessPath tableElementPath, TableRowDto? filterValues = null);
+         /// <summary>
+         ///  کلیک بر روی یک دکمه داخل ردیف های جدول
+         ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
+         /// </summary>
+         /// <param name="tableElementPath"> مشخصات دسترسی به المنت جدول</param>
+         /// <param name="buttonColumnKey"> کلید تعریف شده در پراپرتی های دسترسی به جدول مربوط به همان دکمه مورد نظر که میخواهیم بر رویش کلیک شود</param>
+         /// <param name="filterValues">شروطی که باید مطابق بر اون بر روی دکمه هر ردیف کلیک شود</param>
+         /// <returns></returns>
+        Task Table_ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null);
         /// <summary>
-        ///
+        /// دریافت اطلاعات یک ردیف خاص از یک جدول
+        /// باید برای فراخوانی این متد از طریق TableElementAccessPath باید با متد مخصوص داخلش اطلاعات دسترسی اون ردیف مورد نظر ساخته بشه
         /// </summary>
-        /// <param name="elementPath"></param>
-        /// <param name="columnKey">کلید ستون دکمه</param>
-        /// <param name="value">فیلتر مورد نظر برای پیدا کردن رکورد</param>
+        /// <param name="tableRowElementPath">اطلاعات دسترسی به ردیف مورد نظر جدول</param>
         /// <returns></returns>
-
+        Task<TableRowDto> Table_GetTableRowContent(TableRowElementAccessPath tableRowElementPath);
         /// <summary>
-        ///  کلیک بر روی یک دکمه داخل ردیف های جدول
-        ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
+        /// کلیک روی دکمه خاص از ردیف مشخص جدول
+        /// باید برای فراخوانی این متد از طریق TableElementAccessPath باید با متد مخصوص داخلش اطلاعات دسترسی اون ردیف مورد نظر ساخته بشه
         /// </summary>
-        /// <param name="tableElementPath"> مشخصات دسترسی به المنت جدول</param>
+        /// <param name="tableRowElementPath">اطلاعات دسترسی به ردیف مورد نظر جدول</param>
         /// <param name="buttonColumnKey"> کلید تعریف شده در پراپرتی های دسترسی به جدول مربوط به همان دکمه مورد نظر که میخواهیم بر رویش کلیک شود</param>
-        /// <param name="filterValues">شروطی که باید مطابق بر اون بر روی دکمه هر ردیف کلیک شود</param>
         /// <returns></returns>
-        Task ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null);
+        Task Table_ClickOnTableRowSubElement(TableRowElementAccessPath tableRowElementPath, string buttonColumnKey);
+        #endregion
     }
 }
