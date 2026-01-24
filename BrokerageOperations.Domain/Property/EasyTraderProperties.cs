@@ -215,39 +215,163 @@ namespace BrokerageOperations.Domain.Property
         /// دکمه اعمال فیلتر
         /// </summary>
         public static ElementAccessPath OrderHistoryFilterExecuteButton = new ElementAccessPath("دکمه اعمال فیلتر", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/button");
-
+        /// <summary>
+        /// جدول تاریخچه سفارشات
+        /// </summary>
         public static TableElementAccessPath OrderHistoryTable = new TableElementAccessPath(
            "جدول تاریخچه سفارشات",
-          _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[1]/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]/div"
-        ,
-           _Code: "table",
+          _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[1]/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]/div",
+          _Code: "table",
            _ElementType: ElementTypeEnum.Table,
-           _rowAccessPath: new TableRowElementAccessPath("نماد جستجو شده",
+           _rowAccessPath: new TableRowElementAccessPath("ردیف سفارش",
                    _Code: "rows",
                    _ElementType: ElementTypeEnum.TableRow,
-                   _Description: "این المنت شامل تمام نماد های داخل جدول است",
+                   _Description: "این المنت شامل تمام سفارش های داخل جدول است",
                   _DefaultAccessPath: ElementPathEnum.Xpath,
-                  _xpath: "xpath=./div[contains(@class,'list-group-item')]",
-                  _localXpathPart1: "/lib-search-panel-item[", _localXpathPart2: "]",
+                  _xpath: "xpath=./div[contains(@role=,'row')]",
+                  _localXpathPart1: "/div[", _localXpathPart2: "]",
                   _columnsAccessPath: new List<ElementAccessPath>()
                   {
-                       new ElementAccessPath("عنوان سهم",
+                       new ElementAccessPath("تاریخ",
+                           _Code: "Date",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[1]/span"
+                           ),
+                       new ElementAccessPath("ساعت",
+                           _Code: "Time",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[2]"
+                           ),
+                       new ElementAccessPath("سمت سفارش",
+                           _Code: "Side",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[3]/app-ag-order-side-render/div/div"
+                           ),
+                       new ElementAccessPath("عنوان نماد",
                            _Code: "StockTitle",
                            _ElementType: ElementTypeEnum.TableColumn,
                            _DefaultAccessPath: ElementPathEnum.Xpath ,
-                           _xpath: "xpath=./div/a/div[1]/div/div/div/b"
+                           _xpath: "xpath=./div[4]/span/span"
                            ),
-                       new ElementAccessPath("انتخاب سهم",
-                           _Code: "StockSelect",
-                           _ElementType: ElementTypeEnum.Button,
+                       new ElementAccessPath("حجم کل",
+                           _Code: "OrderVolum",
+                           _ElementType: ElementTypeEnum.TableColumn,
                            _DefaultAccessPath: ElementPathEnum.Xpath ,
-                           _xpath: "xpath=./div/a"
+                           _xpath: "xpath=./div[5]"
+                           ),
+                       new ElementAccessPath("قیمت",
+                           _Code: "Price",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[6]"
+                           ),
+                       new ElementAccessPath("حجم انجام شده",
+                           _Code: "DoneVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[7]"
                            )
                   }
            ));
-       
-        "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[1]/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]/div/div[1]"
-        "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[1]/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]/div/div[2]"
+        /// <summary>
+        /// دکمه نمایش 100 رکورد در هر صفحه
+        /// </summary>
+        public static ElementAccessPath RowPerPage100Button = new ElementAccessPath("دکمه 100 رکورد در هر صفحه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[1]/button[4]");
+        /// <summary>
+        /// دکمه نمایش 50 رکورد در هر صفحه
+        /// </summary>
+        public static ElementAccessPath RowPerPage50Button = new ElementAccessPath("دکمه 50 رکورد در هر صفحه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[1]/button[3]");
+        /// <summary>
+        /// دکمه نمایش 20 رکورد در هر صفحه
+        /// </summary>
+        public static ElementAccessPath RowPerPage20Button = new ElementAccessPath("دکمه 20 رکورد در هر صفحه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[1]/button[2]");
+        /// <summary>
+        /// دکمه نمایش 10 رکورد در هر صفحه
+        /// </summary>
+        public static ElementAccessPath RowPerPage10Button = new ElementAccessPath("دکمه 10 رکورد در هر صفحه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[1]/button[1]");
+        /// <summary>
+        /// رفتن به صفحه قبل
+        /// </summary>
+        public static ElementAccessPath PrevPageButton = new ElementAccessPath("رفتن به صفحه قبل", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[2]/div/app-pagination/div/button[1]/ui-chevron/svg-icon/svg");
+        /// <summary>
+        /// رفتن به صفحه بعد
+        /// </summary>
+        public static ElementAccessPath NextPageButton = new ElementAccessPath("رفتن به صفحه بعد", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[2]/div/app-pagination/div/button[2]/ui-chevron/svg-icon/svg");
+        #endregion
+        #region خواندن اطلاعات سهم و آپشن
+        public static ElementAccessPath StockTitle = new ElementAccessPath("عنوان سهم", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[1]/div/div[2]/app-symbol/a/div/div/div");
+        public static ElementAccessPath LastPrice = new ElementAccessPath("قیمت آخرین معامله", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[1]/div/div[2]/div/span");
+        public static ElementAccessPath ClosePrice = new ElementAccessPath("قیمت پایانی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/div/symbol-header-price/div/div[1]/span[3]");
+        public static ElementAccessPath TotalVolum = new ElementAccessPath("حجم کل معاملات", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/div/symbol-header-price/div/div[2]/span[2]");
+        public static ElementAccessPath ZeroPrice = new ElementAccessPath("قیمت بازگشایی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/symbol-detail-candle/div/div/div[1]/div[2]/text()");
+        public static ElementAccessPath NavPrice = new ElementAccessPath("nav ابطال", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/symbol-header-nav/div/div[1]/span[2]");
+        public static TableElementAccessPath TopFiveOrderTable = new TableElementAccessPath(
+             "جدول پنج مظنه برتر",
+            _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/table/tbody",
+
+            _Code: "table",
+             _ElementType: ElementTypeEnum.Table,
+             _rowAccessPath: new TableRowElementAccessPath("ردیف سفارشات",
+                     _Code: "rows",
+                     _ElementType: ElementTypeEnum.TableRow,
+                     _Description: "این المنت شامل تمام سفارش های داخل جدول است",
+                    _DefaultAccessPath: ElementPathEnum.Xpath,
+                    _xpath: "xpath=./tr",
+                    _localXpathPart1: "/tr[", _localXpathPart2: "]",
+                    _columnsAccessPath: new List<ElementAccessPath>()
+                    {
+                       new ElementAccessPath("تعداد - خرید",
+                           _Code: "BuyCount",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[1]"
+                           ),
+                       new ElementAccessPath("تعداد - فروش",
+                           _Code: "SellCount",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[4]"
+                           ),
+                       new ElementAccessPath("حجم - خرید",
+                           _Code: "BuyVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[2]/div/div[2]/span[2]"
+                           ),
+                       new ElementAccessPath("حجم - فروش",
+                           _Code: "SellVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[3]/div/div[2]/span[2]"
+                           ),
+                       new ElementAccessPath("قیمت - خرید",
+                           _Code: "BuyPrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[2]/div/div[2]/span[1]"
+                           ),
+                       new ElementAccessPath("قیمت - فروش",
+                           _Code: "SellPrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./td[3]/div/div[2]/span[1]"
+                           ),
+
+                    }
+             ));
+        public static ElementAccessPath TotalBuyOrderVolum = new ElementAccessPath("مجموع حجم سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[2]");
+        public static ElementAccessPath TotalBuyOrderCount = new ElementAccessPath("مجموع تعداد سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[1]");
+        public static ElementAccessPath TotalSellOrderVolume = new ElementAccessPath("مجموع حجم سفارشات فروش", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[3]");
+        public static ElementAccessPath TotalSellOrderCount = new ElementAccessPath("مجموع تعداد سفارشات فروش", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[4]");
+        #region اطلاعات قرارداد - برای آپشن ها
+        public static ElementAccessPath ContractTradesValue = new ElementAccessPath("ارزش معاملات", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[3]/div[2]/span[2]");
+        public static ElementAccessPath ContractOpenPosition = new ElementAccessPath("موقعیت های باز", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[4]/div[1]/span[2]");
+        public static ElementAccessPath ContractOpenPositionGroup = new ElementAccessPath("موقعیت های باز هم گروه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[6]/div[1]/span[2]");
+
+        #endregion
         #endregion
     }
 }
