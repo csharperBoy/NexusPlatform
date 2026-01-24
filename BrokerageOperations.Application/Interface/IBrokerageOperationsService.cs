@@ -38,6 +38,13 @@ namespace BrokerageOperations.Application.Interface
         Task<SnapShotDto> GetSnapShotFromTrade(StockDto stock);
 
         /// <summary>
+        /// گرفتن اسنپ شات از وضعیت معاملات سهام های داخل یک دیده بان که شامل تمام مراحل مورد نیاز با توجه به سامانه خواهد بود
+        /// </summary>
+        /// <param name="MarketWatchTitle">عنوان دیده بان</param>
+        /// <returns></returns>
+        Task<List<SnapShotDto>> GetSnapShotFromMarketWatch(string MarketWatchTitle);
+
+        /// <summary>
         /// دریافت لیست سفارشات
         /// </summary>
         /// <param name="from">از تاریخ</param>

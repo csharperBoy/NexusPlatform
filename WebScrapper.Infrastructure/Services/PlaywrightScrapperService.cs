@@ -358,6 +358,24 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
+        public async Task<int> Table_GetTableRowCount(TableElementAccessPath tableElementPath)
+        {
+            try
+            {
+                var table = await FindElement(tableElementPath);
+                var rowPath = tableElementPath.rowAccessPath;
+                var rows = FindElements(rowPath, table);
+                
+                return rows.count();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Table_GetTableRowCount error in PlaywrightScrapperService - element = {tableElementPath.Title} - page = {tableElementPath.pageCode} - window = {tableElementPath.windowCode}");
+
+                throw;
+            }
+        }
+
         #endregion
 
         #region اختصاصی همین کلاس

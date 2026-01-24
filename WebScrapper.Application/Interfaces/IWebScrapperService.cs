@@ -127,6 +127,12 @@ namespace WebScrapper.Application.Interfaces
         /// <param name="buttonColumnKey"> کلید تعریف شده در پراپرتی های دسترسی به جدول مربوط به همان دکمه مورد نظر که میخواهیم بر رویش کلیک شود</param>
         /// <returns></returns>
         Task Table_ClickOnTableRowSubElement(TableRowElementAccessPath tableRowElementPath, string buttonColumnKey);
+        /// <summary>
+        /// دریافت تعداد رکورد های داخل یک جدول
+        /// </summary>
+        /// <param name="tableElementPath">اطلاعات دسترسی به جدول</param>
+        /// <returns></returns>
+        Task<int> Table_GetTableRowCount(TableElementAccessPath tableElementPath);
         #endregion
     }
 }

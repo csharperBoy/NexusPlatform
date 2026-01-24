@@ -115,5 +115,10 @@ namespace BrokerageOperations.Infrastructure.Service
         {
             throw new NotImplementedException();
         }
+
+        public Task<List<SnapShotDto>> GetSnapShotFromMarketWatch(string MarketWatchTitle)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

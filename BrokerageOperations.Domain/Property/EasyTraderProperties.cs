@@ -301,6 +301,7 @@ namespace BrokerageOperations.Domain.Property
         /// </summary>
         public static ElementAccessPath NextPageButton = new ElementAccessPath("رفتن به صفحه بعد", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[2]/div/app-pagination/div/button[2]/ui-chevron/svg-icon/svg");
         #endregion
+
         #region خواندن اطلاعات سهم و آپشن
         /// <summary>
         /// عنوان سهم
@@ -415,6 +416,140 @@ namespace BrokerageOperations.Domain.Property
         public static ElementAccessPath ContractOpenPositionGroup = new ElementAccessPath("موقعیت های باز هم گروه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[6]/div[1]/span[2]");
 
         #endregion
+        #endregion
+
+        #region خواندن دیده بان
+        /// <summary>
+        /// لیست دیده بان ها
+        /// </summary>
+        public static TableElementAccessPath MarketWatchHeaderTable = new TableElementAccessPath(
+           "لیست دیده بان ها",
+          _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[1]/div/as-split/as-split-area/d-portfolio-watch-container/d-market-watch-route-gateway/d-market-watch-new-container/div/market-watch-header/div/div[1]/div/div",
+
+          _Code: "table",
+           _ElementType: ElementTypeEnum.Table,
+           _rowAccessPath: new TableRowElementAccessPath("ردیف سفارش",
+                   _Code: "rows",
+                   _ElementType: ElementTypeEnum.TableRow,
+                   _Description: "این المنت شامل تمام سفارش های داخل جدول است",
+                  _DefaultAccessPath: ElementPathEnum.Xpath,
+                  _xpath: "xpath=./div[contains(@class=,'tab')]",
+                  _localXpathPart1: "/div[", _localXpathPart2: "]",
+                  _columnsAccessPath: new List<ElementAccessPath>()
+                  {
+                       new ElementAccessPath("عنوان",
+                           _Code: "Title",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./span"
+                           ),
+                      new ElementAccessPath("انتخاب دیده بان",
+                           _Code: "SelectWatch",
+                           _ElementType: ElementTypeEnum.Button,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./span"
+                           )
+                  }
+           ));
+        /// <summary>
+        /// جدول نمادهای داخل دیده بان - قسمت سمت راست که فقط شامل عنوان است
+        /// </summary>
+        public static TableElementAccessPath MarketWatchTableRightPart = new TableElementAccessPath(
+           "لیست نماد های داخل دیده بان",
+          _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[1]/div/as-split/as-split-area/d-portfolio-watch-container/d-market-watch-route-gateway/d-market-watch-new-container/div/div/market-watch-symbols/div/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[3]",
+                     _Code: "table",
+           _ElementType: ElementTypeEnum.Table,
+           _rowAccessPath: new TableRowElementAccessPath("ردیف نمادها",
+                   _Code: "rows",
+                   _ElementType: ElementTypeEnum.TableRow,
+                   _Description: "این المنت شامل تمام عناوین نماد های داخل جدول است",
+                  _DefaultAccessPath: ElementPathEnum.Xpath,
+                  _xpath: "xpath=./div[contains(@role=,'row')]",
+                  _localXpathPart1: "/div[", _localXpathPart2: "]",
+                  _columnsAccessPath: new List<ElementAccessPath>()
+                  {
+                       new ElementAccessPath("عنوان",
+                           _Code: "Title",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div/div/span/symbol-name-renderer/symbol-state-plus-alarm-and-note/app-symbol/a/div/div/div"
+                           ),
+                      new ElementAccessPath("انتخاب",
+                           _Code: "Select",
+                           _ElementType: ElementTypeEnum.Button,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div/div/span/symbol-name-renderer/symbol-state-plus-alarm-and-note/app-symbol/a/div/div/div"
+                           )
+                  }
+           ));
+        /// <summary>
+        /// جدول نمادهای داخل دیده بان - قسمت سمت چپ که  شامل مقادیر است
+        /// </summary>
+        public static TableElementAccessPath MarketWatchTableLeftPart = new TableElementAccessPath(
+           "لیست نماد های داخل دیده بان",
+           _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[1]/div/as-split/as-split-area/d-portfolio-watch-container/d-market-watch-route-gateway/d-market-watch-new-container/div/div/market-watch-symbols/div/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]",
+           _Code: "table",
+           _ElementType: ElementTypeEnum.Table,
+           _rowAccessPath: new TableRowElementAccessPath("ردیف نمادها",
+                   _Code: "rows",
+                   _ElementType: ElementTypeEnum.TableRow,
+                   _Description: "این المنت شامل تمام مقادیر نماد های داخل جدول است",
+                  _DefaultAccessPath: ElementPathEnum.Xpath,
+                  _xpath: "xpath=./div[contains(@role=,'row')]",
+                  _localXpathPart1: "/div/div[", _localXpathPart2: "]",
+                  _columnsAccessPath: new List<ElementAccessPath>()
+                  {
+                       new ElementAccessPath("حجم معاملات",
+                           _Code: "TotalTradeVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[1]/bold-blink-formatted-value-renderer/div/div"
+                           ),
+                      new ElementAccessPath("ارزش معاملات",
+                           _Code: "TotalTradeValue",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[2]/bold-blink-formatted-value-renderer/div/div"
+                           ),
+                      new ElementAccessPath("آخرین قیمت",
+                           _Code: "LastPrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[3]/value-percent-renderer/div/div/div[2]"
+                           ),
+                      new ElementAccessPath("قیمت پایانی",
+                           _Code: "ClosePrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[4]/value-percent-renderer/div/div/div[2]"
+                           ),
+                      new ElementAccessPath("حجم تقاضا",
+                           _Code: "TopBuyOrderVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[6]/bold-blink-formatted-value-renderer/div/div"
+                           ),
+                      new ElementAccessPath("قیمت تقاضا",
+                           _Code: "TopBuyOrderPrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[7]/bold-blink-formatted-value-renderer/div/div"
+                           ),
+                      new ElementAccessPath("حجم عرضه",
+                           _Code: "TopSellOrderVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[8]/bold-blink-formatted-value-renderer/div/div"
+                           ),
+                      new ElementAccessPath("قیمت عرضه",
+                           _Code: "TopSellOrderPrice",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[9]/bold-blink-formatted-value-renderer/div/div"
+                           )
+                  }
+           ));
+
         #endregion
     }
 }
