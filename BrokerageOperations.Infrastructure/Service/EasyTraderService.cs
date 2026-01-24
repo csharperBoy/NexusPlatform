@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
 
 namespace BrokerageOperations.Infrastructure.Service
@@ -70,11 +71,47 @@ namespace BrokerageOperations.Infrastructure.Service
                 throw;
             }
         }
-        public Task CancelOrders(StockDto? stock = null, int? price = null, int? quantity = null)
+        public async Task CancelOrders(StockDto? stock = null, int? price = null, int? quantity = null)
         {
             try
             {
+                TableRowDto? filtere = null;
+                if (stock != null || price != null || quantity != null)
+                {
+                    filtere = new TableRowDto();
 
+                    if (stock != null)
+                    {
+                        filtere.columns.Add(
+                            new TableColumnDto()
+                            {
+                                key = "StockTitle",
+                                value = stock.Title
+                            });
+                    }
+                    if (price != null)
+                    {
+
+
+                        filtere.columns.Add(
+                            new TableColumnDto()
+                            {
+                                key = "VolumOrder",
+                                value = quantity.ToString()
+                            });
+                    }
+                    if (quantity != null)
+                    {
+                        filtere.columns.Add(
+                            new TableColumnDto()
+                            {
+                                key = "Price",
+                                value = price.ToString()
+                            });
+                    }
+                }
+                await _scrapper.Table_ClickOnTableSubElement(EasyTraderProperties.TodayOrdersTable, "Select", filtere);
+                await _scrapper.Table_ClickOnTableSubElement(EasyTraderProperties.TodayOrdersTable, "delete", filtere);
             }
             catch (Exception ex)
             {
@@ -84,9 +121,36 @@ namespace BrokerageOperations.Infrastructure.Service
             }
         }
 
-        public Task<IEnumerable<OrderDto>> GetOrders(DateTime? from = null, DateTime? to = null, StockDto? stock = null)
+        public async Task<IEnumerable<OrderDto>> GetOrders(DateTime? from = null, DateTime? to = null, StockDto? stock = null)
         {
-            throw new NotImplementedException();
+            try
+            {
+                TableRowDto? filtere = null;
+                if (stock != null || from != null || to != null)
+                {
+                    filtere = new TableRowDto();
+
+                    if (stock != null)
+                    {
+                        filtere.columns.Add(
+                            new TableColumnDto()
+                            {
+                                key = "StockTitle",
+                                value = stock.Title
+                            });
+                    }
+                    
+                }
+                await EnsureOrderPage();
+
+                await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable)
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"GetOrders error in EasyTraderService - stockTitle= {stock.Title} - price = {price} - quantity = {quantity} ");
+
+                throw;
+            }
         }
 
         public Task<SnapShotDto> GetSnapShotFromTrade(StockDto stock)

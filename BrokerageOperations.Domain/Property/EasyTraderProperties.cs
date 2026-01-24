@@ -183,6 +183,12 @@ namespace BrokerageOperations.Domain.Property
                            _DefaultAccessPath: ElementPathEnum.Xpath ,
                            _xpath: "xpath=./div[4]/span[1]"
                            ),
+                        new ElementAccessPath("انتخاب ",
+                           _Code: "Select",
+                           _ElementType: ElementTypeEnum.Button,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath=./div[1]/div[1]/h6"
+                           ),
                        new ElementAccessPath("دکمه حذف سفارش",
                            _Code: "delete",
                            _ElementType: ElementTypeEnum.Button,
