@@ -302,12 +302,33 @@ namespace BrokerageOperations.Domain.Property
         public static ElementAccessPath NextPageButton = new ElementAccessPath("رفتن به صفحه بعد", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[2]/div[2]/div/app-pagination/div/button[2]/ui-chevron/svg-icon/svg");
         #endregion
         #region خواندن اطلاعات سهم و آپشن
+        /// <summary>
+        /// عنوان سهم
+        /// </summary>
         public static ElementAccessPath StockTitle = new ElementAccessPath("عنوان سهم", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[1]/div/div[2]/app-symbol/a/div/div/div");
+        /// <summary>
+        /// قیمت آخرین معامله
+        /// </summary>
         public static ElementAccessPath LastPrice = new ElementAccessPath("قیمت آخرین معامله", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[1]/div/div[2]/div/span");
+        /// <summary>
+        /// قیمت پایانی
+        /// </summary>
         public static ElementAccessPath ClosePrice = new ElementAccessPath("قیمت پایانی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/div/symbol-header-price/div/div[1]/span[3]");
+        /// <summary>
+        /// حجم کل معاملات
+        /// </summary>
         public static ElementAccessPath TotalVolum = new ElementAccessPath("حجم کل معاملات", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/div/symbol-header-price/div/div[2]/span[2]");
+        /// <summary>
+        /// قیمت بازگشایی
+        /// </summary>
         public static ElementAccessPath ZeroPrice = new ElementAccessPath("قیمت بازگشایی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/symbol-detail-candle/div/div/div[1]/div[2]/text()");
+        /// <summary>
+        /// nav ابطال
+        /// </summary>
         public static ElementAccessPath NavPrice = new ElementAccessPath("nav ابطال", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[1]/lib-symbol-header/div[2]/symbol-header-nav/div/div[1]/span[2]");
+        /// <summary>
+        /// جدول پنج مظنه برتر
+        /// </summary>
         public static TableElementAccessPath TopFiveOrderTable = new TableElementAccessPath(
              "جدول پنج مظنه برتر",
             _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/table/tbody",
@@ -362,13 +383,35 @@ namespace BrokerageOperations.Domain.Property
 
                     }
              ));
+        /// <summary>
+        /// مجموع حجم سفارشات خرید
+        /// </summary>
         public static ElementAccessPath TotalBuyOrderVolum = new ElementAccessPath("مجموع حجم سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[2]");
+        /// <summary>
+        /// مجموع تعداد سفارشات خرید
+        /// </summary>
         public static ElementAccessPath TotalBuyOrderCount = new ElementAccessPath("مجموع تعداد سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[1]");
+        /// <summary>
+        /// مجموع حجم سفارشات فروش
+        /// </summary>
         public static ElementAccessPath TotalSellOrderVolume = new ElementAccessPath("مجموع حجم سفارشات فروش", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[3]");
+        /// <summary>
+        /// مجموع تعداد سفارشات فروش
+        /// </summary>
         public static ElementAccessPath TotalSellOrderCount = new ElementAccessPath("مجموع تعداد سفارشات فروش", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[4]");
+
         #region اطلاعات قرارداد - برای آپشن ها
+        /// <summary>
+        /// ارزش معاملات
+        /// </summary>
         public static ElementAccessPath ContractTradesValue = new ElementAccessPath("ارزش معاملات", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[3]/div[2]/span[2]");
+        /// <summary>
+        /// موقعیت های باز
+        /// </summary>
         public static ElementAccessPath ContractOpenPosition = new ElementAccessPath("موقعیت های باز", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[4]/div[1]/span[2]");
+        /// <summary>
+        /// موقعیت های باز هم گروه
+        /// </summary>
         public static ElementAccessPath ContractOpenPositionGroup = new ElementAccessPath("موقعیت های باز هم گروه", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[4]/symbol-contract-info/div/div/div/div[6]/div[1]/span[2]");
 
         #endregion
