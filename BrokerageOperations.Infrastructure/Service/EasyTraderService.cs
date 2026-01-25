@@ -4,20 +4,23 @@ using BrokerageOperations.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
+using WebScrapper.Domain.Enums;
 
 namespace BrokerageOperations.Infrastructure.Service
 {
     public class EasyTraderService : IBrokerageOperationsService
     {
-        private IWebScrapperServicee _scrapper;
+        private IWebScrapperServicee<Element> _scrapper;
         private ILogger<EasyTraderService> _logger;
         //private EasyTraderProperties _easyTraderProperties;
-        public EasyTraderService(IWebScrapperServicee scrapper, ILogger<EasyTraderService> logger)
+        public EasyTraderService(IWebScrapperServicee<Element> scrapper, ILogger<EasyTraderService> logger)
         {
             _logger = logger;
             _scrapper = scrapper;
@@ -125,9 +128,11 @@ namespace BrokerageOperations.Infrastructure.Service
         {
             try
             {
+                /*
                 TableRowDto? filtere = null;
-                if (stock != null || from != null || to != null)
+                if (stock != null)
                 {
+                    
                     filtere = new TableRowDto();
 
                     if (stock != null)
@@ -140,14 +145,136 @@ namespace BrokerageOperations.Infrastructure.Service
                             });
                     }
                     
-                }
-                await EnsureOrderPage();
 
-                await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable)
+
+                }
+                */
+                IEnumerable<OrderDto> orders = new List<OrderDto>();
+                await EnsureOrderPage();
+                if (stock != null)
+                {
+                    await _scrapper.Click(EasyTraderProperties.OrderHistoryStockTitleInput);
+                    await _scrapper.Fill(EasyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
+                }
+                if (from != null)
+                {
+
+                }
+                if (to != null)
+                {
+
+                }
+                TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
+                foreach (var row in tableData.rows)
+                {
+                    OrderDto order = new OrderDto();
+                    DateOnly date = new DateOnly();
+                    TimeOnly time = new TimeOnly();
+                    foreach (var column in row.columns)
+                    {
+                        switch (column.key)
+                        {
+                            case "Date":
+                                date = ConvertToDateOnly( column.value);
+                                break;
+                            case "Time":
+                                time = TimeOnly.Parse(column.value);
+                                break;
+                            case "Side":
+                                order.OrderSide = column.value.Trim() == "فروش" ? Shared.Enums.OrderSideEnum.sell : Shared.Enums.OrderSideEnum.buy;
+                                break;
+                            case "StockTitle":
+                                order.StockTitle = column.value.Trim();
+                                break;
+                            case "OrderVolum":
+                                order.BaseOrderQuantity = StringToInt( column.value.Trim());
+                                break;
+                            case "Price":
+                                order.PriceOfUnit = StringToInt(column.value.Trim());
+                                break;
+                            case "DoneVolume":
+                                order.DoneOrderQuantity = StringToInt(column.value.Trim());
+                                break;
+                            default:
+                                break;
+                        }
+
+
+                    }
+                    order.DateTime = date.ToDateTime(time);
+                }
+                return orders;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetOrders error in EasyTraderService - stockTitle= {stock.Title} - price = {price} - quantity = {quantity} ");
+                _logger.LogError(ex, $"GetOrders error in EasyTraderService - stockTitle= {stock.Title} - from = {from} - to = {to} ");
+
+                throw;
+            }
+        }
+
+        private int StringToInt(string v)
+        {
+            try
+            {
+                return int.Parse(v.Replace(",", ""));
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        private DateOnly ConvertToDateOnly(string value)
+        {
+            try
+            {
+
+                PersianCalendar pc = new PersianCalendar();
+                string[] dateParts = value.Split('/');
+                DateTime persianDate = pc.ToDateTime(
+                    int.Parse(dateParts[0]),
+                    int.Parse(dateParts[1]),
+                    int.Parse(dateParts[2]),
+                    0, 0, 0, 0
+                );
+                DateOnly datePart = DateOnly.FromDateTime(persianDate);
+                return datePart;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<OrderDto>> GetTodayOrders(StockDto? stock = null)
+        {
+            try
+            {
+
+                IEnumerable<OrderDto> orders = new List<OrderDto>();
+                await EnsureOrderPage();
+                if (stock != null)
+                {
+                    await _scrapper.Click(EasyTraderProperties.OrderHistoryStockTitleInput);
+                    await _scrapper.Fill(EasyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
+                }
+                if (from != null)
+                {
+
+                }
+                if (to != null)
+                {
+
+                }
+                await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"GetOrders error in EasyTraderService - stockTitle= {stock.Title} - from = {from} - to = {to} ");
 
                 throw;
             }

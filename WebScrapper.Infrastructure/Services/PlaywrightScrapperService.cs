@@ -7,6 +7,7 @@ using Core.Application.Abstractions.Security;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Results;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System;
@@ -23,7 +24,7 @@ using WebScrapper.Domain.Enums;
 
 namespace WebScrapper.Infrastructure.Services
 {
-    public class PlaywrightScrapperService : IWebScrapperServicee
+    public class PlaywrightScrapperService : IWebScrapperServicee<Element>
 
     {
         private IPlaywright _playwright;
@@ -144,7 +145,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task WaitForLoad(ElementAccessPath elementPath, IElement? BaseElement = null)
+        public async Task WaitForLoad(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
@@ -160,7 +161,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<bool> ElementIsExist(ElementAccessPath elementPath, IElement? BaseElement = null)
+        public async Task<bool> ElementIsExist(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
@@ -181,7 +182,7 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Fill(ElementAccessPath elementPath, string value, IElement? BaseElement = null)
+        public async Task Fill(ElementAccessPath elementPath, string value, Element? BaseElement = null)
         {
             try
             {
@@ -198,7 +199,7 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Click(ElementAccessPath elementPath, IElement? BaseElement = null)
+        public async Task Click(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
@@ -214,7 +215,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<string> InnerText(ElementAccessPath elementPath, IElement? BaseElement = null)
+        public async Task<string> InnerText(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
@@ -386,11 +387,11 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<IElement> FindElement(ElementAccessPath elementPath, IElement? BaseElement = null)
+        private async Task<Element> FindElement(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
-                IElement element;
+                Element element;
                 switch (elementPath.DefaultAccessPath)
                 {
                     case ElementPathEnum.FullXpath:
@@ -453,11 +454,11 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<IEnumerable<IElement>> FindElements(ElementAccessPath elementPath, IElement? BaseElement = null)
+        private async Task<IEnumerable<Element>> FindElements(ElementAccessPath elementPath, Element? BaseElement = null)
         {
             try
             {
-                IEnumerable<IElement> element;
+                IEnumerable<Element> element;
                 switch (elementPath.DefaultAccessPath)
                 {
                     case ElementPathEnum.FullXpath:

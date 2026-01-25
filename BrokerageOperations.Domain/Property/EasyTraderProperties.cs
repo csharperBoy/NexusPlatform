@@ -214,9 +214,26 @@ namespace BrokerageOperations.Domain.Property
         /// </summary>
         public static ElementAccessPath OrderHistoryNavigateButton = new ElementAccessPath("دکمه رفتن به صفحه تاریخچه سفارشات", "/html/body/app-root/main-layout/main/div[2]/div[2]/div/div/ul[1]/li[2]");
         /// <summary>
-        /// کادر مربوط به فیلتر جستجوی نماد
+        /// کادر مربوط به فیلتر جستجوی نماد رد صفحه تاریخچه سفارشات
         /// </summary>
         public static ElementAccessPath OrderHistoryStockTitleInput = new ElementAccessPath("کادر مربوط به فیلتر جستجوی نماد", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[1]/lib-search-symbol/lib-search-symbol-input/input");
+
+        /// <summary>
+        /// کادر مربوط به فیلتر از تاریخ
+        /// </summary>
+        public static ElementAccessPath OrderHistoryFromDateInput = new ElementAccessPath("کادر مربوط به فیلتر از تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[2]/custom-date-picker/div/div[1]/input");
+        /// <summary>
+        /// دکمه انتخاب امروز برای فیلتر از تاریخ
+        /// </summary>
+        public static ElementAccessPath OrderHistoryFromDateSelectTodayButton = new ElementAccessPath("دکمه انتخاب امروز برای فیلتر از تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[2]/custom-date-picker/div/div[2]/div/persian-datepicker/div/div/div[3]/div/span");
+        /// <summary>
+        /// کادر مربوط به فیلتر تا تاریخ
+        /// </summary>
+        public static ElementAccessPath OrderHistoryToDateInput = new ElementAccessPath("کادر مربوط به فیلتر تا تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[3]/custom-date-picker/div/div[1]/input");
+        /// <summary>
+        /// دکمه انتخاب امروز برای فیلتر تا تاریخ
+        /// </summary>
+        public static ElementAccessPath OrderHistoryToDateSelectTodayButtonInput = new ElementAccessPath("دکمه انتخاب امروز برای فیلتر تا تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[3]/custom-date-picker/div/div[2]/div/persian-datepicker/div/div/div[3]/div/span");
         /// <summary>
         /// دکمه اعمال فیلتر
         /// </summary>

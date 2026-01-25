@@ -1,6 +1,7 @@
 ﻿using BrokerageOperations.Shared.Enums;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,7 +21,8 @@ namespace BrokerageOperations.Shared.DTOs
         /// <summary>
         /// سهم
         /// </summary>
-        public StockDto Stock { get; set; }
+        //public StockDto Stock { get; set; }
+        public string StockTitle { get; set; }
         /// <summary>
         /// قیمت واحد
         /// </summary>

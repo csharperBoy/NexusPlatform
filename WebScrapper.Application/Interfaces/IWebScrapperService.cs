@@ -14,7 +14,7 @@ namespace WebScrapper.Application.Interfaces
 {
 
 
-    public interface IWebScrapperServicee
+    public interface IWebScrapperServicee<TElement> where TElement : class
     {
 
 
@@ -48,20 +48,20 @@ namespace WebScrapper.Application.Interfaces
         /// <param name="elementPath">دسترسی به المنت</param>
         /// <param name="value">مقدار</param>
         /// <returns></returns>
-        Task Fill(ElementAccessPath elementPath, string value, IElement? BaseElement = null);
+        Task Fill(ElementAccessPath elementPath, string value, TElement? BaseElement = null);
              
         /// <summary>
         /// کلیک روی المنت
         /// </summary>
         /// <param name="elementPath">دسترسی به المنت</param>
         /// <returns></returns>
-        Task Click(ElementAccessPath elementPath, IElement? BaseElement = null);
+        Task Click(ElementAccessPath elementPath, TElement? BaseElement = null);
         /// <summary>
         ///دریافت متن داخل المنت
         /// </summary>
         /// <param name="elementPath">دسترسی به المنت</param>
         /// <returns>متن داخل المنت</returns>
-        Task<string> InnerText(ElementAccessPath elementPath, IElement? BaseElement = null);
+        Task<string> InnerText(ElementAccessPath elementPath, TElement? BaseElement = null);
         /// <summary>
         /// تعویق به میلی ثانیه
         /// </summary>
@@ -78,13 +78,13 @@ namespace WebScrapper.Application.Interfaces
         /// </summary>
         /// <param name="elementPath">دسترسی به المنت</param>
         /// <returns></returns>
-        Task WaitForLoad(ElementAccessPath elementPath, IElement? BaseElement = null);
+        Task WaitForLoad(ElementAccessPath elementPath, TElement? BaseElement = null);
         /// <summary>
         /// بررسی وجود المنت در صفحه
         /// </summary>
         /// <param name="elementPath">دسترسی به المنت</param>
         /// <returns>وجود یا عدم وجود المنت</returns>
-        Task<bool> ElementIsExist(ElementAccessPath elementPath, IElement? BaseElement = null);
+        Task<bool> ElementIsExist(ElementAccessPath elementPath, TElement? BaseElement = null);
         /// <summary>
         /// آماده سازی بدلیل اینکه در سازنده نمیتوان async استفاده کرد
         /// </summary>
