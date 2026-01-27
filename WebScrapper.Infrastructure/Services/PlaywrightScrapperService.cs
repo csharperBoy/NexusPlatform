@@ -24,7 +24,7 @@ using WebScrapper.Domain.Enums;
 
 namespace WebScrapper.Infrastructure.Services
 {
-    public class PlaywrightScrapperService : IWebScrapperServicee<Element>
+    public class PlaywrightScrapperService : IWebScrapperServicee<IElementHandle>
 
     {
         private IPlaywright _playwright;
@@ -145,7 +145,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task WaitForLoad(ElementAccessPath elementPath, Element? BaseElement = null)
+        public async Task WaitForLoad(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<bool> ElementIsExist(ElementAccessPath elementPath, Element? BaseElement = null)
+        public async Task<bool> ElementIsExist(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
@@ -182,7 +182,7 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Fill(ElementAccessPath elementPath, string value, Element? BaseElement = null)
+        public async Task Fill(ElementAccessPath elementPath, string value, IElementHandle? BaseElement = null)
         {
             try
             {
@@ -199,7 +199,7 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
-        public async Task Click(ElementAccessPath elementPath, Element? BaseElement = null)
+        public async Task Click(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
@@ -215,7 +215,7 @@ namespace WebScrapper.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<string> InnerText(ElementAccessPath elementPath, Element? BaseElement = null)
+        public async Task<string> InnerText(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
@@ -242,7 +242,7 @@ namespace WebScrapper.Infrastructure.Services
                 TableDto tableContent = new TableDto();
                 var table = await FindElement(tableElementPath);
                 var rowPath = tableElementPath.rowAccessPath;
-                var rows = FindElements(rowPath, table);
+                IEnumerable<IElementHandle> rows =await FindElements(rowPath, table);
                 foreach (var row in rows)
                 {
                     TableRowDto tableRow = new TableRowDto();
@@ -273,7 +273,7 @@ namespace WebScrapper.Infrastructure.Services
             {
                 var table = await FindElement(tableElementPath);
                 var rowPath = tableElementPath.rowAccessPath;
-                var rows = FindElements(rowPath, table);
+                IEnumerable<IElementHandle> rows =await FindElements(rowPath, table);
                 foreach (var row in rows)
                 {
                     TableRowDto tableRow = new TableRowDto();
@@ -314,7 +314,7 @@ namespace WebScrapper.Infrastructure.Services
             try
             {
                 TableRowDto rowContent = new TableRowDto();
-                var row = FindElement(tableRowElementPath);
+                IElementHandle row = await FindElement(tableRowElementPath);
 
                 foreach (var columnPath in tableRowElementPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.TableColumn))
                 {
@@ -337,9 +337,9 @@ namespace WebScrapper.Infrastructure.Services
         {
             try
             {
-                var rows = FindElement(tableRowElementPath);
-                foreach (var row in rows)
-                {
+                IElementHandle row = await FindElement(tableRowElementPath);
+                //foreach (var row in rows)
+               // {
                     TableRowDto tableRow = new TableRowDto();
 
                     foreach (var columnPath in tableRowElementPath.columnsAccessPath.Where(c => c.ElementType == ElementTypeEnum.Button))
@@ -348,7 +348,7 @@ namespace WebScrapper.Infrastructure.Services
                         {
                             await Click(columnPath, row);
                         }
-                    }
+                 //   }
 
                 }
             }
@@ -365,9 +365,9 @@ namespace WebScrapper.Infrastructure.Services
             {
                 var table = await FindElement(tableElementPath);
                 var rowPath = tableElementPath.rowAccessPath;
-                var rows = FindElements(rowPath, table);
+                IEnumerable<IElementHandle> rows =await FindElements(rowPath, table);
                 
-                return rows.count();
+                return rows.Count();
             }
             catch (Exception ex)
             {
@@ -387,11 +387,11 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<Element> FindElement(ElementAccessPath elementPath, Element? BaseElement = null)
+        private async Task<IElementHandle> FindElement(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
-                Element element;
+                IElementHandle? element;
                 switch (elementPath.DefaultAccessPath)
                 {
                     case ElementPathEnum.FullXpath:
@@ -436,7 +436,7 @@ namespace WebScrapper.Infrastructure.Services
                 if (element == null)
                 {
 
-                    throw new Exception("Element not found!!!");
+                    throw new Exception("Elementnot found!!!");
                 }
                 return element;
             }
@@ -454,32 +454,32 @@ namespace WebScrapper.Infrastructure.Services
         /// <param name="elementPath"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private async Task<IEnumerable<Element>> FindElements(ElementAccessPath elementPath, Element? BaseElement = null)
+        private async Task<IEnumerable<IElementHandle>> FindElements(ElementAccessPath elementPath, IElementHandle? BaseElement = null)
         {
             try
             {
-                IEnumerable<Element> element;
+                IEnumerable<IElementHandle> element;
                 switch (elementPath.DefaultAccessPath)
                 {
                     case ElementPathEnum.FullXpath:
                         if (BaseElement == null)
-                            element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                            element = await _page.QuerySelectorAllAsync(elementPath.FullXpath);
                         else
-                            element = await BaseElement.QuerySelectorAsync(elementPath.FullXpath);
+                            element = await BaseElement.QuerySelectorAllAsync(elementPath.FullXpath);
 
                         break;
                     case ElementPathEnum.SelectorXpath:
                         if (BaseElement == null)
-                            element = await _page.QuerySelectorAsync(elementPath.SelectorXpath);
+                            element = await _page.QuerySelectorAllAsync(elementPath.SelectorXpath);
                         else
-                            element = await BaseElement.QuerySelectorAsync(elementPath.SelectorXpath);
+                            element = await BaseElement.QuerySelectorAllAsync(elementPath.SelectorXpath);
 
                         break;
                     case ElementPathEnum.JSpath:
                         if (BaseElement == null)
-                            element = await _page.QuerySelectorAsync(elementPath.JSpath);
+                            element = await _page.QuerySelectorAllAsync(elementPath.JSpath);
                         else
-                            element = await BaseElement.QuerySelectorAsync(elementPath.JSpath);
+                            element = await BaseElement.QuerySelectorAllAsync(elementPath.JSpath);
 
                         break;
                     //case ElementPathEnum.localXpath:
@@ -487,23 +487,23 @@ namespace WebScrapper.Infrastructure.Services
                     //    break;
                     case ElementPathEnum.Xpath:
                         if (BaseElement == null)
-                            element = await _page.QuerySelectorAsync(elementPath.Xpath);
+                            element = await _page.QuerySelectorAllAsync(elementPath.Xpath);
                         else
-                            element = await BaseElement.QuerySelectorAsync(elementPath.Xpath);
+                            element = await BaseElement.QuerySelectorAllAsync(elementPath.Xpath);
 
                         break;
                     default:
                         if (BaseElement == null)
-                            element = await _page.QuerySelectorAsync(elementPath.FullXpath);
+                            element = await _page.QuerySelectorAllAsync(elementPath.FullXpath);
                         else
-                            element = await BaseElement.QuerySelectorAsync(elementPath.FullXpath);
+                            element = await BaseElement.QuerySelectorAllAsync(elementPath.FullXpath);
 
                         break;
                 }
                 if (element == null)
                 {
 
-                    throw new Exception("Element not found!!!");
+                    throw new Exception("IElementHandle not found!!!");
                 }
                 return element;
             }

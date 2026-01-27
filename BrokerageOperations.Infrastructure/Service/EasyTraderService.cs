@@ -12,15 +12,17 @@ using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
 using WebScrapper.Domain.Enums;
+using Microsoft.Playwright;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace BrokerageOperations.Infrastructure.Service
 {
     public class EasyTraderService : IBrokerageOperationsService
     {
-        private IWebScrapperServicee<Element> _scrapper;
+        private IWebScrapperServicee<IElementHandle> _scrapper;
         private ILogger<EasyTraderService> _logger;
         //private EasyTraderProperties _easyTraderProperties;
-        public EasyTraderService(IWebScrapperServicee<Element> scrapper, ILogger<EasyTraderService> logger)
+        public EasyTraderService(IWebScrapperServicee<IElementHandle> scrapper, ILogger<EasyTraderService> logger)
         {
             _logger = logger;
             _scrapper = scrapper;
@@ -175,7 +177,7 @@ namespace BrokerageOperations.Infrastructure.Service
                         switch (column.key)
                         {
                             case "Date":
-                                date = ConvertToDateOnly( column.value);
+                                date = ConvertToDateOnly(column.value);
                                 break;
                             case "Time":
                                 time = TimeOnly.Parse(column.value);
@@ -187,7 +189,7 @@ namespace BrokerageOperations.Infrastructure.Service
                                 order.StockTitle = column.value.Trim();
                                 break;
                             case "OrderVolum":
-                                order.BaseOrderQuantity = StringToInt( column.value.Trim());
+                                order.BaseOrderQuantity = StringToInt(column.value.Trim());
                                 break;
                             case "Price":
                                 order.PriceOfUnit = StringToInt(column.value.Trim());
@@ -261,28 +263,152 @@ namespace BrokerageOperations.Infrastructure.Service
                     await _scrapper.Click(EasyTraderProperties.OrderHistoryStockTitleInput);
                     await _scrapper.Fill(EasyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
                 }
-                if (from != null)
-                {
+                await _scrapper.Click(EasyTraderProperties.OrderHistoryFromDateInput);
+                await _scrapper.Click(EasyTraderProperties.OrderHistoryFromDateSelectTodayButton);
 
-                }
-                if (to != null)
-                {
+                await _scrapper.Click(EasyTraderProperties.OrderHistoryToDateInput);
+                await _scrapper.Click(EasyTraderProperties.OrderHistoryToDateSelectTodayButton);
 
+
+                TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
+                foreach (var row in tableData.rows)
+                {
+                    OrderDto order = new OrderDto();
+                    DateOnly date = new DateOnly();
+                    TimeOnly time = new TimeOnly();
+                    foreach (var column in row.columns)
+                    {
+                        switch (column.key)
+                        {
+                            case "Date":
+                                date = ConvertToDateOnly(column.value);
+                                break;
+                            case "Time":
+                                time = TimeOnly.Parse(column.value);
+                                break;
+                            case "Side":
+                                order.OrderSide = column.value.Trim() == "فروش" ? Shared.Enums.OrderSideEnum.sell : Shared.Enums.OrderSideEnum.buy;
+                                break;
+                            case "StockTitle":
+                                order.StockTitle = column.value.Trim();
+                                break;
+                            case "OrderVolum":
+                                order.BaseOrderQuantity = StringToInt(column.value.Trim());
+                                break;
+                            case "Price":
+                                order.PriceOfUnit = StringToInt(column.value.Trim());
+                                break;
+                            case "DoneVolume":
+                                order.DoneOrderQuantity = StringToInt(column.value.Trim());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    order.DateTime = date.ToDateTime(time);
                 }
-                await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
                 return orders;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetOrders error in EasyTraderService - stockTitle= {stock.Title} - from = {from} - to = {to} ");
+                _logger.LogError(ex, $"GetTodayOrders error in EasyTraderService - stockTitle= {stock.Title}  ");
 
                 throw;
             }
         }
 
-        public Task<SnapShotDto> GetSnapShotFromTrade(StockDto stock)
+        public async Task<SnapShotDto> GetSnapShotFromTrade(StockDto stock)
         {
-            throw new NotImplementedException();
+            try
+            {
+                await EnsureStockPage(stock);
+                SnapShotDto snapShot = new SnapShotDto();
+                snapShot.TotalTradedValue = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalVolum));
+                snapShot.DateTime = DateTime.Now;
+                snapShot.stockTitle = await _scrapper.InnerText(EasyTraderProperties.StockTitle);
+                snapShot.LastPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.LastPrice));
+                snapShot.ClosePrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ClosePrice));
+                snapShot.TotalTradedVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalVolum));
+                snapShot.ZeroPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ZeroPrice));
+
+
+                snapShot = await GetTopFiveOrderTableContent(snapShot);
+
+                snapShot.TotalBuyOrderCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyOrderCount));
+                snapShot.TotalSellOrdersCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellOrderCount));
+                snapShot.TotalBuyOrderVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyOrderVolume));
+                snapShot.TotalSellOrderVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellOrderVolume));
+
+                snapShot.TotalSellLegalPersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellLegalPersonalityCount));
+                snapShot.TotalBuyLegalPersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyLegalPersonalityCount));
+                snapShot.TotalBuyTruePersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyTruePersonalityCount));
+                snapShot.TotalSellTruePersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellTruePersonalityCount));
+
+                snapShot.TotalSellLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellLegalPersonalityVolume));
+                snapShot.TotalBuyLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyLegalPersonalityVolume));
+                snapShot.TotalBuyTruePersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyTruePersonalityVolume));
+                snapShot.TotalSellTruePersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellTruePersonalityVolume));
+
+                if (stock.stockType == StockType.sandogh)
+                    snapShot.NavPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.NavPrice));
+
+                if (stock.stockType == StockType.Option)
+                {
+                    snapShot.ContractOpenPosition = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractOpenPosition));
+                    snapShot.ContractOpenPositionGroup = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractOpenPositionGroup));
+                    snapShot.ContractTradesValue = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractTradesValue));
+
+                }
+                return snapShot;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"GetTodayOrders error in EasyTraderService - stockTitle= {stock.Title}  ");
+
+                throw;
+            }
+
+        }
+
+
+        /// <summary>
+        /// دریافت محتوای جدول 5 سفارش برتر خرید و فروش در صفحه سهم و اضافه کردن به snapShot
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private async Task<SnapShotDto> GetTopFiveOrderTableContent(SnapShotDto snapShot)
+        {
+            TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.TopFiveOrderTable);
+            for (int i = 1; i <= 5; i++)
+            {
+                foreach (var column in tableData.rows[i].columns)
+                {
+                    switch (column.key)
+                    {
+                        case "SellPrice":
+                            snapShot.SellOrderPrice[i] = StringToInt(column.value.Trim());
+                            break;
+                        case "BuyPrice":
+                            snapShot.BuyOrderPrice[i] = StringToInt(column.value.Trim());
+                            break;
+                        case "SellVolume":
+                            snapShot.SellOrderVolume[i] = StringToInt(column.value.Trim());
+                            break;
+                        case "BuyVolume":
+                            snapShot.BuyOrderVolume[i] = StringToInt(column.value.Trim());
+                            break;
+                        case "SellCount":
+                            snapShot.SellOrderCount[i] = StringToInt(column.value.Trim());
+                            break;
+                        case "BuyCount":
+                            snapShot.BuyOrderCount[i] = StringToInt(column.value.Trim());
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return snapShot;
         }
 
         public Task<IEnumerable<TurnoverDto>> GetTurnover(DateTime? from = null, DateTime? to = null, string? description = null)
@@ -293,6 +419,35 @@ namespace BrokerageOperations.Infrastructure.Service
 
 
         public async Task EnsureStockPage(StockDto stock)
+        {
+            try
+            {
+                while(!await _scrapper.ElementIsExist(EasyTraderProperties.StockTitle))
+                {
+                    while (!await _scrapper.ElementIsExist(EasyTraderProperties.SearchButton))
+                    {
+                        await Login();
+                        await _scrapper.GoToUrl("https://d.easytrader.ir/");
+                    }
+                    await _scrapper.Click(EasyTraderProperties.SearchButton);
+
+                }
+                string stockName = await _scrapper.InnerText(EasyTraderProperties.StockTitle);
+                if (stockName == null)
+                {
+                    
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"EnsureStockPage error in EasyTraderService - stockTitle= {stock.Title}  ");
+
+                throw;
+            }
+        }
+
+        private async Task Login()
         {
             throw new NotImplementedException();
         }

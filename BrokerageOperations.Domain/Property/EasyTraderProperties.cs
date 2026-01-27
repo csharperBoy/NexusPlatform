@@ -233,7 +233,7 @@ namespace BrokerageOperations.Domain.Property
         /// <summary>
         /// دکمه انتخاب امروز برای فیلتر تا تاریخ
         /// </summary>
-        public static ElementAccessPath OrderHistoryToDateSelectTodayButtonInput = new ElementAccessPath("دکمه انتخاب امروز برای فیلتر تا تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[3]/custom-date-picker/div/div[2]/div/persian-datepicker/div/div/div[3]/div/span");
+        public static ElementAccessPath OrderHistoryToDateSelectTodayButton = new ElementAccessPath("دکمه انتخاب امروز برای فیلتر تا تاریخ", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/d-order-history-filters/div/div[2]/form/div[3]/custom-date-picker/div/div[2]/div/persian-datepicker/div/div/div[3]/div/span");
         /// <summary>
         /// دکمه اعمال فیلتر
         /// </summary>
@@ -410,7 +410,7 @@ namespace BrokerageOperations.Domain.Property
         /// <summary>
         /// مجموع حجم سفارشات خرید
         /// </summary>
-        public static ElementAccessPath TotalBuyOrderVolum = new ElementAccessPath("مجموع حجم سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[2]");
+        public static ElementAccessPath TotalBuyOrderVolume = new ElementAccessPath("مجموع حجم سفارشات خرید", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[2]");
         /// <summary>
         /// مجموع تعداد سفارشات خرید
         /// </summary>
@@ -423,6 +423,42 @@ namespace BrokerageOperations.Domain.Property
         /// مجموع تعداد سفارشات فروش
         /// </summary>
         public static ElementAccessPath TotalSellOrderCount = new ElementAccessPath("مجموع تعداد سفارشات فروش", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[1]/div[1]/lib-market-depth/div/market-depth-best-limit/div/div/lib-market-depth-aggregates/div[2]/div[4]");
+        
+        /// <summary>
+        /// تعداد خرید انجام شده حقیقی
+        /// </summary>
+        public static ElementAccessPath TotalBuyTruePersonalityCount = new ElementAccessPath("تعداد خرید انجام شده حقیقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[1]/div[1]/div/span[1]");
+        /// <summary>
+        /// تعداد فروش انجام شده حقیقی
+        /// </summary>
+        public static ElementAccessPath TotalSellTruePersonalityCount = new ElementAccessPath("تعداد فروش انجام شده حقیقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[1]/div[3]/div/span[1]");
+        /// <summary>
+        /// حجم خرید انجام شده حقیقی
+        /// </summary>
+        public static ElementAccessPath TotalBuyTruePersonalityVolume = new ElementAccessPath("حجم خرید انجام شده حقیقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[1]/div[1]/div/span[2]/text()");
+        /// <summary>
+        /// حجم فروش انجام شده حقیقی
+        /// </summary>
+        public static ElementAccessPath TotalSellTruePersonalityVolume = new ElementAccessPath("حجم فروش انجام شده حقیقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[1]/div[3]/div/span[2]/text()");
+        /// <summary>
+        /// تعداد خرید انجام شده حقوقی
+        /// </summary>
+        public static ElementAccessPath TotalBuyLegalPersonalityCount = new ElementAccessPath("تعداد خرید انجام شده حقوقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[2]/div[1]/div[1]/span[1]");
+        /// <summary>
+        /// تعداد فروش انجام شده حقوقی
+        /// </summary>
+        public static ElementAccessPath TotalSellLegalPersonalityCount = new ElementAccessPath("تعداد فروش انجام شده حقوقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[2]/div[3]/div[1]/span[1]");
+        /// <summary>
+        /// حجم خرید انجام شده حقوقی
+        /// </summary>
+        public static ElementAccessPath TotalBuyLegalPersonalityVolume = new ElementAccessPath("حجم خرید انجام شده حقوقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[2]/div[1]/div[1]/span[2]/text()");
+        /// <summary>
+        /// حجم فروش انجام شده حقوقی
+        /// </summary>
+        public static ElementAccessPath TotalSellLegalPersonalityVolume = new ElementAccessPath("حجم فروش انجام شده حقوقی", "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/app-layout-selector/app-layout2/as-split/as-split-area[2]/div[2]/div[2]/lib-symbol-information-container/div/div/div[3]/lib-ind-inst-chart/div[2]/div[2]/div[3]/div[1]/span[2]/text()");
+        
+        
+
 
         #region اطلاعات قرارداد - برای آپشن ها
         /// <summary>

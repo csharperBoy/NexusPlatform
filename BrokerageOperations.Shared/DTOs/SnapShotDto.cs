@@ -41,7 +41,18 @@ namespace BrokerageOperations.Shared.DTOs
         /// ارزش معاملات
         /// </summary>
         public long? TotalTradedValue { get; set; }
+        public int?[] BuyOrderPrice { get; set; }
 
+        public long?[] BuyOrderVolume { get; set; }
+
+        public long?[] BuyOrderCount { get; set; }
+        public int?[] SellOrderPrice { get; set; }
+
+        public long?[] SellOrderVolume { get; set; }
+
+        public long?[] SellOrderCount { get; set; }
+
+        /*
         public int? BuyOrder1Price { get; set; }
 
         public long? BuyOrder1Volume { get; set; }
@@ -101,6 +112,7 @@ namespace BrokerageOperations.Shared.DTOs
         public long? SellOrder5Volume { get; set; }
 
         public long? SellOrder5Count { get; set; }
+        */
         /// <summary>
         /// مجموع حجم سفارشات خرید
         /// </summary>
@@ -112,7 +124,7 @@ namespace BrokerageOperations.Shared.DTOs
         /// <summary>
         /// مجموع تعداد سفارشات خرید
         /// </summary>
-        public long? TotalBuyOrdersCount { get; set; }
+        public long? TotalBuyOrderCount { get; set; }
         /// <summary>
         /// مجموع تعداد سفارشات فروش
         /// </summary>
@@ -150,11 +162,7 @@ namespace BrokerageOperations.Shared.DTOs
         /// مجموع تعداد فروش حقوقی
         /// </summary>
         public long? TotalSellLegalPersonalityCount { get; set; }
-        /// <summary>
-        /// موقعیت های باز
-        /// </summary>
-        public long NumberOfOpenPositions { get; set; }
-
+        
         /// <summary>
         /// کلید خارجی به سهام
         /// </summary>
@@ -162,9 +170,35 @@ namespace BrokerageOperations.Shared.DTOs
         public string stockISIN { get; set; }
 
         /// <summary>
+        /// عنوان سهام
+        /// </summary>
+        public string stockTitle { get; set; }
+
+        /// <summary>
         /// ارزش بازار
         /// </summary>
         public long? MarketCapitalization { get; set; }
+        /// <summary>
+        /// قیمت صفر تابلو
+        /// </summary>
+        public long? ZeroPrice { get; set; }
+        /// <summary>
+        /// قیمت Nav
+        /// </summary>
+        public long? NavPrice { get; set; }
 
+        /// <summary>
+        /// ارزش معاملات - آپشن
+        /// </summary>
+        public long? ContractTradesValue { get; set; }
+        /// <summary>
+        /// موقعیت های باز - آپشن
+        /// </summary>
+        public long? ContractOpenPosition { get; set; }
+
+        /// <summary>
+        /// موقعیت های باز هم گروه
+        /// </summary>
+        public  long? ContractOpenPositionGroup { get; set; }
     }
 }
