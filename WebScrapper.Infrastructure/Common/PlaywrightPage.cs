@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Microsoft.Playwright;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WebScrapper.Domain.Common;
-using Microsoft.Playwright;
-namespace WebScrapper.Application.DTOs
+using static System.Net.Mime.MediaTypeNames;
+namespace WebScrapper.Infrastructure.Common
 {
-    public class PlaywrightPageDto : IPageContract
+    public class PlaywrightPage : IPageContract
     {
 
         public string code { get; set; }

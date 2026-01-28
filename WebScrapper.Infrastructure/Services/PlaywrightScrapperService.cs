@@ -21,6 +21,7 @@ using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
 using WebScrapper.Domain.Common;
 using WebScrapper.Domain.Enums;
+using WebScrapper.Infrastructure.Common;
 
 namespace WebScrapper.Infrastructure.Services
 {
@@ -31,7 +32,7 @@ namespace WebScrapper.Infrastructure.Services
         private IBrowser _browser;
         private IBrowserContext _context;
         private IPage _page;
-        private IEnumerable<PlaywrightWindowDto> _windows;
+        private IEnumerable<PlaywrightWindow> _windows;
         private ILogger<PlaywrightScrapperService> _logger;
         public PlaywrightScrapperService(
          IPlaywright playwright,
@@ -44,7 +45,7 @@ namespace WebScrapper.Infrastructure.Services
             _browser = browser;
             _context = context;
             _page = page;
-            _windows = new List<PlaywrightWindowDto>();
+            _windows = new List<PlaywrightWindow>();
             _logger = logger;
         }
 

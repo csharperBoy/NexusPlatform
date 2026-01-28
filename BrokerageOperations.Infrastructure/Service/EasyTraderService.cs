@@ -21,16 +21,15 @@ namespace BrokerageOperations.Infrastructure.Service
     {
         private IWebScrapperServicee<IElementHandle> _scrapper;
         private ILogger<EasyTraderService> _logger;
-        //private EasyTraderProperties _easyTraderProperties;
+        public BrokerageUserDto _user { get; protected set; }
+        private EasyTraderProperties _easyTraderProperties;
         public EasyTraderService(IWebScrapperServicee<IElementHandle> scrapper, ILogger<EasyTraderService> logger)
         {
             _logger = logger;
             _scrapper = scrapper;
-
+            _easyTraderProperties = new EasyTraderProperties();
             _scrapper.InitializeAsync().Wait();
-            _scrapper.GoToUrl(EasyTraderProperties.LoginUrl).Wait();
         }
-        public BrokerageUserDto _user { get; protected set; }
         public Task SetUser(BrokerageUserDto user)
         {
             try
@@ -49,10 +48,10 @@ namespace BrokerageOperations.Infrastructure.Service
             try
             {
                 await EnsureStockPage(stock);
-                await _scrapper.Click(EasyTraderProperties.BuyButton);
-                await _scrapper.Fill(EasyTraderProperties.VolumeInput, quantity.ToString());
-                await _scrapper.Fill(EasyTraderProperties.PriceInput, price.ToString());
-                await _scrapper.Click(EasyTraderProperties.SendBuyOrderButton);
+                await _scrapper.Click(_easyTraderProperties.BuyButton);
+                await _scrapper.Fill(_easyTraderProperties.VolumeInput, quantity.ToString());
+                await _scrapper.Fill(_easyTraderProperties.PriceInput, price.ToString());
+                await _scrapper.Click(_easyTraderProperties.SendBuyOrderButton);
             }
             catch (Exception ex)
             {
@@ -65,10 +64,10 @@ namespace BrokerageOperations.Infrastructure.Service
             try
             {
                 await EnsureStockPage(stock);
-                await _scrapper.Click(EasyTraderProperties.SellButton);
-                await _scrapper.Fill(EasyTraderProperties.VolumeInput, quantity.ToString());
-                await _scrapper.Fill(EasyTraderProperties.PriceInput, price.ToString());
-                await _scrapper.Click(EasyTraderProperties.SendSellOrderButton);
+                await _scrapper.Click(_easyTraderProperties.SellButton);
+                await _scrapper.Fill(_easyTraderProperties.VolumeInput, quantity.ToString());
+                await _scrapper.Fill(_easyTraderProperties.PriceInput, price.ToString());
+                await _scrapper.Click(_easyTraderProperties.SendSellOrderButton);
             }
             catch (Exception ex)
             {
@@ -115,8 +114,8 @@ namespace BrokerageOperations.Infrastructure.Service
                             });
                     }
                 }
-                await _scrapper.Table_ClickOnTableSubElement(EasyTraderProperties.TodayOrdersTable, "Select", filtere);
-                await _scrapper.Table_ClickOnTableSubElement(EasyTraderProperties.TodayOrdersTable, "delete", filtere);
+                await _scrapper.Table_ClickOnTableSubElement(_easyTraderProperties.TodayOrdersTable, "Select", filtere);
+                await _scrapper.Table_ClickOnTableSubElement(_easyTraderProperties.TodayOrdersTable, "delete", filtere);
             }
             catch (Exception ex)
             {
@@ -155,8 +154,8 @@ namespace BrokerageOperations.Infrastructure.Service
                 await EnsureOrderPage();
                 if (stock != null)
                 {
-                    await _scrapper.Click(EasyTraderProperties.OrderHistoryStockTitleInput);
-                    await _scrapper.Fill(EasyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
+                    await _scrapper.Click(_easyTraderProperties.OrderHistoryStockTitleInput);
+                    await _scrapper.Fill(_easyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
                 }
                 if (from != null)
                 {
@@ -166,7 +165,7 @@ namespace BrokerageOperations.Infrastructure.Service
                 {
 
                 }
-                TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
+                TableDto tableData = await _scrapper.Table_GetTableContent(_easyTraderProperties.OrderHistoryTable);
                 foreach (var row in tableData.rows)
                 {
                     OrderDto order = new OrderDto();
@@ -260,17 +259,84 @@ namespace BrokerageOperations.Infrastructure.Service
                 await EnsureOrderPage();
                 if (stock != null)
                 {
-                    await _scrapper.Click(EasyTraderProperties.OrderHistoryStockTitleInput);
-                    await _scrapper.Fill(EasyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
+                    await _scrapper.Click(_easyTraderProperties.OrderHistoryStockTitleInput);
+                    await _scrapper.Fill(_easyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
                 }
-                await _scrapper.Click(EasyTraderProperties.OrderHistoryFromDateInput);
-                await _scrapper.Click(EasyTraderProperties.OrderHistoryFromDateSelectTodayButton);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateInput);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateSelectTodayButton);
 
-                await _scrapper.Click(EasyTraderProperties.OrderHistoryToDateInput);
-                await _scrapper.Click(EasyTraderProperties.OrderHistoryToDateSelectTodayButton);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateInput);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateSelectTodayButton);
 
 
-                TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.OrderHistoryTable);
+                TableDto tableData = await _scrapper.Table_GetTableContent(_easyTraderProperties.OrderHistoryTable);
+                foreach (var row in tableData.rows)
+                {
+                    OrderDto order = new OrderDto();
+                    DateOnly date = new DateOnly();
+                    TimeOnly time = new TimeOnly();
+                    foreach (var column in row.columns)
+                    {
+                        switch (column.key)
+                        {
+                            case "Date":
+                                date = ConvertToDateOnly(column.value);
+                                break;
+                            case "Time":
+                                time = TimeOnly.Parse(column.value);
+                                break;
+                            case "Side":
+                                order.OrderSide = column.value.Trim() == "فروش" ? Shared.Enums.OrderSideEnum.sell : Shared.Enums.OrderSideEnum.buy;
+                                break;
+                            case "StockTitle":
+                                order.StockTitle = column.value.Trim();
+                                break;
+                            case "OrderVolum":
+                                order.BaseOrderQuantity = StringToInt(column.value.Trim());
+                                break;
+                            case "Price":
+                                order.PriceOfUnit = StringToInt(column.value.Trim());
+                                break;
+                            case "DoneVolume":
+                                order.DoneOrderQuantity = StringToInt(column.value.Trim());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    order.DateTime = date.ToDateTime(time);
+                }
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"GetTodayOrders error in EasyTraderService - stockTitle= {stock.Title}  ");
+
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<OrderDto>> GetTodayOrders(StockDto? stock = null)
+        {
+            try
+            {
+
+                IEnumerable<OrderDto> orders = new List<OrderDto>();
+                await EnsureOrderPage();
+                if (stock != null)
+                {
+                    await _scrapper.Click(_easyTraderProperties.OrderHistoryStockTitleInput);
+                    await _scrapper.Fill(_easyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
+                }
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateInput);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateSelectTodayButton);
+
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateInput);
+                await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateSelectTodayButton);
+
+                // همه سفارشات رو جداول جزئیاتش رو باز میکنه تا برای خواندن آماده بشوند
+                await _scrapper.Table_ClickOnTableSubElement(_easyTraderProperties.OrderHistoryTable, "OpenSubOrders");
+                TableDto tableData = await _scrapper.Table_GetTableContent(_easyTraderProperties.OrderHistoryDetailsTable);
                 foreach (var row in tableData.rows)
                 {
                     OrderDto order = new OrderDto();
@@ -323,40 +389,40 @@ namespace BrokerageOperations.Infrastructure.Service
             {
                 await EnsureStockPage(stock);
                 SnapShotDto snapShot = new SnapShotDto();
-                snapShot.TotalTradedValue = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalVolum));
+                snapShot.TotalTradedValue = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalVolum));
                 snapShot.DateTime = DateTime.Now;
-                snapShot.stockTitle = await _scrapper.InnerText(EasyTraderProperties.StockTitle);
-                snapShot.LastPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.LastPrice));
-                snapShot.ClosePrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ClosePrice));
-                snapShot.TotalTradedVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalVolum));
-                snapShot.ZeroPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ZeroPrice));
+                snapShot.stockTitle = await _scrapper.InnerText(_easyTraderProperties.StockTitle);
+                snapShot.LastPrice = StringToInt(await _scrapper.InnerText(_easyTraderProperties.LastPrice));
+                snapShot.ClosePrice = StringToInt(await _scrapper.InnerText(_easyTraderProperties.ClosePrice));
+                snapShot.TotalTradedVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalVolum));
+                snapShot.ZeroPrice = StringToInt(await _scrapper.InnerText(_easyTraderProperties.ZeroPrice));
 
 
                 snapShot = await GetTopFiveOrderTableContent(snapShot);
 
-                snapShot.TotalBuyOrderCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyOrderCount));
-                snapShot.TotalSellOrdersCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellOrderCount));
-                snapShot.TotalBuyOrderVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyOrderVolume));
-                snapShot.TotalSellOrderVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellOrderVolume));
+                snapShot.TotalBuyOrderCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyOrderCount));
+                snapShot.TotalSellOrdersCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellOrderCount));
+                snapShot.TotalBuyOrderVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyOrderVolume));
+                snapShot.TotalSellOrderVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellOrderVolume));
 
-                snapShot.TotalSellLegalPersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellLegalPersonalityCount));
-                snapShot.TotalBuyLegalPersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyLegalPersonalityCount));
-                snapShot.TotalBuyTruePersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyTruePersonalityCount));
-                snapShot.TotalSellTruePersonalityCount = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellTruePersonalityCount));
+                snapShot.TotalSellLegalPersonalityCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellLegalPersonalityCount));
+                snapShot.TotalBuyLegalPersonalityCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyLegalPersonalityCount));
+                snapShot.TotalBuyTruePersonalityCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyTruePersonalityCount));
+                snapShot.TotalSellTruePersonalityCount = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellTruePersonalityCount));
 
-                snapShot.TotalSellLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellLegalPersonalityVolume));
-                snapShot.TotalBuyLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyLegalPersonalityVolume));
-                snapShot.TotalBuyTruePersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalBuyTruePersonalityVolume));
-                snapShot.TotalSellTruePersonalityVolume = StringToInt(await _scrapper.InnerText(EasyTraderProperties.TotalSellTruePersonalityVolume));
+                snapShot.TotalSellLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellLegalPersonalityVolume));
+                snapShot.TotalBuyLegalPersonalityVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyLegalPersonalityVolume));
+                snapShot.TotalBuyTruePersonalityVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalBuyTruePersonalityVolume));
+                snapShot.TotalSellTruePersonalityVolume = StringToInt(await _scrapper.InnerText(_easyTraderProperties.TotalSellTruePersonalityVolume));
 
                 if (stock.stockType == StockType.sandogh)
-                    snapShot.NavPrice = StringToInt(await _scrapper.InnerText(EasyTraderProperties.NavPrice));
+                    snapShot.NavPrice = StringToInt(await _scrapper.InnerText(_easyTraderProperties.NavPrice));
 
                 if (stock.stockType == StockType.Option)
                 {
-                    snapShot.ContractOpenPosition = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractOpenPosition));
-                    snapShot.ContractOpenPositionGroup = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractOpenPositionGroup));
-                    snapShot.ContractTradesValue = StringToInt(await _scrapper.InnerText(EasyTraderProperties.ContractTradesValue));
+                    snapShot.ContractOpenPosition = StringToInt(await _scrapper.InnerText(_easyTraderProperties.ContractOpenPosition));
+                    snapShot.ContractOpenPositionGroup = StringToInt(await _scrapper.InnerText(_easyTraderProperties.ContractOpenPositionGroup));
+                    snapShot.ContractTradesValue = StringToInt(await _scrapper.InnerText(_easyTraderProperties.ContractTradesValue));
 
                 }
                 return snapShot;
@@ -378,7 +444,7 @@ namespace BrokerageOperations.Infrastructure.Service
         /// <exception cref="NotImplementedException"></exception>
         private async Task<SnapShotDto> GetTopFiveOrderTableContent(SnapShotDto snapShot)
         {
-            TableDto tableData = await _scrapper.Table_GetTableContent(EasyTraderProperties.TopFiveOrderTable);
+            TableDto tableData = await _scrapper.Table_GetTableContent(_easyTraderProperties.TopFiveOrderTable);
             for (int i = 1; i <= 5; i++)
             {
                 foreach (var column in tableData.rows[i].columns)
@@ -422,21 +488,23 @@ namespace BrokerageOperations.Infrastructure.Service
         {
             try
             {
-                while(!await _scrapper.ElementIsExist(EasyTraderProperties.StockTitle))
+                while (!await _scrapper.ElementIsExist(_easyTraderProperties.StockTitle))
                 {
-                    while (!await _scrapper.ElementIsExist(EasyTraderProperties.SearchButton))
+                    while (!await _scrapper.ElementIsExist(_easyTraderProperties.SearchButton))
                     {
                         await Login();
-                        await _scrapper.GoToUrl("https://d.easytrader.ir/");
+                        await _scrapper.GoToUrl(_easyTraderProperties.BaseUrl);
                     }
-                    await _scrapper.Click(EasyTraderProperties.SearchButton);
+                    await _scrapper.Click(_easyTraderProperties.SearchButton);
+                    await _scrapper.Fill(_easyTraderProperties.SearchInput, stock.ISIN);
+                    await _scrapper.Table_ClickOnTableRowSubElement(_easyTraderProperties.SearchResultTable.GetnumberOfRowFullXpath("1"), "StockSelect");
 
                 }
-                string stockName = await _scrapper.InnerText(EasyTraderProperties.StockTitle);
-                if (stockName == null)
+                while (await _scrapper.InnerText(_easyTraderProperties.StockTitle) != stock.Title)
                 {
-                    
-                    
+                    await _scrapper.Click(_easyTraderProperties.SearchButton);
+                    await _scrapper.Fill(_easyTraderProperties.SearchInput, stock.ISIN);
+                    await _scrapper.Table_ClickOnTableRowSubElement(_easyTraderProperties.SearchResultTable.GetnumberOfRowFullXpath("1"), "StockSelect");
                 }
             }
             catch (Exception ex)
@@ -449,12 +517,59 @@ namespace BrokerageOperations.Infrastructure.Service
 
         private async Task Login()
         {
-            throw new NotImplementedException();
+            try
+            {
+                await _scrapper.GoToUrl(_easyTraderProperties.LoginUrl);
+                while (await IsLoginPage())
+                {
+                    await _scrapper.Fill(_easyTraderProperties.UserNameInput, _user.UserName);
+                    await _scrapper.Fill(_easyTraderProperties.PasswordInput, _user.Password);
+                    await _scrapper.Click(_easyTraderProperties.LoginButton);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Login error in EasyTraderService - stockTitle= {_user.UserName}  ");
+
+                throw;
+            }
         }
 
         public async Task EnsureOrderPage()
         {
-            throw new NotImplementedException();
+            try
+            {
+                while (await _scrapper.GetCurrentUrl() != _easyTraderProperties.OrderHistoryUrl)
+                {
+                    while (await IsLoginPage())
+                    {
+                        await Login();
+                    }
+                    await _scrapper.GoToUrl(_easyTraderProperties.OrderHistoryUrl);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"EnsureOrderPage error in EasyTraderService   ");
+
+                throw;
+            }
+        }
+
+        private async Task<bool> IsLoginPage()
+        {
+            try
+            {
+                if (await _scrapper.GetCurrentUrl() == _easyTraderProperties.LoginUrl)
+                    return true;
+                else
+                    return false;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public async Task EnsureTurnoverPage()
