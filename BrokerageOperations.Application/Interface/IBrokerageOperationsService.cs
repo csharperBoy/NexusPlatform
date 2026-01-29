@@ -52,7 +52,12 @@ namespace BrokerageOperations.Application.Interface
         /// <param name="stock">سهم</param>
         /// <returns></returns>
         Task<IEnumerable<OrderDto>> GetOrders(DateTime? from = null, DateTime? to = null, StockDto? stock = null);
-
+        /// <summary>
+        /// دریافت معاملات امروز
+        /// </summary>
+        /// <param name="stock"></param>
+        /// <returns></returns>
+        Task<IEnumerable<TradeDto>> GetTodayTrades(StockDto? stock = null);
         /// <summary>
         /// دریافت گردش حساب
         /// </summary>

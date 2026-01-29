@@ -378,6 +378,104 @@ namespace WebScrapper.Infrastructure.Services
             }
         }
 
+
+        public async Task<List<MasterDetailTableDto>> Table_GetMasterDetailContent(
+    TableElementAccessPath masterTablePath,
+    TableElementAccessPath detailTablePath)
+        {
+            try
+            {
+                var result = new List<MasterDetailTableDto>();
+
+                // پیدا کردن جدول اصلی
+                var masterTable = await FindElement(masterTablePath);
+                var masterRowPath = masterTablePath.rowAccessPath;
+                var masterRows = await FindElements(masterRowPath, masterTable);
+
+                foreach (var masterRow in masterRows)
+                {
+                    var masterRowData = new TableRowDto();
+                    var masterDetailData = new MasterDetailTableDto();
+
+                    // خواندن اطلاعات ردیف اصلی
+                    foreach (var columnPath in masterRowPath.columnsAccessPath
+                        .Where(c => c.ElementType == ElementTypeEnum.TableColumn))
+                    {
+                        var column = new TableColumnDto
+                        {
+                            value = await InnerText(columnPath, masterRow),
+                            key = columnPath.Code
+                        };
+                        masterRowData.columns.Add(column);
+                    }
+
+                    masterDetailData.MasterRow = masterRowData;
+
+                    // بررسی آیا ردیف قابل گسترش است
+                    if (await IsRowExpandable(masterRow))
+                    {
+                        // اگر بسته است، بازش کن
+                        if (!await IsRowExpanded(masterRow))
+                        {
+                            await ClickExpandButton(masterRow);
+                            await Wait(1500); // صبر برای بارگذاری کامل جزئیات
+                        }
+
+                        // حالا ردیف جزئیات را پیدا کن
+                        // ردیف جزئیات معمولاً sibling بعدی است
+                        var detailRow = await masterRow.EvaluateHandleAsync(@"element => {
+                    let sibling = element.nextElementSibling;
+                    while(sibling && !sibling.classList.contains('ag-details-row')) {
+                        sibling = sibling.nextElementSibling;
+                    }
+                    return sibling;
+                }");
+
+                        if (detailRow != null && detailRow.ToString() != "null")
+                        {
+                            var detailRowElement = detailRow as IElementHandle;
+                            if (detailRowElement != null)
+                            {
+                                // حالا جدول جزئیات را از داخل ردیف جزئیات پیدا کن
+                                var detailGrid = await FindElement(detailTablePath, detailRowElement);
+                                if (detailGrid != null)
+                                {
+                                    // خواندن ردیف‌های جدول جزئیات
+                                    var detailRows = await FindElements(detailTablePath.rowAccessPath, detailGrid);
+
+                                    foreach (var subRow in detailRows)
+                                    {
+                                        var detailRowData = new TableRowDto();
+
+                                        foreach (var columnPath in detailTablePath.rowAccessPath.columnsAccessPath
+                                            .Where(c => c.ElementType == ElementTypeEnum.TableColumn))
+                                        {
+                                            var column = new TableColumnDto
+                                            {
+                                                value = await InnerText(columnPath, subRow),
+                                                key = columnPath.Code
+                                            };
+                                            detailRowData.columns.Add(column);
+                                        }
+
+                                        masterDetailData.DetailRows.Add(detailRowData);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    result.Add(masterDetailData);
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Table_GetMasterDetailContent error");
+                throw;
+            }
+        }
         #endregion
 
         #region اختصاصی همین کلاس
@@ -513,6 +611,51 @@ namespace WebScrapper.Infrastructure.Services
                 _logger.LogError(ex, $"FindElement error in PlaywrightScrapperService - element = {elementPath.Title} - page = {elementPath.pageCode} - window = {elementPath.windowCode}");
 
                 throw;
+            }
+        }
+
+        private async Task<bool> IsRowExpandable(IElementHandle row)
+        {
+            try
+            {
+                // بررسی وجود کلاس ag-row-group که نشان‌دهنده قابلیت گسترش است
+                var classAttribute = await row.GetAttributeAsync("class");
+                return classAttribute.Contains("ag-row-group");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task<bool> IsRowExpanded(IElementHandle row)
+        {
+            try
+            {
+                var classAttribute = await row.GetAttributeAsync("class");
+                return classAttribute.Contains("ag-row-group-expanded");
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task ClickExpandButton(IElementHandle row)
+        {
+            try
+            {
+                // پیدا کردن آیکون باز کردن (معمولاً در سلول اول)
+                var expandButton = await row.QuerySelectorAsync(".ag-group-contracted");
+                if (expandButton != null)
+                {
+                    await expandButton.ClickAsync();
+                    await Wait(1000); // صبر برای باز شدن
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error clicking expand button");
             }
         }
         #endregion

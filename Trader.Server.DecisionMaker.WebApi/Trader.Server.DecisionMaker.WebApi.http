@@ -1,0 +1,6 @@
+@Trader.Server.DecisionMaker.WebApi_HostAddress = http://localhost:5019
+
+GET {{Trader.Server.DecisionMaker.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

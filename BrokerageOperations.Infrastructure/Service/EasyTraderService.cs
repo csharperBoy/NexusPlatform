@@ -1,7 +1,10 @@
 ﻿using BrokerageOperations.Application.Interface;
 using BrokerageOperations.Domain.Property;
 using BrokerageOperations.Shared.DTOs;
+using BrokerageOperations.Shared.Enums;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,8 +15,6 @@ using System.Xml.Linq;
 using WebScrapper.Application.DTOs;
 using WebScrapper.Application.Interfaces;
 using WebScrapper.Domain.Enums;
-using Microsoft.Playwright;
-using Microsoft.AspNetCore.Identity.Data;
 
 namespace BrokerageOperations.Infrastructure.Service
 {
@@ -250,7 +251,7 @@ namespace BrokerageOperations.Infrastructure.Service
             }
         }
 
-        public async Task<IEnumerable<OrderDto>> GetTodayOrders(StockDto? stock = null)
+        public async Task<IEnumerable<OrderDto>> GetTodayOrders_old(StockDto? stock = null)
         {
             try
             {
@@ -316,73 +317,83 @@ namespace BrokerageOperations.Infrastructure.Service
             }
         }
 
-        public async Task<IEnumerable<OrderDto>> GetTodayOrders(StockDto? stock = null)
+        public async Task<IEnumerable<TradeDto>> GetTodayTrades(StockDto? stock = null)
         {
             try
             {
-
-                IEnumerable<OrderDto> orders = new List<OrderDto>();
+                List<TradeDto> trades = new List<TradeDto>();
                 await EnsureOrderPage();
+
                 if (stock != null)
                 {
                     await _scrapper.Click(_easyTraderProperties.OrderHistoryStockTitleInput);
                     await _scrapper.Fill(_easyTraderProperties.OrderHistoryStockTitleInput, stock.Title);
                 }
+
                 await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateInput);
                 await _scrapper.Click(_easyTraderProperties.OrderHistoryFromDateSelectTodayButton);
 
                 await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateInput);
                 await _scrapper.Click(_easyTraderProperties.OrderHistoryToDateSelectTodayButton);
 
-                // همه سفارشات رو جداول جزئیاتش رو باز میکنه تا برای خواندن آماده بشوند
-                await _scrapper.Table_ClickOnTableSubElement(_easyTraderProperties.OrderHistoryTable, "OpenSubOrders");
-                TableDto tableData = await _scrapper.Table_GetTableContent(_easyTraderProperties.OrderHistoryDetailsTable);
-                foreach (var row in tableData.rows)
+                // استفاده از متد جدید برای خواندن جدول اصلی و جزئیات
+                var masterDetailData = await _scrapper.Table_GetMasterDetailContent(
+                    _easyTraderProperties.OrderHistoryTable,
+                    _easyTraderProperties.OrderHistoryDetailsTable);
+
+                foreach (var masterDetail in masterDetailData)
                 {
-                    OrderDto order = new OrderDto();
-                    DateOnly date = new DateOnly();
-                    TimeOnly time = new TimeOnly();
-                    foreach (var column in row.columns)
+                    // اگر این ردیف جزئیات دارد (قابل گسترش بوده)
+                    if (masterDetail.DetailRows.Any())
                     {
-                        switch (column.key)
+                        foreach (var detailRow in masterDetail.DetailRows)
                         {
-                            case "Date":
-                                date = ConvertToDateOnly(column.value);
-                                break;
-                            case "Time":
-                                time = TimeOnly.Parse(column.value);
-                                break;
-                            case "Side":
-                                order.OrderSide = column.value.Trim() == "فروش" ? Shared.Enums.OrderSideEnum.sell : Shared.Enums.OrderSideEnum.buy;
-                                break;
-                            case "StockTitle":
-                                order.StockTitle = column.value.Trim();
-                                break;
-                            case "OrderVolum":
-                                order.BaseOrderQuantity = StringToInt(column.value.Trim());
-                                break;
-                            case "Price":
-                                order.PriceOfUnit = StringToInt(column.value.Trim());
-                                break;
-                            case "DoneVolume":
-                                order.DoneOrderQuantity = StringToInt(column.value.Trim());
-                                break;
-                            default:
-                                break;
+                            TradeDto trade = new TradeDto();
+                            DateOnly date = new DateOnly();
+                            TimeOnly time = new TimeOnly();
+
+                            foreach (var column in detailRow.columns)
+                            {
+                                switch (column.key)
+                                {
+                                    case "TradeDate":
+                                        date = ConvertToDateOnly(column.value);
+                                        break;
+                                    case "TradeTime":
+                                        time = TimeOnly.Parse(column.value);
+                                        break;
+                                    case "Quantity":
+                                        trade.Quantity = StringToInt(column.value.Trim());
+                                        break;
+                                    case "Price":
+                                        trade.PriceOfUnit = StringToInt(column.value.Trim());
+                                        break;
+                                }
+                            }
+
+                            // اطلاعات اصلی سفارش از master row
+                            //var orderDateColumn = masterDetail.MasterRow.columns.FirstOrDefault(c => c.key == "OrderDate");
+                            var orderSideColumn = masterDetail.MasterRow.columns.FirstOrDefault(c => c.key == "OrderSide");
+                            var stockTitleColumn = masterDetail.MasterRow.columns.FirstOrDefault(c => c.key == "StockTitle");
+
+                            //if (orderDateColumn != null) order.OrderDate = ConvertToDateOnly(orderDateColumn.value);
+                            if (orderSideColumn != null) trade.OrderSide = orderSideColumn.value.Trim() == "فروش" ? OrderSideEnum.sell : OrderSideEnum.buy;
+                            if (stockTitleColumn != null) trade.StockTitle = stockTitleColumn.value.Trim();
+
+                            trade.DateTime = date.ToDateTime(time);
+                            trades.Add(trade);
                         }
                     }
-                    order.DateTime = date.ToDateTime(time);
                 }
-                return orders;
+
+                return trades;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"GetTodayOrders error in EasyTraderService - stockTitle= {stock.Title}  ");
-
+                _logger.LogError(ex, $"GetTodayOrders error in EasyTraderService");
                 throw;
             }
         }
-
         public async Task<SnapShotDto> GetSnapShotFromTrade(StockDto stock)
         {
             try

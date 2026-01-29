@@ -255,8 +255,8 @@ namespace BrokerageOperations.Domain.Property
                   _ElementType: ElementTypeEnum.TableRow,
                   _Description: "این المنت شامل تمام سفارش های داخل جدول است",
                  _DefaultAccessPath: ElementPathEnum.Xpath,
-                 _xpath: "xpath{ get; set; } =./div[contains(@role{ get; set; } =,'row')]",
-                 _localXpathPart1: "/div[", _localXpathPart2: "]",
+                  _xpath: "./div[contains(@role,'row') and contains(@class,'ag-row-level-0')]",
+                    _localXpathPart1: "/div[", _localXpathPart2: "]",
                  _columnsAccessPath: new List<ElementAccessPath>()
                  {
                      new ElementAccessPath("باز کردن ردیف های سفارش",
@@ -264,11 +264,94 @@ namespace BrokerageOperations.Domain.Property
                           _ElementType: ElementTypeEnum.Button,
                           _DefaultAccessPath: ElementPathEnum.Xpath ,
                           _xpath: "xpath{ get; set; } =./div[1]/span/span[2]/span"
-                          )
+                          ),
+                     new ElementAccessPath("تاریخ سفارش",
+                           _Code: "Date",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "./div[1]//span[@class='ag-group-value']"
+                         ),
+                       new ElementAccessPath("ساعت",
+                           _Code: "Time",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[2]"
+                           ),
+                       new ElementAccessPath("سمت سفارش",
+                           _Code: "Side",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[3]/app-ag-order-side-render/div/div"
+                           ),
+                       new ElementAccessPath("عنوان نماد",
+                           _Code: "StockTitle",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[4]/span/span"
+                           ),
+                       new ElementAccessPath("حجم کل",
+                           _Code: "OrderVolum",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[5]"
+                           ),
+                       new ElementAccessPath("قیمت",
+                           _Code: "Price",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[6]"
+                           ),
+                       new ElementAccessPath("حجم انجام شده",
+                           _Code: "DoneVolume",
+                           _ElementType: ElementTypeEnum.TableColumn,
+                           _DefaultAccessPath: ElementPathEnum.Xpath ,
+                           _xpath: "xpath{ get; set; } =./div[7]"
+                           )
                  }
           ));
 
-
+        public TableElementAccessPath OrderHistoryDetailsTable { get; set; } = new TableElementAccessPath(
+    "جدول جزئیات معاملات",
+    _Code: "orderDetails",
+    _ElementType: ElementTypeEnum.Table,
+    // این XPath از ریشه ردیف جزئیات شروع میشه
+    _DefaultAccessPath: ElementPathEnum.Xpath,
+    _xpath: ".//div[contains(@class,'ag-details-grid')]//div[@role='grid']",
+    _rowAccessPath: new TableRowElementAccessPath(
+        "ردیف جزئیات معامله",
+        _Code: "detailRows",
+        _ElementType: ElementTypeEnum.TableRow,
+        _DefaultAccessPath: ElementPathEnum.Xpath,
+        _xpath: ".//div[@role='row' and contains(@class,'ag-row-level-0')]",
+        _columnsAccessPath: new List<ElementAccessPath>()
+        {
+            new ElementAccessPath("تاریخ معامله",
+                _Code: "TradeDate",
+                _ElementType: ElementTypeEnum.TableColumn,
+                _DefaultAccessPath: ElementPathEnum.Xpath,
+                _xpath: "./div[1]"
+            ),
+            new ElementAccessPath("ساعت معامله",
+                _Code: "TradeTime",
+                _ElementType: ElementTypeEnum.TableColumn,
+                _DefaultAccessPath: ElementPathEnum.Xpath,
+                _xpath: "./div[2]"
+            ),
+            new ElementAccessPath("تعداد",
+                _Code: "Quantity",
+                _ElementType: ElementTypeEnum.TableColumn,
+                _DefaultAccessPath: ElementPathEnum.Xpath,
+                _xpath: "./div[3]"
+            ),
+            new ElementAccessPath("نرخ",
+                _Code: "Price",
+                _ElementType: ElementTypeEnum.TableColumn,
+                _DefaultAccessPath: ElementPathEnum.Xpath,
+                _xpath: "./div[4]"
+            )
+        }
+    )
+);
         /*public TableElementAccessPath OrderHistoryTable { get; set; } = new TableElementAccessPath(
            "جدول تاریخچه سفارشات",
           _FullXpath: "/html/body/app-root/main-layout/main/div[3]/div/div/as-split/as-split-area/orders-history-wrapper/div/ng-component/div/div/div[1]/ag-grid-angular/div[3]/div[1]/div[2]/div[3]/div[1]/div[2]/div",

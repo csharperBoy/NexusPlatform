@@ -26,7 +26,7 @@ namespace WebScrapper.Application.Interfaces
         Task NewTabPage<TPage, TWindow>(string url, TPage page, TWindow? window)
              where TPage : IPageContract
             where TWindow : IWindowContract<TPage>;
-            
+
         /// <summary>
         /// باز کردن پنجره جدید
         /// </summary>
@@ -49,7 +49,7 @@ namespace WebScrapper.Application.Interfaces
         /// <param name="value">مقدار</param>
         /// <returns></returns>
         Task Fill(ElementAccessPath elementPath, string value, TElement? BaseElement = null);
-             
+
         /// <summary>
         /// کلیک روی المنت
         /// </summary>
@@ -94,7 +94,7 @@ namespace WebScrapper.Application.Interfaces
 
 
         #region عملیات های مربوط به جداول
-        
+
         /// <summary>
         /// دریافت رکورد های داخل یک جدول بصورت ساختار تعریف شده
         ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
@@ -103,14 +103,14 @@ namespace WebScrapper.Application.Interfaces
         /// <param name="filterValues">فیلتر برای اعمال روی نتیجه</param>
         /// <returns></returns>
         Task<TableDto> Table_GetTableContent(TableElementAccessPath tableElementPath, TableRowDto? filterValues = null);
-         /// <summary>
-         ///  کلیک بر روی یک دکمه داخل ردیف های جدول
-         ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
-         /// </summary>
-         /// <param name="tableElementPath"> مشخصات دسترسی به المنت جدول</param>
-         /// <param name="buttonColumnKey"> کلید تعریف شده در پراپرتی های دسترسی به جدول مربوط به همان دکمه مورد نظر که میخواهیم بر رویش کلیک شود</param>
-         /// <param name="filterValues">شروطی که باید مطابق بر اون بر روی دکمه هر ردیف کلیک شود</param>
-         /// <returns></returns>
+        /// <summary>
+        ///  کلیک بر روی یک دکمه داخل ردیف های جدول
+        ///  باید مشخصات دسترسی به جدول بصورت تو در تو و مطابق استاندارد تعریف شده برای جداول باشد
+        /// </summary>
+        /// <param name="tableElementPath"> مشخصات دسترسی به المنت جدول</param>
+        /// <param name="buttonColumnKey"> کلید تعریف شده در پراپرتی های دسترسی به جدول مربوط به همان دکمه مورد نظر که میخواهیم بر رویش کلیک شود</param>
+        /// <param name="filterValues">شروطی که باید مطابق بر اون بر روی دکمه هر ردیف کلیک شود</param>
+        /// <returns></returns>
         Task Table_ClickOnTableSubElement(TableElementAccessPath tableElementPath, string buttonColumnKey, TableRowDto? filterValues = null);
         /// <summary>
         /// دریافت اطلاعات یک ردیف خاص از یک جدول
@@ -133,6 +133,8 @@ namespace WebScrapper.Application.Interfaces
         /// <param name="tableElementPath">اطلاعات دسترسی به جدول</param>
         /// <returns></returns>
         Task<int> Table_GetTableRowCount(TableElementAccessPath tableElementPath);
+
+        Task<List<MasterDetailTableDto>> Table_GetMasterDetailContent(TableElementAccessPath masterTablePath, TableElementAccessPath detailTablePath);
         #endregion
     }
 }
