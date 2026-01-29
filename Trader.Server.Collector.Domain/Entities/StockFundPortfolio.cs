@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Domain.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Trader.Server.Collector.Domain.Entities
 {
-    public class StockFundPortfolio
+    public class StockFundPortfolio : AuditableEntity
     {
         public Guid Id { get; set; }
         /// <summary>

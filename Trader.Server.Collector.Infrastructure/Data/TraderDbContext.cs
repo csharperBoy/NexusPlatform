@@ -13,15 +13,15 @@ using Trader.Server.Collector.Domain.Entities;
 using Trader.Server.Collector.Infrastructure.Configurations;
 namespace Trader.Server.Collector.Infrastructure.Data
 {
-    public class CollectorDbContext : BaseDbContext
+    public class TraderDbContext : BaseDbContext
     {
-        public CollectorDbContext(
-             DbContextOptions<CollectorDbContext> options,
+        public TraderDbContext(
+             DbContextOptions<TraderDbContext> options,
              IServiceProvider serviceProvider)
              : base(options, serviceProvider)
         {
         }
-        public CollectorDbContext(DbContextOptions<CollectorDbContext> options)
+        public TraderDbContext(DbContextOptions<TraderDbContext> options)
       : base(options, new ServiceCollection().BuildServiceProvider()) 
         {
         }

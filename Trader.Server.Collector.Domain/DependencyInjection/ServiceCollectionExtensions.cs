@@ -6,7 +6,7 @@ namespace Trader.Server.Collector.Domain.DependencyInjection
  
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection TraderServerCollector_AddDomain(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection TraderServer_AddDomain(this IServiceCollection services, IConfiguration configuration)
         {
            return services;
         }

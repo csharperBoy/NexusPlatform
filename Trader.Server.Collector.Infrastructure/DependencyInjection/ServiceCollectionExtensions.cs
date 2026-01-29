@@ -11,14 +11,14 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
  
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection TraderServerCollector_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection TraderServer_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 گرفتن Connection String از تنظیمات
             var conn = configuration.GetConnectionString("DefaultConnection");
-            var migrationsAssembly = typeof(CollectorDbContext).Assembly.GetName().Name;
+            var migrationsAssembly = typeof(TraderDbContext).Assembly.GetName().Name;
 
             // 📌 رجیستر DbContext برای ماژول Sample
-            services.AddDbContext<CollectorDbContext>((serviceProvider, options) =>
+            services.AddDbContext<TraderDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
                 {
@@ -26,11 +26,11 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
                     b.MigrationsAssembly(migrationsAssembly);
 
                     // تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
-                    b.MigrationsHistoryTable("__CollectorMigrationsHistory", "Collector");
+                    b.MigrationsHistoryTable("__TraderMigrationsHistory", "Trader");
                 });
             });
 
-            services.AddScoped<IUnitOfWork<CollectorDbContext>, EfUnitOfWork<CollectorDbContext>>();
+            services.AddScoped<IUnitOfWork<TraderDbContext>, EfUnitOfWork<TraderDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
 
@@ -40,7 +40,7 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
-            registration.AddOutboxProcessor<CollectorDbContext>(services);
+            registration.AddOutboxProcessor<TraderDbContext>(services);
 
             return services;
         }

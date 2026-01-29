@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace Trader.Server.Collector.Infrastructure.Data
 {
 
-    public class CollectorDbContextFactory : IDesignTimeDbContextFactory<CollectorDbContext>
+    public class TraderDbContextFactory : IDesignTimeDbContextFactory<TraderDbContext>
     {
-        public CollectorDbContext CreateDbContext(string[] args)
+        public TraderDbContext CreateDbContext(string[] args)
         {
             // 📌 مسیر پایه برای خواندن فایل‌های تنظیمات
             var basePath = Directory.GetCurrentDirectory();
@@ -29,18 +29,18 @@ namespace Trader.Server.Collector.Infrastructure.Data
             var conn = config.GetConnectionString("DefaultConnection");
 
             // 📌 تنظیم DbContextOptions برای EF Core
-            var optionsBuilder = new DbContextOptionsBuilder<CollectorDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<TraderDbContext>();
             optionsBuilder.UseSqlServer(conn, b =>
             {
                 // 📌 تعیین اسمبلی محل Migrationها
-                b.MigrationsAssembly(typeof(CollectorDbContext).Assembly.GetName().Name);
+                b.MigrationsAssembly(typeof(TraderDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
                 b.MigrationsHistoryTable("__CollectorMigrationsHistory", "Collector");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده
-            return new CollectorDbContext(optionsBuilder.Options);
+            return new TraderDbContext(optionsBuilder.Options);
         }
     }
 }

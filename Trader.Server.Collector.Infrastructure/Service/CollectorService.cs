@@ -17,8 +17,8 @@ namespace Trader.Server.Collector.Infrastructure.Service
     public class CollectorService : ICollectorService
     {
         private readonly IStockService _stockService;
-        private readonly IRepository<CollectorDbContext, SnapShotFromStockTrading, Guid> _repository;
-        private readonly IUnitOfWork<CollectorDbContext> _uow;
+        private readonly IRepository<TraderDbContext, SnapShotFromStockTrading, Guid> _repository;
+        private readonly IUnitOfWork<TraderDbContext> _uow;
         private readonly ILogger<CollectorService> _logger;
         private IBrokerageOperationsService _brokerageService;
         public CollectorService(ILogger<CollectorService> logger, IBrokerageOperationsService brokerageService, IStockService stockService)

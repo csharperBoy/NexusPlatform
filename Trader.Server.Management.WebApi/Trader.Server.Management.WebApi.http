@@ -1,0 +1,6 @@
+@Trader.Server.Management.WebApi_HostAddress = http://localhost:5173
+
+GET {{Trader.Server.Management.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

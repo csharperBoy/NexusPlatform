@@ -1,5 +1,4 @@
-﻿using Authorization.Domain.Entities;
-using Core.Infrastructure.Database.Configurations;
+﻿using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;

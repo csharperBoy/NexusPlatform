@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Sample.Infrastructure.Data;
 using Serilog;
 using Trader.Server.Collector.Infrastructure.Data;
 namespace Trader.Server.Collector.Infrastructure.DependencyInjection
@@ -12,7 +11,7 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
     public static class ApplicationBuilderExtensions
     {
         // 📌 متد اصلی برای استفاده در Startup
-        public static async Task<IApplicationBuilder> TraderServerCollector_UseInfrastructure(this IApplicationBuilder app)
+        public static async Task<IApplicationBuilder> TraderServer_UseInfrastructure(this IApplicationBuilder app)
         {
             await app.RunSmartMigrations();
             return app;
@@ -26,7 +25,7 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
             var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-            var dbContextType = typeof(CollectorDbContext);
+            var dbContextType = typeof(TraderDbContext);
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
 

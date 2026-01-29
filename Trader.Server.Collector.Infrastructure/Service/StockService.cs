@@ -19,10 +19,10 @@ namespace Trader.Server.Collector.Infrastructure.Service
     public class StockService : IStockService
     {
         private readonly ILogger<StockService> _logger;
-        private readonly IRepository<CollectorDbContext, Stock, Guid> _repository;
+        private readonly IRepository<TraderDbContext, Stock, Guid> _repository;
         private readonly ISpecificationRepository<Stock, Guid> _specRepository;
-        private readonly IUnitOfWork<CollectorDbContext> _uow;
-        public StockService(ILogger<StockService> logger, IRepository<CollectorDbContext, Stock, Guid> repository, ISpecificationRepository<Stock, Guid> specRepository, IUnitOfWork<CollectorDbContext> uow)
+        private readonly IUnitOfWork<TraderDbContext> _uow;
+        public StockService(ILogger<StockService> logger, IRepository<TraderDbContext, Stock, Guid> repository, ISpecificationRepository<Stock, Guid> specRepository, IUnitOfWork<TraderDbContext> uow)
         {
             _uow = uow;
             _repository = repository;

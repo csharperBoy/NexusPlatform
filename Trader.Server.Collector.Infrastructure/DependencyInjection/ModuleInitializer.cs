@@ -1,9 +1,12 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trader.Server.Collector.Infrastructure.Data;
 namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 {
 
@@ -27,19 +30,25 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 
             try
             {
-                _logger.LogInformation("Starting TraderServerCollector module initialization...");
+                _logger.LogInformation("Starting Trader module initialization...");
 
-                // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                //var repo = scope.ServiceProvider.GetRequiredService<IRepository<SampleDbContext, SampleEntity, Guid>>();
-                //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
-                //await SampleSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
+                // اجرای seed داده‌ها
+                var dbContext = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
-                _logger.LogInformation("TraderServerCollector module initialization completed successfully.");
+                // روش 1: استفاده از متد یکپارچه
+                await TraderSeedData.SeedAsync(
+                    resourceService, permissionService, roleService,
+                    _logger);
+                _logger.LogInformation("Successfull Trader module initialization.");
+
             }
             catch (Exception ex)
             {
                 // 📌 ثبت خطا در صورت شکست عملیات
-                _logger.LogError(ex, "An error occurred while initializing the Sample module");
+                _logger.LogError(ex, "An error occurred while initializing the Trader module");
                 throw;
             }
         }

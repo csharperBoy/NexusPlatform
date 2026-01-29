@@ -104,7 +104,7 @@ namespace Trader.Server.Collector.Domain.Entities
             if (_PercentOfDailyTolerance == null)
                 PercentOfDailyTolerance = 0.03;
             else
-                PercentOfDailyTolerance = _PercentOfDailyTolerance;
+                PercentOfDailyTolerance = _PercentOfDailyTolerance ?? 0;
 
             CodeOfTsetmc = _CodeOfTsetmc;
 

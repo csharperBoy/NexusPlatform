@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Audit.Application\Audit.Application.csproj" />
+    <ProjectReference Include="..\Audit.Domain\Audit.Domain.csproj" />
+    <ProjectReference Include="..\Audit.Infrastructure\Audit.Infrastructure.csproj" />
+    <ProjectReference Include="..\Audit.Presentation\Audit.Presentation.csproj" />
+    <ProjectReference Include="..\Authorization.Application\Authorization.Application.csproj" />
+    <ProjectReference Include="..\Authorization.Domain\Authorization.Domain.csproj" />
+    <ProjectReference Include="..\Authorization.Infrastructure\Authorization.Infrastructure.csproj" />
+    <ProjectReference Include="..\Authorization.Presentation\Authorization.Presentation.csproj" />
+    <ProjectReference Include="..\Cach.Application\Cach.Application.csproj" />
+    <ProjectReference Include="..\Cach.Domain\Cach.Domain.csproj" />
+    <ProjectReference Include="..\Cach.Infrastructure\Cach.Infrastructure.csproj" />
+    <ProjectReference Include="..\Cach.Presentation\Cach.Presentation.csproj" />
+    <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
+    <ProjectReference Include="..\Core.Domain\Core.Domain.csproj" />
+    <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\Core.Presentation\Core.Presentation.csproj" />
+    <ProjectReference Include="..\Event.Application\Event.Application.csproj" />
+    <ProjectReference Include="..\Event.Domain\Event.Domain.csproj" />
+    <ProjectReference Include="..\Event.Infrastructure\Event.Infrastructure.csproj" />
+    <ProjectReference Include="..\Event.Presentation\Event.Presentation.csproj" />
+    <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
+    <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
+    <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\Identity.Presentation\Identity.Presentation.csproj" />
+    <ProjectReference Include="..\Notification.Application\Notification.Application.csproj" />
+    <ProjectReference Include="..\Notification.Domain\Notification.Domain.csproj" />
+    <ProjectReference Include="..\Notification.Infrastructure\Notification.Infrastructure.csproj" />
+    <ProjectReference Include="..\Notification.Presentation\Notification.Presentation.csproj" />
+    <ProjectReference Include="..\Trader.Server.Collector.Application\Trader.Server.Collector.Application.csproj" />
+    <ProjectReference Include="..\Trader.Server.Collector.Domain\Trader.Server.Collector.Domain.csproj" />
+    <ProjectReference Include="..\Trader.Server.Collector.Infrastructure\Trader.Server.Collector.Infrastructure.csproj" />
+    <ProjectReference Include="..\Trader.Server.Collector.Presentation\Trader.Server.Collector.Presentation.csproj" />
+    <ProjectReference Include="..\User.Application\User.Application.csproj" />
+    <ProjectReference Include="..\User.Domain\User.Domain.csproj" />
+    <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
+    <ProjectReference Include="..\User.Presentation\User.Presentation.csproj" />
+  </ItemGroup>
+
+</Project>
