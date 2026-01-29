@@ -34,9 +34,9 @@ namespace Trader.Server.Collector.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.HasDefaultSchema("collector");
+            modelBuilder.HasDefaultSchema("trader");
 
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("collector"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("trader"));
 
             modelBuilder.ApplyConfiguration(new StockConfiguration());
             modelBuilder.ApplyConfiguration(new OptionConfiguration());

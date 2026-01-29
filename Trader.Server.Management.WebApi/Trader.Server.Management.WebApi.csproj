@@ -8,6 +8,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -47,10 +51,6 @@
     <ProjectReference Include="..\Trader.Server.Collector.Domain\Trader.Server.Collector.Domain.csproj" />
     <ProjectReference Include="..\Trader.Server.Collector.Infrastructure\Trader.Server.Collector.Infrastructure.csproj" />
     <ProjectReference Include="..\Trader.Server.Collector.Presentation\Trader.Server.Collector.Presentation.csproj" />
-    <ProjectReference Include="..\User.Application\User.Application.csproj" />
-    <ProjectReference Include="..\User.Domain\User.Domain.csproj" />
-    <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
-    <ProjectReference Include="..\User.Presentation\User.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

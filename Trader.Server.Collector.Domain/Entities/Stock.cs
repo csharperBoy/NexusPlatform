@@ -16,6 +16,8 @@ namespace Trader.Server.Collector.Domain.Entities
     [SecuredResource("Collector.Stock")]
     public class Stock : DataScopedAndResourcedEntity, IAggregateRoot
     {
+        protected Stock() { }
+
         public Stock(
              string _Isin,
              string? _Title,
