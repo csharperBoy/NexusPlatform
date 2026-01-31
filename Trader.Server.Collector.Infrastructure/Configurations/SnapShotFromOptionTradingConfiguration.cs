@@ -15,7 +15,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<SnapShotFromOptionTrading> builder)
         {
             base.Configure(builder); 
-            builder.ToTable("SnapShotFromOptionTrading", "collector");
+            builder.ToTable("SnapShotFromOptionTrading", "trader");
 
             builder.Property(p => p.DateTime).IsRequired();
 

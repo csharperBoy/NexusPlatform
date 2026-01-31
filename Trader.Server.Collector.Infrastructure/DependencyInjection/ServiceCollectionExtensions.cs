@@ -4,7 +4,10 @@ using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Trader.Server.Collector.Application.Interface;
+using Trader.Server.Collector.Domain.Entities;
 using Trader.Server.Collector.Infrastructure.Data;
+using Trader.Server.Collector.Infrastructure.Service;
 
 namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 {
@@ -32,7 +35,15 @@ namespace Trader.Server.Collector.Infrastructure.DependencyInjection
 
             services.AddScoped<IUnitOfWork<TraderDbContext>, EfUnitOfWork<TraderDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
-            //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
+            services.AddScoped<ISpecificationRepository<Option, Guid>, EfSpecificationRepository<TraderDbContext, Option, Guid>>();
+            services.AddScoped<ISpecificationRepository<OptionContract, Guid>, EfSpecificationRepository<TraderDbContext, OptionContract, Guid>>();
+            services.AddScoped<ISpecificationRepository<SnapShotFromOptionTrading, Guid>, EfSpecificationRepository<TraderDbContext, SnapShotFromOptionTrading, Guid>>();
+            services.AddScoped<ISpecificationRepository<SnapShotFromStockTrading, Guid>, EfSpecificationRepository<TraderDbContext, SnapShotFromStockTrading, Guid>>();
+            services.AddScoped<ISpecificationRepository<Stock, Guid>, EfSpecificationRepository<TraderDbContext, Stock, Guid>>();
+            services.AddScoped<ISpecificationRepository<StockFundPortfolio, Guid>, EfSpecificationRepository<TraderDbContext, StockFundPortfolio, Guid>>();
+
+            services.AddScoped<ICollectorService, CollectorService>();
+            services.AddScoped<IStockService, StockService>();
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

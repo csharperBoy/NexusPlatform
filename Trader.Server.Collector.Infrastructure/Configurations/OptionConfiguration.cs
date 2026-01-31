@@ -16,7 +16,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         {
             base.Configure(builder); // اعمال CreatedAt و...
 
-            builder.ToTable("Options", "collector");
+            builder.ToTable("Options", "trader");
 
             builder.Property(p => p.Side).HasConversion<byte>();
 

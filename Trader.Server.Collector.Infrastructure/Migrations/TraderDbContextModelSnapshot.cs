@@ -83,6 +83,87 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("OutboxMessages", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.BrokerageAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("EquivalentResourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FkUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("OwnerOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte>("Platform")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_BrokerageAccount_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_BrokerageAccount_CreatedBy");
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_BrokerageAccount_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_BrokerageAccount_ModifiedBy");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_BrokerageAccount_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_BrokerageAccount_OwnerPerson");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_BrokerageAccount_ScopedLookup");
+
+                    b.HasIndex("Platform", "FkUserId")
+                        .HasDatabaseName("IX_Option_FastLookup");
+
+                    b.ToTable("BrokerageAccount", "trader");
+                });
+
             modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.Option", b =>
                 {
                     b.Property<Guid>("Id")
@@ -166,7 +247,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.HasIndex("Side", "FkOptionContractId", "DuePrice")
                         .HasDatabaseName("IX_Option_FastLookup");
 
-                    b.ToTable("Options", "collector");
+                    b.ToTable("Options", "trader");
                 });
 
             modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.OptionContract", b =>
@@ -246,7 +327,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_OptionContract_ScopedLookup");
 
-                    b.ToTable("OptionContracts", "collector");
+                    b.ToTable("OptionContracts", "trader");
                 });
 
             modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.SnapShotFromOptionTrading", b =>
@@ -460,7 +541,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_SnapShotFromOptionTrading_ScopedLookup");
 
-                    b.ToTable("SnapShotFromOptionTrading", "collector");
+                    b.ToTable("SnapShotFromOptionTrading", "trader");
                 });
 
             modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.SnapShotFromStockTrading", b =>
@@ -674,7 +755,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_SnapShotFromStockTrading_ScopedLookup");
 
-                    b.ToTable("SnapShotFromStockTrading", "collector");
+                    b.ToTable("SnapShotFromStockTrading", "trader");
                 });
 
             modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.Stock", b =>
@@ -796,7 +877,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.HasIndex("Isin", "Title", "OpenTime", "TypeOfMarket")
                         .HasDatabaseName("IX_Stock_FastLookup");
 
-                    b.ToTable("Stock", "collector");
+                    b.ToTable("Stock", "trader");
                 });
 #pragma warning restore 612, 618
         }

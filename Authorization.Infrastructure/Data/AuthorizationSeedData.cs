@@ -303,7 +303,7 @@ namespace Authorization.Infrastructure.Data
         {
             new()
             {
-                ResourceKey = "authorization.resources", // فرض می‌کنیم این کلید وجود دارد
+                ResourceKey = "authorization.resource", // فرض می‌کنیم این کلید وجود دارد
                 Action = "Full",
                 Scope = "All",
                 Type = "allow",

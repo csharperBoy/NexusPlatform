@@ -15,7 +15,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<OptionContract> builder)
         {
             base.Configure(builder);
-            builder.ToTable("OptionContracts", "collector");
+            builder.ToTable("OptionContracts", "trader");
 
             builder.Property(r => r.FkStockId).IsRequired().IsUnicode(false);
 

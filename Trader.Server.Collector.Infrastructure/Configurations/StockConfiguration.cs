@@ -15,7 +15,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<Stock> builder)
         {
             base.Configure(builder); 
-            builder.ToTable("Stock", "collector");
+            builder.ToTable("Stock", "trader");
 
             builder.Property(p => p.TypeOfMarket).HasConversion<byte>();
 

@@ -17,7 +17,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<StockFundPortfolio> builder)
         {
             base.Configure(builder);
-            builder.ToTable("StockFundPortfolio", "collector");
+            builder.ToTable("StockFundPortfolio", "trader");
 
             builder.HasIndex(p => new { p.StockFundId })
                   .HasDatabaseName("IX_StockFundPortfolio_FastLookup");

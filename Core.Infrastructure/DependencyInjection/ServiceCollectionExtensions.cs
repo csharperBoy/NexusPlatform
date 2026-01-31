@@ -125,5 +125,13 @@ namespace Core.Infrastructure.DependencyInjection
 
             return services;
         }
+
+        public static IServiceCollection AddScopedWithAsync<TService>(
+            this IServiceCollection services,
+            Func<IServiceProvider, Task<TService>> implementationFactory) where TService : class
+        {
+            return services.AddScoped(provider =>
+                implementationFactory(provider).GetAwaiter().GetResult());
+        }
     }
 }

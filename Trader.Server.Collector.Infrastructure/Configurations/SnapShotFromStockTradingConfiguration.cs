@@ -16,7 +16,7 @@ namespace Trader.Server.Collector.Infrastructure.Configurations
         {
 
             base.Configure(builder); 
-            builder.ToTable("SnapShotFromStockTrading", "collector");
+            builder.ToTable("SnapShotFromStockTrading", "trader");
 
             builder.Property(p => p.DateTime).IsRequired();
 

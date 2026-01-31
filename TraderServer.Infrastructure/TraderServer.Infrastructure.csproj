@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BrokerageOperations.Application\BrokerageOperations.Application.csproj" />
+    <ProjectReference Include="..\BrokerageOperations.Infrastructure\BrokerageOperations.Infrastructure.csproj" />
+    <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\TraderServer.Application\TraderServer.Application.csproj" />
+    <ProjectReference Include="..\TraderServer.Domain\TraderServer.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -36,7 +36,7 @@ namespace Trader.Server.Collector.Infrastructure.Data
                 b.MigrationsAssembly(typeof(TraderDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
-                b.MigrationsHistoryTable("__CollectorMigrationsHistory", "Collector");
+                b.MigrationsHistoryTable("__CollectorMigrationsHistory", "trader");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده

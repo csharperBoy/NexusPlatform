@@ -26,6 +26,7 @@ namespace Trader.Server.Collector.Infrastructure.Data
         {
         }
         public DbSet<Stock> Stock { get; set; }
+        public DbSet<BrokerageAccount> BrokerageAccount { get; set; }
         public DbSet<Option> Option { get; set; }
         public DbSet<OptionContract> OptionContract { get; set; }
         public DbSet<SnapShotFromStockTrading> SnapShotFromStockTrading { get; set; }
@@ -39,6 +40,7 @@ namespace Trader.Server.Collector.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("trader"));
 
             modelBuilder.ApplyConfiguration(new StockConfiguration());
+            modelBuilder.ApplyConfiguration(new BrokerageAccountConfiguration());
             modelBuilder.ApplyConfiguration(new OptionConfiguration());
             modelBuilder.ApplyConfiguration(new OptionContractConfiguration());
             modelBuilder.ApplyConfiguration(new SnapShotFromOptionTradingConfiguration());

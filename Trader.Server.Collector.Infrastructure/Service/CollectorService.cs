@@ -21,11 +21,16 @@ namespace Trader.Server.Collector.Infrastructure.Service
         private readonly IUnitOfWork<TraderDbContext> _uow;
         private readonly ILogger<CollectorService> _logger;
         private IBrokerageOperationsService _brokerageService;
-        public CollectorService(ILogger<CollectorService> logger, IBrokerageOperationsService brokerageService, IStockService stockService)
+        private IBrokerageFactory _brokerageFactory;
+        private BrokerageAccount _account;
+        public CollectorService(ILogger<CollectorService> logger,BrokerageAccount account, /*IBrokerageOperationsService brokerageService,*/ IStockService stockService, IBrokerageFactory brokerageFactory)
         {
             _logger = logger;
-            _brokerageService = brokerageService;
+            //_brokerageService = brokerageService;
             _stockService = stockService;
+            _brokerageFactory = brokerageFactory;
+            _account = account;
+            _brokerageService = _brokerageFactory.CreateBrokerageService(account.Platform);
         }
         public async Task SaveSnapShotStockTrading(SaveSnapShotRequest req)
         {
