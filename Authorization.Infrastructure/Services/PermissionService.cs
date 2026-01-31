@@ -389,8 +389,8 @@ namespace Authorization.Infrastructure.Services
                     permissionDefinition.Scope.ToEnumOrDefault(Core.Domain.Enums.ScopeType.Self),
                     null,
                     permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
-                    
                     );
+
                 permission.SetUserOwner(initializeruser);
                 await _permissionRepository.AddAsync(permission);
                 
