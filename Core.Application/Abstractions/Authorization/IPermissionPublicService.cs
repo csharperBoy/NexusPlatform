@@ -8,6 +8,7 @@ namespace Core.Application.Abstractions.Authorization
 {
     public interface IPermissionPublicService
     {
+       
         /// <summary>
         /// ثبت پرمیشن‌های اولیه برای یک نقش خاص (مثلاً ادمین)
         /// </summary>

@@ -11,6 +11,7 @@ using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
+using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -38,7 +39,7 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService,
+            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService, 
             ICacheService cache)
         {
             _permissionRepository = permissionRepository;
@@ -392,10 +393,32 @@ namespace Authorization.Infrastructure.Services
                     );
 
                 permission.SetUserOwner(initializeruser);
-                await _permissionRepository.AddAsync(permission);
+                if(! await IsExist(permission))
+                    await _permissionRepository.AddAsync(permission);
                 
             }
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        private async Task<bool> IsExist(Permission permission)
+        {
+            try
+            {
+              return  await _permissionRepository.ExistsAsync(
+                    p=>p.ResourceId == permission.ResourceId &&
+                    p.Scope == permission.Scope &&
+                   (ScopeType.SpecificProperty == permission.Scope && p.SpecificScopeId == permission.SpecificScopeId) &&
+                    p.Action == permission.Action &&
+                    p.AssigneeType == permission.AssigneeType &&
+                    p.AssigneeId == permission.AssigneeId &&
+                    p.Type == permission.Type
+                    );
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
     }
 }
