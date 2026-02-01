@@ -23,9 +23,25 @@ namespace Authorization.Infrastructure.Configurations
             builder.Property(p => p.Action).HasConversion<byte>();
             builder.Property(p => p.Scope).HasConversion<byte>();
 
+            builder.Property(p => p.SpecificScopeId)
+              .IsRequired();
+
             // ایندکس ترکیبی طلایی برای چک کردن دسترسی
             builder.HasIndex(p => new { p.AssigneeId, p.ResourceId, p.Action })
                    .HasDatabaseName("IX_Permissions_FastLookup");
+
+            // عدم ثبت دسترسی تکراری
+            builder.HasIndex(p => new {
+                p.ResourceId,
+                p.Scope,
+                p.SpecificScopeId, 
+                p.Action,
+                p.AssigneeType,
+                p.AssigneeId,
+                p.Type
+            })
+            .HasDatabaseName("IX_Permissions_Unique")
+            .IsUnique();
         }
     }
 }

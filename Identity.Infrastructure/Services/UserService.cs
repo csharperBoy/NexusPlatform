@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entities;
@@ -16,6 +17,7 @@ namespace Identity.Infrastructure.Services
     internal class UserService : IUserInternalService, IUserPublicService
     {
         private readonly IRepository<IdentityDbContext, ApplicationUser, Guid> _userRepository;
+       
         private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<UserService> _logger;
@@ -24,12 +26,26 @@ namespace Identity.Infrastructure.Services
             IRepository<IdentityDbContext, ApplicationUser, Guid> userRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
             UserManager<ApplicationUser> userManager,
+             
             ILogger<UserService> logger)
         {
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _logger = logger;
+           
+        }
+
+        public async Task<Guid> GetPersonId(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                throw new Exception($"user with name '{userId}' not found.");
+            }
+
+            return user.FkPersonId;
         }
 
         public async Task<Guid> GetUserId(string userName)

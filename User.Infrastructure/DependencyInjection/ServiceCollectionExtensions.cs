@@ -1,9 +1,12 @@
 ﻿
 using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.HR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using User.Application.Interfaces;
 using User.Infrastructure.Data;
+using User.Infrastructure.Services;
 namespace User.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
@@ -22,7 +25,8 @@ namespace User.Infrastructure.DependencyInjection
                     b.MigrationsHistoryTable("__UserMigrationsHistory", "user");
                 });
             });
-
+            services.AddScoped<IPersonPublicService>(sp => sp.GetRequiredService<PersonService>());
+            services.AddScoped<IPersonInternalService>(sp => sp.GetRequiredService<PersonService>());
             // Resolve از DI
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();

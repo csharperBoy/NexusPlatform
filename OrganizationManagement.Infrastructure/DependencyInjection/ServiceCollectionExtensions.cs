@@ -1,10 +1,14 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.HR;
+using Core.Application.Abstractions.Identity;
 using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using OrganizationManagement.Application.Interfaces;
 using OrganizationManagement.Infrastructure.Data;
+using OrganizationManagement.Infrastructure.Services;
 
 namespace OrganizationManagement.Infrastructure.DependencyInjection
 {
@@ -61,6 +65,9 @@ namespace OrganizationManagement.Infrastructure.DependencyInjection
             services.AddScoped<IUnitOfWork<OrganizationManagementDbContext>, EfUnitOfWork<OrganizationManagementDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
+            
+            services.AddScoped<IPositionPublicService>(sp => sp.GetRequiredService<PositionService>());
+            services.AddScoped<IPositionInternalService>(sp => sp.GetRequiredService<PositionService>());
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

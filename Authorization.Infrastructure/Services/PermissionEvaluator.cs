@@ -5,7 +5,10 @@ using Authorization.Domain.Enums;
 using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.HR;
+using Core.Application.Abstractions.Identity;
 using Core.Domain.Enums;
+using Core.Shared.DTOs.Identity;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
@@ -13,17 +16,29 @@ namespace Authorization.Infrastructure.Services
     public class PermissionEvaluator : IPermissionEvaluator
     {
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
+        private readonly IUserPublicService _userService;
+        private readonly IRolePublicService _roleService;
         private readonly ILogger<PermissionEvaluator> _logger;
         private readonly ICacheService _cache;
+        private readonly IPersonPublicService _personService;
+        private readonly IPositionPublicService _positionService;
 
         public PermissionEvaluator(
             ISpecificationRepository<Permission, Guid> permissionSpecRepository,
+            IUserPublicService userService, 
+            IPersonPublicService personService,
+             IPositionPublicService positionService,
+             IRolePublicService roleService,
             ILogger<PermissionEvaluator> logger,
             ICacheService cache)
         {
             _permissionSpecRepository = permissionSpecRepository;
             _logger = logger;
             _cache = cache;
+            _userService = userService; 
+            _personService = personService;
+            _positionService = positionService;
+            _roleService = roleService;
         }
 
         public async Task<EffectivePermissionDto> EvaluateUserPermissionsAsync(Guid userId, string resourceKey)
@@ -44,10 +59,16 @@ namespace Authorization.Infrastructure.Services
                 var activePermissionsSpec = new ActivePermissionsSpec();
                 var allPermissions = await _permissionSpecRepository.ListBySpecAsync(activePermissionsSpec);
 
+                Guid personId = await _userService.GetPersonId(userId) ;
+                List<Guid> positionId = await _positionService.GetUserPositionsId(userId);
+                List<Guid> allUserRoles = await _roleService.GetAllUserRolesId(userId);
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions
-                    .Where(p => p.AppliesTo(AssigneeType.Person, userId) &&
-                               p.Resource.Key == resourceKey)
+                    .Where(p => (p.AppliesTo(AssigneeType.Position, positionId)
+                                    || p.AppliesTo(AssigneeType.User, userId)
+                                    || p.AppliesTo(AssigneeType.Person, personId)
+                                    || p.AppliesTo(AssigneeType.Role, allUserRoles))
+                                && p.Resource.Key == resourceKey)
                     .ToList();
 
                 // محاسبه دسترسی مؤثر
@@ -188,7 +209,7 @@ namespace Authorization.Infrastructure.Services
                 CanDelete = canDelete,
                 EvaluatedAt = DateTime.UtcNow,
                 PermissionCount = permissions.Count
-                
+
             };
         }
     }

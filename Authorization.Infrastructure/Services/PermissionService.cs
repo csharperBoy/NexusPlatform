@@ -39,7 +39,7 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService, 
+            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService,
             ICacheService cache)
         {
             _permissionRepository = permissionRepository;
@@ -65,7 +65,7 @@ namespace Authorization.Infrastructure.Services
                 // اعتبارسنجی وجود Resource
                 var resource = await _resourceRepository.GetByIdAsync(command.ResourceId);
                 if (resource == null)
-                { 
+                {
                     throw new ArgumentException($"Resource with ID {command.ResourceId} not found");
                 }
 
@@ -83,7 +83,7 @@ namespace Authorization.Infrastructure.Services
                     command.ResourceId,
                     command.AssigneeType,
                     command.AssigneeId,
-                    command.Action,command.scope,command.specificScopeId,command.type,
+                    command.Action, command.scope, command.specificScopeId, command.type,
                     command.EffectiveFrom,
                     command.ExpiresAt,
                     command.Description,
@@ -339,7 +339,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        
+
         private async Task InvalidatePermissionCachesAsync(Guid assigneeId, Guid resourceId)
         {
             try
@@ -366,7 +366,7 @@ namespace Authorization.Infrastructure.Services
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
-                
+
                 IsActive = permission.IsActive,
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
@@ -379,12 +379,12 @@ namespace Authorization.Infrastructure.Services
         public async Task SeedRolePermissionsAsync(List<PermissionDefinition> permissions, CancellationToken cancellationToken = default)
         {
             var initializeruser = await _userService.GetUserId("intitializer");
-            foreach (var permissionDefinition in permissions) 
+            foreach (var permissionDefinition in permissions)
             {
                 ResourceByKeySpec specByKey = new ResourceByKeySpec(permissionDefinition.ResourceKey);
-                var specRet =await _resourceSpecRepository.FindBySpecAsync(specByKey);
+                var specRet = await _resourceSpecRepository.FindBySpecAsync(specByKey);
                 Permission permission = new Permission(
-                    specRet.Items.FirstOrDefault().Id , permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
+                    specRet.Items.FirstOrDefault().Id, permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
                     permissionDefinition.AssignId,
                     permissionDefinition.Action.ToEnumOrDefault(Core.Domain.Enums.PermissionAction.View),
                     permissionDefinition.Scope.ToEnumOrDefault(Core.Domain.Enums.ScopeType.Self),
@@ -393,9 +393,9 @@ namespace Authorization.Infrastructure.Services
                     );
 
                 permission.SetUserOwner(initializeruser);
-                if(! await IsExist(permission))
+                if (!await IsExist(permission))
                     await _permissionRepository.AddAsync(permission);
-                
+
             }
             await _unitOfWork.SaveChangesAsync();
         }
@@ -404,15 +404,15 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-              return  await _permissionRepository.ExistsAsync(
-                    p=>p.ResourceId == permission.ResourceId &&
+                return await _permissionRepository.ExistsAsync(
+                    p => p.ResourceId == permission.ResourceId &&
                     p.Scope == permission.Scope &&
-                   (ScopeType.SpecificProperty != permission.Scope || p.SpecificScopeId == permission.SpecificScopeId) &&
+                    p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
                     p.Action == permission.Action &&
                     p.AssigneeType == permission.AssigneeType &&
                     p.AssigneeId == permission.AssigneeId &&
                     p.Type == permission.Type
-                    );
+         );
             }
             catch (Exception ex)
             {

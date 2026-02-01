@@ -10,7 +10,7 @@ namespace OrganizationManagement.Application.Interfaces
 {
     public interface IOrganizationService
     {
-         Task<Position?> GetUserPositionAsync(Guid userId);
+        
 
          Task<IReadOnlyList<Guid>> GetUserUnitsAsync(Guid userId);
          //Task<Person> GetUserPersonAsync(Guid userId);

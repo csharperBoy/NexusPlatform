@@ -28,7 +28,7 @@ namespace Authorization.Domain.Entities
 
         // 4. با چه دامنه‌ای؟ (اینجا ادغام شد)
         public ScopeType Scope { get; private set; }
-        public Guid? SpecificScopeId { get; private set; } // اگر Scope == SpecificProperty باشد پر می‌شود
+        public Guid SpecificScopeId { get; private set; } // اگر Scope == SpecificProperty باشد پر می‌شود
 
         // 5. وضعیت
         public PermissionType Type { get; private set; } = PermissionType.allow; // برای Deny یا allow کردن
@@ -100,14 +100,26 @@ namespace Authorization.Domain.Entities
             // اینجا Domain Event برای پاک کردن کش دسترسی‌ها واجب است
         }
 
+        
         private void SetScope(ScopeType scope, Guid? specificId)
         {
-            if (scope == ScopeType.SpecificProperty && !specificId.HasValue)
-                throw new ArgumentException("SpecificScopeId is required when scope is SpecificProperty.");
+            if (scope == ScopeType.SpecificProperty)
+            {
+                // در حالت SpecificProperty، specificId اجباری است
+                if (!specificId.HasValue || specificId.Value == Guid.Empty)
+                    throw new ArgumentException("SpecificScopeId is required when scope is SpecificProperty and cannot be Guid.Empty.");
+
+                SpecificScopeId = specificId.Value;
+            }
+            else
+            {
+                // برای سایر حالات، همیشه Guid.Empty
+                SpecificScopeId = Guid.Empty;
+            }
 
             Scope = scope;
-            SpecificScopeId = (scope == ScopeType.SpecificProperty) ? specificId : null;
         }
+
         public void Update(
            PermissionAction action,
           
@@ -151,6 +163,10 @@ namespace Authorization.Domain.Entities
         public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
         {
             return AssigneeType == assigneeType && AssigneeId == assigneeId;
+        }
+        public bool AppliesTo(AssigneeType assigneeType, List<Guid> assigneeId)
+        {
+            return AssigneeType == assigneeType &&   assigneeId.Any(a=>a == AssigneeId);
         }
     }
 }
