@@ -407,7 +407,7 @@ namespace Authorization.Infrastructure.Services
               return  await _permissionRepository.ExistsAsync(
                     p=>p.ResourceId == permission.ResourceId &&
                     p.Scope == permission.Scope &&
-                   (ScopeType.SpecificProperty == permission.Scope && p.SpecificScopeId == permission.SpecificScopeId) &&
+                   (ScopeType.SpecificProperty != permission.Scope || p.SpecificScopeId == permission.SpecificScopeId) &&
                     p.Action == permission.Action &&
                     p.AssigneeType == permission.AssigneeType &&
                     p.AssigneeId == permission.AssigneeId &&

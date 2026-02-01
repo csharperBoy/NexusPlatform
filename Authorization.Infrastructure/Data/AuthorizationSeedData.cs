@@ -18,13 +18,13 @@ namespace Authorization.Infrastructure.Data
 
     public static class AuthorizationSeedData
     {
-       // تعریف منابع به صورت درختی (Hierarchical)
+        // تعریف منابع به صورت درختی (Hierarchical)
         private static List<ResourceDefinition> GetResourceDefinitions()
         {
             // ساختار درختی منابع
             return new List<ResourceDefinition>
         {
-            
+
             new()
             {
                 Key = "authorization",
@@ -47,7 +47,7 @@ namespace Authorization.Infrastructure.Data
                         Order = 1001,
                         Icon = "users",
                         Path = "/authorization/resource"
-                        
+
                     }
                 }
             }
@@ -295,7 +295,7 @@ namespace Authorization.Infrastructure.Data
         }
 
 
-        
+
         // لیست پرمیژن‌های پیش‌فرض برای نقش Admin
         private static List<PermissionDefinition> GetAdminPermissionDefinitions()
         {
@@ -415,6 +415,9 @@ namespace Authorization.Infrastructure.Data
                 {
                     var resourceId = resources[definition.ResourceKey];
 
+                    var Action = definition.Action.ToEnumOrDefault(PermissionAction.Full);
+                    var Scope = definition.Scope.ToEnumOrDefault(ScopeType.All);
+                    var Type = definition.Type.ToEnumOrDefault(PermissionType.allow);
                     // بررسی وجود پرمیژن تکراری
                     var existingPermission = await dbContext.Set<Permission>()
                         .FirstOrDefaultAsync(p =>
@@ -434,7 +437,7 @@ namespace Authorization.Infrastructure.Data
                     // ایجاد پرمیژن جدید
                     var permission = new Permission(
                         resourceId: resourceId,
-                        assigneeType: AssigneeType.Role,
+                        assigneeType: AssigneeType.User,
                         assigneeId: initializerUserId,
                         action: definition.Action.ToEnumOrDefault(PermissionAction.Full),
                         scope: definition.Scope.ToEnumOrDefault(ScopeType.All),
