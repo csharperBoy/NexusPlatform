@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 namespace Core.Infrastructure.Repositories
 {
     /*
@@ -89,8 +90,17 @@ namespace Core.Infrastructure.Repositories
        
         public virtual async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> specification)
         {
+            try
+            {
+
             var result = await ApplySpecification(specification);
             return await result.FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
 
         public virtual async Task<IEnumerable<TEntity>> ListBySpecAsync(ISpecification<TEntity> specification)

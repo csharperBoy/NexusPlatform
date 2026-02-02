@@ -21,11 +21,19 @@ namespace Identity.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IRepository<IdentityDbContext, ApplicationRole, Guid> _roleRepository;
         private readonly ISpecificationRepository<ApplicationRole, Guid> _roleSpecRepository;
-        public RoleService(IAuthorizationService authorizationService, IRepository<IdentityDbContext, ApplicationRole, Guid> roleRepository)
+        public RoleService(
+            IAuthorizationService authorizationService, 
+            IRepository<IdentityDbContext, ApplicationRole, Guid> roleRepository,
+            ISpecificationRepository<ApplicationRole, Guid> roleSpecRepository,
+            RoleManager<ApplicationRole> roleManager,
+        UserManager<ApplicationUser> userManager
+            )
         {
             _authorizationService = authorizationService;
             _roleRepository = roleRepository;
-
+            _roleManager = roleManager;
+            _userManager = userManager;
+            _roleSpecRepository = roleSpecRepository;
         }
 
 
@@ -37,7 +45,7 @@ namespace Identity.Infrastructure.Services
         public async Task<List<Guid>> GetAllUserRolesId(Guid userId)
         {
             List<Guid> RolesId = new List<Guid>();
-            ApplicationUser user = await _userManager.FindByIdAsync(userId.ToString());
+            ApplicationUser? user = await _userManager.FindByIdAsync(userId.ToString());
             var rolesName = await _userManager.GetRolesAsync(user);
             foreach (var roleName in rolesName)
             {

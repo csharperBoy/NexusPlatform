@@ -1,11 +1,14 @@
-﻿using Core.Infrastructure.Database;
+﻿using Core.Application.Helper;
+using Core.Application.Models;
+using Core.Infrastructure.Database;
 using Core.Infrastructure.Logging;
 using Core.Infrastructure.Middlewares;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -48,6 +51,12 @@ namespace Core.Infrastructure.DependencyInjection
         // 📌 ثبت Middlewareهای زیرساختی
         public static async Task<IApplicationBuilder> Core_UseInfrastructure(this IApplicationBuilder app)
         {
+
+            var moduleSettings = app.ApplicationServices.GetRequiredService<IOptions<ModuleSettings>>().Value;
+            ModuleHelper.Initialize(moduleSettings);
+
+
+
             app.UseMiddleware<CorrelationIdMiddleware>();
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

@@ -42,7 +42,7 @@ namespace Identity.Domain.Entities
             UserName = userName;
             Email = email;
             EmailConfirmed = true;
-
+            
             NormalizedUserName = userName.ToUpperInvariant();
             NormalizedEmail = email.ToUpperInvariant();
 

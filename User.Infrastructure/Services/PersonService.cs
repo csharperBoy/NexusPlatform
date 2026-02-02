@@ -18,7 +18,7 @@ namespace User.Infrastructure.Services
         private readonly IRepository<UserDbContext, Person, Guid> _personRepository;
         private readonly ISpecificationRepository< Person, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
-        public PersonService(IRepository<UserDbContext, Person, Guid> personRepository, ILogger<PersonService> logger, ISpecificationRepository<UserDbContext, Person, Guid> personSpecRepository)
+        public PersonService(IRepository<UserDbContext, Person, Guid> personRepository, ILogger<PersonService> logger, ISpecificationRepository< Person, Guid> personSpecRepository)
         {
             _personRepository = personRepository;
             _personSpecRepository = personSpecRepository;

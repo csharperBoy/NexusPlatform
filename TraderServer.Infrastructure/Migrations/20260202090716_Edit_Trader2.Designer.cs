@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TraderServer.Infrastructure.DependencyInjection;
 
@@ -11,9 +12,11 @@ using TraderServer.Infrastructure.DependencyInjection;
 namespace Trader.Server.Collector.Infrastructure.Migrations
 {
     [DbContext(typeof(TraderDbContext))]
-    partial class TraderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260202090716_Edit_Trader2")]
+    partial class Edit_Trader2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

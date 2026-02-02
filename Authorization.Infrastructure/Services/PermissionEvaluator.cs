@@ -59,18 +59,18 @@ namespace Authorization.Infrastructure.Services
                 var activePermissionsSpec = new ActivePermissionsSpec();
                 var allPermissions = await _permissionSpecRepository.ListBySpecAsync(activePermissionsSpec);
 
-                Guid personId = await _userService.GetPersonId(userId) ;
-                List<Guid> positionId = await _positionService.GetUserPositionsId(userId);
+                Guid? personId = await _userService.GetPersonId(userId) ;
+                List<Guid>? positionId = await _positionService.GetUserPositionsId(userId);
                 List<Guid> allUserRoles = await _roleService.GetAllUserRolesId(userId);
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions
                     .Where(p => (p.AppliesTo(AssigneeType.User, userId)
                                     || p.AppliesTo(AssigneeType.Role, allUserRoles)
-                                    || (personId != null && p.AppliesTo(AssigneeType.Person, personId))
+                                    || (personId != null && p.AppliesTo(AssigneeType.Person, (Guid)personId))
                                     || (positionId != null &&  p.AppliesTo(AssigneeType.Position, positionId)))
                                 && p.Resource.Key == resourceKey)
                     .ToList();
-
+               
                 // محاسبه دسترسی مؤثر
                 var effectivePermission = CalculateEffectivePermission(userPermissions, resourceKey);
 
@@ -183,10 +183,10 @@ namespace Authorization.Infrastructure.Services
             }
 
             // محاسبه دسترسی‌های پایه
-            var canView = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.View);
-            var canCreate = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Create);
-            var canEdit = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Edit);
-            var canDelete = permissions.Any(p => p.Type == PermissionType.allow && p.Action == PermissionAction.Delete);
+            var canView = permissions.Any(p => p.Type == PermissionType.allow && (p.Action == PermissionAction.View || p.Action == PermissionAction.Full));
+            var canCreate = permissions.Any(p => p.Type == PermissionType.allow && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Full));
+            var canEdit = permissions.Any(p => p.Type == PermissionType.allow && (p.Action == PermissionAction.Edit || p.Action == PermissionAction.Full));
+            var canDelete = permissions.Any(p => p.Type == PermissionType.allow && (p.Action == PermissionAction.Delete || p.Action == PermissionAction.Full));
 
             // اعمال منطق deny - اگر حتی یک deny وجود داشته باشد
             var denyView = permissions.Any(p => p.Type != PermissionType.allow && p.Action == PermissionAction.View);

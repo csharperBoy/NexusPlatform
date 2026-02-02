@@ -70,6 +70,25 @@ namespace Core.Infrastructure.DependencyInjection
     {
         public static IServiceCollection Core_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            #region ثبت ماژول های فعال در کلاس helper
+
+            services.Configure<ModuleSettings>(
+                configuration.GetSection("Modules"));
+
+            // گزینه ۲: ثبت به صورت Singleton برای دسترسی مستقیم
+            services.AddSingleton(provider =>
+            {
+                // روش صحیح: ابتدا ConfigurationSection را بگیرید
+                var section = configuration.GetSection("Modules");
+                var settings = new ModuleSettings();
+
+                // Bind کردن تنظیمات
+                section.Bind(settings);
+                return settings;
+            });
+
+            #endregion
+
             // 📌 ثبت سرویس‌های زیرساختی
             services.AddSwaggerGen();
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));

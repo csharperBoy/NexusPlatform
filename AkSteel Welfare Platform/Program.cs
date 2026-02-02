@@ -1,4 +1,6 @@
-﻿using Core.Infrastructure.DependencyInjection;
+﻿using Core.Application.Helper;
+using Core.Application.Models;
+using Core.Infrastructure.DependencyInjection;
 using Notification.Presentation.Hubs;
 using Serilog;
 
@@ -17,9 +19,22 @@ try
 
     var configuration = builder.Configuration;
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
+    /*
+    builder.Services.Configure<ModuleSettings>(
+    builder.Configuration.GetSection("Modules"));
 
+    // یا به صورت Singleton (اگر نخواهیم از IOptions استفاده کنیم)
+    builder.Services.AddSingleton(sp =>
+    {
+        var settings = new ModuleSettings();
+        builder.Configuration.GetSection("Modules").Bind(settings);
+        return settings;
+    });
+    */
     var app = builder.Build();
-
+   /* var moduleSettings = app.Services.GetRequiredService<ModuleSettings>();
+    ModuleHelper.Initialize(moduleSettings);
+   */
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);
     await app.UseSwaggerApplicationBuilderExtensions(configuration);
 

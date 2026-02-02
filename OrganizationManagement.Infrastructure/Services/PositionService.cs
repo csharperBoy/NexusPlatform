@@ -31,7 +31,7 @@ namespace OrganizationManagement.Infrastructure.Services
             _assignmentSpecRepository = assignmentSpecRepository;
         }
 
-        public async Task<List<Guid>> GetUserPositionsId(Guid userId)
+        public async Task<List<Guid>?> GetUserPositionsId(Guid userId)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace OrganizationManagement.Infrastructure.Services
                 var position = assignment.Select(a=>a.Position);
                 if (position == null)
                 {
-                    _logger.LogError("Position not found for assignment {AssignmentId}", assignment.Id);
+                    _logger.LogError("Position not found for assignment ");
                     return null;
                 }
 

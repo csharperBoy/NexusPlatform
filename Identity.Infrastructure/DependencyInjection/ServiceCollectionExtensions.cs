@@ -56,9 +56,16 @@ namespace Identity.Infrastructure.DependencyInjection
             services.AddScoped<IRolePublicService>(sp => sp.GetRequiredService<RoleService>());
             services.AddScoped<IUserPublicService>(sp => sp.GetRequiredService<UserService>());
 
-
+           
+            services.AddScoped<IRepository<IdentityDbContext, ApplicationRole, Guid>, EfRepository<IdentityDbContext, ApplicationRole, Guid>>();
+            services.AddScoped<IRepository<IdentityDbContext, ApplicationUser, Guid>, EfRepository<IdentityDbContext, ApplicationUser, Guid>>();
+            services.AddScoped<IRepository<IdentityDbContext, RefreshToken, Guid>, EfRepository<IdentityDbContext, RefreshToken, Guid>>();
+            services.AddScoped<IRepository<IdentityDbContext, UserSession, Guid>, EfRepository<IdentityDbContext, UserSession, Guid>>();
 
             services.AddScoped<ISpecificationRepository<RefreshToken, Guid>, EfSpecificationRepository<IdentityDbContext, RefreshToken, Guid>>();
+            services.AddScoped<ISpecificationRepository<ApplicationRole, Guid>, EfSpecificationRepository<IdentityDbContext, ApplicationRole, Guid>>();
+            services.AddScoped<ISpecificationRepository<ApplicationUser, Guid>, EfSpecificationRepository<IdentityDbContext, ApplicationUser, Guid>>();
+            services.AddScoped<ISpecificationRepository<UserSession, Guid>, EfSpecificationRepository<IdentityDbContext, UserSession, Guid>>();
             // Outbox registration
             var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
             registration.AddOutboxProcessor<IdentityDbContext>(services);

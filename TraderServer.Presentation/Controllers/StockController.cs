@@ -22,7 +22,7 @@ namespace TraderServer.Presentation.Controllers
             _mediator = mediator;
         }
         [HttpPost("add")]
-        [AuthorizeResource("collector.stock", "Create")]
+        [AuthorizeResource("trader.stock", "Create")]
         public async Task<IActionResult> Add([FromBody] AddStockCommand command)
         {
             var result = await Mediator.Send(command);

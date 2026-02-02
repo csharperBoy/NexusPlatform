@@ -9,9 +9,13 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+
+//using Microsoft.EntityFrameworkCore.DynamicLinq;
+using System.Linq.Dynamic.Core;
 
 namespace Authorization.Infrastructure.Services
 {
@@ -39,11 +43,19 @@ namespace Authorization.Infrastructure.Services
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     Guid userId = _currentUserService.UserId ?? Guid.Empty;
-                    if(userId == Guid.Empty)
-                        return query.Where(x => false);
+                    if (userId == Guid.Empty)
+                        return query.Where("EquivalentResourceId == null");
+
                     var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionInternalService>();
                     var permissions = await permissionService.GetUserPermissionsAsync(userId);
-                    query = query.Where(e => permissions.Any(p=>p.ResourceId == ((IResourcedEntity)e).EquivalentResourceId));
+
+                    var allowedResourceIds = permissions.Select(p => p.ResourceId).ToList();
+
+                    if (!allowedResourceIds.Any())
+                        return query.Where("EquivalentResourceId == null");
+
+                    // استفاده ساده و بهینه
+                    return query.Where("@0.Contains(EquivalentResourceId) || EquivalentResourceId == null", allowedResourceIds);
                 }
             }
             // 1. اگر موجودیت DataScoped نیست، کاری نداشته باش
