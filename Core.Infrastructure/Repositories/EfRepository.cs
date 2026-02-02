@@ -209,7 +209,7 @@ namespace Core.Infrastructure.Repositories
 
                 var scope = await authorizationChecker.GetPermissionScopeAsync(userId.Value, resourceAttr.ResourceKey, action);
 
-                bool isAllowed = IsEntityInScope(dataScopedEntity, scope, userId.Value);
+                bool isAllowed =await IsEntityInScope(dataScopedEntity, scope, userId.Value);
 
                 if (!isAllowed)
                 {
@@ -220,8 +220,9 @@ namespace Core.Infrastructure.Repositories
         }
 
         // ... (متدهای IsEntityInScope و SetOwnerDefaults بدون تغییر) ...
-        private bool IsEntityInScope(IDataScopedEntity entity, ScopeType scope, Guid userId)
+        private async Task<bool> IsEntityInScope(IDataScopedEntity entity, ScopeType scope, Guid userId)
         {
+            var userContext = await _currentUserService.GetUserContext();
             switch (scope)
             {
                 case ScopeType.All:
@@ -229,7 +230,7 @@ namespace Core.Infrastructure.Repositories
                 case ScopeType.Account:
                     return entity.OwnerUserId == userId;
                 case ScopeType.Self:
-                    var userPersonId = _currentUserService.PersonId;
+                    var userPersonId = userContext.PersonId;
                     return entity.OwnerPersonId == userId;
                 case ScopeType.Unit:
                     var userUnitId = _currentUserService.OrganizationUnitId;
@@ -243,13 +244,14 @@ namespace Core.Infrastructure.Repositories
             }
         }
 
-        private void SetOwnerDefaults(TEntity entity)
+        private async Task SetOwnerDefaults(TEntity entity)
         {
             if (entity is DataScopedEntity scopedEntity)
             {
+                var userContext = await _currentUserService.GetUserContext();
                 if (scopedEntity.OwnerPersonId == null || scopedEntity.OwnerPersonId == Guid.Empty)
                 {
-                    var personId = _currentUserService.PersonId ?? Guid.Empty;
+                    var personId = userContext.PersonId ?? Guid.Empty;
                     scopedEntity.SetPersonOwner(personId);
                 }
                 if (scopedEntity.OwnerOrganizationUnitId == null || scopedEntity.OwnerOrganizationUnitId == Guid.Empty)
@@ -259,8 +261,8 @@ namespace Core.Infrastructure.Repositories
                 }
                 if (scopedEntity.OwnerPositionId == null || scopedEntity.OwnerPositionId == Guid.Empty)
                 {
-                    var positionId = _currentUserService.PositionId ?? Guid.Empty;
-                    scopedEntity.SetPositionOwner(positionId);
+                    Guid? positionId = userContext.PositionId.FirstOrDefault();
+                    scopedEntity.SetPositionOwner(positionId ?? Guid.Empty);
                 }
             }
         }

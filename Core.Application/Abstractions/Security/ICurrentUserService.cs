@@ -37,11 +37,9 @@ namespace Core.Application.Abstractions.Security
         string? UserName { get; }      // 📌 نام کاربری فعلی
         bool IsAuthenticated { get; }  // 📌 وضعیت احراز هویت
         IEnumerable<string> Roles { get; } // 📌 نقش‌های کاربر فعلی
-        IEnumerable<Guid> RolesId { get; } 
+       
+        Guid? OrganizationUnitId { get; }  
 
-        Guid? PersonId { get; }         
-        Guid? OrganizationUnitId { get; }      
-        Guid? PositionId { get; }      
-        
+        Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds)> GetUserContext();
     }
 }

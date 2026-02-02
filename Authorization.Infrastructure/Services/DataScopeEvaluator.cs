@@ -39,7 +39,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (userId,personId, positionId, roleIds) = GetUserContext();
+                var (userId,personId, positionId, roleIds) =await _currentUserService.GetUserContext();
 
                 // استفاده از اسپک فیلتر شده (Specific Resource & Action)
                 var spec = new EffectivePermissionsSpec(userId,personId, positionId, roleIds, resourceKey, action);
@@ -76,7 +76,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (userId,personId, positionId, roleIds) = GetUserContext();
+                var (userId,personId, positionId, roleIds) = await _currentUserService.GetUserContext();
 
                 // دریافت کل پرمیشن‌های کاربر (بدون فیلتر ریسورس)
                 var spec = new UserPermissionsSpec(userId,personId, positionId, roleIds);
@@ -98,7 +98,7 @@ namespace Authorization.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error evaluating all data scopes for user {UserId}", _currentUserService.PersonId);
+                _logger.LogError(ex, "Error evaluating all data scopes for user {UserId}", _currentUserService.UserId);
                 return new List<DataScopeDto>();
             }
         }
@@ -115,7 +115,7 @@ namespace Authorization.Infrastructure.Services
             {
                 ScopeType.All => "1=1", // همه چیز
                 ScopeType.None => "1=0", // هیچ چیز
-                ScopeType.Self => $"OwnerPersonId = '{_currentUserService.PersonId}'",
+                ScopeType.Self => $"OwnerPersonId = '{(await _currentUserService.GetUserContext()).PersonId}'",
                 ScopeType.Unit => $"OwnerOrganizationUnitId = '{_currentUserService.OrganizationUnitId}'",
                 // نکته: برای UnitAndBelow نیاز به لاجیک پیچیده‌تر SQL (Like) است
                 ScopeType.UnitAndBelow => $"OwnerOrganizationUnitId IN (SELECT Id FROM OrganizationUnits WHERE Path LIKE ...)",
@@ -155,13 +155,13 @@ namespace Authorization.Infrastructure.Services
                 .Max();
         }
 
-        private (Guid UserId, Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
+      /*  private (Guid UserId, Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
         {
             var posId = _currentUserService.PositionId;
             var roleIds = _currentUserService.RolesId ?? new List<Guid>(); // اصلاح نام پراپرتی بر اساس ICurrentUserService شما
             var personId = _currentUserService.PersonId;
             var userId = _currentUserService.UserId;
             return (userId ?? Guid.Empty , personId ?? Guid.Empty, posId, roleIds.ToList());
-        }
+        }*/
     }
 }

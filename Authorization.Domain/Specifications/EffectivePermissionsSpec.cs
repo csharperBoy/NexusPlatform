@@ -12,7 +12,7 @@ namespace Authorization.Domain.Specifications
 {
     public class EffectivePermissionsSpec : BaseSpecification<Permission>
     {
-        public EffectivePermissionsSpec(Guid? userId, Guid? personId, Guid? positionId, List<Guid>? roleIds, string resourceKey, PermissionAction action)
+        public EffectivePermissionsSpec(Guid? userId, Guid? personId, List<Guid>? positionsId, List<Guid>? roleIds, string resourceKey, PermissionAction action)
             : base(p => p.Resource.Key == resourceKey &&
                         p.Action == action &&
                         (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow) &&
@@ -20,7 +20,7 @@ namespace Authorization.Domain.Specifications
                         (
                             (p.AssigneeType == AssigneeType.Person && p.AssigneeId == personId) ||
                             (p.AssigneeType == AssigneeType.User && p.AssigneeId == userId) ||
-                            (positionId.HasValue && p.AssigneeType == AssigneeType.Position && p.AssigneeId == positionId.Value) ||
+                            (positionsId.Count>0 && p.AssigneeType == AssigneeType.Position && positionsId.Any(q=>q == p.AssigneeId )) ||
                             (p.AssigneeType == AssigneeType.Role && roleIds.Contains(p.AssigneeId))
                         ))
         {

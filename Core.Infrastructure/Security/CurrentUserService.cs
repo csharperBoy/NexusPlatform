@@ -1,4 +1,6 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.HR;
+using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Security;
 using Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -50,7 +52,9 @@ namespace Core.Infrastructure.Security
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        private readonly IRolePublicService _roleService;
+        private readonly IUserPublicService _userService;
+        private readonly IPositionPublicService _positionService;
         public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
@@ -85,12 +89,26 @@ namespace Core.Infrastructure.Security
                 _httpContextAccessor.HttpContext?.User?.FindAll(ClaimTypes.Role).Select(r => r.Value)
                 ?? Enumerable.Empty<string>();
 
-        public IEnumerable<Guid> RolesId => Enumerable.Empty<Guid>();
-
-        public Guid? PersonId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         public Guid? OrganizationUnitId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        public Guid? PositionId => Guid.Parse("00000000-0000-0000-0000-000000000001");
+        public async Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds)> GetUserContext()
+        {
+            try
+            {
+                Guid UserId = Guid.Parse( _httpContextAccessor.HttpContext?.User?
+                        .FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                
+                Guid? PersonId = await _userService.GetPersonId(UserId);
+                List<Guid>? PositionId =await _positionService.GetUserPositionsId(UserId);
+                List<Guid> RoleIds =await _roleService.GetAllUserRolesId(UserId);
+                return(UserId,PersonId, PositionId, RoleIds);
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
     }
 }

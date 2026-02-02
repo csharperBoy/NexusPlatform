@@ -67,7 +67,7 @@ namespace Authorization.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.PersonId);
+                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.UserId);
                 return ScopeType.None; // Fail Secure
             }
         }
@@ -105,7 +105,7 @@ namespace Authorization.Infrastructure.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.PersonId);
+                _logger.LogError(ex, "Error calculating scope for user {UserId}", _currentUserService.UserId);
                 return ScopeType.None; // Fail Secure
             }
         }
