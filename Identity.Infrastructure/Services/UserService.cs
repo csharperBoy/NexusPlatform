@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
+using Core.Application.Helper;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;
@@ -36,8 +37,11 @@ namespace Identity.Infrastructure.Services
            
         }
 
-        public async Task<Guid> GetPersonId(Guid userId)
+        public async Task<Guid?> GetPersonId(Guid userId)
         {
+            if (!ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.User))
+                return null;
+
             var user = await _userManager.FindByIdAsync(userId.ToString());
 
             if (user == null)

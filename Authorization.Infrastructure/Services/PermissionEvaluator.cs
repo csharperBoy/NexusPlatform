@@ -64,10 +64,10 @@ namespace Authorization.Infrastructure.Services
                 List<Guid> allUserRoles = await _roleService.GetAllUserRolesId(userId);
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions
-                    .Where(p => (p.AppliesTo(AssigneeType.Position, positionId)
-                                    || p.AppliesTo(AssigneeType.User, userId)
-                                    || p.AppliesTo(AssigneeType.Person, personId)
-                                    || p.AppliesTo(AssigneeType.Role, allUserRoles))
+                    .Where(p => (p.AppliesTo(AssigneeType.User, userId)
+                                    || p.AppliesTo(AssigneeType.Role, allUserRoles)
+                                    || (personId != null && p.AppliesTo(AssigneeType.Person, personId))
+                                    || (positionId != null &&  p.AppliesTo(AssigneeType.Position, positionId)))
                                 && p.Resource.Key == resourceKey)
                     .ToList();
 

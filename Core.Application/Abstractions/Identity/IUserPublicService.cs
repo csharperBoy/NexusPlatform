@@ -8,7 +8,7 @@ namespace Core.Application.Abstractions.Identity
 {
     public interface IUserPublicService
     {
-        Task<Guid> GetPersonId(Guid userId);
+        Task<Guid?> GetPersonId(Guid userId);
         Task<Guid> GetUserId(string userName);
 
     }
