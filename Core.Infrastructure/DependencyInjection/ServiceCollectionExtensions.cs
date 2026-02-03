@@ -1,24 +1,25 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Cors; // اضافه کردن این using
-using Core.Application.Models;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
-using Core.Infrastructure.HealthChecks;
-using Core.Infrastructure.Repositories;
-using MediatR;
-using Core.Application.Behaviors;
-using Core.Infrastructure.Logging;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Core.Infrastructure.Database;
-using Microsoft.AspNetCore.Builder;
-using Core.Infrastructure.Resilience;
-using Microsoft.EntityFrameworkCore;
 using Core.Application.Abstractions.Security;
+using Core.Application.Behaviors;
+using Core.Application.Models;
+using Core.Infrastructure.Database;
+using Core.Infrastructure.HealthChecks;
+using Core.Infrastructure.Logging;
+using Core.Infrastructure.Repositories;
+using Core.Infrastructure.Resilience;
 using Core.Infrastructure.Security;
+using MediatR;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors; // اضافه کردن این using
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Serilog;
+using System.ComponentModel.Design;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -97,6 +98,7 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddHttpContextAccessor();
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
+
             services.AddScoped<IMigrationManager, MigrationManager>();
             services.AddScoped(typeof(IRepository<,,>), typeof(EfRepository<,,>));
             //services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));

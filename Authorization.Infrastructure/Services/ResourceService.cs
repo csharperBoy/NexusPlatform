@@ -26,7 +26,6 @@ namespace Authorization.Infrastructure.Services
         private readonly ISpecificationRepository<Resource, Guid> _resourceSpecRepository;
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<ResourceService> _logger;
-        private readonly ICurrentUserService _currentUser;
         private readonly ICacheService _cache;
 
         public ResourceService(
@@ -34,14 +33,12 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<ResourceService> logger,
-            ICurrentUserService currentUser,
             ICacheService cache)
         {
             _resourceRepository = resourceRepository;
             _resourceSpecRepository = resourceSpecRepository;
             _unitOfWork = unitOfWork;
             _logger = logger;
-            _currentUser = currentUser;
             _cache = cache;
         }
 

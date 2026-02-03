@@ -117,8 +117,7 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task AddAsync(TEntity entity)
         {
-            SetOwnerDefaults(entity);
-
+            await SetOwnerDefaults(entity);
             await CheckPermissionAsync(entity, PermissionAction.Create);
             await _dbSet.AddAsync(entity);
         }
@@ -127,7 +126,7 @@ namespace Core.Infrastructure.Repositories
         {
             foreach (var entity in entities)
             {
-                SetOwnerDefaults(entity);
+            await    SetOwnerDefaults(entity);
                 await CheckPermissionAsync(entity, PermissionAction.Create);
             }
             await _dbSet.AddRangeAsync(entities);

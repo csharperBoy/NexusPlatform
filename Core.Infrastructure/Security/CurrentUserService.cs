@@ -1,8 +1,10 @@
-﻿using Core.Application.Abstractions.HR;
+﻿using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -52,12 +54,14 @@ namespace Core.Infrastructure.Security
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IRolePublicService _roleService;
-        private readonly IUserPublicService _userService;
-        private readonly IPositionPublicService _positionService;
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+        private readonly IServiceProvider _serviceProvider;
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor
+            , IServiceProvider serviceProvider
+            )
         {
             _httpContextAccessor = httpContextAccessor;
+            _serviceProvider = serviceProvider;
+
         }
         public string? Email => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
         public Guid? UserId
@@ -96,17 +100,32 @@ namespace Core.Infrastructure.Security
         {
             try
             {
-                Guid UserId = Guid.Parse( _httpContextAccessor.HttpContext?.User?
-                        .FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                
-                Guid? PersonId = await _userService.GetPersonId(UserId);
-                List<Guid>? PositionId =await _positionService.GetUserPositionsId(UserId);
-                List<Guid> RoleIds =await _roleService.GetAllUserRolesId(UserId);
-                return(UserId,PersonId, PositionId, RoleIds);
+                var userIdValue = _httpContextAccessor.HttpContext?.User?
+                    .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdValue))
+                {
+                    throw new UnauthorizedAccessException("User is not authenticated");
+                }
+
+                Guid userId = Guid.Parse(userIdValue);
+
+                // استفاده از یک scope جدید برای resolve کردن سرویس‌ها
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var userService = scope.ServiceProvider.GetRequiredService<IUserPublicService>();
+                    var positionService = scope.ServiceProvider.GetRequiredService<IPositionPublicService>();
+                    var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+
+                    Guid? personId = await userService.GetPersonId(userId);
+                    List<Guid>? positionId = await positionService.GetUserPositionsId(userId);
+                    List<Guid> roleIds = await roleService.GetAllUserRolesId(userId);
+
+                    return (userId, personId, positionId, roleIds);
+                }
             }
             catch (Exception ex)
             {
-
+                // در اینجا بهتر است لاگ مناسب داشته باشید
                 throw;
             }
         }
