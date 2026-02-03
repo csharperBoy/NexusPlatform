@@ -45,12 +45,14 @@ namespace Authorization.Infrastructure.Services
                 var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
 
                 // 1. بررسی کش
+                /* موقت
                 var cached = await _cache.GetAsync<ScopeType?>(cacheKey);
                 if (cached.HasValue)
                 {
                     _logger.LogDebug("Cache hit for scope check: {Key} -> {Scope}", cacheKey, cached.Value);
                     return cached.Value;
                 }
+                */
 
                 // 2. واگذاری محاسبه به Evaluator
                 // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود

@@ -28,6 +28,9 @@ namespace Authorization.Infrastructure.Services
 
         public async Task<IQueryable<TEntity>> ApplyScope<TEntity>(IQueryable<TEntity> query) where TEntity : class
         {
+            try
+            {
+
             // 🚨 جلوگیری از لوپ منطقی
             if (typeof(TEntity) == typeof(Permission) || typeof(TEntity) == typeof(Resource))
                 return query;
@@ -96,6 +99,13 @@ namespace Authorization.Infrastructure.Services
             }
 
             return query.Where("false");
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
     }
 }

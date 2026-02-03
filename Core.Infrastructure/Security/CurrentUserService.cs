@@ -100,27 +100,23 @@ namespace Core.Infrastructure.Security
         {
             try
             {
-                var userIdValue = _httpContextAccessor.HttpContext?.User?
-                    .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userIdValue))
+                string UserIdTemp = _httpContextAccessor.HttpContext?.User?
+                        .FindFirst(ClaimTypes.NameIdentifier)?.Value ;
+                if (UserIdTemp == null)
                 {
-                    throw new UnauthorizedAccessException("User is not authenticated");
+                    return (Guid.Parse("00000000-0000-0000-0000-000000000000"), null, null, null);
                 }
-
-                Guid userId = Guid.Parse(userIdValue);
-
-                // استفاده از یک scope جدید برای resolve کردن سرویس‌ها
+                Guid UserId = Guid.Parse(UserIdTemp);
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var userService = scope.ServiceProvider.GetRequiredService<IUserPublicService>();
                     var positionService = scope.ServiceProvider.GetRequiredService<IPositionPublicService>();
                     var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
-                    Guid? personId = await userService.GetPersonId(userId);
-                    List<Guid>? positionId = await positionService.GetUserPositionsId(userId);
-                    List<Guid> roleIds = await roleService.GetAllUserRolesId(userId);
-
-                    return (userId, personId, positionId, roleIds);
+                    Guid? PersonId = await userService.GetPersonId(UserId);
+                    List<Guid>? PositionId = await positionService.GetUserPositionsId(UserId);
+                    List<Guid> RoleIds = await roleService.GetAllUserRolesId(UserId);
+                    return (UserId, PersonId, PositionId, RoleIds);
                 }
             }
             catch (Exception ex)

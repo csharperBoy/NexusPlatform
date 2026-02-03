@@ -260,7 +260,7 @@ namespace Core.Infrastructure.Repositories
                 }
                 if (scopedEntity.OwnerPositionId == null || scopedEntity.OwnerPositionId == Guid.Empty)
                 {
-                    Guid? positionId = userContext.PositionId.FirstOrDefault();
+                    Guid? positionId = userContext.PositionId?.FirstOrDefault();
                     scopedEntity.SetPositionOwner(positionId ?? Guid.Empty);
                 }
             }

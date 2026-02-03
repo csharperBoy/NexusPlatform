@@ -2,6 +2,7 @@
 using Core.Application.Abstractions.Security;
 using Core.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,39 +63,52 @@ namespace Core.Infrastructure.Repositories
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
         protected readonly IDataScopeProcessor _scopeProcessor;
-        public EfSpecificationRepository(TDbContext dbContext, IDataScopeProcessor scopeProcessor)
+        protected readonly ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> _logger;
+
+        public EfSpecificationRepository(TDbContext dbContext, IDataScopeProcessor scopeProcessor, ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> logger)
         {
             _dbContext = dbContext;
+            _logger = logger;   
             _dbSet = dbContext.Set<TEntity>();
             _scopeProcessor = scopeProcessor;
         }
         private async Task<IQueryable<TEntity>> ApplySpecification(ISpecification<TEntity> specification)
         {
-            IQueryable<TEntity> query = _dbSet;
+            try
+            {
 
-            // ***** اعمال امنیت همین اول کار *****
-            // اگر Specification خاصی نباید فیلتر شود، می‌توان پراپرتی IgnoreSecurity به Specification اضافه کرد
-            query = await _scopeProcessor.ApplyScope(query);
 
-            if (specification.Criteria != null)
-                query = query.Where(specification.Criteria);
+                IQueryable<TEntity> query = _dbSet;
 
-            query = specification.Includes.Aggregate(query, (current, include) => current.Include(include));
-            query = specification.IncludeFunctions.Aggregate(query, (current, includeFunction) => includeFunction(current));
-            query = specification.IncludeStrings.Aggregate(query, (current, include) => current.Include(include));
+                // ***** اعمال امنیت همین اول کار *****
+                // اگر Specification خاصی نباید فیلتر شود، می‌توان پراپرتی IgnoreSecurity به Specification اضافه کرد
+                query = await _scopeProcessor.ApplyScope(query);
 
-            query = ApplyOrdering(query, specification);
+                if (specification.Criteria != null)
+                    query = query.Where(specification.Criteria);
 
-            return query;
+                query = specification.Includes.Aggregate(query, (current, include) => current.Include(include));
+                query = specification.IncludeFunctions.Aggregate(query, (current, includeFunction) => includeFunction(current));
+                query = specification.IncludeStrings.Aggregate(query, (current, include) => current.Include(include));
+
+                query = ApplyOrdering(query, specification);
+
+                return query;
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
         }
-       
+
         public virtual async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> specification)
         {
             try
             {
 
-            var result = await ApplySpecification(specification);
-            return await result.FirstOrDefaultAsync();
+                var result = await ApplySpecification(specification);
+                return await result.FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {
@@ -105,8 +119,34 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<IEnumerable<TEntity>> ListBySpecAsync(ISpecification<TEntity> specification)
         {
-            var result = await ApplySpecification(specification);
-            return await result.ToListAsync();
+            try
+            {
+
+
+                _logger.LogInformation(
+                      "DbContext Hash befor ApplySpecification: {Hash}",
+                      _dbContext.GetHashCode()
+                    );
+                var result =await ApplySpecification(specification);
+
+                _logger.LogInformation(
+                      "DbContext Hash after ApplySpecification: {Hash}",
+                      _dbContext.GetHashCode()
+                    );
+
+                var a = await result.ToListAsync();
+                _logger.LogInformation(
+                      "DbContext Hash after ToListAsync: {Hash}",
+                      _dbContext.GetHashCode()
+                    );
+                return a;
+            }
+            catch (Exception ex)
+            {
+                // خطا را بهتر لاگ کنید
+                _logger.LogError(ex, "Error in ListBySpecAsync. Specification: {Spec}", specification);
+                throw;
+            }
         }
 
         public virtual async Task<(IEnumerable<TEntity> Items, int TotalCount)> FindBySpecAsync(ISpecification<TEntity> specification)
@@ -129,13 +169,13 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
         {
             var query = _dbSet.AsQueryable();
-            query =await _scopeProcessor.ApplyScope(query);
+            query = await _scopeProcessor.ApplyScope(query);
             if (specification.Criteria != null)
                 query = query.Where(specification.Criteria);
             return await query.CountAsync();
         }
 
-       
+
 
         private IQueryable<TEntity> ApplyOrdering(IQueryable<TEntity> query, ISpecification<TEntity> specification)
         {
