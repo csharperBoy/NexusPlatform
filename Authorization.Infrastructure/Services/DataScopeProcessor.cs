@@ -16,12 +16,15 @@ namespace Authorization.Infrastructure.Services
 {
     public class DataScopeProcessor : IDataScopeProcessor
     {
+
+        private readonly IAuthorizationChecker _permissionChecker;
+        private readonly IPermissionInternalService _permissionService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IServiceProvider _serviceProvider; // تغییر ۱: تزریق پروایدر
-        public DataScopeProcessor(ICurrentUserService currentUserService, IServiceProvider serviceProvider)
+        public DataScopeProcessor(ICurrentUserService currentUserService, IPermissionInternalService permissionService , IAuthorizationChecker permissionChecker)
         {
             _currentUserService = currentUserService;
-            _serviceProvider = serviceProvider;
+            _permissionService = permissionService;
+            _permissionChecker = permissionChecker;
         }
 
 
@@ -38,14 +41,12 @@ namespace Authorization.Infrastructure.Services
             // بخش IResourcedEntity
             if (typeof(IResourcedEntity).IsAssignableFrom(typeof(TEntity)))
             {
-                using (var scope = _serviceProvider.CreateScope())
-                {
+                
                     Guid userId = _currentUserService.UserId ?? Guid.Empty;
                     if (userId == Guid.Empty)
                         return query.Where("EquivalentResourceId == null");
 
-                    var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionInternalService>();
-                    var permissions = await permissionService.GetUserPermissionsAsync(userId);
+                    var permissions = await _permissionService.GetUserPermissionsAsync(userId);
                     var allowedResourceIds = permissions.Select(p => p.ResourceId).ToList();
 
                     if (!allowedResourceIds.Any())
@@ -53,7 +54,7 @@ namespace Authorization.Infrastructure.Services
 
                     // استفاده از متد Where با رشته - این قسمت باید کار کند
                     return query.Where("@0.Contains(EquivalentResourceId) || EquivalentResourceId == null", allowedResourceIds);
-                }
+                
             }
 
             // بخش IDataScopedEntity
@@ -68,10 +69,8 @@ namespace Authorization.Infrastructure.Services
             if (personId == null)
                 return query.Where("false");
 
-            using (var scope = _serviceProvider.CreateScope())
-            {
-                var permissionChecker = scope.ServiceProvider.GetRequiredService<IAuthorizationChecker>();
-                var scopes = await permissionChecker.GetScopeForUser(personId.Value, attribute.ResourceKey);
+            
+                var scopes = await _permissionChecker.GetScopeForUser(personId.Value, attribute.ResourceKey);
 
                 if (!scopes.Any())
                     return query.Where("false");
@@ -96,7 +95,7 @@ namespace Authorization.Infrastructure.Services
                 {
                     return query.Where("OwnerPersonId == @0", personId.Value);
                 }
-            }
+            
 
             return query.Where("false");
 
