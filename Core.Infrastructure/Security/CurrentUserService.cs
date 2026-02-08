@@ -54,13 +54,23 @@ namespace Core.Infrastructure.Security
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IUserPublicService _userService ;
+        private readonly IPositionPublicService _positionService;
+        private readonly IRolePublicService _roleService ;
+
         public CurrentUserService(IHttpContextAccessor httpContextAccessor
-            , IServiceProvider serviceProvider
+            IUserPublicService userService ,
+        IPositionPublicService positionService,
+        IRolePublicService roleService
+
+
+
             )
         {
             _httpContextAccessor = httpContextAccessor;
-            _serviceProvider = serviceProvider;
+            _userService = userService;
+            _positionService = positionService;
+            _roleService = roleService;
 
         }
         public string? Email => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.Email)?.Value;
@@ -101,23 +111,19 @@ namespace Core.Infrastructure.Security
             try
             {
                 string UserIdTemp = _httpContextAccessor.HttpContext?.User?
-                        .FindFirst(ClaimTypes.NameIdentifier)?.Value ;
+                        .FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (UserIdTemp == null)
                 {
                     return (Guid.Parse("00000000-0000-0000-0000-000000000000"), null, null, null);
                 }
                 Guid UserId = Guid.Parse(UserIdTemp);
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var userService = scope.ServiceProvider.GetRequiredService<IUserPublicService>();
-                    var positionService = scope.ServiceProvider.GetRequiredService<IPositionPublicService>();
-                    var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
-                    Guid? PersonId = await userService.GetPersonId(UserId);
-                    List<Guid>? PositionId = await positionService.GetUserPositionsId(UserId);
-                    List<Guid> RoleIds = await roleService.GetAllUserRolesId(UserId);
-                    return (UserId, PersonId, PositionId, RoleIds);
-                }
+              
+                Guid? PersonId = await _userService.GetPersonId(UserId);
+                List<Guid>? PositionId = await _positionService.GetUserPositionsId(UserId);
+                List<Guid> RoleIds = await _roleService.GetAllUserRolesId(UserId);
+                return (UserId, PersonId, PositionId, RoleIds);
+
             }
             catch (Exception ex)
             {
