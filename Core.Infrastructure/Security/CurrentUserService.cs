@@ -60,8 +60,8 @@ namespace Core.Infrastructure.Security
 
         public CurrentUserService(IHttpContextAccessor httpContextAccessor,
             IUserPublicService userService ,
-        IPositionPublicService positionService,
-        IRolePublicService roleService
+            IPositionPublicService positionService,
+            IRolePublicService roleService
 
 
 
