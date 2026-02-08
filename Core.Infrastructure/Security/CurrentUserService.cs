@@ -58,7 +58,7 @@ namespace Core.Infrastructure.Security
         private readonly IPositionPublicService _positionService;
         private readonly IRolePublicService _roleService ;
 
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor
+        public CurrentUserService(IHttpContextAccessor httpContextAccessor,
             IUserPublicService userService ,
         IPositionPublicService positionService,
         IRolePublicService roleService
