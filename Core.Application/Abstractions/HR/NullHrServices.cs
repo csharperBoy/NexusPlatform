@@ -24,6 +24,11 @@ namespace Core.Application.Abstractions.HR
     }
     public class NullPositionService : IPositionPublicService
     {
+        public Task<List<Guid>?> GetUserOrganizeId(Guid userId)
+        {
+            return Task.FromResult<List<Guid>?>(null);
+        }
+
         public Task<List<Guid>?> GetUserPositionsId(Guid userId)
         {
             return Task.FromResult<List<Guid>?>( null);

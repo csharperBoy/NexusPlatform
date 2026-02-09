@@ -39,7 +39,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (userId,personId, positionId, roleIds) =await _currentUserService.GetUserContext();
+                var (userId,personId, positionId, roleIds , orgIds) =await _currentUserService.GetUserContext();
 
                 // استفاده از اسپک فیلتر شده (Specific Resource & Action)
                 var spec = new EffectivePermissionsSpec(userId,personId, positionId, roleIds, resourceKey, action);
@@ -76,7 +76,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var (userId,personId, positionId, roleIds) = await _currentUserService.GetUserContext();
+                var (userId, personId, positionId, roleIds, orgIds) = await _currentUserService.GetUserContext();
 
                 // دریافت کل پرمیشن‌های کاربر (بدون فیلتر ریسورس)
                 var spec = new UserPermissionsSpec(userId,personId, positionId, roleIds);

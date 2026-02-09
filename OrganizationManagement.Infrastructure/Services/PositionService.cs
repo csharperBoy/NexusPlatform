@@ -78,5 +78,19 @@ namespace OrganizationManagement.Infrastructure.Services
                 throw;
             }
         }
+
+        public async Task<List<Guid>?> GetUserOrganizeId(Guid userId)
+        {
+            try
+            {
+                var positions = await GetUserPositionAsync(userId);
+                return positions.Select(p => p.FkOrganizationUnitId).ToList();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
     }
 }

@@ -106,7 +106,7 @@ namespace Core.Infrastructure.Security
 
         public Guid? OrganizationUnitId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-        public async Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds)> GetUserContext()
+        public async Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds, List<Guid>? OrganizationUnitId)> GetUserContext()
         {
             try
             {
@@ -114,7 +114,7 @@ namespace Core.Infrastructure.Security
                         .FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (UserIdTemp == null)
                 {
-                    return (Guid.Parse("00000000-0000-0000-0000-000000000000"), null, null, null);
+                    return (Guid.Parse("00000000-0000-0000-0000-000000000000"), null, null, null,null);
                 }
                 Guid UserId = Guid.Parse(UserIdTemp);
 
@@ -122,7 +122,8 @@ namespace Core.Infrastructure.Security
                 Guid? PersonId = await _userService.GetPersonId(UserId);
                 List<Guid>? PositionId = await _positionService.GetUserPositionsId(UserId);
                 List<Guid> RoleIds = await _roleService.GetAllUserRolesId(UserId);
-                return (UserId, PersonId, PositionId, RoleIds);
+                List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(UserId);
+                return (UserId, PersonId, PositionId, RoleIds, OrgIds);
 
             }
             catch (Exception ex)

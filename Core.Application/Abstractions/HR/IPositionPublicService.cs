@@ -8,6 +8,7 @@ namespace Core.Application.Abstractions.HR
 {
     public interface IPositionPublicService
     {
+        Task<List<Guid>?> GetUserOrganizeId(Guid userId);
         Task<List<Guid>?> GetUserPositionsId(Guid userId);
     }
 }
