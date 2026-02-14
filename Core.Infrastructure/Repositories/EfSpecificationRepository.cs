@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;
@@ -62,15 +63,17 @@ namespace Core.Infrastructure.Repositories
     {
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
-        protected readonly IDataScopeProcessor _scopeProcessor;
+
+        protected readonly IAuthorizationProcessor<TEntity> _authorizationProcessor;
         protected readonly ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> _logger;
 
-        public EfSpecificationRepository(TDbContext dbContext, IDataScopeProcessor scopeProcessor, ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> logger)
+        public EfSpecificationRepository(TDbContext dbContext, IAuthorizationProcessor<TEntity> authorizationProcessor, 
+            ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> logger)
         {
             _dbContext = dbContext;
             _logger = logger;   
             _dbSet = dbContext.Set<TEntity>();
-            _scopeProcessor = scopeProcessor;
+            _authorizationProcessor = authorizationProcessor;
         }
         private async Task<IQueryable<TEntity>> ApplySpecification(ISpecification<TEntity> specification)
         {
@@ -82,7 +85,7 @@ namespace Core.Infrastructure.Repositories
 
                 // ***** اعمال امنیت همین اول کار *****
                 // اگر Specification خاصی نباید فیلتر شود، می‌توان پراپرتی IgnoreSecurity به Specification اضافه کرد
-                query = await _scopeProcessor.ApplyScope(query);
+                query = await _authorizationProcessor.ApplyScope(query);
 
                 if (specification.Criteria != null)
                     query = query.Where(specification.Criteria);
@@ -153,7 +156,7 @@ namespace Core.Infrastructure.Repositories
         {
             // 📌 شمارش فقط با Criteria برای جلوگیری از بارگذاری سنگین Includes
             var countQuery = _dbSet.AsQueryable();
-            countQuery = await _scopeProcessor.ApplyScope(countQuery);
+            countQuery = await _authorizationProcessor.ApplyScope(countQuery);
             if (specification.Criteria != null)
                 countQuery = countQuery.Where(specification.Criteria);
             var totalCount = await countQuery.CountAsync();
@@ -169,7 +172,7 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
         {
             var query = _dbSet.AsQueryable();
-            query = await _scopeProcessor.ApplyScope(query);
+            query = await _authorizationProcessor.ApplyScope(query);
             if (specification.Criteria != null)
                 query = query.Where(specification.Criteria);
             return await query.CountAsync();

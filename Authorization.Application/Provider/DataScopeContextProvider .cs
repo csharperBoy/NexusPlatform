@@ -21,8 +21,6 @@ namespace Authorization.Application.Context
     public class DataScopeContextProvider : IDataScopeContextProvider
     {
         private readonly IPermissionInternalService _permissionService;
-        private readonly IPermissionProcessor _permissionProcess;
-        private readonly IAuthorizationChecker _authorizationChecker;
         private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
         private readonly IPositionPublicService _positionService;
@@ -30,8 +28,7 @@ namespace Authorization.Application.Context
 
         public DataScopeContextProvider(
             IPermissionInternalService permissionService,
-            IPermissionProcessor permissionProcess,
-            IAuthorizationChecker authorizationChecker,
+           
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
             IPositionPublicService positionService,
@@ -39,11 +36,9 @@ namespace Authorization.Application.Context
             )
         {
             _permissionService = permissionService;
-            _authorizationChecker = authorizationChecker;
             _httpContext = httpContext;
             _userService = userService;
             _positionService = positionService;
-            _permissionProcess = permissionProcess;
             _roleService = roleService;
         }
         public async Task<DataScopeContext> GetAsync(CancellationToken ct)
