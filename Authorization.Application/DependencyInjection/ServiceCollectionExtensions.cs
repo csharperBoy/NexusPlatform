@@ -1,10 +1,12 @@
 ﻿using Authorization.Application.Attributes;
+using Authorization.Application.Context;
 using Authorization.Application.Interfaces;
 using Core.Application.Behaviors;
+using Core.Application.Provider;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
 
 namespace Authorization.Application.DependencyInjection
 {
@@ -18,7 +20,7 @@ namespace Authorization.Application.DependencyInjection
             services.AddMediatR(cfg =>
                cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
 
-
+            services.AddScoped<IDataScopeContextProvider , DataScopeContextProvider>(); 
             services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
 
             return services;

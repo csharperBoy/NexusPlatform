@@ -2,6 +2,7 @@
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
+using Core.Application.Context;
 using Core.Application.Models;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +25,7 @@ namespace Core.Application.DependencyInjection
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AccessBehavior<,>));
-
+            services.AddScoped<DataScopeContext>();
             return services;
         }
         public static IServiceCollection Core_AllModuleNullServiceInject(this IServiceCollection services, IConfiguration configuration)
