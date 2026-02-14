@@ -1,9 +1,11 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
 using Core.Infrastructure.Security;
+using Core.Shared.Enums.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,21 +60,22 @@ namespace Core.Infrastructure.Repositories
     */
 
     public class EfRepository<TDbContext, TEntity, TKey> : IRepository<TDbContext, TEntity, TKey>
-       where TDbContext : DbContext
-       where TEntity : class
-       where TKey : IEquatable<TKey>
+         where TDbContext : DbContext
+         where TEntity : class
+         where TKey : IEquatable<TKey>
     {
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
-
+        protected readonly IAuthorizationProcessor<TEntity> _authorizationProcessor;
 
         public EfRepository(
             TDbContext dbContext,
-            IDataScopeProcessor scopeProcessor
+            IAuthorizationProcessor<TEntity> authorizationProcessor
             )
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();
+            _authorizationProcessor = authorizationProcessor;
         }
 
         // ... (متدهای GetByIdAsync, GetAllAsync, CountAsync, ExistsAsync بدون تغییر) ...
@@ -81,40 +84,51 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<TEntity?> GetByIdAsync(TKey id)
         {
-            return await _dbSet.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
+            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            var result = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            return await result.ToListAsync();
         }
 
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
         {
-            return predicate == null ? await _dbSet.CountAsync() : await _dbSet.CountAsync(predicate);
-
+            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            if (predicate != null) query = query.Where(predicate);
+            return await query.CountAsync();
         }
 
         public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _dbSet.AnyAsync(predicate);
+            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            return await query.AnyAsync(predicate);
         }
 
         // --- WRITE OPERATIONS ---
 
         public virtual async Task AddAsync(TEntity entity)
         {
+            await _authorizationProcessor.SetOwnerDefaults(entity);
+            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
             await _dbSet.AddAsync(entity);
         }
 
         public virtual async Task AddRangeAsync(IEnumerable<TEntity> entities)
         {
-            
+            foreach (var entity in entities)
+            {
+                await _authorizationProcessor.SetOwnerDefaults(entity);
+                await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
+            }
             await _dbSet.AddRangeAsync(entities);
         }
 
         public virtual async Task UpdateAsync(TEntity entity)
         {
+            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Edit);
             _dbSet.Update(entity);
         }
 
@@ -123,11 +137,13 @@ namespace Core.Infrastructure.Repositories
             var entity = await _dbSet.FindAsync(id);
             if (entity == null) return;
 
+            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Delete);
             _dbSet.Remove(entity);
         }
 
         public virtual async Task DeleteAsync(TEntity entity)
         {
+            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Delete);
             if (_dbContext.Entry(entity).State == EntityState.Detached)
                 _dbSet.Attach(entity);
             _dbSet.Remove(entity);
@@ -135,14 +151,26 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task RemoveRangeAsync(IEnumerable<TEntity> entities)
         {
-            
+            foreach (var entity in entities)
+            {
+                await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Delete);
+            }
             _dbSet.RemoveRange(entities);
         }
 
-        public virtual IQueryable<TEntity> AsQueryable() => _dbSet;
-        public virtual IQueryable<TEntity> AsNoTrackingQueryable() => _dbSet.AsNoTracking();
+        public virtual async Task<IQueryable<TEntity>> AsQueryable()
+        {
+            return await _authorizationProcessor.ApplyScope(_dbSet);
+           
+        }
+      
+        public virtual async Task<IQueryable<TEntity>> AsNoTrackingQueryable()
+        {
+            return await _authorizationProcessor.ApplyScope(_dbSet.AsNoTracking());
 
-       
+        }
+
+
         
     }
 }

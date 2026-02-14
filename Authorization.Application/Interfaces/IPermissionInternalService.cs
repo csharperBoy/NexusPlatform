@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.Commands.Permissions;
 using Authorization.Application.DTOs.Permissions;
 using Core.Application.Abstractions.Authorization;
+using Core.Shared.DTOs.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,5 +24,8 @@ namespace Authorization.Application.Interfaces
         // منطق کسب‌وکار پیچیده
         Task<bool> CheckPermissionConflictAsync(AssignPermissionCommand command);
         Task ResolvePermissionConflictsAsync(Guid userId, string resourceKey);
+        Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds);
+        Task<IReadOnlyList<PermissionDto>> GetPersonPermissionsAsync(Guid? personId);
+        Task<IReadOnlyList<PermissionDto>> GetPositionPermissionsAsync(List<Guid>? positionIds);
     }
 }

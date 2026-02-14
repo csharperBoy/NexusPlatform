@@ -4,6 +4,8 @@ using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;

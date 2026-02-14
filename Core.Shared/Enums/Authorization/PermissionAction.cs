@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Domain.Enums
+namespace Core.Shared.Enums.Authorization
 {
     public enum PermissionAction : byte
     {
@@ -13,11 +13,7 @@ namespace Core.Domain.Enums
         Create = 2,
         Edit = 3,
         Delete = 4,
-
-        // عملیات بیزینسی (مثال)
-        Approve = 5,
-        Reject = 6,
-        Export = 7,
+        Export = 5,
 
         // دسترسی کامل
         Full = 99

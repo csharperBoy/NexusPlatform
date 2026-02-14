@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Domain.Enums
+namespace Core.Shared.Enums.Authorization
 {
     public enum PermissionType : byte
     {

@@ -11,12 +11,13 @@ using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
-using Core.Domain.Enums;
 using Core.Domain.Interfaces;
+using Core.Shared.DTOs.Identity;
+using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-
+using Core.Shared.Enums;
 namespace Authorization.Infrastructure.Services
 {
     public class PermissionService : IPermissionInternalService
@@ -362,17 +363,18 @@ namespace Authorization.Infrastructure.Services
             return new PermissionDto
             {
                 Id = permission.Id,
+                ResourceKey = permission.Resource.Key,
                 ResourceId = permission.ResourceId,
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
-
+                Scope = permission.Scope,
+                SpecificScopeId = permission.SpecificScopeId,
+                Type = permission.Type,
                 IsActive = permission.IsActive,
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                CreatedAt = permission.CreatedAt,
-                CreatedBy = permission.CreatedBy
             };
         }
 
@@ -386,8 +388,8 @@ namespace Authorization.Infrastructure.Services
                 Permission permission = new Permission(
                     specRet.Items.FirstOrDefault().Id, permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
                     permissionDefinition.AssignId,
-                    permissionDefinition.Action.ToEnumOrDefault(Core.Domain.Enums.PermissionAction.View),
-                    permissionDefinition.Scope.ToEnumOrDefault(Core.Domain.Enums.ScopeType.Self),
+                    permissionDefinition.Action.ToEnumOrDefault(Core.Shared.Enums.Authorization.PermissionAction.View),
+                    permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
                     null,
                     permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
                     );
@@ -417,6 +419,74 @@ namespace Authorization.Infrastructure.Services
             catch (Exception ex)
             {
 
+                throw;
+            }
+        }
+
+        public async     Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds)
+        {
+            try
+            {
+                var spec = new PermissionsByRolesSpec(roleIds);
+                var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+                var dtos = permissions.Select(MapToDto).ToList();
+
+                _logger.LogDebug(
+                    "Retrieved {Count} permissions for roles {roleIds}",
+                    dtos.Count, roleIds);
+
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving permissions for roles {roleIds}", roleIds);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<PermissionDto>> GetPersonPermissionsAsync(Guid? personId)
+        {
+            try
+            {
+                if (personId == null)
+                    return null;
+                var spec = new PermissionsByPersonSpec((Guid)personId);
+                var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+                var dtos = permissions.Select(MapToDto).ToList();
+
+                _logger.LogDebug(
+                    "Retrieved {Count} permissions for person {personId}",
+                    dtos.Count, personId);
+
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving permissions for person {personId}", personId);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<PermissionDto>> GetPositionPermissionsAsync(List<Guid>? positionIds)
+        {
+            try
+            {
+                var spec = new PermissionsByPositionsSpec(positionIds);
+                var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+                var dtos = permissions.Select(MapToDto).ToList();
+
+                _logger.LogDebug(
+                    "Retrieved {Count} permissions for Position {UsepositionIdsrId}",
+                    dtos.Count, positionIds);
+
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving permissions for position {positionIds}", positionIds);
                 throw;
             }
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Domain.Enums
+namespace Core.Shared.Enums
 {
     public enum ScopeType : byte
     {

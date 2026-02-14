@@ -7,6 +7,8 @@ using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

@@ -1,4 +1,6 @@
 ﻿using Core.Domain.Enums;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;

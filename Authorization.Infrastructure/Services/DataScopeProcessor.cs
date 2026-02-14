@@ -2,10 +2,13 @@
 using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Core.Application.Abstractions.Security;
+using Core.Application.Context;
+using Core.Application.Holder;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
 using Core.Infrastructure.Security;
+using Core.Shared.Enums;
 using Microsoft.EntityFrameworkCore.DynamicLinq; // یا System.Linq.Dynamic.Core
 using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
@@ -19,12 +22,12 @@ namespace Authorization.Infrastructure.Services
 
         private readonly IAuthorizationChecker _permissionChecker;
         private readonly IPermissionInternalService _permissionService;
-        private readonly ICurrentUserService _currentUserService;
-        public DataScopeProcessor(ICurrentUserService currentUserService, IPermissionInternalService permissionService , IAuthorizationChecker permissionChecker)
+        private readonly DataScopeContext _scope;
+        public DataScopeProcessor( IPermissionInternalService permissionService , IAuthorizationChecker permissionChecker, DataScopeContext scope)
         {
-            _currentUserService = currentUserService;
             _permissionService = permissionService;
             _permissionChecker = permissionChecker;
+            _scope = scope;
         }
 
 
@@ -42,7 +45,7 @@ namespace Authorization.Infrastructure.Services
             if (typeof(IResourcedEntity).IsAssignableFrom(typeof(TEntity)))
             {
                 
-                    Guid userId = _currentUserService.UserId ?? Guid.Empty;
+                    Guid userId = _scope.UserId ;
                     if (userId == Guid.Empty)
                         return query.Where("EquivalentResourceId == null");
 
@@ -65,7 +68,7 @@ namespace Authorization.Infrastructure.Services
             if (attribute == null)
                 return query;
 
-            var personId =(await _currentUserService.GetUserContext()).PersonId;
+            var personId = _scope.PersonId;
             if (personId == null)
                 return query.Where("false");
 
@@ -85,9 +88,9 @@ namespace Authorization.Infrastructure.Services
 
                 if (maxScope == ScopeType.Unit)
                 {
-                    var userUnitId = _currentUserService.OrganizationUnitId;
-                    return userUnitId.HasValue
-                        ? query.Where("OwnerOrganizationUnitId == @0", userUnitId.Value)
+                    var userUnitId = _scope.OrganizationUnitIds;
+                    return userUnitId.Count()>0
+                        ? query.Where("OwnerOrganizationUnitId in ( @0 )", userUnitId)
                         : query.Where("false");
                 }
 

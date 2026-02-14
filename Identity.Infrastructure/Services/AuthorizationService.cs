@@ -69,7 +69,7 @@ namespace Identity.Infrastructure.Services
             var role = await _roleManager.FindByNameAsync(roleName);
             if (role == null) return Result.Fail("Role not found.");
 
-            var userRole = await _userRoleRepository.AsQueryable()
+            var userRole =await( await _userRoleRepository.AsQueryable())
                 .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == role.Id);
 
             if (userRole == null) return Result.Fail("User does not have this role.");
@@ -87,7 +87,7 @@ namespace Identity.Infrastructure.Services
 
         public async Task<IList<string>> GetUserRolesAsync(Guid userId)
         {
-            var query = from ur in _userRoleRepository.AsQueryable()
+            var query = from ur in (await _userRoleRepository.AsQueryable())
                         join r in _roleManager.Roles on ur.RoleId equals r.Id
                         where ur.UserId == userId
                         select r.Name!;

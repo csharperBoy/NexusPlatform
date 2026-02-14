@@ -1,5 +1,7 @@
 ﻿using Authorization.Domain.Enums;
 using Core.Domain.Enums;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 using MediatR;
 using System;

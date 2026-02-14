@@ -106,6 +106,8 @@ namespace Core.Infrastructure.Security
 
         public Guid? OrganizationUnitId => Guid.Parse("00000000-0000-0000-0000-000000000001");
 
+        List<Guid>? ICurrentUserService.OrganizationUnitId => throw new NotImplementedException();
+
         public async Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds, List<Guid>? OrganizationUnitId)> GetUserContext()
         {
             try

@@ -9,6 +9,8 @@ using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Infrastructure.Repositories;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 

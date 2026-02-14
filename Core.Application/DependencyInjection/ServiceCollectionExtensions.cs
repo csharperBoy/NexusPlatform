@@ -23,6 +23,7 @@ namespace Core.Application.DependencyInjection
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AccessBehavior<,>));
 
             return services;
         }

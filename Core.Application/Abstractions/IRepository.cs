@@ -70,7 +70,7 @@ namespace Core.Application.Abstractions
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
 
-        IQueryable<TEntity> AsQueryable();
-        IQueryable<TEntity> AsNoTrackingQueryable();
+        Task<IQueryable<TEntity>> AsQueryable();
+        Task<IQueryable<TEntity>> AsNoTrackingQueryable();
     }
 }

@@ -102,7 +102,7 @@ namespace Identity.Infrastructure.Services
         public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, string userId)
         {
             var userGuid = Guid.Parse(userId);
-            var session = await _sessionRepository.AsQueryable()
+            var session =await( await _sessionRepository.AsQueryable())
                                 .FirstOrDefaultAsync(s => s.UserId == userGuid &&
                                s.RefreshToken == refreshToken &&
                                s.ExpiresAt > DateTime.UtcNow);
@@ -113,7 +113,7 @@ namespace Identity.Infrastructure.Services
 
         public async Task RevokeRefreshTokenAsync(string refreshToken)
         {
-            var session = await _sessionRepository.AsQueryable().FirstOrDefaultAsync(s => s.RefreshToken == refreshToken);
+            var session =await( await _sessionRepository.AsQueryable()).FirstOrDefaultAsync(s => s.RefreshToken == refreshToken);
 
             if (session != null)
             {
@@ -126,7 +126,7 @@ namespace Identity.Infrastructure.Services
         {
 
             var userGuid = Guid.Parse(userId);
-            var sessions = await _sessionRepository.AsQueryable()
+            var sessions =await (await _sessionRepository.AsQueryable())
                                                      .Where(s => s.UserId == userGuid)
                                                      .ToListAsync();
 

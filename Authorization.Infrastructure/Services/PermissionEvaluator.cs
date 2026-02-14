@@ -9,6 +9,7 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Identity;
+using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services

@@ -1,6 +1,7 @@
 ﻿using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Core.Domain.Specifications;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace Authorization.Domain.Specifications
     public class PermissionsByUserSpec : BaseSpecification<Permission>
     {
         public PermissionsByUserSpec(Guid userId)
-            : base(p => p.AssigneeType == AssigneeType.Person && // تغییر از User به Person
+            : base(p => p.AssigneeType == AssigneeType.User && // تغییر از User به Person
                         p.AssigneeId == userId)
         {
             AddInclude(p => p.Resource);

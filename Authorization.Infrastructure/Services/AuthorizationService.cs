@@ -6,6 +6,8 @@ using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services

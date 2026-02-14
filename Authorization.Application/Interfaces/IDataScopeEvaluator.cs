@@ -1,5 +1,7 @@
 ﻿using Authorization.Application.DTOs.DataScopes;
 using Core.Domain.Enums;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
