@@ -2,13 +2,16 @@
 using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.HostedServices;
+using Authorization.Infrastructure.Processor;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
+using Core.Application.Behaviors;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
+using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -56,6 +59,7 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
 
 
+            services.AddTransient(typeof(IAuthorizationProcessor<>), typeof(AuthorizationProcessor<>));
             services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
             //services.AddScoped<IDataScopeService, DataScopeService>();
 

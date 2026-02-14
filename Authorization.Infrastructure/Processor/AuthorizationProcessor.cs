@@ -8,7 +8,6 @@ using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Application.Context;
-using Core.Application.Holder;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
