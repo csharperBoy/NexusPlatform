@@ -1,4 +1,4 @@
-import { LogoutButton } from "@/modules/auth/components/Buttons/LogoutButton";
+import { LogoutButton } from "@/modules/Identity/components/Buttons/LogoutButton";
 import React from "react";
 
 const Dashboard: React.FC = () => {

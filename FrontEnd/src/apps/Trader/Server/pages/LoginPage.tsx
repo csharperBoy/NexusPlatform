@@ -2,7 +2,7 @@ import React from "react";
 import Button from "@/core/components/Button";
 import Input from "@/core/components/Input";
 import Card from "@/core/components/Card";
-import { useLoginForm } from "@/modules/auth/hooks/Forms/useLoginForm";
+import { useLoginForm } from "@/modules/Identity/hooks/Forms/useLoginForm";
 
 export type LoginFormProps = {
   onSuccess?: () => void;

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Button from "@/core/components/Button";
 import Input from "@/core/components/Input";
 import Card from "@/core/components/Card";
-import { useLogin } from "@/modules/auth/hooks/useLogin";
+import { useLogin } from "@/modules/Identity/hooks/useLogin";
 
 export type LoginFormProps = {
   onSuccess?: () => void;

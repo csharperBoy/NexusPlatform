@@ -1,6 +1,6 @@
 //src/apps/MaharRayanesh/AdminPanel/App.tsx
 import { useRoutes } from "react-router-dom";
-import { authRoutes, ProtectedRoute } from "../../../modules/auth";
+import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
 import Dashboard from "./pages/Dashboard";
 import TailwindTest from "./pages/TailwindTest";
 

@@ -14,15 +14,16 @@
     "dev:mahar.website": "pnpm --filter mahar-website run dev",
     "build:mahar.website": "pnpm --filter mahar-website run build",
     "preview:mahar.website": "pnpm --filter mahar-website run preview",
-    "dev:pmis": "pnpm --filter pmis run dev",
-    "build:pmis": "pnpm --filter pmis run build",
-    "preview:pmis": "pnpm --filter pmis run preview",
+    
     "dev:akwp.admin": "pnpm --filter akwp-adminpanel run dev",
     "build:akwp.admin": "pnpm --filter akwp-adminpanel run build",
     "preview:akwp.admin": "pnpm --filter akwp-adminpanel run preview",
     "dev:akwp.website": "pnpm --filter akwp-website run dev",
     "build:akwp.website": "pnpm --filter akwp-website run build",
-    "preview:akwp.website": "pnpm --filter akwp-website run preview"
+    "preview:akwp.website": "pnpm --filter akwp-website run preview",
+    "dev:trader.server": "pnpm --filter trader-server run dev",
+    "build:trader.server": "pnpm --filter trader-server run build",
+    "preview:trader.server": "pnpm --filter trader-server run preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
