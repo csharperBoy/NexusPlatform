@@ -5,25 +5,25 @@ import type { RegisterRequest } from "../models/RegisterRequest";
 import type { AuthResponse } from "../models/AuthResponse";
 
 // نام ماژول API - می‌توانید از env بگیرید یا مستقیماً مشخص کنید
-const API_MODULE = import.meta.env.VITE_API_MODULE || "auth";
+const API_MODULE = import.meta.env.VITE_API_MODULE || "identity";
 
 export const authApi = {
   loginWithEmail: async (data: LoginRequest): Promise<AuthResponse> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/login/email";
+    const url = "/api/identity/auth/login/email";
     
-    console.log(`[authApi] POST ${url}`, data);
-    console.log(`[authApi] BaseURL: ${axiosClient.defaults.baseURL}`);
+    console.log(`[identity] POST ${url}`, data);
+    console.log(`[identity] BaseURL: ${axiosClient.defaults.baseURL}`);
 
     const response = await axiosClient.post<AuthResponse>(url, data);
     return response.data;
   },
   loginWithUsername: async (data: LoginRequest): Promise<AuthResponse> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/login/username";
+    const url = "/api/identity/auth/login/username";
     
-    console.log(`[authApi] POST ${url}`, data);
-    console.log(`[authApi] BaseURL: ${axiosClient.defaults.baseURL}`);
+    console.log(`[identity] POST ${url}`, data);
+    console.log(`[identity] BaseURL: ${axiosClient.defaults.baseURL}`);
 
     const response = await axiosClient.post<AuthResponse>(url, data);
     return response.data;
@@ -31,10 +31,10 @@ export const authApi = {
 
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/register";
+    const url = "/api/identity/auth/register";
     
-    console.log(`[authApi] POST ${url}`, data);
-    console.log(`[authApi] BaseURL: ${axiosClient.defaults.baseURL}`);
+    console.log(`[identity] POST ${url}`, data);
+    console.log(`[identity] BaseURL: ${axiosClient.defaults.baseURL}`);
 
     const response = await axiosClient.post<AuthResponse>(url, data);
     return response.data;
@@ -42,18 +42,18 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/logout";
+    const url = "/api/identity/auth/logout";
     
-    console.log(`[authApi] POST ${url}`);
+    console.log(`[identity] POST ${url}`);
     
     await axiosClient.post(url);
   },
 
   refreshToken: async (refreshToken: string): Promise<AuthResponse> => {
     const axiosClient = getAPI(API_MODULE);
-    const url = "/api/auth/refresh";
+    const url = "/api/identity/auth/refresh";
     
-    console.log(`[authApi] POST ${url}`);
+    console.log(`[identity] POST ${url}`);
 
     const response = await axiosClient.post<AuthResponse>(url, { refreshToken });
     return response.data;

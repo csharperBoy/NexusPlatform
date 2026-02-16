@@ -1,6 +1,6 @@
 // src/modules/auth/hooks/Forms/useLoginForm.ts
 import { useState, useEffect, useCallback } from "react";
-import { authApi } from "../../api/authApi";
+import { authApi } from "../../api/identityApi";
 import { useAuth } from "../useAuth";
 
 type LoginType = "email" | "username";
