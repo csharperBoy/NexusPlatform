@@ -48,6 +48,7 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             // 1. ثبت خودِ سرویس (Implementation)
             services.AddScoped<ResourceService>();
+            services.AddScoped<SeedService>();
             services.AddScoped<PermissionService>();
             // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
             // ارجاع می‌دهیم به همان Instance بالایی
@@ -57,6 +58,7 @@ namespace Authorization.Infrastructure.DependencyInjection
             // این هم ارجاع می‌شود به همان Instance
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
+            services.AddScoped<IAuthorizeSeedService>(sp => sp.GetRequiredService<SeedService>());
 
 
             services.AddTransient(typeof(IAuthorizationProcessor<>), typeof(AuthorizationProcessor<>));

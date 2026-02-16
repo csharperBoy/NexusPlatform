@@ -1,15 +1,24 @@
-﻿using Identity.Domain.Entities;
+﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.HR;
+using Core.Application.Abstractions.Identity;
+using Core.Application.Context;
+using Core.Application.Provider;
+using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;
+using Identity.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Identity.Infrastructure.DependencyInjection
 {
     public class IdentityModuleInitializer : IHostedService
     {
+
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<IdentityModuleInitializer> _logger;
         private readonly IConfiguration _configuration;
@@ -30,10 +39,12 @@ namespace Identity.Infrastructure.DependencyInjection
                 _logger.LogInformation("Starting identity module initialization...");
 
                 // اجرای seed داده‌ها
-            
+
                 var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+               
                 await IdentitySeedData.StartSeedAsync(roleManager, userManager, _configuration);
+
                 _logger.LogInformation("Identity module initialization completed successfully.");
             }
             catch (Exception ex)

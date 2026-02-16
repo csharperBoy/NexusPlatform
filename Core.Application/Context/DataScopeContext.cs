@@ -12,6 +12,7 @@ namespace Core.Application.Context
     public sealed class DataScopeContext
     {
         public Guid UserId { get; init; }
+        public string UserName { get; init; }
         public Guid? PersonId { get; init; }
         public IReadOnlySet<Guid>? OrganizationUnitIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<Guid>? PositionIds { get; init; } = new HashSet<Guid>();

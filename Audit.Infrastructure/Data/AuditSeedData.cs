@@ -70,9 +70,8 @@ namespace Audit.Infrastructure.Data
 
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
         public static async Task SeedAsync(
-            IResourcePublicService resourceService,
-            IPermissionPublicService permissionService,
-            IRolePublicService roleService, // سرویس عمومی برای گرفتن نقش‌ها
+            IAuthorizeSeedService authorizeSeedService,
+            IRolePublicService roleService, 
             ILogger logger,
             CancellationToken cancellationToken = default)
         {
@@ -83,7 +82,7 @@ namespace Audit.Infrastructure.Data
                 // 1. ثبت منابع (Resources)
                 // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
                 var resources = GetAuditResourceDefinitions();
-                await resourceService.SyncModuleResourcesAsync(resources, cancellationToken);
+                await authorizeSeedService.SyncModuleResourcesAsync(resources, cancellationToken);
                 logger.LogInformation("✅ Audit resources synced successfully.");
 
                 // 2. ثبت پرمیشن‌ها (Permissions)
@@ -91,7 +90,7 @@ namespace Audit.Infrastructure.Data
                 var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
                 var permissions = GetAuditPermissionDefinitions(adminRoleId);
-                await permissionService.SeedRolePermissionsAsync( permissions, cancellationToken);
+                await authorizeSeedService.SeedRolePermissionsAsync( permissions, cancellationToken);
                 logger.LogInformation("✅ Audit permissions seeded successfully.");
             }
             catch (Exception ex)

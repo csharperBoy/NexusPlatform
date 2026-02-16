@@ -327,8 +327,8 @@ namespace Authorization.Infrastructure.Data
         // متد اصلی برای ایجاد پرمیژن‌ها
         public static async Task SeedPermissionsAsync(
             AuthorizationDbContext dbContext,
-            IRolePublicService roleService,
-            IUserPublicService userService,
+        IRolePublicService roleService,
+            //IUserPublicService userService,
             ILogger logger)
         {
             logger.LogInformation("🚀 Starting permission seeding for admin role...");
@@ -337,7 +337,7 @@ namespace Authorization.Infrastructure.Data
             {
                 // 1. دریافت RoleId نقش Admin
                 var adminRoleId = await roleService.GetAdminRoleIdAsync();
-                var initializerUserId = await userService.GetUserId("intitializer");
+                //var initializerUserId = await userService.GetUserId("intitializer");
                 logger.LogInformation($"Admin Role ID: {adminRoleId}");
 
                 // 2. دریافت تعاریف پرمیژن‌ها
@@ -412,7 +412,7 @@ namespace Authorization.Infrastructure.Data
                 }
 
                 // 7. ایجاد پرمیژن‌های initializer
-                var permissionsInitializerCreated = 0;
+               /* var permissionsInitializerCreated = 0;
                 foreach (var definition in PermissionDefinitions)
                 {
                     var resourceId = resources[definition.ResourceKey];
@@ -456,9 +456,9 @@ namespace Authorization.Infrastructure.Data
 
                     logger.LogInformation($"✅ Created permission for Admin on resource '{definition.ResourceKey}'");
                 }
-
+                */
                 // 8. ذخیره تغییرات
-                if (permissionsCreated > 0 || permissionsInitializerCreated > 0)
+                if (permissionsCreated > 0)
                 {
                     await dbContext.SaveChangesAsync();
                     logger.LogInformation($"✅ Created {permissionsCreated} permissions for Admin role");
@@ -479,7 +479,6 @@ namespace Authorization.Infrastructure.Data
         public static async Task SeedAuthorizationDataAsync(
             AuthorizationDbContext dbContext,
             IRolePublicService roleService,
-            IUserPublicService userService,
             IConfiguration config,
             ILogger logger)
         {
@@ -489,7 +488,7 @@ namespace Authorization.Infrastructure.Data
             await SeedResourcesAsync(dbContext, config, logger);
 
             // 2. Seed پرمیژن‌ها
-            await SeedPermissionsAsync(dbContext, roleService, userService, logger);
+            await SeedPermissionsAsync(dbContext, roleService,  logger);
 
             logger.LogInformation("✅ Authorization data seeding completed!");
         }

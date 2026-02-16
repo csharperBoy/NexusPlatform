@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -38,6 +39,11 @@ namespace Core.Application.Abstractions.Identity
     }
     public class NullUserService : IUserPublicService
     {
+        public Task<DataScopeContext> GetInitializerUserContext()
+        {
+            return null;
+        }
+
         public Task<Guid?> GetPersonId(Guid userId)
         {
             return null;

@@ -35,13 +35,12 @@ namespace Audit.Infrastructure.DependencyInjection
 
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
-                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
-                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var authorizeSeedService = scope.ServiceProvider.GetRequiredService<IAuthorizeSeedService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
                 await AuditSeedData.SeedAsync(
-                    resourceService, permissionService, roleService,
+                    authorizeSeedService,  roleService,
                     _logger);
                 _logger.LogInformation("Successfull Audit module initialization.");
 

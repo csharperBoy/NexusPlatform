@@ -20,7 +20,7 @@ using System.ComponentModel.Design;
 using Core.Shared.Enums;
 namespace Authorization.Infrastructure.Services
 {
-    public class PermissionService : IPermissionInternalService
+    public class PermissionService : IPermissionInternalService 
     {
         private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
@@ -487,6 +487,29 @@ namespace Authorization.Infrastructure.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving permissions for position {positionIds}", positionIds);
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds)
+        {
+            try
+            {
+                var spec = new UserPermissionsSpec(userId, personId, positionsId, roleIds);
+                var allPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+               
+                var dtos = allPermissions.Select(MapToDto).ToList();
+
+                _logger.LogDebug(
+                    "Retrieved {Count} permissions for Position {userId}",
+                    dtos.Count, userId);
+
+                return dtos;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving permissions for position {userId}", userId);
                 throw;
             }
         }

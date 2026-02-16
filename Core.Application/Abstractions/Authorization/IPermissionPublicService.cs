@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Shared.DTOs.Identity;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,5 +14,7 @@ namespace Core.Application.Abstractions.Authorization
         /// ثبت پرمیشن‌های اولیه برای یک نقش خاص (مثلاً ادمین)
         /// </summary>
         Task SeedRolePermissionsAsync( List<PermissionDefinition> permissions, CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds);
     }
 }

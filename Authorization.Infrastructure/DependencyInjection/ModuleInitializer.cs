@@ -35,13 +35,11 @@ namespace Authorization.Infrastructure.DependencyInjection
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<AuthorizationDbContext>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
-                var userService = scope.ServiceProvider.GetRequiredService<IUserPublicService>();
-
+               
                 // روش 1: استفاده از متد یکپارچه
                 await AuthorizationSeedData.SeedAuthorizationDataAsync(
                     dbContext,
                     roleService,
-                    userService,
                     _configuration,
                     _logger);
                 

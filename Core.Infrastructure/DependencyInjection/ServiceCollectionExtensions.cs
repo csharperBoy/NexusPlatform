@@ -112,6 +112,7 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
 
+            //services.AddHostedService<CoreModuleInitializer>();
             return services;
         }
 

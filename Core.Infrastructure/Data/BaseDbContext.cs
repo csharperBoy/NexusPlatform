@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Core.Domain.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -52,25 +53,25 @@ namespace Core.Infrastructure.Data
             if (!entries.Any()) return;
 
             // دریافت ICurrentUserService به صورت lazy
-            var currentUserService = _serviceProvider.GetService<ICurrentUserService>();
-            var currentUserId = GetCurrentUserId(currentUserService);
-            var currentUserName = GetCurrentUserName(currentUserService);
+            var currentUserContext = _serviceProvider.GetService<DataScopeContext>();
+            var currentUserId = currentUserContext.UserId;
+            var currentUserName = currentUserContext.UserName;
 
             foreach (var entry in entries)
             {
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedAt = DateTime.UtcNow;
-                    entry.Entity.CreatedBy = currentUserId;
+                    entry.Entity.CreatedBy = currentUserId.ToString();
 
                     // برای Modified هم در حالت Added مقدار دهی می‌کنیم
                     entry.Entity.ModifiedAt = DateTime.UtcNow;
-                    entry.Entity.ModifiedBy = currentUserId;
+                    entry.Entity.ModifiedBy = currentUserId.ToString();
                 }
                 else if (entry.State == EntityState.Modified)
                 {
                     entry.Entity.ModifiedAt = DateTime.UtcNow;
-                    entry.Entity.ModifiedBy = currentUserId;
+                    entry.Entity.ModifiedBy = currentUserId.ToString();
 
                     // از تغییر CreatedAt جلوگیری می‌کنیم
                     entry.Property(nameof(AuditableEntity.CreatedAt)).IsModified = false;
@@ -79,43 +80,6 @@ namespace Core.Infrastructure.Data
             }
         }
 
-        private string GetCurrentUserId(ICurrentUserService? currentUserService)
-        {
-            // اولویت با ICurrentUserService است
-            if (currentUserService?.UserId != null)
-            {
-                return currentUserService.UserId.ToString()!;
-            }
-
-            // اگر ICurrentUserService نبود، از HttpContext استفاده می‌کنیم
-            var httpContextAccessor = _serviceProvider.GetService<IHttpContextAccessor>();
-            var userId = httpContextAccessor?.HttpContext?.User?.FindFirst("sub")?.Value;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                return userId;
-            }
-
-            // اگر هیچکدام نبود، از Environment
-            return Environment.UserName ?? "system";
-        }
-
-        private string GetCurrentUserName(ICurrentUserService? currentUserService)
-        {
-            if (!string.IsNullOrEmpty(currentUserService?.UserName))
-            {
-                return currentUserService.UserName;
-            }
-
-            var httpContextAccessor = _serviceProvider.GetService<IHttpContextAccessor>();
-            var userName = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
-
-            if (!string.IsNullOrEmpty(userName))
-            {
-                return userName;
-            }
-
-            return Environment.UserName ?? "system";
-        }
+        
     }
 }
