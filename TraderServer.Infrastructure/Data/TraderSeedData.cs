@@ -64,8 +64,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
 
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
         public static async Task SeedAsync(
-            IResourcePublicService resourceService,
-            IPermissionPublicService permissionService,
+            IAuthorizeSeedService seedService,
             IRolePublicService roleService, // سرویس عمومی برای گرفتن نقش‌ها
             ILogger logger,
             CancellationToken cancellationToken = default)
@@ -77,7 +76,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
                 // 1. ثبت منابع (Resources)
                 // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
                 var resources = GetTraderResourceDefinitions();
-                await resourceService.SyncModuleResourcesAsync(resources, cancellationToken);
+                await seedService.SyncModuleResourcesAsync(resources, cancellationToken);
                 logger.LogInformation("✅ Trader resources synced successfully.");
 
                 // 2. ثبت پرمیشن‌ها (Permissions)
@@ -85,7 +84,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
                 var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
                 var permissions = GetTraderPermissionDefinitions(adminRoleId);
-                await permissionService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                await seedService.SeedRolePermissionsAsync(permissions, cancellationToken);
                 logger.LogInformation("✅ Trader permissions seeded successfully.");
             }
             catch (Exception ex)

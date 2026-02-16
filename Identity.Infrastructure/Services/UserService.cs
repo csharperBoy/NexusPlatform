@@ -108,5 +108,17 @@ namespace Identity.Infrastructure.Services
 
             return user.Id;
         }
+
+        public async Task<string?> GetUserName(Guid userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            if (user == null)
+            {
+                throw new Exception($"user with name '{userId}' not found.");
+            }
+
+            return user.UserName;
+        }
     }
 }

@@ -38,7 +38,7 @@ namespace TraderServer.Application.Handlers.Commands
                     "Add Stock successfully: {Isin}:{Title} ",
                     request.Isin, request.Title);
 
-                return Result<Guid>.Ok(Guid.Empty);
+                return Result<Guid>.Ok(stockId);
             }
             catch (Exception ex)
             {

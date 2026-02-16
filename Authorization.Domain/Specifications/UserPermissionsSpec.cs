@@ -18,9 +18,9 @@ namespace Authorization.Domain.Specifications
                 (p.EffectiveFrom == null || p.EffectiveFrom <= DateTime.UtcNow) &&
                 (
                     (p.AssigneeType == AssigneeType.User && p.AssigneeId == userId) ||
-                    (p.AssigneeType == AssigneeType.Person && p.AssigneeId == personId) ||
-                    (positionsId.Count()>0 && p.AssigneeType == AssigneeType.Position && positionsId.Any(q=>q ==  p.AssigneeId )) ||
-                    (p.AssigneeType == AssigneeType.Role && roleIds.Contains(p.AssigneeId))
+                    (personId != null ? (p.AssigneeType == AssigneeType.Person && p.AssigneeId == personId) : false) ||
+                    (positionsId != null ? (positionsId.Count() > 0 && p.AssigneeType == AssigneeType.Position && positionsId.Any(q => q == p.AssigneeId)) : false) ||
+                   (roleIds != null ? (roleIds.Count() > 0 && p.AssigneeType == AssigneeType.Role && roleIds.Any(q => q == p.AssigneeId)) : false)
                 ))
         {
             AddInclude(p => p.Resource);

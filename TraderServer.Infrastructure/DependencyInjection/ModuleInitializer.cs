@@ -33,13 +33,12 @@ namespace TraderServer.Infrastructure.DependencyInjection
 
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
-                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
-                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var seedService = scope.ServiceProvider.GetRequiredService<IAuthorizeSeedService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
                 await TraderSeedData.SeedAsync(
-                    resourceService, permissionService, roleService,
+                    seedService,  roleService,
                     _logger);
                 _logger.LogInformation("Successfull Trader module initialization.");
 

@@ -19,6 +19,12 @@ namespace TraderServer.Infrastructure.Configurations
 
             builder.Property(p => p.TypeOfMarket).HasConversion<byte>();
 
+            builder.Property(p => p.SellCommissionRate)
+              .HasPrecision(18, 5); 
+
+            builder.Property(p => p.BuyCommissionRate)
+                   .HasPrecision(18, 5);
+
             builder.HasIndex(p => new { p.Isin, p.Title, p.OpenTime , p.TypeOfMarket })
                    .HasDatabaseName("IX_Stock_FastLookup");
             builder.HasIndex(p => new { p.Isin})

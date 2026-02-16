@@ -53,10 +53,7 @@ namespace Authorization.Infrastructure.Processor
                     return query;
 
                 List<PermissionDto> allPermissions = _scope.Permissions.ToList();
-                //allPermissions.AddRange(_scope.userPermissions);
-                //allPermissions.AddRange(_scope.personPermissions);
-                //allPermissions.AddRange(_scope.positionPermissions);
-                //allPermissions.AddRange(_scope.rolePermissions);
+                
                 // بخش IResourcedEntity
                 if (typeof(IResourcedEntity).IsAssignableFrom(typeof(TEntity)))
                 {
@@ -67,8 +64,8 @@ namespace Authorization.Infrastructure.Processor
                         return query.Where("EquivalentResourceId == null");
 
                     // استفاده از متد Where با رشته - این قسمت باید کار کند
-                    return query.Where("@0.Contains(EquivalentResourceId) || EquivalentResourceId == null", allowedResourceIds);
-
+                    //return query.Where("@0.Contains(EquivalentResourceId) || EquivalentResourceId == null", allowedResourceIds);
+                    return query.Where("(EquivalentResourceId != null && @0.Contains(EquivalentResourceId.Value)) || EquivalentResourceId == null", allowedResourceIds);
                 }
 
                 // بخش IDataScopedEntity
@@ -132,7 +129,10 @@ namespace Authorization.Infrastructure.Processor
                     return cached.Value;
                 }
 
-                ScopeType scope = CalculateScopeFromList(allPermissions.Where(p=>p.ResourceKey == resourceKey && p.Action == action));
+                ScopeType scope = CalculateScopeFromList(allPermissions.Where(p=>p.ResourceKey.ToLower() == resourceKey.ToLower() && 
+                (p.Action == PermissionAction.Full || p.Action == action)
+                
+                ));
                
 
                 // 3. ذخیره در کش
@@ -257,6 +257,10 @@ namespace Authorization.Infrastructure.Processor
                 {
                     Guid? positionId = _scope.PositionIds?.FirstOrDefault();
                     scopedEntity.SetPositionOwner(positionId ?? Guid.Empty);
+                }
+                if (scopedEntity.OwnerUserId == null || scopedEntity.OwnerUserId == Guid.Empty)
+                {
+                    scopedEntity.SetUserOwner(_scope.UserId);
                 }
             }
 

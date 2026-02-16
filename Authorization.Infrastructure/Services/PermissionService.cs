@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using Core.Shared.Enums;
+using Core.Application.Context;
 namespace Authorization.Infrastructure.Services
 {
     public class PermissionService : IPermissionInternalService 
@@ -28,10 +29,11 @@ namespace Authorization.Infrastructure.Services
         private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resourceRepository;
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<PermissionService> _logger;
-        private readonly ICurrentUserService _currentUser;
+        //private readonly ICurrentUserService _currentUser;
+        private readonly DataScopeContext _currentUserContext;
         private readonly ICacheService _cache;
-        private readonly IRolePublicService _roleService;
-        private readonly IUserPublicService _userService;
+        //private readonly IRolePublicService _roleService;
+        //private readonly IUserPublicService _userService;
 
         public PermissionService(
             IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
@@ -40,7 +42,8 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-            ICurrentUserService currentUser, IRolePublicService roleService, IUserPublicService userService,
+             DataScopeContext currentUserContext,
+            //ICurrentUserService currentUser, //IRolePublicService roleService, IUserPublicService userService,
             ICacheService cache)
         {
             _permissionRepository = permissionRepository;
@@ -49,10 +52,11 @@ namespace Authorization.Infrastructure.Services
             _resourceSpecRepository = resourceSpecRepository;
             _unitOfWork = unitOfWork;
             _logger = logger;
-            _currentUser = currentUser;
+            _currentUserContext = currentUserContext;
+            //_currentUser = currentUser;
             _cache = cache;
-            _roleService = roleService;
-            _userService = userService;
+            //_roleService = roleService;
+            //_userService = userService;
         }
 
         public async Task<Guid> AssignPermissionAsync(AssignPermissionCommand command)
@@ -88,7 +92,7 @@ namespace Authorization.Infrastructure.Services
                     command.EffectiveFrom,
                     command.ExpiresAt,
                     command.Description,
-                    createdBy: _currentUser.UserId?.ToString() ?? "system"
+                    createdBy: _currentUserContext.UserName ?? "system"
                 );
 
                 // ذخیره در Repository
@@ -380,7 +384,7 @@ namespace Authorization.Infrastructure.Services
 
         public async Task SeedRolePermissionsAsync(List<PermissionDefinition> permissions, CancellationToken cancellationToken = default)
         {
-            var initializeruser = await _userService.GetUserId("intitializer");
+            //var initializeruser = await _userService.GetUserId("intitializer");
             foreach (var permissionDefinition in permissions)
             {
                 ResourceByKeySpec specByKey = new ResourceByKeySpec(permissionDefinition.ResourceKey);
@@ -394,7 +398,7 @@ namespace Authorization.Infrastructure.Services
                     permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
                     );
 
-                permission.SetUserOwner(initializeruser);
+                //permission.SetUserOwner(initializeruser);
                 if (!await IsExist(permission))
                     await _permissionRepository.AddAsync(permission);
 

@@ -44,12 +44,12 @@ namespace TraderServer.Domain.Entities
                 PreOpeningTimeStart = _PreOpeningTimeStart;
 
             if (_PreOpeningTimeEnd == null)
-                PreOpeningTimeEnd = new TimeOnly(9);
+                PreOpeningTimeEnd = new TimeOnly(9,0);
             else
                 PreOpeningTimeEnd = _PreOpeningTimeEnd;
 
             if (_OpenTime == null)
-                OpenTime = new TimeOnly(9);
+                OpenTime = new TimeOnly(9,0);
             else
                 OpenTime = _OpenTime;
 

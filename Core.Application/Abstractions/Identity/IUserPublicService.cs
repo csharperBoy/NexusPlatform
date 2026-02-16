@@ -12,6 +12,6 @@ namespace Core.Application.Abstractions.Identity
         Task<Guid?> GetPersonId(Guid userId);
         Task<Guid> GetUserId(string userName);
         Task<DataScopeContext> GetInitializerUserContext();
-
+        Task<string?> GetUserName(Guid userId);
     }
 }

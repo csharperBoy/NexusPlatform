@@ -54,7 +54,10 @@ namespace Core.Application.Abstractions.Identity
             return null;
         }
 
-        
+        public Task<string?> GetUserName(Guid userId)
+        {
+            return null;
+        }
     }
 
     }
