@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuth } from "@/modules/Identity/hooks/useAuth";
+import { useAuth } from "@/modules/Identity";
 import { useNavigate } from "react-router-dom";
 
 const Dashboard: React.FC = () => {
