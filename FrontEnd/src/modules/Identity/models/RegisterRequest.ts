@@ -1,5 +1,5 @@
 
-// modules/auth/models/RegisterRequest.ts
+// modules/identity/models/RegisterRequest.ts
 export interface RegisterRequest {
   email: string;
   password: string;

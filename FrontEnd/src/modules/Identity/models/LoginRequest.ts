@@ -1,6 +1,6 @@
-// modules/auth/models/LoginRequest.ts
+// modules/identity/models/LoginRequest.ts
 export interface LoginRequest {
-  username: string;
+  userIdentifier: string;
   password: string;
 }
 

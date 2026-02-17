@@ -10,8 +10,8 @@ namespace Identity.Infrastructure.Services
     public interface IJwtTokenService
     {
         Task<(string AccessToken, string RefreshToken)> GenerateTokensAsync(ApplicationUser user, IEnumerable<string> roles);
-        Task<bool> ValidateRefreshTokenAsync(string refreshToken, string userId);
-        Task RevokeRefreshTokenAsync(string refreshToken);
-        Task RevokeAllUserTokensAsync(string userId);
+        //Task<bool> ValidateRefreshTokenAsync(string refreshToken, string userId);
+        //Task RevokeRefreshTokenAsync(string refreshToken);
+        //Task RevokeAllUserTokensAsync(string userId);
     }
 }

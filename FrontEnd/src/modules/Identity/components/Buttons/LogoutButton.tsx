@@ -1,4 +1,4 @@
-// modules/auth/components/LogoutButton.tsx
+// modules/identity/components/LogoutButton.tsx
 import React from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";

@@ -1,4 +1,4 @@
-// modules/auth/routes.tsx
+// modules/identity/routes.tsx
 import type { RouteObject } from "react-router-dom";
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";

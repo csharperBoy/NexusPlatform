@@ -1,5 +1,5 @@
 
-// modules/auth/models/AuthResponse.ts
+// modules/identity/models/AuthResponse.ts
 export interface AuthResponse {
   token: string;
   expires: string;

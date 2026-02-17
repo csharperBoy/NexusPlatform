@@ -1,4 +1,5 @@
 ﻿using Core.Shared.Results;
+using Identity.Application.Commands;
 using Identity.Application.DTOs;
 using System;
 using System.Collections.Generic;
@@ -11,9 +12,8 @@ namespace Identity.Application.Interfaces
     public interface IAuthService
     {
         Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request);
-        Task<Result<AuthResponse>> LoginWithUserNameAsync(LoginRequest request);
-        Task<Result<AuthResponse>> LoginWithEmailAsync(LoginRequest request);
-        Task<Result<AuthTokens>> RefreshTokenAsync(RefreshTokenRequest request);
-        Task<Result> LogoutAsync(LogoutRequest request);
+        Task<Result<AuthResponse>> LoginAsync(string identifier, string password);
+        Task<Result<AuthTokens>> RefreshTokenAsync(RefreshTokenCommand request);
+        Task<Result> LogoutAsync(LogoutCommand request);
     }
 }

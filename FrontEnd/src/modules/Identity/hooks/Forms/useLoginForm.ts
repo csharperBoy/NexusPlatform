@@ -29,9 +29,9 @@ export const useLoginForm = (loginType: LoginType = "email", onSuccess?: () => v
       
       let response;
       if (loginType === "email") {
-        response = await authApi.loginWithEmail({ username: identifier, password });
+        response = await authApi.loginWithEmail({ userIdentifier: identifier, password });
       } else {
-        response = await authApi.loginWithUsername({ username: identifier, password });
+        response = await authApi.loginWithUsername({ userIdentifier: identifier, password });
       }
       
       authLogin(response);

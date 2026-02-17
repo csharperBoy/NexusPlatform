@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Handlers.Commands
 {
-    public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, Result<AuthTokens>>
+    public class RefreshTokenCommandHandler : IRequestHandler<Application.Commands.RefreshTokenCommand, Result<AuthTokens>>
     {
         private readonly IAuthService _authService;
 
@@ -19,7 +19,7 @@ namespace Identity.Application.Handlers.Commands
 
         public async Task<Result<AuthTokens>> Handle(RefreshTokenCommand request, CancellationToken ct)
         {
-            return await _authService.RefreshTokenAsync(new RefreshTokenRequest(request.RefreshToken));
+            return await _authService.RefreshTokenAsync(request);
         }
     }
 
@@ -31,7 +31,7 @@ namespace Identity.Application.Handlers.Commands
 
         public async Task<Result> Handle(LogoutCommand request, CancellationToken ct)
         {
-            return await _authService.LogoutAsync(new LogoutRequest(request.RefreshToken));
+            return await _authService.LogoutAsync(request);
         }
     }
 }

@@ -11,34 +11,18 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Handlers.Commands
 {
-    public class LoginUsernameBaseCommandHandler : IRequestHandler<LoginUsernameBaseCommand, Result<AuthResponse>>
+    public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
     {
         private readonly IAuthService _authService;
 
-        public LoginUsernameBaseCommandHandler(IAuthService authService)
+        public LoginCommandHandler(IAuthService authService)
         {
             _authService = authService;
         }
 
-        public async Task<Result<AuthResponse>> Handle(LoginUsernameBaseCommand request, CancellationToken cancellationToken)
+        public async Task<Result<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
-            return await _authService.LoginWithUserNameAsync(new LoginRequest(request.Usename, request.Password));
-
-        }
-    }
-    public class LoginEmailBaseCommandHandler : IRequestHandler<LoginEmailBaseCommand, Result<AuthResponse>>
-    {
-        private readonly IAuthService _authService;
-
-        public LoginEmailBaseCommandHandler(IAuthService authService)
-        {
-            _authService = authService;
-        }
-
-        public async Task<Result<AuthResponse>> Handle(LoginEmailBaseCommand request, CancellationToken cancellationToken)
-        {
-            return await _authService.LoginWithEmailAsync(new LoginRequest(request.Email, request.Password));
-
+            return await _authService.LoginAsync(request.UserIdentifier, request.Password);
         }
     }
 

@@ -1,4 +1,4 @@
-// modules/auth/api/authApi.ts
+// modules/identity/api/authApi.ts
 import getAPI from "../../../core/api/axiosClient";
 import type { LoginRequest } from "../models/LoginRequest";
 import type { RegisterRequest } from "../models/RegisterRequest";

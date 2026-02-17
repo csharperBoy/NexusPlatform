@@ -1,4 +1,4 @@
-// modules/auth/pages/LoginPage.tsx
+// modules/identity/pages/LoginPage.tsx
 import React, { useEffect } from "react";
 import LoginForm from "../components/Forms/LoginForm";
 import { useNavigate } from "react-router-dom";

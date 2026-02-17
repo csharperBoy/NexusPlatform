@@ -9,9 +9,10 @@ namespace Identity.Application.DTOs
     public record AuthResponse(
      string AccessToken,
      string RefreshToken,
-     Guid userId,
-     DateTime ExpiresAt,
+     Guid UserId,
+     DateTime ExpireAt,
      string UserName
  );
+    
 
 }

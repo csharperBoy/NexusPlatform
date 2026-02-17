@@ -1,4 +1,4 @@
-// modules/auth/index.ts
+// modules/identity/index.ts
 export { default as LoginForm } from "./components/Forms/LoginForm";
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/Forms/useLoginForm";

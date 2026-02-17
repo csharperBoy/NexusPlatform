@@ -9,11 +9,6 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Commands
 {
-    // موجود: RegisterCommand, LoginUsernameBaseCommand, LoginEmailBaseCommand
-
     public record RefreshTokenCommand(string RefreshToken)
         : IRequest<Result<AuthTokens>>;
-
-    public record LogoutCommand(string RefreshToken)
-        : IRequest<Result>;
 }
