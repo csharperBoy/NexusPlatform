@@ -3,11 +3,11 @@ import { useRoutes } from "react-router-dom";
 import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
 import Dashboard from "./pages/Dashboard";
 import TailwindTest from "./pages/TailwindTest";
-import LoginForm from "./pages/LoginPage";
+//  import LoginForm from "./pages/LoginPage";
 
 export default function App() {
   const routes = useRoutes([
-    
+    ...authRoutes,
     {
       path: "/dashboard",
       element: (
@@ -16,12 +16,12 @@ export default function App() {
         </ProtectedRoute>
       ),
     },
-    {
+    /*{
       path: "/login",
       element: (
           <LoginForm />
       ),
-    },
+    },*/
     {
   path: "/twtest",
   element: <TailwindTest />,
