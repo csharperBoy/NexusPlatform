@@ -8,3 +8,5 @@ export { getAccessToken, setGlobalAccessToken } from "./context/AuthContext"; //
 export * from "./api/identityApi";
 export { default as authRoutes } from "./routes";
 export { default as ProtectedRoute } from "./components/ProtectedRoute";
+export { LoginPageWithCustomForm } from './components/CustomPage/LoginPage';
+export type { RenderFormProps, LoginPageWithCustomFormProps } from './components/CustomPage/LoginPage';

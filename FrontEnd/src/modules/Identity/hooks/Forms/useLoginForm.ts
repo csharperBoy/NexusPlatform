@@ -15,14 +15,21 @@ export const useLoginForm = (onSuccess?: () => void) => {
     e.preventDefault();
     try {
       setLoading(true);
+       console.log("Sending login request...");
+    
       const res = await authApi.login({
         userIdentifier: identifier,
         password,
       });
-
+console.log("Login response:", res); // اینجا باید accessToken را ببینیم
+    
       login(res);
+      console.log("after login call"); // ببینیم تا اینجا می‌رسد؟
+    
       onSuccess?.();
     } catch (err: any) {
+      console.error("Login error:", err); // اینجا خطا را نشان می‌دهد
+    
       setError(err?.response?.data || "ورود ناموفق بود");
     } finally {
       setLoading(false);

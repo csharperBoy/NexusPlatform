@@ -1,13 +1,12 @@
-//src/apps/Trader/Server/App.tsx
+// src/apps/Trader/Server/App.tsx
 import { useRoutes } from "react-router-dom";
-import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
+import { ProtectedRoute } from "../../../modules/Identity";
 import Dashboard from "./pages/Dashboard";
 import TailwindTest from "./pages/TailwindTest";
-//  import LoginForm from "./pages/LoginPage";
+import LoginPage from "./pages/LoginPage"; // صفحه اختصاصی جدید
 
 export default function App() {
   const routes = useRoutes([
-    ...authRoutes,
     {
       path: "/dashboard",
       element: (
@@ -16,16 +15,14 @@ export default function App() {
         </ProtectedRoute>
       ),
     },
-    /*{
-      path: "/login",
-      element: (
-          <LoginForm />
-      ),
-    },*/
     {
-  path: "/twtest",
-  element: <TailwindTest />,
-},
+      path: "/login",
+      element: <LoginPage />,
+    },
+    {
+      path: "/twtest",
+      element: <TailwindTest />,
+    },
     { path: "*", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
   ]);
 
