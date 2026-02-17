@@ -1,5 +1,4 @@
 // modules/identity/index.ts
-export { default as LoginForm } from "./components/Forms/LoginForm";
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/Forms/useLoginForm";
 export { useAuth } from "./context/AuthContext";          // از AuthContext
