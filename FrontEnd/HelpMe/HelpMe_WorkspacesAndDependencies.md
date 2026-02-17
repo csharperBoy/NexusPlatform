@@ -115,7 +115,7 @@ pnpm --filter pmis add -D daisyui
   ```
 - اجرای dev یک اپ خاص:
   ```bash
-  pnpm run dev:pmis
+  pnpm run dev:trader.server
   ```
 - اجرای build یک اپ خاص:
   ```bash
