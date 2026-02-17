@@ -2,8 +2,9 @@
 export { default as LoginForm } from "./components/Forms/LoginForm";
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/Forms/useLoginForm";
-export { useAuth } from "./hooks/useAuth"; 
+export { useAuth } from "./context/AuthContext";          // از AuthContext
+export { AuthProvider } from "./context/AuthContext";     // از AuthContext
+export { getAccessToken, setGlobalAccessToken } from "./context/AuthContext"; // در صورت نیاز
 export * from "./api/identityApi";
 export { default as authRoutes } from "./routes";
-export { AuthProvider } from "./context/AuthProvider"; 
 export { default as ProtectedRoute } from "./components/ProtectedRoute";

@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import LoginForm from "../components/Forms/LoginForm";
 import { useNavigate } from "react-router-dom";
 import { useUIConfig } from "@/core/context/UIProvider";
-import { useAuth } from "../hooks/useAuth"; // فرض می‌کنیم hook وضعیت کاربر رو برمی‌گردونه
+import { useAuth } from "../context/AuthContext";
 
 const LoginPage: React.FC = () => {
   const nav = useNavigate();

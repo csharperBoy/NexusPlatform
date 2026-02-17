@@ -1,7 +1,7 @@
 // src/modules/Identity/hooks/Forms/useLoginForm.ts
 import { useState } from "react";
 import { authApi } from "../../api/identityApi";
-import { useAuth } from "../useAuth";
+import { useAuth } from "../../context/AuthContext";
 
 export const useLoginForm = (onSuccess?: () => void) => {
   const { login } = useAuth();
