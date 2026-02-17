@@ -1,51 +1,89 @@
-//modules/auth/context/AuthProvider.tsx
-import React, { createContext, useState, useEffect, ReactNode } from "react";
-import { AuthResponse } from "../models/AuthResponse";
-import { storage } from "@/core/utils/storage";
+// modules/auth/context/AuthProvider.tsx
+
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
+import { authApi } from "../api/identityApi";
+import type { AuthResponse } from "../models/AuthResponse";
 
 interface AuthContextType {
-  user: { email: string } | null;
-  token: string | null;
+  accessToken: string | null;
+  user: { id: string; userName: string } | null;
   login: (data: AuthResponse) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+  setAccessToken: (token: string | null) => void;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<{ email: string } | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [user, setUser] = useState<{
+    id: string;
+    userName: string;
+  } | null>(null);
 
-  useEffect(() => {
-    const savedToken = storage.getToken();
-    const savedUser = storage.getUser(); // اضافه شد
-    if (savedToken) {
-      setToken(savedToken);
-    }
-    if (savedUser) {
-      setUser(savedUser);
+  // -------------------------
+  // Login (بعد از موفقیت فرم)
+  // -------------------------
+  const login = (data: AuthResponse) => {
+    setAccessToken(data.accessToken);
+    setUser({
+      id: data.userId,
+      userName: data.userName,
+    });
+  };
+
+  // -------------------------
+  // Logout
+  // -------------------------
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout(); // cookie حذف می‌شود
+    } catch (err) {
+      console.warn("Logout request failed", err);
+    } finally {
+      setAccessToken(null);
+      setUser(null);
     }
   }, []);
 
-  const login = (data: AuthResponse) => {
-    const userData = { email: data.email };
-    setUser(userData);
-    setToken(data.token);
-    storage.setToken(data.token);
-    storage.setUser(userData); // اضافه شد
-  };
+  // -------------------------
+  // Silent Refresh هنگام load اولیه
+  // -------------------------
+  useEffect(() => {
+    const silentRefresh = async () => {
+      try {
+        const res = await authApi.refresh();
+        setAccessToken(res.accessToken);
+      } catch {
+        setAccessToken(null);
+        setUser(null);
+      }
+    };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    storage.clearToken();
-    storage.clearUser(); // اضافه شد
-  };
+    silentRefresh();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        accessToken,
+        user,
+        login,
+        logout,
+        isAuthenticated: !!accessToken,
+        setAccessToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
-

@@ -1,14 +1,9 @@
-//src/modules/auth/components/ProtectedRoute.tsx
+//src/modules/Identity/components/ProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-type ProtectedRouteProps = {
-  children: React.ReactElement;
-};
-
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { token } = useAuth();
-  const isAuthenticated = !!token;
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
+  const { isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

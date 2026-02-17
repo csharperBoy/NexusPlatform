@@ -1,3 +1,4 @@
+// modules/Identity/Components/Forms/LoginForm.tsx
 import React from "react";
 import Button from "@/core/components/Button";
 import Input from "@/core/components/Input";
@@ -21,8 +22,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setIdentifier,
     setPassword,
     handleSubmit,
-    loginType
-  } = useLoginForm("email", onSuccess); // مشخص کردن نوع لاگین به عنوان ایمیل
+  } = useLoginForm( onSuccess); // مشخص کردن نوع لاگین به عنوان ایمیل
 
   return (
     <div className="bg-yellow-400 dark:bg-gray-800 h-screen overflow-hidden flex items-center justify-center">
@@ -35,7 +35,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
               id="identifier"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="UserName" 
+            placeholder="Email Or UserName" 
               disabled={loading}
               required
             />

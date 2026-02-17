@@ -21,8 +21,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     setIdentifier,
     setPassword,
     handleSubmit,
-    loginType
-  } = useLoginForm("username", onSuccess); // مشخص کردن نوع لاگین به عنوان ایمیل
+  } = useLoginForm( onSuccess); // مشخص کردن نوع لاگین به عنوان ایمیل
 
   return (
     <div className="bg-yellow-400 dark:bg-gray-800 h-screen overflow-hidden flex items-center justify-center">

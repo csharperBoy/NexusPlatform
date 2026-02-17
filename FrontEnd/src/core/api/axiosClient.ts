@@ -1,60 +1,139 @@
 // src/core/api/axiosClient.ts
-import axios, { type AxiosInstance, type AxiosResponse } from "axios";
+import axios, {
+  type AxiosInstance,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from "axios";
 
-// اسم پروژه جاری (AdminPanel, WebSite, ...) را از env بگیریم یا fallback
+import { getAccessToken , setGlobalAccessToken } from "@/modules/Identity/context/AuthContext";
+/* ============================================================
+   ENV CONFIG
+============================================================ */
+
 const CURRENT_PROJECT = import.meta.env.VITE_CURRENT_PROJECT || "default";
 
-// محیط جاری
-const ENV = import.meta.env.MODE; // "development" یا "production"
+/* ============================================================
+   DISCOVER API MODULES
+============================================================ */
 
-// پیدا کردن تمام envهای مربوط به API
 function getAPIModules(): Record<string, string> {
   const modules: Record<string, string> = {};
+  const prefix = `VITE_${CURRENT_PROJECT.toUpperCase()}_`;
+
   Object.keys(import.meta.env).forEach((key) => {
-    // فقط env هایی که مربوط به پروژه جاری و _API هستند
-    // قالب: VITE_<PROJECT>_<MODULE>_API
-    const prefix = `VITE_${CURRENT_PROJECT.toUpperCase()}_`;
     if (key.startsWith(prefix) && key.endsWith("_API")) {
-      const moduleName = key.slice(prefix.length, -4).toLowerCase(); // حذف پیشوند و _API
+      const moduleName = key
+        .slice(prefix.length, -4)
+        .toLowerCase();
+
       modules[moduleName] = import.meta.env[key] as string;
     }
   });
+
   return modules;
 }
 
-// ساخت axios instances
 const apiModules = getAPIModules();
+
+/* ============================================================
+   REFRESH CONTROL
+============================================================ */
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
+
+/* ============================================================
+   CREATE CLIENTS
+============================================================ */
+
 type AxiosClients = Record<string, AxiosInstance>;
 const axiosClients: AxiosClients = {};
 
 Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
   const client = axios.create({
     baseURL,
+    timeout: 15000,
+    withCredentials: true, // 🔥 required for cookie refresh
     headers: {
       "Content-Type": "application/json",
     },
-    timeout: 10000,
   });
 
-  // اضافه کردن توکن به همه درخواست‌ها
-  client.interceptors.request.use((config) => {
-    const token = localStorage.getItem(`${CURRENT_PROJECT}_token`);
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+  /* ===========================
+     REQUEST INTERCEPTOR
+  =========================== */
+
+  client.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+      const token = getAccessToken();
+
+      if (token) {
+        config.headers.set("Authorization", `Bearer ${token}`);
+      }
+
+      return config;
     }
-    return config;
-  });
+  );
 
-  // هندل ارورها
+  /* ===========================
+     RESPONSE INTERCEPTOR
+  =========================== */
+
   client.interceptors.response.use(
     (response: AxiosResponse) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        console.warn(`Unauthorized request in module "${moduleName}" for project "${CURRENT_PROJECT}"`);
-        // می‌توانید اینجا redirect یا logout خودکار بگذارید
-        // localStorage.removeItem(`${CURRENT_PROJECT}_token`);
-        // window.location.href = '/login';
+    async (error) => {
+      const originalRequest: any = error.config;
+
+      if (
+        error.response?.status === 401 &&
+        !originalRequest._retry &&
+        !originalRequest.url?.includes("/refresh")
+      ) {
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            subscribeTokenRefresh((token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              resolve(client(originalRequest));
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const refreshResponse = await axios.post(
+            `${baseURL}/api/identity/auth/refresh`,
+            {},
+            { withCredentials: true }
+          );
+
+          const newToken = refreshResponse.data.accessToken;
+
+          setGlobalAccessToken(newToken);
+          onRefreshed(newToken);
+
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+          return client(originalRequest);
+        } catch (refreshError) {
+          setGlobalAccessToken(null);
+          window.location.href = "/login";
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
       }
+
       return Promise.reject(error);
     }
   );
@@ -62,14 +141,20 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
   axiosClients[moduleName] = client;
 });
 
-// تابع کمکی برای گرفتن یک ماژول مشخص
+/* ============================================================
+   GET API
+============================================================ */
+
 export function getAPI(moduleName: string): AxiosInstance {
   const client = axiosClients[moduleName];
+
   if (!client) {
-    throw new Error(`Axios client for module "${moduleName}" not found in project "${CURRENT_PROJECT}". Available modules: ${Object.keys(axiosClients).join(', ')}`);
+    throw new Error(
+      `Axios client for module "${moduleName}" not found.`
+    );
   }
+
   return client;
 }
 
-// export پیش‌فرض برای backward compatibility
 export default getAPI;

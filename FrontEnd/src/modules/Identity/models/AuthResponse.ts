@@ -1,7 +1,8 @@
 
 // modules/identity/models/AuthResponse.ts
 export interface AuthResponse {
-  token: string;
-  expires: string;
-  email: string;
+  accessToken: string;
+  userId: string;
+  userName: string;
+  expireAt: string;
 }
