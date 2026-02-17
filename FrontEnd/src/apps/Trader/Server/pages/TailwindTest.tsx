@@ -1,3 +1,4 @@
+// src/apps/Trader/Server/pages/TailwindTest.tsx
 import React from "react";
 
 const TailwindTest: React.FC = () => {

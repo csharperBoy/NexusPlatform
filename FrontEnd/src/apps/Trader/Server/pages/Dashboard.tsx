@@ -1,3 +1,4 @@
+// src/apps/Trader/Server/pages/Dashboard.tsx
 import { LogoutButton } from "@/modules/Identity/components/Buttons/LogoutButton";
 import React from "react";
 

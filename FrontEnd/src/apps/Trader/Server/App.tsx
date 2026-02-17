@@ -1,4 +1,4 @@
-//src/apps/AkSteel Wellfare Platform/AdminPanel/App.tsx
+//src/apps/Trader/Server/App.tsx
 import { useRoutes } from "react-router-dom";
 import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
 import Dashboard from "./pages/Dashboard";

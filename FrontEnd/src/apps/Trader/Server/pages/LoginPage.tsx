@@ -1,3 +1,4 @@
+// src/apps/Trader/Server/Pages/LoginPage.tsx
 import React from "react";
 import Button from "@/core/components/Button";
 import Input from "@/core/components/Input";
