@@ -12,7 +12,7 @@ const __dirname = dirname(__filename);
 export default defineConfig(({ mode }) => {
   // env مخصوص AdminPanel
   const env = loadEnv(mode, resolve(__dirname, "src/apps/Trader/Server"));
-const isDev = mode === 'trader.server.development';
+const isDev =  mode.includes('development');
   return {
     root: resolve(__dirname, "src/apps/Trader/Server"),
     plugins: [
