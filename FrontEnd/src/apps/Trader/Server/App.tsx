@@ -5,7 +5,7 @@ import {
   identityPanelRoutes, 
   ProtectedRoute 
 } from "@/modules/Identity";
-import { DashboardLayout } from "@/modules/DashboardCore";
+import { MainLayout } from "@/modules/DashboardCore";
 import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage"; // صفحه اختصاصی لاگین
 
@@ -23,9 +23,9 @@ export default function App() {
     {
       element: (
         <ProtectedRoute>
-          <DashboardLayout>
+          <MainLayout>
             <Outlet />
-          </DashboardLayout>
+          </MainLayout>
         </ProtectedRoute>
       ),
       children: [
