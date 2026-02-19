@@ -1,32 +1,41 @@
 // src/apps/Trader/Server/App.tsx
-import { useRoutes } from "react-router-dom";
-import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
-import Dashboard from "./pages/Dashboard";
-import TailwindTest from "./pages/TailwindTest";
+import { useRoutes, Navigate, Outlet } from "react-router-dom";
+import { 
+  identityPublicRoutes, 
+  identityPanelRoutes, 
+  ProtectedRoute 
+} from "@/modules/Identity";
+import { DashboardLayout } from "@/modules/DashboardCore";
+import DashboardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage"; // صفحه اختصاصی لاگین
 
 export default function App() {
   const routes = useRoutes([
-    //  مسیر های صفحات سفارشی شده مربوط به ماژول Identity - اولویت بالاتر را دارد نسبت به صفحات پیش فرض چون زودتر ثبت شده است
-     {
+    // 1. مسیر سفارشی لاگین (اولویت بالاتر)
+    {
       path: "/login",
       element: <LoginPage />,
     },
-    ...authRoutes, // صفحات پیش فرض ماژول Identity - در صورتی که در بالا ثبت نشده باشد
+    // 2. مسیرهای عمومی Identity (مثلاً /register) - اگر تداخل نداشته باشند
+    ...identityPublicRoutes,
+    
+    // 3. مسیرهای محافظت‌شده با Layout
     {
-      path: "/dashboard",
       element: (
         <ProtectedRoute>
-          <Dashboard />
+          <DashboardLayout>
+            <Outlet />
+          </DashboardLayout>
         </ProtectedRoute>
       ),
+      children: [
+        { path: "/dashboard", element: <DashboardPage /> },
+        ...identityPanelRoutes, // مسیرهای خصوصی (مثلاً /users)
+      ],
     },
-   
-    {
-      path: "/twtest",
-      element: <TailwindTest />,
-    },
-    { path: "*", element: <ProtectedRoute><Dashboard /></ProtectedRoute> },
+    
+    // 4. مسیر پیش‌فرض
+    { path: "*", element: <Navigate to="/dashboard" replace /> },
   ]);
 
   return routes;

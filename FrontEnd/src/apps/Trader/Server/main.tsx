@@ -6,6 +6,8 @@ import App from "./App";
 import "@/index.css"; 
 import { AuthProvider } from "@/modules/Identity";
 import { UIProvider } from "@/core/context/UIProvider";
+import { DashboardProvider } from "@/modules/DashboardCore";
+import { IdentityModuleRegistration } from "@/modules/Identity/IdentityModuleRegistration";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -13,7 +15,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <AuthProvider>
         {/* فقط AdminPanel با تم admin و استایل flat */}
         <UIProvider initialTheme="Light" initialStyle="Flat">
-          <App />
+           <DashboardProvider>
+            {/* ثبت ماژول‌ها */}
+            <IdentityModuleRegistration />
+            {/* سایر ماژول‌ها مانند SalesModuleRegistration */}
+
+            <App />
+          </DashboardProvider>
         </UIProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -4,7 +4,7 @@ export { useAuth } from "./context/AuthContext";          // از AuthContext
 export { AuthProvider } from "./context/AuthContext";     // از AuthContext
 export { getAccessToken, setGlobalAccessToken } from "./context/AuthContext"; // در صورت نیاز
 export * from "./api/identityApi";
-export { default as authRoutes } from "./routes";
+export { identityPublicRoutes, identityPanelRoutes } from "./routes"; 
 export { default as ProtectedRoute } from "./components/ProtectedRoute";
 
 // Login page

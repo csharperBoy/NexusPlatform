@@ -4,10 +4,11 @@ import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
 import UsersPage from "./pages/UsersPage";
 
-const authRoutes: RouteObject[] = [
+export const identityPublicRoutes: RouteObject[] = [
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
-  { path: '/users', element: <UsersPage /> },
 ];
 
-export default authRoutes;
+export const identityPanelRoutes: RouteObject[] = [
+  { path: "/users", element: <UsersPage /> }, // مسیر نسبی یا مطلق؟ بهتر است نسبی باشد: "users"
+];

@@ -1,5 +1,4 @@
 // src/core/context/UIProvider.tsx
-// src/core/context/UIProvider.tsx
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 export type Theme = "Light" | "Dark" | "Auto";
