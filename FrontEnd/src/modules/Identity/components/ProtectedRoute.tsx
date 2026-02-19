@@ -1,15 +1,26 @@
 //src/modules/Identity/components/ProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import LoadingIndicator from '@/core/components/LoadingIndicator'; 
 
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
-  const { isAuthenticated } = useAuth();
-console.log("ProtectedRoute - isAuthenticated:", isAuthenticated);
+interface ProtectedRouteProps {
+  children: React.ReactElement;
+  loadingComponent?: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children, loadingComponent }: ProtectedRouteProps) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    console.log(" isLoading:");
+    return loadingComponent ? <>{loadingComponent}</> : <LoadingIndicator />;
+  }
   
   if (!isAuthenticated) {
+    
+    console.log(" ! isAuthenticated");
     return <Navigate to="/login" replace />;
   }
-
+console.log("  children");
   return children;
 };
 

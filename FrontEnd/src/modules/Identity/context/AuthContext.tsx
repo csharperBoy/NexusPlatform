@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  useRef ,
   useCallback,
 } from "react";
 import { authApi } from "../api/identityApi";
@@ -18,6 +19,7 @@ interface AuthContextType {
   accessToken: string | null;
   user: UserInfo | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (data: {
     accessToken: string;
     userId: string;
@@ -50,7 +52,9 @@ export function setGlobalAccessToken(token: string | null) {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [user, setUser] = useState<UserInfo | null>(null);
-
+  const [isLoading, setIsLoading] = useState(true); 
+  
+   const refreshAttempted = useRef(false); 
   const setAccessToken = (token: string | null) => {
     setAccessTokenState(token);
     setGlobalAccessToken(token);
@@ -93,15 +97,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /* ===========================
      SILENT REFRESH ON LOAD
   =========================== */
-
   useEffect(() => {
+    // جلوگیری از اجرای دو باره در StrictMode
+    if (refreshAttempted.current) return;
+    refreshAttempted.current = true;
+
     const silentRefresh = async () => {
       try {
         const res = await authApi.refresh();
         setAccessToken(res.accessToken);
+        setUser({ id: res.userId, userName: res.userName });
       } catch {
         setAccessToken(null);
-      }
+        setUser(null);
+      } finally {
+      setIsLoading(false); // پایان بارگذاری
+    }
     };
 
     silentRefresh();
@@ -113,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         accessToken,
         user,
         isAuthenticated: !!accessToken,
+        isLoading,
         login,
         logout,
         setAccessToken,

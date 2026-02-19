@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useRegisterForm } from '../../hooks/Forms/useRegisterForm';
+import LoadingIndicator from '@/core/components/LoadingIndicator'; 
 
 export interface RenderRegisterFormProps {
   username: string;
@@ -23,22 +24,29 @@ export interface RenderRegisterFormProps {
 export interface RegisterPageWithCustomFormProps {
   redirectTo?: string;
   renderForm: (props: RenderRegisterFormProps) => React.ReactNode;
+    /** کامپوننت بارگذاری سفارشی (اختیاری) */
+    loadingComponent?: React.ReactNode;
 }
 
 export const RegisterPageWithCustomForm: React.FC<RegisterPageWithCustomFormProps> = ({
   redirectTo = '/dashboard',
   renderForm,
+   loadingComponent,
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const formProps = useRegisterForm();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       navigate(redirectTo);
     }
-  }, [isAuthenticated, navigate, redirectTo]);
+  }, [isAuthenticated, isLoading, navigate, redirectTo]);
 
+  if (isLoading) {
+    return loadingComponent ? <>{loadingComponent}</> : <LoadingIndicator />;
+  }
+  
   if (isAuthenticated) return null;
 
   return <>{renderForm(formProps)}</>;

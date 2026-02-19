@@ -5,10 +5,18 @@ import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
 import Card from '@/core/components/Card';
 
+// کامپوننت بارگذاری سفارشی
+const CustomSpinner = () => (
+  <div className="flex items-center justify-center h-screen bg-gray-100">
+    <div className="text-2xl text-purple-600 animate-pulse">در حال آماده‌سازی...</div>
+  </div>
+);
+
 const LoginPage: React.FC = () => {
   return (
     <LoginPageWithCustomForm
       redirectTo="/dashboard"
+      loadingComponent={<CustomSpinner />} // استفاده از سفارشی      
       renderForm={({
         identifier,
         password,
