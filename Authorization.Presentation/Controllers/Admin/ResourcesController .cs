@@ -219,17 +219,5 @@ namespace Authorization.Presentation.Controllers.Admin
         }
     }
 
-    // ========== DTOهای درخواست (برای APIهای آینده) ==========
-
-    /*
-    public class ChangeParentRequest
-    {
-        public Guid? NewParentId { get; set; }
-    }
-
-    public class ToggleActiveRequest
-    {
-        public bool IsActive { get; set; }
-    }
-    */
+   
 }
