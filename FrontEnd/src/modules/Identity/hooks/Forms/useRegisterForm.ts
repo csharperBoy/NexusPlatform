@@ -1,6 +1,6 @@
 // src/modules/Identity/hooks/Forms/useRegisterForm.ts
 import { useState } from "react";
-import { authApi } from "../../api/identityApi";
+import { identityApi } from "../../api/identityApi";
 import { useAuth } from "../../context/AuthContext";
 import type { RegisterRequest } from "../../models/RegisterRequest";
 
@@ -34,7 +34,7 @@ export const useRegisterForm = (onSuccess?: () => void) => {
         displayName: displayName || undefined,
       };
 
-      const res = await authApi.register(registerData);
+      const res = await identityApi.register(registerData);
       login(res);
       onSuccess?.();
     } catch (err: any) {

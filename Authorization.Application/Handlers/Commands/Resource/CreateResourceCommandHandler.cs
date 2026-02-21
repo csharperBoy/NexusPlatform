@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.DTOs.Resource;
 using Authorization.Application.Interfaces;
+using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Shared.Results;
 using MediatR;
@@ -18,7 +19,7 @@ namespace Authorization.Application.Commands
         private readonly ILogger<CreateResourceCommandHandler> _logger;
 
         public CreateResourceCommandHandler(
-            IResourceInternalService resourceService,
+            IResourceInternalService resourceService, 
             ILogger<CreateResourceCommandHandler> logger)
         {
             _resourceService = resourceService;

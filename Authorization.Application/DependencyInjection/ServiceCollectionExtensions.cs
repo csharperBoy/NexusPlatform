@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.Attributes;
 using Authorization.Application.Context;
+using Authorization.Application.EventHandlers;
 using Authorization.Application.Interfaces;
 using Core.Application.Behaviors;
 using Core.Application.Provider;
@@ -19,6 +20,8 @@ namespace Authorization.Application.DependencyInjection
             // رجیستر MediatR و همه Handlerهای موجود در اسمبلی Application
             services.AddMediatR(cfg =>
                cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));
+
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ResourceHierarchyChangedEventHandler).Assembly));
 
             services.AddScoped<IDataScopeContextProvider , DataScopeContextProvider>(); 
             services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);

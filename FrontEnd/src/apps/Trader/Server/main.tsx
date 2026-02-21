@@ -8,6 +8,7 @@ import { AuthProvider } from "@/modules/Identity";
 import { UIProvider } from "@/core/context/UIProvider";
 import { DashboardProvider } from "@/modules/DashboardCore";
 import { IdentityModuleRegistration } from "@/modules/Identity/IdentityModuleRegistration";
+import { AuthorizationModuleRegistration } from "@/modules/Authorization/AuthorizationModuleRegistration";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
            <DashboardProvider>
             {/* ثبت ماژول‌ها */}
             <IdentityModuleRegistration />
+             <AuthorizationModuleRegistration /> 
             {/* سایر ماژول‌ها مانند SalesModuleRegistration */}
 
             <App />

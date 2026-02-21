@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using StackExchange.Redis;
 
 namespace Cach.Infrastructure.Services
 {
@@ -19,15 +20,18 @@ namespace Cach.Infrastructure.Services
         private readonly CacheSettings _settings;
         private readonly ILogger<RedisCacheService> _logger;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly IConnectionMultiplexer _redisMultiplexer;
 
         public RedisCacheService(
             IDistributedCache cache,
             IOptions<CacheSettings> settings,
-            ILogger<RedisCacheService> logger)
+            ILogger<RedisCacheService> logger,
+            IConnectionMultiplexer redisMultiplexer)
         {
             _cache = cache;
             _settings = settings.Value;
             _logger = logger;
+            _redisMultiplexer = redisMultiplexer;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -96,10 +100,36 @@ namespace Cach.Infrastructure.Services
             }
         }
 
-        public Task RemoveByPatternAsync(string pattern)
+        public async Task RemoveByPatternAsync(string pattern)
         {
-            _logger.LogWarning("⚠️ RemoveByPatternAsync for Redis is not implemented due to keyspace scan concerns.");
-            return Task.CompletedTask;
+            try
+            {
+                var db = _redisMultiplexer.GetDatabase();
+                var server = _redisMultiplexer.GetServer(_redisMultiplexer.GetEndPoints().First());
+
+                // ترکیب instance name با الگو
+                string fullPattern = $"{_settings.RedisInstanceName}{pattern}";
+
+                var keys = new List<RedisKey>();
+                await foreach (var key in server.KeysAsync(pattern: fullPattern, pageSize: 100))
+                {
+                    keys.Add(key);
+                }
+
+                if (keys.Any())
+                {
+                    await db.KeyDeleteAsync(keys.ToArray());
+                    _logger.LogInformation("🗑️ Redis removed {Count} keys matching pattern '{FullPattern}'", keys.Count, fullPattern);
+                }
+                else
+                {
+                    _logger.LogInformation("ℹ️ No keys found matching pattern '{FullPattern}'", fullPattern);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Redis remove by pattern error for pattern '{Pattern}'", pattern);
+            }
         }
     }
 }

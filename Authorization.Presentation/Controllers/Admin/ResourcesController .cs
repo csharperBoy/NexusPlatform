@@ -16,26 +16,35 @@ namespace Authorization.Presentation.Controllers.Admin
 {
     [ApiController]
     [Route("api/authorization/admin/[controller]")]
-    [Authorize(Policy = "RequireAdminRole")]
+    //[Authorize(Policy = "RequireAdminRole")]
     public class ResourcesController : BaseController
     {
         /// <summary>
         /// 📋 دریافت درخت کامل منابع
         /// </summary>
         [HttpGet("tree")]
-        [AuthorizeResource("authorization.resources", "View")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourceTree([FromQuery] Guid? rootId = null)
         {
             var query = new GetResourceTreeQuery(rootId);
             var result = await Mediator.Send(query);
             return HandleResult(result);
         }
-
+        /// <summary>
+        /// 🆕 ایجاد منبع جدید
+        /// </summary>
+        [HttpPost("Create")]
+        [AuthorizeResource("authorization.resource", "Create")]
+        public async Task<IActionResult> CreateResource([FromBody] CreateResourceCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
         /// <summary>
         /// 🔍 دریافت منبع براساس ID 
         /// </summary>
         [HttpGet("{id:guid}")]
-        [AuthorizeResource("authorization.resources", "View")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourceById(Guid id)
         {
             var query = new GetResourceByIdQuery(id);
@@ -47,7 +56,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// 🔑 دریافت منبع براساس کلید
         /// </summary>
         [HttpGet("key/{key}")]
-        [AuthorizeResource("authorization.resources", "View")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourceByKey(string key)
         {
             var query = new GetResourceByKeyQuery(key);
@@ -55,22 +64,13 @@ namespace Authorization.Presentation.Controllers.Admin
             return HandleResult(result);
         }
 
-        /// <summary>
-        /// 🆕 ایجاد منبع جدید
-        /// </summary>
-        [HttpPost]
-        [AuthorizeResource("authorization.resources", "Create")]
-        public async Task<IActionResult> CreateResource([FromBody] CreateResourceCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
+     
 
         /// <summary>
         /// ✏️ به‌روزرسانی منبع
         /// </summary>
         [HttpPut("{id:guid}")]
-        [AuthorizeResource("authorization.resources", "Edit")]
+        [AuthorizeResource("authorization.resource", "Edit")]
         public async Task<IActionResult> UpdateResource(Guid id, [FromBody] UpdateResourceCommand command)
         {
             // اطمینان از تطابق ID در route با command
@@ -83,7 +83,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// 🗑️ حذف منبع
         /// </summary>
         [HttpDelete("{id:guid}")]
-        [AuthorizeResource("authorization.resources", "Delete")]
+        [AuthorizeResource("authorization.resource", "Delete")]
         public async Task<IActionResult> DeleteResource(Guid id)
         {
             var command = new DeleteResourceCommand(id);
@@ -95,7 +95,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// 📊 دریافت منابع براساس دسته‌بندی
         /// </summary>
         [HttpGet("category/{category}")]
-        [AuthorizeResource("authorization.resources", "View")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourcesByCategory(
             string category,
             [FromQuery] int page = 1,
@@ -121,7 +121,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// 📱 دریافت منابع براساس نوع
         /// </summary>
         [HttpGet("type/{type}")]
-        [AuthorizeResource("authorization.resources", "View")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourcesByType(
             string type,
             [FromQuery] int page = 1,
@@ -219,17 +219,5 @@ namespace Authorization.Presentation.Controllers.Admin
         }
     }
 
-    // ========== DTOهای درخواست (برای APIهای آینده) ==========
-
-    /*
-    public class ChangeParentRequest
-    {
-        public Guid? NewParentId { get; set; }
-    }
-
-    public class ToggleActiveRequest
-    {
-        public bool IsActive { get; set; }
-    }
-    */
+   
 }
