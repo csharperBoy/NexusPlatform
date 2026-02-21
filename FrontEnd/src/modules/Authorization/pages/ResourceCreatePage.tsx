@@ -8,7 +8,7 @@ import Card from '@/core/components/Card';
 const ResourceCreatePage: React.FC = () => {
   return (
     <ResourceCreateWithCustomForm
-      redirectTo="/resources" // بعد از ایجاد به صفحه مدیریت برود
+      redirectTo="/resources"
       renderForm={({
         formData,
         loading,
@@ -53,9 +53,9 @@ const ResourceCreatePage: React.FC = () => {
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value="Module">ماژول</option>
-                <option value="Page">صفحه</option>
-                <option value="Action">عملیات</option>
+                <option value="Module">ماژول (Module)</option>
+                <option value="Ui">رابط کاربری (Ui)</option>
+                <option value="Data">داده (Data)</option>
               </select>
             </div>
             <div className="mb-4">
@@ -66,8 +66,14 @@ const ResourceCreatePage: React.FC = () => {
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value="Admin">مدیریتی</option>
-                <option value="Public">عمومی</option>
+                <option value="General">عمومی (General)</option>
+                <option value="System">سیستمی (System)</option>
+                <option value="Module">ماژول (Module)</option>
+                <option value="Menu">منو (Menu)</option>
+                <option value="Page">صفحه (Page)</option>
+                <option value="Component">کامپوننت (Component)</option>
+                <option value="DatabaseTable">جدول دیتابیس (DatabaseTable)</option>
+                <option value="RowInTable">سطر جدول (RowInTable)</option>
               </select>
             </div>
             <div className="mb-4">
@@ -75,11 +81,40 @@ const ResourceCreatePage: React.FC = () => {
               <Input
                 type="number"
                 value={formData.displayOrder}
-                onChange={(e) => handleChange('displayOrder', parseInt(e.target.value))}
+                onChange={(e) => handleChange('displayOrder', parseInt(e.target.value) || 0)}
                 disabled={loading}
               />
             </div>
-            {error && <div className="text-red-600 mb-4">{error}</div>}
+            <div className="mb-4">
+              <label className="block mb-1">آیکون (اختیاری)</label>
+              <Input
+                value={formData.icon}
+                onChange={(e) => handleChange('icon', e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-1">مسیر (Route - اختیاری)</label>
+              <Input
+                value={formData.route}
+                onChange={(e) => handleChange('route', e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block mb-1">والد (ParentId - اختیاری)</label>
+              <Input
+                value={formData.parentId || ''}
+                onChange={(e) => handleChange('parentId', e.target.value || null)}
+                disabled={loading}
+                placeholder="GUID والد"
+              />
+            </div>
+            {error && (
+              <div className="text-red-600 mb-4 p-3 bg-red-50 rounded">
+                {error}
+              </div>
+            )}
             <Button type="submit" disabled={loading}>
               {loading ? "در حال ایجاد..." : "ایجاد منبع"}
             </Button>
