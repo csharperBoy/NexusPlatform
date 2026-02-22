@@ -1,0 +1,42 @@
+// src/modules/Authorization/components/CustomPage/ResourceManagementPage.tsx
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/modules/Identity';
+import { useResourceManagement } from '../../hooks/Forms/useResourceManagementForm';
+import LoadingIndicator from '@/core/components/LoadingIndicator';
+import type { ResourceTreeDto } from '../../models/ResourceTreeDto';
+
+export interface RenderFormProps {
+  treeData: ResourceTreeDto[];
+  loading: boolean;
+  error: string | null;
+  refresh: (rootId?: string) => Promise<void>;
+}
+
+export interface ResourceManagementPageWithCustomFormProps {
+  redirectTo?: string;
+  renderForm: (props: RenderFormProps) => React.ReactNode;
+  loadingComponent?: React.ReactNode;
+}
+
+export const ResourceManagementWithCustomForm: React.FC<ResourceManagementPageWithCustomFormProps> = ({
+  redirectTo = '/dashboard',
+  renderForm,
+  loadingComponent,
+}) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const managementProps = useResourceManagement();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return loadingComponent ? <>{loadingComponent}</> : <LoadingIndicator />;
+  }
+
+  return <>{renderForm(managementProps)}</>;
+};
