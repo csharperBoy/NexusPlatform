@@ -40,5 +40,5 @@ namespace Core.Application.Abstractions.Events
             TEvent @event,                          // 📌 رویداد دامنه
             CancellationToken cancellationToken = default // 📌 لغو عملیات (اختیاری)
         );
-    }
+    } 
 }
