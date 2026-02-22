@@ -46,8 +46,8 @@ namespace Authorization.Infrastructure.Services
 
                 var tree = BuildTreeFromList(allResources, null);
                 await _cache.SetAsync(cacheKey, tree, TimeSpan.FromMinutes(30));
-
-                _logger.LogInformation("Built full resource tree with {Count} root nodes", tree.Count);
+                
+               _logger.LogInformation("Built full resource tree with {Count} root nodes", tree.Count);
                 return tree;
             }
             catch (Exception ex)

@@ -8,7 +8,7 @@ import React, {
   useRef ,
   useCallback,
 } from "react";
-import { authApi } from "../api/identityApi";
+import { identityApi } from "../api/identityApi";
 
 interface UserInfo {
   id: string;
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = useCallback(async () => {
     try {
-      await authApi.logout();
+      await identityApi.logout();
     } catch {
       // ignore
     } finally {
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const silentRefresh = async () => {
       try {
-        const res = await authApi.refresh();
+        const res = await identityApi.refresh();
         setAccessToken(res.accessToken);
         setUser({ id: res.userId, userName: res.userName });
       } catch {

@@ -197,7 +197,7 @@ namespace Authorization.Infrastructure.Services
             resource.AddDomainEvent(new ResourceHierarchyChangedEvent(resource.Id));
 
             await _unitOfWork.SaveChangesAsync();
-            await InvalidateResourceCachesAsync();
+            //await InvalidateResourceCachesAsync();
 
             return resource.Id;
         }

@@ -1,6 +1,6 @@
 // src/modules/Identity/hooks/Forms/useLoginForm.ts
 import { useState } from "react";
-import { authApi } from "../../api/identityApi";
+import { identityApi } from "../../api/identityApi";
 import { useAuth } from "../../context/AuthContext";
 
 export const useLoginForm = (onSuccess?: () => void) => {
@@ -17,7 +17,7 @@ export const useLoginForm = (onSuccess?: () => void) => {
       setLoading(true);
        console.log("Sending login request...");
     
-      const res = await authApi.login({
+      const res = await identityApi.login({
         userIdentifier: identifier,
         password,
       });

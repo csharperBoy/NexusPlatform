@@ -1,19 +1,20 @@
 ﻿using Cach.Application.Models;
-using Core.Application.Abstractions.Events;
+using Cach.Infrastructure.Services;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Events;
 using Core.Application.Behaviors;
 using Core.Application.Models;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Cach.Infrastructure.Services;
-using Core.Application.Abstractions.Caching;
-using Microsoft.Extensions.Logging;
 
 namespace Cach.Infrastructure.DependencyInjection
 {
@@ -60,6 +61,9 @@ namespace Cach.Infrastructure.DependencyInjection
                 options.Configuration = redisConnection;
                 options.InstanceName = cacheSettings.RedisInstanceName;
             });
+            // ثبت IConnectionMultiplexer به‌صورت Singleton برای استفاده در RedisCacheService
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+                ConnectionMultiplexer.Connect(redisConnection));
             services.AddScoped<ICacheService, RedisCacheService>();
 
          }

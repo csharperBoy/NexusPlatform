@@ -33,12 +33,12 @@ namespace Core.Application.Abstractions.Events
      که هر رویداد دامنه یک Handler اختصاصی داشته باشد. این کار باعث رعایت اصل **Single Responsibility**
      و جداسازی منطق واکنش از منطق اصلی می‌شود.
     */
-
+    /*
     public interface IEventHandler<in TEvent> where TEvent : IDomainEvent
     {
         Task HandleAsync(
-            TEvent @event,                          // 📌 رویداد دامنه
+            TEvent @event,                                // 📌 رویداد دامنه
             CancellationToken cancellationToken = default // 📌 لغو عملیات (اختیاری)
         );
-    }
+    }*/
 }
