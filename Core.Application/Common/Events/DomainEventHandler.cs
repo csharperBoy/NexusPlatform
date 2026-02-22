@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions.Events;
 using Core.Domain.Common;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -55,7 +56,7 @@ namespace Core.Application.Common.Events
      بدون اینکه نیاز باشد این منطق در هر Handler تکرار شود.
     */
 
-    public abstract class DomainEventHandler<TEvent> : IEventHandler<TEvent>
+    public abstract class DomainEventHandler<TEvent> : INotificationHandler<TEvent>
         where TEvent : IDomainEvent
     {
         protected readonly ILogger<DomainEventHandler<TEvent>> _logger;
@@ -65,14 +66,12 @@ namespace Core.Application.Common.Events
             _logger = logger;
         }
 
-        public virtual async Task HandleAsync(TEvent @event, CancellationToken cancellationToken)
+        public async Task Handle(TEvent notification, CancellationToken cancellationToken)
         {
             try
             {
                 _logger.LogInformation("Handling domain event: {EventType}", typeof(TEvent).Name);
-
-                await HandleEventAsync(@event, cancellationToken);
-
+                await HandleEventAsync(notification, cancellationToken);
                 _logger.LogInformation("Domain event handled successfully: {EventType}", typeof(TEvent).Name);
             }
             catch (Exception ex)
@@ -82,7 +81,7 @@ namespace Core.Application.Common.Events
             }
         }
 
-        // 📌 متد انتزاعی برای منطق اختصاصی پردازش رویداد
+        // متد انتزاعی برای منطق اختصاصی
         protected abstract Task HandleEventAsync(TEvent @event, CancellationToken cancellationToken);
     }
 }
