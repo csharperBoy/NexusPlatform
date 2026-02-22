@@ -9,7 +9,7 @@ using Polly.Registry;
 namespace Authorization.Application.EventHandlers
 {
     
-    /*
+    
     public class ResourceHierarchyChangedEventHandler : DomainEventHandler<ResourceHierarchyChangedEvent>
     {
         private readonly IResourceInternalService _resourceService;
@@ -39,8 +39,8 @@ namespace Authorization.Application.EventHandlers
             }, cancellationToken);
         }
     }
-    */
-    public class ResourceHierarchyChangedEventHandler : INotificationHandler<ResourceHierarchyChangedEvent>
+    
+   /* public class ResourceHierarchyChangedEventHandler : INotificationHandler<ResourceHierarchyChangedEvent>
     {
         private readonly IResourceInternalService _resourceService;
         private readonly IReadOnlyPolicyRegistry<string> _policies;
@@ -66,5 +66,5 @@ namespace Authorization.Application.EventHandlers
                 await _cacheService.RemoveByPatternAsync(cacheKey);
             }, cancellationToken);
         }
-    }
+    }*/
 }
