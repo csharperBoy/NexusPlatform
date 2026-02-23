@@ -7,12 +7,8 @@ export interface TreeNodeBase {
   [key: string]: any;
 }
 
-export interface TreeProps<T = TreeNodeBase> {
-  nodes: T[];
+export interface TreeProps<T = TreeNodeBase> extends UseTreeProps<T> {
   renderNode?: (node: T, level: number, isExpanded: boolean) => React.ReactNode;
-  onNodeClick?: (node: T) => void;
-  defaultExpanded?: boolean | string[];
-  expandAll?: boolean;          // prop ورودی
   className?: string;
 }
 

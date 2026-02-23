@@ -1,4 +1,3 @@
-// src/core/components/Tree/Tree.tsx
 import React from 'react';
 import { useTree } from './useTree';
 import { TreeProps } from './Tree.types';
@@ -9,28 +8,34 @@ function Tree<T>({
   onNodeClick,
   defaultExpanded,
   expandAll,
+  getNodeId,
+  getNodeChildren,
+  getNodeLabel,
   className = '',
 }: TreeProps<T>) {
   const {
     expandedNodes,
     handleNodeClick,
     isExpanded,
-    getNodeId,
-    getNodeChildren,
-    getNodeLabel,
+    getNodeId: _getNodeId,
+    getNodeChildren: _getNodeChildren,
+    getNodeLabel: _getNodeLabel,
   } = useTree({
     nodes,
     defaultExpanded,
     expandAll,
     onNodeClick,
+    getNodeId,
+    getNodeChildren,
+    getNodeLabel,
   });
 
   const renderNodeRecursive = (node: T, level: number = 0): React.ReactNode => {
-    const nodeId = getNodeId(node);
-    const children = getNodeChildren(node);
+    const nodeId = _getNodeId(node);
+    const children = _getNodeChildren(node);
     const hasChildren = children && children.length > 0;
     const expanded = isExpanded(nodeId);
-    const label = getNodeLabel(node);   // استفاده از تابع استخراج برچسب
+    const label = _getNodeLabel(node);
 
     return (
       <div key={nodeId} className="tree-node">

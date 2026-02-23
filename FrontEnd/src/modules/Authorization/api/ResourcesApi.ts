@@ -13,6 +13,7 @@ export const resourceApi = {
       "/api/authorization/admin/resources/tree",
       { params: { rootId }, withCredentials: true }
     );
+    console.log(response.data)
     return response.data;
   },
 

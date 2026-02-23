@@ -17,6 +17,7 @@ namespace Authorization.Application.Interfaces
         Task UpdateResourceAsync(UpdateResourceCommand command);
         Task DeleteResourceAsync(Guid resourceId);
         Task<string> GetKeyById(Guid resourceId);
+        Task<IReadOnlyList<ResourceTreeDto>> GetByTreeStructure(Guid? RootId = null);
         //Task SyncResourcesWithDefinitionsAsync();
 
         // عملیات Read

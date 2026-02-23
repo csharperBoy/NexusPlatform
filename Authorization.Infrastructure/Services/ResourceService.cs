@@ -7,15 +7,18 @@ using Authorization.Domain.Enums;
 using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
+using Azure.Core;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
+using Core.Shared.Results;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
+using ResourceType = Authorization.Domain.Enums.ResourceType;
 
 namespace Authorization.Infrastructure.Services
 {
@@ -27,12 +30,14 @@ namespace Authorization.Infrastructure.Services
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<ResourceService> _logger;
         private readonly ICacheService _cache;
+        private readonly IResourceProcessor _resourceProcessor;
 
         public ResourceService(
             IRepository<AuthorizationDbContext, Resource, Guid> resourceRepository,
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<ResourceService> logger,
+            IResourceProcessor resourceProcessor,
             ICacheService cache)
         {
             _resourceRepository = resourceRepository;
@@ -40,6 +45,35 @@ namespace Authorization.Infrastructure.Services
             _unitOfWork = unitOfWork;
             _logger = logger;
             _cache = cache;
+            _resourceProcessor = resourceProcessor;
+        }
+        public async Task<IReadOnlyList<ResourceTreeDto>> GetByTreeStructure(Guid? RootId = null)
+        {
+            var cacheKey = "auth:resourcetree:full";
+
+            try
+            {
+                var cached = await _cache.GetAsync<IReadOnlyList<ResourceTreeDto>>(cacheKey);
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for full resource tree");
+                    return cached;
+                }
+
+                var allResourcesSpec = new ResourceByCategorySpec();
+                var allResources = await _resourceSpecRepository.ListBySpecAsync(allResourcesSpec);
+
+                var tree = _resourceProcessor.BuildTree(allResources, RootId);
+                await _cache.SetAsync(cacheKey, tree, TimeSpan.FromMinutes(30));
+
+                _logger.LogInformation("Built full resource tree with {Count} root nodes", tree.Count);
+                return tree;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error building full resource tree");
+                throw;
+            }
         }
 
         // ========================================================================

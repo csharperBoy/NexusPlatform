@@ -15,15 +15,14 @@ namespace Authorization.Application.Handlers.Queries.Resource
     public class GetResourceTreeQueryHandler
       : IRequestHandler<GetResourceTreeQuery, Result<IReadOnlyList<ResourceTreeDto>>>
     {
-        private readonly IResourceTreeBuilder _resourceTreeBuilder;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<GetResourceTreeQueryHandler> _logger;
 
-        public GetResourceTreeQueryHandler(
-            IResourceTreeBuilder resourceTreeBuilder,
+        public GetResourceTreeQueryHandler(IResourceInternalService resourceService,
             ILogger<GetResourceTreeQueryHandler> logger)
         {
-            _resourceTreeBuilder = resourceTreeBuilder;
             _logger = logger;
+            _resourceService = resourceService;
         }
 
         public async Task<Result<IReadOnlyList<ResourceTreeDto>>> Handle(
@@ -34,24 +33,10 @@ namespace Authorization.Application.Handlers.Queries.Resource
             {
                 _logger.LogDebug("Building resource tree with root: {RootId}", request.RootId?.ToString() ?? "null");
 
-                var allTrees = await _resourceTreeBuilder.BuildTreeAsync();
+                var allTrees = await _resourceService.GetByTreeStructure(request.RootId);
 
-                if (request.RootId.HasValue)
-                {
-                    var rootTree = FindTreeByRootId(allTrees, request.RootId.Value);
-                    if (rootTree is null)
-                    {
-                        return Result<IReadOnlyList<ResourceTreeDto>>.Fail($"Root resource with ID {request.RootId} not found");
-                    }
+                return Result<IReadOnlyList<ResourceTreeDto>>.Ok(allTrees);
 
-                    // Return the found subtree as a single-item list to match the signature
-                    return Result<IReadOnlyList<ResourceTreeDto>>.Ok(new List<ResourceTreeDto> { rootTree });
-                }
-                else
-                {
-                    // Return the full forest (list of root trees)
-                    return Result<IReadOnlyList<ResourceTreeDto>>.Ok(allTrees);
-                }
             }
             catch (Exception ex)
             {
@@ -60,7 +45,7 @@ namespace Authorization.Application.Handlers.Queries.Resource
             }
         }
 
-        private ResourceTreeDto? FindTreeByRootId(IReadOnlyList<ResourceTreeDto> trees, Guid rootId)
+        /*private ResourceTreeDto? FindTreeByRootId(IReadOnlyList<ResourceTreeDto> trees, Guid rootId)
         {
             foreach (var tree in trees)
             {
@@ -76,6 +61,6 @@ namespace Authorization.Application.Handlers.Queries.Resource
             }
 
             return null;
-        }
+        }*/
     }
 }
