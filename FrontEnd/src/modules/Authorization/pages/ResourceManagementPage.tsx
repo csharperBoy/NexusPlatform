@@ -42,7 +42,10 @@ const ResourceManagementPage: React.FC = () => {
             {error && <p className="text-red-600">{error}</p>}
             {!loading && !error && <TreeView data={treeData} />}
           </Card>
+          
         </div>
+
+        
       )}
     />
   );
