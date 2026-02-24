@@ -16,14 +16,19 @@ const ResourceManagementPage: React.FC = () => {
       }: RenderFormProps) => (
         
         <div className="p-4">
-          <Tree
-            nodes={treeData}
-            getNodeId={(node) => node.id}
-            getNodeLabel={(node) => node.name}
-            getNodeChildren={(node) => node.children}            
-            onNodeClick={(node) => console.log('Selected:', node)}
-            expandAll
-          />
+         <Tree
+          nodes={treeData}
+          getNodeId={(node) => node.id}
+          getNodeLabel={(node) => node.name}
+          getNodeChildren={(node) => node.children}
+          onNodeClick={(node) => console.log('Selected:', node)}
+          selectable={true}
+          cascadeSelection={true}  // آبشاری
+          onSelectionChange={(selectedIds, selectedNodes) => {
+            console.log('Selected IDs:', selectedIds);
+          }}
+          expandAll
+        />
         </div>
       )}
     />

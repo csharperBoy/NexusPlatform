@@ -11,7 +11,13 @@ function Tree<T>({
   getNodeId,
   getNodeChildren,
   getNodeLabel,
+  selectable = false,
+  selected,
+  defaultSelected,
+  onSelectionChange,
+  cascadeSelection = false,
   className = '',
+  dir = 'rtl',
 }: TreeProps<T>) {
   const {
     expandedNodes,
@@ -20,6 +26,9 @@ function Tree<T>({
     getNodeId: _getNodeId,
     getNodeChildren: _getNodeChildren,
     getNodeLabel: _getNodeLabel,
+    selectedNodes,
+    toggleSelect,
+    isSelected,
   } = useTree({
     nodes,
     defaultExpanded,
@@ -28,6 +37,11 @@ function Tree<T>({
     getNodeId,
     getNodeChildren,
     getNodeLabel,
+    selectable,
+    selected,
+    defaultSelected,
+    onSelectionChange,
+    cascadeSelection,
   });
 
   const renderNodeRecursive = (node: T, level: number = 0): React.ReactNode => {
@@ -36,26 +50,55 @@ function Tree<T>({
     const hasChildren = children && children.length > 0;
     const expanded = isExpanded(nodeId);
     const label = _getNodeLabel(node);
+    const selected = isSelected(nodeId);
+
+    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      e.stopPropagation();
+      toggleSelect(nodeId, node);
+    };
+
+    // استایل padding بر اساس جهت صفحه
+    const paddingStyle = dir === 'rtl' 
+      ? { paddingRight: `${level * 1.5}rem` } 
+      : { paddingLeft: `${level * 1.5}rem` };
 
     return (
       <div key={nodeId} className="tree-node">
         <div
-          className={`tree-node-content flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer ${level > 0 ? 'mr-4' : ''}`}
-          style={{ paddingLeft: `${level * 1.5}rem` }}
+          className="tree-node-content flex items-center py-1 px-2 hover:bg-gray-100 cursor-pointer"
+          style={paddingStyle}
           onClick={() => handleNodeClick(node)}
         >
+          {/* چک‌باکس */}
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={handleCheckboxChange}
+              onClick={(e) => e.stopPropagation()}
+              className={dir === 'rtl' ? 'ml-2' : 'mr-2'}
+            />
+          )}
+
+          {/* آیکون باز/بسته */}
           {hasChildren && (
-            <span className="tree-expand-icon w-4 inline-block ml-1">
+            <span className={`tree-expand-icon w-4 inline-block ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`}>
               {expanded ? '▼' : '▶'}
             </span>
           )}
-          {!hasChildren && <span className="w-4 inline-block ml-1" />}
+          {!hasChildren && (
+            <span className={`w-4 inline-block ${dir === 'rtl' ? 'ml-1' : 'mr-1'}`} />
+          )}
+
+          {/* محتوای گره */}
           {renderNode ? (
-            renderNode(node, level, expanded)
+            renderNode(node, level, expanded, selected)
           ) : (
             <span className="tree-label">{label}</span>
           )}
         </div>
+
+        {/* فرزندان */}
         {hasChildren && expanded && (
           <div className="tree-children">
             {children.map(child => renderNodeRecursive(child, level + 1))}
@@ -65,7 +108,11 @@ function Tree<T>({
     );
   };
 
-  return <div className={`tree ${className}`}>{nodes.map(node => renderNodeRecursive(node))}</div>;
+  return (
+    <div className={`tree ${className}`} dir={dir}>
+      {nodes.map(node => renderNodeRecursive(node))}
+    </div>
+  );
 }
 
 export default Tree;
