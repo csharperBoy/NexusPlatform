@@ -1,5 +1,4 @@
-﻿using Core.Domain.Attributes;
-using Core.Domain.Common;
+﻿using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
@@ -8,31 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Audit.Domain.Entities
+namespace Navigation.Domain.Entities
 {
-    [SecuredResource("audit.auditlog")]
-    public class AuditLog : IDataScopedEntity, IAggregateRoot
+    public class Menu : AuditableEntity, IDataScopedEntity, IAggregateRoot
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
-        public DateTime Timestamp { get; private set; } = DateTime.UtcNow;
-
-        public string Action { get; private set; } = string.Empty;
-        public string EntityName { get; private set; } = string.Empty;
-        public string EntityId { get; private set; } = string.Empty;
-        public Guid? UserId { get; private set; }
-        public string? Changes { get; private set; }
-
-        protected AuditLog() { }
-
-        public AuditLog(string action, string entityName, string entityId, Guid? userId, string? changes = null)
-        {
-            Action = action;
-            EntityName = entityName;
-            EntityId = entityId;
-            UserId = userId;
-            Changes = changes;           
-        }
-
         #region IDataScopedEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
@@ -63,6 +41,27 @@ namespace Audit.Domain.Entities
             OwnerOrganizationUnitId = orgUnitId;
         }
         #endregion
+
+        public string Title { get; private set; }
+        public string? Icon { get; private set; }
+        public string? Path { get; private set; }
+        public int DisplayOrder { get; private set; }
+        public Guid? ParentId { get; private set; }
+        public bool IsActive { get; private set; } = true;
+
+        // Navigation properties
+        public virtual Menu? Parent { get; private set; }
+        public virtual ICollection<Menu> Children { get; private set; } = new List<Menu>();
+
+        protected Menu() { }
+
+        public Menu(string title, string? icon, string? path, int displayOrder, Guid? parentId)
+        {
+            Title = title;
+            Icon = icon;
+            Path = path;
+            DisplayOrder = displayOrder;
+            ParentId = parentId;
+        }
     }
 }
-

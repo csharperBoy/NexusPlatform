@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Sample.Domain.Events;
@@ -31,8 +32,39 @@ namespace Sample.Domain.Entities
      و می‌توانند از Value Objectها برای مدل‌سازی دقیق‌تر داده‌های تجاری استفاده کنند.
     */
 
-    public class SampleEntity : DataScopedEntity,IAggregateRoot
+    public class SampleEntity : AuditableEntity, IDataScopedEntity,IAggregateRoot
     {
+        #region IDataScopedEntity Impelement
+        public Guid? OwnerOrganizationUnitId { get; protected set; }
+        public Guid? OwnerPositionId { get; protected set; }
+        public Guid? OwnerPersonId { get; protected set; }
+        public Guid? OwnerUserId { get; protected set; }
+
+        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        {
+            OwnerUserId = userId;
+            OwnerPersonId = personId;
+            OwnerPositionId = positiontId;
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        public void SetPersonOwner(Guid personId)
+        {
+            OwnerPersonId = personId;
+        }
+        public void SetUserOwner(Guid userId)
+        {
+            OwnerUserId = userId;
+        }
+        public void SetPositionOwner(Guid positiontId)
+        {
+            OwnerPositionId = positiontId;
+        }
+        public void SetOrganizationUnitOwner(Guid orgUnitId)
+        {
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        #endregion
+
         // ویژگی ساده برای نگهداری وضعیت
         public string property1 { get; set; } = default!;
 

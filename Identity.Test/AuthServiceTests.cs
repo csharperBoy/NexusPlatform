@@ -58,12 +58,12 @@ namespace Identity.Test
                 signInManager.Object,
                 tokenService.Object,
                 jwtOptions,
-                outbox.Object,
-                roleResolver.Object,
+                //outbox.Object,
                 refreshRepo.Object,
                 specRepo.Object,
                 unitOfWork.Object,
-                logger.Object
+                roleResolver.Object
+                //logger.Object
             );
 
             var request = new RegisterRequest("ali", "ali@test.com", "Pass123!", "Ali");

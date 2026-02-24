@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Domain.Common
 {
-    public   interface IResourcedEntity
+   /* public   interface IResourcedEntity
     {
         Guid? EquivalentResourceId { get; }
     }
@@ -21,5 +21,5 @@ namespace Core.Domain.Common
             
         }
         
-    }
+    }*/
 }

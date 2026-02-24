@@ -2,6 +2,7 @@
 using Authorization.Domain.Events;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,44 @@ namespace Authorization.Domain.Entities
 {
 
     [SecuredResource("Authorization.Resource")]
-    public class Resource : DataScopedEntity, IAggregateRoot
+    public class Resource : AuditableEntity, IDataScopedEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
+        #region IHierarchicalStructureEntity Impelement
+        public Guid? ParentId { get; private set; }
+        public virtual Resource? Parent { get; private set; }
+        public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
+      
+        #endregion
+        #region IDataScopedEntity Impelement
+        public Guid? OwnerOrganizationUnitId { get; protected set; }
+        public Guid? OwnerPositionId { get; protected set; }
+        public Guid? OwnerPersonId { get; protected set; }
+        public Guid? OwnerUserId { get; protected set; }
+
+        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        {
+            OwnerUserId = userId;
+            OwnerPersonId = personId;
+            OwnerPositionId = positiontId;
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        public void SetPersonOwner(Guid personId)
+        {
+            OwnerPersonId = personId;
+        }
+        public void SetUserOwner(Guid userId)
+        {
+            OwnerUserId = userId;
+        }
+        public void SetPositionOwner(Guid positiontId)
+        {
+            OwnerPositionId = positiontId;
+        }
+        public void SetOrganizationUnitOwner(Guid orgUnitId)
+        {
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        #endregion
         public string Key { get; private set; } // e.g. "Invoice", "SystemSettings"
         public string Name { get; private set; }
         public string Description { get; private set; }
@@ -24,12 +61,8 @@ namespace Authorization.Domain.Entities
         public bool IsActive { get; private set; } = true;
         public int DisplayOrder { get; private set; }
         public string Icon { get; private set; }
-        public Guid? ParentId { get; private set; }
         public string? ResourcePath { get; private set; } // سلسله مراتب ریسورس‌ها (مثل منوهای تودرتو)
 
-        // Navigation
-        public virtual Resource? Parent { get; private set; }
-        public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
 
         // ارتباط مستقیم با پرمیشن‌ها
         public virtual ICollection<Permission> Permissions { get; private set; } = new List<Permission>();
@@ -138,6 +171,7 @@ namespace Authorization.Domain.Entities
         public bool IsDataResource => Type == ResourceType.Data;
         [NotMapped]
         public bool IsRoot => !ParentId.HasValue;
+
     }
 
 

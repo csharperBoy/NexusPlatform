@@ -2,6 +2,7 @@
 using Authorization.Domain.Events;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums;
@@ -16,7 +17,7 @@ using System.Threading.Tasks;
 namespace Authorization.Domain.Entities
 {
     [SecuredResource("Authorization.Permission")]
-    public class Permission : DataScopedEntity, IAggregateRoot
+    public class Permission : AuditableEntity, IDataScopedEntity, IAggregateRoot
     {
         // 1. چه کسی؟
         public AssigneeType AssigneeType { get; private set; }
@@ -170,5 +171,37 @@ namespace Authorization.Domain.Entities
         {
             return AssigneeType == assigneeType &&   assigneeId.Any(a=>a == AssigneeId);
         }
+
+        #region IDataScopedEntity Impelement
+        public Guid? OwnerOrganizationUnitId { get; protected set; }
+        public Guid? OwnerPositionId { get; protected set; }
+        public Guid? OwnerPersonId { get; protected set; }
+        public Guid? OwnerUserId { get; protected set; }
+
+        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        {
+            OwnerUserId = userId;
+            OwnerPersonId = personId;
+            OwnerPositionId = positiontId;
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        public void SetPersonOwner(Guid personId)
+        {
+            OwnerPersonId = personId;
+        }
+        public void SetUserOwner(Guid userId)
+        {
+            OwnerUserId = userId;
+        }
+        public void SetPositionOwner(Guid positiontId)
+        {
+            OwnerPositionId = positiontId;
+        }
+        public void SetOrganizationUnitOwner(Guid orgUnitId)
+        {
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        #endregion
+
     }
 }

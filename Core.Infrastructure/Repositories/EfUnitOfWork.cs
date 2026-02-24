@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
 using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;

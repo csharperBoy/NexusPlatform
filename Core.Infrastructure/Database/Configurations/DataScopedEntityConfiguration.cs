@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -10,8 +11,9 @@ using System.Threading.Tasks;
 namespace Core.Infrastructure.Database.Configurations
 {
     public abstract class DataScopedEntityConfiguration<T> : AuditableEntityConfiguration<T>
-     where T : DataScopedEntity
+     where T : IDataScopedEntity 
     {
+
         public override void Configure(EntityTypeBuilder<T> builder)
         {
             // ابتدا تنظیمات Auditable (CreatedAt, CreatedBy, ...) اعمال می‌شود

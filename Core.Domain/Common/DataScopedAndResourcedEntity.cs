@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Domain.Common
 {
-    public class DataScopedAndResourcedEntity : DataScopedEntity, IResourcedEntity
+    /*public class DataScopedAndResourcedEntity : DataScopedEntity, IResourcedEntity
     {
         public Guid? EquivalentResourceId { get; protected set; }
 
@@ -16,5 +16,5 @@ namespace Core.Domain.Common
             EquivalentResourceId = resourceId;
 
         }
-    }
+    }*/
 }

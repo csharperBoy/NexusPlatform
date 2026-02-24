@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,14 +18,16 @@ namespace Cach.Test
     public class RedisCacheServiceTests
     {
         private readonly Mock<IDistributedCache> _cacheMock;
+        private readonly Mock<IConnectionMultiplexer> _MultiMock;
         private readonly RedisCacheService _service;
 
         public RedisCacheServiceTests()
         {
             _cacheMock = new Mock<IDistributedCache>();
+            _MultiMock = new Mock<IConnectionMultiplexer>();
             var settings = Options.Create(new CacheSettings { DefaultExpirationMinutes = 5 });
             var logger = new Mock<ILogger<RedisCacheService>>();
-            _service = new RedisCacheService(_cacheMock.Object, settings, logger.Object);
+            _service = new RedisCacheService(_cacheMock.Object, settings, logger.Object, _MultiMock.Object);
         }
 
         [Fact]

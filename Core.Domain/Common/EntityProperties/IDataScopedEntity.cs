@@ -1,22 +1,34 @@
-﻿using Core.Domain.Attributes;
-using Core.Domain.Common;
-using Core.Domain.Common.EntityProperties;
-using Core.Domain.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TraderServer.Domain.Entities
+namespace Core.Domain.Common.EntityProperties
 {
     /// <summary>
-    /// اطلاعات مربوط به قرار داد های اختیار معامله
+    ///  یعنی موجودیت دارای فیلد های مالک میباشد 
+    ///  (OwnerOrganizationUnit - OwnerPosition - OwnerPerson - OwnerUser)
     /// </summary>
-    [SecuredResource("Trader.OptionContract")]
-    public class OptionContract : AuditableEntity , IDataScopedEntity, IAggregateRoot
+    public interface IDataScopedEntity
     {
-        #region IDataScopedEntity Impelement
+        // مشخص می‌کند این رکورد متعلق به کدام واحد است (برای اسکوپ‌های Unit و UnitAndBelow)
+        Guid? OwnerOrganizationUnitId { get; }
+
+        // مشخص می‌کند این رکورد متعلق به کدام پست سازمانی است (برای اسکوپ Self)
+        Guid? OwnerPositionId { get; }
+
+        // مشخص می‌کند این رکورد متعلق به کدام شخص است (برای اسکوپ Self)
+        Guid? OwnerPersonId { get; }
+
+        Guid? OwnerUserId { get; }
+        void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId);
+        void SetPersonOwner(Guid personId);
+        void SetUserOwner(Guid userId);
+        void SetPositionOwner(Guid positiontId);
+        void SetOrganizationUnitOwner(Guid orgUnitId);
+
+        /* impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
         public Guid? OwnerPersonId { get; protected set; }
@@ -45,25 +57,8 @@ namespace TraderServer.Domain.Entities
         {
             OwnerOrganizationUnitId = orgUnitId;
         }
-        #endregion
-
-        /// <summary>
-        /// شناسه
-        /// </summary>
-        public Guid Id { get; set; }
-        /// <summary>
-        /// تاریخ سررسید
-        /// </summary>
-        public DateOnly DueDate { get; set; }
-        /// <summary>
-        /// کلید خارجی به سهام پایه
-        /// </summary>
-        public Guid FkStockId { get; set; }
-        /// <summary>
-        /// تعداد موقعیت باز مجاز
-        /// </summary>
-        public int NumberOfOpenPositionAllow { get; set; }
-        public bool IsActive { get; set; } = true;
+        
+         */
 
     }
 }
