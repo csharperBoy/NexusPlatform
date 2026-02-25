@@ -11,7 +11,7 @@ using TraderServer.Domain.Entities;
 namespace TraderServer.Infrastructure.Configurations
 {
     
-    public class BrokerageAccountConfiguration : DataScopedEntityConfiguration<BrokerageAccount>
+    public class BrokerageAccountConfiguration : BaseConfiguration<BrokerageAccount>
     {
         public override void Configure(EntityTypeBuilder<BrokerageAccount> builder)
         {

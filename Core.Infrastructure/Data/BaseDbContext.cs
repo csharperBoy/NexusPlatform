@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -47,7 +48,7 @@ namespace Core.Infrastructure.Data
         private void UpdateAuditableEntities()
         {
             var entries = ChangeTracker
-                .Entries<AuditableEntity>()
+                .Entries<IAuditableEntity>()
                 .ToList();
 
             if (!entries.Any()) return;
@@ -74,8 +75,8 @@ namespace Core.Infrastructure.Data
                     entry.Entity.ModifiedBy = currentUserId.ToString();
 
                     // از تغییر CreatedAt جلوگیری می‌کنیم
-                    entry.Property(nameof(AuditableEntity.CreatedAt)).IsModified = false;
-                    entry.Property(nameof(AuditableEntity.CreatedBy)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreatedAt)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
                 }
             }
         }

@@ -32,8 +32,14 @@ namespace Sample.Domain.Entities
      و می‌توانند از Value Objectها برای مدل‌سازی دقیق‌تر داده‌های تجاری استفاده کنند.
     */
 
-    public class SampleEntity : AuditableEntity, IDataScopedEntity,IAggregateRoot
+    public class SampleEntity :BaseEntity, IAuditableEntity, IDataScopedEntity,IAggregateRoot
     {
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        #endregion
         #region IDataScopedEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }

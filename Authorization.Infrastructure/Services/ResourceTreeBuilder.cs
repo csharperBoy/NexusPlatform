@@ -8,7 +8,7 @@ using Core.Application.Abstractions.Caching;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
-{
+{/*
     public class ResourceTreeBuilder : IResourceTreeBuilder
     {
         private readonly ISpecificationRepository<Resource, Guid> _resourceSpecRepository;
@@ -206,4 +206,4 @@ namespace Authorization.Infrastructure.Services
             };
         }
     }
-}
+*/}

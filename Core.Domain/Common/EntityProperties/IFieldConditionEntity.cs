@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Shared.Enums.Authorization
+namespace Core.Domain.Common.EntityProperties
 {
-    public enum PermissionType : byte
+    public interface IFieldConditionEntity
     {
-        allow = 1,    
-        Deny = 2   
     }
 }

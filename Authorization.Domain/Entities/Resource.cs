@@ -15,8 +15,14 @@ namespace Authorization.Domain.Entities
 {
 
     [SecuredResource("Authorization.Resource")]
-    public class Resource : AuditableEntity, IDataScopedEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
+    public class Resource : BaseEntity , IAuditableEntity, IDataScopedEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        #endregion
         #region IHierarchicalStructureEntity Impelement
         public Guid? ParentId { get; private set; }
         public virtual Resource? Parent { get; private set; }
@@ -53,7 +59,7 @@ namespace Authorization.Domain.Entities
             OwnerOrganizationUnitId = orgUnitId;
         }
         #endregion
-        public string Key { get; private set; } // e.g. "Invoice", "SystemSettings"
+        public string Key { get; private set; } 
         public string Name { get; private set; }
         public string Description { get; private set; }
         public ResourceType Type { get; private set; }
@@ -63,6 +69,9 @@ namespace Authorization.Domain.Entities
         public string Icon { get; private set; }
         public string? ResourcePath { get; private set; } // سلسله مراتب ریسورس‌ها (مثل منوهای تودرتو)
 
+        public bool hasScope { get; set; } // آیا شروط مربوط به Scope باید اعمال شود روی این؟
+        public bool hasFieldBaseCondition { get; set; }// آیا شروط مربوط به FieldBaseCondition باید اعمال شود روی این؟
+        public bool hasRelationBaseCondition { get; set; }// آیا شروط مربوط به RelationBaseCondition باید اعمال شود روی این؟
 
         // ارتباط مستقیم با پرمیشن‌ها
         public virtual ICollection<Permission> Permissions { get; private set; } = new List<Permission>();

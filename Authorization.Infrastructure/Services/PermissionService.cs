@@ -88,7 +88,8 @@ namespace Authorization.Infrastructure.Services
                     command.ResourceId,
                     command.AssigneeType,
                     command.AssigneeId,
-                    command.Action, command.scope, command.specificScopeId, command.type,
+                    command.Action,  
+                    command.effect,
                     command.EffectiveFrom,
                     command.ExpiresAt,
                     command.Description,
@@ -372,9 +373,7 @@ namespace Authorization.Infrastructure.Services
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
-                Scope = permission.Scope,
-                SpecificScopeId = permission.SpecificScopeId,
-                Type = permission.Type,
+                Effect = permission.Effect,
                 IsActive = permission.IsActive,
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
@@ -393,9 +392,9 @@ namespace Authorization.Infrastructure.Services
                     specRet.Items.FirstOrDefault().Id, permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
                     permissionDefinition.AssignId,
                     permissionDefinition.Action.ToEnumOrDefault(Core.Shared.Enums.Authorization.PermissionAction.View),
-                    permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
-                    null,
-                    permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
+                    //permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
+                    //null,
+                    permissionDefinition.Effect.ToEnumOrDefault(PermissionEffect.allow)
                     );
 
                 //permission.SetUserOwner(initializeruser);
@@ -412,12 +411,12 @@ namespace Authorization.Infrastructure.Services
             {
                 return await _permissionRepository.ExistsAsync(
                     p => p.ResourceId == permission.ResourceId &&
-                    p.Scope == permission.Scope &&
-                    p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
+                    //p.Scope == permission.Scope &&
+                    //p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
                     p.Action == permission.Action &&
                     p.AssigneeType == permission.AssigneeType &&
                     p.AssigneeId == permission.AssigneeId &&
-                    p.Type == permission.Type
+                    p.Effect == permission.Effect
          );
             }
             catch (Exception ex)

@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Core.Infrastructure.Database.Configurations
-{
+{/*
     public abstract class DataScopedEntityConfiguration<T> : AuditableEntityConfiguration<T>
      where T : IDataScopedEntity 
     {
@@ -37,5 +37,5 @@ namespace Core.Infrastructure.Database.Configurations
             builder.HasIndex(e => new { e.OwnerOrganizationUnitId, e.OwnerPersonId })
                 .HasDatabaseName($"IX_{typeof(T).Name}_ScopedLookup");
         }
-    }
+    }*/
 }

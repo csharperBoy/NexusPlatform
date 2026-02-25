@@ -15,7 +15,7 @@ using System.Linq.Dynamic.Core;
 using System.Reflection;
 
 namespace Authorization.Infrastructure.Services
-{
+{/*
     public class DataScopeProcessor : IDataScopeProcessor
     {
 
@@ -109,4 +109,4 @@ namespace Authorization.Infrastructure.Services
             }
         }
     }
-}
+*/}

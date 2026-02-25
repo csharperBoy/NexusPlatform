@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Core.Infrastructure.Database.Configurations
 {
+    /*
     public abstract class AuditableEntityConfiguration<T> : IEntityTypeConfiguration<T>
         where T : AuditableEntity
     {
@@ -39,4 +40,5 @@ namespace Core.Infrastructure.Database.Configurations
                 .HasDatabaseName($"IX_{typeof(T).Name}_ModifiedBy");
         }
     }
+*/
 }

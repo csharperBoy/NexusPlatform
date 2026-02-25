@@ -308,7 +308,7 @@ namespace Authorization.Infrastructure.Data
                 ResourceKey = "authorization.resource", // فرض می‌کنیم این کلید وجود دارد
                 Action = "Full",
                 Scope = "All",
-                Type = "allow",
+                Effect = "allow",
                 Description = "Full access to all authorization resources"
             }
             //,
@@ -381,8 +381,8 @@ namespace Authorization.Infrastructure.Data
                             p.AssigneeId == adminRoleId &&
                             p.ResourceId == resourceId &&
                             p.Action == definition.Action.ToEnumOrDefault(PermissionAction.View) &&
-                            p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.Self) &&
-                            p.Type == definition.Type.ToEnumOrDefault(PermissionType.allow));
+                            //p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.Self) &&
+                            p.Effect == definition.Effect.ToEnumOrDefault(PermissionEffect.allow));
 
                     if (existingPermission != null)
                     {
@@ -396,9 +396,9 @@ namespace Authorization.Infrastructure.Data
                         assigneeType: AssigneeType.Role,
                         assigneeId: adminRoleId,
                         action: definition.Action.ToEnumOrDefault(PermissionAction.View),
-                        scope: definition.Scope.ToEnumOrDefault(ScopeType.Self),
-                        specificScopeId: null, // چون ScopeType.All است
-                        type: definition.Type.ToEnumOrDefault(PermissionType.allow),
+                        //scope: definition.Scope.ToEnumOrDefault(ScopeType.Self),
+                        //specificScopeId: null, // چون ScopeType.All است
+                        effect: definition.Effect.ToEnumOrDefault(PermissionEffect.allow),
                         effectiveFrom: DateTime.UtcNow,
                         expiresAt: null, // بدون انقضا
                         description: definition.Description,

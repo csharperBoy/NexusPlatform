@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,14 @@ using System.Threading.Tasks;
 
 namespace OrganizationManagement.Domain.Entities
 {
-    public class OrganizationUnit : AuditableEntity, IAggregateRoot
+    public class OrganizationUnit :BaseEntity,IAuditableEntity, IAggregateRoot
     {
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        #endregion
         public string Name { get; private set; }
         public string Code { get; private set; }
         public Guid? ParentId { get; private set; }

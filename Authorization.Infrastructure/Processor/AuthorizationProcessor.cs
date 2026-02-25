@@ -10,6 +10,7 @@ using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Core.Infrastructure.Security;
@@ -54,19 +55,7 @@ namespace Authorization.Infrastructure.Processor
 
                 List<PermissionDto> allPermissions = _scope.Permissions.ToList();
                 
-                // بخش IResourcedEntity
-                if (typeof(IResourcedEntity).IsAssignableFrom(typeof(TEntity)))
-                {
-
-                    var allowedResourceIds = allPermissions.Select(p => p.ResourceId).ToList();
-
-                    if (!allowedResourceIds.Any())
-                        return query.Where("EquivalentResourceId == null");
-
-                    // استفاده از متد Where با رشته - این قسمت باید کار کند
-                    //return query.Where("@0.Contains(EquivalentResourceId) || EquivalentResourceId == null", allowedResourceIds);
-                    return query.Where("(EquivalentResourceId != null && @0.Contains(EquivalentResourceId.Value)) || EquivalentResourceId == null", allowedResourceIds);
-                }
+               
 
                 // بخش IDataScopedEntity
                 if (!typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
@@ -154,19 +143,19 @@ namespace Authorization.Infrastructure.Processor
             var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
             if (personPerm != null)
             {
-                return personPerm.Type == PermissionType.Deny ? ScopeType.None : personPerm.Scope;
+                return personPerm.Effect == PermissionEffect.Deny ? ScopeType.None : personPerm.Scopes.FirstOrDefault().scope;
             }
 
             // اولویت ۲: وجود Deny در نقش/پست
-            if (permissions.Any(p => p.Type == PermissionType.Deny))
+            if (permissions.Any(p => p.Effect == PermissionEffect.Deny))
             {
                 return ScopeType.None;
             }
 
             // اولویت ۳: Max Scope
             return permissions
-                .Where(p => p.Type == PermissionType.allow)
-                .Select(p => p.Scope)
+                .Where(p => p.Effect == PermissionEffect.allow)
+                .Select(p => p.Scopes.FirstOrDefault().scope)
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
         }
@@ -190,15 +179,7 @@ namespace Authorization.Infrastructure.Processor
             var userId = _scope.UserId;
             if (userId == null) return;
 
-            if (entity is IResourcedEntity resource && action != PermissionAction.Create)
-            {
-                //اگر رکورد های موجودیت بعنوان ریسورس هم تعریف شده بود
-                var scope = await GetScopeForUser(allPermissions, resourceAttr.ResourceKey, action);
-                if (scope == ScopeType.None)
-                {
-                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to Row Level Security restrictions.");
-                }
-            }
+            
 
             if (entity is IDataScopedEntity dataScopedEntity)
             {
@@ -242,7 +223,7 @@ namespace Authorization.Infrastructure.Processor
 
         public async Task SetOwnerDefaults(TEntity entity)
         {
-            if (entity is DataScopedEntity scopedEntity)
+            if (entity is IDataScopedEntity scopedEntity)
             {
                 if (scopedEntity.OwnerPersonId == null || scopedEntity.OwnerPersonId == Guid.Empty)
                 {

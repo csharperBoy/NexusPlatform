@@ -13,7 +13,7 @@ using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
-{
+{/*
     public class PermissionEvaluator : IPermissionEvaluator
     {
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
@@ -214,4 +214,4 @@ namespace Authorization.Infrastructure.Services
             };
         }
     }
-}
+*/}

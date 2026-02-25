@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Sample.Infrastructure.Configurations
 {
-    public class SampleEntityConfiguration : DataScopedEntityConfiguration<SampleEntity>
+    public class SampleEntityConfiguration : BaseConfiguration<SampleEntity>
     {
         public override void Configure(EntityTypeBuilder<SampleEntity> builder)
         {

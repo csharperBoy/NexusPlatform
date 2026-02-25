@@ -10,7 +10,7 @@ using TraderServer.Domain.Entities;
 
 namespace TraderServer.Infrastructure.Configurations
 {
-    public class SnapShotFromOptionTradingConfiguration : DataScopedEntityConfiguration<SnapShotFromOptionTrading>
+    public class SnapShotFromOptionTradingConfiguration : BaseConfiguration<SnapShotFromOptionTrading>
     {
         public override void Configure(EntityTypeBuilder<SnapShotFromOptionTrading> builder)
         {

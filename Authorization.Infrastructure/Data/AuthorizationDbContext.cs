@@ -27,6 +27,7 @@ namespace Authorization.Infrastructure.Data
         }
         public DbSet<Resource> Resources { get; set; }
         public DbSet<Permission> Permissions { get; set; }
+        public DbSet<PermissionRule> PermissionRule { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,7 @@ namespace Authorization.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("authorization"));
             modelBuilder.ApplyConfiguration(new ResourceConfiguration());
+            modelBuilder.ApplyConfiguration(new PermissionRuleConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
 
         }

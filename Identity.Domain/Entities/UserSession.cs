@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -8,8 +9,14 @@ using System.Threading.Tasks;
 
 namespace Identity.Domain.Entities
 {
-    public class UserSession : AuditableEntity, IEntity<Guid>
+    public class UserSession :BaseEntity, IAuditableEntity, IEntity<Guid>
     {
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        #endregion
         public Guid Id { get; private set; } = Guid.NewGuid();
 
         public Guid UserId { get; private set; }

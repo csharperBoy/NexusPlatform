@@ -25,7 +25,7 @@ namespace Authorization.Application.Commands.Permissions
         PermissionAction Action,
          ScopeType scope = ScopeType.None,
             Guid? specificScopeId = null,
-            PermissionType type = PermissionType.allow,
+            PermissionEffect effect = PermissionEffect.allow,
         DateTime? EffectiveFrom = null,
         DateTime? ExpiresAt = null,
         string? Description = null

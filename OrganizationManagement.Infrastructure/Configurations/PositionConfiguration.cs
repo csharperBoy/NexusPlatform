@@ -10,7 +10,7 @@ using OrganizationManagement.Domain.Entities;
 
 namespace OrganizationManagement.Infrastructure.Services
 {
-    public class PositionConfiguration : AuditableEntityConfiguration<Position>
+    public class PositionConfiguration : BaseConfiguration<Position>
     {
         public override void Configure(EntityTypeBuilder<Position> builder)
         {

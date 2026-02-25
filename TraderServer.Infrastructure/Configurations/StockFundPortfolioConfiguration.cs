@@ -12,7 +12,7 @@ using TraderServer.Domain.Entities;
 namespace TraderServer.Infrastructure.Configurations
 {
     
-    public class StockFundPortfolioConfiguration : AuditableEntityConfiguration<StockFundPortfolio>
+    public class StockFundPortfolioConfiguration : BaseConfiguration<StockFundPortfolio>
     {
         public override void Configure(EntityTypeBuilder<StockFundPortfolio> builder)
         {

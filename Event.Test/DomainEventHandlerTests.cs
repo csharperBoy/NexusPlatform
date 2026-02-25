@@ -22,11 +22,15 @@ namespace Event.Test
             public bool Called { get; private set; }
             public TestHandler(ILogger<DomainEventHandler<TestDomainEvent>> logger) : base(logger) { }
 
+            
+
             protected override Task HandleEventAsync(TestDomainEvent @event, CancellationToken cancellationToken)
             {
                 Called = true;
                 return Task.CompletedTask;
             }
+
+          
         }
 
         [Fact]
@@ -35,7 +39,7 @@ namespace Event.Test
             var logger = new Mock<ILogger<DomainEventHandler<TestDomainEvent>>>();
             var handler = new TestHandler(logger.Object);
 
-            await handler.HandleAsync(new TestDomainEvent(), CancellationToken.None);
+            await handler.Handle(new TestDomainEvent(), CancellationToken.None);
 
             handler.Called.Should().BeTrue();
             logger.VerifyLog(LogLevel.Information, times: 2); // قبل و بعد
@@ -54,7 +58,7 @@ namespace Event.Test
             var logger = new Mock<ILogger<DomainEventHandler<TestDomainEvent>>>();
             var handler = new ThrowingHandler(logger.Object);
 
-            var act = async () => await handler.HandleAsync(new TestDomainEvent(), CancellationToken.None);
+            var act = async () => await handler.Handle(new TestDomainEvent(), CancellationToken.None);
 
             await act.Should().ThrowAsync<ApplicationException>()
                 .WithMessage("handler failed");

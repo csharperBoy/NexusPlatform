@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -12,8 +13,14 @@ namespace Identity.Domain.Entities
      شامل اطلاعات IP و دستگاه برای سشن‌های هم‌زمان (در آینده برای خروج از دستگاه‌های دیگر استفاده می‌کنیم).
     IsRevoked برای باطل‌کردن دستی RefreshTokenها (مثلاً بعد از تغییر پسورد یا logout all).
       */
-    public class RefreshToken : AuditableEntity, IEntity<Guid>
-    {
+    public class RefreshToken :BaseEntity, IAuditableEntity, IEntity<Guid>
+    { 
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+#endregion
         public Guid Id { get; private set; } = Guid.NewGuid();
 
         public Guid UserId { get; private set; }

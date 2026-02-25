@@ -53,7 +53,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
                     ResourceKey = "trader.stock",
                     Action = "Full", // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
                     Scope = "All",
-                    Type = "allow",
+                    Effect = "allow",
                     AssignType="Role",
                     AssignId = roleId,
 

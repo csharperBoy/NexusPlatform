@@ -1,16 +1,16 @@
 ﻿using Authorization.Domain.Entities;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Infrastructure.Database.Configurations;
 
 namespace Authorization.Infrastructure.Configurations
 {
-    public class ResourceConfiguration : BaseConfiguration<Resource>
+    public class ScopeConfiguration : BaseConfiguration<Resource>
     {
         public override void Configure(EntityTypeBuilder<Resource> builder)
         {

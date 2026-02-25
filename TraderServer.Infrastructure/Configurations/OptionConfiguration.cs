@@ -10,7 +10,7 @@ using TraderServer.Domain.Entities;
 
 namespace TraderServer.Infrastructure.Configurations
 {
-    public class OptionConfiguration : DataScopedEntityConfiguration<Option>
+    public class OptionConfiguration : BaseConfiguration<Option>
     {
         public override void Configure(EntityTypeBuilder<Option> builder)
         {

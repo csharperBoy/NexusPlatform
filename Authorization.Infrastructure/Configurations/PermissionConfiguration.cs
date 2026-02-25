@@ -10,7 +10,7 @@ using Core.Infrastructure.Database.Configurations;
 
 namespace Authorization.Infrastructure.Configurations
 {
-    public class PermissionConfiguration : DataScopedEntityConfiguration<Permission>
+    public class PermissionConfiguration : BaseConfiguration<Permission>
     {
         public override void Configure(EntityTypeBuilder<Permission> builder)
         {
@@ -21,10 +21,7 @@ namespace Authorization.Infrastructure.Configurations
             // استفاده از Byte برای Enumها جهت سرعت در محاسبات Permission
             builder.Property(p => p.AssigneeType).HasConversion<byte>();
             builder.Property(p => p.Action).HasConversion<byte>();
-            builder.Property(p => p.Scope).HasConversion<byte>();
-
-            builder.Property(p => p.SpecificScopeId)
-              .IsRequired();
+            
 
             // ایندکس ترکیبی طلایی برای چک کردن دسترسی
             builder.HasIndex(p => new { p.AssigneeId, p.ResourceId, p.Action })
@@ -33,12 +30,10 @@ namespace Authorization.Infrastructure.Configurations
             // عدم ثبت دسترسی تکراری
             builder.HasIndex(p => new {
                 p.ResourceId,
-                p.Scope,
-                p.SpecificScopeId, 
                 p.Action,
                 p.AssigneeType,
                 p.AssigneeId,
-                p.Type
+                p.Effect
             })
             .HasDatabaseName("IX_Permissions_Unique")
             .IsUnique();

@@ -63,14 +63,14 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddTransient(typeof(IAuthorizationProcessor<>), typeof(AuthorizationProcessor<>));
             services.AddTransient<IResourceProcessor, ResourceProcessor>();
-            services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
+            //services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
             //services.AddScoped<IDataScopeService, DataScopeService>();
 
             // سرویس‌های دیگری که احتمالاً نیاز دارید و باید چک کنید ثبت شده باشند:
             services.AddScoped<IAuthorizationChecker, AuthorizationService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
-            services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
-            services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
+            //services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
+            //services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
 
             services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
@@ -86,11 +86,11 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddHostedService<ModuleInitializer>();
 
-            services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
-            services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
+            //services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
+            //services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
             services.AddScoped<IPermissionInternalService, PermissionService>();
             services.AddScoped<IResourceInternalService, ResourceService>();
-            services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
+            //services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
 
             services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddScoped<IAuthorizationChecker, AuthorizationService>();

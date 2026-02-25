@@ -1,4 +1,5 @@
-﻿using Core.Shared.Enums;
+﻿using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
@@ -25,9 +26,9 @@ namespace Core.Shared.DTOs.Identity
         public string ResourceKey { get;  set; }
         public PermissionAction Action { get; set; }
 
-        public ScopeType Scope { get; set; }
-        public Guid SpecificScopeId { get; set; }
-        public PermissionType Type { get; set; } 
+        public PermissionEffect Effect { get;  set; }  // برای Deny یا allow کردن
+
+
         public DateTime? EffectiveFrom { get; set; }
         public DateTime? ExpiresAt { get;   set; }
 
@@ -35,6 +36,9 @@ namespace Core.Shared.DTOs.Identity
         public bool IsActive { get; set; }
 
 
-        
+        public virtual ICollection<PermissionRuleDto> Rules { get; private set; }
+
+        public virtual ICollection<ScopeDto> Scopes { get; private set; }
+
     }
 }

@@ -10,7 +10,7 @@ using OrganizationManagement.Domain.Entities;
 
 namespace OrganizationManagement.Infrastructure.Services
 {
-    public class AssignmentConfiguration : AuditableEntityConfiguration<Assignment>
+    public class AssignmentConfiguration : BaseConfiguration<Assignment>
     {
         public override void Configure(EntityTypeBuilder<Assignment> builder)
         {

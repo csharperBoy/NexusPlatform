@@ -196,9 +196,9 @@ namespace Authorization.Infrastructure.Services
                     specRet.Id, permissionDefinition.AssignType.ToEnumOrDefault(AssigneeType.Role),
                     permissionDefinition.AssignId,
                     permissionDefinition.Action.ToEnumOrDefault(Core.Shared.Enums.Authorization.PermissionAction.View),
-                    permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
-                    null,
-                    permissionDefinition.Type.ToEnumOrDefault(PermissionType.allow)
+                    //permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
+                    //null,
+                    permissionDefinition.Effect .ToEnumOrDefault(PermissionEffect.allow)
                     );
 
                 if (!IsPermissionExist(permission))
@@ -219,12 +219,12 @@ namespace Authorization.Infrastructure.Services
             {
                 return _dbContext.Permissions.Any(
                     p => p.ResourceId == permission.ResourceId &&
-                    p.Scope == permission.Scope &&
-                    p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
+                    //p.Scope == permission.Scope &&
+                    //p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
                     p.Action == permission.Action &&
                     p.AssigneeType == permission.AssigneeType &&
                     p.AssigneeId == permission.AssigneeId &&
-                    p.Type == permission.Type
+                    p.Effect == permission.Effect
                     );
             }
             catch (Exception ex)

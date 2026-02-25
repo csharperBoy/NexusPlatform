@@ -17,8 +17,14 @@ using System.Threading.Tasks;
 namespace Authorization.Domain.Entities
 {
     [SecuredResource("Authorization.Permission")]
-    public class Permission : AuditableEntity, IDataScopedEntity, IAggregateRoot
+    public class Permission : BaseEntity ,IAuditableEntity, IDataScopedEntity, IAggregateRoot
     {
+        #region IAuditableEntity Impelement
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
+        public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
+        public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
+        public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        #endregion
         // 1. چه کسی؟
         public AssigneeType AssigneeType { get; private set; }
         public Guid AssigneeId { get; private set; } // RoleId, PositionId, or PersonId
@@ -29,12 +35,8 @@ namespace Authorization.Domain.Entities
         // 3. چه کاری؟
         public PermissionAction Action { get; private set; }
 
-        // 4. با چه دامنه‌ای؟ (اینجا ادغام شد)
-        public ScopeType Scope { get; private set; }
-        public Guid SpecificScopeId { get; private set; } // اگر Scope == SpecificProperty باشد پر می‌شود
-
         // 5. وضعیت
-        public PermissionType Type { get; private set; } = PermissionType.allow; // برای Deny یا allow کردن
+        public PermissionEffect Effect { get; private set; } = PermissionEffect.allow; // برای Deny یا allow کردن
         public DateTime? EffectiveFrom { get; private set; }
         public DateTime? ExpiresAt { get; private set; }
 
@@ -43,7 +45,9 @@ namespace Authorization.Domain.Entities
 
         // Navigation
         public virtual Resource Resource { get; private set; } = null!;
+        public virtual ICollection<PermissionRule> Rules { get; private set; }
 
+        public virtual ICollection<Scope> Scopes { get; private set; }
         [NotMapped]
         public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
         [NotMapped]
@@ -58,25 +62,20 @@ namespace Authorization.Domain.Entities
             AssigneeType assigneeType,
             Guid assigneeId,
             PermissionAction action,
-            ScopeType scope = ScopeType.None,
-            Guid? specificScopeId = null,
-            PermissionType type =  PermissionType.allow)
+            PermissionEffect effect = PermissionEffect.allow)
         {
             ResourceId = resourceId;
             AssigneeType = assigneeType;
             AssigneeId = assigneeId;
             Action = action;
-            SetScope(scope, specificScopeId);
-            Type = type;
+            Effect = effect;
         }
         public Permission(
             Guid resourceId,
             AssigneeType assigneeType,
             Guid assigneeId,
             PermissionAction action,
-            ScopeType scope = ScopeType.None,
-            Guid? specificScopeId = null,
-            PermissionType type = PermissionType.allow,            
+            PermissionEffect effect = PermissionEffect.allow,            
             DateTime? effectiveFrom = null,
             DateTime? expiresAt = null,
             string? description = null,            
@@ -89,39 +88,17 @@ namespace Authorization.Domain.Entities
             AssigneeType = assigneeType;
             AssigneeId = assigneeId;
             Action = action;
-            SetScope(scope, specificScopeId);
-            Type = type;
+            Effect = effect;
             EffectiveFrom = effectiveFrom;
             ExpiresAt = expiresAt;
             Description = description;
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
         }
-        public void UpdateScope(ScopeType newScope, Guid? specificScopeId)
-        {
-            SetScope(newScope, specificScopeId);
-            // اینجا Domain Event برای پاک کردن کش دسترسی‌ها واجب است
-        }
+        
 
         
-        private void SetScope(ScopeType scope, Guid? specificId)
-        {
-            if (scope == ScopeType.SpecificProperty)
-            {
-                // در حالت SpecificProperty، specificId اجباری است
-                if (!specificId.HasValue || specificId.Value == Guid.Empty)
-                    throw new ArgumentException("SpecificScopeId is required when scope is SpecificProperty and cannot be Guid.Empty.");
-
-                SpecificScopeId = specificId.Value;
-            }
-            else
-            {
-                // برای سایر حالات، همیشه Guid.Empty
-                SpecificScopeId = Guid.Empty;
-            }
-
-            Scope = scope;
-        }
+        
 
         public void Update(
            PermissionAction action,

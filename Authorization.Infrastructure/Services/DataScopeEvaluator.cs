@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Authorization.Infrastructure.Services
 {
-
+/*
     public class DataScopeEvaluator : IDataScopeEvaluator
     {
         // استفاده از ریپازیتوری اسپسیفیکیشن برای کوئری‌های بهینه
@@ -37,7 +37,7 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 1. محاسبه اسکوپ برای یک اکشن خاص (مثلا Edit)
         // ----------------------------------------------------------------
-        public async Task<ScopeType> EvaluateScopeAsync(/*Guid userId,*/ string resourceKey, PermissionAction action)
+        public async Task<ScopeType> EvaluateScopeAsync( string resourceKey, PermissionAction action)
         {
             try
             {
@@ -59,7 +59,7 @@ namespace Authorization.Infrastructure.Services
         // ----------------------------------------------------------------
         // 2. محاسبه اسکوپ داده (پیش‌فرض روی View) برای یک ریسورس
         // ----------------------------------------------------------------
-        public async Task<DataScopeDto> EvaluateDataScopeAsync(/*Guid userId,*/ string resourceKey)
+        public async Task<DataScopeDto> EvaluateDataScopeAsync( string resourceKey)
         {
             // وقتی صحبت از Data Scope است، یعنی کاربر چه چیزی را می‌تواند ببیند (View)
             var scope = await EvaluateScopeAsync( resourceKey, PermissionAction.View);
@@ -140,30 +140,24 @@ namespace Authorization.Infrastructure.Services
             var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
             if (personPerm != null)
             {
-                return personPerm.Type == PermissionType.Deny ? ScopeType.None : personPerm.Scope;
+                return personPerm.Effect == PermissionEffect.Deny ? ScopeType.None : personPerm.Scope;
             }
 
             // اولویت ۲: وجود Deny در نقش/پست
-            if (permissions.Any(p => p.Type == PermissionType.Deny))
+            if (permissions.Any(p => p.Effect == PermissionEffect.Deny))
             {
                 return ScopeType.None;
             }
 
             // اولویت ۳: Max Scope
             return permissions
-                .Where(p => p.Type == PermissionType.allow)
+                .Where(p => p.Effect == PermissionEffect.allow)
                 .Select(p => p.Scope)
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
         }
 
-      /*  private (Guid UserId, Guid PersonId, Guid? PositionId, List<Guid> RoleIds) GetUserContext()
-        {
-            var posId = _currentUserService.PositionId;
-            var roleIds = _currentUserService.RolesId ?? new List<Guid>(); // اصلاح نام پراپرتی بر اساس ICurrentUserService شما
-            var personId = _currentUserService.PersonId;
-            var userId = _currentUserService.UserId;
-            return (userId ?? Guid.Empty , personId ?? Guid.Empty, posId, roleIds.ToList());
-        }*/
+      
     }
+*/
 }

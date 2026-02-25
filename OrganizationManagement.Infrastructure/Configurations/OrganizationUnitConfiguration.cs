@@ -12,7 +12,7 @@ namespace OrganizationManagement.Infrastructure.Services
 {
     
     
-    public class OrganizationUnitConfiguration : AuditableEntityConfiguration<OrganizationUnit>
+    public class OrganizationUnitConfiguration : BaseConfiguration<OrganizationUnit>
     {
         public override void Configure(EntityTypeBuilder<OrganizationUnit> builder)
         {
