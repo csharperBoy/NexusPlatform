@@ -2,7 +2,7 @@
 using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
-{
+{/*
     public interface IPermissionEvaluator
     {
         /// <summary>
@@ -20,4 +20,4 @@ namespace Authorization.Application.Interfaces
         /// </summary>
         Task<bool> HasPermissionAsync(Guid userId, string resourceKey, string action);
     }
-}
+*/}

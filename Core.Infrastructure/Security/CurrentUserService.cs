@@ -50,7 +50,7 @@ namespace Core.Infrastructure.Security
      این کلاس پایه‌ی مکانیزم **Current User Context Abstraction** در معماری ماژولار است
      و تضمین می‌کند که اطلاعات کاربر جاری به صورت استاندارد و قابل استفاده مجدد در کل سیستم در دسترس باشد.
     */
-
+    /*
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -135,4 +135,4 @@ namespace Core.Infrastructure.Security
             }
         }
     }
-}
+*/}

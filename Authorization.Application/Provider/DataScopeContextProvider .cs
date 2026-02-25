@@ -58,15 +58,7 @@ namespace Authorization.Application.Context
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(userId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PositionId, RoleIds);
-            /*List<PermissionDto> allPermission = new List<PermissionDto>();
-            var userPermissions = await _permissionService.GetUserPermissionsAsync(userId);
-            var rolePermissions = await _permissionService.GetRolePermissionsAsync(RoleIds);
-            var personPermissions = await _permissionService.GetPersonPermissionsAsync(PersonId);
-            var positionPermissions = await _permissionService.GetPositionPermissionsAsync(PositionId);
-            allPermission.AddRange(userPermissions);
-            allPermission.AddRange(rolePermissions);
-            allPermission.AddRange(personPermissions);
-            allPermission.AddRange(positionPermissions);*/
+            
             return new DataScopeContext
             {
                 UserId = userId,
@@ -75,10 +67,6 @@ namespace Authorization.Application.Context
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
                 RoleIds = RoleIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
-                //userPermissions = userPermissions.ToHashSet(),
-                //rolePermissions = rolePermissions.ToHashSet(),
-                //personPermissions = personPermissions.ToHashSet(),
-                //positionPermissions = positionPermissions.ToHashSet(),
             };
         }
     }

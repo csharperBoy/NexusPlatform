@@ -5,7 +5,7 @@ using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
-{
+{/*
     public interface IDataScopeEvaluator
     {
         /// <summary>
@@ -32,4 +32,4 @@ namespace Authorization.Application.Interfaces
         /// </summary>
         Task<string> BuildDataFilterAsync( string resourceKey);
     }
-}
+*/}

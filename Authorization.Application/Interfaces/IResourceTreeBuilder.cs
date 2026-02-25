@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Interfaces
-{
+{/*
     public interface IResourceTreeBuilder
     {
         /// <summary>
@@ -25,4 +25,4 @@ namespace Authorization.Application.Interfaces
         /// </summary>
         Task<IReadOnlyList<ResourceDto>> GetResourcePathAsync(string resourceKey);
     }
-}
+*/}

@@ -1,4 +1,6 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Security;
+using Core.Application.Provider;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -12,20 +14,20 @@ namespace Core.Presentation.Filters
 {
     public class AuthorizeResourceFilter : IAsyncAuthorizationFilter
     {
-        private readonly IAuthorizationChecker _authorizationChecker;
-        private readonly ICurrentUserService _currentUserService;
+        private readonly IAuthorizationProcessor _authorizationChecker;
+        private readonly IDataScopeContextProvider _contextProvider;
         private readonly string _resourceKey;
         private readonly string _action;
 
         // Constructor برای استفاده توسط Factory
         public AuthorizeResourceFilter(
-            IAuthorizationChecker authorizationChecker,
-            ICurrentUserService currentUserService,
-            string resourceKey,
+            IAuthorizationProcessor authorizationChecker,
+            IDataScopeContextProvider contextProvider,
+        string resourceKey,
             string action)
         {
             _authorizationChecker = authorizationChecker;
-            _currentUserService = currentUserService;
+            _contextProvider = contextProvider;
             _resourceKey = resourceKey;
             _action = action;
         }
