@@ -23,7 +23,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+//using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 
 namespace Authorization.Infrastructure.DependencyInjection
 {
@@ -61,14 +61,14 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddScoped<IAuthorizeSeedService>(sp => sp.GetRequiredService<SeedService>());
 
 
-            services.AddTransient(typeof(IAuthorizationProcessor<>), typeof(AuthorizationProcessor<>));
+            services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(RowLevelSecurityProcessor<>));
             services.AddTransient<IResourceProcessor, ResourceProcessor>();
             //services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
             //services.AddScoped<IDataScopeService, DataScopeService>();
 
             // سرویس‌های دیگری که احتمالاً نیاز دارید و باید چک کنید ثبت شده باشند:
-            services.AddScoped<IAuthorizationChecker, AuthorizationService>();
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
+            //services.AddScoped<IAuthorizationChecker, AuthorizationService>();
+            //services.AddScoped<IAuthorizationService, AuthorizationService>();
             //services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
             //services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
 
@@ -92,8 +92,8 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddScoped<IResourceInternalService, ResourceService>();
             //services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
 
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
-            services.AddScoped<IAuthorizationChecker, AuthorizationService>();
+            //services.AddScoped<IAuthorizationService, AuthorizationService>();
+            //services.AddScoped<IAuthorizationChecker, AuthorizationService>();
             
             // Resource Definition Providers
             //services.AddSingleton<AuthorizationResourceDefinitionProvider>();

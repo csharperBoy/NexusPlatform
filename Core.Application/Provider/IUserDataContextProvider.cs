@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Provider
 {
-    public interface IDataScopeContextProvider
+    public interface IUserDataContextProvider
     {
 
-        Task<DataScopeContext> GetAsync(CancellationToken ct);
+        Task<UserDataContext> GetAsync(CancellationToken ct);
     }
 
 }

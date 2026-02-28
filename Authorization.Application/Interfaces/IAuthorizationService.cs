@@ -3,7 +3,7 @@ using Core.Shared.Results;
 
 namespace Authorization.Application.Interfaces
 {
-    public interface IAuthorizationService
+  /*  public interface IAuthorizationService
     {
         /// <summary>
         /// بررسی سریع دسترسی کاربر به یک منبع
@@ -45,4 +45,4 @@ namespace Authorization.Application.Interfaces
         public static AccessResult Grant() => new() { HasAccess = true };
         public static AccessResult Deny(string reason) => new() { HasAccess = false, DenyReason = reason };
     }
-}
+*/}

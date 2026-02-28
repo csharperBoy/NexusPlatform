@@ -12,7 +12,7 @@ namespace Core.Application.Abstractions.Security
     /// <summary>
     /// رابط ساده برای بررسی دسترسی - برای استفاده در Attributeها و ماژول‌های دیگر
     /// </summary>
-    public interface IAuthorizationChecker
+ /*   public interface IAuthorizationChecker
     {
         Task<bool> CheckAccessAsync(Guid userId, string resourceKey, string action);
         Task<bool> CheckAccessAsync(string resourceKey, string action);
@@ -24,4 +24,4 @@ namespace Core.Application.Abstractions.Security
         Task<ScopeType> GetPermissionScopeAsync(Guid userId, Guid resourceId, PermissionAction action);
         Task<List<ScopeType>> GetScopeForUser(Guid userId, string resourceKey);
     }
-}
+*/}

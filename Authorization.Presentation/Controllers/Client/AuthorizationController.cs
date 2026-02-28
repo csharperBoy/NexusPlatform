@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+//using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 namespace Authorization.Presentation.Controllers.Client
 {
     [ApiController]
@@ -55,26 +55,7 @@ namespace Authorization.Presentation.Controllers.Client
             return HandleResult(result);
         }
 
-        /// <summary>
-        /// 📊 خلاصه دسترسی‌های من
-        /// </summary>
-        [HttpGet("my-permissions/summary")]
-        public async Task<IActionResult> GetMyPermissionsSummary()
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var userAccess = await authorizationService.GetUserEffectiveAccessAsync(
-                currentUserService.UserId.Value);
-
-            return Ok(userAccess);
-        }
+      
 
         /// <summary>
         /// 🎯 بررسی دسترسی براساس مسیر

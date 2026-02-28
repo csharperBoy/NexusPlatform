@@ -39,7 +39,7 @@ namespace Core.Application.Abstractions.Identity
     }
     public class NullUserService : IUserPublicService
     {
-        public Task<DataScopeContext> GetInitializerUserContext()
+        public Task<UserDataContext> GetInitializerUserContext()
         {
             return null;
         }

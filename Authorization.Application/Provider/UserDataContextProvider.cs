@@ -7,7 +7,7 @@ using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Application.Provider;
 using Core.Domain.Enums;
-using Core.Shared.DTOs.Identity;
+using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Context
 {
-    public class DataScopeContextProvider : IDataScopeContextProvider
+    public class UserDataContextProvider : IUserDataContextProvider
     {
         private readonly IPermissionInternalService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
@@ -26,7 +26,7 @@ namespace Authorization.Application.Context
         private readonly IPositionPublicService _positionService;
         private readonly IRolePublicService _roleService;
 
-        public DataScopeContextProvider(
+        public UserDataContextProvider(
             IPermissionInternalService permissionService,
            
             IHttpContextAccessor httpContext,
@@ -41,7 +41,7 @@ namespace Authorization.Application.Context
             _positionService = positionService;
             _roleService = roleService;
         }
-        public async Task<DataScopeContext> GetAsync(CancellationToken ct)
+        public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
 
 
@@ -50,7 +50,7 @@ namespace Authorization.Application.Context
                        .FindFirst(ClaimTypes.NameIdentifier)?.Value;
             Guid userId = string.IsNullOrEmpty(userIdstr) ? Guid.Empty : Guid.Parse(userIdstr);
             if (userId == Guid.Empty)
-                return new DataScopeContext { Permissions = new HashSet<PermissionDto> { } };
+                return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
 
             Guid? PersonId = await _userService.GetPersonId(userId);
             string? userName = await _userService.GetUserName(userId);
@@ -59,7 +59,7 @@ namespace Authorization.Application.Context
             List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(userId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PositionId, RoleIds);
             
-            return new DataScopeContext
+            return new UserDataContext
             {
                 UserId = userId,
                 PersonId = PersonId,

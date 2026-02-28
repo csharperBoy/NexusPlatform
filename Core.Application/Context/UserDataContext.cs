@@ -1,6 +1,6 @@
 ﻿using Core.Application.Abstractions.Authorization;
 using Core.Domain.Enums;
-using Core.Shared.DTOs.Identity;
+using Core.Shared.DTOs.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Context
 {
-    public sealed class DataScopeContext
+    public sealed class UserDataContext
     {
         public Guid UserId { get; init; }
         public string UserName { get; init; }

@@ -66,11 +66,11 @@ namespace Core.Infrastructure.Repositories
     {
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
-        protected readonly IAuthorizationProcessor<TEntity> _authorizationProcessor;
+        protected readonly IRowLevelSecurityProcessor<TEntity> _authorizationProcessor;
 
         public EfRepository(
             TDbContext dbContext,
-            IAuthorizationProcessor<TEntity> authorizationProcessor
+            IRowLevelSecurityProcessor<TEntity> authorizationProcessor
             )
         {
             _dbContext = dbContext;

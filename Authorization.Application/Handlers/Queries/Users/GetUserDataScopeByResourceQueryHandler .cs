@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Users
 {
+    /*
     public class GetUserDataScopeByResourceQueryHandler
         : IRequestHandler<GetUserDataScopeByResourceQuery, Result<DataScopeDto>>
     {
@@ -52,4 +53,5 @@ namespace Authorization.Application.Handlers.Queries.Users
             }
         }
     }
+*/
 }

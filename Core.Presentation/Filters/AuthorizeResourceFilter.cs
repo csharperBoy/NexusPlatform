@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Core.Application.Provider;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,19 +16,19 @@ namespace Core.Presentation.Filters
     public class AuthorizeResourceFilter : IAsyncAuthorizationFilter
     {
         private readonly IAuthorizationProcessor _authorizationChecker;
-        private readonly IDataScopeContextProvider _contextProvider;
+        private readonly UserDataContext _userDataContext;
         private readonly string _resourceKey;
         private readonly string _action;
 
         // Constructor برای استفاده توسط Factory
         public AuthorizeResourceFilter(
             IAuthorizationProcessor authorizationChecker,
-            IDataScopeContextProvider contextProvider,
+             UserDataContext userDataContext,
         string resourceKey,
             string action)
         {
             _authorizationChecker = authorizationChecker;
-            _contextProvider = contextProvider;
+            _userDataContext = userDataContext;
             _resourceKey = resourceKey;
             _action = action;
         }
@@ -37,14 +38,14 @@ namespace Core.Presentation.Filters
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
        
-            var userId = _currentUserService.UserId;
+            var userId = _userDataContext.UserId;
             if (userId == null || userId == Guid.Empty)
             {
                 context.Result = new UnauthorizedResult();
                 return;
             }
 
-            var hasAccess = await _authorizationChecker.CheckAccessAsync(userId.Value, _resourceKey, _action);
+            var hasAccess = await _authorizationChecker.CheckAccessAsync( _resourceKey, _action);
             if (!hasAccess)
             {
                 context.Result = new ForbidResult();

@@ -12,13 +12,13 @@ using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
-using Core.Shared.DTOs.Identity;
 using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using Core.Shared.Enums;
 using Core.Application.Context;
+using Core.Shared.DTOs.Authorization;
 namespace Authorization.Infrastructure.Services
 {
     public class PermissionService : IPermissionInternalService 
@@ -30,7 +30,7 @@ namespace Authorization.Infrastructure.Services
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<PermissionService> _logger;
         //private readonly ICurrentUserService _currentUser;
-        private readonly DataScopeContext _currentUserContext;
+        private readonly UserDataContext _currentUserContext;
         private readonly ICacheService _cache;
         //private readonly IRolePublicService _roleService;
         //private readonly IUserPublicService _userService;
@@ -42,7 +42,7 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-             DataScopeContext currentUserContext,
+             UserDataContext currentUserContext,
             //ICurrentUserService currentUser, //IRolePublicService roleService, IUserPublicService userService,
             ICacheService cache)
         {

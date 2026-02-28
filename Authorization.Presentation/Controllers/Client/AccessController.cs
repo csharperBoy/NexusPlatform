@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+//using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 namespace Authorization.Presentation.Controllers.Client
 {
     [ApiController]
@@ -21,52 +21,7 @@ namespace Authorization.Presentation.Controllers.Client
     [Authorize]
     public class AccessController : BaseController
     {
-        /// <summary>
-        /// 📋 دریافت منابع قابل دسترسی من
-        /// </summary>
-        [HttpGet("my-resources")]
-        public async Task<IActionResult> GetMyResources()
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var userAccess = await authorizationService.GetUserEffectiveAccessAsync(
-                currentUserService.UserId.Value);
-
-            return Ok(userAccess.Permissions);
-        }
-
-        /// <summary>
-        /// 📱 دریافت منابع قابل دسترسی براساس نوع
-        /// </summary>
-        [HttpGet("my-resources/type/{type}")]
-        public async Task<IActionResult> GetMyResourcesByType(string type)
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var userAccess = await authorizationService.GetUserEffectiveAccessAsync(
-                currentUserService.UserId.Value);
-
-            var filtered = userAccess.Permissions
-                .Where(p => p.ResourceKey.Split('.')
-                    .LastOrDefault()?.StartsWith(type, StringComparison.OrdinalIgnoreCase) ?? false)
-                .ToList();
-
-            return Ok(filtered);
-        }
+        
 
         /// <summary>
         /// 🗂️ دریافت منابع قابل دسترسی براساس دسته‌بندی
@@ -78,26 +33,7 @@ namespace Authorization.Presentation.Controllers.Client
             return BadRequest("این API نیاز به توسعه دارد");
         }
 
-        /// <summary>
-        /// 📊 دریافت محدوده‌های داده من
-        /// </summary>
-        [HttpGet("my-data-scopes")]
-        public async Task<IActionResult> GetMyDataScopes()
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var dataScopeEvaluator = HttpContext.RequestServices
-                .GetRequiredService<IDataScopeEvaluator>();
-
-            var dataScopes = await dataScopeEvaluator.EvaluateAllDataScopesAsync(
-              );
-
-            return Ok(dataScopes);
-        }
+       
 
         /// <summary>
         /// 🔍 دریافت محدوده داده برای یک منبع
@@ -119,75 +55,8 @@ namespace Authorization.Presentation.Controllers.Client
             return HandleResult(result);
         }
 
-        /// <summary>
-        /// ⚙️ دریافت تنظیمات دسترسی من
-        /// </summary>
-        [HttpGet("my-access-settings")]
-        public async Task<IActionResult> GetMyAccessSettings()
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
 
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var userId = currentUserService.UserId.Value;
-
-            // ترکیب چند سرویس
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var dataScopeEvaluator = HttpContext.RequestServices
-                .GetRequiredService<IDataScopeEvaluator>();
-
-            // اجرای موازی دو task
-            var userAccessTask = authorizationService.GetUserEffectiveAccessAsync(userId);
-            var dataScopesTask = dataScopeEvaluator.EvaluateAllDataScopesAsync();
-
-            await Task.WhenAll(userAccessTask, dataScopesTask);
-
-            var userAccess = userAccessTask.Result;
-            var dataScopes = dataScopesTask.Result;
-
-            var settings = new
-            {
-                UserId = userId,
-                TotalPermissions = userAccess.Permissions.Count,
-                TotalDataScopes = dataScopes.Count,
-                HasFullAccess = userAccess.Permissions.Any(p =>
-                    p.ResourceKey == "system" && p.CanView && p.CanCreate && p.CanEdit && p.CanDelete),
-                LastEvaluated = DateTime.UtcNow
-            };
-
-            return Ok(settings);
-        }
-
-        /// <summary>
-        /// 🛡️ بررسی دسترسی صفحه
-        /// </summary>
-        [HttpPost("check-page-access")]
-        public async Task<IActionResult> CheckPageAccess([FromBody] CheckPageAccessRequest request)
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var permissions = request.RequiredPermissions
-                .Select(p => (p.ResourceKey, p.Action))
-                .ToList();
-
-            var hasAccess = await authorizationService.CheckMultipleAccessAsync(
-                currentUserService.UserId.Value,
-                permissions);
-
-            return Ok(new { HasAccess = hasAccess });
-        }
-
+        
         // ========== APIهای نیازمند توسعه ==========
 
         /*

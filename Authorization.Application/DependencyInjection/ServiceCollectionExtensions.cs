@@ -23,7 +23,7 @@ namespace Authorization.Application.DependencyInjection
 
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ResourceHierarchyChangedEventHandler).Assembly));
 
-            services.AddScoped<IDataScopeContextProvider , DataScopeContextProvider>(); 
+            services.AddScoped<IUserDataContextProvider , UserDataContextProvider>(); 
             services.AddValidatorsFromAssembly(typeof(ServiceCollectionExtensions).Assembly);
 
             return services;

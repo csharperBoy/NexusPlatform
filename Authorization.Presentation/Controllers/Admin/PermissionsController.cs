@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+//using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 
 namespace Authorization.Presentation.Controllers.Admin
 {
@@ -90,37 +90,6 @@ namespace Authorization.Presentation.Controllers.Admin
         {
             var result = await Mediator.Send(query);
             return HandleResult(result);
-        }
-
-        /// <summary>
-        /// 📊 خلاصه دسترسی‌های کاربر
-        /// </summary>
-        [HttpGet("user/{userId:guid}/summary")]
-        [AuthorizeResource("authorization.permissions", "View")]
-        public async Task<IActionResult> GetUserPermissionsSummary(Guid userId)
-        {
-            // استفاده از AuthorizationService برای دریافت خلاصه دسترسی‌ها
-            var authorizationService = HttpContext.RequestServices
-                .GetRequiredService<IAuthorizationService>();
-
-            var userAccess = await authorizationService.GetUserEffectiveAccessAsync(userId);
-
-            var summary = new UserPermissionsSummaryDto
-            {
-                UserId = userId,
-                AllowedResources = userAccess.Permissions
-                    .Where(p => p.CanView)
-                    .Select(p => p.ResourceKey)
-                    .ToList(),
-                DeniedResources = userAccess.Permissions
-                    .Where(p => !p.CanView)
-                    .Select(p => p.ResourceKey)
-                    .ToList(),
-                HasFullSystemAccess = userAccess.Permissions.Any(p =>
-                    p.ResourceKey == "system" && p.CanView && p.CanCreate && p.CanEdit && p.CanDelete)
-            };
-
-            return Ok(summary);
         }
 
         // ========== APIهای نیازمند توسعه ==========

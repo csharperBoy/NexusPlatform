@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Users
-{
+{/*
     public class GetUserEffectiveAccessQueryHandler
         : IRequestHandler<GetUserEffectiveAccessQuery, Result<UserAccessDto>>
     {
@@ -44,4 +44,4 @@ namespace Authorization.Application.Handlers.Queries.Users
             }
         }
     }
-}
+*/}

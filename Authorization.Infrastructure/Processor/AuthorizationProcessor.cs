@@ -1,250 +1,199 @@
-﻿using Authorization.Application.DTOs.DataScopes;
-using Authorization.Application.Interfaces;
+﻿using Authorization.Application.DTOs.Permissions;
 using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
 using Authorization.Domain.Specifications;
-using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Caching;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
-using Core.Domain.Attributes;
-using Core.Domain.Common;
-using Core.Domain.Common.EntityProperties;
-using Core.Domain.Enums;
-using Core.Domain.Interfaces;
-using Core.Infrastructure.Security;
-using Core.Shared.DTOs.Identity;
-using Core.Shared.Enums;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Dynamic.Core;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Processor
 {
-    public class AuthorizationProcessor<TEntity> : IAuthorizationProcessor<TEntity>
-        where TEntity : class
+    public class AuthorizationProcessor : IAuthorizationProcessor
     {
-        ICacheService _cacheService;
-        ILogger<AuthorizationProcessor<TEntity>> _logger;
-        private readonly DataScopeContext _scope;
+        private readonly UserDataContext _userDataContext;
+        private readonly ICacheService _cache;
+        private readonly ILogger<AuthorizationProcessor> _logger;
 
-            
-        public AuthorizationProcessor(ICacheService cacheService , ILogger<AuthorizationProcessor<TEntity>> logger, DataScopeContext scope)
+        public AuthorizationProcessor(UserDataContext userDataContext, ICacheService cache, ILogger<AuthorizationProcessor> logger)
         {
-            _cacheService = cacheService;
+            _userDataContext = userDataContext;
+            _cache = cache;
             _logger = logger;
-            _scope = scope;
         }
-        public async Task<IQueryable<TEntity>> ApplyScope(IQueryable<TEntity> query)
+        public async Task<bool> CheckAccessAsync( string resourceKey, string action)
         {
+            Guid userId = _userDataContext.UserId;
+            var cacheKey = $"auth:access:{userId}:{resourceKey}:{action}";
+
             try
             {
-
-                // 🚨 جلوگیری از لوپ منطقی
-                if (typeof(TEntity) == typeof(Permission) || typeof(TEntity) == typeof(Resource))
-                    return query;
-
-                List<PermissionDto> allPermissions = _scope.Permissions.ToList();
-                
-               
-
-                // بخش IDataScopedEntity
-                if (!typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
-                    return query;
-
-                var attribute = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
-                if (attribute == null)
-                    return query;
-
-
-
-                var scope = await GetScopeForUser(allPermissions, attribute.ResourceKey);
-
-                if (scope == null)
-                    return query.Where("false");
-
-                if (scope == ScopeType.All)
-                    return query;
-
-                if (scope == ScopeType.None)
-                    return query.Where("false");
-
-                
-                if (scope == ScopeType.Unit)
-                {
-                    return _scope.OrganizationUnitIds?.Count() > 0
-                        ? query.Where("OwnerOrganizationUnitId in ( @0 )", _scope.OrganizationUnitIds)
-                        : query.Where("false");
-                }
-
-                if (scope == ScopeType.Self)
-                {
-                    return query.Where("OwnerPersonId == @0", _scope.PersonId);
-                }
-
-
-                return query.Where("false");
-
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
-        }
-
-        private async Task<ScopeType> GetScopeForUser(List<PermissionDto> allPermissions, string resourceKey, PermissionAction action = PermissionAction.View)
-        {
-            try
-            {
-                // کلید کش شامل اکشن هم می‌شود
-                var cacheKey = $"auth:scope:{_scope.UserId}:{resourceKey}:{action}";
-
-                // 1. بررسی کش
-                
-                var cached = await _cacheService.GetAsync<ScopeType?>(cacheKey);
+                // بررسی کش
+                var cached = await _cache.GetAsync<bool?>(cacheKey);
                 if (cached.HasValue)
                 {
-                    _logger.LogDebug("Cache hit for scope check: {Key} -> {Scope}", cacheKey, cached.Value);
+                    _logger.LogDebug("Cache hit for access check: {Key}", cacheKey);
                     return cached.Value;
                 }
 
-                ScopeType scope = CalculateScopeFromList(allPermissions.Where(p=>p.ResourceKey.ToLower() == resourceKey.ToLower() && 
-                (p.Action == PermissionAction.Full || p.Action == action)
-                
-                ));
-               
+                // ارزیابی دسترسی
+                var hasAccess = await HasPermissionAsync(userId, resourceKey, action);
 
-                // 3. ذخیره در کش
-                await _cacheService.SetAsync(cacheKey, scope, TimeSpan.FromMinutes(10));
+                // ذخیره در کش
+                await _cache.SetAsync(cacheKey, hasAccess, TimeSpan.FromMinutes(10));
 
-                return scope;
+                _logger.LogInformation(
+                    "Access check for user {UserId} to {Resource}:{Action} = {Result}",
+                    userId, resourceKey, action, hasAccess ? "GRANTED" : "DENIED");
+
+                return hasAccess;
             }
             catch (Exception ex)
             {
+                _logger.LogError(
+                    ex,
+                    "Error in access check for user {UserId} to {Resource}:{Action}",
+                    userId, resourceKey, action);
+                return false; // Fail secure
+            }
+        }
 
+        private async Task<bool> HasPermissionAsync(Guid userId, string resourceKey, string action)
+        {
+            try
+            {
+                var effectivePermission = await EvaluateUserPermissionsAsync(userId, resourceKey);
+
+                var result = action.ToLower() switch
+                {
+                    "view" => effectivePermission.CanView,
+                    "create" => effectivePermission.CanCreate,
+                    "edit" => effectivePermission.CanEdit,
+                    "delete" => effectivePermission.CanDelete,
+                    _ => effectivePermission.CanView // پیش‌فرض
+                };
+
+                _logger.LogDebug(
+                    "Permission check for user {UserId} to {Resource}:{Action} = {Result}",
+                    userId, resourceKey, action, result);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in permission check for user {UserId} to {Resource}:{Action}",
+                    userId, resourceKey, action);
+                return false;
+            }
+        }
+
+        private async Task<EffectivePermissionDto> EvaluateUserPermissionsAsync(Guid userId, string resourceKey)
+        {
+            var cacheKey = $"auth:permissions:{userId}:{resourceKey}";
+
+            try
+            {
+                // بررسی کش
+                var cached = await _cache.GetAsync<EffectivePermissionDto>(cacheKey);
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for permissions: {Key}", cacheKey);
+                    return cached;
+                }
+
+                // دریافت تمام دسترسی‌های فعال
+                var activePermissionsSpec = new ActivePermissionsSpec();
+                //var allPermissions = await _permissionSpecRepository.ListBySpecAsync(activePermissionsSpec);
+                var allPermissions = _userDataContext.Permissions;
+
+                Guid? personId = _userDataContext.PersonId;
+                List<Guid>? positionId = _userDataContext.PositionIds?.ToList();
+                List<Guid>? allUserRoles = _userDataContext.RoleIds?.ToList();
+                // فیلتر دسترسی‌های مربوط به کاربر و منبع
+                var userPermissions = allPermissions
+                    .Where(p => (p.AppliesTo(AssigneeType.User, userId)
+                                    || p.AppliesTo(AssigneeType.Role, allUserRoles)
+                                    || (personId != null && p.AppliesTo(AssigneeType.Person, (Guid)personId))
+                                    || (positionId != null && p.AppliesTo(AssigneeType.Position, positionId)))
+                                && p.ResourceKey == resourceKey)
+                    .ToList();
+
+                // محاسبه دسترسی مؤثر
+                var effectivePermission = CalculateEffectivePermission(userPermissions, resourceKey);
+
+                // ذخیره در کش
+                await _cache.SetAsync(cacheKey, effectivePermission, TimeSpan.FromMinutes(10));
+
+                _logger.LogDebug(
+                    "Evaluated permissions for user {UserId} to resource {Resource}: {View}/{Create}/{Edit}/{Delete}",
+                    userId, resourceKey, effectivePermission.CanView, effectivePermission.CanCreate,
+                    effectivePermission.CanEdit, effectivePermission.CanDelete);
+
+                return effectivePermission;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error evaluating permissions for user {UserId} to resource {Resource}",
+                    userId, resourceKey);
                 throw;
             }
         }
-        private ScopeType CalculateScopeFromList(IEnumerable<PermissionDto> permissions)
+        private EffectivePermissionDto CalculateEffectivePermission(List<PermissionDto> permissions, string resourceKey)
         {
-            if (permissions == null || !permissions.Any()) return ScopeType.None;
-
-            // اولویت ۱: شخص
-            var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
-            if (personPerm != null)
+            if (!permissions.Any())
             {
-                return personPerm.Effect == PermissionEffect.Deny ? ScopeType.None : personPerm.Scopes.FirstOrDefault().scope;
+                return new EffectivePermissionDto
+                {
+                    ResourceKey = resourceKey,
+                    CanView = false,
+                    CanCreate = false,
+                    CanEdit = false,
+                    CanDelete = false,
+                    EvaluatedAt = DateTime.UtcNow,
+                    PermissionCount = 0,
+                    HasExplicitDeny = false
+                };
             }
 
-            // اولویت ۲: وجود Deny در نقش/پست
-            if (permissions.Any(p => p.Effect == PermissionEffect.Deny))
+            // محاسبه دسترسی‌های پایه
+            var canView = permissions.Any(p => p.Effect == PermissionEffect.allow && (p.Action == PermissionAction.View || p.Action == PermissionAction.Full));
+            var canCreate = permissions.Any(p => p.Effect == PermissionEffect.allow && (p.Action == PermissionAction.Create || p.Action == PermissionAction.Full));
+            var canEdit = permissions.Any(p => p.Effect == PermissionEffect.allow && (p.Action == PermissionAction.Edit || p.Action == PermissionAction.Full));
+            var canDelete = permissions.Any(p => p.Effect == PermissionEffect.allow && (p.Action == PermissionAction.Delete || p.Action == PermissionAction.Full));
+
+            // اعمال منطق deny - اگر حتی یک deny وجود داشته باشد
+            var denyView = permissions.Any(p => p.Effect != PermissionEffect.allow && p.Action == PermissionAction.View);
+            var denyCreate = permissions.Any(p => p.Effect != PermissionEffect.allow && p.Action == PermissionAction.Create);
+            var denyEdit = permissions.Any(p => p.Effect != PermissionEffect.allow && p.Action == PermissionAction.Edit);
+            var denyDelete = permissions.Any(p => p.Effect != PermissionEffect.allow && p.Action == PermissionAction.Delete);
+
+            // اعمال deny rules
+            if (denyView) canView = false;
+            if (denyCreate) canCreate = false;
+            if (denyEdit) canEdit = false;
+            if (denyDelete) canDelete = false;
+
+            return new EffectivePermissionDto
             {
-                return ScopeType.None;
-            }
+                ResourceKey = resourceKey,
+                CanView = canView,
+                CanCreate = canCreate,
+                CanEdit = canEdit,
+                CanDelete = canDelete,
+                EvaluatedAt = DateTime.UtcNow,
+                PermissionCount = permissions.Count
 
-            // اولویت ۳: Max Scope
-            return permissions
-                .Where(p => p.Effect == PermissionEffect.allow)
-                .Select(p => p.Scopes.FirstOrDefault().scope)
-                .DefaultIfEmpty(ScopeType.None)
-                .Max();
-        }
-        public async Task CheckPermissionAsync(TEntity entity, PermissionAction action)
-        {
-            // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
-            // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
-            // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
-            /* if (typeof(TEntity) == typeof(Permission) ||
-                 typeof(TEntity) == typeof(Resource) ||
-                 typeof(TEntity) == typeof(UserSession)) // UserSession هم در زنجیره لاگین است
-             {
-                 return;
-             }*/
-            List<PermissionDto> allPermissions = _scope.Permissions.ToList();
-
-            var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
-            if (resourceAttr == null) return;
-            if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
-
-            var userId = _scope.UserId;
-            if (userId == null) return;
-
-            
-
-            if (entity is IDataScopedEntity dataScopedEntity)
-            {
-                // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
-                // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
-                // و Circular Dependency در استارتاپ حل شود.
-                //var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
-
-                var scope = await GetScopeForUser(allPermissions, resourceAttr.ResourceKey, action);
-
-                bool isAllowed = await IsEntityInScope(dataScopedEntity, scope, userId);
-
-                if (!isAllowed)
-                {
-                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to data scope restrictions.");
-                }
-
-            }
-        }
-     
-       private async Task<bool> IsEntityInScope(IDataScopedEntity entity, ScopeType scope, Guid userId)
-        {
-            switch (scope)
-            {
-                case ScopeType.All:
-                    return true;
-                case ScopeType.Account:
-                    return entity.OwnerUserId == userId;
-                case ScopeType.Self:
-                    var userPersonId = _scope.PersonId;
-                    return entity.OwnerPersonId == userId;
-                case ScopeType.Unit:
-                    return _scope.OrganizationUnitIds.Any(a=>a ==  entity.OwnerOrganizationUnitId ) ;
-                case ScopeType.UnitAndBelow:
-                    return _scope.OrganizationUnitIds.Any(a=>a == entity.OwnerOrganizationUnitId );
-                case ScopeType.None:
-                default:
-                    return false;
-            }
-        }
-
-        public async Task SetOwnerDefaults(TEntity entity)
-        {
-            if (entity is IDataScopedEntity scopedEntity)
-            {
-                if (scopedEntity.OwnerPersonId == null || scopedEntity.OwnerPersonId == Guid.Empty)
-                {
-                    var personId = _scope.PersonId ?? Guid.Empty;
-                    scopedEntity.SetPersonOwner(personId);
-                }
-                if (scopedEntity.OwnerOrganizationUnitId == null || scopedEntity.OwnerOrganizationUnitId == Guid.Empty)
-                {
-                    scopedEntity.SetOrganizationUnitOwner(_scope.OrganizationUnitIds?.FirstOrDefault() ?? Guid.Empty);
-                }
-                if (scopedEntity.OwnerPositionId == null || scopedEntity.OwnerPositionId == Guid.Empty)
-                {
-                    Guid? positionId = _scope.PositionIds?.FirstOrDefault();
-                    scopedEntity.SetPositionOwner(positionId ?? Guid.Empty);
-                }
-                if (scopedEntity.OwnerUserId == null || scopedEntity.OwnerUserId == Guid.Empty)
-                {
-                    scopedEntity.SetUserOwner(_scope.UserId);
-                }
-            }
-
+            };
         }
     }
 }

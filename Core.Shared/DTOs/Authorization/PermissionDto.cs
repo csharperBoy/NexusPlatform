@@ -1,5 +1,4 @@
-﻿using Core.Shared.DTOs.Authorization;
-using Core.Shared.Enums;
+﻿using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
@@ -7,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Shared.DTOs.Identity
+namespace Core.Shared.DTOs.Authorization
 {/*
      📌 PermissionDto
      -----------------
@@ -39,6 +38,14 @@ namespace Core.Shared.DTOs.Identity
         public virtual ICollection<PermissionRuleDto> Rules { get; private set; }
 
         public virtual ICollection<ScopeDto> Scopes { get; private set; }
+        public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
+        {
+            return AssigneeType == assigneeType && AssigneeId == assigneeId;
+        }
+        public bool AppliesTo(AssigneeType assigneeType, List<Guid> assigneeId)
+        {
+            return AssigneeType == assigneeType && assigneeId.Any(a => a == AssigneeId);
+        }
 
     }
 }

@@ -15,7 +15,7 @@ namespace Authorization.Infrastructure.Services
     /// <summary>
     /// پیاده‌سازی همزمان IAuthorizationService (کامل) و IAuthorizationChecker (سبک)
     /// </summary>
-    public class AuthorizationService : IAuthorizationService, IAuthorizationChecker
+  /*  public class AuthorizationService : IAuthorizationService, IAuthorizationChecker
     {
         private readonly IPermissionEvaluator _permissionEvaluator;
         private readonly IDataScopeEvaluator _dataScopeEvaluator;
@@ -46,15 +46,7 @@ namespace Authorization.Infrastructure.Services
                 // کلید کش شامل اکشن هم می‌شود
                 var cacheKey = $"auth:scope:{userId}:{resourceKey}:{action}";
 
-                // 1. بررسی کش
-                /* موقت
-                var cached = await _cache.GetAsync<ScopeType?>(cacheKey);
-                if (cached.HasValue)
-                {
-                    _logger.LogDebug("Cache hit for scope check: {Key} -> {Scope}", cacheKey, cached.Value);
-                    return cached.Value;
-                }
-                */
+               
 
                 // 2. واگذاری محاسبه به Evaluator
                 // لاجیک پیچیده سلسله مراتب در اینجا صدا زده می‌شود
@@ -299,4 +291,5 @@ namespace Authorization.Infrastructure.Services
             }
         }
     }
+*/
 }

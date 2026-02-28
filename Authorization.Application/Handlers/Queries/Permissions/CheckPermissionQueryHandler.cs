@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Permissions
-{
+{/*
     public class CheckPermissionQueryHandler
         : IRequestHandler<CheckPermissionQuery, Result<bool>>
     {
@@ -51,4 +51,4 @@ namespace Authorization.Application.Handlers.Queries.Permissions
             }
         }
     }
-}
+*/}

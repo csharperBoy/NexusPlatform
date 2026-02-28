@@ -64,10 +64,10 @@ namespace Core.Infrastructure.Repositories
         protected readonly TDbContext _dbContext;
         protected readonly DbSet<TEntity> _dbSet;
 
-        protected readonly IAuthorizationProcessor<TEntity> _authorizationProcessor;
+        protected readonly IRowLevelSecurityProcessor<TEntity> _authorizationProcessor;
         protected readonly ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> _logger;
 
-        public EfSpecificationRepository(TDbContext dbContext, IAuthorizationProcessor<TEntity> authorizationProcessor, 
+        public EfSpecificationRepository(TDbContext dbContext, IRowLevelSecurityProcessor<TEntity> authorizationProcessor, 
             ILogger<EfSpecificationRepository<TDbContext, TEntity, TKey>> logger)
         {
             _dbContext = dbContext;

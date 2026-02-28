@@ -13,12 +13,12 @@ namespace Core.Application.Behaviors
     public class AccessBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     {
-        private readonly IDataScopeContextProvider _provider;
-        private readonly DataScopeContext _context;
+        private readonly IUserDataContextProvider _provider;
+        private readonly UserDataContext _context;
 
         public AccessBehavior(
-            IDataScopeContextProvider provider,
-            DataScopeContext context)
+            IUserDataContextProvider provider,
+            UserDataContext context)
         {
             _provider = provider;
             _context = context;
@@ -32,28 +32,28 @@ namespace Core.Application.Behaviors
             var ctx = await _provider.GetAsync(cancellationToken);
 
             // مقداردهی Scoped Instance
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.UserId))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.UserId))!
                 .SetValue(_context, ctx.UserId);
 
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.PersonId))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PersonId))!
                 .SetValue(_context, ctx.PersonId);
 
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.OrganizationUnitIds))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
                 .SetValue(_context, ctx.OrganizationUnitIds);
 
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.PositionIds))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PositionIds))!
                 .SetValue(_context, ctx.PositionIds);
 
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.RoleIds))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.RoleIds))!
                 .SetValue(_context, ctx.RoleIds);
 
-            typeof(DataScopeContext)
-                .GetProperty(nameof(DataScopeContext.Permissions))!
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.Permissions))!
                 .SetValue(_context, ctx.Permissions);
 
             return await next();

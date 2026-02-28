@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.DTOs.Users;
-using Core.Shared.DTOs.Identity;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using MediatR;
 using System;

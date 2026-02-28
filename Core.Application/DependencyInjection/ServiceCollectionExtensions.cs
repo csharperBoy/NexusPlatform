@@ -25,7 +25,7 @@ namespace Core.Application.DependencyInjection
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RetryBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AccessBehavior<,>));
-            services.AddScoped<DataScopeContext>();
+            services.AddScoped<UserDataContext>();
             return services;
         }
         public static IServiceCollection Core_AllModuleNullServiceInject(this IServiceCollection services, IConfiguration configuration)

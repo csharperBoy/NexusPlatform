@@ -49,7 +49,7 @@ namespace Identity.Infrastructure.Services
             _permissionService = permissionService;
         }
 
-        public async Task<DataScopeContext> GetInitializerUserContext()
+        public async Task<UserDataContext> GetInitializerUserContext()
         {
             var user = await _userManager.FindByNameAsync("intitializer");
 
@@ -66,7 +66,7 @@ namespace Identity.Infrastructure.Services
             List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(user.Id);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(user.Id, PersonId, PositionId, RoleIds);
            
-            return new DataScopeContext
+            return new UserDataContext
             {
                 UserId = user.Id,
                 PersonId = PersonId,

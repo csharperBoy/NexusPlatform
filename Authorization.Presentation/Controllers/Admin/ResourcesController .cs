@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
 
-using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
+//using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
 
 
 namespace Authorization.Presentation.Controllers.Admin

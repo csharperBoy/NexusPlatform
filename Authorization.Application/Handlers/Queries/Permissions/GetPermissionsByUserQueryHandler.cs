@@ -1,7 +1,7 @@
 ﻿using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
 using Authorization.Application.Queries.Permissions;
-using Core.Shared.DTOs.Identity;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;

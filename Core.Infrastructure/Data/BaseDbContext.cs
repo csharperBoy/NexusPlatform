@@ -54,7 +54,7 @@ namespace Core.Infrastructure.Data
             if (!entries.Any()) return;
 
             // دریافت ICurrentUserService به صورت lazy
-            var currentUserContext = _serviceProvider.GetService<DataScopeContext>();
+            var currentUserContext = _serviceProvider.GetService<UserDataContext>();
             var currentUserId = currentUserContext.UserId;
             var currentUserName = currentUserContext.UserName;
 
