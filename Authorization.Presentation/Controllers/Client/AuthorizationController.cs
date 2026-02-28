@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.Queries.Permissions;
 using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Core.Presentation.Controllers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -27,11 +28,11 @@ namespace Authorization.Presentation.Controllers.Client
         {
             // اگر UserId مشخص نشده، از کاربر جاری استفاده کن
             var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
+                .GetRequiredService<UserDataContext>();
 
-            if (query.UserId == Guid.Empty && currentUserService.UserId.HasValue)
+            if (query.UserId == Guid.Empty && currentUserService.UserId != Guid.Empty)
             {
-                query = query with { UserId = currentUserService.UserId.Value };
+                query = query with { UserId = currentUserService.UserId };
             }
 
             var result = await Mediator.Send(query);
@@ -45,38 +46,18 @@ namespace Authorization.Presentation.Controllers.Client
         public async Task<IActionResult> GetMyPermissions()
         {
             var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
+                .GetRequiredService<UserDataContext>();
 
-            if (!currentUserService.UserId.HasValue)
+            if (currentUserService.UserId == Guid.Empty)
                 return Unauthorized();
 
-            var query = new GetPermissionsByUserQuery(currentUserService.UserId.Value);
+            var query = new GetPermissionsByUserQuery(currentUserService.UserId);
             var result = await Mediator.Send(query);
             return HandleResult(result);
         }
 
       
 
-        /// <summary>
-        /// 🎯 بررسی دسترسی براساس مسیر
-        /// </summary>
-        [HttpPost("check-by-route")]
-        public async Task<IActionResult> CheckByRoute([FromBody] CheckByRouteRequest request)
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var query = new CheckPermissionQuery(
-                currentUserService.UserId.Value,
-                request.ResourceKey,
-                request.Action);
-
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
 
         // ========== APIهای نیازمند توسعه ==========
 

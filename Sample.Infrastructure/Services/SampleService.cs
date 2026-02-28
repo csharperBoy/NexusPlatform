@@ -4,6 +4,7 @@ using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Results;
 using Microsoft.Extensions.Logging;
@@ -62,14 +63,14 @@ namespace Sample.Infrastructure.Services
         private readonly IRepository<SampleDbContext, SampleEntity, Guid> _repository;
         private readonly IUnitOfWork<SampleDbContext> _uow;
         private readonly ILogger<SampleService> _logger;
-        private readonly ICurrentUserService _currentUser;
+        private readonly UserDataContext _currentUser;
         private readonly ICacheService _cache;
 
         public SampleService(
             IRepository<SampleDbContext, SampleEntity, Guid> repository,
             IUnitOfWork<SampleDbContext> uow,
             ILogger<SampleService> logger,
-            ICurrentUserService currentUser,
+            UserDataContext currentUser,
             ICacheService cache)
         {
             _repository = repository;

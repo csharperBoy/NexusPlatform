@@ -30,7 +30,7 @@ namespace Core.Application.Abstractions.Security
      که لایه Application فقط قرارداد را بشناسد، نه جزئیات پیاده‌سازی.
      پیاده‌سازی آن در لایه Infrastructure خواهد بود (مثلاً CurrentUserService مبتنی بر HttpContext).
     */
-
+    /*
     public interface ICurrentUserService
     {
         Guid? UserId { get; }          // 📌 شناسه کاربر فعلی
@@ -41,5 +41,5 @@ namespace Core.Application.Abstractions.Security
         List<Guid>? OrganizationUnitId { get; }  
 
         Task<(Guid UserId, Guid? PersonId, List<Guid>? PositionId, List<Guid> RoleIds, List<Guid>? OrganizationUnitId)> GetUserContext();
-    }
+    }*/
 }

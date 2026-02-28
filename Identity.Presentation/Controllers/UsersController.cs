@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -13,9 +14,9 @@ namespace Identity.Presentation.Controllers
     [Route("api/identity/[controller]")]
     public class UsersController : ControllerBase
     {
-        private readonly ICurrentUserService _currentUser;
+        private readonly UserDataContext _currentUser;
 
-        public UsersController(ICurrentUserService currentUser)
+        public UsersController(UserDataContext currentUser)
         {
             _currentUser = currentUser;
         }
@@ -24,14 +25,13 @@ namespace Identity.Presentation.Controllers
         [Authorize]
         public IActionResult Me()
         {
-            if (!_currentUser.IsAuthenticated)
+            if (_currentUser.UserId == Guid.Empty)
                 return Unauthorized();
 
             return Ok(new
             {
                 _currentUser.UserId,
-                _currentUser.UserName,
-                Roles = _currentUser.Roles
+                _currentUser.UserName
             });
         }
     }

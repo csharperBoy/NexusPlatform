@@ -3,9 +3,9 @@
 
 2- for create magration execute this command in developer PowerShell:
 
-dotnet ef migrations add Initial_Authorization -p Authorization.Infrastructure -s "AkSteel Welfare Platform"
+dotnet ef migrations add Edit5_Authorization -p Authorization.Infrastructure -s "AkSteel Welfare Platform"
 or
-Add-Migration Initial_Authorization -Project Authorization.Infrastructure -Context AuthorizationDbContext -Start "AkSteel Welfare Platform"
+Add-Migration Edit5_Authorization -Project Authorization.Infrastructure -Context AuthorizationDbContext -Start "AkSteel Welfare Platform"
 
 3- for update database execute this command in developer powershell or package manager console 
 dotnet ef database update -p Authorization.Infrastructure -s  "AkSteel Welfare Platform"

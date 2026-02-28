@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Security;
+using Core.Application.Context;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Sample.Application.DTOs;
@@ -43,7 +44,7 @@ namespace Sample.Test.Services
     {
         private readonly Mock<IRepository<SampleDbContext, SampleEntity, Guid>> _repositoryMock;
         private readonly Mock<IUnitOfWork<SampleDbContext>> _uowMock;
-        private readonly Mock<ICurrentUserService> _currentUserMock;
+        private readonly Mock<UserDataContext> _currentUserMock;
         private readonly Mock<ICacheService> _cacheMock;
         private readonly Mock<ILogger<SampleService>> _loggerMock;
 
@@ -53,7 +54,7 @@ namespace Sample.Test.Services
         {
             _repositoryMock = new Mock<IRepository<SampleDbContext, SampleEntity, Guid>>();
             _uowMock = new Mock<IUnitOfWork<SampleDbContext>>();
-            _currentUserMock = new Mock<ICurrentUserService>();
+            _currentUserMock = new Mock<UserDataContext>();
             _cacheMock = new Mock<ICacheService>();
             _loggerMock = new Mock<ILogger<SampleService>>();
 

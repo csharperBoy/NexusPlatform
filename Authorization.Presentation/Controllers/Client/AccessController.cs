@@ -35,26 +35,6 @@ namespace Authorization.Presentation.Controllers.Client
 
        
 
-        /// <summary>
-        /// 🔍 دریافت محدوده داده برای یک منبع
-        /// </summary>
-        [HttpGet("my-data-scopes/resource/{resourceKey}")]
-        public async Task<IActionResult> GetMyDataScopeByResource(string resourceKey)
-        {
-            var currentUserService = HttpContext.RequestServices
-                .GetRequiredService<ICurrentUserService>();
-
-            if (!currentUserService.UserId.HasValue)
-                return Unauthorized();
-
-            var query = new GetUserDataScopeByResourceQuery(
-                currentUserService.UserId.Value,
-                resourceKey);
-
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
-
 
         
         // ========== APIهای نیازمند توسعه ==========
