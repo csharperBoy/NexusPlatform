@@ -20,7 +20,6 @@ namespace Core.Presentation.Filters
         private readonly string _resourceKey;
         private readonly string _action;
 
-        // Constructor برای استفاده توسط Factory
         public AuthorizeResourceFilter(
             IAuthorizationProcessor authorizationChecker,
              UserDataContext userDataContext,
@@ -32,8 +31,6 @@ namespace Core.Presentation.Filters
             _resourceKey = resourceKey;
             _action = action;
         }
-
-        
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
