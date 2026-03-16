@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Audit.Infrastructure.Migrations
 {
     [DbContext(typeof(AuditDbContext))]
-    [Migration("20251231122216_Edit2_Audit1")]
-    partial class Edit2_Audit1
+    [Migration("20260316130708_Edit_1_Audit")]
+    partial class Edit_1_Audit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,12 +40,6 @@ namespace Audit.Infrastructure.Migrations
                     b.Property<string>("Changes")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("EntityId")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -56,12 +50,6 @@ namespace Audit.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid?>("OwnerOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
@@ -69,6 +57,9 @@ namespace Audit.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("Timestamp")
@@ -79,6 +70,15 @@ namespace Audit.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_AuditLog_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_AuditLog_OwnerPerson");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_AuditLog_ScopedLookup");
 
                     b.ToTable("AuditLogs", "audit");
                 });

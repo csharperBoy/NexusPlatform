@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authorization.Infrastructure.Migrations
 {
     [DbContext(typeof(AuthorizationDbContext))]
-    [Migration("20260105111455_Edit4_Authorization")]
-    partial class Edit4_Authorization
+    [Migration("20260316130818_Initial_Authorization")]
+    partial class Initial_Authorization
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,6 +54,9 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<byte>("Effect")
+                        .HasColumnType("tinyint");
+
                     b.Property<DateTime?>("EffectiveFrom")
                         .HasColumnType("datetime2");
 
@@ -85,15 +88,6 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<byte>("Scope")
-                        .HasColumnType("tinyint");
-
-                    b.Property<Guid?>("SpecificScopeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt")
@@ -114,15 +108,75 @@ namespace Authorization.Infrastructure.Migrations
                     b.HasIndex("OwnerPersonId")
                         .HasDatabaseName("IX_Permission_OwnerPerson");
 
-                    b.HasIndex("ResourceId");
-
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_Permission_ScopedLookup");
 
                     b.HasIndex("AssigneeId", "ResourceId", "Action")
                         .HasDatabaseName("IX_Permissions_FastLookup");
 
+                    b.HasIndex("ResourceId", "Action", "AssigneeType", "AssigneeId", "Effect")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Permissions_Unique");
+
                     b.ToTable("Permissions", "authorization");
+                });
+
+            modelBuilder.Entity("Authorization.Domain.Entities.PermissionRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FieldName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GroupOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("JoinEntity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JoinField")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JoinForeignKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JoinLocalKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte>("LogicalOperator")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte>("Operator")
+                        .HasColumnType("tinyint");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("Type")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("PermissionRule", "authorization");
                 });
 
             modelBuilder.Entity("Authorization.Domain.Entities.Resource", b =>
@@ -196,6 +250,15 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<byte>("Type")
                         .HasColumnType("tinyint");
 
+                    b.Property<bool>("hasFieldBaseCondition")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("hasRelationBaseCondition")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("hasScope")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt")
@@ -227,6 +290,37 @@ namespace Authorization.Infrastructure.Migrations
                         .HasDatabaseName("IX_Resource_ScopedLookup");
 
                     b.ToTable("Resources", "authorization");
+                });
+
+            modelBuilder.Entity("Authorization.Domain.Entities.Scope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PermissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("scope")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("Scope", "authorization");
                 });
 
             modelBuilder.Entity("Core.Domain.Common.OutboxMessage", b =>
@@ -300,6 +394,15 @@ namespace Authorization.Infrastructure.Migrations
                     b.Navigation("Resource");
                 });
 
+            modelBuilder.Entity("Authorization.Domain.Entities.PermissionRule", b =>
+                {
+                    b.HasOne("Authorization.Domain.Entities.Permission", null)
+                        .WithMany("Rules")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Authorization.Domain.Entities.Resource", b =>
                 {
                     b.HasOne("Authorization.Domain.Entities.Resource", "Parent")
@@ -307,6 +410,22 @@ namespace Authorization.Infrastructure.Migrations
                         .HasForeignKey("ParentId");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Authorization.Domain.Entities.Scope", b =>
+                {
+                    b.HasOne("Authorization.Domain.Entities.Permission", null)
+                        .WithMany("Scopes")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Authorization.Domain.Entities.Permission", b =>
+                {
+                    b.Navigation("Rules");
+
+                    b.Navigation("Scopes");
                 });
 
             modelBuilder.Entity("Authorization.Domain.Entities.Resource", b =>

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Audit.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial_Audit : Migration
+    public partial class Edit_1_Audit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -24,8 +24,12 @@ namespace Audit.Infrastructure.Migrations
                     Action = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     EntityName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     EntityId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Changes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", maxLength: 100, nullable: true),
+                    Changes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -54,6 +58,24 @@ namespace Audit.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_OutboxMessages", x => x.Id);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLog_OwnerOrgUnit",
+                schema: "audit",
+                table: "AuditLogs",
+                column: "OwnerOrganizationUnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLog_OwnerPerson",
+                schema: "audit",
+                table: "AuditLogs",
+                column: "OwnerPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AuditLog_ScopedLookup",
+                schema: "audit",
+                table: "AuditLogs",
+                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OutboxMessages_ProcessedOnUtc",
