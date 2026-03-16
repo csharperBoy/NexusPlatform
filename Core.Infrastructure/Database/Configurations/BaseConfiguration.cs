@@ -11,81 +11,64 @@ using System.Threading.Tasks;
 namespace Core.Infrastructure.Database.Configurations
 {
     public class BaseConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
-        where TEntity : class
+    where TEntity : class
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {
-            if (typeof(BaseEntity).IsAssignableFrom(typeof(TEntity)))
-            {
-                ConfigureBaseEntity(builder as EntityTypeBuilder<BaseEntity>);
-            }
             if (typeof(IAuditableEntity).IsAssignableFrom(typeof(TEntity)))
             {
-                ConfigureAuditable(builder as EntityTypeBuilder<IAuditableEntity>);
+                ConfigureAuditable(builder);
             }
+
             if (typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
             {
-                ConfigureDataScoped(builder as EntityTypeBuilder<IDataScopedEntity>);
+                ConfigureDataScoped(builder);
+            }
+
+            if (typeof(BaseEntity).IsAssignableFrom(typeof(TEntity)))
+            {
+                ConfigureBaseEntity(builder);
             }
         }
-        private void ConfigureBaseEntity(EntityTypeBuilder<BaseEntity> builder)
+
+        private void ConfigureAuditable(EntityTypeBuilder<TEntity> builder)
         {
+            builder.Property("CreatedAt")
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
 
-        }
-
-        private void ConfigureAuditable(EntityTypeBuilder<IAuditableEntity> builder)
-        {
-            // تنظیمات مشترک برای همه Auditable Entities
-            builder.Property(e => e.CreatedAt)
-            .IsRequired()
-            .HasDefaultValueSql("GETUTCDATE()"); // مقدار پیش‌فرض در دیتابیس
-
-            builder.Property(e => e.CreatedBy)
+            builder.Property("CreatedBy")
                 .HasMaxLength(256)
                 .IsRequired();
 
-            builder.Property(e => e.ModifiedAt)
+            builder.Property("ModifiedAt")
                 .IsRequired(false);
 
-            builder.Property(e => e.ModifiedBy)
+            builder.Property("ModifiedBy")
                 .HasMaxLength(256)
                 .IsRequired(false);
 
-            // ایندکس‌های عملکردی
-            builder.HasIndex(e => e.CreatedAt)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_CreatedAt");
-
-            builder.HasIndex(e => e.ModifiedAt)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_ModifiedAt");
-
-            builder.HasIndex(e => e.CreatedBy)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_CreatedBy");
-
-            builder.HasIndex(e => e.ModifiedBy)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_ModifiedBy");
+            builder.HasIndex("CreatedAt").HasDatabaseName($"IX_{typeof(TEntity).Name}_CreatedAt");
+            builder.HasIndex("ModifiedAt").HasDatabaseName($"IX_{typeof(TEntity).Name}_ModifiedAt");
+            builder.HasIndex("CreatedBy").HasDatabaseName($"IX_{typeof(TEntity).Name}_CreatedBy");
+            builder.HasIndex("ModifiedBy").HasDatabaseName($"IX_{typeof(TEntity).Name}_ModifiedBy");
         }
-        
-        private void ConfigureDataScoped(EntityTypeBuilder<IDataScopedEntity> builder)
+
+        private void ConfigureDataScoped(EntityTypeBuilder<TEntity> builder)
         {
-            // تنظیمات مربوط به Scoping
-            builder.Property(e => e.OwnerOrganizationUnitId)
-                .IsRequired(false); // بسته به بیزینس می‌تواند اجباری باشد
+            builder.Property("OwnerOrganizationUnitId").IsRequired(false);
+            builder.Property("OwnerPersonId").IsRequired(false);
 
-            builder.Property(e => e.OwnerPersonId)
-                .IsRequired(false);
-
-            // ایندکس‌های حیاتی برای Performance در زمان فیلتر کردن داده‌ها
-            builder.HasIndex(e => e.OwnerOrganizationUnitId)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_OwnerOrgUnit");
-
-            builder.HasIndex(e => e.OwnerPersonId)
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_OwnerPerson");
-
-            // ایندکس ترکیبی برای سرعت بیشتر در سناریوهای معمول
-            builder.HasIndex(e => new { e.OwnerOrganizationUnitId, e.OwnerPersonId })
-                .HasDatabaseName($"IX_{typeof(TEntity).Name}_ScopedLookup");
+            builder.HasIndex("OwnerOrganizationUnitId").HasDatabaseName($"IX_{typeof(TEntity).Name}_OwnerOrgUnit");
+            builder.HasIndex("OwnerPersonId").HasDatabaseName($"IX_{typeof(TEntity).Name}_OwnerPerson");
+            builder.HasIndex(new[] { "OwnerOrganizationUnitId", "OwnerPersonId" })
+                   .HasDatabaseName($"IX_{typeof(TEntity).Name}_ScopedLookup");
         }
 
-
+        private void ConfigureBaseEntity(EntityTypeBuilder<TEntity> builder)
+        {
+            // اگر خاصیتی در BaseEntity داری، اینجا تنظیم کن
+        }
     }
+
 }
