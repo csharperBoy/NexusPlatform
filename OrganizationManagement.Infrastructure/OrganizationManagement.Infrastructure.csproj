@@ -12,4 +12,8 @@
     <ProjectReference Include="..\OrganizationManagement.Domain\OrganizationManagement.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

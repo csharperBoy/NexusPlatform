@@ -14,40 +14,6 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Data
 {
-    /*
-    public class AuthorizationDbContext : DbContext
-    {
-        public AuthorizationDbContext(
-            DbContextOptions<AuthorizationDbContext> options,
-            IServiceProvider serviceProvider)
-            : base(options, serviceProvider)
-        {
-        }
-        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
-      : base(options
-            , new ServiceCollection().BuildServiceProvider()
-            ) // ServiceProvider خالی
-        {
-        }
-       
-        public DbSet<Resource> Resources { get; set; }
-        public DbSet<Permission> Permissions { get; set; }
-        public DbSet<PermissionRule> PermissionRule { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-            // اعمال اسکیما
-            modelBuilder.HasDefaultSchema("authorization");
-
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("authorization"));
-            modelBuilder.ApplyConfiguration(new ResourceConfiguration());
-            modelBuilder.ApplyConfiguration(new PermissionRuleConfiguration());
-            modelBuilder.ApplyConfiguration(new PermissionConfiguration());
-
-        }
-    }
-   */
     public class AuthorizationDbContext : BaseDbContext
     {
         public AuthorizationDbContext(

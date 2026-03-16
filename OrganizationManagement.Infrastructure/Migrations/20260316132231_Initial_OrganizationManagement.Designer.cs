@@ -12,7 +12,7 @@ using OrganizationManagement.Infrastructure.Data;
 namespace OrganizationManagement.Infrastructure.Migrations
 {
     [DbContext(typeof(OrganizationManagementDbContext))]
-    [Migration("20251231121235_Initial_OrganizationManagement")]
+    [Migration("20260316132231_Initial_OrganizationManagement")]
     partial class Initial_OrganizationManagement
     {
         /// <inheritdoc />
