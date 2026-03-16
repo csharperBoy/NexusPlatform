@@ -13,11 +13,12 @@ namespace Core.Infrastructure.Data
     {
         private readonly IServiceProvider _serviceProvider;
 
-        protected BaseDbContext(DbContextOptions options, IServiceProvider serviceProvider)
-            : base(options)
-        {
-            _serviceProvider = serviceProvider;
-        }
+         protected BaseDbContext(DbContextOptions options, IServiceProvider serviceProvider)
+             : base(options)
+         {
+             _serviceProvider = serviceProvider;
+         }
+        //public BaseDbContext(DbContextOptions options) : base(options) { }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -47,40 +48,48 @@ namespace Core.Infrastructure.Data
 
         private void UpdateAuditableEntities()
         {
-            var entries = ChangeTracker
-                .Entries<IAuditableEntity>()
-                .ToList();
+              var entries = ChangeTracker
+                  .Entries<IAuditableEntity>()
+                  .ToList();
 
-            if (!entries.Any()) return;
+              if (!entries.Any()) return;
 
-            // دریافت ICurrentUserService به صورت lazy
-            var currentUserContext = _serviceProvider.GetService<UserDataContext>();
-            var currentUserId = currentUserContext.UserId;
-            var currentUserName = currentUserContext.UserName;
+              // دریافت ICurrentUserService به صورت lazy
+              var currentUserContext = _serviceProvider.GetService<UserDataContext>();
+              var currentUserId = currentUserContext.UserId;
+              var currentUserName = currentUserContext.UserName;
 
-            foreach (var entry in entries)
-            {
-                if (entry.State == EntityState.Added)
-                {
-                    entry.Entity.CreatedAt = DateTime.UtcNow;
-                    entry.Entity.CreatedBy = currentUserId.ToString();
+              foreach (var entry in entries)
+              {
+                  if (entry.State == EntityState.Added)
+                  {
+                      entry.Entity.CreatedAt = DateTime.UtcNow;
+                      entry.Entity.CreatedBy = currentUserId.ToString();
 
-                    // برای Modified هم در حالت Added مقدار دهی می‌کنیم
-                    entry.Entity.ModifiedAt = DateTime.UtcNow;
-                    entry.Entity.ModifiedBy = currentUserId.ToString();
-                }
-                else if (entry.State == EntityState.Modified)
-                {
-                    entry.Entity.ModifiedAt = DateTime.UtcNow;
-                    entry.Entity.ModifiedBy = currentUserId.ToString();
+                      // برای Modified هم در حالت Added مقدار دهی می‌کنیم
+                      entry.Entity.ModifiedAt = DateTime.UtcNow;
+                      entry.Entity.ModifiedBy = currentUserId.ToString();
+                  }
+                  else if (entry.State == EntityState.Modified)
+                  {
+                      entry.Entity.ModifiedAt = DateTime.UtcNow;
+                      entry.Entity.ModifiedBy = currentUserId.ToString();
 
-                    // از تغییر CreatedAt جلوگیری می‌کنیم
-                    entry.Property(nameof(IAuditableEntity.CreatedAt)).IsModified = false;
-                    entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
-                }
-            }
+                      // از تغییر CreatedAt جلوگیری می‌کنیم
+                      entry.Property(nameof(IAuditableEntity.CreatedAt)).IsModified = false;
+                      entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
+                  }
+              }
         }
 
+
+    }
+
+    public abstract class BaseDbContext2 : DbContext
+    {
+        public BaseDbContext2(DbContextOptions options) : base(options) { }
+
+    
         
     }
 }

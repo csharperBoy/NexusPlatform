@@ -11,6 +11,8 @@ namespace Audit.Infrastructure.Data
 {
     public class AuditDbContextFactory : IDesignTimeDbContextFactory<AuditDbContext>
     {
+       
+
         public AuditDbContext CreateDbContext(string[] args)
         {
             var basePath = Directory.GetCurrentDirectory();

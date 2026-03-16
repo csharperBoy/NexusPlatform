@@ -4,6 +4,7 @@ using Audit.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Audit.Infrastructure.Migrations
 {
     [DbContext(typeof(AuditDbContext))]
-    partial class AuditDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312132359_Edit_Audit2")]
+    partial class Edit_Audit2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -67,15 +70,6 @@ namespace Audit.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_AuditLog_OwnerOrgUnit");
-
-                    b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_AuditLog_OwnerPerson");
-
-                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_AuditLog_ScopedLookup");
 
                     b.ToTable("AuditLogs", "audit");
                 });

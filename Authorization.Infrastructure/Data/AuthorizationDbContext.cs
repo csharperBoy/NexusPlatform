@@ -1,5 +1,6 @@
 ﻿using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Configurations;
+using Core.Domain.Common;
 using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,8 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Data
 {
-    public class AuthorizationDbContext : BaseDbContext
+    /*
+    public class AuthorizationDbContext : DbContext
     {
         public AuthorizationDbContext(
             DbContextOptions<AuthorizationDbContext> options,
@@ -22,9 +24,12 @@ namespace Authorization.Infrastructure.Data
         {
         }
         public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
-      : base(options, new ServiceCollection().BuildServiceProvider()) // ServiceProvider خالی
+      : base(options
+            , new ServiceCollection().BuildServiceProvider()
+            ) // ServiceProvider خالی
         {
         }
+       
         public DbSet<Resource> Resources { get; set; }
         public DbSet<Permission> Permissions { get; set; }
         public DbSet<PermissionRule> PermissionRule { get; set; }
@@ -40,6 +45,35 @@ namespace Authorization.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PermissionRuleConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
 
+        }
+    }
+   */
+    public class AuthorizationDbContext : BaseDbContext
+    {
+        public AuthorizationDbContext(
+        DbContextOptions<AuthorizationDbContext> options,
+        IServiceProvider serviceProvider)
+        : base(options, serviceProvider)
+        {
+        }
+        public AuthorizationDbContext(DbContextOptions<AuthorizationDbContext> options)
+       : base(options
+             , new ServiceCollection().BuildServiceProvider()
+             )
+        {
+        }
+
+        public DbSet<Resource> Resources { get; set; } = null!;
+        public DbSet<Permission> Permissions { get; set; } = null!;
+        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("authorization");
+
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("authorization"));
+            modelBuilder.ApplyConfiguration(new ResourceConfiguration());
+            modelBuilder.ApplyConfiguration(new PermissionConfiguration());
         }
     }
 
