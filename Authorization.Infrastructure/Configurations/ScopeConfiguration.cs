@@ -15,7 +15,7 @@ namespace Authorization.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<Resource> builder)
         {
             base.Configure(builder);
-            builder.ToTable("Resources", "authorization");
+            builder.ToTable("Scope", "authorization");
 
             builder.Property(r => r.Key).IsRequired().HasMaxLength(100).IsUnicode(false);
             builder.HasIndex(r => r.Key).IsUnique();

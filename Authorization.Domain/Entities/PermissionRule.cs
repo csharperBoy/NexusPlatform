@@ -20,7 +20,7 @@ namespace Authorization.Domain.Entities
         #endregion
         public Guid PermissionId { get; private set; }
 
-        public RuleType Type { get; private set; }
+        //public RuleType Type { get; private set; }
         // Scope
         // Field
         // Relation
@@ -29,12 +29,13 @@ namespace Authorization.Domain.Entities
         public string? FieldName { get; private set; }
 
         // For Relation
-        public string? JoinEntity { get; private set; }
+       /* public string? JoinEntity { get; private set; }
         public string? JoinLocalKey { get; private set; }
         public string? JoinForeignKey { get; private set; }
-        public string? JoinField { get; private set; }
+        public string? JoinField { get; private set; }*/
+        public Guid? JoinDetailId {  get; private set; }
 
-        public ComparisonOperator Operator { get; private set; }
+        public ComparisonOperator Operator { get; private set; } // = ، < ، > ، !=
         public string? Value { get; private set; }
 
         public LogicalOperator LogicalOperator { get; private set; } // AND / OR
