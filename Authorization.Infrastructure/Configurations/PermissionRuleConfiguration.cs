@@ -16,7 +16,7 @@ namespace Authorization.Infrastructure.Configurations
         {
             base.Configure(builder);
 
-            builder.ToTable("PermissionRule", "authorization");
+            builder.ToTable("PermissionRules", "authorization");
 
             builder.HasKey(ds => ds.Id);
             builder.HasIndex(ds => ds.Id).IsUnique();

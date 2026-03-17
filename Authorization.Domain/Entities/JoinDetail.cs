@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common.EntityProperties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
+
+    [SecuredResource("Authorization.JoinDetail")]
     public class JoinDetail : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement

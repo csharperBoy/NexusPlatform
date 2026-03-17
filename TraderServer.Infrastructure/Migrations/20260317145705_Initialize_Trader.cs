@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Trader.Server.Collector.Infrastructure.Migrations
+namespace TraderServer.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class Initialize_Trader : Migration
@@ -12,21 +12,14 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.EnsureSchema(
-                name: "collector");
-
-            migrationBuilder.EnsureSchema(
                 name: "trader");
 
             migrationBuilder.CreateTable(
-                name: "OptionContracts",
-                schema: "collector",
+                name: "BrokerageAccount",
+                schema: "trader",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DueDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    FkStockId = table.Column<Guid>(type: "uniqueidentifier", unicode: false, nullable: false),
-                    NumberOfOpenPositionAllow = table.Column<int>(type: "int", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -35,7 +28,34 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EquivalentResourceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Platform = table.Column<byte>(type: "tinyint", nullable: false),
+                    FkUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BrokerageAccount", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OptionContracts",
+                schema: "trader",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DueDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    FkStockId = table.Column<Guid>(type: "uniqueidentifier", unicode: false, nullable: false),
+                    NumberOfOpenPositionAllow = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -44,15 +64,10 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Options",
-                schema: "collector",
+                schema: "trader",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkOptionContractId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Side = table.Column<byte>(type: "tinyint", nullable: false),
-                    DuePrice = table.Column<long>(type: "bigint", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -61,7 +76,11 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EquivalentResourceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    FkOptionContractId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Side = table.Column<byte>(type: "tinyint", nullable: false),
+                    DuePrice = table.Column<long>(type: "bigint", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -93,10 +112,18 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "SnapShotFromOptionTrading",
-                schema: "collector",
+                schema: "trader",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkOptionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastPrice = table.Column<int>(type: "int", nullable: true),
@@ -146,15 +173,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     TotalBuyLegalPersonalityCount = table.Column<long>(type: "bigint", nullable: true),
                     TotalSellLegalPersonalityVolume = table.Column<long>(type: "bigint", nullable: true),
                     TotalSellLegalPersonalityCount = table.Column<long>(type: "bigint", nullable: true),
-                    NumberOfOpenPositions = table.Column<long>(type: "bigint", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    NumberOfOpenPositions = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,10 +182,18 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "SnapShotFromStockTrading",
-                schema: "collector",
+                schema: "trader",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkStockId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     DateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastPrice = table.Column<int>(type: "int", nullable: true),
@@ -216,15 +243,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     TotalBuyLegalPersonalityVolume = table.Column<long>(type: "bigint", nullable: true),
                     TotalBuyLegalPersonalityCount = table.Column<long>(type: "bigint", nullable: true),
                     TotalSellLegalPersonalityVolume = table.Column<long>(type: "bigint", nullable: true),
-                    TotalSellLegalPersonalityCount = table.Column<long>(type: "bigint", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    TotalSellLegalPersonalityCount = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -233,27 +252,10 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Stock",
-                schema: "collector",
+                schema: "trader",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Isin = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    TypeOfMarket = table.Column<byte>(type: "tinyint", nullable: true),
-                    PreOpeningTimeStart = table.Column<TimeOnly>(type: "time", nullable: true),
-                    PreOpeningTimeEnd = table.Column<TimeOnly>(type: "time", nullable: true),
-                    OpenTime = table.Column<TimeOnly>(type: "time", nullable: true),
-                    CloseTime = table.Column<TimeOnly>(type: "time", nullable: true),
-                    TPlus = table.Column<int>(type: "int", nullable: true),
-                    BuyCommissionRate = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    SellCommissionRate = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    MinValueBuyOrder = table.Column<int>(type: "int", nullable: true),
-                    MinValueSellOrder = table.Column<int>(type: "int", nullable: true),
-                    StepPrice = table.Column<int>(type: "int", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: true),
-                    CodeOfTsetmc = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ReleaseDate = table.Column<DateOnly>(type: "date", nullable: true),
-                    PercentOfDailyTolerance = table.Column<double>(type: "float", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -262,7 +264,23 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    EquivalentResourceId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Isin = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    TypeOfMarket = table.Column<byte>(type: "tinyint", nullable: true),
+                    PreOpeningTimeStart = table.Column<TimeOnly>(type: "time", nullable: true),
+                    PreOpeningTimeEnd = table.Column<TimeOnly>(type: "time", nullable: true),
+                    OpenTime = table.Column<TimeOnly>(type: "time", nullable: true),
+                    CloseTime = table.Column<TimeOnly>(type: "time", nullable: true),
+                    TPlus = table.Column<int>(type: "int", nullable: true),
+                    BuyCommissionRate = table.Column<decimal>(type: "decimal(18,5)", precision: 18, scale: 5, nullable: true),
+                    SellCommissionRate = table.Column<decimal>(type: "decimal(18,5)", precision: 18, scale: 5, nullable: true),
+                    MinValueBuyOrder = table.Column<int>(type: "int", nullable: true),
+                    MinValueSellOrder = table.Column<int>(type: "int", nullable: true),
+                    StepPrice = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: true),
+                    CodeOfTsetmc = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ReleaseDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    PercentOfDailyTolerance = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -270,104 +288,152 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_CreatedAt",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_CreatedBy",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_ModifiedAt",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_ModifiedBy",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_OwnerOrgUnit",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "OwnerOrganizationUnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_OwnerPerson",
+                schema: "trader",
+                table: "BrokerageAccount",
+                column: "OwnerPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BrokerageAccount_ScopedLookup",
+                schema: "trader",
+                table: "BrokerageAccount",
+                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Option_FastLookup",
+                schema: "trader",
+                table: "BrokerageAccount",
+                columns: new[] { "Platform", "FkUserId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_CreatedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_CreatedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 columns: new[] { "FkStockId", "DueDate" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_ModifiedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_ModifiedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_OwnerOrgUnit",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "OwnerOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_OwnerPerson",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 column: "OwnerPersonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OptionContract_ScopedLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "OptionContracts",
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_CreatedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_CreatedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 columns: new[] { "Side", "FkOptionContractId", "DuePrice" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_ModifiedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_ModifiedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_OwnerOrgUnit",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "OwnerOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_OwnerPerson",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "OwnerPersonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_ScopedLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Option_Title_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Options",
                 column: "Title");
 
@@ -391,151 +457,151 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_CreatedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_CreatedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 columns: new[] { "DateTime", "FkOptionId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_ModifiedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_ModifiedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_OwnerOrgUnit",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "OwnerOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_OwnerPerson",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 column: "OwnerPersonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromOptionTrading_ScopedLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromOptionTrading",
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_CreatedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_CreatedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 columns: new[] { "DateTime", "FkStockId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_ModifiedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_ModifiedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_OwnerOrgUnit",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "OwnerOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_OwnerPerson",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 column: "OwnerPersonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SnapShotFromStockTrading_ScopedLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "SnapShotFromStockTrading",
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_CreatedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_CreatedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 columns: new[] { "Isin", "Title", "OpenTime", "TypeOfMarket" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_Isin_FastLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "Isin");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_ModifiedAt",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_ModifiedBy",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_OwnerOrgUnit",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "OwnerOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_OwnerPerson",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 column: "OwnerPersonId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Stock_ScopedLookup",
-                schema: "collector",
+                schema: "trader",
                 table: "Stock",
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
         }
@@ -544,12 +610,16 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "BrokerageAccount",
+                schema: "trader");
+
+            migrationBuilder.DropTable(
                 name: "OptionContracts",
-                schema: "collector");
+                schema: "trader");
 
             migrationBuilder.DropTable(
                 name: "Options",
-                schema: "collector");
+                schema: "trader");
 
             migrationBuilder.DropTable(
                 name: "OutboxMessages",
@@ -557,15 +627,15 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "SnapShotFromOptionTrading",
-                schema: "collector");
+                schema: "trader");
 
             migrationBuilder.DropTable(
                 name: "SnapShotFromStockTrading",
-                schema: "collector");
+                schema: "trader");
 
             migrationBuilder.DropTable(
                 name: "Stock",
-                schema: "collector");
+                schema: "trader");
         }
     }
 }

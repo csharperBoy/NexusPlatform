@@ -17,7 +17,7 @@ namespace Authorization.Infrastructure.Configurations
         {
             base.Configure(builder);
 
-            builder.ToTable("JoinDetail", "authorization");
+            builder.ToTable("JoinDetails", "authorization");
 
             builder.HasKey(ds => ds.Id);
             builder.HasIndex(ds => ds.Id).IsUnique();

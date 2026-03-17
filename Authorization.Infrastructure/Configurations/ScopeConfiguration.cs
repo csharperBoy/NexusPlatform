@@ -10,18 +10,15 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Configurations
 {
-    public class ScopeConfiguration : BaseConfiguration<Resource>
+    public class ScopeConfiguration : BaseConfiguration<Scope>
     {
-        public override void Configure(EntityTypeBuilder<Resource> builder)
+        public override void Configure(EntityTypeBuilder<Scope> builder)
         {
             base.Configure(builder);
-            builder.ToTable("Scope", "authorization");
-
-            builder.Property(r => r.Key).IsRequired().HasMaxLength(100).IsUnicode(false);
-            builder.HasIndex(r => r.Key).IsUnique();
+            builder.ToTable("Scopes", "authorization");
 
             // ایندکس روی Path برای کوئری‌های بازگشتی (Hierarchical)
-            builder.HasIndex(r => r.ResourcePath);
+            builder.HasIndex(r => r.PermissionId);
         }
     }
 }

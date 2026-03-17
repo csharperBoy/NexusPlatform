@@ -9,11 +9,11 @@ using TraderServer.Infrastructure.DependencyInjection;
 
 #nullable disable
 
-namespace Trader.Server.Collector.Infrastructure.Migrations
+namespace TraderServer.Infrastructure.Migrations
 {
     [DbContext(typeof(TraderDbContext))]
-    [Migration("20260131081438_Edit_Trader1")]
-    partial class Edit_Trader1
+    [Migration("20260317145705_Initialize_Trader")]
+    partial class Initialize_Trader
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -86,7 +86,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("OutboxMessages", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.BrokerageAccount", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.BrokerageAccount", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,9 +101,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkUserId")
                         .HasColumnType("uniqueidentifier");
@@ -167,7 +164,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("BrokerageAccount", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.Option", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.Option", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -185,9 +182,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
                     b.Property<long>("DuePrice")
                         .HasColumnType("bigint");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkOptionContractId")
                         .HasColumnType("uniqueidentifier");
@@ -253,7 +247,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("Options", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.OptionContract", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.OptionContract", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -271,9 +265,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
                     b.Property<DateOnly>("DueDate")
                         .HasColumnType("date");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkStockId")
                         .IsUnicode(false)
@@ -333,7 +324,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("OptionContracts", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.SnapShotFromOptionTrading", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.SnapShotFromOptionTrading", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -547,7 +538,7 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("SnapShotFromOptionTrading", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.SnapShotFromStockTrading", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.SnapShotFromStockTrading", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -761,14 +752,15 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                     b.ToTable("SnapShotFromStockTrading", "trader");
                 });
 
-            modelBuilder.Entity("Trader.Server.Collector.Domain.Entities.Stock", b =>
+            modelBuilder.Entity("TraderServer.Domain.Entities.Stock", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("BuyCommissionRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 5)
+                        .HasColumnType("decimal(18,5)");
 
                     b.Property<TimeOnly?>("CloseTime")
                         .HasColumnType("time");
@@ -785,9 +777,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool?>("IsActive")
                         .HasColumnType("bit");
@@ -837,7 +826,8 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<decimal?>("SellCommissionRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 5)
+                        .HasColumnType("decimal(18,5)");
 
                     b.Property<int?>("StepPrice")
                         .HasColumnType("int");

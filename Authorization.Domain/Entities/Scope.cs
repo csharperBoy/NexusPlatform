@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums;
 using System;
@@ -9,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
+
+    [SecuredResource("Authorization.Scope")]
     public class Scope :BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement

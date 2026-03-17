@@ -7,7 +7,7 @@ dotnet ef migrations add <migration_name> --project Trader.Server.Collector.Infr
 
 dotnet ef migrations add Initial_Trader -p Trader.Server.Collector.Infrastructure -s "Trader.Server.Management.WebApi"
 or
-Add-Migration Edit_Trader1 -Project Trader.Server.Collector.Infrastructure -Context TraderDbContext -Start "Trader.Server.Management.WebApi"
+Add-Migration Initialize_Trader -Project TraderServer.Infrastructure -Context TraderDbContext -Start "TraderServer.WebApi"
 
 3- for update database execute this command in developer powershell or package manager console 
 dotnet ef database update -p Trader.Server.Collector.Infrastructure -s  "Trader.Server.Management.WebApi"

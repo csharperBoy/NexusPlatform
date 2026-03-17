@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums.Authorization;
@@ -10,6 +11,8 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
+
+    [SecuredResource("Authorization.PermissionRule")]
     public class PermissionRule : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement

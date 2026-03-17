@@ -8,7 +8,7 @@ using TraderServer.Infrastructure.DependencyInjection;
 
 #nullable disable
 
-namespace Trader.Server.Collector.Infrastructure.Migrations
+namespace TraderServer.Infrastructure.Migrations
 {
     [DbContext(typeof(TraderDbContext))]
     partial class TraderDbContextModelSnapshot : ModelSnapshot
@@ -99,9 +99,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("FkUserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -182,9 +179,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
                     b.Property<long>("DuePrice")
                         .HasColumnType("bigint");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkOptionContractId")
                         .HasColumnType("uniqueidentifier");
@@ -268,9 +262,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
 
                     b.Property<DateOnly>("DueDate")
                         .HasColumnType("date");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkStockId")
                         .IsUnicode(false)
@@ -765,7 +756,8 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal?>("BuyCommissionRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 5)
+                        .HasColumnType("decimal(18,5)");
 
                     b.Property<TimeOnly?>("CloseTime")
                         .HasColumnType("time");
@@ -782,9 +774,6 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("EquivalentResourceId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool?>("IsActive")
                         .HasColumnType("bit");
@@ -834,7 +823,8 @@ namespace Trader.Server.Collector.Infrastructure.Migrations
                         .HasColumnType("date");
 
                     b.Property<decimal?>("SellCommissionRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(18, 5)
+                        .HasColumnType("decimal(18,5)");
 
                     b.Property<int?>("StepPrice")
                         .HasColumnType("int");
