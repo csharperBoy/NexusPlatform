@@ -16,7 +16,7 @@ namespace Authorization.Domain.Entities
 {
 
     [SecuredResource("Authorization.Resource")]
-    public class Resource : BaseEntity , IAuditableEntity, IDataScopedEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
+    public class Resource : BaseEntity , IAuditableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

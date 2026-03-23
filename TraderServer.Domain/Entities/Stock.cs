@@ -15,7 +15,7 @@ namespace TraderServer.Domain.Entities
     /// اطلاعات مربوط به سهم در اون وجود داره
     /// </summary>
     [SecuredResource("Trader.Stock")]
-    public class Stock : BaseEntity, IAuditableEntity, IDataScopedEntity, IAggregateRoot
+    public class Stock : BaseEntity, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

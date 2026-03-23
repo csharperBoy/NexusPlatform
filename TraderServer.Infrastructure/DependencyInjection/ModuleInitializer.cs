@@ -1,6 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Identity.PublicService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

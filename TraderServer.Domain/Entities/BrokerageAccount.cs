@@ -14,7 +14,7 @@ namespace TraderServer.Domain.Entities
 {
 
     [SecuredResource("Trader.BrokerageAccount")]
-    public class BrokerageAccount :BaseEntity, IAuditableEntity,IDataScopedEntity, IAggregateRoot
+    public class BrokerageAccount :BaseEntity, IAuditableEntity,IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

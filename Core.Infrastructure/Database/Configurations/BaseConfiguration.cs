@@ -20,7 +20,7 @@ namespace Core.Infrastructure.Database.Configurations
                 ConfigureAuditable(builder);
             }
 
-            if (typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
+            if (typeof(IOwnerableEntity).IsAssignableFrom(typeof(TEntity)))
             {
                 ConfigureDataScoped(builder);
             }

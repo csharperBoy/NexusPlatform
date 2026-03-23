@@ -32,7 +32,7 @@ namespace Sample.Domain.Entities
      و می‌توانند از Value Objectها برای مدل‌سازی دقیق‌تر داده‌های تجاری استفاده کنند.
     */
 
-    public class SampleEntity :BaseEntity, IAuditableEntity, IDataScopedEntity,IAggregateRoot
+    public class SampleEntity :BaseEntity, IAuditableEntity, IOwnerableEntity,IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

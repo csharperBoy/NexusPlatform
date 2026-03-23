@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Behaviors
 {
-    public class AccessBehavior<TRequest, TResponse>
+    public class SetUserDataBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
     {
         private readonly IUserDataContextProvider _provider;
         private readonly UserDataContext _context;
 
-        public AccessBehavior(
+        public SetUserDataBehavior(
             IUserDataContextProvider provider,
             UserDataContext context)
         {

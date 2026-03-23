@@ -1,7 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.HR;
-using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Context;
 using Core.Application.Helper;
 using Core.Shared.DTOs.Identity;

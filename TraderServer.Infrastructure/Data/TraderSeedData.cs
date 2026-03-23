@@ -1,6 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Identity.PublicService;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;

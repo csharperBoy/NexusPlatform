@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.Identity
+namespace Core.Application.Abstractions.Identity.PublicService
 {
     public interface IUserPublicService
     {

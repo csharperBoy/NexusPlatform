@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Navigation.Domain.Entities
 {
-    public class Menu :BaseEntity, IAuditableEntity, IDataScopedEntity, IAggregateRoot
+    public class Menu :BaseEntity, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

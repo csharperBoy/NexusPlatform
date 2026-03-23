@@ -14,7 +14,7 @@ namespace TraderServer.Domain.Entities
     /// اطلاعات مربوط به قرار داد های اختیار معامله
     /// </summary>
     [SecuredResource("Trader.OptionContract")]
-    public class OptionContract :BaseEntity ,  IAuditableEntity , IDataScopedEntity, IAggregateRoot
+    public class OptionContract :BaseEntity ,  IAuditableEntity , IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

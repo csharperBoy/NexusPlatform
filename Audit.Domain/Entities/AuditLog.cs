@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Audit.Domain.Entities
 {
     [SecuredResource("audit.auditlog")]
-    public class AuditLog : IDataScopedEntity, IAggregateRoot
+    public class AuditLog : IOwnerableEntity, IAggregateRoot
     {
         public Guid Id { get; private set; } = Guid.NewGuid();
         public DateTime Timestamp { get; private set; } = DateTime.UtcNow;

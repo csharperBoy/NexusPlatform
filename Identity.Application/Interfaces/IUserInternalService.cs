@@ -1,4 +1,4 @@
-﻿using Core.Application.Abstractions.Identity;
+﻿using Core.Application.Abstractions.Identity.PublicService;
 using System;
 using System.Collections.Generic;
 using System.Linq;

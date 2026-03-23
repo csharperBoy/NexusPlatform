@@ -4,7 +4,7 @@ using Authorization.Domain.Enums;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Identity.PublicService;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;

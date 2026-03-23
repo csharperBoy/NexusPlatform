@@ -56,7 +56,7 @@ namespace Authorization.Infrastructure.Processor
                
 
                 // بخش IDataScopedEntity
-                if (!typeof(IDataScopedEntity).IsAssignableFrom(typeof(TEntity)))
+                if (!typeof(IOwnerableEntity).IsAssignableFrom(typeof(TEntity)))
                     return query;
 
                 var attribute = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
@@ -179,7 +179,7 @@ namespace Authorization.Infrastructure.Processor
 
             
 
-            if (entity is IDataScopedEntity dataScopedEntity)
+            if (entity is IOwnerableEntity dataScopedEntity)
             {
                 // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
                 // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
@@ -198,7 +198,7 @@ namespace Authorization.Infrastructure.Processor
             }
         }
      
-       private async Task<bool> IsEntityInScope(IDataScopedEntity entity, ScopeType scope, Guid userId)
+       private async Task<bool> IsEntityInScope(IOwnerableEntity entity, ScopeType scope, Guid userId)
         {
             switch (scope)
             {
@@ -221,7 +221,7 @@ namespace Authorization.Infrastructure.Processor
 
         public async Task SetOwnerDefaults(TEntity entity)
         {
-            if (entity is IDataScopedEntity scopedEntity)
+            if (entity is IOwnerableEntity scopedEntity)
             {
                 if (scopedEntity.OwnerPersonId == null || scopedEntity.OwnerPersonId == Guid.Empty)
                 {

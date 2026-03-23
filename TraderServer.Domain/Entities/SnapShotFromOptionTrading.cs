@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace TraderServer.Domain.Entities
 {
     [SecuredResource("Collector.SnapShotFromStockTrading")]
-    public class SnapShotFromOptionTrading :BaseEntity, IAuditableEntity, IDataScopedEntity, IAggregateRoot
+    public class SnapShotFromOptionTrading :BaseEntity, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

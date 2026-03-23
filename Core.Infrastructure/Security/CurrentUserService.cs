@@ -134,4 +134,5 @@ namespace Core.Infrastructure.Security
             }
         }
     }
-*/}
+*/
+}

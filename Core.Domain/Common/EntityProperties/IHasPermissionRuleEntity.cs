@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Domain.Common.EntityProperties
 {
-    public interface IFieldConditionEntity
+    public interface IHasPermissionRuleEntity
     {
     }
 }

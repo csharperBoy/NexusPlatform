@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Identity;
+using Core.Application.Abstractions.Identity.PublicService;
 using Identity.Application.Interfaces;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;

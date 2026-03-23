@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 namespace Authorization.Domain.Entities
 {
     [SecuredResource("Authorization.Permission")]
-    public class Permission : BaseEntity ,IAuditableEntity, IDataScopedEntity, IAggregateRoot
+    public class Permission : BaseEntity ,IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

@@ -59,7 +59,6 @@ namespace Core.Infrastructure.DependencyInjection
 
             app.UseMiddleware<CorrelationIdMiddleware>();
             app.UseMiddleware<ExceptionHandlingMiddleware>();
-
             return app;
         }
 

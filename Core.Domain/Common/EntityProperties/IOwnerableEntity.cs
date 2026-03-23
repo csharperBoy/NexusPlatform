@@ -10,7 +10,7 @@ namespace Core.Domain.Common.EntityProperties
     ///  یعنی موجودیت دارای فیلد های مالک میباشد 
     ///  (OwnerOrganizationUnit - OwnerPosition - OwnerPerson - OwnerUser)
     /// </summary>
-    public interface IDataScopedEntity
+    public interface IOwnerableEntity
     {
         // مشخص می‌کند این رکورد متعلق به کدام واحد است (برای اسکوپ‌های Unit و UnitAndBelow)
         Guid? OwnerOrganizationUnitId { get; }
