@@ -4,17 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Domain.Enums
+namespace Core.Shared.Enums.Authorization
 {
-   /* public enum ResourceCategory : byte
+    public enum ResourceCategory : byte
     {
         General = 0,
         System = 1,
         Module = 2,
         Menu = 3,
-        Page = 4,  
+        Page = 4,
         Component = 5,
         DatabaseTable = 6,
         RowInTable = 7 // سطر داخل جدول مخصوص موجودیت های دارای فیلد resourceId
-    }*/
+    }
 }

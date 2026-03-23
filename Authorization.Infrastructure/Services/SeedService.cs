@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Services
 {
+    /*
     public class SeedService : IAuthorizeSeedService
     {
         private AuthorizationDbContext _dbContext;
@@ -236,4 +237,5 @@ namespace Authorization.Infrastructure.Services
 
         }
     }
+*/
 }

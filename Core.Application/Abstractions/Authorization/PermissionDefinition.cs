@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.Authorization
 {
-    public class PermissionDefinition
+   /* public class PermissionDefinition
     {
         public string ResourceKey { get; set; }
         public string Action { get; set; }
@@ -17,5 +17,5 @@ namespace Core.Application.Abstractions.Authorization
         public Guid AssignId { get; set; }
         public string Description { get; set; }
 
-    }
+    }*/
 }

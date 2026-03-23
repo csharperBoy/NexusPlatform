@@ -1,20 +1,13 @@
-﻿using Authorization.Domain.Enums;
+﻿using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Application.DTOs.Resource
+namespace Core.Shared.DTOs.Authorization
 {
-    /*
-     📌 ResourceDto
-     ----------------
-     مدل کامل Resource برای API و مدیریت.
-
-     شامل اطلاعاتی است که برای نمایش یا ویرایش لازم است.
-    */
-    /*
     public class ResourceDto
     {
         public Guid Id { get; init; }
@@ -34,5 +27,4 @@ namespace Authorization.Application.DTOs.Resource
         public DateTime? ModifiedAt { get; init; }
         public string? ModifiedBy { get; init; }
     }
-    */
 }

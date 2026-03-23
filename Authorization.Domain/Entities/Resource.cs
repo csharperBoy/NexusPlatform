@@ -4,6 +4,7 @@ using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -23,12 +24,14 @@ namespace Authorization.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
+
         #region IHierarchicalStructureEntity Impelement
         public Guid? ParentId { get; private set; }
         public virtual Resource? Parent { get; private set; }
         public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
       
         #endregion
+
         #region IDataScopedEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
@@ -59,6 +62,7 @@ namespace Authorization.Domain.Entities
             OwnerOrganizationUnitId = orgUnitId;
         }
         #endregion
+
         public string Key { get; private set; } 
         public string Name { get; private set; }
         public string Description { get; private set; }

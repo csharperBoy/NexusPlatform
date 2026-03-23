@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.Authorization
 {
-    public interface IAuthorizeSeedService
+/*    public interface IAuthorizeSeedService
     {
         /// <summary>
         /// همگام‌سازی لیست منابع یک ماژول با سیستم Authorization
@@ -14,5 +14,5 @@ namespace Core.Application.Abstractions.Authorization
         Task SyncModuleResourcesAsync(List<ResourceDefinition> resources, CancellationToken cancellationToken = default);
         Task SeedRolePermissionsAsync(List<PermissionDefinition> permissions, CancellationToken cancellationToken = default);
 
-    }
+    }*/
 }
