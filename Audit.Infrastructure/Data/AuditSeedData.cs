@@ -4,7 +4,6 @@ using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;

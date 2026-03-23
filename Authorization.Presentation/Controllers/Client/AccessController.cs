@@ -1,7 +1,6 @@
 ﻿using Authorization.Application.Interfaces;
 using Authorization.Application.Queries.Users;
 using Authorization.Domain.Entities;
-using Core.Application.Abstractions.Security;
 using Core.Presentation.Controllers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

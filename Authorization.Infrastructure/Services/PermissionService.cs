@@ -9,7 +9,6 @@ using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums.Authorization;
 using Microsoft.Extensions.Logging;

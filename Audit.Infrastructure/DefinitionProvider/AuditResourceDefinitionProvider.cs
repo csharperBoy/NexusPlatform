@@ -1,5 +1,4 @@
 ﻿using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;

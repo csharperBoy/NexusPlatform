@@ -5,7 +5,6 @@ using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
@@ -25,29 +24,29 @@ namespace Authorization.Infrastructure.Data
         private static List<ResourceDto> GetResourceDefinitions()
         {
             // ساختار درختی منابع
-            return new List<ResourceDefinition>
+            return new List<ResourceDto>
         {
 
             new()
             {
                 Key = "authorization",
                 Name = "Authorization",
-                Type = "Module",
-                Category = "System",
+                Type = ResourceType.Module,
+                Category =ResourceCategory.System,
                 Description = "Authorization System administration",
-                Order = 1000,
+                DisplayOrder = 1000,
                 Icon = "settings",
                 Path = "/authorization",
-                Children = new List<ResourceDefinition>
+                Children = new List<ResourceDto>
                 {
                     new()
                     {
                         Key = "authorization.resource",
                         Name = "resource Management",
-                        Type = "Data",
-                        Category = "System",
+                        Type =ResourceType.Data,
+                        Category =ResourceCategory.System,
                         Description = "Manage resource",
-                        Order = 1001,
+                        DisplayOrder = 1001,
                         Icon = "users",
                         Path = "/authorization/resource"
 
@@ -130,11 +129,11 @@ namespace Authorization.Infrastructure.Data
                     var resource = new Resource(
                         definition.Key,
                         definition.Name,
-                        definition.Type.ToEnumOrDefault(ResourceType.Ui),
-                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
+                        definition.Type,
+                            definition.Category,
                             parentId,
                         definition.Description,
-                        definition.Order,
+                        definition.DisplayOrder,
                         definition.Icon,
                         definition.Path
                     );

@@ -11,7 +11,6 @@ using Azure.Core;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Caching.PublicService;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;

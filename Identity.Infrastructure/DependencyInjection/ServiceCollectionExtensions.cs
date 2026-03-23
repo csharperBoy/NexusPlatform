@@ -2,7 +2,6 @@
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;
 using Identity.Application;

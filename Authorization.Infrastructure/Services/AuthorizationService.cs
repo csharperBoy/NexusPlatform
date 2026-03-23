@@ -3,7 +3,6 @@ using Authorization.Application.DTOs.DataScopes;
 using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
 using Core.Application.Abstractions.Caching;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums;

@@ -7,7 +7,6 @@ using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
 using Authorization.Infrastructure.Data;

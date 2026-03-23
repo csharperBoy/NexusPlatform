@@ -3,7 +3,6 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Results;
 using Microsoft.AspNetCore.Mvc.RazorPages;

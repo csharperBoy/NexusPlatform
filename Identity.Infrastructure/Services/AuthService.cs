@@ -1,6 +1,5 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Domain.ValueObjects;
 using Core.Shared.Results;
 using Identity.Application.Commands;

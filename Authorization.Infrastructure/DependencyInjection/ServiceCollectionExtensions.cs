@@ -8,7 +8,6 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.Processor;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
 using Core.Infrastructure.DependencyInjection;
 using Core.Infrastructure.Repositories;

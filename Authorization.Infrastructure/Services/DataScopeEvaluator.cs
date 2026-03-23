@@ -6,7 +6,6 @@ using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums;

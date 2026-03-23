@@ -1,6 +1,5 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching.PublicService;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Microsoft.Extensions.Logging;
 using Moq;

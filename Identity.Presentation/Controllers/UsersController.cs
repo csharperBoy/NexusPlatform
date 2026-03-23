@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions.Security;
-using Core.Application.Context;
+﻿using Core.Application.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;

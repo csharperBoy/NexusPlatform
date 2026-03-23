@@ -6,7 +6,6 @@ using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions.Authorization.Processor;
 using Core.Application.Abstractions.Caching.PublicService;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Domain.Attributes;
 using Core.Domain.Common;

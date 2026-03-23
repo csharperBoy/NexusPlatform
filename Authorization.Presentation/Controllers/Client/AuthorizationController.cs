@@ -1,5 +1,4 @@
 ﻿using Authorization.Application.Queries.Permissions;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Presentation.Controllers;
 using MediatR;

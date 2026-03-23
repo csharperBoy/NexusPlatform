@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions.Security;
-using Identity.Application.Interfaces;
+﻿using Identity.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Identity.Infrastructure.Services
 {
+    /*
     public class PermissionChecker : IPermissionChecker
     {
 
@@ -75,4 +75,5 @@ namespace Identity.Infrastructure.Services
         }
 
     }
+*/
 }

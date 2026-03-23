@@ -1,7 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Domain.Common;
 using FluentAssertions;
 using Identity.Application.DTOs;

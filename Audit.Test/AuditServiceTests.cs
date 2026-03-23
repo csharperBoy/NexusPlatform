@@ -20,10 +20,11 @@ namespace Audit.Test
         {
             // Arrange
             var repo = new Mock<IRepository<AuditDbContext, AuditLog, Guid>>();
+            var specRepo = new Mock<ISpecificationRepository< AuditLog, Guid>>();
             var uow = new Mock<IUnitOfWork<AuditDbContext>>();
             var logger = new Mock<ILogger<AuditService>>();
 
-            var service = new AuditService(repo.Object, uow.Object, logger.Object);
+            var service = new AuditService(repo.Object, specRepo.Object, uow.Object, logger.Object);
 
             // Act
             await service.LogAsync(
@@ -42,4 +43,5 @@ namespace Audit.Test
             uow.Verify(u => u.SaveChangesAsync(default), Times.Once);
         }
     }
+
 }

@@ -3,7 +3,6 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Results;

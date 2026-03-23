@@ -2,7 +2,6 @@
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
