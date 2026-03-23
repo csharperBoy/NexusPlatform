@@ -1,4 +1,4 @@
-﻿using Core.Application.Abstractions.Auditing;
+﻿using Core.Application.Abstractions.Auditing.PublicService;
 using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using MediatR;
@@ -48,10 +48,10 @@ namespace Core.Application.Behaviors
 
     public class AuditBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     {
-        private readonly IAuditService _auditService;
+        private readonly IAuditPublicService _auditService;
         private readonly UserDataContext _currentUser;
 
-        public AuditBehavior(IAuditService auditService, UserDataContext currentUser)
+        public AuditBehavior(IAuditPublicService auditService, UserDataContext currentUser)
         {
             _auditService = auditService;
             _currentUser = currentUser;

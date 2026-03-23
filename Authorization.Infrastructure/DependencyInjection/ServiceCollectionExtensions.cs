@@ -5,7 +5,8 @@ using Authorization.Infrastructure.HostedServices;
 using Authorization.Infrastructure.Processor;
 using Authorization.Infrastructure.Services;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.Processor;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
@@ -48,7 +49,7 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             // 1. ثبت خودِ سرویس (Implementation)
             services.AddScoped<ResourceService>();
-            services.AddScoped<SeedService>();
+            //services.AddScoped<SeedService>();
             services.AddScoped<PermissionService>();
             // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
             // ارجاع می‌دهیم به همان Instance بالایی
@@ -58,7 +59,7 @@ namespace Authorization.Infrastructure.DependencyInjection
             // این هم ارجاع می‌شود به همان Instance
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
-            services.AddScoped<IAuthorizeSeedService>(sp => sp.GetRequiredService<SeedService>());
+            //services.AddScoped<IAuthorizeSeedService>(sp => sp.GetRequiredService<SeedService>());
 
 
             services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(RowLevelSecurityProcessor<>));

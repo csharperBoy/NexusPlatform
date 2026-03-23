@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.Processor;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;

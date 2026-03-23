@@ -1,7 +1,7 @@
 ﻿using Audit.Domain.Entities;
 using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Microsoft.AspNetCore.Identity;
@@ -35,12 +35,14 @@ namespace Audit.Infrastructure.DependencyInjection
 
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<AuditDbContext>();
-                var authorizeSeedService = scope.ServiceProvider.GetRequiredService<IAuthorizeSeedService>();
+                //var authorizeSeedService = scope.ServiceProvider.GetRequiredService<IAuthorizeSeedService>();
+                var resourcePublicService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionPublicService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
-                await AuditSeedData.SeedAsync(
-                    authorizeSeedService,  roleService,
+                await AuditSeedData.SeedAsync(resourcePublicService,
+                    permissionPublicService,  roleService,
                     _logger);
                 _logger.LogInformation("Successfull Audit module initialization.");
 

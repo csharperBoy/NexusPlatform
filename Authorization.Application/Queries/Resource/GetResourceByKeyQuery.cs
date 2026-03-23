@@ -1,4 +1,5 @@
 ﻿using Authorization.Application.DTOs.Resource;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using MediatR;
 using System;

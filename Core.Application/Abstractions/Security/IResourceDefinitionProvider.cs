@@ -11,7 +11,7 @@ namespace Core.Application.Abstractions.Security
     /// رابط برای تعریف منابع ماژول‌ها
     /// هر ماژول می‌تواند منابع خود را از طریق این رابط ثبت کند
     /// </summary>
-    public interface IResourceDefinitionProvider
+   /* public interface IResourceDefinitionProvider
     {
         /// <summary>
         /// کلید منحصربه‌فرد ماژول
@@ -27,5 +27,5 @@ namespace Core.Application.Abstractions.Security
         /// منابع ماژول را برمی‌گرداند
         /// </summary>
         IEnumerable<ResourceDefinition> GetResourceDefinitions();
-    }
+    }*/
 }

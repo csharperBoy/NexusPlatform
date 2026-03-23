@@ -1,7 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
 using Core.Application.Models;
 using Core.Infrastructure.Database;

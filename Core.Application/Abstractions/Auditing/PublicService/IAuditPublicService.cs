@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace Core.Application.Abstractions.Auditing
+namespace Core.Application.Abstractions.Auditing.PublicService
 {
     /*
      📌 IAuditService
@@ -34,7 +34,7 @@ namespace Core.Application.Abstractions.Auditing
      با این طراحی، لایه Application فقط قرارداد را می‌شناسد و وابسته به جزئیات پیاده‌سازی نیست.
     */
 
-    public interface IAuditService
+    public interface IAuditPublicService
     {
         Task LogAsync(
             string action,       // نوع عملیات (Create, Update, Delete, ...)

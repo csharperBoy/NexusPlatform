@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Sample.Application.Interfaces;
@@ -38,7 +38,7 @@ namespace Sample.Test.Services
     public class SampleQueryServiceTests
     {
         private readonly Mock<ISpecificationRepository<SampleEntity, Guid>> _specRepoMock;
-        private readonly Mock<ICacheService> _cacheMock;
+        private readonly Mock<ICachePublicService> _cacheMock;
         private readonly Mock<ILogger<SampleService>> _loggerMock;
 
         private readonly ISampleQueryService _service;
@@ -46,7 +46,7 @@ namespace Sample.Test.Services
         public SampleQueryServiceTests()
         {
             _specRepoMock = new Mock<ISpecificationRepository<SampleEntity, Guid>>();
-            _cacheMock = new Mock<ICacheService>();
+            _cacheMock = new Mock<ICachePublicService>();
             _loggerMock = new Mock<ILogger<SampleService>>();
 
             // 📌 ساخت سرویس اصلی با Mockها

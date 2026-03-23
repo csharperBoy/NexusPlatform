@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -33,12 +33,13 @@ namespace TraderServer.Infrastructure.DependencyInjection
 
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
-                var seedService = scope.ServiceProvider.GetRequiredService<IAuthorizeSeedService>();
+                var resourcePublicService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionPublicService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
                 await TraderSeedData.SeedAsync(
-                    seedService,  roleService,
+                    resourcePublicService, permissionPublicService,  roleService,
                     _logger);
                 _logger.LogInformation("Successfull Trader module initialization.");
 

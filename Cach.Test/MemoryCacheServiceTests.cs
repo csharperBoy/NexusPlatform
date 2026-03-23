@@ -1,5 +1,5 @@
 ﻿using Cach.Infrastructure.Services;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -14,7 +14,7 @@ namespace Cach.Test
 {
     public class MemoryCacheServiceTests
     {
-        private readonly ICacheService _cache;
+        private readonly ICachePublicService _cache;
 
         public MemoryCacheServiceTests()
         {

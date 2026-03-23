@@ -1,7 +1,6 @@
 ﻿using Authorization.Application.DTOs.Resource;
 using Authorization.Application.Interfaces;
 using Core.Application.Abstractions.Caching;
-using Core.Application.Abstractions.Security;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;

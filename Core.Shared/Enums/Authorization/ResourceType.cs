@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Domain.Enums
+namespace Core.Shared.Enums.Authorization
 {
-   /* public enum ResourceType : byte
+    public enum ResourceType : byte
     {
         Module = 0, // ماژول اصلی
         Ui = 1,    // صفحات، دکمه‌ها، گریدها
         Data = 2   // داده‌ها برای Scoping
-    }*/
+    }
 }

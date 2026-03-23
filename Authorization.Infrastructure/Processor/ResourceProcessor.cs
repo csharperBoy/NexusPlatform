@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.DTOs.Resource;
 using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
+using Core.Shared.DTOs.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,5 +42,26 @@ namespace Authorization.Infrastructure.Processor
 
             return nodes;
         }
+        // الگوریتم Flatten کردن درخت
+        public List<ResourceDto> FlattenResources(List<ResourceDto> resources)
+        {
+            var result = new List<ResourceDto>();
+            foreach (var res in resources)
+            {
+                // والد اول اضافه می‌شود
+                result.Add(res);
+
+                // بعد فرزندان به صورت بازگشتی
+                if (res.Children != null && res.Children.Any())
+                {
+                    // ست کردن ParentKey برای فرزندان (جهت اطمینان)
+                    foreach (var child in res.Children) child.ParentKey = res.Key;
+
+                    result.AddRange(FlattenResources(res.Children));
+                }
+            }
+            return result;
+        }
+
     }
 }

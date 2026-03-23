@@ -7,6 +7,7 @@ using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -21,7 +22,7 @@ namespace Authorization.Infrastructure.Data
     public static class AuthorizationSeedData
     {
         // تعریف منابع به صورت درختی (Hierarchical)
-        private static List<ResourceDefinition> GetResourceDefinitions()
+        private static List<ResourceDto> GetResourceDefinitions()
         {
             // ساختار درختی منابع
             return new List<ResourceDefinition>
@@ -57,10 +58,10 @@ namespace Authorization.Infrastructure.Data
         }
 
         // تبدیل ساختار درختی به لیست مسطح با حفظ سلسله مراتب
-        private static List<(ResourceDefinition Definition, int Level)> FlattenResourceTree(
-            List<ResourceDefinition> definitions, int level = 0)
+        private static List<(ResourceDto Definition, int Level)> FlattenResourceTree(
+            List<ResourceDto> definitions, int level = 0)
         {
-            var result = new List<(ResourceDefinition, int)>();
+            var result = new List<(ResourceDto, int)>();
 
             foreach (var def in definitions)
             {
@@ -156,7 +157,7 @@ namespace Authorization.Infrastructure.Data
 
         // پردازش یک تعریف Resource
         private static async Task ProcessResourceDefinition(
-            ResourceDefinition definition,
+            ResourceDto definition,
             int level,
             Dictionary<string, Resource> existingResources,
             Dictionary<string, Guid?> parentKeyToIdMap,
@@ -200,13 +201,13 @@ namespace Authorization.Infrastructure.Data
                 var resource = new Resource(
                     definition.Key,
                     definition.Name,
-                    definition.Type.ToEnumOrDefault(ResourceType.Ui),
-                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
+                    definition.Type,
+                            definition.Category,
                             parentId,
                     definition.Description,
-                    definition.Order,
-                    definition.Icon,
-                    definition.Path
+                    definition.DisplayOrder,
+                   definition.Icon,
+                   definition.Path
                 );
 
                 // اضافه کردن به DbContext
@@ -237,7 +238,7 @@ namespace Authorization.Infrastructure.Data
             {
                 var existingResources = await GetExistingResourcesMap(dbContext);
                 var rootDefinitions = GetResourceDefinitions();
-                var queue = new Queue<(ResourceDefinition Definition, Guid? ParentId)>();
+                var queue = new Queue<(ResourceDto Definition, Guid? ParentId)>();
 
                 // اول تمام ریشه‌ها را به صف اضافه می‌کنیم
                 foreach (var root in rootDefinitions)
@@ -255,11 +256,11 @@ namespace Authorization.Infrastructure.Data
                         var resource = new Resource(
                             definition.Key,
                             definition.Name,
-                            definition.Type.ToEnumOrDefault(ResourceType.Ui),
-                            definition.Category.ToEnumOrDefault(ResourceCategory.System),
+                            definition.Type,
+                            definition.Category,
                             parentId,
                             definition.Description,
-                            definition.Order,
+                            definition.DisplayOrder,
                             definition.Icon,
                             definition.Path
                         );
@@ -299,16 +300,22 @@ namespace Authorization.Infrastructure.Data
 
 
         // لیست پرمیژن‌های پیش‌فرض برای نقش Admin
-        private static List<PermissionDefinition> GetAdminPermissionDefinitions()
+        private static List<PermissionDto> GetAdminPermissionDefinitions()
         {
-            return new List<PermissionDefinition>
+            return new List<PermissionDto>
         {
             new()
             {
                 ResourceKey = "authorization.resource", // فرض می‌کنیم این کلید وجود دارد
-                Action = "Full",
-                Scope = "All",
-                Effect = "allow",
+                Action =PermissionAction.Full,
+                Scopes = new List<ScopeDto>()
+                {
+                    new()
+                    {
+                        scope = ScopeType.All,
+                    }
+                },
+                Effect =PermissionEffect.allow,
                 Description = "Full access to all authorization resources"
             }
             //,
@@ -380,9 +387,9 @@ namespace Authorization.Infrastructure.Data
                             p.AssigneeType == AssigneeType.Role &&
                             p.AssigneeId == adminRoleId &&
                             p.ResourceId == resourceId &&
-                            p.Action == definition.Action.ToEnumOrDefault(PermissionAction.View) &&
+                            p.Action == definition.Action &&
                             //p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.Self) &&
-                            p.Effect == definition.Effect.ToEnumOrDefault(PermissionEffect.allow));
+                            p.Effect == definition.Effect);
 
                     if (existingPermission != null)
                     {
@@ -395,10 +402,10 @@ namespace Authorization.Infrastructure.Data
                         resourceId: resourceId,
                         assigneeType: AssigneeType.Role,
                         assigneeId: adminRoleId,
-                        action: definition.Action.ToEnumOrDefault(PermissionAction.View),
+                        action: definition.Action,
                         //scope: definition.Scope.ToEnumOrDefault(ScopeType.Self),
                         //specificScopeId: null, // چون ScopeType.All است
-                        effect: definition.Effect.ToEnumOrDefault(PermissionEffect.allow),
+                        effect: definition.Effect,
                         effectiveFrom: DateTime.UtcNow,
                         expiresAt: null, // بدون انقضا
                         description: definition.Description,
@@ -412,51 +419,51 @@ namespace Authorization.Infrastructure.Data
                 }
 
                 // 7. ایجاد پرمیژن‌های initializer
-               /* var permissionsInitializerCreated = 0;
-                foreach (var definition in PermissionDefinitions)
-                {
-                    var resourceId = resources[definition.ResourceKey];
+                /* var permissionsInitializerCreated = 0;
+                 foreach (var definition in PermissionDefinitions)
+                 {
+                     var resourceId = resources[definition.ResourceKey];
 
-                    var Action = definition.Action.ToEnumOrDefault(PermissionAction.Full);
-                    var Scope = definition.Scope.ToEnumOrDefault(ScopeType.All);
-                    var Type = definition.Type.ToEnumOrDefault(PermissionType.allow);
-                    // بررسی وجود پرمیژن تکراری
-                    var existingPermission = await dbContext.Set<Permission>()
-                        .FirstOrDefaultAsync(p =>
-                            p.AssigneeType == AssigneeType.User &&
-                            p.AssigneeId == initializerUserId &&
-                            p.ResourceId == resourceId &&
-                            p.Action == definition.Action.ToEnumOrDefault(PermissionAction.Full) &&
-                            p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.All) &&
-                            p.Type == definition.Type.ToEnumOrDefault(PermissionType.allow));
+                     var Action = definition.Action.ToEnumOrDefault(PermissionAction.Full);
+                     var Scope = definition.Scope.ToEnumOrDefault(ScopeType.All);
+                     var Type = definition.Type.ToEnumOrDefault(PermissionType.allow);
+                     // بررسی وجود پرمیژن تکراری
+                     var existingPermission = await dbContext.Set<Permission>()
+                         .FirstOrDefaultAsync(p =>
+                             p.AssigneeType == AssigneeType.User &&
+                             p.AssigneeId == initializerUserId &&
+                             p.ResourceId == resourceId &&
+                             p.Action == definition.Action.ToEnumOrDefault(PermissionAction.Full) &&
+                             p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.All) &&
+                             p.Type == definition.Type.ToEnumOrDefault(PermissionType.allow));
 
-                    if (existingPermission != null)
-                    {
-                        logger.LogDebug($"ℹ️ Permission already exists for resource '{definition.ResourceKey}', skipping...");
-                        continue;
-                    }
+                     if (existingPermission != null)
+                     {
+                         logger.LogDebug($"ℹ️ Permission already exists for resource '{definition.ResourceKey}', skipping...");
+                         continue;
+                     }
 
-                    // ایجاد پرمیژن جدید
-                    var permission = new Permission(
-                        resourceId: resourceId,
-                        assigneeType: AssigneeType.User,
-                        assigneeId: initializerUserId,
-                        action: definition.Action.ToEnumOrDefault(PermissionAction.Full),
-                        scope: definition.Scope.ToEnumOrDefault(ScopeType.All),
-                        specificScopeId: null, // چون ScopeType.All است
-                        type: definition.Type.ToEnumOrDefault(PermissionType.allow),
-                        effectiveFrom: DateTime.UtcNow,
-                        expiresAt: null, // بدون انقضا
-                        description: definition.Description,
-                        createdBy: "system"
-                    );
+                     // ایجاد پرمیژن جدید
+                     var permission = new Permission(
+                         resourceId: resourceId,
+                         assigneeType: AssigneeType.User,
+                         assigneeId: initializerUserId,
+                         action: definition.Action.ToEnumOrDefault(PermissionAction.Full),
+                         scope: definition.Scope.ToEnumOrDefault(ScopeType.All),
+                         specificScopeId: null, // چون ScopeType.All است
+                         type: definition.Type.ToEnumOrDefault(PermissionType.allow),
+                         effectiveFrom: DateTime.UtcNow,
+                         expiresAt: null, // بدون انقضا
+                         description: definition.Description,
+                         createdBy: "system"
+                     );
 
-                    await dbContext.Set<Permission>().AddAsync(permission);
-                    permissionsInitializerCreated++;
+                     await dbContext.Set<Permission>().AddAsync(permission);
+                     permissionsInitializerCreated++;
 
-                    logger.LogInformation($"✅ Created permission for Admin on resource '{definition.ResourceKey}'");
-                }
-                */
+                     logger.LogInformation($"✅ Created permission for Admin on resource '{definition.ResourceKey}'");
+                 }
+                 */
                 // 8. ذخیره تغییرات
                 if (permissionsCreated > 0)
                 {
@@ -488,7 +495,7 @@ namespace Authorization.Infrastructure.Data
             await SeedResourcesAsync(dbContext, config, logger);
 
             // 2. Seed پرمیژن‌ها
-            await SeedPermissionsAsync(dbContext, roleService,  logger);
+            await SeedPermissionsAsync(dbContext, roleService, logger);
 
             logger.LogInformation("✅ Authorization data seeding completed!");
         }

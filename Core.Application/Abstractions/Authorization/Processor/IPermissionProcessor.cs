@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.Authorization
+namespace Core.Application.Abstractions.Authorization.Processor
 {
     public interface IPermissionProcessor
     {

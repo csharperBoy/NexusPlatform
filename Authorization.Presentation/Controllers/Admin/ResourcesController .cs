@@ -4,6 +4,7 @@ using Authorization.Application.DTOs.Resource;
 using Authorization.Application.Queries.Resource;
 using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
+using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -181,10 +182,10 @@ namespace Authorization.Presentation.Controllers.Admin
                 DisplayOrder = node.DisplayOrder,
                 Icon = node.Icon,
                 Path = node.Path,
-                CreatedAt = node.CreatedAt,
-                CreatedBy = node.CreatedBy,
-                ModifiedAt = node.ModifiedAt,
-                ModifiedBy = node.ModifiedBy
+                //CreatedAt = node.CreatedAt,
+                //CreatedBy = node.CreatedBy,
+                //ModifiedAt = node.ModifiedAt,
+                //ModifiedBy = node.ModifiedBy
             });
 
             if (node.Children is { Count: > 0 })

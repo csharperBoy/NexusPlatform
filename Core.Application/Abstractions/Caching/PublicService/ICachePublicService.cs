@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace Core.Application.Abstractions.Caching
+namespace Core.Application.Abstractions.Caching.PublicService
 {
     /*
      📌 ICacheService
@@ -44,7 +44,7 @@ namespace Core.Application.Abstractions.Caching
      پیاده‌سازی‌های مختلف (MemoryCache، Redis، NCache، ...) را بدون تغییر در لایه Application فراهم می‌کند.
     */
 
-    public interface ICacheService
+    public interface ICachePublicService
     {
         Task<T?> GetAsync<T>(string key); // 📌 دریافت داده از کش
         Task SetAsync<T>(string key, T value, TimeSpan? expiration = null); // 📌 ذخیره داده در کش با زمان انقضا

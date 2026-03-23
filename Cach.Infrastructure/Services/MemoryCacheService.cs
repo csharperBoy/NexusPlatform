@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.Caching;
+﻿using Cach.Application.Interface;
+using Core.Application.Abstractions.Caching;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Cach.Infrastructure.Services
 {
-    public class MemoryCacheService : ICacheService
+    public class MemoryCacheService : ICacheInternalService
     {
         private readonly IMemoryCache _memoryCache;
         private readonly ILogger<MemoryCacheService> _logger;

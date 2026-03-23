@@ -17,11 +17,11 @@ namespace Audit.Application.Handlers.Queries
 
     {
         //private readonly ISpecificationRepository< AuditLog, Guid> _repo;
-        private readonly IAuditQueryService _service;
+        private readonly IAuditInternalService _service;
 
         public GetRecentAuditLogsHandler(
             //ISpecificationRepository<AuditLog, Guid> repo
-            IAuditQueryService service
+            IAuditInternalService service
             )
         {
             _service = service;

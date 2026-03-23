@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Context;

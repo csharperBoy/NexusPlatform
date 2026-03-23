@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.DTOs.Resource;
 using Authorization.Domain.Entities;
+using Core.Shared.DTOs.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace Authorization.Application.Interfaces
         /// ساخت درخت کامل منابع
         /// </summary>
         IReadOnlyList<ResourceTreeDto> BuildTree(IEnumerable<Resource> resources, Guid? parentId = null);
+        // الگوریتم Flatten کردن درخت
+        List<ResourceDto> FlattenResources(List<ResourceDto> resources);
 
     }
 }

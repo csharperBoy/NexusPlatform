@@ -1,7 +1,7 @@
 ﻿using Cach.Application.Models;
 using Cach.Infrastructure.Services;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Behaviors;
 using Core.Application.Models;
@@ -64,14 +64,14 @@ namespace Cach.Infrastructure.DependencyInjection
             // ثبت IConnectionMultiplexer به‌صورت Singleton برای استفاده در RedisCacheService
             services.AddSingleton<IConnectionMultiplexer>(sp =>
                 ConnectionMultiplexer.Connect(redisConnection));
-            services.AddScoped<ICacheService, RedisCacheService>();
+            services.AddScoped<ICachePublicService, RedisCacheService>();
 
          }
 
         private static void ConfigureMemoryCache(IServiceCollection services )
         {
             services.AddMemoryCache();
-            services.AddScoped<ICacheService, MemoryCacheService>();
+            services.AddScoped<ICachePublicService, MemoryCacheService>();
 
         }
     }

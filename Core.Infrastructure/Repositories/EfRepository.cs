@@ -1,6 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Security;
+using Core.Application.Abstractions.Authorization.Processor;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;

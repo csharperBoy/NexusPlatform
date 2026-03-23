@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions.Security;
-using Core.Shared.Results;
+﻿using Core.Shared.Results;
 using MediatR;
 using Sample.Application.Commands;
 using Sample.Application.DTOs;
@@ -35,20 +34,22 @@ namespace Sample.Application.Handlers.Commands
     public class SampleApiCommandHandler : IRequestHandler<SampleApiCommand, Result<SampleApiResponse>>
     {
         private readonly ISampleService _sampleService;
-        private readonly IPermissionChecker _permissionChecker;
+        //private readonly IPermissionChecker _permissionChecker;
 
-        public SampleApiCommandHandler(ISampleService sampleService, IPermissionChecker permissionChecker)
+        public SampleApiCommandHandler(ISampleService sampleService
+            //, IPermissionChecker permissionChecker
+            )
         {
             _sampleService = sampleService;
-            _permissionChecker = permissionChecker;
+            //_permissionChecker = permissionChecker;
         }
 
         public async Task<Result<SampleApiResponse>> Handle(SampleApiCommand request, CancellationToken cancellationToken)
         {
             // مرحله 1: بررسی مجوز
-            var hasPermission = await _permissionChecker.HasPermissionAsync("Sample.Execute");
-            if (!hasPermission)
-                return Result<SampleApiResponse>.Fail("مجوز لازم وجود ندارد.");
+            //var hasPermission = await _permissionChecker.HasPermissionAsync("Sample.Execute");
+            //if (!hasPermission)
+                //return Result<SampleApiResponse>.Fail("مجوز لازم وجود ندارد.");
 
             // مرحله 2: اجرای عملیات با سرویس
             var result = await _sampleService.SampleApiMethodAsync(new SampleApiRequest(request.property1, request.property2));

@@ -1,4 +1,4 @@
-﻿using Core.Application.Abstractions.Caching;
+﻿using Core.Application.Abstractions.Caching.PublicService;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Diagnostics;
 
@@ -6,9 +6,9 @@ namespace Cach.Infrastructure.HealthChecks
 {
     public class CacheHealthCheck : IHealthCheck
     {
-        private readonly ICacheService _cacheService;
+        private readonly ICachePublicService _cacheService;
 
-        public CacheHealthCheck(ICacheService cacheService)
+        public CacheHealthCheck(ICachePublicService cacheService)
         {
             _cacheService = cacheService;
         }

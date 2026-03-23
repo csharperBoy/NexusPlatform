@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.Interfaces;
 using Authorization.Domain.Events;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Common.Events;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -15,9 +15,9 @@ namespace Authorization.Application.EventHandlers
         private readonly IResourceInternalService _resourceService;
         private readonly IReadOnlyPolicyRegistry<string> _policies;
 
-        private readonly ICacheService _cacheService;
+        private readonly ICachePublicService _cacheService;
         public ResourceHierarchyChangedEventHandler(
-            IResourceInternalService resourceService, ICacheService cacheService,
+            IResourceInternalService resourceService, ICachePublicService cacheService,
             ILogger<DomainEventHandler<ResourceHierarchyChangedEvent>> logger,
             IReadOnlyPolicyRegistry<string> policies)
             : base(logger) // لاگ استاندارد از کلاس پایه

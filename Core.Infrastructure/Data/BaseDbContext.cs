@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions.Security;
-using Core.Application.Context;
+﻿using Core.Application.Context;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Microsoft.AspNetCore.Http;

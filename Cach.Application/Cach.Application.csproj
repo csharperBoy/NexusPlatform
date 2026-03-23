@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cach.Domain\Cach.Domain.csproj" />
+    <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
   </ItemGroup>
 
 </Project>

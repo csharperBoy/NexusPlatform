@@ -3,7 +3,6 @@ using Authorization.Application.Interfaces;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Application.Provider;
 using Core.Domain.Enums;

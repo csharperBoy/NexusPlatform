@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.Security
 {
-    public interface IDataScopeProcessor
+   /* public interface IDataScopeProcessor
     {
         Task<IQueryable<TEntity>> ApplyScope<TEntity>(IQueryable<TEntity> query) where TEntity : class;
     }
+    */
 }

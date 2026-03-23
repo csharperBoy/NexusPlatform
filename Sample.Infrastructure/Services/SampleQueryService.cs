@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Security;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Results;
@@ -51,12 +51,12 @@ namespace Sample.Infrastructure.Services
     {
         private readonly ISpecificationRepository<SampleEntity, Guid> _repository;
         private readonly ILogger<SampleService> _logger;
-        private readonly ICacheService _cache;
+        private readonly ICachePublicService _cache;
 
         public SampleQueryService(
            ILogger<SampleService> logger,
            ISpecificationRepository<SampleEntity, Guid> repository,
-           ICacheService cache)
+           ICachePublicService cache)
         {
             _logger = logger;
             _repository = repository;

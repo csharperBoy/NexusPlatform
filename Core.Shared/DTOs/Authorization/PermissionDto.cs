@@ -35,9 +35,9 @@ namespace Core.Shared.DTOs.Authorization
         public bool IsActive { get; set; }
 
 
-        public virtual ICollection<PermissionRuleDto> Rules { get; private set; }
 
-        public virtual ICollection<ScopeDto> Scopes { get; private set; }
+        public List<ScopeDto> Scopes { get; set; } = new();
+        public List<PermissionRuleDto> Rules { get; set; } = new();
         public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
         {
             return AssigneeType == assigneeType && AssigneeId == assigneeId;

@@ -24,4 +24,5 @@ namespace Core.Application.Abstractions.Security
         Task<ScopeType> GetPermissionScopeAsync(Guid userId, Guid resourceId, PermissionAction action);
         Task<List<ScopeType>> GetScopeForUser(Guid userId, string resourceKey);
     }
-*/}
+*/
+}

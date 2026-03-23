@@ -1,7 +1,7 @@
 ﻿using Authorization.Application.Commands;
 using Authorization.Application.Commands.Resource;
 using Authorization.Application.DTOs.Resource;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using System;
 using System.Collections.Generic;
 using System.Linq;

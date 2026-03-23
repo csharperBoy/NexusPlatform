@@ -1,5 +1,5 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Microsoft.Extensions.Logging;
@@ -45,7 +45,7 @@ namespace Sample.Test.Services
         private readonly Mock<IRepository<SampleDbContext, SampleEntity, Guid>> _repositoryMock;
         private readonly Mock<IUnitOfWork<SampleDbContext>> _uowMock;
         private readonly Mock<UserDataContext> _currentUserMock;
-        private readonly Mock<ICacheService> _cacheMock;
+        private readonly Mock<ICachePublicService> _cacheMock;
         private readonly Mock<ILogger<SampleService>> _loggerMock;
 
         private readonly ISampleService _service;
@@ -55,7 +55,7 @@ namespace Sample.Test.Services
             _repositoryMock = new Mock<IRepository<SampleDbContext, SampleEntity, Guid>>();
             _uowMock = new Mock<IUnitOfWork<SampleDbContext>>();
             _currentUserMock = new Mock<UserDataContext>();
-            _cacheMock = new Mock<ICacheService>();
+            _cacheMock = new Mock<ICachePublicService>();
             _loggerMock = new Mock<ILogger<SampleService>>();
 
             // 📌 ساخت سرویس اصلی با Mockها

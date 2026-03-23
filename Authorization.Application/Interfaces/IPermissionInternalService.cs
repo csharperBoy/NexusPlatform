@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.Commands.Permissions;
 using Authorization.Application.DTOs.Permissions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Shared.DTOs.Authorization;
 using System;
 using System.Collections.Generic;

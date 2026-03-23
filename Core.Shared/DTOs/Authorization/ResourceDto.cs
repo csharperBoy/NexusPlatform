@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
+using ResourceType = Core.Shared.Enums.Authorization.ResourceType;
 
 namespace Core.Shared.DTOs.Authorization
 {
@@ -22,9 +23,8 @@ namespace Core.Shared.DTOs.Authorization
         public Guid? ParentId { get; init; }
         public string ParentKey { get; set; }
         public string Path { get; init; } = string.Empty;
-        public DateTime CreatedAt { get; init; }
-        public string CreatedBy { get; init; } = string.Empty;
-        public DateTime? ModifiedAt { get; init; }
-        public string? ModifiedBy { get; init; }
+
+        public List<ResourceDto> Children { get; set; } = new();
+
     }
 }

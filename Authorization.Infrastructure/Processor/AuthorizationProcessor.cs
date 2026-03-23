@@ -1,8 +1,8 @@
 ﻿using Authorization.Application.DTOs.Permissions;
 using Authorization.Domain.Entities;
 using Authorization.Domain.Specifications;
-using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Authorization.Processor;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Context;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums.Authorization;
@@ -18,10 +18,10 @@ namespace Authorization.Infrastructure.Processor
     public class AuthorizationProcessor : IAuthorizationProcessor
     {
         private readonly UserDataContext _userDataContext;
-        private readonly ICacheService _cache;
+        private readonly ICachePublicService _cache;
         private readonly ILogger<AuthorizationProcessor> _logger;
 
-        public AuthorizationProcessor(UserDataContext userDataContext, ICacheService cache, ILogger<AuthorizationProcessor> logger)
+        public AuthorizationProcessor(UserDataContext userDataContext, ICachePublicService cache, ILogger<AuthorizationProcessor> logger)
         {
             _userDataContext = userDataContext;
             _cache = cache;

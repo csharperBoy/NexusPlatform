@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.Authorization.Processor;
 using Core.Application.Context;
 using Core.Application.Provider;
 using Microsoft.AspNetCore.Http;

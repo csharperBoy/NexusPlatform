@@ -4,7 +4,7 @@ using Audit.Infrastructure.Data;
 using Audit.Infrastructure.DefinitionProvider;
 using Audit.Infrastructure.Services;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Auditing;
+using Core.Application.Abstractions.Auditing.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
@@ -33,8 +33,8 @@ namespace Audit.Infrastructure.DependencyInjection
             services.AddScoped<IUnitOfWork<AuditDbContext>, EfUnitOfWork<AuditDbContext>>();
 
             services.AddScoped<ISpecificationRepository<AuditLog, Guid>, EfSpecificationRepository<AuditDbContext, AuditLog, Guid>>();
-            services.AddScoped<IAuditService, AuditService>();
-            services.AddScoped<IAuditQueryService, AuditQueryService>();
+            services.AddScoped<IAuditPublicService, AuditService>();
+            services.AddScoped<IAuditInternalService, AuditQueryService>();
             services.AddHostedService<ModuleInitializer>();
 
             // Resolve از DI

@@ -1,5 +1,5 @@
 ﻿using Cach.Infrastructure.DependencyInjection;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +29,7 @@ namespace Cach.Test
             services.Cach_AddInfrastructure(config);
 
             var provider = services.BuildServiceProvider();
-            var cache = provider.GetService<ICacheService>();
+            var cache = provider.GetService<ICachePublicService>();
 
             cache.Should().NotBeNull();
         }

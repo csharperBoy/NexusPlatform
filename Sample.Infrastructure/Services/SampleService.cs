@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.Security;
 using Core.Application.Context;
@@ -64,14 +64,14 @@ namespace Sample.Infrastructure.Services
         private readonly IUnitOfWork<SampleDbContext> _uow;
         private readonly ILogger<SampleService> _logger;
         private readonly UserDataContext _currentUser;
-        private readonly ICacheService _cache;
+        private readonly ICachePublicService _cache;
 
         public SampleService(
             IRepository<SampleDbContext, SampleEntity, Guid> repository,
             IUnitOfWork<SampleDbContext> uow,
             ILogger<SampleService> logger,
             UserDataContext currentUser,
-            ICacheService cache)
+            ICachePublicService cache)
         {
             _repository = repository;
             _uow = uow;

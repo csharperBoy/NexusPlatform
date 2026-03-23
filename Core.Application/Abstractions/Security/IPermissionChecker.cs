@@ -33,7 +33,7 @@ namespace Core.Application.Abstractions.Security
      که کنترل دسترسی به صورت استاندارد و مستقل از جزئیات پیاده‌سازی انجام شود.
      پیاده‌سازی آن در لایه Infrastructure خواهد بود (مثلاً PermissionChecker مبتنی بر ClaimsPrincipal).
     */
-
+/*
     public interface IPermissionChecker
     {
         /// <summary>
@@ -47,4 +47,5 @@ namespace Core.Application.Abstractions.Security
         Task<bool> HasAnyPermissionAsync(params string[] permissions);
 
     }
+*/
 }

@@ -4,8 +4,8 @@ using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Services;
-using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Authorization.Processor;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Security;
 using Core.Application.Context;
 using Core.Domain.Attributes;
@@ -32,12 +32,12 @@ namespace Authorization.Infrastructure.Processor
     public class RowLevelSecurityProcessor<TEntity> : IRowLevelSecurityProcessor<TEntity>
         where TEntity : class
     {
-        ICacheService _cacheService;
+        ICachePublicService _cacheService;
         ILogger<RowLevelSecurityProcessor<TEntity>> _logger;
         private readonly UserDataContext _scope;
 
             
-        public RowLevelSecurityProcessor(ICacheService cacheService , ILogger<RowLevelSecurityProcessor<TEntity>> logger, UserDataContext scope)
+        public RowLevelSecurityProcessor(ICachePublicService cacheService , ILogger<RowLevelSecurityProcessor<TEntity>> logger, UserDataContext scope)
         {
             _cacheService = cacheService;
             _logger = logger;

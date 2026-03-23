@@ -1,7 +1,6 @@
 ﻿using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
-using Core.Application.Abstractions.Security;
 using Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

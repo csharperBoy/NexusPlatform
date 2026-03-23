@@ -2,10 +2,13 @@
 using Audit.Domain.Entities;
 using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Enums;
+using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,30 +20,30 @@ namespace Audit.Infrastructure.Data
     public static class AuditSeedData
     {
         // تعریف ساختار درختی منابع ماژول Audit
-        private static List<ResourceDefinition> GetAuditResourceDefinitions()
+        private static List<ResourceDto> GetAuditResourceDefinitions()
         {
-            return new List<ResourceDefinition>
+            return new List<ResourceDto>
             {
                 new()
                 {
                     Key = "audit",
                     Name = "Audit",
-                    Type = "Module",
-                    Category = "System",
+                    Type =ResourceType.Module,
+                    Category = ResourceCategory.System,
                     Description = "Audit management module",
-                    Order = 2000,
+                    DisplayOrder = 2000,
                     Icon = "shield",
                     //Path = "/audit",
-                    Children = new List<ResourceDefinition>
+                    Children = new List<ResourceDto>
                     {
                         new()
                         {
                             Key = "audit.auditlog",
                             Name = "Audit Logs",
-                            Type = "Data",
-                            Category = "System",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
                             Description = "Audit log management",
-                            Order = 2001,
+                            DisplayOrder = 2001,
                             Icon = "list",
                             //Path = "/audit/logs"
                         }
@@ -50,18 +53,24 @@ namespace Audit.Infrastructure.Data
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDefinition> GetAuditPermissionDefinitions(Guid roleId)
+        private static List<PermissionDto> GetAuditPermissionDefinitions(Guid roleId)
         {
-            return new List<PermissionDefinition>
+            return new List<PermissionDto>
             {
                 new()
                 {
                     ResourceKey = "audit.auditlog",
-                    Action = "Full", // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
-                    Scope = "All",
-                    Effect = "allow",
-                    AssignType="Role",
-                    AssignId = roleId,
+                    Action = PermissionAction.Full, // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
+                    Scopes = new List<ScopeDto>()
+                    {
+                        new()
+                        {
+                            scope =ScopeType.All
+                        }
+                    },
+                    Effect = PermissionEffect.allow,
+                    AssigneeType= AssigneeType.Role,
+                    AssigneeId = roleId,
 
                     Description = "Full access to audit logs"
                 }
@@ -70,7 +79,8 @@ namespace Audit.Infrastructure.Data
 
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
         public static async Task SeedAsync(
-            IAuthorizeSeedService authorizeSeedService,
+            IResourcePublicService resourcePublicService,
+            IPermissionPublicService permissionPublicService,
             IRolePublicService roleService, 
             ILogger logger,
             CancellationToken cancellationToken = default)
@@ -82,7 +92,7 @@ namespace Audit.Infrastructure.Data
                 // 1. ثبت منابع (Resources)
                 // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
                 var resources = GetAuditResourceDefinitions();
-                await authorizeSeedService.SyncModuleResourcesAsync(resources, cancellationToken);
+                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
                 logger.LogInformation("✅ Audit resources synced successfully.");
 
                 // 2. ثبت پرمیشن‌ها (Permissions)
@@ -90,7 +100,7 @@ namespace Audit.Infrastructure.Data
                 var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
                 var permissions = GetAuditPermissionDefinitions(adminRoleId);
-                await authorizeSeedService.SeedRolePermissionsAsync( permissions, cancellationToken);
+                await permissionPublicService.SeedRolePermissionsAsync( permissions, cancellationToken);
                 logger.LogInformation("✅ Audit permissions seeded successfully.");
             }
             catch (Exception ex)

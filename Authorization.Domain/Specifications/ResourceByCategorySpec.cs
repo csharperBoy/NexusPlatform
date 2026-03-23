@@ -1,6 +1,7 @@
 ﻿using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Core.Domain.Specifications;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Specifications
 {
+    /*
     public class ResourceByCategorySpec : BaseSpecification<Resource>
     {
         public ResourceByCategorySpec(ResourceCategory? category = null)
@@ -20,4 +22,5 @@ namespace Authorization.Domain.Specifications
             ApplyThenOrderBy(r => r.Name);
         }
     }
+    */
 }

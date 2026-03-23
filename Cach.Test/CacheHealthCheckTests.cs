@@ -1,5 +1,5 @@
 ﻿using Cach.Infrastructure.HealthChecks;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Caching.PublicService;
 using FluentAssertions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Moq;
@@ -16,7 +16,7 @@ namespace Cach.Test
         [Fact]
         public async Task Should_Return_Healthy_When_Cache_Works()
         {
-            var cache = new Mock<ICacheService>();
+            var cache = new Mock<ICachePublicService>();
             cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan?>()))
                  .Returns(Task.CompletedTask);
             cache.Setup(c => c.GetAsync<string>(It.IsAny<string>()))
@@ -32,7 +32,7 @@ namespace Cach.Test
         [Fact]
         public async Task Should_Return_Unhealthy_When_Cache_Fails()
         {
-            var cache = new Mock<ICacheService>();
+            var cache = new Mock<ICachePublicService>();
             cache.Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan?>()))
                  .ThrowsAsync(new Exception("fail"));
 

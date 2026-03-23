@@ -1,20 +1,21 @@
-﻿using Cach.Application.Models;
+﻿using Cach.Application.Interface;
+using Cach.Application.Models;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using StackExchange.Redis;
 
 namespace Cach.Infrastructure.Services
 {
-    public class RedisCacheService : ICacheService
+    public class RedisCacheService : ICacheInternalService
     {
         private readonly IDistributedCache _cache;
         private readonly CacheSettings _settings;

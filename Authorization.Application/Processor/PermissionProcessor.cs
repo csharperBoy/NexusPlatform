@@ -1,4 +1,4 @@
-﻿using Core.Application.Abstractions.Authorization;
+﻿using Core.Application.Abstractions.Authorization.Processor;
 using Core.Shared.DTOs.Identity;
 using System;
 using System.Collections.Generic;

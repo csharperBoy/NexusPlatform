@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.Authorization
+namespace Core.Application.Abstractions.Authorization.PublicService
 {
     public interface IPermissionPublicService
     {
@@ -13,7 +13,7 @@ namespace Core.Application.Abstractions.Authorization
         /// <summary>
         /// ثبت پرمیشن‌های اولیه برای یک نقش خاص (مثلاً ادمین)
         /// </summary>
-        Task SeedRolePermissionsAsync( List<PermissionDefinition> permissions, CancellationToken cancellationToken = default);
+        Task SeedRolePermissionsAsync( List<PermissionDto> permissions, CancellationToken cancellationToken = default);
 
         Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds);
     }

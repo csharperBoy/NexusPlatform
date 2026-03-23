@@ -1,6 +1,9 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity;
+using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -11,30 +14,30 @@ namespace TraderServer.Infrastructure.DependencyInjection
       public static class TraderSeedData
     {
         // تعریف ساختار درختی منابع ماژول Audit
-        private static List<ResourceDefinition> GetTraderResourceDefinitions()
+        private static List<ResourceDto> GetTraderResourceDefinitions()
         {
-            return new List<ResourceDefinition>
+            return new List<ResourceDto>
             {
                 new()
                 {
                     Key = "trader",
                     Name = "Trader",
-                    Type = "Module",
-                    Category = "System",
+                    Type =ResourceType.Module,
+                    Category =ResourceCategory.System,
                     Description = "Trader management module",
-                    Order = 2000,
+                    DisplayOrder = 2000,
                     Icon = "shield",
                     //Path = "/audit",
-                    Children = new List<ResourceDefinition>
+                    Children = new List<ResourceDto>
                     {
                         new()
                         {
                             Key = "trader.stock",
                             Name = "Stock",
-                            Type = "Data",
-                            Category = "System",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System ,
                             Description = "Stock management",
-                            Order = 2001,
+                            DisplayOrder = 2001,
                             Icon = "list",
                             //Path = "/audit/logs"
                         }
@@ -44,18 +47,22 @@ namespace TraderServer.Infrastructure.DependencyInjection
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDefinition> GetTraderPermissionDefinitions(Guid roleId)
+        private static List<PermissionDto> GetTraderPermissionDefinitions(Guid roleId)
         {
-            return new List<PermissionDefinition>
+            return new List<PermissionDto>
             {
                 new()
                 {
                     ResourceKey = "trader.stock",
-                    Action = "Full", // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
-                    Scope = "All",
-                    Effect = "allow",
-                    AssignType="Role",
-                    AssignId = roleId,
+                    Action =PermissionAction.Full, 
+                    Scopes = new List<ScopeDto>(){ 
+                                new(){
+                                    scope = ScopeType.All 
+                                } 
+                            },
+                    Effect = PermissionEffect.allow,
+                    AssigneeType= AssigneeType.Role,
+                    AssigneeId = roleId,
 
                     Description = "Full access to trader.stock"
                 }
@@ -64,7 +71,8 @@ namespace TraderServer.Infrastructure.DependencyInjection
 
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
         public static async Task SeedAsync(
-            IAuthorizeSeedService seedService,
+            IResourcePublicService resourcePublicService,
+            IPermissionPublicService permissionPublicService,
             IRolePublicService roleService, // سرویس عمومی برای گرفتن نقش‌ها
             ILogger logger,
             CancellationToken cancellationToken = default)
@@ -76,7 +84,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
                 // 1. ثبت منابع (Resources)
                 // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
                 var resources = GetTraderResourceDefinitions();
-                await seedService.SyncModuleResourcesAsync(resources, cancellationToken);
+                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
                 logger.LogInformation("✅ Trader resources synced successfully.");
 
                 // 2. ثبت پرمیشن‌ها (Permissions)
@@ -84,7 +92,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
                 var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
                 var permissions = GetTraderPermissionDefinitions(adminRoleId);
-                await seedService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
                 logger.LogInformation("✅ Trader permissions seeded successfully.");
             }
             catch (Exception ex)

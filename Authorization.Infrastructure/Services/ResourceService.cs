@@ -9,16 +9,16 @@ using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
 using Azure.Core;
 using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Caching;
+using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Security;
 using Core.Domain.Interfaces;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
-using ResourceType = Authorization.Domain.Enums.ResourceType;
 
 namespace Authorization.Infrastructure.Services
 {
@@ -29,7 +29,7 @@ namespace Authorization.Infrastructure.Services
         private readonly ISpecificationRepository<Resource, Guid> _resourceSpecRepository;
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<ResourceService> _logger;
-        private readonly ICacheService _cache;
+        private readonly ICachePublicService _cache;
         private readonly IResourceProcessor _resourceProcessor;
 
         public ResourceService(
@@ -38,7 +38,7 @@ namespace Authorization.Infrastructure.Services
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<ResourceService> logger,
             IResourceProcessor resourceProcessor,
-            ICacheService cache)
+            ICachePublicService cache)
         {
             _resourceRepository = resourceRepository;
             _resourceSpecRepository = resourceSpecRepository;
@@ -60,8 +60,8 @@ namespace Authorization.Infrastructure.Services
                     return cached;
                 }
 
-                var allResourcesSpec = new ResourceByCategorySpec();
-                var allResources = await _resourceSpecRepository.ListBySpecAsync(allResourcesSpec);
+                //var allResourcesSpec = new ResourceByCategorySpec();
+                var allResources = await _resourceRepository.GetAllAsync();
 
                 var tree = _resourceProcessor.BuildTree(allResources, RootId);
                 await _cache.SetAsync(cacheKey, tree, TimeSpan.FromMinutes(30));
@@ -80,12 +80,12 @@ namespace Authorization.Infrastructure.Services
         // IResourcePublicService Implementation (متد جدید برای Seed)
         // ========================================================================
 
-        public async Task SyncModuleResourcesAsync(List<ResourceDefinition> resources, CancellationToken cancellationToken = default)
+        public async Task SyncModuleResourcesAsync(List<ResourceDto> resources, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("🔄 Starting sync for {Count} root resources...", resources.Count);
 
             // 1. تبدیل درخت به لیست خطی (با رعایت ترتیب والد -> فرزند)
-            var flatResources = FlattenResources(resources);
+            var flatResources = _resourceProcessor.FlattenResources(resources);
 
             // 2. دیکشنری برای نگهداری Key -> Id (برای ست کردن ParentId بدون کوئری اضافه)
             var keyToIdMap = new Dictionary<string, Guid>();
@@ -124,12 +124,12 @@ namespace Authorization.Infrastructure.Services
                         var newResource = new Resource(
                             def.Key,
                             def.Name,
-                             def.Type.ToEnumOrDefault(ResourceType.Ui),
-                            def.Category.ToEnumOrDefault(ResourceCategory.System),
+                             def.Type,
+                            def.Category,
 
                             parentId,
                             def.Description,
-                            def.Order,
+                            def.DisplayOrder,
                             def.Icon
                         );
                         newResource.GeneratePath();
@@ -155,9 +155,9 @@ namespace Authorization.Infrastructure.Services
                             existingResource.Update(
                                 def.Name,
                                 def.Description,
-                                def.Type.ToEnumOrDefault(ResourceType.Ui),
-                                def.Category.ToEnumOrDefault(ResourceCategory.System),
-                                def.Order,
+                                def.Type,
+                                def.Category,
+                                def.DisplayOrder,
                                 def.Icon
                             );
                             // اگر والد تغییر کرده
@@ -302,27 +302,7 @@ namespace Authorization.Infrastructure.Services
             return await _resourceSpecRepository.GetBySpecAsync(spec);
         }
 
-        // الگوریتم Flatten کردن درخت
-        private List<ResourceDefinition> FlattenResources(List<ResourceDefinition> resources)
-        {
-            var result = new List<ResourceDefinition>();
-            foreach (var res in resources)
-            {
-                // والد اول اضافه می‌شود
-                result.Add(res);
-
-                // بعد فرزندان به صورت بازگشتی
-                if (res.Children != null && res.Children.Any())
-                {
-                    // ست کردن ParentKey برای فرزندان (جهت اطمینان)
-                    foreach (var child in res.Children) child.ParentKey = res.Key;
-
-                    result.AddRange(FlattenResources(res.Children));
-                }
-            }
-            return result;
-        }
-
+       
         private async Task InvalidateResourceCachesAsync()
         {
             await _cache.RemoveByPatternAsync("auth:resource:*");
