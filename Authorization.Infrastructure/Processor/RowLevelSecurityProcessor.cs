@@ -42,7 +42,7 @@ namespace Authorization.Infrastructure.Processor
             _logger = logger;
             _scope = scope;
         }
-        public async Task<IQueryable<TEntity>> ApplyScope(IQueryable<TEntity> query)
+        private async Task<IQueryable<TEntity>> ApplyScope(IQueryable<TEntity> query)
         {
             try
             {
@@ -97,6 +97,92 @@ namespace Authorization.Infrastructure.Processor
             {
 
                 throw;
+            }
+        }
+        private async Task<IQueryable<TEntity>> ApplyPermissionRule(IQueryable<TEntity> query)
+        {
+            try
+            {
+
+                return query;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+        public async Task<IQueryable<TEntity>> ApplyFilter(IQueryable<TEntity> query)
+        {
+            try
+            {
+
+                // 🚨 جلوگیری از لوپ منطقی
+                if (typeof(TEntity) == typeof(Permission) || typeof(TEntity) == typeof(Resource))
+                    return query;
+
+                List<PermissionDto> allPermissions = _scope.Permissions.ToList();
+
+
+                var attribute = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
+                if (attribute == null)
+                    return query;
+
+                // بخش IDataScopedEntity
+                if (typeof(IOwnerableEntity).IsAssignableFrom(typeof(TEntity)))
+                    query =await ApplyScope(query);
+
+                if (typeof(IHasPermissionRuleEntity).IsAssignableFrom(typeof(TEntity)))
+                    query = await ApplyPermissionRule(query);
+                return query;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        public async Task CheckPermissionAsync(TEntity entity, PermissionAction action)
+        {
+            // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
+            // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
+            // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
+            /* if (typeof(TEntity) == typeof(Permission) ||
+                 typeof(TEntity) == typeof(Resource) ||
+                 typeof(TEntity) == typeof(UserSession)) // UserSession هم در زنجیره لاگین است
+             {
+                 return;
+             }*/
+            List<PermissionDto> allPermissions = _scope.Permissions.ToList();
+
+            var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
+            if (resourceAttr == null) return;
+            if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
+
+            var userId = _scope.UserId;
+            if (userId == null) return;
+
+
+
+            if (entity is IOwnerableEntity dataScopedEntity)
+            {
+                // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
+                // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
+                // و Circular Dependency در استارتاپ حل شود.
+                //var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
+
+                var scope = await GetScopeForUser(allPermissions, resourceAttr.ResourceKey, action);
+
+                bool isAllowed = await IsEntityInScope(dataScopedEntity, scope, userId);
+
+                if (!isAllowed)
+                {
+                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to data scope restrictions.");
+                }
+
             }
         }
 
@@ -156,46 +242,6 @@ namespace Authorization.Infrastructure.Processor
                 .Select(p => p.Scopes.FirstOrDefault().scope)
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
-        }
-        public async Task CheckPermissionAsync(TEntity entity, PermissionAction action)
-        {
-            // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
-            // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
-            // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
-            /* if (typeof(TEntity) == typeof(Permission) ||
-                 typeof(TEntity) == typeof(Resource) ||
-                 typeof(TEntity) == typeof(UserSession)) // UserSession هم در زنجیره لاگین است
-             {
-                 return;
-             }*/
-            List<PermissionDto> allPermissions = _scope.Permissions.ToList();
-
-            var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
-            if (resourceAttr == null) return;
-            if (resourceAttr.ResourceKey == "audit.auditlog" && action == PermissionAction.Create) return;
-
-            var userId = _scope.UserId;
-            if (userId == null) return;
-
-            
-
-            if (entity is IOwnerableEntity dataScopedEntity)
-            {
-                // تغییر ۳: دریافت سرویس فقط در لحظه نیاز (Lazy Resolution)
-                // این کار باعث می‌شود در لحظه ساخت Repository، نیازی به ساخت AuthorizationService نباشد
-                // و Circular Dependency در استارتاپ حل شود.
-                //var authorizationChecker = _serviceProvider.GetRequiredService<IAuthorizationChecker>();
-
-                var scope = await GetScopeForUser(allPermissions, resourceAttr.ResourceKey, action);
-
-                bool isAllowed = await IsEntityInScope(dataScopedEntity, scope, userId);
-
-                if (!isAllowed)
-                {
-                    throw new UnauthorizedAccessException($"User does not have permission to {action} this resource due to data scope restrictions.");
-                }
-
-            }
         }
      
        private async Task<bool> IsEntityInScope(IOwnerableEntity entity, ScopeType scope, Guid userId)

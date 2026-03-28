@@ -14,7 +14,7 @@ namespace Core.Application.Abstractions.Authorization.Processor
         where TEntity : class
     {
 
-        Task<IQueryable<TEntity>> ApplyScope(IQueryable<TEntity> query) ;
+        Task<IQueryable<TEntity>> ApplyFilter(IQueryable<TEntity> query) ;
 
         Task CheckPermissionAsync(TEntity entity, PermissionAction action);
         Task SetOwnerDefaults(TEntity entity) ;
