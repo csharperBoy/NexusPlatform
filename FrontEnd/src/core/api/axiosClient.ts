@@ -19,8 +19,9 @@ const CURRENT_PROJECT = import.meta.env.VITE_CURRENT_PROJECT || "default";
 function getAPIModules(): Record<string, string> {
   const modules: Record<string, string> = {};
   const prefix = `VITE_${CURRENT_PROJECT.toUpperCase()}_`;
-
+  
   Object.keys(import.meta.env).forEach((key) => {
+  // console.info('1');
     if (key.startsWith(prefix) && key.endsWith("_API")) {
       const moduleName = key
         .slice(prefix.length, -4)
@@ -43,6 +44,7 @@ let isRefreshing = false;
 let refreshSubscribers: ((token: string) => void)[] = [];
 
 function subscribeTokenRefresh(cb: (token: string) => void) {
+  // console.info('2');
   refreshSubscribers.push(cb);
 }
 
@@ -59,6 +61,8 @@ type AxiosClients = Record<string, AxiosInstance>;
 const axiosClients: AxiosClients = {};
 
 Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
+    
+    // console.info('3');
   const client = axios.create({
     baseURL,
     timeout: 15000,
@@ -74,8 +78,9 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
 
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
+        // console.info('4');
       const token = getAccessToken();
-
+      // console.info(token);
       if (token) {
         config.headers.set("Authorization", `Bearer ${token}`);
       }
@@ -91,6 +96,7 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
   client.interceptors.response.use(
     (response: AxiosResponse) => response,
     async (error) => {
+        // console.info('5');
       const originalRequest: any = error.config;
 
       if (
@@ -123,7 +129,7 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
           onRefreshed(newToken);
 
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
+          // console.info(originalRequest.headers.Authorization);
           return client(originalRequest);
         } catch (refreshError) {
           setGlobalAccessToken(null);
@@ -146,6 +152,7 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
 ============================================================ */
 
 export function getAPI(moduleName: string): AxiosInstance {
+    // console.info('6');
   const client = axiosClients[moduleName];
 
   if (!client) {

@@ -8,12 +8,15 @@ const API_MODULE = "authorization"; // دقت کنید که با حروف کوچ
 export const resourceApi = {
   // دریافت درخت منابع (GET)
   getTree: async (rootId?: string): Promise<ResourceTreeDto[]> => {
+     console.info('122'); 
     const api = getAPI(API_MODULE);
+    console.info('123'); 
+    console.info(api);
     const response = await api.get<ResourceTreeDto[]>(
       "/api/authorization/admin/resources/tree",
       { params: { rootId }, withCredentials: true }
     );
-    console.log(response.data)
+    console.log(response)
     return response.data;
   },
 

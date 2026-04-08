@@ -63,6 +63,7 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(RowLevelSecurityProcessor<>));
             services.AddTransient<IResourceProcessor, ResourceProcessor>();
+            services.AddTransient<IAuthorizationProcessor, AuthorizationProcessor>();
             //services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
             //services.AddScoped<IDataScopeService, DataScopeService>();
 

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -112,7 +113,17 @@ namespace Core.Infrastructure.DependencyInjection
             else
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Survey System V1");
+                    c.OAuthClientId("swagger-ui");
+                    c.OAuthClientSecret("swagger-secret");
+                    c.OAuthUsePkce();
+                });
+                //app.UseSwagger();
+                //app.UseSwaggerUI();
+
+                
             }
 
             return app;

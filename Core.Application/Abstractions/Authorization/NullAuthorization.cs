@@ -60,10 +60,13 @@ namespace Core.Application.Abstractions.Authorization
     public class NullRowLevelSecurityProcessor<TEntity> : IRowLevelSecurityProcessor<TEntity>
     where TEntity : class
     {
-        public Task<IQueryable<TEntity>> ApplyScope(IQueryable<TEntity> query)
+        public Task<IQueryable<TEntity>> ApplyFilter(IQueryable<TEntity> query)
         {
+
             return null;
         }
+
+
 
         public Task CheckPermissionAsync(TEntity entity, PermissionAction action)
         {

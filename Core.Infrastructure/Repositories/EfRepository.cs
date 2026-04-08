@@ -83,26 +83,26 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<TEntity?> GetByIdAsync(TKey id)
         {
-            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
             return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            var result = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            var result = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
             return await result.ToListAsync();
         }
 
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
         {
-            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
             if (predicate != null) query = query.Where(predicate);
             return await query.CountAsync();
         }
 
         public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            var query = await _authorizationProcessor.ApplyScope(_dbSet.AsQueryable());
+            var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
             return await query.AnyAsync(predicate);
         }
 
@@ -159,13 +159,13 @@ namespace Core.Infrastructure.Repositories
 
         public virtual async Task<IQueryable<TEntity>> AsQueryable()
         {
-            return await _authorizationProcessor.ApplyScope(_dbSet);
+            return await _authorizationProcessor.ApplyFilter(_dbSet);
            
         }
       
         public virtual async Task<IQueryable<TEntity>> AsNoTrackingQueryable()
         {
-            return await _authorizationProcessor.ApplyScope(_dbSet.AsNoTracking());
+            return await _authorizationProcessor.ApplyFilter(_dbSet.AsNoTracking());
 
         }
 

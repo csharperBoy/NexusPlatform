@@ -84,7 +84,7 @@ namespace Core.Infrastructure.Repositories
 
                 // ***** اعمال امنیت همین اول کار *****
                 // اگر Specification خاصی نباید فیلتر شود، می‌توان پراپرتی IgnoreSecurity به Specification اضافه کرد
-                query = await _authorizationProcessor.ApplyScope(query);
+                query = await _authorizationProcessor.ApplyFilter(query);
 
                 if (specification.Criteria != null)
                     query = query.Where(specification.Criteria);
@@ -155,7 +155,7 @@ namespace Core.Infrastructure.Repositories
         {
             // 📌 شمارش فقط با Criteria برای جلوگیری از بارگذاری سنگین Includes
             var countQuery = _dbSet.AsQueryable();
-            countQuery = await _authorizationProcessor.ApplyScope(countQuery);
+            countQuery = await _authorizationProcessor.ApplyFilter(countQuery);
             if (specification.Criteria != null)
                 countQuery = countQuery.Where(specification.Criteria);
             var totalCount = await countQuery.CountAsync();
@@ -171,7 +171,7 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task<int> CountBySpecAsync(ISpecification<TEntity> specification)
         {
             var query = _dbSet.AsQueryable();
-            query = await _authorizationProcessor.ApplyScope(query);
+            query = await _authorizationProcessor.ApplyFilter(query);
             if (specification.Criteria != null)
                 query = query.Where(specification.Criteria);
             return await query.CountAsync();

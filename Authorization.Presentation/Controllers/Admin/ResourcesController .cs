@@ -8,6 +8,7 @@ using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 //using IAuthorizationService = Authorization.Application.Interfaces.IAuthorizationService;
@@ -27,6 +28,9 @@ namespace Authorization.Presentation.Controllers.Admin
         [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> GetResourceTree([FromQuery] Guid? rootId = null)
         {
+            var userName = User.Identity?.Name;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             var query = new GetResourceTreeQuery(rootId);
             var result = await Mediator.Send(query);
             return HandleResult(result);

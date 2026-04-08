@@ -17,6 +17,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using System.ComponentModel.Design;
 namespace Core.Infrastructure.DependencyInjection
@@ -90,7 +91,7 @@ namespace Core.Infrastructure.DependencyInjection
             #endregion
 
             // 📌 ثبت سرویس‌های زیرساختی
-            services.AddSwaggerGen();
+
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
@@ -104,6 +105,7 @@ namespace Core.Infrastructure.DependencyInjection
 
             services.AddLoggingServices(configuration);
             ConfigureCors(services, configuration);
+            ConfigureSwagger(services, configuration);
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
@@ -132,7 +134,48 @@ namespace Core.Infrastructure.DependencyInjection
                 });
             });
         }
+        private static void ConfigureSwagger(IServiceCollection services, IConfiguration configuration)
+        {
 
+            var swaggerSettings = configuration.GetSection("Swagger").Get<SwaggerSettings>();
+            var title = swaggerSettings?.Title ??  "Title" ;
+            var version = swaggerSettings?.Version ?? "Version";
+            var description = swaggerSettings?.Description ?? "Description";
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc(version, new OpenApiInfo
+                {
+                    Title = title,
+                    Version = version,
+                    Description = description
+                });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "توکن JWT را با فرمت 'Bearer {token}' وارد کنید"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            });
+        }
         // 📌 پیکربندی Logging با Serilog
         private static IServiceCollection AddLoggingServices(this IServiceCollection services, IConfiguration configuration)
         {
