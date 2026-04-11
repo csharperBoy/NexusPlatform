@@ -22,7 +22,7 @@ const ResourceManagementPage: React.FC = () => {
           getNodeLabel={(node) => node.name}
           getNodeChildren={(node) => node.children}
           onNodeClick={(node) => console.log('Selected:', node)}
-          selectable={true}
+          selectable={true}         
           cascadeSelection={true}  // آبشاری
           onSelectionChange={(selectedIds, selectedNodes) => {
             console.log('Selected IDs:', selectedIds);

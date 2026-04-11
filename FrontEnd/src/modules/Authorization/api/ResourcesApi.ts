@@ -2,6 +2,7 @@
 import getAPI from "@/core/api/axiosClient";
 import type { ResourceDto } from "../models/ResourceDto";
 import type { CreateResourceApiRequest } from "../models/CreateResourceRequest";
+import type { UpdateResourceApiRequest } from "../models/UpdateResourceRequest";
 
 const API_MODULE = "authorization"; // دقت کنید که با حروف کوچک در env تعریف شده باشد
 
@@ -39,18 +40,18 @@ createResource: async (data: CreateResourceApiRequest): Promise<string> => {
 },
 
 // ویرایش منبع (PUT)
-  Update: async (Id?: string): Promise<boolean> => {
+  updateResource: async (data: UpdateResourceApiRequest): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
-      `/api/authorization/admin/resources/${Id}`,
-      {  withCredentials: true }
+      `/api/authorization/admin/resources/${data.id}`,
+      {  params: { data }, withCredentials: true }
     );
     console.log(response)
     return response.data;
   },
 
   // حذف منبع (Delete)
-  Delete: async (Id?: string): Promise<boolean> => {
+  deleteResource: async (Id?: string): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.delete<boolean>(
       `/api/authorization/admin/resources/${Id}`,
