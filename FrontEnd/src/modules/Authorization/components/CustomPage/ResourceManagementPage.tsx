@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
 import { useResourceManagement } from '../../hooks/Forms/useResourceManagementForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { ResourceTreeDto } from '../../models/ResourceTreeDto';
+import type { ResourceTreeDto } from '../../models/ResourceDto';
 
 export interface RenderFormProps {
   treeData: ResourceTreeDto[];

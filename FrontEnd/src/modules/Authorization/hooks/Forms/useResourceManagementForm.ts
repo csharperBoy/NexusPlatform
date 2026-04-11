@@ -1,7 +1,7 @@
 // src/modules/Authorization/hooks/Forms/useResourceManagementForm.ts
 import { useState, useEffect } from "react";
 import { resourceApi } from "../../api/ResourcesApi";
-import type { ResourceTreeDto } from "../../models/ResourceTreeDto";
+import type { ResourceTreeDto } from "../../models/ResourceDto";
 
 export const useResourceManagement = () => {
   const [treeData, setTreeData] = useState<ResourceTreeDto[]>([]);

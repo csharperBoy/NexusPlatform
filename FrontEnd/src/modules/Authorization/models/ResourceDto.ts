@@ -1,5 +1,5 @@
-// src/modules/Authorization/models/ResourceTreeDto.ts
-export interface ResourceTreeDto {
+// src/modules/Authorization/models/ResourceDto.ts
+export interface ResourceDto {
   id: string;
   key: string;
   name: string;
@@ -11,5 +11,5 @@ export interface ResourceTreeDto {
   displayOrder: number;
   isActive: boolean;
   path?: string;
-  children?: ResourceTreeDto[]; // برای ساختار درختی
+  children?: ResourceDto[]; // برای ساختار درختی
 }
