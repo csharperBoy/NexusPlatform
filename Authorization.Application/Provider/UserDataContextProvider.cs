@@ -25,9 +25,11 @@ namespace Authorization.Application.Context
         private readonly IPositionPublicService _positionService;
         private readonly IRolePublicService _roleService;
 
+        private readonly UserDataContext _userDataContext;
+
         public UserDataContextProvider(
             IPermissionInternalService permissionService,
-           
+           UserDataContext userDataContext,
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
             IPositionPublicService positionService,
@@ -39,6 +41,7 @@ namespace Authorization.Application.Context
             _userService = userService;
             _positionService = positionService;
             _roleService = roleService;
+            _userDataContext = userDataContext;
         }
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
@@ -66,6 +69,36 @@ namespace Authorization.Application.Context
                 RoleIds = RoleIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
             };
+        }
+
+        public async Task SetUserData(CancellationToken ct)
+        {
+            var ctx = await GetAsync(ct);
+
+            // مقداردهی Scoped Instance
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.UserId))!
+                .SetValue(_userDataContext, ctx.UserId);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PersonId))!
+                .SetValue(_userDataContext, ctx.PersonId);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
+                .SetValue(_userDataContext, ctx.OrganizationUnitIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PositionIds))!
+                .SetValue(_userDataContext, ctx.PositionIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.RoleIds))!
+                .SetValue(_userDataContext, ctx.RoleIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.Permissions))!
+                .SetValue(_userDataContext, ctx.Permissions);
         }
     }
 

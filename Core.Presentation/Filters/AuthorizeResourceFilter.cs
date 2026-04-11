@@ -63,32 +63,8 @@ namespace Core.Presentation.Filters
         {
 
             CancellationToken cancellationToken = new CancellationToken();
-            var ctx = await _provider.GetAsync(cancellationToken);
+             await _provider.SetUserData(cancellationToken);
 
-            // مقداردهی Scoped Instance
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.UserId))!
-                .SetValue(_userDataContext, ctx.UserId);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PersonId))!
-                .SetValue(_userDataContext, ctx.PersonId);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
-                .SetValue(_userDataContext, ctx.OrganizationUnitIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PositionIds))!
-                .SetValue(_userDataContext, ctx.PositionIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.RoleIds))!
-                .SetValue(_userDataContext, ctx.RoleIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.Permissions))!
-                .SetValue(_userDataContext, ctx.Permissions);
             
         }
     }

@@ -11,6 +11,7 @@ namespace Core.Application.Provider
     {
 
         Task<UserDataContext> GetAsync(CancellationToken ct);
+        Task SetUserData(CancellationToken ct);
     }
 
 }

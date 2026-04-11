@@ -33,35 +33,13 @@ namespace Core.Application.Behaviors
             RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
-          
 
-            var ctx = await _provider.GetAsync(cancellationToken);
+            if (_context.UserId == Guid.Empty)
+            {
+                await _provider.SetUserData(cancellationToken);
+            }
 
-            // مقداردهی Scoped Instance
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.UserId))!
-                .SetValue(_context, ctx.UserId);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PersonId))!
-                .SetValue(_context, ctx.PersonId);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
-                .SetValue(_context, ctx.OrganizationUnitIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PositionIds))!
-                .SetValue(_context, ctx.PositionIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.RoleIds))!
-                .SetValue(_context, ctx.RoleIds);
-
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.Permissions))!
-                .SetValue(_context, ctx.Permissions);
-
+           
             return await next();
         }
     }
