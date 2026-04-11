@@ -7,8 +7,11 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Core.Presentation.Filters
 {
@@ -18,10 +21,14 @@ namespace Core.Presentation.Filters
         private readonly UserDataContext _userDataContext;
         private readonly string _resourceKey;
         private readonly string _action;
+        private readonly IHttpContextAccessor _httpContext;
+
+
+        private readonly IUserDataContextProvider _provider;
 
         public AuthorizeResourceFilter(
-            IAuthorizationProcessor authorizationChecker,
-             UserDataContext userDataContext,
+            IAuthorizationProcessor authorizationChecker, IHttpContextAccessor httpContext, IUserDataContextProvider provider,
+        UserDataContext userDataContext,
         string resourceKey,
             string action)
         {
@@ -29,23 +36,60 @@ namespace Core.Presentation.Filters
             _userDataContext = userDataContext;
             _resourceKey = resourceKey;
             _action = action;
+            _httpContext = httpContext;
+            _provider = provider;
         }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-       
+            await SetUserData();
             var userId = _userDataContext.UserId;
+             //var userIdstr = _httpContext.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            //Guid userId = string.IsNullOrEmpty(userIdstr) ? Guid.Empty : Guid.Parse(userIdstr);
+
             if (userId == null || userId == Guid.Empty)
             {
                 context.Result = new UnauthorizedResult();
                 return;
             }
 
-            var hasAccess = await _authorizationChecker.CheckAccessAsync( _resourceKey, _action);
+            var hasAccess = await _authorizationChecker.CheckAccessAsync( _resourceKey, _action );
             if (!hasAccess)
             {
                 context.Result = new ForbidResult();
             }
+        }
+        private async Task SetUserData()
+        {
+
+            CancellationToken cancellationToken = new CancellationToken();
+            var ctx = await _provider.GetAsync(cancellationToken);
+
+            // مقداردهی Scoped Instance
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.UserId))!
+                .SetValue(_userDataContext, ctx.UserId);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PersonId))!
+                .SetValue(_userDataContext, ctx.PersonId);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
+                .SetValue(_userDataContext, ctx.OrganizationUnitIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PositionIds))!
+                .SetValue(_userDataContext, ctx.PositionIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.RoleIds))!
+                .SetValue(_userDataContext, ctx.RoleIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.Permissions))!
+                .SetValue(_userDataContext, ctx.Permissions);
+            
         }
     }
 }

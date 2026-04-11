@@ -71,7 +71,7 @@ namespace Authorization.Infrastructure.Processor
         {
             try
             {
-                return query;
+                //return query;
                 // 🚨 جلوگیری از لوپ منطقی
                 if (typeof(TEntity) == typeof(Permission) || typeof(TEntity) == typeof(Resource))
                     return query;
@@ -101,7 +101,7 @@ namespace Authorization.Infrastructure.Processor
 
         public async Task CheckPermissionAsync(TEntity entity, PermissionAction action)
         {
-            return;
+            //return;
             // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
             // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
             // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.

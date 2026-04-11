@@ -43,8 +43,7 @@ namespace Authorization.Application.Context
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
 
-
-
+            
             var userIdstr = _httpContext.HttpContext?.User?
                        .FindFirst(ClaimTypes.NameIdentifier)?.Value;
             Guid userId = string.IsNullOrEmpty(userIdstr) ? Guid.Empty : Guid.Parse(userIdstr);

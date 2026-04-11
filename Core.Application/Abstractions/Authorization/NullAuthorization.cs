@@ -49,6 +49,7 @@ namespace Core.Application.Abstractions.Authorization
     }
     public class NullAuthorizationProcessor : IAuthorizationProcessor
     {
+
         public Task<bool> CheckAccessAsync(string resourceKey, string action)
         {
             return null;

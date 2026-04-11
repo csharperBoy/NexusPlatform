@@ -139,7 +139,7 @@ namespace Core.Infrastructure.DependencyInjection
 
             var swaggerSettings = configuration.GetSection("Swagger").Get<SwaggerSettings>();
             var title = swaggerSettings?.Title ??  "Title" ;
-            var version = swaggerSettings?.Version ?? "Version";
+            var version = swaggerSettings?.Version ?? "v1";
             var description = swaggerSettings?.Description ?? "Description";
             services.AddSwaggerGen(c =>
             {

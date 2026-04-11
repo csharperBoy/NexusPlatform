@@ -2,11 +2,15 @@
 
 using Core.Application.Provider;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace Core.Application.Behaviors
 {
@@ -17,7 +21,7 @@ namespace Core.Application.Behaviors
         private readonly UserDataContext _context;
 
         public SetUserDataBehavior(
-            IUserDataContextProvider provider,
+            IUserDataContextProvider provider, 
             UserDataContext context)
         {
             _provider = provider;
@@ -29,6 +33,8 @@ namespace Core.Application.Behaviors
             RequestHandlerDelegate<TResponse> next,
             CancellationToken cancellationToken)
         {
+          
+
             var ctx = await _provider.GetAsync(cancellationToken);
 
             // مقداردهی Scoped Instance

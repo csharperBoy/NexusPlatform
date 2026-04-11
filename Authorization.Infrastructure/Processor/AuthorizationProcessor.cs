@@ -27,9 +27,10 @@ namespace Authorization.Infrastructure.Processor
             _cache = cache;
             _logger = logger;
         }
-        public async Task<bool> CheckAccessAsync( string resourceKey, string action)
+        public async Task<bool> CheckAccessAsync(string resourceKey, string action)
         {
-            return true;
+            //return true;
+
             Guid userId = _userDataContext.UserId;
             var cacheKey = $"auth:access:{userId}:{resourceKey}:{action}";
 
