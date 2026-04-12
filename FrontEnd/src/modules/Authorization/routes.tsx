@@ -11,6 +11,6 @@ export const authorizationPublicRoutes: RouteObject[] = [
 
 export const authorizationPanelRoutes: RouteObject[] = [
   { path: "resources/create", element: <ResourceCreatePage /> }, 
-  { path: "resources/update/:id", element: <ResourceUpdatePage /> }, 
+  { path: "resources/edit/:id", element: <ResourceUpdatePage /> }, 
   { path: "resources", element: <ResourceManagementPage /> },
 ];

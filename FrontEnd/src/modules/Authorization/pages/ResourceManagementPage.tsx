@@ -1,32 +1,12 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ResourceManagementWithCustomForm, RenderFormProps } from '../components/CustomPage/ResourceManagementPage';
 import { Tree } from '@/core/components/Tree';
-import { resourceApi } from '../api/ResourcesApi';
-import { ResourceDto } from '../models/ResourceDto';
 const ResourceManagementPage: React.FC = () => {
-  const navigate = useNavigate();
-
-
-const handleDelete = async (
-  node: ResourceDto,
-  refresh: (rootId?: string) => Promise<void>
-) => {
-  if (!confirm(`آیا از حذف "${node.name}" مطمئن هستید؟`)) return;
-
-  try {
-    await resourceApi.deleteResource(node.id);
-    await refresh();
-  } catch {
-    alert("حذف با مشکل مواجه شد");
-  }
-};
-
 
   return (
     <ResourceManagementWithCustomForm
       redirectTo="/dashboard"
-      renderForm={({ treeData, loading, error, refresh }: RenderFormProps) => (
+      renderForm={({ treeData, loading, error, refresh, deleteNode , editNode }: RenderFormProps) => (
         <div className="p-4"> 
           <Tree
             nodes={treeData}
@@ -41,15 +21,30 @@ const handleDelete = async (
                 <span>{node.name}</span>
 
                 <button
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded"
-                  onClick={() => navigate(`/resources/edit/${node.id}`)}
+                  className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
+                   onClick={async () => {
+                    
+                    try {
+                      await editNode(node.id);
+                    } catch (e) {
+                      alert(e);
+                    }
+                  }}
                 >
                   ویرایش
                 </button>
 
                 <button
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded"
-                  onClick={() => handleDelete(node, refresh)}
+                  className="text-red-600 hover:underline"
+                  onClick={async () => {
+                    if (!confirm(`حذف "${node.name}"?`)) return;
+
+                    try {
+                      await deleteNode(node.id);
+                    } catch (e) {
+                      alert(e);
+                    }
+                  }}
                 >
                   حذف
                 </button>

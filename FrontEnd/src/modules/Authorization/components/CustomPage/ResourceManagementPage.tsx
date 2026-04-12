@@ -11,7 +11,10 @@ export interface RenderFormProps {
   loading: boolean;
   error: string | null;
   refresh: (rootId?: string) => Promise<void>;
+  deleteNode: (id: string) => Promise<void>; 
+  editNode: (id: string) => Promise<void>; 
 }
+
 
 export interface ResourceManagementPageWithCustomFormProps {
   redirectTo?: string;
