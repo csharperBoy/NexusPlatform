@@ -20,7 +20,6 @@ export const resourceApi = {
   // دریافت منبع (GET)
   getById: async (Id?: string): Promise<ResourceDto> => {
     
-    console.info('1');
     const api = getAPI(API_MODULE);
     
     const response = await api.get<ResourceDto>(
@@ -46,8 +45,8 @@ createResource: async (data: CreateResourceApiRequest): Promise<string> => {
   updateResource: async (data: UpdateResourceApiRequest): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
-      `/api/authorization/admin/resources/${data.id}`,
-      {  params: { data }, withCredentials: true }
+      `/api/authorization/admin/resources/${data.id}`, data,
+      {  withCredentials: true }
     );
     console.log(response)
     return response.data;

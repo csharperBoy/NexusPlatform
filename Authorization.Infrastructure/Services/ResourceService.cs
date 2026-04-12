@@ -30,7 +30,7 @@ namespace Authorization.Infrastructure.Services
         private readonly ILogger<ResourceService> _logger;
         private readonly ICachePublicService _cache;
         private readonly IResourceProcessor _resourceProcessor;
-
+        private readonly string baseCacheKey = "auth:resource";
         public ResourceService(
             IRepository<AuthorizationDbContext, Resource, Guid> resourceRepository,
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
@@ -48,7 +48,7 @@ namespace Authorization.Infrastructure.Services
         }
         public async Task<IReadOnlyList<ResourceTreeDto>> GetByTreeStructure(Guid? RootId = null)
         {
-            var cacheKey = "auth:resourcetree:full";
+            var cacheKey = $"{baseCacheKey}:tree:full";
 
             try
             {
@@ -304,7 +304,7 @@ namespace Authorization.Infrastructure.Services
        
         private async Task InvalidateResourceCachesAsync()
         {
-            await _cache.RemoveByPatternAsync("auth:resource:*");
+            await _cache.RemoveByPatternAsync($"{baseCacheKey}:*");
         }
 
         public async Task<Resource?> GetById(Guid resourceId)

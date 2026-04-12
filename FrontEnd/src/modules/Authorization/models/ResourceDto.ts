@@ -6,8 +6,8 @@ export interface ResourceDto {
   description: string;
   parentId?: string;
   icon?: string;
-  type: string;
-  category: string;
+  type: number;
+  category: number;
   displayOrder: number;
   isActive: boolean;
   path?: string;

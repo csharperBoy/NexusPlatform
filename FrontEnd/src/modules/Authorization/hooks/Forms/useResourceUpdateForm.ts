@@ -15,7 +15,6 @@ const typeMapReverse: Record<number, string> = {
     0: 'Module',
     1: 'Ui',
     2: 'Data',
-    3: 'Page',
 };
 const categoryMapReverse: Record<number, string> = {
     0: 'General',
@@ -44,10 +43,12 @@ const fetchResourceById = useCallback(async (resourceId: string) => {
             // این مقادیر باید بر اساس response.type و response.category مقداردهی شوند،
             // اگر response.type عدد است، از typeMapReverse استفاده کنید.
             // فرض می‌کنیم response.type و response.category از API به صورت رشته برمی‌گردند یا باید تبدیل شوند.
-            type: response.type || 'Page',
-            category: response.category || 'General',
+            type: typeMapReverse[response.type] , // استفاده از نگاشت معکوس
+            category: categoryMapReverse[response.category] , // استفاده از نگاشت معکوس
+               
             displayOrder: response.displayOrder,
         };
+        console.info(response.type);
         setFormData(loadedData);
         // setError(null); // خطا را اینجا پاک نکنید، اگر fetch موفق بود، خطایی نیست
     } catch (err: any) {
