@@ -4,7 +4,9 @@ using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums.Authorization;
+using MediatR;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,6 +20,26 @@ namespace Authorization.Domain.Entities
     [SecuredResource("Authorization.Resource")]
     public class Resource : BaseEntity , IAuditableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
+        public   ResourceDto ToDto( Resource resource)
+        {
+            ResourceDto result = new ResourceDto()
+            {
+                Category = resource.Category,
+                Children = resource.Children?.Select(m=>m.ToDto(m)).ToList(),
+                Description = resource.Description,
+                DisplayOrder = resource.DisplayOrder,
+                Icon = resource.Icon,
+                Id = resource.Id,
+                IsActive = resource.IsActive,
+                Key = resource.Key,
+                Name = resource.Name,
+                ParentId = resource.ParentId,
+                ParentKey = resource.Parent?.Key,
+                Path = resource.ResourcePath,
+                Type = resource.Type
+            };
+            return result;
+        }
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
@@ -186,7 +208,6 @@ namespace Authorization.Domain.Entities
         public bool IsRoot => !ParentId.HasValue;
 
     }
-
 
 
 }

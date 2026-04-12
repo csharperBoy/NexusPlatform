@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.Commands;
 using Authorization.Application.Commands.Resource;
 using Authorization.Application.DTOs.Resource;
+using Authorization.Domain.Entities;
 using Core.Application.Abstractions.Authorization.PublicService;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace Authorization.Application.Interfaces
         Task UpdateResourceAsync(UpdateResourceCommand command);
         Task DeleteResourceAsync(Guid resourceId);
         Task<string> GetKeyById(Guid resourceId);
+        Task<Resource?> GetById(Guid resourceId);
         Task<IReadOnlyList<ResourceTreeDto>> GetByTreeStructure(Guid? RootId = null);
         //Task SyncResourcesWithDefinitionsAsync();
 

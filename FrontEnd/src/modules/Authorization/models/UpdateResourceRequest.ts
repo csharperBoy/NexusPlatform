@@ -1,7 +1,6 @@
 // src/modules/Authorization/models/UpdateResourceRequest.ts
 export interface UpdateResourceRequest {
-      id: string;
- 
+  id: string;
   key: string;
   name: string;
   description?: string;
@@ -14,8 +13,7 @@ export interface UpdateResourceRequest {
 }
 
 export interface UpdateResourceApiRequest {
-      id: string;
- 
+  id: string;
   key: string;
   name: string;
   type: number;       // 0=Module, 1=Ui, 2=Data

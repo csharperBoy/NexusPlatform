@@ -307,7 +307,14 @@ namespace Authorization.Infrastructure.Services
             await _cache.RemoveByPatternAsync("auth:resource:*");
         }
 
-        
+        public async Task<Resource?> GetById(Guid resourceId)
+        {
+            var spec = new ResourceByIdSpec(resourceId);
+            Resource? resource = await _resourceSpecRepository.GetBySpecAsync(spec);
+            return resource;
+        }
+
+
 
         // تبدیل رشته به Enum (چون Definition استرینگ دارد ولی دیتابیس Enum)
         /*  private ResourceType ParseResourceType(string typeStr) =>

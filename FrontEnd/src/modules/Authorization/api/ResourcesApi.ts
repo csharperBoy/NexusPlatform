@@ -19,12 +19,15 @@ export const resourceApi = {
   },
   // دریافت منبع (GET)
   getById: async (Id?: string): Promise<ResourceDto> => {
+    
+    console.info('1');
     const api = getAPI(API_MODULE);
+    
     const response = await api.get<ResourceDto>(
       `/api/authorization/admin/resources/${Id}`,
       {  withCredentials: true }
     );
-    console.log(response)
+    console.info(response)
     return response.data;
   },
   // ایجاد منبع جدید (POST)

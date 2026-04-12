@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.DTOs.Resource;
 using Authorization.Application.Interfaces;
 using Authorization.Application.Queries.Resource;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Resource
 {
- /*   public class GetResourceByIdQueryHandler
+    public class GetResourceByIdQueryHandler
         : IRequestHandler<GetResourceByIdQuery, Result<ResourceDto>>
     {
         private readonly IResourceInternalService _resourceService;
@@ -34,14 +35,16 @@ namespace Authorization.Application.Handlers.Queries.Resource
             {
                 _logger.LogDebug("Getting resource by ID: {ResourceId}", request.Id);
 
-                var resource = await _resourceService.GetResourceAsync(request.Id);
-
+                var resource = await _resourceService.GetById(request.Id);
+                
+                ResourceDto result = resource.ToDto(resource);
+                
                 if (resource == null)
                 {
                     return Result<ResourceDto>.Fail($"Resource with ID {request.Id} not found");
                 }
 
-                return Result<ResourceDto>.Ok(resource);
+                return Result<ResourceDto>.Ok(result);
             }
             catch (Exception ex)
             {
@@ -50,4 +53,4 @@ namespace Authorization.Application.Handlers.Queries.Resource
             }
         }
     }
-*/}
+}

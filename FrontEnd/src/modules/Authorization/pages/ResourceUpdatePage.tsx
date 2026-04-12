@@ -22,7 +22,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">کلید (Key)</label>
               <Input
-                value={formData.key}
+                value={formData?.key}
                 onChange={(e) => handleChange('key', e.target.value)}
                 required
                 disabled={loading}
@@ -31,7 +31,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">نام</label>
               <Input
-                value={formData.name}
+                value={formData?.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 required
                 disabled={loading}
@@ -40,7 +40,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">توضیحات</label>
               <Input
-                value={formData.description}
+                value={formData?.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 disabled={loading}
               />
@@ -48,7 +48,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">نوع</label>
               <select
-                value={formData.type}
+                value={formData?.type}
                 onChange={(e) => handleChange('type', e.target.value)}
                 className="w-full p-2 border rounded"
                 disabled={loading}
@@ -61,7 +61,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">دسته‌بندی</label>
               <select
-                value={formData.category}
+                value={formData?.category}
                 onChange={(e) => handleChange('category', e.target.value)}
                 className="w-full p-2 border rounded"
                 disabled={loading}
@@ -80,7 +80,7 @@ const ResourceUpdatePage: React.FC = () => {
               <label className="block mb-1">ترتیب نمایش</label>
               <Input
                 type="number"
-                value={formData.displayOrder}
+                value={formData?.displayOrder}
                 onChange={(e) => handleChange('displayOrder', parseInt(e.target.value) || 0)}
                 disabled={loading}
               />
@@ -88,7 +88,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">آیکون (اختیاری)</label>
               <Input
-                value={formData.icon}
+                value={formData?.icon}
                 onChange={(e) => handleChange('icon', e.target.value)}
                 disabled={loading}
               />
@@ -96,7 +96,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">مسیر (Route - اختیاری)</label>
               <Input
-                value={formData.route}
+                value={formData?.route}
                 onChange={(e) => handleChange('route', e.target.value)}
                 disabled={loading}
               />
@@ -104,7 +104,7 @@ const ResourceUpdatePage: React.FC = () => {
             <div className="mb-4">
               <label className="block mb-1">والد (ParentId - اختیاری)</label>
               <Input
-                value={formData.parentId || ''}
+                value={formData?.parentId || ''}
                 onChange={(e) => handleChange('parentId', e.target.value || null)}
                 disabled={loading}
                 placeholder="GUID والد"
