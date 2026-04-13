@@ -1,13 +1,13 @@
 // src/modules/Authorization/pages/ResourceCreatePage.tsx
 import React from 'react';
-import { ResourceCreateWithCustomForm, type RenderFormProps } from '../components/CustomPage/ResourceCreatePage';
+import { ResourceCreateForm, type RenderFormProps } from '../Interface/IResourceCreatePage';
 import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
 import Card from '@/core/components/Card';
 
 const ResourceCreatePage: React.FC = () => {
   return (
-    <ResourceCreateWithCustomForm
+    <ResourceCreateForm
       redirectTo="/resources"
       renderForm={({
         formData,

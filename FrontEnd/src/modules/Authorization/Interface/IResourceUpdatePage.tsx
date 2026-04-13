@@ -1,10 +1,10 @@
-// src/modules/Authorization/components/CustomPage/ResourceUpdatePage.tsx
+// src/modules/Authorization/components/Interface/IResourceUpdatePage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
-import { useResourceUpdateForm } from '../../hooks/Forms/useResourceUpdateForm';
+import { useResourceUpdateForm } from '../hooks/Forms/useResourceUpdateForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { UpdateResourceRequest } from '../../models/UpdateResourceRequest';
+import type { UpdateResourceRequest } from '../models/UpdateResourceRequest';
 
 export interface RenderFormProps {
   formData: UpdateResourceRequest | null; 
@@ -15,13 +15,13 @@ export interface RenderFormProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-export interface ResourceUpdatePageProps { // نام به ResourceUpdatePage تغییر یافت
+export interface IResourceUpdatePageProps { // نام به ResourceUpdatePage تغییر یافت
   redirectTo?: string;
   renderForm: (props: RenderFormProps) => React.ReactNode;
   loadingComponent?: React.ReactNode;
 }
 
-export const ResourceUpdatePage: React.FC<ResourceUpdatePageProps> = ({ // نام به ResourceUpdatePage تغییر یافت
+export const ResourceUpdateForm: React.FC<IResourceUpdatePageProps> = ({ // نام به ResourceUpdatePage تغییر یافت
   redirectTo = '/resources',
   renderForm,
   loadingComponent,
@@ -62,6 +62,3 @@ export const ResourceUpdatePage: React.FC<ResourceUpdatePageProps> = ({ // نا�
   // اگر id وجود ندارد، یعنی حالت افزودن است و formData مقادیر اولیه خواهد داشت
   return <>{renderForm(formProps)}</>;
 };
-
-// نام کامپوننت wrapper را هم می‌توانیم تغییر دهیم اگر لازم است
- export const ResourceUpdateWithCustomForm: React.FC<ResourceUpdatePageProps> = ResourceUpdatePage;

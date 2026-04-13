@@ -1,10 +1,10 @@
-// src/modules/Authorization/components/CustomPage/ResourceCreatePage.tsx
+// src/modules/Authorization/components/Interface/IResourceCreatePage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
-import { useResourceCreateForm } from '../../hooks/Forms/useResourceCreateForm';
+import { useResourceCreateForm } from '../hooks/Forms/useResourceCreateForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { CreateResourceRequest } from '../../models/CreateResourceRequest';
+import type { CreateResourceRequest } from '../models/CreateResourceRequest';
 
 export interface RenderFormProps {
   formData: CreateResourceRequest;
@@ -14,13 +14,13 @@ export interface RenderFormProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-export interface ResourceCreatePageWithCustomFormProps {
+export interface IResourceCreatePageProps {
   redirectTo?: string;
   renderForm: (props: RenderFormProps) => React.ReactNode;
   loadingComponent?: React.ReactNode;
 }
 
-export const ResourceCreateWithCustomForm: React.FC<ResourceCreatePageWithCustomFormProps> = ({
+export const ResourceCreateForm: React.FC<IResourceCreatePageProps> = ({
   redirectTo = '/resources',
   renderForm,
   loadingComponent,

@@ -1,10 +1,10 @@
 import React from 'react';
-import { ResourceManagementWithCustomForm, RenderFormProps } from '../components/CustomPage/ResourceManagementPage';
+import { ResourceManagementForm, RenderFormProps } from '../Interface/IResourceManagementPage';
 import { Tree } from '@/core/components/Tree';
 const ResourceManagementPage: React.FC = () => {
 
   return (
-    <ResourceManagementWithCustomForm
+    <ResourceManagementForm
       redirectTo="/dashboard"
       renderForm={({ treeData, loading, error, refresh, deleteNode , editNode,addNode }: RenderFormProps) => (
         <div className="p-4"> 
@@ -17,11 +17,13 @@ const ResourceManagementPage: React.FC = () => {
             cascadeSelection
             expandAll
             renderNode={(node) => (
-              <div className="flex items-center gap-3">
+              <div 
+              // className="flex items-center gap-3"
+              >
                 <span>{node.name}</span>
 
                 <button
-                  className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
+                  // className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
                    onClick={async () => {
                     
                     try {
@@ -34,7 +36,7 @@ const ResourceManagementPage: React.FC = () => {
                   افزودن
                 </button>
                 <button
-                  className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
+                  // className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
                    onClick={async () => {
                     
                     try {
@@ -47,7 +49,7 @@ const ResourceManagementPage: React.FC = () => {
                   ویرایش
                 </button>
                 <button
-                  className="text-red-600 hover:underline"
+                  // className="text-red-600 hover:underline"
                   onClick={async () => {
                     if (!confirm(`حذف "${node.name}"?`)) return;
 

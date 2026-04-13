@@ -8,13 +8,13 @@ export { identityPublicRoutes, identityPanelRoutes } from "./routes";
 export { default as ProtectedRoute } from "./components/ProtectedRoute";
 
 // Login page
-export { LoginPageWithCustomForm } from './components/CustomPage/LoginPage';
-export type { RenderFormProps, LoginPageWithCustomFormProps } from './components/CustomPage/LoginPage';
+export { LoginPageWithCustomForm } from './Interface/ILoginPage';
+export type { RenderFormProps, LoginPageWithCustomFormProps } from './Interface/ILoginPage';
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/Forms/useLoginForm";
 
 // Register Page
 export { useRegisterForm } from './hooks/Forms/useRegisterForm';
-export { RegisterPageWithCustomForm } from './components/CustomPage/RegisterPage';
-export type { RenderRegisterFormProps, RegisterPageWithCustomFormProps } from './components/CustomPage/RegisterPage';
+export { RegisterPageWithCustomForm } from './Interface/IRegisterPage';
+export type { RenderRegisterFormProps, RegisterPageWithCustomFormProps } from './Interface/IRegisterPage';
 export { default as RegisterPage } from './pages/RegisterPage';

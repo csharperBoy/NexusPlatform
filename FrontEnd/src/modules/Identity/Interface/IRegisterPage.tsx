@@ -1,8 +1,8 @@
-//src/modules/Identity/components/CustomPage/RegisterPage.tsx
+//src/modules/Identity/Interface/IRegisterPage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useRegisterForm } from '../../hooks/Forms/useRegisterForm';
+import { useAuth } from '../context/AuthContext';
+import { useRegisterForm } from '../hooks/Forms/useRegisterForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator'; 
 
 export interface RenderRegisterFormProps {
@@ -21,14 +21,14 @@ export interface RenderRegisterFormProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-export interface RegisterPageWithCustomFormProps {
+export interface IRegisterPageProps {
   redirectTo?: string;
   renderForm: (props: RenderRegisterFormProps) => React.ReactNode;
     /** کامپوننت بارگذاری سفارشی (اختیاری) */
     loadingComponent?: React.ReactNode;
 }
 
-export const RegisterPageWithCustomForm: React.FC<RegisterPageWithCustomFormProps> = ({
+export const RegisterPageWithCustomForm: React.FC<IRegisterPageProps> = ({
   redirectTo = '/dashboard',
   renderForm,
    loadingComponent,

@@ -1,7 +1,7 @@
 // modules/identity/pages/RegisterPage.tsx
 
 import React from 'react';
-import { RegisterPageWithCustomForm, type RenderRegisterFormProps } from '../components/CustomPage/RegisterPage';
+import { RegisterPageWithCustomForm, type RenderRegisterFormProps } from '../Interface/IRegisterPage';
 
 const RegisterPage: React.FC = () => {
   return (

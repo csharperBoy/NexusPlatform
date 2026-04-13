@@ -1,10 +1,10 @@
-// src/modules/Authorization/components/CustomPage/ResourceManagementPage.tsx
+// src/modules/Authorization/components/Interface/IResourceManagementPage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
-import { useResourceManagement } from '../../hooks/Forms/useResourceManagementForm';
+import { useResourceManagement } from '../hooks/Forms/useResourceManagementForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { ResourceDto } from '../../models/ResourceDto';
+import type { ResourceDto } from '../models/ResourceDto';
 
 export interface RenderFormProps {
   treeData: ResourceDto[];
@@ -17,13 +17,13 @@ export interface RenderFormProps {
 }
 
 
-export interface ResourceManagementPageWithCustomFormProps {
+export interface IResourceManagementPageProps {
   redirectTo?: string;
   renderForm: (props: RenderFormProps) => React.ReactNode;
   loadingComponent?: React.ReactNode;
 }
 
-export const ResourceManagementWithCustomForm: React.FC<ResourceManagementPageWithCustomFormProps> = ({
+export const ResourceManagementForm: React.FC<IResourceManagementPageProps> = ({
   redirectTo = '/dashboard',
   renderForm,
   loadingComponent,

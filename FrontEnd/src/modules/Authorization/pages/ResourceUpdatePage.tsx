@@ -1,13 +1,13 @@
 // src/modules/Authorization/pages/ResourceUpdatePage.tsx
 import React from 'react';
-import { ResourceUpdateWithCustomForm, type RenderFormProps } from '../components/CustomPage/ResourceUpdatePage';
+import { ResourceUpdateForm, type RenderFormProps } from '../Interface/IResourceUpdatePage';
 import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
 import Card from '@/core/components/Card';
 
 const ResourceUpdatePage: React.FC = () => {
   return (
-    <ResourceUpdateWithCustomForm
+    <ResourceUpdateForm
       redirectTo="/resources"
       renderForm={({
         formData,

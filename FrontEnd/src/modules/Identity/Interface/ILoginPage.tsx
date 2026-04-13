@@ -1,8 +1,8 @@
-//src/modules/Identity/components/CustomPage/LoginPage.tsx
+//src/modules/Identity/Interface/ILoginPage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useLoginForm } from '../../hooks/Forms/useLoginForm';
+import { useAuth } from '../context/AuthContext';
+import { useLoginForm } from '../hooks/Forms/useLoginForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator'; 
 
 export interface RenderFormProps {
@@ -15,7 +15,7 @@ export interface RenderFormProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-export interface LoginPageWithCustomFormProps {
+export interface ILoginPageProps {
   /** مسیر هدایت پس از لاگین موفق (پیش‌فرض: "/dashboard") */
   redirectTo?: string;
   /** تابعی که فرم سفارشی را با props داده شده رندر می‌کند */
@@ -24,7 +24,7 @@ export interface LoginPageWithCustomFormProps {
   loadingComponent?: React.ReactNode;
 }
 
-export const LoginPageWithCustomForm: React.FC<LoginPageWithCustomFormProps> = ({
+export const LoginPageWithCustomForm: React.FC<ILoginPageProps> = ({
   redirectTo = '/dashboard',
   renderForm,
    loadingComponent,

@@ -1,6 +1,6 @@
 // src/modules/Identity/pages/LoginPage.tsx
 import React from 'react';
-import { LoginPageWithCustomForm, type RenderFormProps } from '../components/CustomPage/LoginPage';
+import { LoginPageWithCustomForm, type RenderFormProps } from '../Interface/ILoginPage';
 
 /**
  * صفحه لاگین پیش‌فرض ماژول Identity
