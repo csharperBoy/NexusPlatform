@@ -26,10 +26,22 @@ const categoryMapReverse: Record<number, string> = {
     6: 'DatabaseTable',
     7: 'RowInTable',
 };
-
-// fetchResourceById باید فقط به id وابسته باشد
+ const typeMap: Record<string, number> = {
+            'Module': 0,
+            'Ui': 1,
+            'Data': 2,
+        };
+  const categoryMap: Record<string, number> = {
+            'General': 0,
+            'System': 1,
+            'Module': 2,
+            'Menu': 3,
+            'Page': 4,
+            'Component': 5,
+            'DatabaseTable': 6,
+            'RowInTable': 7,
+        };
 const fetchResourceById = useCallback(async (resourceId: string) => {
-    // setInitialLoading(true); // این را به useEffect منتقل می‌کنیم تا فقط یک بار در ابتدای بارگذاری اجرا شود
     setError(null);
     try {
         const response = await resourceApi.getById(resourceId);
@@ -40,32 +52,24 @@ const fetchResourceById = useCallback(async (resourceId: string) => {
             description: response.description || "",
             parentId: response.parentId,
             icon: response.icon || "",
-            // این مقادیر باید بر اساس response.type و response.category مقداردهی شوند،
-            // اگر response.type عدد است، از typeMapReverse استفاده کنید.
-            // فرض می‌کنیم response.type و response.category از API به صورت رشته برمی‌گردند یا باید تبدیل شوند.
-            type: typeMapReverse[response.type] , // استفاده از نگاشت معکوس
-            category: categoryMapReverse[response.category] , // استفاده از نگاشت معکوس
+            type: typeMapReverse[response.type] , 
+            category: categoryMapReverse[response.category] , 
                
             displayOrder: response.displayOrder,
         };
         console.info(response.type);
         setFormData(loadedData);
-        // setError(null); // خطا را اینجا پاک نکنید، اگر fetch موفق بود، خطایی نیست
     } catch (err: any) {
         console.error("Error fetching resource:", err);
         setError(err?.response?.data?.message || err?.message || "خطا در بارگذاری اطلاعات منبع");
-        setFormData(null); // اگر خطا رخ داد، formData را null کنید
+        setFormData(null); 
     } finally {
-        // setInitialLoading(false); // این را به useEffect منتقل می‌کنیم
+        
     }
-    // چون setInitialLoading و setError و setFormData وضعیت‌هایی هستند که بیرون این useCallback تعریف شده‌اند،
-    // و ما فقط به id وابسته هستیم، نیازی به قرار دادن آن‌ها در وابستگی useCallback نیست.
-}, [id]); // وابستگی اصلی id است
-
+}, [id]); 
 useEffect(() => {
-    // مدیریت بارگذاری اولیه
     setInitialLoading(true);
-    setError(null); // خطای قبلی را پاک می‌کنیم
+    setError(null); 
 
     if (id) {
         console.info('Fetching resource with ID:', id);
@@ -77,11 +81,10 @@ useEffect(() => {
                 // خطا قبلاً در fetchResourceById مدیریت شده است
             })
             .finally(() => {
-                setInitialLoading(false); // بارگذاری اولیه تمام شد
+                setInitialLoading(false); 
             });
     } else {
         console.info('No ID provided, setting up for new resource creation.');
-        // مقداردهی اولیه برای حالت افزودن
         setFormData({
             id: '',
             key: '',
@@ -89,22 +92,16 @@ useEffect(() => {
             description: '',
             parentId: null,
             icon: '',
-            type: 'Page', // مقدار پیش‌فرض
-            category: 'Admin', // مقدار پیش‌فرض
+            type: 'Page', 
+            category: 'Admin', 
             displayOrder: 0,
-            route: '', // اضافه شده بر اساس payload
+            route: '', 
         });
-        setInitialLoading(false); // بارگذاری اولیه تمام شد (چون فرم آماده است)
+        setInitialLoading(false); 
     }
-    // وابستگی useEffect فقط id است.
-    // fetchResourceById خودش یک useCallback است که به id وابسته است.
-    // قرار دادن fetchResourceById در وابستگی useEffect باعث می‌شود هر بار که fetchResourceById رفرنسی می‌گیرد، useEffect دوباره اجرا شود.
-}, [id, fetchResourceById]); // <<<== فقط id کافی است، اما اگر fetchResourceById را نیز اضافه کنید، این مورد مهم است که fetchResourceById فقط به id وابسته باشد
-
-// ... بقیه هوک (handleChange, handleSubmit)
+    }, [id, fetchResourceById]); 
 
 const handleChange = (field: keyof UpdateResourceRequest, value: any) => {
-    // این بخش درست به نظر می‌رسد
     setFormData(prev => {
         if (!prev) return null;
         return { ...prev, [field]: value };
@@ -121,30 +118,9 @@ const handleSubmit = async (e: React.FormEvent) => {
         setLoading(true);
         setError(null);
 
-        // این مپ‌ها چون ثابت هستند، بهتر است بیرون از تابع handleSubmit تعریف شوند
-        // یا اگر فقط اینجا استفاده می‌شوند، همینجا باشند.
-        const typeMap: Record<string, number> = {
-            'Module': 0,
-            'Ui': 1,
-            'Data': 2,
-            'Page': 3, // اضافه شده
-        };
-        const categoryMap: Record<string, number> = {
-            'General': 0,
-            'System': 1,
-            'Module': 2,
-            'Menu': 3,
-            'Page': 4,
-            'Component': 5,
-            'DatabaseTable': 6,
-            'RowInTable': 7,
-            // 'Admin' باید اینجا اضافه شود اگر در formData استفاده شده
-            'Admin': 8, // فرض کنید Admin کد 8 دارد
-        };
+      
 
-        // اگر مقادیر type یا category در نقشه‌های بالا وجود نداشتند، مقدار پیش‌فرض 0 برگردانده می‌شود.
-        // این ممکن است رفتار دلخواه نباشد. بهتر است خطا بدهید یا مقدار پیش‌فرض مناسب‌تری بگذارید.
-        const typeValue = typeMap[formData.type] !== undefined ? typeMap[formData.type] : 0;
+       const typeValue = typeMap[formData.type] !== undefined ? typeMap[formData.type] : 0;
         const categoryValue = categoryMap[formData.category] !== undefined ? categoryMap[formData.category] : 0;
 
 

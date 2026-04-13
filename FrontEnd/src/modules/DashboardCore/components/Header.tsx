@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ className = '', render }) => {
       </div>
       <div className="flex items-center gap-4">
         {/* می‌توانید آیتم‌های دیگری مثل اعلان‌ها اضافه کنید */}
-        <LogoutButton className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" />
+        <LogoutButton className="px-4 py-2 bg-red-500 text-red rounded hover:bg-red-600" />
       </div>
     </header>
   );

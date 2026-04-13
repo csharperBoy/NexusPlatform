@@ -2,16 +2,19 @@
 import { useState } from "react";
 import { resourceApi } from "../../api/ResourcesApi";
 import type { CreateResourceRequest,CreateResourceApiRequest } from "../../models/CreateResourceRequest";
+import { useParams } from "react-router-dom";
 
 export const useResourceCreateForm = (onSuccess?: () => void) => {
+  
+  const { parentId } = useParams<{ parentId: string }>();
   const [formData, setFormData] = useState<CreateResourceRequest>({
     key: '',
     name: '',
     description: '',
-    parentId: null,
+    parentId: parentId,
     icon: '',
-    type: 'Page',
-    category: 'Admin',
+    type: 'Module',
+    category: 'General',
     displayOrder: 0,
     route: '',
   });
@@ -45,8 +48,8 @@ export const useResourceCreateForm = (onSuccess?: () => void) => {
         'RowInTable': 7,
       };
 
-      const typeValue = typeMap[formData.type] ?? 0; // پیش‌فرض Page
-      const categoryValue = categoryMap[formData.category] ?? 0; // پیش‌فرض Page
+      const typeValue = typeMap[formData.type] ?? 0; 
+      const categoryValue = categoryMap[formData.category] ?? 0; 
 
       // ساخت payload منطبق با بک‌اند
       const payload: CreateResourceApiRequest = {

@@ -27,6 +27,13 @@ export const useResourceManagement = () => {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
+   const addNode = async (id: string) => {
+    try {
+       navigate(`/resources/create/${id}`)
+    } catch (err: any) {
+      throw err?.response?.data || "ویرایش ناموفق بود";
+    }
+  };
   const fetchTree = async (rootId?: string) => {
     try {
       setLoading(true);
@@ -50,5 +57,6 @@ export const useResourceManagement = () => {
     refresh: fetchTree,
     deleteNode,
     editNode,
+    addNode,
   };
 };

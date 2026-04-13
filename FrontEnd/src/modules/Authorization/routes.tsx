@@ -10,7 +10,8 @@ export const authorizationPublicRoutes: RouteObject[] = [
 ];
 
 export const authorizationPanelRoutes: RouteObject[] = [
-  { path: "resources/create", element: <ResourceCreatePage /> }, 
+  { path: "resources/create", element: <ResourceCreatePage /> },   
+  { path: "resources/create/:parentId", element: <ResourceCreatePage /> }, 
   { path: "resources/edit/:id", element: <ResourceUpdatePage /> }, 
   { path: "resources", element: <ResourceManagementPage /> },
 ];

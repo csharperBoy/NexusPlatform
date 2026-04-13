@@ -12,7 +12,8 @@ export interface RenderFormProps {
   error: string | null;
   refresh: (rootId?: string) => Promise<void>;
   deleteNode: (id: string) => Promise<void>; 
-  editNode: (id: string) => Promise<void>; 
+  editNode: (id: string) => Promise<void>;   
+  addNode: (id: string) => Promise<void>; 
 }
 
 

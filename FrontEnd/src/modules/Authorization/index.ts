@@ -15,7 +15,7 @@ export { useResourceCreateForm } from "./hooks/Forms/useResourceCreateForm";
 export { ResourceUpdateWithCustomForm } from './components/CustomPage/ResourceUpdatePage';
 export type { 
   RenderFormProps as RenderResourceUpdateFormProps, 
-  ResourceUpdatePageWithCustomFormProps 
+  ResourceUpdatePageProps
 } from './components/CustomPage/ResourceUpdatePage';
 export { default as ResourceUpdatePage } from "./pages/ResourceUpdatePage";
 export { useResourceUpdateForm } from "./hooks/Forms/useResourceUpdateForm";

@@ -6,7 +6,7 @@ const ResourceManagementPage: React.FC = () => {
   return (
     <ResourceManagementWithCustomForm
       redirectTo="/dashboard"
-      renderForm={({ treeData, loading, error, refresh, deleteNode , editNode }: RenderFormProps) => (
+      renderForm={({ treeData, loading, error, refresh, deleteNode , editNode,addNode }: RenderFormProps) => (
         <div className="p-4"> 
           <Tree
             nodes={treeData}
@@ -25,6 +25,19 @@ const ResourceManagementPage: React.FC = () => {
                    onClick={async () => {
                     
                     try {
+                      await addNode(node.id);
+                    } catch (e) {
+                      alert(e);
+                    }
+                  }}
+                >
+                  افزودن
+                </button>
+                <button
+                  className="px-2 py-1 text-xs bg-blue-500 text-blue rounded"
+                   onClick={async () => {
+                    
+                    try {
                       await editNode(node.id);
                     } catch (e) {
                       alert(e);
@@ -33,7 +46,6 @@ const ResourceManagementPage: React.FC = () => {
                 >
                   ویرایش
                 </button>
-
                 <button
                   className="text-red-600 hover:underline"
                   onClick={async () => {

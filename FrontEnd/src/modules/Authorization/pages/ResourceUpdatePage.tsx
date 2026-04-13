@@ -116,7 +116,7 @@ const ResourceUpdatePage: React.FC = () => {
               </div>
             )}
             <Button type="submit" disabled={loading}>
-              {loading ? "در حال ایجاد..." : "ایجاد منبع"}
+              {loading ? "در حال ویرایش..." : "ویرایش منبع"}
             </Button>
           </form>
         </Card>
