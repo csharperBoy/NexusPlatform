@@ -1,7 +1,7 @@
 // src/core/components/Table/CustomTable.tsx
 import React from 'react';
 import { useTable } from './useTable';
-import { UseTableProps, UseTableReturn } from './Table.type';
+import { UseTableProps, UseTableReturn } from './Table.types';
 
 export interface CustomTableProps<T> extends UseTableProps<T> {
   className?: string;
