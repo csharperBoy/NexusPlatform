@@ -132,7 +132,7 @@ namespace Identity.Infrastructure.Services
                 && (request.phoneNumber != null ? u.PhoneNumber.Contains(request.phoneNumber) : true)
                 ).Select(u => new UserDto
                 {
-                    FullName = u.FullName,
+                    FullName = $"{u.FullName.FirstName} {u.FullName.LastName}",
                     Id = u.Id,
                     phoneNumber = u.PhoneNumber,
                     UserName = u.UserName

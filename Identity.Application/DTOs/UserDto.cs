@@ -15,6 +15,6 @@ namespace Identity.Application.DTOs
         public string? phoneNumber { get;  set; }
         //public Guid FkPersonId { get;  set; }
 
-        public FullName? FullName { get;  set; }
+        public string? FullName { get;  set; }
     }
 }

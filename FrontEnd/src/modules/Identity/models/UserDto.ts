@@ -1,8 +1,8 @@
 
 // modules/identity/models/UserDto.ts
 export interface UserDto {
-  UserName: string;
-  Id: string;
+  userName: string;
+  id: string;
   phoneNumber: string;
-  FullName?: string;
+  fullName?: string;
 }

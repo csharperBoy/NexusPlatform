@@ -1,298 +1,172 @@
 // src/core/components/Table/useTable.ts
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { VariableSizeList } from 'react-window'; // For virtualization
+// src/core/components/Table/useTable.ts
+import { useState, useMemo, useCallback } from "react";
+import { UseTableProps, UseTableReturn, SortState } from "./Table.types"; // Assuming SortState is the correct type for sorting
 
-import {
-  ColumnDef,
-  SortState,
-  FilterState,
-  PaginationState,
-  SelectionMode,
-  TableProps,
-  UseTableReturn,
-  TableTheme,
-} from './Table.types';
+export function useTable<T>({
+  data,
+  columns,
+  pageSize = 10,
+  defaultPage = 1,
+  controlledPage,
+  onPageChange,
 
-// --- Feature Hooks ---
-// (اینها در فایل‌های جداگانه تعریف خواهند شد)
-import { useSorting } from './features/useSorting';
-import { useFiltering } from './features/useFiltering';
-import { usePagination } from './features/usePagination';
-import { useSelection } from './features/useSelection';
-import { useRowExpansion } from './features/useRowExpansion';
-import { useColumnManagement } from './features/useColumnManagement'; // For resize & drag
-import { useVirtualization } from './features/useVirtualization';
-// ... other feature hooks
+  defaultSort,
+  sort: controlledSort,
+  onSortChange,
 
-// --- Default Values ---
-const DEFAULT_ROW_HEIGHT = 40;
-const DEFAULT_THEME: TableTheme = {
-  density: 'normal',
-  // Add more default theme values
-};
+  selectable = false,
+  cascadeSelection = false,
+  selected: controlledSelected,
+  defaultSelected = [],
+  onSelectionChange,
 
-// --- Main useTable Hook ---
-export function useTable<T>(props: TableProps<T>): UseTableReturn<T> {
-  const {
-    data,
-    columns,
-    getRowId,
+  getRowId = (row: any) => row.id,
+}: UseTableProps<T>): UseTableReturn<T> {
+  // ---------- Sorting ----------
+  const isSortControlled = controlledSort !== undefined;
+  // Initialize internalSort with a type that matches SortState or null
+  const [internalSort, setInternalSort] = useState<SortState | null>(defaultSort || null);
 
-    // Sorting props
-    sortable,
-    sort: controlledSort,
-    defaultSort,
-    onSortChange,
-    serverSort,
+  // Ensure sortState has the correct type
+  const sortState = isSortControlled ? controlledSort : internalSort;
 
-    // Filtering props
-    filterable,
-    filters: controlledFilters,
-    defaultFilters,
-    onFiltersChange,
-    serverFiltering,
+  const sortedData = useMemo(() => {
+    if (!sortState) return data;
+    const col = columns.find(c => c.id === sortState.columnId);
+    if (!col) return data;
 
-    // Pagination props
-    pagination,
-    paginationState: controlledPagination,
-    defaultPaginationState,
-    onPaginationChange,
-    serverPagination,
+    // Ensure accessor is correctly typed or handled
+    const accessor = col.accessor || ((row: T) => row[col.id as keyof T]); // Use keyof T for better type safety
 
-    // Selection props
-    selectionMode = 'none',
-    cascadeSelection,
-    selected: controlledSelected,
-    defaultSelected,
-    onSelectedChange,
+    return [...data].sort((a: T, b: T) => { // Explicitly type a and b
+      const va = accessor(a);
+      const vb = accessor(b);
+      
+      // Handle potential null/undefined values for robust sorting
+      if (va == null && vb == null) return 0;
+      if (va == null) return sortState.direction === "asc" ? -1 : 1;
+      if (vb == null) return sortState.direction === "asc" ? 1 : -1;
 
-    // Row Expansion props
-    expandableRows,
-    expandedRows: controlledExpandedRows,
-    defaultExpandedRows,
-    onExpandedRowsChange,
-    renderExpandedRow,
+      if (va < vb) return sortState.direction === "asc" ? -1 : 1;
+      if (va > vb) return sortState.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [data, sortState, columns]);
 
-    // Virtualization props
-    virtualized,
-    rowHeight = DEFAULT_ROW_HEIGHT,
-    overscan = 5,
+  const toggleSort = useCallback(
+    (columnId: string) => {
+      // Define the type for the next sort state explicitly
+      let nextDirection: "asc" | "desc";
+      if (sortState?.columnId === columnId) {
+        nextDirection = sortState.direction === "asc" ? "desc" : "asc";
+      } else {
+        nextDirection = "asc";
+      }
+      
+      const next: SortState = { columnId, direction: nextDirection };
 
-    // Column Management props
-    resizableColumns,
-    draggableColumns,
-    onColumnOrderChange,
-    onColumnResize,
-    onColumnDrag, // Added for drag callback
-
-    // Sticky props
-    stickyHeader,
-    stickyColumns,
-
-    // Theming props
-    theme: customTheme,
-    className,
-    dir = 'ltr',
-
-    // Loading/Empty state props
-    loading,
-    renderEmptyState,
-    renderLoadingState,
-  } = props;
-
-  // --- State Management ---
-  const getRowIdMemo = useCallback((row: T) => getRowId?.(row) ?? (row as any).id, [getRowId]);
-
-  // Controlled/Uncontrolled State Management for Sorting, Filtering, Pagination, Selection, Expansion
-  const { sortState, setSort } = useSorting<T>(controlledSort, defaultSort, onSortChange, serverSort);
-  const { filterState, setFilters } = useFiltering<T>(controlledFilters, defaultFilters, onFiltersChange, serverFiltering);
-  const { paginationState, setPagination } = usePagination(controlledPagination, defaultPaginationState, onPaginationChange, serverPagination);
-  const { selectedIds, toggleRowSelected } = useSelection(controlledSelected, defaultSelected, onSelectedChange, selectionMode, cascadeSelection, getRowIdMemo);
-  const { expandedIds, toggleRowExpanded } = useRowExpansion(controlledExpandedRows, defaultExpandedRows, onExpandedRowsChange, getRowIdMemo);
-
-  // Column Management (Order, Size)
-  const {
-    orderedColumns,
-    columnSizes,
-    setColumnOrder,
-    setColumnSize,
-    registerColumnSize,
-    // Dragging state might be handled within useColumnManagement
-  } = useColumnManagement(columns, resizableColumns, draggableColumns, onColumnResize, onColumnOrderChange);
-
-  // Memoize processed data
-  const processedData = useMemo(() => {
-    // Apply Server-side logic first if enabled
-    let currentData = data;
-
-    if (serverSort && sortState) {
-      // Should ideally be handled by API call, but for client-side simulation:
-      console.warn('Server-side sorting is enabled. Ensure data is pre-sorted by the server.');
-    }
-    if (serverFiltering && filterState.length > 0) {
-      console.warn('Server-side filtering is enabled. Ensure data is pre-filtered by the server.');
-    }
-    if (serverPagination && (paginationState.page !== 0 || paginationState.pageSize !== 10)) {
-      console.warn('Server-side pagination is enabled. Ensure data is pre-paginated by the server.');
-    }
-
-    // Client-side sorting
-    let sortedData = currentData;
-    if (sortable && sortState && !serverSort) {
-      sortedData = [...currentData].sort((a, b) => {
-         // Implement sorting logic based on ColumnDef accessor and sortState
-         // This is a simplified placeholder
-         const col = orderedColumns.find(c => c.id === sortState.columnId);
-         if (!col || !col.accessor) return 0;
-         const valA = col.accessor(a);
-         const valB = col.accessor(b);
-         if (valA < valB) return sortState.direction === 'asc' ? -1 : 1;
-         if (valA > valB) return sortState.direction === 'asc' ? 1 : -1;
-         return 0;
-      });
-    }
-
-    // Client-side filtering
-    let filteredData = sortedData;
-    if (filterable && filterState.length > 0 && !serverFiltering) {
-       filteredData = sortedData.filter(row => {
-         return filterState.every(filter => {
-           const column = orderedColumns.find(c => c.id === filter.columnId);
-           if (!column || !column.accessor) return true;
-           const cellValue = column.accessor(row);
-           // Basic filtering logic (needs enhancement for different types/operators)
-           return String(cellValue).toLowerCase().includes(String(filter.value).toLowerCase());
-         });
-       });
-    }
-
-    // Client-side pagination
-    let paginatedData = filteredData;
-    if (pagination && !serverPagination) {
-      const startIndex = paginationState.page * paginationState.pageSize;
-      const endIndex = startIndex + paginationState.pageSize;
-      paginatedData = filteredData.slice(startIndex, endIndex);
-    }
-
-    return paginatedData; // This is the data that will be rendered
-  }, [
-    data,
-    sortable, sortState, serverSort, // Sorting dependencies
-    filterable, filterState, serverFiltering, // Filtering dependencies
-    pagination, paginationState, serverPagination, // Pagination dependencies
-    getRowIdMemo,
-    orderedColumns,
-    // Ensure any other logic changing data is included here
-  ]);
-
-  // --- Virtualization Logic ---
-  const {
-    virtualizedRows,
-    virtualizedListRef,
-    getItemSize,
-    cellRenderer,
-    rowRenderer,
-  } = useVirtualization(
-    processedData,
-    orderedColumns,
-    rowHeight,
-    overscan,
-    expandedIds, // Needed to calculate row height if expanded content varies
-    renderExpandedRow,
-    getRowIdMemo,
-    theme, // Pass theme to calculate density adjustments if needed
-    stickyHeader,
-    stickyColumns
+      if (isSortControlled) {
+        // Type safety for onSortChange
+        onSortChange?.(next);
+      } else {
+        // Type safety for setInternalSort
+        setInternalSort(next);
+      }
+    },
+    [sortState, isSortControlled, onSortChange] // Include sortState in dependencies
   );
 
-  // Determine which data to render (virtualized or full)
-  const renderableRows = virtualized ? virtualizedRows : processedData;
+  // ---------- Pagination ----------
+  const isPageControlled = controlledPage !== undefined;
+  const [internalPage, setInternalPage] = useState(defaultPage);
 
-  // --- Column Definitions for Rendering ---
-  const visibleColumns = useMemo(() => {
-    // Filter out columns that might be hidden due to multi-level headers if needed
-    // For now, just use the ordered columns
-    return orderedColumns;
-  }, [orderedColumns]);
+  const page = isPageControlled ? controlledPage : internalPage;
+  const totalPages = Math.ceil(sortedData.length / pageSize);
 
-  // --- Theme Merging ---
-  const theme = useMemo(() => ({ ...DEFAULT_THEME, ...customTheme }), [customTheme]);
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return sortedData.slice(start, start + pageSize);
+  }, [page, pageSize, sortedData]);
 
-  // --- State for the component ---
-  const tableState: UseTableReturn<T> = {
-    rows: renderableRows, // Use virtualized rows if enabled
-    visibleColumns: visibleColumns,
-
-    // Pass down processed data and states
-    sortedRows: processedData, // Full dataset after sorting (for external use)
-    filteredRows: processedData, // Full dataset after filtering
-    paginatedRows: processedData, // Full dataset after pagination
-
-    sortState,
-    setSort,
-
-    filterState,
-    setFilters,
-
-    paginationState,
-    setPagination,
-
-    selectedIds,
-    toggleRowSelected,
-
-    expandedIds,
-    toggleRowExpanded,
-
-    columnOrder: orderedColumns.map(c => c.id), // Map to just IDs for simplicity
-    setColumnOrder,
-
-    columnSizes,
-    setColumnSize: (id, size) => {
-        setColumnSize(id, size);
-        onColumnResize?.(id, size); // Callback for resize
+  const setPage = useCallback(
+    (p: number) => {
+      const valid = Math.min(Math.max(1, p), totalPages);
+      if (isPageControlled) onPageChange?.(valid);
+      else setInternalPage(valid);
     },
+    [isPageControlled, totalPages, onPageChange]
+  );
 
-    isVirtualized: !!virtualized,
-    theme: theme,
+  // ---------- Selection ----------
+  const isSelectionControlled = controlledSelected !== undefined;
+  const [internalSelected, setInternalSelected] = useState<Set<string>>(
+    new Set(defaultSelected)
+  );
 
-    // Add virtualization ref and item getter
-    // These would be used by the Table.tsx component
-    // virtualListRef: virtualizedListRef,
-    // getItemSize: getItemSize,
-    // cellRenderer: cellRenderer,
-    // rowRenderer: rowRenderer,
+  const selectedSet = isSelectionControlled
+    ? new Set(controlledSelected)
+    : internalSelected;
+
+  const updateSelection = useCallback(
+    (newSet: Set<string>) => {
+      if (!isSelectionControlled) setInternalSelected(newSet);
+      // Ensure onSelectionChange receives correct types
+      onSelectionChange?.(
+        Array.from(newSet),
+        data.filter(row => newSet.has(getRowId(row)))
+      );
+    },
+    [isSelectionControlled, onSelectionChange, data, getRowId]
+  );
+
+  const toggleSelect = useCallback(
+    (row: T) => {
+      if (!selectable) return;
+      const id = getRowId(row);
+      const newSet = new Set(selectedSet);
+
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+
+      updateSelection(newSet);
+    },
+    [selectedSet, selectable, getRowId, updateSelection]
+  );
+
+  const selectAllPage = useCallback(() => {
+    if (!selectable) return;
+    const newSet = new Set(selectedSet);
+
+    paginatedData.forEach(row => newSet.add(getRowId(row)));
+    updateSelection(newSet);
+  }, [paginatedData, selectable, updateSelection, getRowId, selectedSet]);
+
+  const clearSelection = useCallback(() => {
+    updateSelection(new Set());
+  }, [updateSelection]);
+
+  const isSelected = useCallback(
+    (row: T) => selectedSet.has(getRowId(row)),
+    [selectedSet, getRowId]
+  );
+
+  return {
+    paginatedData,
+    totalPages,
+
+    sort: sortState,
+    toggleSort,
+
+    selectedSet,
+    toggleSelect,
+    isSelected,
+    selectAllPage,
+    clearSelection,
+
+    page,
+    setPage,
+
+    getRowId,
   };
-
-  return tableState;
 }
-
-// --- Placeholder for Feature Hooks (to be implemented) ---
-// These would typically be in separate files like features/useSorting.ts
-
-// Example for useSorting (simplified)
-function useSorting<T>(
-    controlledSort: SortState | null | undefined,
-    defaultSort: SortState | null | undefined,
-    onSortChange?: (sort: SortState | null) => void,
-    serverSort?: boolean
-) {
-    const [sort, setInternalSort] = useState<SortState | null>(controlledSort ?? defaultSort ?? null);
-
-    useEffect(() => {
-        if (controlledSort !== undefined) {
-            setInternalSort(controlledSort);
-        }
-    }, [controlledSort]);
-
-    const handleSetSort = useCallback((newSort: SortState | null) => {
-        if (!serverSort) {
-            setInternalSort(newSort);
-        }
-        onSortChange?.(newSort);
-    }, [serverSort, onSortChange]);
-
-    return { sortState: sort, setSort: handleSetSort };
-}
-
-// ... Implement similar hooks for useFiltering, usePagination, etc.
-// ... Implement useColumnManagement, useVirtualization, etc.
