@@ -77,7 +77,7 @@ namespace Audit.Infrastructure.Data
         }
 
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
-        public static async Task SeedAsync(
+        public static async Task SeedAuditsForAuthorizationAsync(
             IResourcePublicService resourcePublicService,
             IPermissionPublicService permissionPublicService,
             IRolePublicService roleService, 

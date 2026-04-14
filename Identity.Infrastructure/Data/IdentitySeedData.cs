@@ -1,17 +1,30 @@
-﻿using Identity.Domain.Entities;
+﻿using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Identity.PublicService;
+using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
+using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 
 namespace Identity.Infrastructure.Data
 {
     public static class IdentitySeedData
     {
-        public static async Task StartSeedAsync(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, IConfiguration config)
+        public static async Task StartSeedAsync(RoleManager<ApplicationRole> roleManager,
+            UserManager<ApplicationUser> userManager,
+            IResourcePublicService resourcePublicService,
+            IPermissionPublicService permissionPublicService,
+            IRolePublicService roleService,
+            ILogger logger,
+            IConfiguration config)
         {
             await SeedRolesAsync(roleManager);
             await SeedAdminUserAsync(userManager, config); 
             await AssignAdminRoleToAdminUserAsync(userManager, config);
+            await SeedIdentotiesForAuthorizationAsync(resourcePublicService,permissionPublicService,roleService,logger);
         }
         public static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager)
         {
@@ -65,6 +78,7 @@ namespace Identity.Infrastructure.Data
                 {
                     EmailConfirmed = true
                 };
+                
                 adminUser.SetFullName("System", "intitializer");
                 var result = await userManager.CreateAsync(initializerUser, "Init@123456789");
                 if (!result.Succeeded)
@@ -97,6 +111,97 @@ namespace Identity.Infrastructure.Data
                 }
             }
         }
+
+        #region seed resource and permission
+        // تعریف ساختار درختی منابع ماژول Audit
+        private static List<ResourceDto> GetIdentityResourceDefinitions()
+        {
+            return new List<ResourceDto>
+            {
+                new()
+                {
+                    Key = "identity",
+                    Name = "Identoty",
+                    Type =ResourceType.Module,
+                    Category = ResourceCategory.System,
+                    Description = "Identity management module",
+                    DisplayOrder = 3000,
+                    Icon = "shield",
+                    //Path = "/audit",
+                    Children = new List<ResourceDto>
+                    {
+                        new()
+                        {
+                            Key = "identity.user",
+                            Name = "identity Users",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "Identity Users management",
+                            DisplayOrder = 3001,
+                            Icon = "list",
+                            //Path = "/audit/logs"
+                        }
+                    }
+                }
+            };
+        }
+
+        // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
+        private static List<PermissionDto> GetIdentityPermissionDefinitions(Guid roleId)
+        {
+            return new List<PermissionDto>
+            {
+                new()
+                {
+                    ResourceKey = "identity.user",
+                    Action = PermissionAction.Full, // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
+                    Scopes = new List<ScopeDto>()
+                    {
+                        new()
+                        {
+                            scope =ScopeType.All
+                        }
+                    },
+                    Effect = PermissionEffect.allow,
+                    AssigneeType= AssigneeType.Role,
+                    AssigneeId = roleId,
+
+                    Description = "Full access to Identity Users"
+                }
+            };
+        }
+        public static async Task SeedIdentotiesForAuthorizationAsync(
+            IResourcePublicService resourcePublicService,
+            IPermissionPublicService permissionPublicService,
+            IRolePublicService roleService,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Audit module seeding...");
+
+            try
+            {
+                // 1. ثبت منابع (Resources)
+                // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
+                var resources = GetIdentityResourceDefinitions();
+                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
+                logger.LogInformation("✅ Identity resources synced successfully.");
+
+                // 2. ثبت پرمیشن‌ها (Permissions)
+                // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
+                var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+
+                var permissions = GetIdentityPermissionDefinitions(adminRoleId);
+                await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                logger.LogInformation("✅ Identity permissions seeded successfully.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Identity module seeding");
+                throw;
+            }
+        }
+        #endregion
 
     }
 }

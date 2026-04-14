@@ -74,7 +74,6 @@ namespace Identity.Infrastructure.DependencyInjection
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IUnitOfWork<IdentityDbContext>, EfUnitOfWork<IdentityDbContext>>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IAuthorizationService, AuthorizationService>();
             services.AddHostedService<IdentityModuleInitializer>();
             // Identity (User + Role)
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>

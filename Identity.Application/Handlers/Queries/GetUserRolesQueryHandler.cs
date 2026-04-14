@@ -12,13 +12,13 @@ namespace Identity.Application.Handlers.Queries
 {
     public class GetUserRolesQueryHandler : IRequestHandler<GetUserRolesQuery, Result<IList<string>>>
     {
-        private readonly IAuthorizationService _authorizationService;
-        public GetUserRolesQueryHandler(IAuthorizationService authorizationService)
-            => _authorizationService = authorizationService;
+        private readonly IRoleInternalService _roleService;
+        public GetUserRolesQueryHandler(IRoleInternalService roleService)
+            => _roleService = roleService;
 
         public async Task<Result<IList<string>>> Handle(GetUserRolesQuery request, CancellationToken ct)
         {
-            var roles = await _authorizationService.GetUserRolesAsync(request.UserId);
+            var roles = await _roleService.GetUserRolesAsync(request.UserId);
             return Result<IList<string>>.Ok(roles);
         }
     }

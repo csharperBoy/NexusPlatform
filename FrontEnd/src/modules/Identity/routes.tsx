@@ -2,7 +2,7 @@
 import type { RouteObject } from "react-router-dom";
 import Login from "./pages/LoginPage";
 import Register from "./pages/RegisterPage";
-import UsersPage from "./pages/UsersPage";
+import UsersManagementPage from "./pages/UsersManagementPage";
 
 export const identityPublicRoutes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -10,5 +10,5 @@ export const identityPublicRoutes: RouteObject[] = [
 ];
 
 export const identityPanelRoutes: RouteObject[] = [
-  { path: "/users", element: <UsersPage /> }, // مسیر نسبی یا مطلق؟ بهتر است نسبی باشد: "users"
+  { path: "/users", element: <UsersManagementPage /> }, // مسیر نسبی یا مطلق؟ بهتر است نسبی باشد: "users"
 ];

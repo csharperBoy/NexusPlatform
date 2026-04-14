@@ -1,3 +1,4 @@
+// src/modules/Authorization/pages/ResourceManagementPage.tsx
 import React from 'react';
 import { ResourceManagementForm, RenderFormProps } from '../Interface/IResourceManagementPage';
 import { Tree } from '@/core/components/Tree';

@@ -1,4 +1,6 @@
 ﻿using Core.Application.Abstractions.Identity.PublicService;
+using Identity.Application.DTOs;
+using Identity.Application.Queries.User;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +11,6 @@ namespace Identity.Application.Interfaces
 {
     public interface IUserInternalService : IUserPublicService
     {
-
+        Task<List<UserDto>> getUsers(GetUsersQuery request);
     }
 }

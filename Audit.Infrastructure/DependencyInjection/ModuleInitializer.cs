@@ -40,7 +40,7 @@ namespace Audit.Infrastructure.DependencyInjection
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
-                await AuditSeedData.SeedAsync(resourcePublicService,
+                await AuditSeedData.SeedAuditsForAuthorizationAsync(resourcePublicService,
                     permissionPublicService,  roleService,
                     _logger);
                 _logger.LogInformation("Successfull Audit module initialization.");

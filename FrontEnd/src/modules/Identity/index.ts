@@ -9,12 +9,22 @@ export { default as ProtectedRoute } from "./components/ProtectedRoute";
 
 // Login page
 export { LoginPageWithCustomForm } from './Interface/ILoginPage';
-export type { RenderFormProps, LoginPageWithCustomFormProps } from './Interface/ILoginPage';
+export type { RenderFormProps, ILoginPageProps } from './Interface/ILoginPage';
 export { default as LoginPage } from "./pages/LoginPage";
 export * from "./hooks/Forms/useLoginForm";
 
 // Register Page
 export { useRegisterForm } from './hooks/Forms/useRegisterForm';
 export { RegisterPageWithCustomForm } from './Interface/IRegisterPage';
-export type { RenderRegisterFormProps, RegisterPageWithCustomFormProps } from './Interface/IRegisterPage';
+export type { RenderRegisterFormProps, IRegisterPageProps } from './Interface/IRegisterPage';
 export { default as RegisterPage } from './pages/RegisterPage';
+
+
+// UserManagementPage
+export { UserManagementForm } from './Interface/IUserManagementPage';
+export type { 
+  RenderFormProps as RenderUserManagementFormProps, 
+  IUserManagementPageProps 
+} from './Interface/IUserManagementPage';
+export { default as UserManagementPage } from './pages/UsersManagementPage';
+export { useUserManagement } from './hooks/Forms/useUserManagementForm';

@@ -5,10 +5,13 @@ using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Context;
 using Core.Application.Helper;
 using Core.Shared.DTOs.Identity;
+using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
+using Identity.Application.Queries.User;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -119,6 +122,23 @@ namespace Identity.Infrastructure.Services
             }
 
             return user.UserName;
+        }
+
+        public async Task<List<UserDto>> getUsers(GetUsersQuery request)
+        {
+            return await _userManager.Users.Where(
+                u => (request.UserName != null ? u.UserName.Contains(request.UserName) : true)
+                && (request.FullName != null ? (u.FullName.FirstName.Contains(request.FullName) || u.FullName.LastName.Contains(request.FullName)) : true)
+                && (request.phoneNumber != null ? u.PhoneNumber.Contains(request.phoneNumber) : true)
+                ).Select(u => new UserDto
+                {
+                    FullName = u.FullName,
+                    Id = u.Id,
+                    phoneNumber = u.PhoneNumber,
+                    UserName = u.UserName
+                }).AsNoTracking().ToListAsync();
+
+
         }
     }
 }

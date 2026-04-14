@@ -18,6 +18,7 @@ namespace Identity.Domain.Entities
      */
     public class ApplicationUser : IdentityUser<Guid>, IAggregateRoot
     {
+        
         public Guid FkPersonId { get; private set; }
 
         public FullName? FullName { get; private set; }
@@ -42,7 +43,7 @@ namespace Identity.Domain.Entities
             UserName = userName;
             Email = email;
             EmailConfirmed = true;
-            
+           
             NormalizedUserName = userName.ToUpperInvariant();
             NormalizedEmail = email.ToUpperInvariant();
 

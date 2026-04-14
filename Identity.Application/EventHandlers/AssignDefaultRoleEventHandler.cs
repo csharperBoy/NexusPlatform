@@ -44,16 +44,16 @@ namespace Identity.Application.EventHandlers
 
     public class AssignDefaultRoleEventHandler : INotificationHandler<UserRegisteredEvent>
     {
-        private readonly IAuthorizationService _authorizationService;
+        private readonly IRoleInternalService _roleService;
         private readonly ILogger<AssignDefaultRoleEventHandler> _logger;
 
         private readonly IReadOnlyPolicyRegistry<string> _policies;
         public AssignDefaultRoleEventHandler(
-            IAuthorizationService authorizationService,
+            IRoleInternalService roleService,
             ILogger<AssignDefaultRoleEventHandler> logger,
             IReadOnlyPolicyRegistry<string> policies)
         {
-            _authorizationService = authorizationService;
+            _roleService = roleService;
             _logger = logger;
 
             _policies = policies;
@@ -65,7 +65,7 @@ namespace Identity.Application.EventHandlers
             var policy = _policies.Get<IAsyncPolicy>("DefaultRetry");
             await policy.ExecuteAsync(async ct =>
             {
-                var result = await _authorizationService.AssignDefaultRoleAsync(notification.UserId);
+                var result = await _roleService.AssignDefaultRoleAsync(notification.UserId);
 
                 if (result.Succeeded)
                     _logger.LogInformation("Default role 'User' assigned to {UserId}", notification.UserId);

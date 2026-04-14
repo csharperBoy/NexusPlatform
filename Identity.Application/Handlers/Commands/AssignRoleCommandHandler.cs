@@ -12,13 +12,13 @@ namespace Identity.Application.Handlers.Commands
 {
     public class AssignRoleCommandHandler : IRequestHandler<AssignRoleCommand, Result>
     {
-        private readonly IAuthorizationService _authorizationService;
-        public AssignRoleCommandHandler(IAuthorizationService authorizationService)
-            => _authorizationService = authorizationService;
+        private readonly IRoleInternalService _roleService;
+        public AssignRoleCommandHandler(IRoleInternalService roleService)
+            => _roleService = roleService;
 
         public async Task<Result> Handle(AssignRoleCommand request, CancellationToken ct)
         {
-            return await _authorizationService.AssignRoleToUserAsync(request.UserId, request.RoleName);
+            return await _roleService.AssignRoleToUserAsync(request.UserId, request.RoleName);
         }
     }
 }
