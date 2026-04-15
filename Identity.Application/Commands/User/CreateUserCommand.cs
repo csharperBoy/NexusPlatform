@@ -13,9 +13,8 @@ namespace Identity.Application.Commands.User
         string UserName, 
         string Password, 
         string Email,
-        string? firstName,
-        string? lastName,
+        string? NickName,
         string? phoneNumber,
-        Guid? personId
+        Guid? personId = null
 ) : IRequest<Result<Guid>>;
 }

@@ -63,12 +63,11 @@ namespace Identity.Infrastructure.Services
             var user = new ApplicationUser(
                 command.UserName,
                 command.Email,
-                command.firstName,
-                command.lastName,
+                command.NickName,
                 command.phoneNumber,
                 command.personId
             );
-            await _userManager.CreateAsync(user,command.Password);            
+            await _userManager.CreateAsync(user, command.Password);
             await InvalidateUserCachesAsync();
             return user.Id;
         }
@@ -167,12 +166,11 @@ namespace Identity.Infrastructure.Services
             }
             var result = await _userManager.Users.Where(
                 u => (request.UserName != null ? u.UserName.Contains(request.UserName) : true)
-                && (request.FullName != null ? (u.FullName.FirstName.Contains(request.FullName) || u.FullName.LastName.Contains(request.FullName)) : true)
+                && (request.NickName != null ? u.NickName.Contains(request.NickName) : true)
                 && (request.phoneNumber != null ? u.PhoneNumber.Contains(request.phoneNumber) : true)
                 ).Select(u => new UserDto
                 {
-                    FirstName = u.FullName.FirstName ,
-                    LastName = u.FullName.LastName,
+                    NickName = u.NickName,
                     Email = u.Email,
                     Id = u.Id,
                     phoneNumber = u.PhoneNumber,
@@ -187,35 +185,7 @@ namespace Identity.Infrastructure.Services
         {
             var user = await _userRepository.GetByIdAsync(request.Id);
             if (user == null) throw new ArgumentException("User not found");
-            bool hasChange = false;
-            // آپدیت فیلدها
-            if (request.UserName != null && request.UserName != user.UserName)
-            {
-                user.UserName =request.UserName;
-                hasChange = true;
-            }
-            if ((request.FirstName != null && request.FirstName != user.FullName?.FirstName) || (request.LastName != null && request.LastName != user.FullName?.LastName))
-            {
-                user.SetFullName(request.FirstName, request.LastName);
-                hasChange = true;
-            }
-            if (request.Email != null && request.Email.ToString() != user.Email)
-            {
-                user.Email = request.Email.ToString();
-                hasChange = true;
-            }
-            if (request.phoneNumber != null && request.phoneNumber != user.PhoneNumber)
-            {
-                user.PhoneNumber = request.phoneNumber;
-                hasChange = true;
-            }
-            if (request.Password != null )
-            {
-                user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, request.Password);
-                hasChange = true;
-            }
-
-            if (hasChange)
+            if ( user.ApplyChange(request.UserName, request.NickName, request.Password, request.Email, request.phoneNumber,_userManager, request.personId))
             {
                 await _userManager.UpdateAsync(user);
                 await InvalidateUserCachesAsync();

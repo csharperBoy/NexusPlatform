@@ -10,14 +10,14 @@ export interface RenderRegisterFormProps {
   email: string;
   password: string;
   confirmPassword: string;
-  displayName: string;
+  nickName: string;
   loading: boolean;
   error: string | null;
   setUsername: (value: string) => void;
   setEmail: (value: string) => void;
   setPassword: (value: string) => void;
   setConfirmPassword: (value: string) => void;
-  setDisplayName: (value: string) => void;
+  setNickName: (value: string) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 

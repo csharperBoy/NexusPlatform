@@ -13,9 +13,9 @@ const UsersManagementPage: React.FC = () => {
       accessor: (row) => row.userName,
     },
     {
-      id: 'FullName',
-      label: 'نام کامل',
-      accessor: (row) => row.firstName?.concat( ' ' , row.lastName || '' ),
+      id: 'NickName',
+      label: 'نام ',
+      accessor: (row) => row.nickName,
     },
     {
       id: 'phoneNumber',

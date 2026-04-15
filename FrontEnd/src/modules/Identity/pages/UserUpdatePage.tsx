@@ -28,19 +28,12 @@ const UserUpdatePage: React.FC = () => {
                 disabled={loading}
               />
             </div>
+            
             <div className="mb-4">
-              <label className="block mb-1">نام</label>
+              <label className="block mb-1">نام </label>
               <Input
-                value={formData?.FirstName || ''}
-                onChange={(e) => handleChange('FirstName', e.target.value)}                
-                disabled={loading}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block mb-1">نام خانوادگی</label>
-              <Input
-                value={formData?.LastName || ''}
-                onChange={(e) => handleChange('LastName', e.target.value)}
+                value={formData?.NickName || ''}
+                onChange={(e) => handleChange('NickName', e.target.value)}
                 disabled={loading}
               />
             </div>

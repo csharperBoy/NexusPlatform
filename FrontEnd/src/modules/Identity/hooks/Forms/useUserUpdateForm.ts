@@ -18,9 +18,9 @@ const fetchUserById = useCallback(async (UserId: string) => {
             Id: response.id,
             UserName: response.userName,
             Email: response.email,
-            FirstName:response.firstName,
-            LastName : response.lastName,
-            phoneNumber: response.phoneNumber
+            NickName:response.nickName,
+            phoneNumber: response.phoneNumber,
+            personId:response.person?.id || null
         };
         setFormData(loadedData);
     } catch (err: any) {
@@ -53,10 +53,10 @@ useEffect(() => {
             Id: '',
            UserName :'',
            Email:'',
-           FirstName:'',
-           LastName:'',
+           NickName:'',
            Password:'',
-           phoneNumber: ''
+           phoneNumber: '',
+           personId: null
         });
         setInitialLoading(false); 
     }

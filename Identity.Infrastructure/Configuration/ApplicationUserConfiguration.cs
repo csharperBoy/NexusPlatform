@@ -25,20 +25,9 @@ namespace Identity.Infrastructure.Configuration
 
             // Audit fields
             b.Property(u => u.CreatedAt).IsRequired();
-            b.Property(u => u.UpdatedAt);
+            b.Property(u => u.ModifiedAt);
 
-            // ValueObject: FullName
-            b.OwnsOne(u => u.FullName, fn =>
-            {
-                fn.Property(f => f.FirstName)
-                  .HasColumnName("FirstName")
-                  .HasMaxLength(100);
-
-                fn.Property(f => f.LastName)
-                  .HasColumnName("LastName")
-                  .HasMaxLength(100);
-            });
-
+           
             // One-to-many RefreshTokens
             b.HasMany(u => u.RefreshTokens)
              .WithOne(t => t.User)

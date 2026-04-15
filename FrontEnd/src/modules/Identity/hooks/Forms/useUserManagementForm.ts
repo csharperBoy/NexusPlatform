@@ -11,7 +11,7 @@ export const useUserManagement = () => {
   const [filters, setFilters] = useState<GetUsersQuery | null>({
       UserName: '',
       phoneNumber: '',
-      FullName: '',
+      NickName: '',
     });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

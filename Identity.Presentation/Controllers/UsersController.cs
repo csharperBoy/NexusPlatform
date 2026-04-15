@@ -29,8 +29,8 @@ namespace Identity.Presentation.Controllers
         public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery? request = null)
         {
 
-            var query = new GetUsersQuery(request.UserName , request.FullName, request.phoneNumber);
-            var result = await Mediator.Send(query);
+            //var query = new GetUsersQuery(request.UserName , request.NickName, request.phoneNumber);
+            var result = await Mediator.Send(request);
             return HandleResult(result);
         }
         [HttpGet("{id:guid}")]

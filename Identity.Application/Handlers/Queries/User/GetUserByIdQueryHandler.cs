@@ -45,8 +45,7 @@ namespace Identity.Application.Handlers.Queries.User
 
                 UserDto result = new UserDto()
                 {
-                    FirstName = User.FullName?.FirstName,
-                    LastName =User.FullName?.LastName,
+                    NickName = User.NickName,
                     Email = User.Email,
                     Id = User.Id,
                     phoneNumber = User.PhoneNumber,

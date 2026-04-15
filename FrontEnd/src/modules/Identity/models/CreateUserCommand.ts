@@ -1,6 +1,5 @@
-// src/modules/Identity/models/UpdateUserCommand.ts
-export interface UpdateUserCommand {
-  Id: string;
+// src/modules/Identity/models/CreateUserCommand.ts
+export interface CreateUserCommand {
   UserName: string;
   NickName?: string | null;
   Password?: string | null;

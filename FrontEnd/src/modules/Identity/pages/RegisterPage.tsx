@@ -12,14 +12,14 @@ const RegisterPage: React.FC = () => {
         email,
         password,
         confirmPassword,
-        displayName,
+        nickName,
         loading,
         error,
         setUsername,
         setEmail,
         setPassword,
         setConfirmPassword,
-        setDisplayName,
+        setNickName,
         handleSubmit,
       }: RenderRegisterFormProps) => (
         <div style={{ maxWidth: '400px', margin: '50px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
@@ -53,12 +53,12 @@ const RegisterPage: React.FC = () => {
             </div>
             {/* فیلد نام نمایشی (اختیاری) */}
             <div style={{ marginBottom: '15px' }}>
-              <label htmlFor="displayName" style={{ display: 'block', marginBottom: '5px' }}>نام نمایشی (اختیاری)</label>
+              <label htmlFor="nickName" style={{ display: 'block', marginBottom: '5px' }}>نام نمایشی (اختیاری)</label>
               <input
                 type="text"
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                id="nickName"
+                value={nickName}
+                onChange={(e) => setNickName(e.target.value)}
                 style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                 disabled={loading}
               />

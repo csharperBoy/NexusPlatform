@@ -1,4 +1,5 @@
 ﻿using Core.Domain.ValueObjects;
+using Core.Shared.DTOs.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,8 @@ namespace Identity.Application.DTOs
         public Guid Id { get;  set; }
         public string? UserName { get;  set; }
         public string? phoneNumber { get;  set; }
-        //public Guid FkPersonId { get;  set; }
-
-        public string? FirstName { get;  set; }
-        public string? LastName { get;  set; }
+        public string? NickName { get; set; }
         public string? Email { get;  set; }
+        public PersonDto? person { get; set; } = null;
     }
 }

@@ -63,7 +63,7 @@ namespace Identity.Infrastructure.Data
                 {
                     EmailConfirmed = true
                 };
-                adminUser.SetFullName("System", "Administrator");
+                adminUser.NickName = "System Administrator";
                 var result = await userManager.CreateAsync(adminUser, adminPassword);
                 if (!result.Succeeded)
                 {
@@ -78,8 +78,8 @@ namespace Identity.Infrastructure.Data
                 {
                     EmailConfirmed = true
                 };
-                
-                adminUser.SetFullName("System", "intitializer");
+
+                adminUser.NickName = "System intitializer";
                 var result = await userManager.CreateAsync(initializerUser, "Init@123456789");
                 if (!result.Succeeded)
                 {

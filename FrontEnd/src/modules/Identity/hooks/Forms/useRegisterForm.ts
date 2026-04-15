@@ -11,7 +11,7 @@ export const useRegisterForm = (onSuccess?: () => void) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [nickName, setNickName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +31,7 @@ export const useRegisterForm = (onSuccess?: () => void) => {
         username,
         email,
         password,
-        displayName: displayName || undefined,
+        displayName: nickName || undefined,
       };
 
       const res = await identityApi.register(registerData);
@@ -49,14 +49,14 @@ export const useRegisterForm = (onSuccess?: () => void) => {
     email,
     password,
     confirmPassword,
-    displayName,
+    nickName,
     loading,
     error,
     setUsername,
     setEmail,
     setPassword,
     setConfirmPassword,
-    setDisplayName,
+    setNickName,
     handleSubmit,
   };
 };

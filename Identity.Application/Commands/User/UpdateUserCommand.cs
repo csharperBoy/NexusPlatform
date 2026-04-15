@@ -13,10 +13,10 @@ namespace Identity.Application.Commands.User
     public record UpdateUserCommand(
      Guid Id,
      string UserName,
-     string? FirstName,
-     string? LastName,
+     string? NickName,
      string? Password,
      string? Email,
-      string? phoneNumber
+     string? phoneNumber,
+     Guid? personId = null
  ) : IRequest<Result<bool>>;
 }
