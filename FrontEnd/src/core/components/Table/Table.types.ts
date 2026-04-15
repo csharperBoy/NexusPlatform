@@ -16,7 +16,11 @@ export interface UseTableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
 
-  // ——— Pagination ———
+// ——— Action ———  
+  onEdit? : (id:string) => void;
+onDelete? : (id:string) => void;
+  
+// ——— Pagination ———
   pageSize?: number;
   defaultPage?: number;
   controlledPage?: number;

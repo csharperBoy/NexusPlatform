@@ -15,7 +15,7 @@ const UsersManagementPage: React.FC = () => {
     {
       id: 'FullName',
       label: 'نام کامل',
-      accessor: (row) => row.fullName,
+      accessor: (row) => row.firstName?.concat( ' ' , row.lastName || '' ),
     },
     {
       id: 'phoneNumber',
@@ -23,17 +23,14 @@ const UsersManagementPage: React.FC = () => {
       accessor: (row) => row.phoneNumber,
     },
     {
-      id: 'actions',
-      
+      id: 'email',
+      label: 'ایمیل',
+      accessor: (row) => row.email,
+    },
+    {
+      id: 'actions',      
       label: 'عملیات',
-      // این ستون برای نمایش دکمه‌های ویرایش و حذف است
-      // تابع render به هر سطر (row) دسترسی دارد
-      render: (row) => (
-        <div className="flex space-x-2">
-          {/* <button onClick={() => editAction(row.Id)} className="text-blue-500 hover:text-blue-700">ویرایش</button> خطا داره چون editAction رو اینجای کد شناسایی نمیکنه */}
-          {/* <button onClick={() => deleteAction(row.Id)} className="text-red-500 hover:text-red-700">حذف</button> */}
-        </div>
-      ),
+      
     },
   ];
 
@@ -51,7 +48,8 @@ const UsersManagementPage: React.FC = () => {
           <Table
             data={Data}
             columns={userColumns}
-            
+            onEdit={editAction}
+            onDelete={deleteAction}
           />
         </div>
       )}

@@ -20,8 +20,8 @@ namespace Identity.Application.Handlers.Queries.User
 
         public async Task<Result<IList<UserDto>>> Handle(GetUsersQuery request, CancellationToken ct)
         {
-            List<UserDto> users = await _userService.getUsers(request);
-            return Result<IList<UserDto>>.Ok(users);
+           var users = await _userService.getUsers(request);
+            return Result<IList<UserDto>>.Ok(users.ToList());
         }
     }
 }

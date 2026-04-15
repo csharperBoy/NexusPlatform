@@ -83,7 +83,6 @@ namespace Identity.Infrastructure.Services
         {
             var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email);
             user.SetFullName(request.DisplayName, request.DisplayName);
-
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)
                 return Result<AuthResponse>.Fail(string.Join("; ", createRes.Errors.Select(e => e.Description)));

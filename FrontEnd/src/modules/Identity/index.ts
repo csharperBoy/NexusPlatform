@@ -28,3 +28,13 @@ export type {
 } from './Interface/IUserManagementPage';
 export { default as UserManagementPage } from './pages/UsersManagementPage';
 export { useUserManagement } from './hooks/Forms/useUserManagementForm';
+
+
+// UserUpdatePage
+export { UserUpdateForm } from './Interface/IUserUpdatePage';
+export type { 
+  RenderFormProps as RenderUseUpdateFormProps, 
+  IUserUpdatePageProps 
+} from './Interface/IUserUpdatePage';
+export { default as UserUpdatePage } from './pages/UserUpdatePage';
+export { useUserUpdateForm } from './hooks/Forms/useUserUpdateForm';

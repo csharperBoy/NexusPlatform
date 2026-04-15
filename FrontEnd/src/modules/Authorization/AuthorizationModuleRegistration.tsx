@@ -22,18 +22,18 @@ export const AuthorizationModuleRegistration = () => {
       title: 'مدیریت منابع',
       path: '/resources',
       icon: <ResourceIcon />,
-      permissions: ['admin'], // در صورت نیاز
+      // permissions: ['admin'], // در صورت نیاز
       order: 20, // بعد از مدیریت کاربران
     });
 
     // ثبت زیرمنو برای ایجاد منبع (اختیاری)
-    registerMenuItem({
-      id: 'resources-create',
-      title: 'ایجاد منبع جدید',
-      path: '/resources/create',
-      parentId: 'resources', // اگر بخواهید زیرمنو باشد
-      order: 1,
-    });
+    // registerMenuItem({
+    //   id: 'resources-create',
+    //   title: 'ایجاد منبع جدید',
+    //   path: '/resources/create',
+    //   parentId: 'resources', // اگر بخواهید زیرمنو باشد
+    //   order: 1,
+    // });
 
     // ثبت ویجت
     registerWidget({

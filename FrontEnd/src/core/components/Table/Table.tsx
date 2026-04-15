@@ -6,6 +6,8 @@ import { UseTableProps as TableProps } from "./Table.types";
 function Table<T>({
   data,
   columns,
+  onEdit,
+  onDelete,
   pageSize,
   defaultPage,
   controlledPage,
@@ -101,9 +103,28 @@ function Table<T>({
                     />
                   </td>
                 )}
-
-                {columns.map(col => {
-                  const content = col.render
+                    {columns.map((col) => (
+                    <td key={col.id}>
+                    {col.id === 'actions' ? (
+                    // اگر ستون، ستون اکشن ها بود
+                    <>
+                    {/* استفاده از props پاس داده شده */}
+                    {onEdit && <button onClick={() => onEdit(id)}>ویرایش</button>}
+                    {onDelete && <button onClick={() => onDelete(id)}>حذف</button>}
+                    </>
+                    ) : col.accessor ? (
+                    // اگر accessor تعریف شده بود
+                    col.accessor(row)
+                    ) : col.render ? (
+                    // اگر render تعریف شده بود (برای ستون های خاص)
+                    col.render(row)
+                    ) : null}
+                    </td>
+                    ))}
+                {/* {columns.map(col => {
+                  const content = 
+                  
+                      col.render
                     ? col.render(row)
                     : col.accessor
                     ? col.accessor(row)
@@ -114,7 +135,7 @@ function Table<T>({
                       {content}
                     </td>
                   );
-                })}
+                })} */}
               </tr>
             );
           })}

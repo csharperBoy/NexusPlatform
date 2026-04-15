@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Identity.Domain.Entities
 {
@@ -19,7 +20,7 @@ namespace Identity.Domain.Entities
     public class ApplicationUser : IdentityUser<Guid>, IAggregateRoot
     {
         
-        public Guid FkPersonId { get; private set; }
+        public Guid? FkPersonId { get; private set; }
 
         public FullName? FullName { get; private set; }
         public bool IsActive { get; private set; } = true;
@@ -49,9 +50,31 @@ namespace Identity.Domain.Entities
 
             SecurityStamp = Guid.NewGuid().ToString();
         }
+        public ApplicationUser(
+            string UserName,
+        //string Password,
+        string Email,
+        string? firstName,
+        string? lastName,
+        string? phoneNumber,
+        Guid? personId = null
+            )
+             : base(UserName)
+        {
+            FkPersonId = personId;
+            UserName = UserName;
+            Email = Email;
+            EmailConfirmed = true;
+            SetFullName(firstName, lastName);
+            PhoneNumber = phoneNumber;
+            NormalizedUserName = UserName.ToUpperInvariant();
+            NormalizedEmail = Email.ToUpperInvariant();
+
+            SecurityStamp = Guid.NewGuid().ToString();
+        }
 
         private void Touch() => UpdatedAt = DateTime.UtcNow;
-
+     
         public void SetFullName(FullName fullName)
         {
             FullName = fullName;
