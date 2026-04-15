@@ -14,6 +14,8 @@ namespace Identity.Application.Interfaces
     public interface IUserInternalService : IUserPublicService
     {
         Task<Guid> CreateUserAsync(CreateUserCommand request);
+        Task DeleteUserAsync(Guid id);
+
         Task<ApplicationUser?> GetById(Guid id);
         Task<IReadOnlyList<UserDto>> getUsers(GetUsersQuery request);
         Task UpdateUserAsync(UpdateUserCommand request);

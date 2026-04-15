@@ -20,7 +20,7 @@ export const useUserManagement = () => {
   
  const deleteAction = async (id: string) => {
     try {
-    //   await userApi.deleteUser(id);
+       await userApi.deleteUser(id);
       await fetchData(); // رفرش درخت بعد از حذف
     } catch (err: any) {
       throw err?.response?.data || "حذف ناموفق بود";

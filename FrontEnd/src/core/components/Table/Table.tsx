@@ -110,7 +110,16 @@ function Table<T>({
                     <>
                     {/* استفاده از props پاس داده شده */}
                     {onEdit && <button onClick={() => onEdit(id)}>ویرایش</button>}
-                    {onDelete && <button onClick={() => onDelete(id)}>حذف</button>}
+                    {onDelete && <button onClick={
+                        async () => {
+                    if (!confirm(`آیا از حذف مطمون هستید ?`)) return;
+
+                    try {
+                      await onDelete(id);
+                    } catch (e) {
+                      alert(e);
+                    }
+                  }}>حذف</button>}
                     </>
                     ) : col.accessor ? (
                     // اگر accessor تعریف شده بود

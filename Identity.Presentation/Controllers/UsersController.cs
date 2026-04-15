@@ -35,7 +35,7 @@ namespace Identity.Presentation.Controllers
         }
         [HttpGet("{id:guid}")]
         [AuthorizeResource("identity.user", "View")]
-        public async Task<IActionResult> GetResourceById(Guid id)
+        public async Task<IActionResult> GetUserById(Guid id)
         {
             var query = new GetUserByIdQuery(id);
             var result = await Mediator.Send(query);
@@ -48,7 +48,7 @@ namespace Identity.Presentation.Controllers
         /// </summary>
         [HttpPut("{id:guid}")]
         [AuthorizeResource("identity.user", "Edit")]
-        public async Task<IActionResult> UpdateResource(Guid id, [FromBody] UpdateUserCommand command)
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserCommand command)
         {
             // اطمینان از تطابق ID در route با command
             var updatedCommand = command with { Id = id };
@@ -57,8 +57,19 @@ namespace Identity.Presentation.Controllers
         }
         [HttpPost("Create")]
         [AuthorizeResource("identity.user", "Create")]
-        public async Task<IActionResult> CreateResource([FromBody] CreateUserCommand command)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserCommand command)
         {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        /// <summary>
+        /// 🗑️ حذف کاربر
+        /// </summary>
+        [HttpDelete("{id:guid}")]
+        [AuthorizeResource("identity.user", "Delete")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            var command = new DeleteUserCommand(id);
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }

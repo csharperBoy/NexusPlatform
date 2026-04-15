@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions;
+﻿using Azure.Core;
+using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.HR;
@@ -6,6 +7,7 @@ using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Context;
 using Core.Application.Helper;
 using Core.Shared.DTOs.Identity;
+using Core.Shared.Results;
 using Identity.Application.Commands.User;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
@@ -58,6 +60,17 @@ namespace Identity.Infrastructure.Services
             _roleService = roleService;
             _permissionService = permissionService;
         }
+
+        public async Task DeleteUserAsync(Guid Id)
+        {
+            var user = await _userRepository.GetByIdAsync(Id);
+            if (user == null) return;
+
+            await _userRepository.DeleteAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+            await InvalidateUserCachesAsync();
+        }
+
         public async Task<Guid> CreateUserAsync(CreateUserCommand command)
         {
             var user = new ApplicationUser(
@@ -67,7 +80,11 @@ namespace Identity.Infrastructure.Services
                 command.phoneNumber,
                 command.personId
             );
-            await _userManager.CreateAsync(user, command.Password);
+            var createRes = await _userManager.CreateAsync(user, command.Password);
+            if (!createRes.Succeeded)
+                throw new Exception(createRes.Errors.FirstOrDefault().Description);
+
+            await _unitOfWork.SaveChangesAsync();
             await InvalidateUserCachesAsync();
             return user.Id;
         }

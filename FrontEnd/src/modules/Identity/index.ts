@@ -38,3 +38,13 @@ export type {
 } from './Interface/IUserUpdatePage';
 export { default as UserUpdatePage } from './pages/UserUpdatePage';
 export { useUserUpdateForm } from './hooks/Forms/useUserUpdateForm';
+
+
+// UserCreatePage
+export { UserCreateForm } from './Interface/IUserCreatePage';
+export type { 
+  RenderFormProps as RenderUseCreateFormProps, 
+  IUserCreatePageProps 
+} from './Interface/IUserCreatePage';
+export { default as UserCreatePage } from './pages/UserCreatePage';
+export { useUserCreateForm } from './hooks/Forms/useUserCreateForm';
