@@ -12,7 +12,10 @@ export interface RenderFormProps {
   error: string | null;
   handleChange: (field: keyof CreateUserCommand, value: any) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  rolesList: { id: string; name: string }[];                 // ← اضافه شد
+  handleRolesChange: (id: string, checked: boolean) => void;  // ← اضافه شد
 }
+
 
 export interface IUserCreatePageProps {
   redirectTo?: string;

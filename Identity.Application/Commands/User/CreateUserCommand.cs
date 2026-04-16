@@ -15,6 +15,7 @@ namespace Identity.Application.Commands.User
         string Email,
         string? NickName,
         string? phoneNumber,
-        Guid? personId = null
+        Guid? personId = null,
+        List<string>? roles = null
 ) : IRequest<Result<Guid>>;
 }

@@ -16,7 +16,7 @@ namespace Identity.Application.Interfaces
         Task<Guid> CreateUserAsync(CreateUserCommand request);
         Task DeleteUserAsync(Guid id);
 
-        Task<ApplicationUser?> GetById(Guid id);
+        Task<UserDto?> GetById(Guid id);
         Task<IReadOnlyList<UserDto>> getUsers(GetUsersQuery request);
         Task UpdateUserAsync(UpdateUserCommand request);
     }

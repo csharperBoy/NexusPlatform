@@ -30,12 +30,14 @@ namespace Identity.Infrastructure.Services
     {
         private readonly IRepository<IdentityDbContext, ApplicationUser, Guid> _userRepository;
 
+        private readonly IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> _userRoleRepository;
         private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<UserService> _logger;
 
         private readonly IPositionPublicService _positionService;
-        private readonly IRolePublicService _roleService;
+        private readonly IRoleInternalService _roleService;
         private readonly IPermissionPublicService _permissionService;
 
         private readonly ICachePublicService _cache;
@@ -43,17 +45,20 @@ namespace Identity.Infrastructure.Services
 
         public UserService(
             IRepository<IdentityDbContext, ApplicationUser, Guid> userRepository,
+            IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
-            UserManager<ApplicationUser> userManager,
+            UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager,
             IPositionPublicService positionService,
-            IRolePublicService roleService,
+            IRoleInternalService roleService,
             IPermissionPublicService permissionService,
             ICachePublicService cache,
             ILogger<UserService> logger)
         {
             _userRepository = userRepository;
+            _userRoleRepository = userRoleRepository;
             _unitOfWork = unitOfWork;
             _userManager = userManager;
+            _roleManager = roleManager;
             _logger = logger;
             _cache = cache;
             _positionService = positionService;
@@ -65,9 +70,12 @@ namespace Identity.Infrastructure.Services
         {
             var user = await _userRepository.GetByIdAsync(Id);
             if (user == null) return;
+            var Res = await _userManager.DeleteAsync(user);
+            if (!Res.Succeeded)
+                throw new Exception(Res.Errors.FirstOrDefault().Description);
 
-            await _userRepository.DeleteAsync(user);
-            await _unitOfWork.SaveChangesAsync();
+            //await _userRepository.DeleteAsync(user);
+            //await _unitOfWork.SaveChangesAsync();
             await InvalidateUserCachesAsync();
         }
 
@@ -84,11 +92,17 @@ namespace Identity.Infrastructure.Services
             if (!createRes.Succeeded)
                 throw new Exception(createRes.Errors.FirstOrDefault().Description);
 
-            await _unitOfWork.SaveChangesAsync();
+            var addToRolesRes = await _userManager.AddToRolesAsync(user, command.roles);
+            if (!addToRolesRes.Succeeded)
+                throw new Exception(addToRolesRes.Errors.FirstOrDefault().Description);
+
+
+
+            //await _unitOfWork.SaveChangesAsync();
             await InvalidateUserCachesAsync();
             return user.Id;
         }
-        public async Task<ApplicationUser?> GetById(Guid id)
+        public async Task<UserDto?> GetById(Guid id)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
 
@@ -96,8 +110,16 @@ namespace Identity.Infrastructure.Services
             {
                 throw new Exception($"user with name '{id}' not found.");
             }
-
-            return user;
+            UserDto result = new UserDto()
+            {
+                NickName = user.NickName,
+                Email = user.Email,
+                Id = user.Id,
+                phoneNumber = user.PhoneNumber,
+                UserName = user.UserName
+            };
+            result.roles = await _userManager.GetRolesAsync(user);
+            return result;
         }
 
         public async Task<UserDataContext> GetInitializerUserContext()
@@ -181,19 +203,45 @@ namespace Identity.Infrastructure.Services
                 _logger.LogDebug("Cache hit for full resource tree");
                 return cached;
             }
-            var result = await _userManager.Users.Where(
+            /*var result = await _userManager.Users.Where(
                 u => (request.UserName != null ? u.UserName.Contains(request.UserName) : true)
                 && (request.NickName != null ? u.NickName.Contains(request.NickName) : true)
                 && (request.phoneNumber != null ? u.PhoneNumber.Contains(request.phoneNumber) : true)
-                ).Select(u => new UserDto
+                ).Select( u => new UserDto
                 {
                     NickName = u.NickName,
                     Email = u.Email,
                     Id = u.Id,
                     phoneNumber = u.PhoneNumber,
-                    UserName = u.UserName
-                }).AsNoTracking().ToListAsync();
+                    UserName = u.UserName,
+                    roles = await _userManager.GetRolesAsync(u)
+                }).AsNoTracking().ToListAsync();*/
 
+            var query =
+                        from user in _userManager.Users.AsNoTracking()
+                        join userRole in (await _userRoleRepository.AsNoTrackingQueryable()) on user.Id equals userRole.UserId
+                        join role in _roleManager.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                        where
+                            (request.UserName != null ? user.UserName.Contains(request.UserName) : true)
+                            && (request.NickName != null ? user.NickName.Contains(request.NickName) : true)
+                            && (request.phoneNumber != null ? user.PhoneNumber.Contains(request.phoneNumber) : true)
+                        group role.Name by user into g
+                        select new UserDto
+                        {
+                            Id = g.Key.Id,
+                            Email = g.Key.Email,
+                            NickName = g.Key.NickName,
+                            phoneNumber = g.Key.PhoneNumber,
+                            UserName = g.Key.UserName,
+                            roles = g.ToList()/*.Select(x => new RoleDto
+                            {
+                                Id = x.role.Id,
+                                Name = x.role.Name,
+                                Description = x.role.Description,
+                                OrderNum = x.role.OrderNum
+                            }).ToList()*/
+                        };
+            var result = await query.ToListAsync();
             await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
             return result;
         }
@@ -205,6 +253,8 @@ namespace Identity.Infrastructure.Services
             if ( user.ApplyChange(request.UserName, request.NickName, request.Password, request.Email, request.phoneNumber,_userManager, request.personId))
             {
                 await _userManager.UpdateAsync(user);
+                await _userManager.RemoveFromRolesAsync(user, (await _userManager.GetRolesAsync(user)));
+                await _userManager.AddToRolesAsync(user, request.roles);
                 await InvalidateUserCachesAsync();
             }
         }

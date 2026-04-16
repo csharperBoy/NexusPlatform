@@ -36,22 +36,15 @@ namespace Identity.Application.Handlers.Queries.User
             {
                 _logger.LogDebug("Getting User by ID: {UserId}", request.Id);
 
-                ApplicationUser? User = await _UserService.GetById(request.Id);
+                UserDto? User = await _UserService.GetById(request.Id);
 
                 if (User == null)
                 {
                     return Result<UserDto>.Fail($"User with ID {request.Id} not found");
                 }
 
-                UserDto result = new UserDto()
-                {
-                    NickName = User.NickName,
-                    Email = User.Email,
-                    Id = User.Id,
-                    phoneNumber = User.PhoneNumber,
-                    UserName = User.UserName
-                };
-                return Result<UserDto>.Ok(result);
+              
+                return Result<UserDto>.Ok(User);
             }
             catch (Exception ex)
             {

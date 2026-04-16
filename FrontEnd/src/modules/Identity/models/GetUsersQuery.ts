@@ -3,5 +3,5 @@
 export interface GetUsersQuery {
   UserName?: string;
   phoneNumber?: string;
-  NickName?: string;
+  NickName?: string;  
 }

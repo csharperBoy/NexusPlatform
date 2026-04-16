@@ -16,6 +16,8 @@ const UserCreatePage: React.FC = () => {
         error,
         handleChange,
         handleSubmit,
+        rolesList,
+        handleRolesChange
       }: RenderFormProps) => (
         <Card className="max-w-2xl mx-auto p-6">
           <h2 className="text-xl font-bold mb-4">ایجاد کاربر جدید</h2>
@@ -76,7 +78,26 @@ const UserCreatePage: React.FC = () => {
                 disabled={loading}
               />
             </div>
-           
+            <div className="mb-4">
+              <label className="block mb-2 font-medium">نقش‌ها</label>
+              <div>
+                {rolesList.length === 0 && <p>در حال بارگذاری نقش‌ها...</p>}
+                {rolesList.map((role) => (
+                  <div key={role.name} className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      id={role.name}
+                      checked={formData.roles?.includes(role.name) || false}
+                      onChange={(e) => handleRolesChange(role.name, e.target.checked)}
+                      disabled={loading}
+                      className="mr-2"
+                    />
+                    <label htmlFor={role.name}>{role.name}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+       
             {error && (
               <div className="text-red-600 mb-4 p-3 bg-red-50 rounded">
                 {error}
@@ -92,4 +113,4 @@ const UserCreatePage: React.FC = () => {
   );
 };
 
-export default UserCreatePage;
+export default UserCreatePage; 

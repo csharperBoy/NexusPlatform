@@ -1,4 +1,5 @@
 import { PersonDto } from "@/modules/HR/models/PersonDto";
+import { RoleDto } from "./RoleDto";
 
 // modules/identity/models/UserDto.ts
 export interface UserDto {
@@ -8,4 +9,5 @@ export interface UserDto {
   nickName?: string | null;
   email?: string | null;
   person?: PersonDto | null;
+  Roles?: string[] | null;
 }
