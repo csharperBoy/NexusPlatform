@@ -6,8 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Identity.Application.Queries
+namespace Identity.Application.Commands.Role
 {
-    public record GetUserRolesQuery(Guid UserId) : IRequest<Result<IList<string>>>;
-
+    public record DeleteRoleCommand(
+        Guid Id
+    ) : IRequest<Result<bool>>;
 }

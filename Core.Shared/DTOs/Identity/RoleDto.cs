@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Core.Shared.DTOs.Identity
 {
-    public class RoleDto
+  /*  public class RoleDto
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
-    }
+    }*/
 }

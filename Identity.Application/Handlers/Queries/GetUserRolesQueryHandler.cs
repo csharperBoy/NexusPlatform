@@ -1,6 +1,6 @@
 ﻿using Core.Shared.Results;
 using Identity.Application.Interfaces;
-using Identity.Application.Queries;
+using Identity.Application.Queries.User;
 using MediatR;
 using System;
 using System.Collections.Generic;

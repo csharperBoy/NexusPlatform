@@ -12,7 +12,7 @@ namespace Core.Application.Abstractions.Identity.PublicService
         Task<List<Guid>> GetAllUserRolesId(Guid userId);
 
         // 📌 دریافت نقش‌های کاربر بر اساس UserId
-        Task<IList<string>> GetUserRolesAsync(Guid userId); 
+        //Task<IList<string>> GetUserRolesAsync(Guid userId); 
 
     }
 }

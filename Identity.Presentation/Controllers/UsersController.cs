@@ -24,6 +24,15 @@ namespace Identity.Presentation.Controllers
         {
             _currentUser = currentUser;
         }
+
+        [HttpGet("GetRoles/{userId:guid}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetUserRoles([FromRoute] Guid userId)
+        {
+            var res = await Mediator.Send(new GetUserRolesQuery(userId));
+            if (!res.Succeeded) return BadRequest(res.Error);
+            return Ok(res.Data);
+        }
         [HttpGet("GetUsers")]
         [AuthorizeResource("identity.user", "View")]
         public async Task<IActionResult> GetUsers([FromQuery] GetUsersQuery? request = null)

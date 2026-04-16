@@ -43,8 +43,38 @@ export { useUserUpdateForm } from './hooks/Forms/useUserUpdateForm';
 // UserCreatePage
 export { UserCreateForm } from './Interface/IUserCreatePage';
 export type { 
-  RenderFormProps as RenderUseCreateFormProps, 
+  RenderFormProps as RenderUserCreateFormProps, 
   IUserCreatePageProps 
 } from './Interface/IUserCreatePage';
 export { default as UserCreatePage } from './pages/UserCreatePage';
 export { useUserCreateForm } from './hooks/Forms/useUserCreateForm';
+
+
+// RoleManagementPage
+export { RoleManagementForm } from './Interface/Role/IRoleManagementPage';
+export type { 
+  RenderFormProps as RenderRoleManagementFormProps, 
+  IRoleManagementPageProps 
+} from './Interface/Role/IRoleManagementPage';
+export { default as RoleManagementPage } from './pages/Role/RolesManagementPage';
+export { useRoleManagement } from './hooks/Forms/Role/useRoleManagementForm';
+
+
+// RoleUpdatePage
+export { RoleUpdateForm } from './Interface/Role/IRoleUpdatePage';
+export type { 
+  RenderFormProps as RenderRoleUpdateFormProps, 
+  IRoleUpdatePageProps 
+} from './Interface/Role/IRoleUpdatePage';
+export { default as RoleUpdatePage } from './pages/Role/RoleUpdatePage';
+export { useRoleUpdateForm } from './hooks/Forms/Role/useRoleUpdateForm';
+
+
+// RoleCreatePage
+export { RoleCreateForm } from './Interface/Role/IRoleCreatePage';
+export type { 
+  RenderFormProps as RenderUseCreateFormProps, 
+  IRoleCreatePageProps 
+} from './Interface/Role/IRoleCreatePage';
+export { default as RoleCreatePage } from './pages/Role/RoleCreatePage';
+export { useRoleCreateForm } from './hooks/Forms/Role/useRoleCreateForm';

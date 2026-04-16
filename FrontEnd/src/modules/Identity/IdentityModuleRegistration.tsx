@@ -27,6 +27,13 @@ export const IdentityModuleRegistration = () => {
       icon: <UserIcon />,
       order: 10,
     });
+ registerMenuItem({
+      id: 'roles',
+      title: 'مدیریت نقش ها',
+      path: '/roles',
+      icon: <UserIcon />,
+      order: 20,
+    });
 
     // ثبت ویجت برای صفحه اصلی داشبورد
     registerWidget({

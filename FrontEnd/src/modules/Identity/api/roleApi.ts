@@ -1,22 +1,21 @@
-// modules/identity/api/userApi.ts
+// modules/identity/api/roleApi.ts
 import getAPI from "@/core/api/axiosClient";
 import type { LoginRequest } from "../models/LoginRequest";
 import type { RegisterRequest } from "../models/RegisterRequest";
 import type { AuthResponse } from "../models/AuthResponse";
-import { UserDto } from "../models/UserDto";
-import { GetUsersQuery } from "../models/GetUsersQuery";
-import { UpdateUserCommand } from "../models/UpdateUserCommand";
-import { CreateUserCommand } from "../models/CreateUserCommand";
 import { RoleDto } from "../models/RoleDto";
+import { GetRolesQuery } from "../models/GetRolesQuery";
+import { UpdateRoleCommand } from "../models/UpdateRoleCommand";
+import { CreateRoleCommand } from "../models/CreateRoleCommand";
 const API_MODULE = "identity";
 
-export const userApi = {
+export const roleApi = {
 
  // دریافت کاربران (GET)
-  getUsers: async (req?: GetUsersQuery | null): Promise<UserDto[]> => {
+  getRoles: async (req?: GetRolesQuery | null): Promise<RoleDto[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<UserDto[]>(
-      "/api/identity/Users/GetUsers",
+    const response = await api.get<RoleDto[]>(
+      "/api/identity/Roles/GetRoles",
       { params: { req }, withCredentials: true }
     );
     console.log(response)
@@ -24,44 +23,44 @@ export const userApi = {
   },
 
   // دریافت کاربر (GET)
-    getById: async (Id?: string): Promise<UserDto> => {
+    getById: async (Id?: string): Promise<RoleDto> => {
       
       const api = getAPI(API_MODULE);
       
-      const response = await api.get<UserDto>(
-        `/api/identity/Users/${Id}`,
+      const response = await api.get<RoleDto>(
+        `/api/identity/Roles/${Id}`,
         {  withCredentials: true }
       );
       console.info(response)
       return response.data;
     },
 // ایجاد کاربر جدید (POST)
-createUser: async (data: CreateUserCommand): Promise<string> => {
+createRole: async (data: CreateRoleCommand): Promise<string> => {
   const api = getAPI(API_MODULE);
   console.info("data= " , data);
   const response = await api.post<string>(
-    "/api/identity/Users/create",
+    "/api/identity/Roles/create",
     data,
     { withCredentials: true }
   );
   return response.data;
 },
     // ویرایش کاربر (PUT)
-      updateUser: async (data: UpdateUserCommand): Promise<boolean> => {
+      updateRole: async (data: UpdateRoleCommand): Promise<boolean> => {
         const api = getAPI(API_MODULE);
          console.warn(data);
         const response = await api.put<boolean>(
-          `/api/identity/Users/${data.Id}`, data,
+          `/api/identity/Roles/${data.Id}`, data,
           {  withCredentials: true }
         );
         console.log(response)
         return response.data;
       },
       // حذف کاربر (Delete)
-        deleteUser: async (Id?: string): Promise<boolean> => {
+        deleteRole: async (Id?: string): Promise<boolean> => {
           const api = getAPI(API_MODULE);
           const response = await api.delete<boolean>(
-            `/api/identity/Users/${Id}`,
+            `/api/identity/Roles/${Id}`,
             {  withCredentials: true }
           );
           console.log(response)
@@ -69,14 +68,5 @@ createUser: async (data: CreateUserCommand): Promise<string> => {
         },
         
 
-         // دریافت نقش های کاربر (GET)
-  getRoles: async (userId?: string | null): Promise<RoleDto[]> => {
-    const api = getAPI(API_MODULE);
-    const response = await api.get<RoleDto[]>(
-      `/api/identity/Users/GetRoles/${userId}`,
-      {  withCredentials: true }
-    );
-    console.log(response)
-    return response.data;
-  },
+      
 };

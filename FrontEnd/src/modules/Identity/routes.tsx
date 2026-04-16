@@ -5,6 +5,9 @@ import Register from "./pages/RegisterPage";
 import UsersManagementPage from "./pages/UsersManagementPage";
 import UserUpdatePage from "./pages/UserUpdatePage";
 import UserCreatePage from "./pages/UserCreatePage";
+import RoleCreatePage from "./pages/Role/RoleCreatePage";
+import RolesManagementPage from "./pages/Role/RolesManagementPage";
+import RoleUpdatePage from "./pages/Role/RoleUpdatePage";
 
 export const identityPublicRoutes: RouteObject[] = [
   { path: "/login", element: <Login /> },
@@ -13,6 +16,10 @@ export const identityPublicRoutes: RouteObject[] = [
 
 export const identityPanelRoutes: RouteObject[] = [  
   { path: "user/create", element: <UserCreatePage /> }, 
-  { path: "/users", element: <UsersManagementPage /> }, // مسیر نسبی یا مطلق؟ بهتر است نسبی باشد: "users"
-  { path: "user/edit/:id", element: <UserUpdatePage /> },   
+  { path: "/users", element: <UsersManagementPage /> }, 
+  { path: "user/edit/:id", element: <UserUpdatePage /> },  
+  
+    { path: "role/create", element: <RoleCreatePage /> }, 
+  { path: "/roles", element: <RolesManagementPage /> }, 
+  { path: "role/edit/:id", element: <RoleUpdatePage /> }, 
 ];
