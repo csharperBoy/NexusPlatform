@@ -43,7 +43,7 @@ namespace Identity.Test
             var outbox = new Mock<IOutboxService<IdentityDbContext>>();
             var roleResolver = new Mock<IRoleInternalService>();
             roleResolver.Setup(r => r.GetUserRolesAsync(It.IsAny<Guid>()))
-                        .ReturnsAsync(new List<string> { "User" });
+                        .ReturnsAsync(new List<RoleDto> { new RoleDto { Name = "User"} });
 
             var refreshRepo = new Mock<IRepository<IdentityDbContext, RefreshToken, Guid>>();
             var specRepo = new Mock<ISpecificationRepository<RefreshToken, Guid>>();

@@ -57,7 +57,7 @@ namespace Identity.Infrastructure.Services
         private async Task<Result<AuthResponse>> GenerateAuthResponse(ApplicationUser user)
         {
             var roles = await _roleService.GetUserRolesAsync(user.Id);
-            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles.Select(r=>r.Name));
 
             var refreshEntity = new RefreshToken(
                 user.Id,
@@ -121,7 +121,7 @@ namespace Identity.Infrastructure.Services
                 return Result<AuthTokens>.Fail("کاربر یافت نشد.");
 
             var roles = await _roleService.GetUserRolesAsync(user.Id);
-            var tokens = await _tokenService.GenerateTokensAsync(user, roles);
+            var tokens = await _tokenService.GenerateTokensAsync(user, roles.Select(r=>r.Name));
 
             refresh.Revoke(tokens.RefreshToken);
 
