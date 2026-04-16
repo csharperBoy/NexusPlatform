@@ -121,7 +121,7 @@ namespace Identity.Infrastructure.Data
                 new()
                 {
                     Key = "identity",
-                    Name = "Identoty",
+                    Name = "identity",
                     Type =ResourceType.Module,
                     Category = ResourceCategory.System,
                     Description = "Identity management module",
@@ -138,6 +138,16 @@ namespace Identity.Infrastructure.Data
                             Category =ResourceCategory.System,
                             Description = "Identity Users management",
                             DisplayOrder = 3001,
+                            Icon = "list",
+                            //Path = "/audit/logs"
+                        }, new()
+                        {
+                            Key = "identity.role",
+                            Name = "identity Roles",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "Identity Roles management",
+                            DisplayOrder = 3002,
                             Icon = "list",
                             //Path = "/audit/logs"
                         }
@@ -167,6 +177,22 @@ namespace Identity.Infrastructure.Data
                     AssigneeId = roleId,
 
                     Description = "Full access to Identity Users"
+                },new()
+                {
+                    ResourceKey = "identity.role",
+                    Action = PermissionAction.Full, // مطمئن شوید این Enum در Core به صورت String یا Enum در دسترس است
+                    Scopes = new List<ScopeDto>()
+                    {
+                        new()
+                        {
+                            scope =ScopeType.All
+                        }
+                    },
+                    Effect = PermissionEffect.allow,
+                    AssigneeType= AssigneeType.Role,
+                    AssigneeId = roleId,
+
+                    Description = "Full access to Identity Roles"
                 }
             };
         }

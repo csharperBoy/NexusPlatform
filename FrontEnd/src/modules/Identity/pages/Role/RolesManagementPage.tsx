@@ -10,17 +10,17 @@ const RolesManagementPage: React.FC = () => {
     {
       id: 'Name',
       label: 'نام ',
-      accessor: (row) => row.Name,
+      accessor: (row) => row.name,
     },
     {
       id: 'Description',
       label: 'توضیح ',
-      accessor: (row) => row.Description,
+      accessor: (row) => row.description,
     },
     {
       id: 'OrderNum',
       label: 'ترتیب',
-      accessor: (row) => row.OrderNum,
+      accessor: (row) => row.orderNum,
     },
     {
       id: 'actions',      

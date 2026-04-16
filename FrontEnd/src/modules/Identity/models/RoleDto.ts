@@ -1,8 +1,8 @@
 // modules/identity/models/RoleDto.ts
 export interface RoleDto {
-  Name: string;
+  name: string;
   id: string ;
-  Description?: string | null;
-  OrderNum?: number | null;
+  description?: string | null;
+  orderNum?: number | null;
   
 }

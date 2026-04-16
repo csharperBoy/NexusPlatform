@@ -14,11 +14,14 @@ export const roleApi = {
  // دریافت کاربران (GET)
   getRoles: async (req?: GetRolesQuery | null): Promise<RoleDto[]> => {
     const api = getAPI(API_MODULE);
+    
+    console.info(req);
     const response = await api.get<RoleDto[]>(
       "/api/identity/Roles/GetRoles",
       { params: { req }, withCredentials: true }
     );
-    console.log(response)
+    console.warn(response);
+    console.log(response);
     return response.data;
   },
 

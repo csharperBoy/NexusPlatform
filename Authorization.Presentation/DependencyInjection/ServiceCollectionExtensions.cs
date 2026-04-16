@@ -39,7 +39,7 @@ namespace Authorization.Presentation.DependencyInjection
 
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Sample_AddPresentation(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Authorization_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 رجیستر کنترلرهای API
             services.AddControllers()

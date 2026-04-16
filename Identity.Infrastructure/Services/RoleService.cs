@@ -108,6 +108,7 @@ namespace Identity.Infrastructure.Services
                 && (request.description != null ? u.Description.Contains(request.description) : true)
                 ).Select(u => new RoleDto
                 {
+                    Id = u.Id,
                    Name = u.Name,
                    Description = u.Description,
                    OrderNum = u.OrderNum,

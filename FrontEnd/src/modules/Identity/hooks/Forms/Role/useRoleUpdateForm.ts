@@ -16,9 +16,9 @@ const fetchRoleById = useCallback(async (RoleId: string) => {
         const response = await roleApi.getById(RoleId);
         const loadedData: UpdateRoleCommand = {
             Id: response.id,
-            Name: response.Name,
-            Description: response.Description,
-            OrderNum:response.OrderNum ,
+            Name: response.name,
+            Description: response.description,
+            OrderNum:response.orderNum ,
         };
         setFormData(loadedData);
     } catch (err: any) {

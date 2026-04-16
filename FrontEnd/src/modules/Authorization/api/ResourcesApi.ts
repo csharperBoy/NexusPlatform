@@ -14,7 +14,8 @@ export const resourceApi = {
       "/api/authorization/admin/resources/tree",
       { params: { rootId }, withCredentials: true }
     );
-    console.log(response)
+    console.warn(response);
+    console.log(response);
     return response.data;
   },
   // دریافت منبع (GET)
