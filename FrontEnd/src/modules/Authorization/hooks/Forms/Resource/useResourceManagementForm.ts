@@ -1,7 +1,7 @@
 // src/modules/Authorization/hooks/Forms/useResourceManagementForm.ts
 import { useState, useEffect } from "react";
-import { resourceApi } from "../../api/ResourcesApi";
-import type { ResourceDto } from "../../models/ResourceDto";
+import { resourceApi } from "../../../api/ResourceApi";
+import type { ResourceDto } from "../../../models/ResourceDto";
 
 import { useNavigate } from 'react-router-dom';
 

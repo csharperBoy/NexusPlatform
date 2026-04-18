@@ -2,9 +2,9 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
-import { useResourceManagement } from '../hooks/Forms/useResourceManagementForm';
+import { useResourceManagement } from '../../hooks/Forms/Resource/useResourceManagementForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { ResourceDto } from '../models/ResourceDto';
+import type { ResourceDto } from '../../models/ResourceDto';
 
 export interface RenderFormProps {
   treeData: ResourceDto[];

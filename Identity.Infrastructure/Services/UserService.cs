@@ -16,10 +16,13 @@ using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -79,6 +82,7 @@ namespace Identity.Infrastructure.Services
             await InvalidateUserCachesAsync();
         }
 
+                
         public async Task<Guid> CreateUserAsync(CreateUserCommand command)
         {
             var user = new ApplicationUser(

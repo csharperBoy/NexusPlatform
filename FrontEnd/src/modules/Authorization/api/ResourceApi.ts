@@ -1,8 +1,7 @@
-// src/modules/Authorization/api/ResourcesApi.ts
+// src/modules/Authorization/api/ResourceApi.ts
 import getAPI from "@/core/api/axiosClient";
 import type { ResourceDto } from "../models/ResourceDto";
-import type { CreateResourceApiRequest } from "../models/CreateResourceRequest";
-import type { UpdateResourceApiRequest } from "../models/UpdateResourceRequest";
+import type { CreateResourceCommand , UpdateResourceCommand } from "../models/ResourceCommands";
 
 const API_MODULE = "authorization"; // دقت کنید که با حروف کوچک در env تعریف شده باشد
 
@@ -31,7 +30,7 @@ export const resourceApi = {
     return response.data;
   },
   // ایجاد منبع جدید (POST)
-createResource: async (data: CreateResourceApiRequest): Promise<string> => {
+createResource: async (data: CreateResourceCommand): Promise<string> => {
   const api = getAPI(API_MODULE);
   console.info("data= " , data);
   const response = await api.post<string>(
@@ -43,10 +42,10 @@ createResource: async (data: CreateResourceApiRequest): Promise<string> => {
 },
 
 // ویرایش منبع (PUT)
-  updateResource: async (data: UpdateResourceApiRequest): Promise<boolean> => {
+  updateResource: async (data: UpdateResourceCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
-      `/api/authorization/admin/resources/${data.id}`, data,
+      `/api/authorization/admin/resources/${data.Id}`, data,
       {  withCredentials: true }
     );
     console.log(response)

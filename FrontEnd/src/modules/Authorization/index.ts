@@ -1,30 +1,24 @@
 // src/modules/Authorization/index.ts
-export * from "./api/ResourcesApi";
+export * from "./api/ResourceApi";
 export { authorizationPanelRoutes } from "./routes";
 
-// ResourceCreatePage
-export { ResourceCreateForm } from './Interface/IResourceCreatePage';
-export type { 
-  RenderFormProps as RenderResourceCreateFormProps, 
-  IResourceCreatePageProps 
-} from './Interface/IResourceCreatePage';
-export { default as ResourceCreatePage } from "./pages/ResourceCreatePage";
-export { useResourceCreateForm } from "./hooks/Forms/useResourceCreateForm";
-
-// ResourceUpdatePage
-export { ResourceUpdateForm } from './Interface/IResourceUpdatePage';
-export type { 
-  RenderFormProps as RenderResourceUpdateFormProps, 
-  IResourceUpdatePageProps
-} from './Interface/IResourceUpdatePage';
-export { default as ResourceUpdatePage } from "./pages/ResourceUpdatePage";
-export { useResourceUpdateForm } from "./hooks/Forms/useResourceUpdateForm";
 
 // ResourceManagementPage
-export { ResourceManagementForm } from './Interface/IResourceManagementPage';
+export { ResourceManagementForm } from './Interface/Resource/IResourceManagementPage';
 export type { 
   RenderFormProps as RenderResourceManagementFormProps, 
   IResourceManagementPageProps 
-} from './Interface/IResourceManagementPage';
-export { default as ResourceManagementPage } from './pages/ResourceManagementPage';
-export { useResourceManagement } from './hooks/Forms/useResourceManagementForm';
+} from './Interface/Resource/IResourceManagementPage';
+export { default as ResourceManagementPage } from './pages/Resource/ResourceManagementPage';
+export { useResourceManagement } from './hooks/Forms/Resource/useResourceManagementForm';
+
+
+
+// ResourceCreateUpdatePage
+export { IResourceCreateUpdatePage } from './Interface/Resource/IResourceCreateUpdatePage';
+export type { 
+  RenderFormProps as RenderResourceFormProps, 
+  IResourceCreateUpdatePageProps 
+} from './Interface/Resource/IResourceCreateUpdatePage';
+export { default as ResourceUpdatePage } from './pages/Resource/ResourceUpdatePage';
+export { useResourceCreateUpdateForm } from './hooks/Forms/Resource/useResourceCreateUpdateForm';

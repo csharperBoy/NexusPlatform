@@ -1,9 +1,9 @@
 // src/modules/Authorization/routes.tsx
 import type { RouteObject } from "react-router-dom";
-import ResourceCreatePage from "./pages/ResourceCreatePage";
+import ResourceCreatePage from "./pages/Resource/ResourceCreatePage";
 
-import ResourceUpdatePage from "./pages/ResourceUpdatePage";
-import ResourceManagementPage from "./pages/ResourceManagementPage";
+import ResourceUpdatePage from "./pages/Resource/ResourceUpdatePage";
+import ResourceManagementPage from "./pages/Resource/ResourceManagementPage";
 
 export const authorizationPublicRoutes: RouteObject[] = [
   

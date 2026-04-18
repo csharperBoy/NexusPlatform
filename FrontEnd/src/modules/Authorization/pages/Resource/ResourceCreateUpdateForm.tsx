@@ -1,24 +1,40 @@
-// src/modules/Authorization/pages/ResourceCreatePage.tsx
+// src/modules/Authorization/pages/Resource/ResourceCreateUpdateForm.tsx
 import React from 'react';
-import { ResourceCreateForm, type RenderFormProps } from '../Interface/IResourceCreatePage';
+import { CreateResourceCommand, ResourceFormCommand } from '../../models/ResourceCommands'; 
+import Card from '@/core/components/Card';
 import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
-import Card from '@/core/components/Card';
 
-const ResourceCreatePage: React.FC = () => {
+interface ResourceCreateUpdateFormProps {
+  formData: ResourceFormCommand;
+  loading: boolean;
+  error: string | null;
+  isEdit: boolean;
+  handleChange: <K extends keyof ResourceFormCommand>(field: K, value: ResourceFormCommand[K]) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+}
+
+export const ResourceCreateUpdateForm: React.FC<ResourceCreateUpdateFormProps> = ({
+  formData,
+  loading,
+  error,
+  isEdit,
+  handleChange,
+  handleSubmit,
+}) => {
   return (
-    <ResourceCreateForm
-      redirectTo="/resources"
-      renderForm={({
-        formData,
-        loading,
-        error,
-        handleChange,
-        handleSubmit,
-      }: RenderFormProps) => (
-        <Card className="max-w-2xl mx-auto p-6">
-          <h2 className="text-xl font-bold mb-4">ایجاد منبع جدید</h2>
-          <form onSubmit={handleSubmit}>
+     
+      
+      <Card className="max-w-2xl mx-auto p-6">
+        
+    <form onSubmit={handleSubmit} className="p-4 space-y-4">
+      <h2 className="text-2xl font-bold text-center mb-4">
+            {isEdit ? "ویرایش منبع" : "افزودن منبع جدید"}
+            </h2>
+
+      {error && <div className="alert alert-error">{error}</div>}
+
+ 
             <div className="mb-4">
               <label className="block mb-1">کلید (Key)</label>
               <Input
@@ -49,31 +65,31 @@ const ResourceCreatePage: React.FC = () => {
               <label className="block mb-1">نوع</label>
               <select
                 value={formData.type}
-                onChange={(e) => handleChange('type', e.target.value)}
+                onChange={(e) => handleChange('type',Number(e.target.value))}
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value="Module">ماژول (Module)</option>
-                <option value="Ui">رابط کاربری (Ui)</option>
-                <option value="Data">داده (Data)</option>
+                <option value='0' label="Module">ماژول (Module)</option>
+                <option value='1' label="Ui">رابط کاربری (Ui)</option>
+                <option value='2' label="Data">داده (Data)</option>
               </select>
             </div>
             <div className="mb-4">
               <label className="block mb-1">دسته‌بندی</label>
               <select
                 value={formData.category}
-                onChange={(e) => handleChange('category', e.target.value)}
+                onChange={(e) => handleChange('category', Number(e.target.value))}
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value="General">عمومی (General)</option>
-                <option value="System">سیستمی (System)</option>
-                <option value="Module">ماژول (Module)</option>
-                <option value="Menu">منو (Menu)</option>
-                <option value="Page">صفحه (Page)</option>
-                <option value="Component">کامپوننت (Component)</option>
-                <option value="DatabaseTable">جدول دیتابیس (DatabaseTable)</option>
-                <option value="RowInTable">سطر جدول (RowInTable)</option>
+               <option value = '0' label= "General" > عمومی(General) </ option >
+                <option value = '1' label="System">سیستمی(System)</option>
+                <option value = '2' label= "Module" > ماژول(Module) </ option >
+                <option value = '3' label="Menu">منو(Menu)</option>
+                <option value = '4' label= "Page" > صفحه(Page) </ option >
+                <option value = '5' label="Component">کامپوننت(Component)</option>
+                <option value = '6' label= "DatabaseTable" > جدول دیتابیس(DatabaseTable)</option>
+                <option value = '7' label= "RowInTable" > سطر جدول(RowInTable)</option>
               </select>
             </div>
             <div className="mb-4">
@@ -110,19 +126,12 @@ const ResourceCreatePage: React.FC = () => {
                 placeholder="GUID والد"
               />
             </div>
-            {error && (
-              <div className="text-red-600 mb-4 p-3 bg-red-50 rounded">
-                {error}
-              </div>
-            )}
+           
+           
             <Button type="submit" disabled={loading}>
-              {loading ? "در حال ایجاد..." : "ایجاد منبع"}
+              {loading ? "در حال ایجاد..." : "ایجاد نقش"}
             </Button>
           </form>
         </Card>
-      )}
-    />
   );
 };
-
-export default ResourceCreatePage;
