@@ -11,20 +11,20 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.Permissions
 {
-    public class AssignPermissionCommandHandler : IRequestHandler<AssignPermissionCommand, Result<Guid>>
+    public class CreatePermissionCommandHandler : IRequestHandler<CreatePermissionCommand, Result<Guid>>
     {
         private readonly IPermissionInternalService _permissionService;
-        private readonly ILogger<AssignPermissionCommandHandler> _logger;
+        private readonly ILogger<CreatePermissionCommandHandler> _logger;
 
-        public AssignPermissionCommandHandler(
+        public CreatePermissionCommandHandler(
             IPermissionInternalService permissionService,
-            ILogger<AssignPermissionCommandHandler> logger)
+            ILogger<CreatePermissionCommandHandler> logger)
         {
             _permissionService = permissionService;
             _logger = logger;
         }
 
-        public async Task<Result<Guid>> Handle(AssignPermissionCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreatePermissionCommand request, CancellationToken cancellationToken)
         {
             try
             {

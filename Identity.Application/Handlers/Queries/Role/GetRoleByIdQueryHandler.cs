@@ -3,7 +3,6 @@ using Core.Shared.Results;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
 using Identity.Application.Queries.Role;
-using Identity.Application.Queries.Role;
 using Identity.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;

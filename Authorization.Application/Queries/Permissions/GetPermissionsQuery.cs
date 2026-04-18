@@ -11,7 +11,8 @@ using System.Threading.Tasks;
 namespace Authorization.Application.Queries.Permissions
 {
 
-    public record GetPermissionsQuery(AssigneeType? AssigneeType = null,
+    public record GetPermissionsQuery(
+        AssigneeType? AssigneeType = null,
          Guid? AssigneeId = null,
      Guid? ResourceId = null,
     string? description = null) : IRequest<Result<IList<PermissionDto>>>;

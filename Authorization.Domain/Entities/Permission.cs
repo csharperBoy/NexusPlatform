@@ -83,7 +83,7 @@ namespace Authorization.Domain.Entities
         {
             if (resourceId == Guid.Empty) throw new ArgumentException("Resource ID cannot be empty.");
             if (assigneeId == Guid.Empty) throw new ArgumentException("Assignee ID cannot be empty.");
-
+            
             ResourceId = resourceId;
             AssigneeType = assigneeType;
             AssigneeId = assigneeId;
@@ -95,10 +95,82 @@ namespace Authorization.Domain.Entities
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
         }
-        
+
+
+        private void Touch() => ModifiedAt = DateTime.UtcNow;
 
         
-        
+
+        public bool ApplyChange(
+                Guid? _ResourceId = null,
+                AssigneeType? _AssigneeType = null,
+                Guid? _AssigneeId = null,
+                PermissionAction? _Action = null,
+                PermissionEffect? _effect = null,
+                DateTime? _EffectiveFrom = null,
+                DateTime? _ExpiresAt = null,
+                bool? _IsActive = null,
+                string? _Description = null
+
+            )
+        {
+            bool hasChange = false;
+            // آپدیت فیلدها
+            if (_ResourceId != null && _ResourceId != this.ResourceId)
+            {
+                this.ResourceId =(Guid) _ResourceId;
+                hasChange = true;
+            }
+            if (_AssigneeType != null && _AssigneeType != this.AssigneeType)
+            {
+                this.AssigneeType =(AssigneeType) _AssigneeType;
+                hasChange = true;
+            }
+
+
+            if (_AssigneeId != null && _AssigneeId != this.AssigneeId)
+            {
+                this.AssigneeId =(Guid) _AssigneeId;
+                hasChange = true;
+            }
+            if (_Action != null && _Action != this.Action)
+            {
+                this.Action = (PermissionAction)_Action;
+                hasChange = true;
+            }
+            if (_effect != null && _effect != this.Effect)
+            {
+                this.Effect = (PermissionEffect)_effect;
+                hasChange = true;
+            }
+            if (_EffectiveFrom != null && _EffectiveFrom != this.EffectiveFrom)
+            {
+                this.EffectiveFrom = _EffectiveFrom;
+                hasChange = true;
+            }
+            if (_ExpiresAt != null && _ExpiresAt != this.ExpiresAt)
+            {
+                this.ExpiresAt = _ExpiresAt;
+                hasChange = true;
+            }
+            if (_IsActive != null && _IsActive != this.IsActive)
+            {
+                this.IsActive =(bool) _IsActive;
+                hasChange = true;
+            }
+            if (_Description != null && _Description != this.Description)
+            {
+                this.Description = _Description;
+                hasChange = true;
+            }
+
+            if (hasChange)
+            {
+                Touch();
+            }
+            return hasChange;
+        }
+
 
         public void Update(
            PermissionAction action,

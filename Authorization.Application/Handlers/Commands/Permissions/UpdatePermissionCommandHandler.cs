@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.Permissions
 {
-    public class TogglePermissionCommandHandler : IRequestHandler<UpdatePermissionCommand, Result<bool>>
+    public class UpdatePermissionCommandHandler : IRequestHandler<UpdatePermissionCommand, Result<bool>>
     {
         private readonly IPermissionInternalService _permissionService;
-        private readonly ILogger<TogglePermissionCommandHandler> _logger;
+        private readonly ILogger<UpdatePermissionCommandHandler> _logger;
 
-        public TogglePermissionCommandHandler(
+        public UpdatePermissionCommandHandler(
             IPermissionInternalService permissionService,
-            ILogger<TogglePermissionCommandHandler> logger)
+            ILogger<UpdatePermissionCommandHandler> logger)
         {
             _permissionService = permissionService;
             _logger = logger;
@@ -28,15 +28,12 @@ namespace Authorization.Application.Handlers.Commands.Permissions
         {
             try
             {
-                _logger.LogInformation(
-                    "Toggling permission {PermissionId} to {IsAllow}",
-                    request.PermissionId, request.IsAllow);
+                _logger.LogInformation("Toggling permission ");
 
-                await _permissionService.TogglePermissionAsync(request.PermissionId, request.IsAllow);
+                await _permissionService.UpdatePermissionAsync(request);
 
                 _logger.LogInformation(
-                    "Permission toggled successfully: {PermissionId} to {IsAllow}",
-                    request.PermissionId, request.IsAllow);
+                    "Permission toggled successfully");
 
                 return Result<bool>.Ok(true);
             }
@@ -44,8 +41,7 @@ namespace Authorization.Application.Handlers.Commands.Permissions
             {
                 _logger.LogError(
                     ex,
-                    "Failed to toggle permission {PermissionId} to {IsAllow}",
-                    request.PermissionId, request.IsAllow);
+                    "Failed to toggle permission ");
 
                 return Result<bool>.Fail(ex.Message);
             }

@@ -72,74 +72,74 @@ namespace Authorization.Presentation.Controllers.Admin
             return HandleResult(result);
         }
         #endregion
-        /// <summary>
-        /// 👤 دریافت دسترسی‌های یک کاربر
-        /// </summary>
-        [HttpGet("user/{userId:guid}")]
+        ///// <summary>
+        ///// 👤 دریافت دسترسی‌های یک کاربر
+        ///// </summary>
+        //[HttpGet("user/{userId:guid}")]
+        ////[AuthorizeResource("authorization.permissions", "View")]
+        //[AuthorizeResource("authorization", "View")]
+        //public async Task<IActionResult> GetPermissionsByUser(Guid userId)
+        //{
+        //    var query = new GetPermissionsByUserQuery(userId);
+        //    var result = await Mediator.Send(query);
+        //    return HandleResult(result);
+        //}
+
+        ///// <summary>
+        ///// 📄 دریافت دسترسی‌های یک منبع
+        ///// </summary>
+        //[HttpGet("resource/{resourceId:guid}")]
         //[AuthorizeResource("authorization.permissions", "View")]
-        [AuthorizeResource("authorization", "View")]
-        public async Task<IActionResult> GetPermissionsByUser(Guid userId)
-        {
-            var query = new GetPermissionsByUserQuery(userId);
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
+        //public async Task<IActionResult> GetPermissionsByResource(Guid resourceId)
+        //{
+        //    var query = new GetPermissionsByResourceQuery(resourceId);
+        //    var result = await Mediator.Send(query);
+        //    return HandleResult(result);
+        //}
 
-        /// <summary>
-        /// 📄 دریافت دسترسی‌های یک منبع
-        /// </summary>
-        [HttpGet("resource/{resourceId:guid}")]
-        [AuthorizeResource("authorization.permissions", "View")]
-        public async Task<IActionResult> GetPermissionsByResource(Guid resourceId)
-        {
-            var query = new GetPermissionsByResourceQuery(resourceId);
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
+        ///// <summary>
+        ///// ➕ اختصاص دسترسی جدید
+        ///// </summary>
+        //[HttpPost("assign")]
+        ////[AuthorizeResource("authorization.permissions", "Create")]
+        //public async Task<IActionResult> AssignPermission([FromBody] AssignPermissionCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return HandleResult(result);
+        //}
 
-        /// <summary>
-        /// ➕ اختصاص دسترسی جدید
-        /// </summary>
-        [HttpPost("assign")]
-        //[AuthorizeResource("authorization.permissions", "Create")]
-        public async Task<IActionResult> AssignPermission([FromBody] AssignPermissionCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
+        ///// <summary>
+        ///// ➖ لغو دسترسی
+        ///// </summary>
+        //[HttpPost("revoke")]
+        //[AuthorizeResource("authorization.permissions", "Delete")]
+        //public async Task<IActionResult> RevokePermission([FromBody] RevokePermissionCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return HandleResult(result);
+        //}
 
-        /// <summary>
-        /// ➖ لغو دسترسی
-        /// </summary>
-        [HttpPost("revoke")]
-        [AuthorizeResource("authorization.permissions", "Delete")]
-        public async Task<IActionResult> RevokePermission([FromBody] RevokePermissionCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
+        ///// <summary>
+        ///// 🔄 تغییر وضعیت دسترسی
+        ///// </summary>
+        //[HttpPatch("toggle")]
+        //[AuthorizeResource("authorization.permissions", "Edit")]
+        //public async Task<IActionResult> TogglePermission([FromBody] UpdatePermissionCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return HandleResult(result);
+        //}
 
-        /// <summary>
-        /// 🔄 تغییر وضعیت دسترسی
-        /// </summary>
-        [HttpPatch("toggle")]
-        [AuthorizeResource("authorization.permissions", "Edit")]
-        public async Task<IActionResult> TogglePermission([FromBody] UpdatePermissionCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
-
-        /// <summary>
-        /// ✅ بررسی دسترسی
-        /// </summary>
-        [HttpPost("check")]
-        [AuthorizeResource("authorization.permissions", "View")]
-        public async Task<IActionResult> CheckPermission([FromBody] CheckPermissionQuery query)
-        {
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
+        ///// <summary>
+        ///// ✅ بررسی دسترسی
+        ///// </summary>
+        //[HttpPost("check")]
+        //[AuthorizeResource("authorization.permissions", "View")]
+        //public async Task<IActionResult> CheckPermission([FromBody] CheckPermissionQuery query)
+        //{
+        //    var result = await Mediator.Send(query);
+        //    return HandleResult(result);
+        //}
 
         // ========== APIهای نیازمند توسعه ==========
 

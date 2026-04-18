@@ -20,8 +20,8 @@ namespace Authorization.Application.Commands.Permissions
     public record CreatePermissionCommand(
 
         Guid ResourceId,
+        Guid AssigneeId,
         AssigneeType AssigneeType = AssigneeType.User,
-        Guid AssigneeId ,
         PermissionAction Action = PermissionAction.Full,
         PermissionEffect effect = PermissionEffect.allow,
         DateTime? EffectiveFrom = null,

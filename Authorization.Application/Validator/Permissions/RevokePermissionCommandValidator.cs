@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Validator.Permissions
 {
-    public class RevokePermissionCommandValidator : AbstractValidator<RevokePermissionCommand>
+    public class RevokePermissionCommandValidator : AbstractValidator<DeletePermissionCommand>
     {
         public RevokePermissionCommandValidator()
         {
-            RuleFor(x => x.PermissionId)
+            RuleFor(x => x.Id)
                 .NotEmpty().WithMessage("Permission ID is required");
         }
     }

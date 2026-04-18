@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Authorization.Application.Validator.Permissions
 {
     
-    public class AssignPermissionCommandValidator : AbstractValidator<AssignPermissionCommand>
+    public class AssignPermissionCommandValidator : AbstractValidator<CreatePermissionCommand>
     {
         public AssignPermissionCommandValidator()
         {

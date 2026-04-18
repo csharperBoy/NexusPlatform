@@ -1,6 +1,7 @@
 ﻿using Authorization.Application.Commands.Permissions;
 using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
+using Authorization.Application.Queries.Permissions;
 using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
 using Authorization.Domain.Events;
@@ -8,19 +9,20 @@ using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Identity;
+using Core.Application.Context;
 using Core.Domain.Interfaces;
+using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-using Core.Shared.Enums;
-using Core.Application.Context;
-using Core.Shared.DTOs.Authorization;
-using Core.Application.Abstractions.Caching.PublicService;
 namespace Authorization.Infrastructure.Services
 {
-    public class PermissionService : IPermissionInternalService 
+    public class PermissionService : IPermissionInternalService
     {
         private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
@@ -31,6 +33,8 @@ namespace Authorization.Infrastructure.Services
         //private readonly ICurrentUserService _currentUser;
         private readonly UserDataContext _currentUserContext;
         private readonly ICachePublicService _cache;
+        private readonly string baseCacheKey = "authorization:permission";
+
         //private readonly IRolePublicService _roleService;
         //private readonly IUserPublicService _userService;
 
@@ -58,7 +62,7 @@ namespace Authorization.Infrastructure.Services
             //_userService = userService;
         }
 
-        public async Task<Guid> AssignPermissionAsync(AssignPermissionCommand command)
+        public async Task<Guid> AssignPermissionAsync(CreatePermissionCommand command)
         {
             try
             {
@@ -87,7 +91,7 @@ namespace Authorization.Infrastructure.Services
                     command.ResourceId,
                     command.AssigneeType,
                     command.AssigneeId,
-                    command.Action,  
+                    command.Action,
                     command.effect,
                     command.EffectiveFrom,
                     command.ExpiresAt,
@@ -159,53 +163,75 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task TogglePermissionAsync(Guid permissionId, bool isActive)
+        public async Task DeletePermissionAsync(Guid permissionId)
+        {
+            try
+            {
+                _logger.LogInformation("Starting permission revocation: {PermissionId}", permissionId);
+
+                await _permissionRepository.DeleteAsync(permissionId);
+
+                // ذخیره تغییرات
+                await _unitOfWork.SaveChangesAsync();
+
+                // پاک کردن کش
+                await InvalidatePermissionCachesAsync();
+
+                _logger.LogInformation("Permission revoked successfully: {PermissionId}", permissionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to revoke permission: {PermissionId}", permissionId);
+                throw;
+            }
+        }
+
+        private async Task InvalidatePermissionCachesAsync()
+        {
+            try
+            {
+                await _cache.RemoveByPatternAsync($"{baseCacheKey}:*");
+
+                _logger.LogDebug("Invalidated permission caches ");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error invalidating permission caches  ");
+            }
+        }
+
+        public async Task UpdatePermissionAsync(UpdatePermissionCommand request)
         {
             try
             {
                 _logger.LogInformation(
-                    "Starting permission toggle: {PermissionId} to {IsActive}",
-                    permissionId, isActive);
+                    "Starting permission toggle");
 
-                var permission = await _permissionRepository.GetByIdAsync(permissionId);
+                var permission = await _permissionRepository.GetByIdAsync(request.Id);
                 if (permission == null)
                 {
-                    throw new ArgumentException($"Permission with ID {permissionId} not found");
+                    throw new ArgumentException($"Permission with ID {request.Id} not found");
                 }
-
-                var assigneeId = permission.AssigneeId;
-                var resourceId = permission.ResourceId;
-
-                if (isActive)
-                {
-                    permission.Activate();
-                }
-                else
-                {
-                    permission.Deactivate();
-                }
+                permission.ApplyChange(request.ResourceId, request.AssigneeType, request.AssigneeId, request.Action, request.effect, request.EffectiveFrom, request.ExpiresAt, request.IsActive, request.Description);
 
                 // انتشار ایونت
-                permission.AddDomainEvent(new PermissionChangedEvent(assigneeId, resourceId));
+                permission.AddDomainEvent(new PermissionChangedEvent((Guid)request.AssigneeId, (Guid)request.ResourceId));
 
                 await _unitOfWork.SaveChangesAsync();
-                await InvalidatePermissionCachesAsync(assigneeId, resourceId);
+                await InvalidatePermissionCachesAsync();
 
-                _logger.LogInformation(
-                    "Permission toggled successfully: {PermissionId} to {IsActive}",
-                    permissionId, isActive);
+                _logger.LogInformation("Permission toggled successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to toggle permission: {PermissionId} to {IsActive}",
-                    permissionId, isActive);
+                    "Failed to toggle permission");
                 throw;
             }
         }
 
-        public async Task<PermissionDto> GetPermissionAsync(Guid permissionId)
+        public async Task<PermissionDto> GetById(Guid permissionId)
         {
             try
             {
@@ -250,7 +276,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task<bool> CheckPermissionConflictAsync(AssignPermissionCommand command)
+        public async Task<bool> CheckPermissionConflictAsync(CreatePermissionCommand command)
         {
             try
             {
@@ -364,11 +390,12 @@ namespace Authorization.Infrastructure.Services
 
         private PermissionDto MapToDto(Permission permission)
         {
-            return new PermissionDto
+
+            return new PermissionDto()
             {
                 Id = permission.Id,
-                ResourceKey = permission.Resource.Key,
                 ResourceId = permission.ResourceId,
+                ResourceKey = permission.Resource.Key,
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
@@ -377,6 +404,12 @@ namespace Authorization.Infrastructure.Services
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
+                Scopes = permission.Scopes.Select(p => new ScopeDto
+                {
+                    scope = p.scope,
+                    PermissionId = p.Id
+                }).ToList(),
+
             };
         }
 
@@ -425,7 +458,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async     Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds)
+        public async Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds)
         {
             try
             {
@@ -500,7 +533,7 @@ namespace Authorization.Infrastructure.Services
                 var spec = new UserPermissionsSpec(userId, personId, positionsId, roleIds);
                 var allPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
-               
+
                 var dtos = allPermissions.Select(MapToDto).ToList();
 
                 _logger.LogDebug(
@@ -514,6 +547,28 @@ namespace Authorization.Infrastructure.Services
                 _logger.LogError(ex, "Error retrieving permissions for position {userId}", userId);
                 throw;
             }
+        }
+
+        public async Task<IReadOnlyList<PermissionDto>> GetPermissions(GetPermissionsQuery request)
+        {
+
+            var cacheKey = $"{baseCacheKey}:full";
+            var cached = await _cache.GetAsync<IReadOnlyList<PermissionDto>>(cacheKey);
+            if (cached != null)
+            {
+                _logger.LogDebug("Cache hit for full resource tree");
+                return cached;
+            }
+            var spec = new GetPermissionsSpec(request.AssigneeType, request.AssigneeId, request.ResourceId, request.description);
+            var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
+
+
+            var result = permissions.Select(MapToDto).ToList();
+
+
+            await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
+            return result;
+
         }
     }
 }

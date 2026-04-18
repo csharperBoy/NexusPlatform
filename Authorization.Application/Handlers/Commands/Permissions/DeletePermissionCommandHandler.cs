@@ -11,34 +11,34 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.Permissions
 {
-    public class RevokePermissionCommandHandler : IRequestHandler<RevokePermissionCommand, Result<bool>>
+    public class DeletePermissionCommandHandler : IRequestHandler<DeletePermissionCommand, Result<bool>>
     {
         private readonly IPermissionInternalService _permissionService;
-        private readonly ILogger<RevokePermissionCommandHandler> _logger;
+        private readonly ILogger<DeletePermissionCommandHandler> _logger;
 
-        public RevokePermissionCommandHandler(
+        public DeletePermissionCommandHandler(
             IPermissionInternalService permissionService,
-            ILogger<RevokePermissionCommandHandler> logger)
+            ILogger<DeletePermissionCommandHandler> logger)
         {
             _permissionService = permissionService;
             _logger = logger;
         }
 
-        public async Task<Result<bool>> Handle(RevokePermissionCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(DeletePermissionCommand request, CancellationToken cancellationToken)
         {
             try
             {
-                _logger.LogInformation("Revoking permission: {PermissionId}", request.PermissionId);
+                _logger.LogInformation("Delete permission: {PermissionId}", request.Id);
 
-                await _permissionService.RevokePermissionAsync(request.PermissionId);
+                await _permissionService.DeletePermissionAsync(request.Id);
 
-                _logger.LogInformation("Permission revoked successfully: {PermissionId}", request.PermissionId);
+                _logger.LogInformation("Permission Delete successfully: {PermissionId}", request.Id);
 
                 return Result<bool>.Ok(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to revoke permission: {PermissionId}", request.PermissionId);
+                _logger.LogError(ex, "Failed to Delete permission: {PermissionId}", request.Id);
                 return Result<bool>.Fail(ex.Message);
             }
         }
