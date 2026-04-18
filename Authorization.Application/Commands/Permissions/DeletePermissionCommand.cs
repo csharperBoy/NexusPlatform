@@ -8,14 +8,12 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Commands.Permissions
 {
-
     /*
-     📌 TogglePermissionCommand
+     📌 RevokePermissionCommand
      --------------------------
-     Command برای تغییر allow/deny یک Permission.
+     Command برای حذف یک Permission.
     */
-    public record TogglePermissionCommand(
-        Guid PermissionId,
-        bool IsAllow
+    public record DeletePermissionCommand(
+        Guid Id
     ) : IRequest<Result<bool>>;
 }

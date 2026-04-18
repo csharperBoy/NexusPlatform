@@ -23,6 +23,55 @@ namespace Authorization.Presentation.Controllers.Admin
     //[Authorize(Policy = "RequireAdminRole")]
     public class PermissionsController : BaseController
     {
+        #region crud api
+        [HttpGet("GetPermissions")]
+        [AuthorizeResource("authorization.permission", "View")]
+        public async Task<IActionResult> GetPermissions([FromQuery] GetPermissionsQuery? request = null)
+        {
+
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("{id:guid}")]
+        [AuthorizeResource("authorization.permission", "View")]
+        public async Task<IActionResult> GetPermissionById(Guid id)
+        {
+            var query = new GetPermissionByIdQuery(id);
+            var result = await Mediator.Send(query);
+            return HandleResult(result);
+        }
+
+
+        /// <summary>
+        /// ✏️ به‌روزرسانی نقش
+        /// </summary>
+        [HttpPut("{id:guid}")]
+        [AuthorizeResource("authorization.permission", "Edit")]
+        public async Task<IActionResult> UpdatePermission(Guid id, [FromBody] UpdatePermissionCommand command)
+        {
+            var updatedCommand = command with { Id = id };
+            var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+        [HttpPost("Create")]
+        [AuthorizeResource("authorization.permission", "Create")]
+        public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        /// <summary>
+        /// 🗑️ حذف نقش
+        /// </summary>
+        [HttpDelete("{id:guid}")]
+        [AuthorizeResource("authorization.permission", "Delete")]
+        public async Task<IActionResult> DeletePermission(Guid id)
+        {
+            var command = new DeletePermissionCommand(id);
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        #endregion
         /// <summary>
         /// 👤 دریافت دسترسی‌های یک کاربر
         /// </summary>
@@ -75,7 +124,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// </summary>
         [HttpPatch("toggle")]
         [AuthorizeResource("authorization.permissions", "Edit")]
-        public async Task<IActionResult> TogglePermission([FromBody] TogglePermissionCommand command)
+        public async Task<IActionResult> TogglePermission([FromBody] UpdatePermissionCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);

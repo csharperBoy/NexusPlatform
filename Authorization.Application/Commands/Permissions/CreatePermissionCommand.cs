@@ -17,17 +17,19 @@ namespace Authorization.Application.Commands.Permissions
      --------------------------
      Command برای ایجاد یک Permission جدید.
     */
-    public record AssignPermissionCommand(
+    public record CreatePermissionCommand(
 
         Guid ResourceId,
-        AssigneeType AssigneeType,
-        Guid AssigneeId,
-        PermissionAction Action,
-         ScopeType scope = ScopeType.None,
-            Guid? specificScopeId = null,
-            PermissionEffect effect = PermissionEffect.allow,
+        AssigneeType AssigneeType = AssigneeType.User,
+        Guid AssigneeId ,
+        PermissionAction Action = PermissionAction.Full,
+        PermissionEffect effect = PermissionEffect.allow,
         DateTime? EffectiveFrom = null,
         DateTime? ExpiresAt = null,
-        string? Description = null
+        bool IsActive = true,
+        string? Description = null,
+        
+        List<ScopeType>? scopes = null // لیست محدوده های مجاز یا غیر مجاز
+
     ) : IRequest<Result<Guid>>;
 }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.Permissions
 {
-    public class TogglePermissionCommandHandler : IRequestHandler<TogglePermissionCommand, Result<bool>>
+    public class TogglePermissionCommandHandler : IRequestHandler<UpdatePermissionCommand, Result<bool>>
     {
         private readonly IPermissionInternalService _permissionService;
         private readonly ILogger<TogglePermissionCommandHandler> _logger;
@@ -24,7 +24,7 @@ namespace Authorization.Application.Handlers.Commands.Permissions
             _logger = logger;
         }
 
-        public async Task<Result<bool>> Handle(TogglePermissionCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(UpdatePermissionCommand request, CancellationToken cancellationToken)
         {
             try
             {
