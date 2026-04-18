@@ -5,7 +5,7 @@ import { useAuth } from '@/modules/Identity';
 import { useRoleManagement } from '../../hooks/Forms/Role/useRoleManagementForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
 import type { RoleDto } from '../../models/RoleDto';
-import  { GetRolesQuery } from '../../models/GetRolesQuery';
+import  { GetRolesQuery } from '../../models/RoleQuery';
 
 export interface RenderFormProps {
   Data: RoleDto[];

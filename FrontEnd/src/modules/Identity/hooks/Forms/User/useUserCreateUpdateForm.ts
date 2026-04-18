@@ -8,7 +8,7 @@ import { CreateUserCommand, UpdateUserCommand, UserFormCommand } from '../../../
 export const useUserCreateUpdateForm = (userId?: string, onSuccess?: () => void) => {
   // state اولیه بر اساس حالت (ایجاد یا ویرایش)
   const initialFormState: UserFormCommand = userId
-    ? { UserName: "", Email: "" } // برای ویرایش، Password اجباری نیست
+    ? {Id :userId, UserName: "", Email: "" } // برای ویرایش، Password اجباری نیست
     : { UserName: "", Email: "", Password: "" }; // برای ایجاد، Password اجباری است
 
   const [formData, setFormData] = useState<UserFormCommand>(initialFormState);
@@ -40,6 +40,7 @@ export const useUserCreateUpdateForm = (userId?: string, onSuccess?: () => void)
         const user = await userApi.getById(userId);
         // اطمینان از اینکه داده‌های بارگذاری شده با نوع UpdateUserCommand مطابقت دارند
         const userData: UpdateUserCommand = {
+            Id: user.id,
           UserName: user.userName,
           Email: user.email || '',
           NickName: user.nickName,

@@ -4,7 +4,7 @@ import { roleApi } from "../../../api/roleApi";
 import type { RoleDto } from "../../../models/RoleDto";
 
 import { useNavigate } from 'react-router-dom';
-import { GetRolesQuery } from "../../../models/GetRolesQuery";
+import { GetRolesQuery } from "../../../models/RoleQuery";
 
 export const useRoleManagement = () => {
   const [Data, setData] = useState<RoleDto[]>([]);

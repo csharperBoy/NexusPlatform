@@ -1,10 +1,10 @@
 // src/modules/Identity/hooks/Forms/useUserManagementForm.tsx
 import { useState, useEffect } from "react";
-import { userApi } from "../../api/userApi";
-import type { UserDto } from "../../models/UserDto";
+import { userApi } from "../../../api/userApi";
+import type { UserDto } from "../../../models/UserDto";
 
 import { useNavigate } from 'react-router-dom';
-import { GetUsersQuery } from "../../models/GetUsersQuery";
+import { GetUsersQuery } from "../../../models/UserQuery";
 
 export const useUserManagement = () => {
   const [Data, setData] = useState<UserDto[]>([]);

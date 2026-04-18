@@ -25,6 +25,7 @@ export interface CreateUserCommand {
 
   export interface UpdateUserCommand extends Omit<CreateUserCommand, "Password"> {
   Password?: string; // اختیاری برای ویرایش
+   Id: string;
 }
 
 

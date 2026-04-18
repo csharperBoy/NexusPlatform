@@ -2,10 +2,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
-import { useUserManagement } from '../hooks/Forms/useUserManagementForm';
+import { useUserManagement } from '../../hooks/Forms/User/useUserManagementForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { UserDto } from '../models/UserDto';
-import  { GetUsersQuery } from '../models/GetUsersQuery';
+import type { UserDto } from '../../models/UserDto';
+import  { GetUsersQuery } from '../../models/UserQuery';
 
 export interface RenderFormProps {
   Data: UserDto[];

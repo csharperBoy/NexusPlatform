@@ -1,8 +1,8 @@
 // modules/identity/pages/UsersManagementPage.tsx
 import React from 'react';
-import { UserManagementForm, RenderFormProps } from '../Interface/IUserManagementPage';
+import { UserManagementForm, RenderFormProps } from '../../Interface/User/IUserManagementPage';
 import { Table, ColumnDef } from '@/core/components/Table';
-import { UserDto } from '../models/UserDto'; 
+import { UserDto } from '../../models/UserDto'; 
 const UsersManagementPage: React.FC = () => {
 
   // تعریف ستون‌های جدول برای نمایش اطلاعات کاربران

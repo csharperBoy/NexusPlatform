@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/modules/Identity';
 import { useRoleUpdateForm } from '../../hooks/Forms/Role/useRoleUpdateForm';
 import LoadingIndicator from '@/core/components/LoadingIndicator';
-import type { UpdateRoleCommand } from '../../models/UpdateRoleCommand';
+import type { UpdateRoleCommand } from '../../models/RoleCommands';
 
 export interface RenderFormProps {
   formData: UpdateRoleCommand | null; 

@@ -21,33 +21,24 @@ export { default as RegisterPage } from './pages/RegisterPage';
 
 
 // UserManagementPage
-export { UserManagementForm } from './Interface/IUserManagementPage';
+export { UserManagementForm } from './Interface/User/IUserManagementPage';
 export type { 
   RenderFormProps as RenderUserManagementFormProps, 
   IUserManagementPageProps 
-} from './Interface/IUserManagementPage';
-export { default as UserManagementPage } from './pages/UsersManagementPage';
-export { useUserManagement } from './hooks/Forms/useUserManagementForm';
+} from './Interface/User/IUserManagementPage';
+export { default as UserManagementPage } from './pages/User/UsersManagementPage';
+export { useUserManagement } from './hooks/Forms/User/useUserManagementForm';
 
 
-// UserUpdatePage
-export { UserUpdateForm } from './Interface/IUserUpdatePage';
+// UserCreateUpdatePage
+export { IUserCreateUpdatePage } from './Interface/User/IUserCreateUpdatePage';
 export type { 
   RenderFormProps as RenderUseUpdateFormProps, 
-  IUserUpdatePageProps 
-} from './Interface/IUserUpdatePage';
-export { default as UserUpdatePage } from './pages/UserUpdatePage';
-export { useUserUpdateForm } from './hooks/Forms/useUserUpdateForm';
+  IUserCreateUpdatePageProps 
+} from './Interface/User/IUserCreateUpdatePage';
+export { default as UserUpdatePage } from './pages/User/UserUpdatePage';
+export { useUserCreateUpdateForm } from './hooks/Forms/User/useUserCreateUpdateForm';
 
-
-// UserCreatePage
-export { UserCreateForm } from './Interface/IUserCreatePage';
-export type { 
-  RenderFormProps as RenderUserCreateFormProps, 
-  IUserCreatePageProps 
-} from './Interface/IUserCreatePage';
-export { default as UserCreatePage } from './pages/UserCreatePage';
-export { useUserCreateForm } from './hooks/Forms/useUserCreateForm';
 
 
 // RoleManagementPage
