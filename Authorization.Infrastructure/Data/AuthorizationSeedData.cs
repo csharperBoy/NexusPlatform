@@ -50,7 +50,20 @@ namespace Authorization.Infrastructure.Data
                         Icon = "users",
                         Path = "/authorization/resource"
 
+                    },
+                     new()
+                    {
+                        Key = "authorization.permission",
+                        Name = "permission Management",
+                        Type =ResourceType.Data,
+                        Category =ResourceCategory.System,
+                        Description = "Manage permission",
+                        DisplayOrder = 1002,
+                        Icon = "users",
+                        Path = "/authorization/permission"
+
                     }
+
                 }
             }
         };
@@ -316,6 +329,20 @@ namespace Authorization.Infrastructure.Data
                 },
                 Effect =PermissionEffect.allow,
                 Description = "Full access to all authorization resources"
+            },
+            new()
+            {
+                ResourceKey = "authorization.permission", // فرض می‌کنیم این کلید وجود دارد
+                Action =PermissionAction.Full,
+                Scopes = new List<ScopeDto>()
+                {
+                    new()
+                    {
+                        scope = ScopeType.All,
+                    }
+                },
+                Effect =PermissionEffect.allow,
+                Description = "Full access to all authorization permission"
             }
             //,
             //new()

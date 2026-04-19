@@ -24,9 +24,9 @@ namespace Authorization.Application.Commands.Permissions
         AssigneeType AssigneeType = AssigneeType.User,
         PermissionAction Action = PermissionAction.Full,
         PermissionEffect effect = PermissionEffect.allow,
+        bool IsActive = true,
         DateTime? EffectiveFrom = null,
         DateTime? ExpiresAt = null,
-        bool IsActive = true,
         string? Description = null,
         
         List<ScopeType>? scopes = null // لیست محدوده های مجاز یا غیر مجاز

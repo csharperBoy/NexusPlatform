@@ -8,7 +8,7 @@ namespace Core.Shared.Enums.Authorization
 {
     public enum PermissionEffect : byte
     {
-        allow = 1,    
-        Deny = 2   
+        allow = 0,    
+        Deny = 1   
     }
 }

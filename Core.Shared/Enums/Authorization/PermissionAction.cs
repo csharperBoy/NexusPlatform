@@ -9,11 +9,11 @@ namespace Core.Shared.Enums.Authorization
     public enum PermissionAction : byte
     {
         // CRUD پایه
-        View = 1,
-        Create = 2,
-        Edit = 3,
-        Delete = 4,
-        Export = 5,
+        View = 0,
+        Create = 1,
+        Edit = 2,
+        Delete =3,
+        Export = 4,
 
         // دسترسی کامل
         Full = 99

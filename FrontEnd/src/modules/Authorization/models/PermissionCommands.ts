@@ -1,23 +1,28 @@
 
-// src/modules/Authorization/models/PermissionRequest.ts
+// src/modules/Authorization/models/PermissionCommands.ts
 
 export interface CreatePermissionCommand {
   ResourceId: string;
   AssigneeId: string;
-  AssigneeType: number;       // 0=Module, 1=Ui, 2=Data
-  Action: number;   // 0=General, 1=System, 2=Module, 3=Menu, 4=Page, 5=Component, 6=DatabaseTable, 7=RowInTable
-  effect?: number;
-  EffectiveFrom?: Date;
-  ExpiresAt: Date;
-  IsActive?: string;
+  AssigneeType: number;       
+  Action: number;  
+  effect: number;
+  EffectiveFrom?: Date | null;
+  ExpiresAt?: Date | null;
+  IsActive?: boolean;
   Description?: string;
-  scopes?: number[];
+  scopes?: number[] | null;
 }
 
-  export interface UpdatePermissionCommand extends CreatePermissionCommand {  
-   Id: string;
-}
+export type UpdatePermissionCommand = {
+  Id: string;
+  ResourceId?: string | null;
+  AssigneeId?: string | null;
+   AssigneeType?: number|null;   
+   Action?: number|null;     
+   effect?: number|null;
+} & Partial<CreatePermissionCommand>;
 
 
-// برای اینکه هوک بتواند هر دو حالت را مدیریت کند، از Union Type استفاده می‌کنیم:
+
 export type PermissionFormCommand = CreatePermissionCommand | UpdatePermissionCommand;

@@ -404,7 +404,7 @@ namespace Authorization.Infrastructure.Services
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                Scopes = permission.Scopes.Select(p => new ScopeDto
+                Scopes = permission.Scopes?.Select(p => new ScopeDto
                 {
                     scope = p.scope,
                     PermissionId = p.Id

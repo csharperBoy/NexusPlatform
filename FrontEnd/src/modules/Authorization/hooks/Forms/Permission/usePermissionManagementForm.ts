@@ -4,9 +4,16 @@ import { permissionApi } from "../../../api/PermissionApi";
 import type { PermissionDto } from "../../../models/PermissionDto";
 
 import { useNavigate } from 'react-router-dom';
+import { GetPermissionsQuery } from "@/modules/Authorization/models/PermissionQuery";
 
 export const usePermissionManagement = () => {
-  const [treeData, setTreeData] = useState<PermissionDto[]>([]);
+  const [FormData, setFormData] = useState<PermissionDto[]>([]);
+  const [filters, setFilters] = useState<GetPermissionsQuery | null>({
+        AssigneeId: '',
+        description: '',
+        AssigneeType: null,
+        ResourceId: null
+      });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -15,7 +22,7 @@ export const usePermissionManagement = () => {
  const deleteNode = async (id: string) => {
     try {
       await permissionApi.deletePermission(id);
-      await fetchTree(); // رفرش درخت بعد از حذف
+      await fetchFormData(); // رفرش درخت بعد از حذف
     } catch (err: any) {
       throw err?.response?.data || "حذف ناموفق بود";
     }
@@ -34,27 +41,28 @@ export const usePermissionManagement = () => {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
-  const fetchTree = async (rootId?: string) => {
+  const fetchFormData = async (req?: GetPermissionsQuery) => {
     try {
       setLoading(true);
-      const data = await permissionApi.getTree(rootId);
-      setTreeData(data);
+      const data = await permissionApi.getPermissions(filters);
+      setFormData(data);
     } catch (err: any) {
-      setError(err?.response?.data || "دریافت منابع ناموفق بود");
+      setError(err?.response?.data || "دریافت  ناموفق بود");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTree();
+    fetchFormData();
   }, []);
 
   return {
-    treeData,
+    FormData,
+    filters,
     loading,
     error,
-    refresh: fetchTree,
+    refresh: fetchFormData,
     deleteNode,
     editNode,
     addNode,

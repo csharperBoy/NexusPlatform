@@ -11,6 +11,6 @@ export interface PermissionDto {
   EffectiveFrom: Date;
   ExpiresAt: Date;
   isActive: boolean;
-  Scopes: string[];
+  Scopes: number[];
 } 
  

@@ -4,9 +4,8 @@ import type { LoginRequest } from "../models/LoginRequest";
 import type { RegisterRequest } from "../models/RegisterRequest";
 import type { AuthResponse } from "../models/AuthResponse";
 import { UserDto } from "../models/UserDto";
-import { GetUsersQuery } from "../models/GetUsersQuery";
-import { UpdateUserCommand } from "../models/UpdateUserCommand";
-import { CreateUserCommand } from "../models/CreateUserCommand";
+import { GetUsersQuery } from "../models/UserQuery"; 
+import { UpdateUserCommand ,CreateUserCommand} from "../models/UserCommands";
 import { RoleDto } from "../models/RoleDto";
 const API_MODULE = "identity";
 

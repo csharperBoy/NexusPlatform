@@ -5,8 +5,7 @@ import type { RegisterRequest } from "../models/RegisterRequest";
 import type { AuthResponse } from "../models/AuthResponse";
 import { RoleDto } from "../models/RoleDto";
 import { GetRolesQuery } from "../models/RoleQuery";
-import { UpdateRoleCommand } from "../models/UpdateRoleCommand";
-import { CreateRoleCommand } from "../models/CreateRoleCommand";
+import { UpdateRoleCommand,CreateRoleCommand } from "../models/RoleCommands";
 const API_MODULE = "identity";
 
 export const roleApi = {

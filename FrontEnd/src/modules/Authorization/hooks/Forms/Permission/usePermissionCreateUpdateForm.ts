@@ -6,32 +6,68 @@ import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand
 import { useParams } from "react-router-dom";
 export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?: () => void) => {
   // state اولیه بر اساس حالت (ایجاد یا ویرایش)
-  const { parentId } = useParams<{ parentId: string }>();
+  // const { userId } = useParams<{ userId: string }>();
+  // const { roleId } = useParams<{ roleId: string }>();
+  const { resourceId } = useParams<{ resourceId: string }>();
   const initialFormState: PermissionFormCommand = permissionId
-    ? {Id :permissionId , key: "", name: "" ,category: 1 , type:1,displayOrder:0,description:"",icon:"",parentId:"",route:"" } // برای ویرایش
-    : {  key: "", name: "" ,category: 1 , type:1,displayOrder:0,description:"",icon:"",parentId:parentId,route:"" }; // برای ایجاد،
+    ? {Id :permissionId , AssigneeType: 0, AssigneeId: "" ,Action: 1 , ResourceId:resourceId ,scopes:null , Description:"",effect:1,IsActive:true,ExpiresAt:null , EffectiveFrom: null} // برای ویرایش
+    : {  AssigneeType: 0, AssigneeId: "" ,Action: 1 , ResourceId:"",scopes:null , Description:"",effect:1,IsActive:true,ExpiresAt:null , EffectiveFrom: null }; // برای ایجاد،
   const [formData, setFormData] = useState<PermissionFormCommand>(initialFormState);
 
+  const [scopesList, setScopesList] = useState<{ value: number; display: string }[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // برای مدیریت خطا
 
-  const typeMap: Record<string, number> = {
-        'Module': 0,
-        'Ui': 1,
-        'Data': 2,
+  const assignTypeMap: Record<string, number> = {
+        'Person': 0,
+        'Position': 1,
+        'Role': 2,
+        'User'  :3,  
+  
       };
-  const categoryMap: Record<string, number> = {
-        'General': 0,
-        'System': 1,
-        'Module': 2,
-        'Menu': 3,
-        'Page': 4,
-        'Component': 5,
-        'DatabaseTable': 6,
-        'RowInTable': 7,
+  const actionMap: Record<string, number> = {
+        'View': 0,
+        'Create' : 1,
+        'Edit' :2,
+        'Delete' : 3,
+        'Export' : 4,
+        'Full': 99
       };
 
-  // بارگذاری اطلاعات کاربر در صورت ویرایش
+      const effectMap: Record<string, number> = {
+        'allow': 0,    
+        'Deny': 1  
+      };
+
+      const scopeMap: Record<string, number> = {
+        'None' : 0,
+        'Account' : 1,
+        'Self' :2,
+        'Unit' : 3,
+        'UnitAndBelow': 4,
+        'SpecificProperty': 5,
+        'All' : 99
+      };
+
+      useEffect(() => {
+      const fetchScopes = async () => {
+        try {
+          const list = Object.entries(scopeMap).map(([key, value]) => ({
+            value,
+            display: key
+          }));
+
+          setScopesList(list);
+        } catch (err) {
+          console.error("Failed to fetch scopes:", err);
+          setError("خطا در بارگذاری لیست محدوده ها.");
+        }
+      };
+
+      fetchScopes();
+    }, []);
+
+  // بارگذاری اطلاعات در صورت ویرایش
   useEffect(() => {
     if (!permissionId) return;
 
@@ -42,16 +78,16 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
         // اطمینان از اینکه داده‌های بارگذاری شده با نوع UpdatePermissionCommand مطابقت دارند
         const permissionData: UpdatePermissionCommand = {
           Id: permission.id,
-          name: permission.name,
-          description: permission.description || '',
-          category:  categoryMap[permission.category],
-          displayOrder: permission.displayOrder,
-          key: permission.key,
-          type: typeMap[permission.type],
-          icon: permission.icon,
-          parentId: permission.parentId,
-          route: permission.path
-          
+          Action: permission.Action,
+          AssigneeType:  permission.AssigneeType,
+          effect:  permission.Effect,
+          AssigneeId: permission.AssigneeId,
+          Description: permission.description,
+          scopes: permission.Scopes || [],
+          EffectiveFrom: permission.EffectiveFrom,
+          ExpiresAt: permission.ExpiresAt,
+          IsActive: permission.isActive,
+          ResourceId:permission.ResourceId
         };
         setFormData(permissionData);
       } catch (err) {
@@ -72,6 +108,17 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
   };
 
 
+  // مدیریت تغییرات انتخاب محدوده ها
+  const handleScopesChange = (scopeValue: number, checked: boolean) => {
+    setFormData(prev => {
+      const currentScopes = prev.scopes || [];
+      const newScopes = checked
+        ? [...currentScopes, scopeValue]
+        : currentScopes.filter(r => r !== scopeValue);
+      return { ...prev, scopes: newScopes };
+    });
+  };
+
   // مدیریت ارسال فرم
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,16 +127,16 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
     if (permissionId) { // حالت ویرایش
       // در اینجا می‌توان اعتبارسنجی‌های مربوط به ویرایش را انجام داد
       // مثلاً اگر فیلدهای خاصی نباید خالی باشند
-      if (!formData.key ) {
-         setError("کلید الزامی هست.");
+      if (!formData.ResourceId ) {
+         setError(" الزامی هست.");
          return;
       }
        // اگر بخواهیم کاربر بتواند رمز عبور را هم در حالت ویرایش تغییر دهد
        // باید مطمئن شویم که `Password` فیلد `UpdatePermissionCommand` هم هست و آن را هندل کنیم
     } else { // حالت ایجاد
       const createData = formData as CreatePermissionCommand; // Cast برای اطمینان از وجود Password
-      if (!createData.key) {
-        setError("کلید الزامی هست.");
+      if (!createData.ResourceId) {
+        setError(" الزامی هست.");
         return;
       }
     }
@@ -117,9 +164,11 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
 
   return {
     formData,
+    scopesList,
     loading,
     error,
     handleChange,
+    handleScopesChange,
     handleSubmit,
     isEdit: !!permissionId, // برای استفاده در UI
   };
