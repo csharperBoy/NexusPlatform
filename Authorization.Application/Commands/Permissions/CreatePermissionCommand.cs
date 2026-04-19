@@ -17,8 +17,8 @@ namespace Authorization.Application.Commands.Permissions
      --------------------------
      Command برای ایجاد یک Permission جدید.
     */
-    public record CreatePermissionCommand(
-
+    public record CreatePermissionCommand
+        (
         Guid ResourceId,
         Guid AssigneeId,
         AssigneeType AssigneeType = AssigneeType.User,

@@ -1,7 +1,7 @@
 // src/modules/Authorization/models/PermissionDto.ts
 export interface PermissionDto {
   id: string;
-  AssigneeType: string;
+  AssigneeType: number;
   AssigneeId: string;
   description: string;
   ResourceId?: string;
@@ -11,5 +11,6 @@ export interface PermissionDto {
   EffectiveFrom: Date;
   ExpiresAt: Date;
   isActive: boolean;
+  Scopes: string[];
 } 
  
