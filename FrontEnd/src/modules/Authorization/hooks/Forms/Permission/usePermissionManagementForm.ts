@@ -52,7 +52,7 @@ export const usePermissionManagement = () => {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
     fetchFormData();
   }, []);

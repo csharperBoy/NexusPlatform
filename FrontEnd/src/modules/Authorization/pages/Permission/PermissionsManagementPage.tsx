@@ -3,19 +3,20 @@ import React from 'react';
 import { PermissionManagementForm, RenderFormProps } from '../../Interface/Permission/IPermissionManagementPage';
 import { Table, ColumnDef } from '@/core/components/Table';
 import { PermissionDto } from '../../models/PermissionDto'; 
+import { actionMap, assignTypeMap, effectMap } from '../../models/PermissionEnum';
 const PermissionsManagementPage: React.FC = () => {
 
   // تعریف ستون‌های جدول برای نمایش اطلاعات کاربران
   const permissionColumns: ColumnDef<PermissionDto>[] = [
     {
-      id: 'Action',
+      id: 'action',
       label: 'عملیات',
-      accessor: (row) => row.Action,
+      accessor: (row) =>actionMap[ row.action],
     },
      {
-      id: 'ResourceKey',
+      id: 'resourceKey',
       label: 'منبع',
-      accessor: (row) => row.ResourceKey,
+      accessor: (row) => row.resourceKey,
     },
     {
       id: 'description',
@@ -23,14 +24,14 @@ const PermissionsManagementPage: React.FC = () => {
       accessor: (row) => row.description,
     },
     {
-      id: 'AssigneeType',
+      id: 'assigneeType',
       label: 'نوع گیرنده مجوز',
-      accessor: (row) => row.AssigneeType,
+      accessor: (row) =>assignTypeMap[ row.assigneeType],
     },
     {
-      id: 'Effect',
+      id: 'effect',
       label: 'مجاز یا غیرمجاز',
-      accessor: (row) => row.Effect,
+      accessor: (row) => effectMap[ row.effect],
     },
     {
       id: 'actions',      

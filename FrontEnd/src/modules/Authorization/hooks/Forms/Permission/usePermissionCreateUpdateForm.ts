@@ -78,16 +78,16 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
         // اطمینان از اینکه داده‌های بارگذاری شده با نوع UpdatePermissionCommand مطابقت دارند
         const permissionData: UpdatePermissionCommand = {
           Id: permission.id,
-          Action: permission.Action,
-          AssigneeType:  permission.AssigneeType,
-          effect:  permission.Effect,
-          AssigneeId: permission.AssigneeId,
+          Action: permission.action,
+          AssigneeType:  permission.assigneeType,
+          effect:  permission.effect,
+          AssigneeId: permission.assigneeId,
           Description: permission.description,
-          scopes: permission.Scopes || [],
-          EffectiveFrom: permission.EffectiveFrom,
-          ExpiresAt: permission.ExpiresAt,
+          scopes: permission.scopes || [],
+          EffectiveFrom: permission.effectiveFrom,
+          ExpiresAt: permission.expiresAt,
           IsActive: permission.isActive,
-          ResourceId:permission.ResourceId
+          ResourceId:permission.resourceId
         };
         setFormData(permissionData);
       } catch (err) {
