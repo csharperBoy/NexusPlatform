@@ -40,13 +40,13 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         
     <form onSubmit={handleSubmit} className="p-4 space-y-4">
       <h2 className="text-2xl font-bold text-center mb-4">
-        {isEdit ? "ویرایش کاربر" : "افزودن کاربر جدید"}
+        {isEdit ? "ویرایش مجوز" : "افزودن مجوز جدید"}
       </h2>
 
       {error && <div className="alert alert-error">{error}</div>}
 
       <div>
-        <label htmlFor="permissionName">نام کاربری:</label>
+        <label htmlFor="ResourceId">ResourceId:</label>
         <Input
           id="ResourceId"
           type="text"
@@ -58,16 +58,35 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
       </div>
 
        <div className="mb-4">
-              <label className="block mb-1">نوع</label>
+              <label className="block mb-1">عملیات</label>
               <select
                 value={formData.Action}
                 onChange={(e) => handleChange('Action',Number(e.target.value))}
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value='0' label="Module">ماژول (Module)</option>
-                <option value='1' label="Ui">رابط کاربری (Ui)</option>
-                <option value='2' label="Data">داده (Data)</option>
+          
+                <option value='0' label="View">مشاهده (View)</option>
+                <option value='1' label="Create">ایجاد (Create)</option>
+                <option value='2' label="Edit">ویرایش (Edit)</option>
+                
+                <option value='3' label="Delete">حذف (Delete)</option>
+                
+                <option value='4' label="Export">خروجی (Export)</option>
+                
+                <option value='99' label="Full">کامل (Full)</option>
+              </select>
+       </div>
+       <div className="mb-4">
+              <label className="block mb-1">مجاز / غیر مجاز</label>
+              <select
+                value={formData.effect}
+                onChange={(e) => handleChange('effect',Number(e.target.value))}
+                className="w-full p-2 border rounded"
+                disabled={loading}
+              >
+                <option value='0' label="allow">مجاز (Module)</option>
+                <option value='1' label="Deny">غیر مجاز (Ui)</option>
               </select>
        </div>
       <div className="mb-4">
@@ -78,27 +97,18 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                <option value='0' label="Module">ماژول (Module)</option>
-                <option value='1' label="Ui">رابط کاربری (Ui)</option>
-                <option value='2' label="Data">داده (Data)</option>
+                 
+  
+                <option value='0' label="Person">شخص (Person)</option>
+                <option value='1' label="Position">موقعیت (Position)</option>
+                <option value='2' label="Role">نقش (Role)</option>
+                <option value='3' label="User">کاربر (User)</option>
               </select>
        </div>
-       <div className="mb-4">
-              <label className="block mb-1">نوع</label>
-              <select
-                value={formData.effect}
-                onChange={(e) => handleChange('effect',Number(e.target.value))}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-              >
-                <option value='0' label="Module">ماژول (Module)</option>
-                <option value='1' label="Ui">رابط کاربری (Ui)</option>
-                <option value='2' label="Data">داده (Data)</option>
-              </select>
-       </div>
+       
       
       <div>
-        <label htmlFor="AssigneeId">نام کاربری:</label>
+        <label htmlFor="AssigneeId">AssigneeId :</label>
         <Input
           id="AssigneeId"
           type="text"
@@ -110,7 +120,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
       </div>
 
  <div>
-        <label htmlFor="Description">نام کاربری:</label>
+        <label htmlFor="Description"> توضیحات:</label>
         <Input
           id="Description"
           type="text"
@@ -120,20 +130,10 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         />
       </div>
       
- <div>
-        <label htmlFor="ResourceId">نام کاربری:</label>
-        <Input
-          id="ResourceId"
-          type="text"
-          value={formData.ResourceId || ""}
-          onChange={(e) => handleChange("ResourceId", e.target.value)}
-          className="input input-bordered w-full"
-          required={true} // همیشه الزامی است
-        />
-      </div>
+
        
  <div>
-        <label htmlFor="IsActive">نام کاربری:</label>
+        <label htmlFor="IsActive">فعال / غیرفعال :</label>
         <Input
           id="IsActive"
           type="checkbox"
@@ -145,7 +145,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
 
       
       <div>
-        <label htmlFor="IsActive">نام کاربری:</label>
+        <label htmlFor="IsActive">تاریخ اعمال:</label>
         <Input
           id="IsActive"
           type="datetime-local"
@@ -156,7 +156,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
       </div>
 
       <div>
-        <label htmlFor="IsActive">نام کاربری:</label>
+        <label htmlFor="IsActive"> تاریخ انقضا:</label>
         <Input
           id="IsActive"
           type="datetime-local"
@@ -170,8 +170,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
       
       {/* بخش انتخاب نقش‌ها */}
       <div>
-        <label className="block mb-2 font-medium">نقش‌ها:</label>
-        {scopesList.length === 0 && !error && <p>در حال بارگذاری نقش‌ها...</p>}
+        <label className="block mb-2 font-medium">محدوده ها:</label>
+        {scopesList.length === 0 && !error && <p>در حال بارگذاری محدوده ها...</p>}
         {scopesList.map(scope => (
           <div key={scope.value} className="flex items-center space-x-2 mb-1">
             <input
@@ -187,7 +187,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
       </div>
 
       <Button type="submit" disabled={loading} className="btn btn-primary w-full">
-        {loading ? "در حال پردازش..." : (isEdit ? "ذخیره تغییرات" : "افزودن کاربر")}
+        {loading ? "در حال پردازش..." : (isEdit ? "ذخیره تغییرات" : "افزودن مجوز")}
       </Button>
     </form>
     </Card>
