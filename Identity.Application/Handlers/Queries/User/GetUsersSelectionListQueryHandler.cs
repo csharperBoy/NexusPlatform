@@ -2,7 +2,6 @@
 using Core.Shared.Results;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
-using Identity.Application.Queries;
 using Identity.Application.Queries.User;
 using MediatR;
 using System;
@@ -13,16 +12,17 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Handlers.Queries.User
 {
-    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, Result<IList<UserDto>>>
+    public class GetUsersSelectionListQueryHandler : IRequestHandler<GetUsersSelectionListQuery, Result<IList<SelectionListDto>>>
     {
         private readonly IUserInternalService _userService;
-        public GetUsersQueryHandler(IUserInternalService userService)
+        public GetUsersSelectionListQueryHandler(IUserInternalService userService)
             => _userService = userService;
 
-        public async Task<Result<IList<UserDto>>> Handle(GetUsersQuery request, CancellationToken ct)
+        public async Task<Result<IList<SelectionListDto>>> Handle(GetUsersSelectionListQuery request, CancellationToken ct)
         {
             var users = await _userService.GetUsers(request.UserName, request.rolesId, request.NickName, request.phoneNumber);
-            return Result<IList<UserDto>>.Ok(users.ToList());
+            var result = users.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.UserName} ({x.NickName})"));
+            return Result<IList<SelectionListDto>>.Ok(result.ToList());
         }
     }
 }

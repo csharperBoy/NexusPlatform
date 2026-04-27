@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.Identity.PublicService;
+using Core.Shared.DTOs;
 using Identity.Application.Commands.User;
 using Identity.Application.DTOs;
 using Identity.Application.Queries.User;
@@ -17,7 +18,7 @@ namespace Identity.Application.Interfaces
         Task DeleteUserAsync(Guid id);
 
         Task<UserDto?> GetById(Guid id);
-        Task<IReadOnlyList<UserDto>> getUsers(GetUsersQuery request);
+        Task<IReadOnlyList<UserDto>> GetUsers(string? UserName = null, List<Guid>? rolesId = null, string? NickName = null, string? phoneNumber = null);
         Task UpdateUserAsync(UpdateUserCommand request);
     }
 }

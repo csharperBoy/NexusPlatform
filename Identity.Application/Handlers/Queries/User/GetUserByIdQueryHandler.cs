@@ -5,6 +5,7 @@ using Identity.Application.Interfaces;
 using Identity.Application.Queries.User;
 using Identity.Domain.Entities;
 using MediatR;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -36,15 +37,14 @@ namespace Identity.Application.Handlers.Queries.User
             {
                 _logger.LogDebug("Getting User by ID: {UserId}", request.Id);
 
-                UserDto? User = await _UserService.GetById(request.Id);
-
-                if (User == null)
+               var user = await _UserService.GetById(request.Id);
+                if (user == null)
                 {
                     return Result<UserDto>.Fail($"User with ID {request.Id} not found");
                 }
-
+               
               
-                return Result<UserDto>.Ok(User);
+                return Result<UserDto>.Ok(user);
             }
             catch (Exception ex)
             {

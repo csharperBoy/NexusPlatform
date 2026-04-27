@@ -35,7 +35,7 @@ namespace Identity.Domain.Entities
         public DateTime? LastLoginTime { get; private set; }
         public bool IsLocked { get; private set; }
 
-      
+
 
         public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
         public ICollection<UserSession> Sessions { get; private set; } = new List<UserSession>();
@@ -54,8 +54,21 @@ namespace Identity.Domain.Entities
 
             SecurityStamp = Guid.NewGuid().ToString();
         }
+        public ApplicationUser(Guid id, string userName, string email, string nickName , string phoneNumber )
+           : base(userName)
+        {
+            Id = id;
+            UserName = userName;
+            Email = email;
+            EmailConfirmed = true;
+            NormalizedUserName = userName.ToUpperInvariant();
+            NormalizedEmail = email.ToUpperInvariant();
+            PhoneNumber = phoneNumber;
+            NickName = nickName;
+            SecurityStamp = Guid.NewGuid().ToString();
+        }
         public ApplicationUser(
-            string _UserName,
+        string _UserName,
         string _Email,
         string? _NickName,
         string? _phoneNumber,
@@ -89,6 +102,17 @@ namespace Identity.Domain.Entities
             FkPersonId = personId;
             Touch();
         }
+
+        //public void SetRoles(List<string> rolesName)
+        //{
+        //    Roles =rolesName.Select(r=>new ApplicationRole(r)).ToList();
+        //    //Touch();
+        //}
+       //public void SetRoles(List<ApplicationRole> roles)
+       //{
+       //    Roles =roles.Select(r=>new IdentityUserRole<Guid> { RoleId = r.Id , UserId = Id}).ToList();
+       //    //Touch();
+       //}
         public void Lock()
         {
             IsLocked = true;

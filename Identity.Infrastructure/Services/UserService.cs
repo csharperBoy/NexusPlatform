@@ -6,6 +6,8 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Context;
 using Core.Application.Helper;
+using Core.Shared.DTOs;
+
 //using Core.Shared.DTOs.Identity;
 using Core.Shared.Results;
 using Identity.Application.Commands.User;
@@ -18,6 +20,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.Extensions.Logging;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -198,55 +201,43 @@ namespace Identity.Infrastructure.Services
             return user.UserName;
         }
 
-        public async Task<IReadOnlyList<UserDto>> getUsers(GetUsersQuery request)
+        public async Task<IReadOnlyList<UserDto>> GetUsers(
+        string? userName = null,
+        List<Guid>? rolesId = null,
+        string? nickName = null,
+        string? phoneNumber = null)
         {
             var cacheKey = $"{baseCacheKey}:full";
+
             var cached = await _cache.GetAsync<IReadOnlyList<UserDto>>(cacheKey);
             if (cached != null)
-            {
-                _logger.LogDebug("Cache hit for full resource tree");
                 return cached;
-            }
-            /*var result = await _userManager.Users.Where(
-                u => (request.UserName != null ? u.UserName.Contains(request.UserName) : true)
-                && (request.NickName != null ? u.NickName.Contains(request.NickName) : true)
-                && (request.phoneNumber != null ? u.PhoneNumber.Contains(request.phoneNumber) : true)
-                ).Select( u => new UserDto
-                {
-                    NickName = u.NickName,
-                    Email = u.Email,
-                    Id = u.Id,
-                    phoneNumber = u.PhoneNumber,
-                    UserName = u.UserName,
-                    roles = await _userManager.GetRolesAsync(u)
-                }).AsNoTracking().ToListAsync();*/
 
+            // EF Projection
             var query =
-                        from user in _userManager.Users.AsNoTracking()
-                        join userRole in (await _userRoleRepository.AsNoTrackingQueryable()) on user.Id equals userRole.UserId
-                        join role in _roleManager.Roles.AsNoTracking() on userRole.RoleId equals role.Id
-                        where
-                            (request.UserName != null ? user.UserName.Contains(request.UserName) : true)
-                            && (request.NickName != null ? user.NickName.Contains(request.NickName) : true)
-                            && (request.phoneNumber != null ? user.PhoneNumber.Contains(request.phoneNumber) : true)
-                        group role.Name by user into g
-                        select new UserDto
-                        {
-                            Id = g.Key.Id,
-                            Email = g.Key.Email,
-                            NickName = g.Key.NickName,
-                            phoneNumber = g.Key.PhoneNumber,
-                            UserName = g.Key.UserName,
-                            roles = g.ToList()/*.Select(x => new RoleDto
-                            {
-                                Id = x.role.Id,
-                                Name = x.role.Name,
-                                Description = x.role.Description,
-                                OrderNum = x.role.OrderNum
-                            }).ToList()*/
-                        };
+                from user in _userManager.Users.AsNoTracking()
+                join userRole in (await _userRoleRepository.AsNoTrackingQueryable()) on user.Id equals userRole.UserId
+                join role in _roleManager.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                where
+                    (userName == null || user.UserName.Contains(userName)) &&
+                    (nickName == null || user.NickName.Contains(nickName)) &&
+                    (phoneNumber == null || user.PhoneNumber.Contains(phoneNumber)) &&
+                    (rolesId == null || rolesId.Contains(role.Id))
+                group role by user into g
+                select new UserDto
+                {
+                    Id = g.Key.Id,
+                    UserName = g.Key.UserName,
+                    Email = g.Key.Email,
+                    phoneNumber = g.Key.PhoneNumber,
+                    NickName = g.Key.NickName,
+                    roles = g.Select(r => r.Name).ToList()
+                };
+
             var result = await query.ToListAsync();
+
             await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
+
             return result;
         }
 
@@ -267,5 +258,6 @@ namespace Identity.Infrastructure.Services
             await _cache.RemoveByPatternAsync($"{baseCacheKey}:*");
         }
 
+        
     }
 }

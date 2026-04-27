@@ -42,6 +42,13 @@ namespace Identity.Presentation.Controllers
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
+        [HttpGet("GetSelectionList")]
+        [AuthorizeResource("identity.user", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetUsersSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
         [HttpGet("{id:guid}")]
         [AuthorizeResource("identity.user", "View")]
         public async Task<IActionResult> GetUserById(Guid id)

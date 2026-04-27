@@ -9,6 +9,6 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Queries.User
 {
-    public record GetUsersQuery(string? UserName = null , string? NickName = null , string? phoneNumber = null) : IRequest<Result<IList<UserDto>>>;
+    public record GetUsersQuery(string? UserName = null, List<Guid>? rolesId = null, string? NickName = null , string? phoneNumber = null) : IRequest<Result<IList<UserDto>>>;
 
 }
