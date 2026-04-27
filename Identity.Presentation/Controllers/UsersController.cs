@@ -43,7 +43,7 @@ namespace Identity.Presentation.Controllers
             return HandleResult(result);
         }
         [HttpGet("GetSelectionList")]
-        [AuthorizeResource("identity.user", "View")]
+        //[AuthorizeResource("identity.user", "View")]
         public async Task<IActionResult> GetSelectionList([FromQuery] GetUsersSelectionListQuery? request = null)
         {
             var result = await Mediator.Send(request);
