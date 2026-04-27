@@ -5,19 +5,21 @@ import Card from '@/core/components/Card';
 import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
 import { data } from 'react-router-dom';
-// فرض کنید این کامپوننت‌ها موجود هستند
-// import { FormInput } from './FormInput';
-// import { Checkbox } from './Checkbox';
+import { SelectionListDto } from '@/core/models/SelectionListDto';
 
 interface PermissionCreateUpdateFormProps {
   formData: PermissionFormCommand;
   scopesList: { value: number; display: string }[];
+  resourceList: SelectionListDto[];
+  
+  assignList  : SelectionListDto[];  
   loading: boolean;
   error: string | null;
   isEdit: boolean;
   handleChange: <K extends keyof PermissionFormCommand>(field: K, value: PermissionFormCommand[K]) => void;
   handleScopesChange: (scopeValue: number, checked: boolean) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  handleAssignTypeChange: (newAssignType: number)  => void;
 }
 
 const toInputDateTime = (date?: Date | null) => {
@@ -28,12 +30,16 @@ const toInputDateTime = (date?: Date | null) => {
 export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProps> = ({
   formData,
   scopesList,
+  resourceList,
+  assignList,
   loading,
   error,
   isEdit,
   handleChange,
   handleScopesChange,
   handleSubmit,
+  handleAssignTypeChange,
+
 }) => {
   return (
      <Card className="max-w-2xl mx-auto p-6">
@@ -45,7 +51,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div>
+      {/* <div>
         <label htmlFor="ResourceId">ResourceId:</label>
         <Input
           id="ResourceId"
@@ -55,7 +61,26 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           className="input input-bordered w-full"
           required={true} // همیشه الزامی است
         />
-      </div>
+      </div> */}
+      <div className="mb-4">
+              <label className="block mb-1">منبع</label>
+              <select
+                value={formData.ResourceId}
+                onChange={(e) => handleChange('ResourceId',e.target.value)}
+                className="w-full p-2 border rounded"
+                disabled={loading}
+                required={true}
+              >
+          
+                 <option value="" disabled>انتخاب کنید...</option>
+                  {resourceList.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.display}
+                    </option>
+                  ))}
+                
+              </select>
+       </div>
 
        <div className="mb-4">
               <label className="block mb-1">عملیات</label>
@@ -93,19 +118,35 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
               <label className="block mb-1">نوع</label>
               <select
                 value={formData.AssigneeType}
-                onChange={(e) => handleChange('AssigneeType',Number(e.target.value))}
+                onChange={(e) => handleAssignTypeChange(Number(e.target.value))}
                 className="w-full p-2 border rounded"
                 disabled={loading}
               >
-                 
-  
                 <option value='0' label="Person">شخص (Person)</option>
                 <option value='1' label="Position">موقعیت (Position)</option>
                 <option value='2' label="Role">نقش (Role)</option>
                 <option value='3' label="User">کاربر (User)</option>
               </select>
        </div>
-       
+       <div className="mb-4">
+              <label className="block mb-1">AssigneeId</label>
+              <select
+                value={formData.AssigneeId}
+                onChange={(e) => handleChange('AssigneeId',e.target.value)}
+                className="w-full p-2 border rounded"
+                disabled={loading}
+                required={true}
+              >
+          
+                 <option value="" disabled>انتخاب کنید...</option>
+                  {assignList.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.display}
+                    </option>
+                  ))}
+                
+              </select>
+       </div>
       
       <div>
         <label htmlFor="AssigneeId">AssigneeId :</label>

@@ -6,6 +6,7 @@ import type { AuthResponse } from "../models/AuthResponse";
 import { RoleDto } from "../models/RoleDto";
 import { GetRolesQuery } from "../models/RoleQuery";
 import { UpdateRoleCommand,CreateRoleCommand } from "../models/RoleCommands";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 const API_MODULE = "identity";
 
 export const roleApi = {
@@ -17,6 +18,18 @@ export const roleApi = {
     console.info(req);
     const response = await api.get<RoleDto[]>(
       "/api/identity/Roles/GetRoles",
+      { params: { req }, withCredentials: true }
+    );
+    console.warn(response);
+    console.log(response);
+    return response.data;
+  },
+    GetSelectionList: async (req?: GetRolesQuery | null): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    
+    console.info(req);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/identity/Roles/GetSelectionList",
       { params: { req }, withCredentials: true }
     );
     console.warn(response);

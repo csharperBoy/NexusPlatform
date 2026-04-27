@@ -54,7 +54,14 @@ namespace Authorization.Presentation.Controllers.Admin
             var result = await Mediator.Send(query);
             return HandleResult(result);
         }
-     
+
+        [HttpGet("GetSelectionList")]
+        //[AuthorizeResource("authorization.resource", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetResourcesSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
 
         /// <summary>
         /// ✏️ به‌روزرسانی منبع

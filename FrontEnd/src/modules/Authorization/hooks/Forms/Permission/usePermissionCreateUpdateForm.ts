@@ -1,13 +1,16 @@
 // src/hooks/usePermissionCreateUpdateForm.ts
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // فرض بر استفاده از react-router-dom
-import { permissionApi } from '../../../api/PermissionApi'; // مسیر API کاربران
-import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand } from '../../../models/PermissionCommands'; // مسیر مدل‌ها
+import { permissionApi } from '../../../api/PermissionApi'; 
+import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand } from '../../../models/PermissionCommands'; 
 import { useParams } from "react-router-dom";
+import { SelectionListDto } from '@/core/models/SelectionListDto';
+import { resourceApi } from '@/modules/Authorization/api/ResourceApi';
+import { userApi } from '@/modules/Identity/api/userApi';
+import { personApi}from '@/modules/HR/api/personApi';
+import { positionApi}from '@/modules/HR/api/positionApi';
+import { roleApi } from '@/modules/Identity/api/roleApi'; 
+
 export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?: () => void) => {
-  // state اولیه بر اساس حالت (ایجاد یا ویرایش)
-  // const { userId } = useParams<{ userId: string }>();
-  // const { roleId } = useParams<{ roleId: string }>();
   const { resourceId } = useParams<{ resourceId: string }>();
   const initialFormState: PermissionFormCommand = permissionId
     ? {Id :permissionId , AssigneeType: 0, AssigneeId: "" ,Action: 1 , ResourceId:resourceId ,scopes:null , Description:"",effect:1,IsActive:true,ExpiresAt:null , EffectiveFrom: null} // برای ویرایش
@@ -15,6 +18,10 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
   const [formData, setFormData] = useState<PermissionFormCommand>(initialFormState);
 
   const [scopesList, setScopesList] = useState<{ value: number; display: string }[]>([]);
+  
+  const [resourceList, setResourceList] = useState<SelectionListDto[]>([]);
+  
+  const [assignList, setAssignList] = useState<SelectionListDto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // برای مدیریت خطا
 
@@ -49,6 +56,50 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
         'All' : 99
       };
 
+useEffect(() => {
+    const fetchAssignees = async () => {
+      try {
+        setLoading(true); // شروع بارگذاری
+        let data: SelectionListDto[] = [];
+
+        switch (formData.AssigneeType) {
+          case 0: // Person
+            data = await personApi.GetSelectionList();
+            break;
+          case 1: // Position
+            data = await positionApi.GetSelectionList();
+            break;
+          case 2: // Role
+            data = await roleApi.GetSelectionList();
+            break;
+          case 3: // User
+            data = await userApi.GetSelectionList();
+            break;
+          default:
+            // اگر AssigneeType نامعتبر بود، لیست خالی باشد
+            data = [];
+        }
+        setAssignList(data);
+      } catch (err) {
+        console.error("Failed to fetch assign list:", err);
+        setError("خطا در بارگذاری لیست انتخاب‌شونده‌ها.");
+        setAssignList([]); // در صورت خطا، لیست را خالی کن
+      } finally {
+        setLoading(false); // پایان بارگذاری
+      }
+    };
+
+    // این useEffect باید زمانی اجرا شود که formData.AssigneeType تغییر می‌کند
+    // یا زمانی که داده‌ها در حالت ویرایش لود می‌شوند و AssigneeType مقدار اولیه دارد
+    fetchAssignees();
+
+    // نکته: اگر در حالت ویرایش، AssigneeId هم باید پر شود، باید یک useEffect جداگانه
+    // یا منطقی در useEffect بالا داشته باشیم که AssigneeId را بر اساس داده‌های دریافتی تنظیم کند.
+    // اما فعلا تمرکز روی تغییر نوع است.
+
+  }, [formData.AssigneeType]); // این useEffect به تغییر AssigneeType واکنش نشان می‌دهد
+
+
       useEffect(() => {
       const fetchScopes = async () => {
         try {
@@ -63,8 +114,20 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
           setError("خطا در بارگذاری لیست محدوده ها.");
         }
       };
+       const fetchResources = async () => {
+        try {
+          const resources = await resourceApi.GetSelectionList();
+          setResourceList(resources);
+        } catch (err) {
+          console.error("Failed to fetch Resource:", err);
+          setError("خطا در بارگذاری لیست منابع.");
+        }
+      };
+ 
+
 
       fetchScopes();
+      fetchResources();
     }, []);
 
   // بارگذاری اطلاعات در صورت ویرایش
@@ -107,6 +170,18 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
     if (error) setError(null);
   };
 
+  const handleAssignTypeChange = (newAssignType: number) => {
+    // ابتدا نوع را در formData به‌روز کن
+    setFormData(prev => ({
+      ...prev,
+      AssigneeType: newAssignType,
+      AssigneeId: "" // AssigneeId را هنگام تغییر نوع، خالی کن
+    }));
+    // نیازی به صدا زدن مستقیم fetchAssignees نیست، چون useEffect بالا به تغییر
+    // formData.AssigneeType واکنش نشان می‌دهد و لیست را لود می‌کند.
+    // همچنین خطا را پاک می‌کنیم اگر وجود داشت.
+    if (error) setError(null);
+  };
 
   // مدیریت تغییرات انتخاب محدوده ها
   const handleScopesChange = (scopeValue: number, checked: boolean) => {
@@ -124,17 +199,13 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
     e.preventDefault();
 
     // اعتبارسنجی اولیه
-    if (permissionId) { // حالت ویرایش
-      // در اینجا می‌توان اعتبارسنجی‌های مربوط به ویرایش را انجام داد
-      // مثلاً اگر فیلدهای خاصی نباید خالی باشند
+    if (permissionId) { 
       if (!formData.ResourceId ) {
          setError(" الزامی هست.");
          return;
       }
-       // اگر بخواهیم کاربر بتواند رمز عبور را هم در حالت ویرایش تغییر دهد
-       // باید مطمئن شویم که `Password` فیلد `UpdatePermissionCommand` هم هست و آن را هندل کنیم
-    } else { // حالت ایجاد
-      const createData = formData as CreatePermissionCommand; // Cast برای اطمینان از وجود Password
+       } else { 
+      const createData = formData as CreatePermissionCommand; 
       if (!createData.ResourceId) {
         setError(" الزامی هست.");
         return;
@@ -142,20 +213,16 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
     }
 
     setLoading(true);
-    setError(null); // پاک کردن خطا قبل از ارسال
-
+    setError(null); 
     try {
       if (permissionId) {
-        // ارسال به API ویرایش - نیاز به type assertion داریم
         await permissionApi.updatePermission( formData as UpdatePermissionCommand);
       } else {
-        // ارسال به API ایجاد - نیاز به type assertion داریم
         await permissionApi.createPermission(formData as CreatePermissionCommand);
       }
-      onSuccess?.(); // اجرای callback موفقیت (مثلاً بازگشت به صفحه قبل)
+      onSuccess?.(); 
     } catch (err: any) {
       console.error("Form submission error:", err);
-      // نمایش خطای بازگشتی از API یا خطای عمومی
       setError(err.message || "خطایی در عملیات رخ داد.");
     } finally {
       setLoading(false);
@@ -165,11 +232,14 @@ export const usePermissionCreateUpdateForm = (permissionId?: string, onSuccess?:
   return {
     formData,
     scopesList,
+    resourceList,
+    assignList,
     loading,
     error,
     handleChange,
     handleScopesChange,
     handleSubmit,
-    isEdit: !!permissionId, // برای استفاده در UI
+    handleAssignTypeChange,
+    isEdit: !!permissionId,
   };
 };

@@ -3,6 +3,7 @@ using Authorization.Application.Commands.Resource;
 using Authorization.Application.DTOs.Resource;
 using Authorization.Domain.Entities;
 using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Shared.DTOs.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace Authorization.Application.Interfaces
         Task<string> GetKeyById(Guid resourceId);
         Task<Resource?> GetById(Guid resourceId);
         Task<IReadOnlyList<ResourceTreeDto>> GetByTreeStructure(Guid? RootId = null);
+        Task<IReadOnlyList<ResourceDto>> GetResources();
         //Task SyncResourcesWithDefinitionsAsync();
 
         // عملیات Read

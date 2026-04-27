@@ -7,6 +7,7 @@ import { UserDto } from "../models/UserDto";
 import { GetUsersQuery } from "../models/UserQuery"; 
 import { UpdateUserCommand ,CreateUserCommand} from "../models/UserCommands";
 import { RoleDto } from "../models/RoleDto";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 const API_MODULE = "identity";
 
 export const userApi = {
@@ -16,6 +17,16 @@ export const userApi = {
     const api = getAPI(API_MODULE);
     const response = await api.get<UserDto[]>(
       "/api/identity/Users/GetUsers",
+      { params: { req }, withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+ // دریافت کاربران (GET)
+  GetSelectionList: async (req?: GetUsersQuery | null): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/identity/Users/GetSelectionList",
       { params: { req }, withCredentials: true }
     );
     console.log(response)

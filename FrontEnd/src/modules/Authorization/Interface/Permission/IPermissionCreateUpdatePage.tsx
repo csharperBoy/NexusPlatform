@@ -5,6 +5,7 @@ import { useAuth } from '@/modules/Identity'; // فرض بر اینکه مسیر
 import { usePermissionCreateUpdateForm } from '../../hooks/Forms/Permission/usePermissionCreateUpdateForm'; // هوک یکپارچه شده
 import LoadingIndicator from '@/core/components/LoadingIndicator'; // کامپوننت لودینگ
 import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand } from '../../models/PermissionCommands'; // مدل‌های یکپارچه شده
+import { SelectionListDto } from '@/core/models/SelectionListDto';
 
 // --- تعریف اینترفیس‌ها ---
 
@@ -16,11 +17,14 @@ import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand
 export interface RenderFormProps {
   formData: PermissionFormCommand; // هوک ما این نوع را برمی‌گرداند
   scopesList: { value: number; display: string }[];
+  resourceList: SelectionListDto[];  
+  assignList  : SelectionListDto[];  
   loading: boolean;
   error: string | null;
   handleChange: <K extends keyof PermissionFormCommand>(field: K, value: PermissionFormCommand[K]) => void;
   handleScopesChange: (scopeValue: number, checked: boolean) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
+  handleAssignTypeChange: (newAssignType: number)  => void;
   isEdit: boolean; // اضافه شد برای اینکه بدانیم در حالت ویرایش هستیم یا ایجاد
 }
 

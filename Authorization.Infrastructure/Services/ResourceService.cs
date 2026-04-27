@@ -301,7 +301,7 @@ namespace Authorization.Infrastructure.Services
             return await _resourceSpecRepository.GetBySpecAsync(spec);
         }
 
-       
+
         private async Task InvalidateResourceCachesAsync()
         {
             await _cache.RemoveByPatternAsync($"{baseCacheKey}:*");
@@ -312,6 +312,49 @@ namespace Authorization.Infrastructure.Services
             var spec = new ResourceByIdSpec(resourceId);
             Resource? resource = await _resourceSpecRepository.GetBySpecAsync(spec);
             return resource;
+        }
+
+        public async Task<IReadOnlyList<ResourceDto>> GetResources()
+        {
+            var cacheKey = $"{baseCacheKey}:full";
+
+            try
+            {
+                var cached = await _cache.GetAsync<IReadOnlyList<ResourceDto>>(cacheKey);
+                if (cached != null)
+                {
+                    _logger.LogDebug("Cache hit for full resource");
+                    return cached;
+                }
+
+                //var allResourcesSpec = new ResourceByCategorySpec();
+                var allResources = await _resourceRepository.GetAllAsync();
+                var result = allResources.Select(r => new ResourceDto
+                {
+                    Name = r.Name,
+                    Category = r.Category,
+                    //Children= r.Children,
+                    Description = r.Description,
+                    DisplayOrder = r.DisplayOrder,
+                    Icon = r.Icon,
+                    Id = r.Id,
+                    IsActive = r.IsActive,
+                    Key = r.Key,
+                    ParentId = r.ParentId,
+                    ParentKey = r.Parent?.Key,
+                    Type = r.Type,
+                }).ToList();
+
+                await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
+
+                _logger.LogInformation("full resource  with {Count}", result.Count);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error  full resource ");
+                throw;
+            }
         }
 
 
