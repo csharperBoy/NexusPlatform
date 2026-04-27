@@ -210,32 +210,24 @@ namespace Identity.Infrastructure.Services
             var cacheKey = $"{baseCacheKey}:full";
 
             var cached = await _cache.GetAsync<IReadOnlyList<UserDto>>(cacheKey);
-            //if (cached != null)
-            //    return cached;
+            if (cached != null)
+                return cached;
 
-            // EF Projection
-            // فرض کنید _userManager, _roleManager و _userRoleRepository همانند قبلی هستند
-
+           
             var query = await (
                 from user in _userManager.Users.AsNoTracking()
-                    // 1. گروه‌کردن تمام نقش‌های کاربر (ممکن است خالی باشد)
                 join userRole in await _userRoleRepository.AsNoTrackingQueryable()
                     on user.Id equals userRole.UserId into urGroup
-                // 2. گسترش گروه به یک رکورد (یا null اگر خالی باشد)
                 from ur in urGroup.DefaultIfEmpty()
-                    // 3. اتصال نقش (اگر ur null بود این join هم null خواهد شد)
                 join role in _roleManager.Roles.AsNoTracking()
                     on ur.RoleId equals role.Id into rGroup
                 from r in rGroup.DefaultIfEmpty()
-                    // 4. فیلترها (به‌دقت در شرایطی که null است)
                 where
                     (userName == null || user.UserName.Contains(userName)) &&
                     (nickName == null || user.NickName.Contains(nickName)) &&
                     (phoneNumber == null || user.PhoneNumber.Contains(phoneNumber)) &&
                     (rolesId == null || rolesId.Contains(r != null ? r.Id : Guid.Empty))
-                // 5. گروه‌سازی بر اساس کاربر (هر کاربر یک رکورد)
                 group r by user into g
-                // 6. ساخت DTO
                 select new UserDto
                 {
                     Id = g.Key.Id,
@@ -243,7 +235,6 @@ namespace Identity.Infrastructure.Services
                     Email = g.Key.Email,
                     phoneNumber = g.Key.PhoneNumber,
                     NickName = g.Key.NickName,
-                    // نقش‌های خالی را به لیست خالی تبدیل می‌کنیم
                     roles = g.Where(x => x != null).Select(x => x.Name).ToList()
                 }).ToListAsync();
 
