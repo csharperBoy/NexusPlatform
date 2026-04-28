@@ -94,7 +94,7 @@ namespace Identity.Infrastructure.Services
             return role;
         }
 
-        public async Task<IReadOnlyList<RoleDto>> getRoles(GetRolesQuery request)
+        public async Task<IReadOnlyList<RoleDto>> getRoles(string? name = null, string? description = null)
         {
             var cacheKey = $"{baseCacheKey}:full";
             var cached = await _cache.GetAsync<IReadOnlyList<RoleDto>>(cacheKey);
@@ -104,8 +104,8 @@ namespace Identity.Infrastructure.Services
                 return cached;
             }
             var result = await _roleManager.Roles.Where(
-                u => (request.Name != null ? u.Name.Contains(request.Name) : true)
-                && (request.description != null ? u.Description.Contains(request.description) : true)
+                u => (name != null ? u.Name.Contains(name) : true)
+                && (description != null ? u.Description.Contains(description) : true)
                 ).Select(u => new RoleDto
                 {
                     Id = u.Id,

@@ -40,25 +40,32 @@ namespace Core.Application.Helper
         }
 
         // متد اضافی: گرفتن لیست ماژول‌های فعال
-        public static List<ModuleEnum> GetActiveModules()
+        //public static List<ModuleEnum> GetActiveModules()
+        //{
+        //    if (_settings == null)
+        //        throw new InvalidOperationException(
+        //            "ModuleHelper has not been initialized. Call Initialize() first.");
+
+        //    var activeModules = new List<ModuleEnum>();
+
+        //    foreach (var moduleItem in _settings.Enabled)
+        //    {
+        //        if (Enum.TryParse<ModuleEnum>(moduleItem.Name, true, out var module))
+        //        {
+        //            activeModules.Add(module);
+        //        }
+        //    }
+
+        //    return activeModules;
+        //}
+        public static List<ModuleItem> GetActiveModules()
         {
             if (_settings == null)
                 throw new InvalidOperationException(
                     "ModuleHelper has not been initialized. Call Initialize() first.");
 
-            var activeModules = new List<ModuleEnum>();
-
-            foreach (var moduleItem in _settings.Enabled)
-            {
-                if (Enum.TryParse<ModuleEnum>(moduleItem.Name, true, out var module))
-                {
-                    activeModules.Add(module);
-                }
-            }
-
-            return activeModules;
+            return _settings.Enabled;
         }
-
         // متد اضافی: گرفتن ماژول‌های فعال به همراه ترتیب
         public static Dictionary<ModuleEnum, int> GetActiveModulesWithOrder()
         {

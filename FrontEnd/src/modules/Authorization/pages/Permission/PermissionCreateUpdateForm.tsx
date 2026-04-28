@@ -148,7 +148,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
               </select>
        </div>
       
-      <div>
+      {/* <div>
         <label htmlFor="AssigneeId">AssigneeId :</label>
         <Input
           id="AssigneeId"
@@ -158,7 +158,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           className="input input-bordered w-full"
           required={true} // همیشه الزامی است
         />
-      </div>
+      </div> */}
 
  <div>
         <label htmlFor="Description"> توضیحات:</label>

@@ -30,7 +30,7 @@ namespace Identity.Application.Interfaces
         Task DeleteRoleAsync(Guid id);
 
         Task<ApplicationRole?> GetById(Guid id);
-        Task<IReadOnlyList<RoleDto>> getRoles(GetRolesQuery request);
+        Task<IReadOnlyList<RoleDto>> getRoles(string? name = null, string? description = null);
         Task UpdateRoleAsync(UpdateRoleCommand request);
     }
 }

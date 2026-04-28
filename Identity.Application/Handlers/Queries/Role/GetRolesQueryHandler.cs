@@ -21,7 +21,7 @@ namespace Identity.Application.Handlers.Queries.Role
 
         public async Task<Result<IList<RoleDto>>> Handle(GetRolesQuery request, CancellationToken ct)
         {
-           var roles = await _roleService.getRoles(request);
+           var roles = await _roleService.getRoles(request.Name,request.description);
             return Result<IList<RoleDto>>.Ok(roles.ToList());
         }
     }
