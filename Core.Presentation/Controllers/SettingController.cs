@@ -20,7 +20,7 @@ namespace Core.Presentation.Controllers
         //[AuthorizeResource("core.setting", "View")]
         public async Task<IActionResult> GetActiveModules()
         {
-            Result<List<ModuleItem>> lst = new Result<List<ModuleItem>>(true, ModuleHelper.GetActiveModules(), "");
+            Result<List<ModuleItem>> lst = new Result<List<ModuleItem>>(true, ModuleHelper.GetActiveModules());
             return HandleResult(lst);
         }
     }
