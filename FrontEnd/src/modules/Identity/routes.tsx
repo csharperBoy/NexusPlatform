@@ -17,8 +17,7 @@ export const identityPublicRoutes: RouteObject[] = [
 export const identityPanelRoutes: RouteObject[] = [  
   { path: "user/create", element: <UserCreatePage /> }, 
   { path: "/users", element: <UsersManagementPage /> }, 
-  { path: "user/edit/:id", element: <UserUpdatePage /> },  
-  
+  { path: "user/edit/:id", element: <UserUpdatePage /> },    
     { path: "role/create", element: <RoleCreatePage /> }, 
   { path: "/roles", element: <RolesManagementPage /> }, 
   { path: "role/edit/:id", element: <RoleUpdatePage /> }, 
