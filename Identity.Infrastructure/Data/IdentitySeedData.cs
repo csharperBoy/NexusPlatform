@@ -1,5 +1,7 @@
 ﻿using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Helper;
+using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
@@ -207,19 +209,22 @@ namespace Identity.Infrastructure.Data
 
             try
             {
-                // 1. ثبت منابع (Resources)
-                // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
-                var resources = GetIdentityResourceDefinitions();
-                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
-                logger.LogInformation("✅ Identity resources synced successfully.");
+                if (ModuleHelper.IsActive(ModuleEnum.Authorization))
+                {
+                    // 1. ثبت منابع (Resources)
+                    // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
+                    var resources = GetIdentityResourceDefinitions();
+                    await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
+                    logger.LogInformation("✅ Identity resources synced successfully.");
 
-                // 2. ثبت پرمیشن‌ها (Permissions)
-                // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
-                var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    // 2. ثبت پرمیشن‌ها (Permissions)
+                    // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
+                    var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
-                var permissions = GetIdentityPermissionDefinitions(adminRoleId);
-                await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
-                logger.LogInformation("✅ Identity permissions seeded successfully.");
+                    var permissions = GetIdentityPermissionDefinitions(adminRoleId);
+                    await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                    logger.LogInformation("✅ Identity permissions seeded successfully.");
+                }
             }
             catch (Exception ex)
             {

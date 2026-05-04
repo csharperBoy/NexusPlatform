@@ -36,7 +36,6 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddDataProtection();
 
-            // DbContext
             services.AddDbContext<AuthorizationDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
@@ -46,32 +45,17 @@ namespace Authorization.Infrastructure.DependencyInjection
                 });
             });
 
-            // 1. ثبت خودِ سرویس (Implementation)
             services.AddScoped<ResourceService>();
-            //services.AddScoped<SeedService>();
             services.AddScoped<PermissionService>();
-            // 2. ثبت اینترفیس داخلی (برای استفاده داخل ماژول)
-            // ارجاع می‌دهیم به همان Instance بالایی
             services.AddScoped<IResourceInternalService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionInternalService>(sp => sp.GetRequiredService<PermissionService>());
-            // 3. ثبت اینترفیس عمومی (برای استفاده بقیه ماژول‌ها)
-            // این هم ارجاع می‌شود به همان Instance
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
-            //services.AddScoped<IAuthorizeSeedService>(sp => sp.GetRequiredService<SeedService>());
 
 
             services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(RowLevelSecurityProcessor<>));
             services.AddTransient<IResourceProcessor, ResourceProcessor>();
             services.AddTransient<IAuthorizationProcessor, AuthorizationProcessor>();
-            //services.AddScoped<IDataScopeProcessor, DataScopeProcessor>();
-            //services.AddScoped<IDataScopeService, DataScopeService>();
-
-            // سرویس‌های دیگری که احتمالاً نیاز دارید و باید چک کنید ثبت شده باشند:
-            //services.AddScoped<IAuthorizationChecker, AuthorizationService>();
-            //services.AddScoped<IAuthorizationService, AuthorizationService>();
-            //services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
-            //services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
 
             services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
@@ -81,27 +65,12 @@ namespace Authorization.Infrastructure.DependencyInjection
             
 
             services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
-            // Outbox registration
             var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
             registration.AddOutboxProcessor<AuthorizationDbContext>(services);
 
             services.AddHostedService<ModuleInitializer>();
-
-            //services.AddScoped<IDataScopeEvaluator, DataScopeEvaluator>();
-            //services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
             services.AddScoped<IPermissionInternalService, PermissionService>();
             services.AddScoped<IResourceInternalService, ResourceService>();
-            //services.AddScoped<IResourceTreeBuilder, ResourceTreeBuilder>();
-
-            //services.AddScoped<IAuthorizationService, AuthorizationService>();
-            //services.AddScoped<IAuthorizationChecker, AuthorizationService>();
-            
-            // Resource Definition Providers
-            //services.AddSingleton<AuthorizationResourceDefinitionProvider>();
-            //services.AddSingleton<IResourceDefinitionProvider>(sp =>
-                //sp.GetRequiredService<AuthorizationResourceDefinitionProvider>());
-            // discover IPermissionDefinitionProvider via DI (modules register their providers)
-            //services.AddHostedService<ResourceRegistrarHostedService>();
             return services;
         }
     }

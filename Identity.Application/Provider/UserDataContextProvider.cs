@@ -1,11 +1,8 @@
-﻿using Authorization.Application.DTOs.Permissions;
-using Authorization.Application.Interfaces;
-using Core.Application.Abstractions.Authorization;
+﻿using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Context;
 using Core.Application.Provider;
-using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -15,21 +12,20 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Application.Provider
+namespace Identity.Application.Provider
 {
     public class UserDataContextProvider : IUserDataContextProvider
     {
-        private readonly IPermissionInternalService _permissionService;
+        private readonly IPermissionPublicService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
         private readonly IPositionPublicService _positionService;
         private readonly IRolePublicService _roleService;
-
         private readonly UserDataContext _userDataContext;
 
         public UserDataContextProvider(
-            IPermissionInternalService permissionService,
-           UserDataContext userDataContext,
+            IPermissionPublicService permissionService,
+            UserDataContext userDataContext,
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
             IPositionPublicService positionService,
@@ -45,8 +41,6 @@ namespace Authorization.Application.Provider
         }
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
-
-            
             var userIdstr = _httpContext.HttpContext?.User?
                        .FindFirst(ClaimTypes.NameIdentifier)?.Value;
             Guid userId = string.IsNullOrEmpty(userIdstr) ? Guid.Empty : Guid.Parse(userIdstr);
@@ -59,7 +53,7 @@ namespace Authorization.Application.Provider
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(userId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PositionId, RoleIds);
-            
+
             return new UserDataContext
             {
                 UserId = userId,

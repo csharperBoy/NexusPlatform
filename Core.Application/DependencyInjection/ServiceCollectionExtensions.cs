@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.HR;
+﻿using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
@@ -33,6 +34,7 @@ namespace Core.Application.DependencyInjection
 
             services.HR_NullServiceInject(configuration);
             services.Identity_NullServiceInject(configuration);
+            services.Authorization_NullInject(configuration);
 
             return services;
         }

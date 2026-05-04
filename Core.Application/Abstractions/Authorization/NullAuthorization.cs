@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Core.Application.Abstractions.Authorization
 {
@@ -19,11 +20,11 @@ namespace Core.Application.Abstractions.Authorization
         public static IServiceCollection Authorization_NullInject(this IServiceCollection services, IConfiguration configuration)
         {
 
+            services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(NullRowLevelSecurityProcessor<>));
             services.AddScoped<IResourcePublicService, NullResourceService>();
             services.AddScoped<IPermissionPublicService, NullPermissionService>();
             services.AddScoped<IAuthorizationProcessor, NullAuthorizationProcessor>();
             services.AddScoped<IPermissionProcessor, NullPermissionProcessor>();
-            services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(NullRowLevelSecurityProcessor<>));
 
             return services;
         }
@@ -32,19 +33,20 @@ namespace Core.Application.Abstractions.Authorization
     {
         public Task SyncModuleResourcesAsync(List<ResourceDto> resources, CancellationToken cancellationToken = default)
         {
-            return null;
+            return Task.CompletedTask; 
         }
     }
     public class NullPermissionService : IPermissionPublicService
     {
         public Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds)
         {
-            return null;
+            IReadOnlyList<PermissionDto> ret = new List<PermissionDto>();
+            return Task.FromResult(ret);
         }
 
         public Task SeedRolePermissionsAsync(List<PermissionDto> permissions, CancellationToken cancellationToken = default)
         {
-            return null;
+            return Task.CompletedTask;
         }
     }
     public class NullAuthorizationProcessor : IAuthorizationProcessor
@@ -52,7 +54,7 @@ namespace Core.Application.Abstractions.Authorization
 
         public Task<bool> CheckAccessAsync(string resourceKey, string action)
         {
-            return null;
+            return Task.FromResult(true); 
         }
     }
     public class NullPermissionProcessor : IPermissionProcessor
@@ -63,20 +65,19 @@ namespace Core.Application.Abstractions.Authorization
     {
         public Task<IQueryable<TEntity>> ApplyFilter(IQueryable<TEntity> query)
         {
-
-            return null;
+            return Task.FromResult(query);
         }
 
 
 
         public Task CheckPermissionAsync(TEntity entity, PermissionAction action)
         {
-            return null;
+            return Task.CompletedTask;
         }
 
         public Task SetOwnerDefaults(TEntity entity)
         {
-            return null;
+            return Task.CompletedTask;
         }
     }
 }

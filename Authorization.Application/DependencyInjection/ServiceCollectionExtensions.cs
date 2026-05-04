@@ -1,7 +1,7 @@
 ﻿using Authorization.Application.Attributes;
-using Authorization.Application.Context;
 using Authorization.Application.EventHandlers;
 using Authorization.Application.Interfaces;
+using Authorization.Application.Provider;
 using Core.Application.Behaviors;
 using Core.Application.Provider;
 using FluentValidation;

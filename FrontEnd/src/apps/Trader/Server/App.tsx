@@ -1,29 +1,31 @@
 // src/apps/Trader/Server/App.tsx
 import { useRoutes, Navigate, Outlet } from "react-router-dom";
-import { 
-  identityPublicRoutes, 
-  identityPanelRoutes, 
-  ProtectedRoute 
-} from "@/modules/Identity";
-
-import { 
-  authorizationPanelRoutes
-} from "@/modules/Authorization";
+import { ProtectedRoute } from "@/modules/Identity";
+import { identityPublicRoutes, identityPanelRoutes } from "@/modules/Identity";
+import { authorizationPanelRoutes } from "@/modules/Authorization";
 import { MainLayout } from "@/modules/DashboardCore";
 import DashboardPage from "./pages/DashboardPage";
-import LoginPage from "./pages/LoginPage"; // صفحه اختصاصی لاگین
+import LoginPage from "./pages/LoginPage";
+import { useActiveModules } from "@/core/context/ModuleContext";
 
 export default function App() {
+  const { activeModules, loading } = useActiveModules();
+
+  if (loading) {
+    // می‌توانید یک اسلایدر یا spinner سفارشی قرار دهید
+    return <div>در حال بارگذاری تنظیمات…</div>;
+  }
+
   const routes = useRoutes([
-    // 1. مسیر سفارشی لاگین (اولویت بالاتر)
-    {
-      path: "/login",
-      element: <LoginPage />,
-    },
-    // 2. مسیرهای عمومی Identity (مثلاً /register) - اگر تداخل نداشته باشند
-    ...identityPublicRoutes,
-    
-    // 3. مسیرهای محافظت‌شده با Layout
+    /* مسیر لاگین اختصاصی */
+    { path: "/login", element: <LoginPage /> },
+
+    /* مسیرهای عمومی ماژول Identity (مثل /register) فقط اگر Identity فعال باشد */
+    ...(activeModules.has("Identity")
+      ? identityPublicRoutes.filter((r) => r.path !== "/login") // حذف login duplicate
+      : []),
+
+    /* مسیرهای محافظت‌شده با Layout */
     {
       element: (
         <ProtectedRoute>
@@ -34,12 +36,16 @@ export default function App() {
       ),
       children: [
         { path: "/dashboard", element: <DashboardPage /> },
-        ...identityPanelRoutes, // مسیرهای خصوصی (مثلاً /users)
-        ...authorizationPanelRoutes,
+
+        /* مسیرهای خصوصی Identity */
+        ...(activeModules.has("Identity") ? identityPanelRoutes : []),
+
+        /* مسیرهای خصوصی Authorization */
+        ...(activeModules.has("Authorization") ? authorizationPanelRoutes : []),
       ],
     },
-    
-    // 4. مسیر پیش‌فرض
+
+    /* مسیر پیش‌فرض */
     { path: "*", element: <Navigate to="/dashboard" replace /> },
   ]);
 

@@ -4,6 +4,7 @@ using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
@@ -88,19 +89,22 @@ namespace Audit.Infrastructure.Data
 
             try
             {
-                // 1. ثبت منابع (Resources)
-                // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
-                var resources = GetAuditResourceDefinitions();
-                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
-                logger.LogInformation("✅ Audit resources synced successfully.");
+                if (ModuleHelper.IsActive(ModuleEnum.Authorization))
+                {
+                    // 1. ثبت منابع (Resources)
+                    // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
+                    var resources = GetAuditResourceDefinitions();
+                    await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
+                    logger.LogInformation("✅ Audit resources synced successfully.");
 
-                // 2. ثبت پرمیشن‌ها (Permissions)
-                // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
-                var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    // 2. ثبت پرمیشن‌ها (Permissions)
+                    // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
+                    var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
-                var permissions = GetAuditPermissionDefinitions(adminRoleId);
-                await permissionPublicService.SeedRolePermissionsAsync( permissions, cancellationToken);
-                logger.LogInformation("✅ Audit permissions seeded successfully.");
+                    var permissions = GetAuditPermissionDefinitions(adminRoleId);
+                    await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                    logger.LogInformation("✅ Audit permissions seeded successfully.");
+                }
             }
             catch (Exception ex)
             {
