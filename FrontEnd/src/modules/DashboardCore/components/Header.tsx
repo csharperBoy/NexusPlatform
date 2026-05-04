@@ -3,6 +3,8 @@ import React from 'react';
 import { useAuth } from '@/modules/Identity';
 import { LogoutButton } from '@/modules/Identity/components/Buttons/LogoutButton';
 
+import { useActiveModules } from "@/core/context/ModuleContext";
+
 export interface HeaderProps {
   className?: string;
   /** امکان سفارشی‌سازی کامل هدر */
@@ -10,6 +12,11 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ className = '', render }) => {
+  
+  const { activeModules } = useActiveModules();
+  const authEnabled = activeModules.has("Authorization");
+  const identityEnabled = activeModules.has("Identity");
+
   const { user } = useAuth();
 
   if (render) {
@@ -24,6 +31,12 @@ export const Header: React.FC<HeaderProps> = ({ className = '', render }) => {
       <div className="flex items-center gap-4">
         {/* می‌توانید آیتم‌های دیگری مثل اعلان‌ها اضافه کنید */}
         <LogoutButton className="px-4 py-2 bg-red-500 text-red rounded hover:bg-red-600" />
+      </div>
+
+       <div className="flex items-center gap-4">
+        ماژول های فعال:
+         {authEnabled && <div> auth </div>}
+          {identityEnabled && <div> identity </div>}
       </div>
     </header>
   );
