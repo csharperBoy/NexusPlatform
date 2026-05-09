@@ -37,7 +37,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="flex h-screen bg-gray-100">
       {sidebar}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col ">
         {header}
         {content}
       </div>

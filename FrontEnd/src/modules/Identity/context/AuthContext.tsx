@@ -72,10 +72,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("AuthContext login called with:", data);
   
     setAccessToken(data.accessToken);
+      console.log("AuthContext 2");
     setUser({
       id: data.userId,
       userName: data.userName,
     });
+    
+      console.log("AuthContext 3");
   };
 
   /* ===========================

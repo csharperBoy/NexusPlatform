@@ -20,6 +20,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.ComponentModel.Design;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -72,6 +74,16 @@ namespace Core.Infrastructure.DependencyInjection
         public static IServiceCollection Core_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             #region ثبت ماژول های فعال در کلاس helper
+            services.AddControllers()
+                    .AddJsonOptions(opts =>
+                    {
+                        // این گزینه باعث می‌شود تمام DateTime در خروجی به ISO 8601 تبدیل شود
+                        opts.JsonSerializerOptions.WriteIndented = true;
+                        //opts.JsonSerializerOptions.PropertyNamingPolicy = null; // اگر می‌خواهید snake_case یا camelCase
+                        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); // برای انوم‌ها
+                        // گزینه زیر باعث می‌شود DateTime به رشته ISO 8601 برگردد (default)
+                        // opts.JsonSerializerOptions.Converters.Add(new JsonConverter<DateTime?>(new DateTimeIsoConverter()));
+                    });
 
             services.Configure<ModuleSettings>(
                 configuration.GetSection("Modules"));

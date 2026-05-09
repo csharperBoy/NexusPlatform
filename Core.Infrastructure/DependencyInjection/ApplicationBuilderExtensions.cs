@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -55,7 +56,6 @@ namespace Core.Infrastructure.DependencyInjection
 
             var moduleSettings = app.ApplicationServices.GetRequiredService<IOptions<ModuleSettings>>().Value;
             ModuleHelper.Initialize(moduleSettings);
-
 
 
             app.UseMiddleware<CorrelationIdMiddleware>();

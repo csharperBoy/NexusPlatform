@@ -131,37 +131,57 @@ useEffect(() => {
     }, []);
 
   // بارگذاری اطلاعات در صورت ویرایش
-  useEffect(() => {
-    if (!permissionId) return;
+  // ... در همان useEffect که permission را می‌گیرد
+useEffect(() => {
+  if (!permissionId) return;
 
-    const fetchPermission = async () => {
-      try {
-        setLoading(true);
-        const permission = await permissionApi.getById(permissionId);
-        // اطمینان از اینکه داده‌های بارگذاری شده با نوع UpdatePermissionCommand مطابقت دارند
-        const permissionData: UpdatePermissionCommand = {
-          Id: permission.id,
-          Action: permission.action,
-          AssigneeType:  permission.assigneeType,
-          effect:  permission.effect,
-          AssigneeId: permission.assigneeId,
-          Description: permission.description,
-          scopes: permission.scopes || [],
-          EffectiveFrom: permission.effectiveFrom,
-          ExpiresAt: permission.expiresAt,
-          IsActive: permission.isActive,
-          ResourceId:permission.resourceId
-        };
-        setFormData(permissionData);
-      } catch (err) {
-        console.error("Failed to fetch :", err);
-        setError("خطا در بارگذاری اطلاعات .");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPermission();
-  }, [permissionId]);
+  const fetchPermission = async () => {
+    try {
+      setLoading(true);
+      const permission = await permissionApi.getById(permissionId);
+
+      // تبدیل مقادیر به نوع مورد انتظار فرم
+      const actionNum   = actionMap[permission.action] ?? permission.action;
+      const effectNum   = effectMap[permission.effect] ?? permission.effect;
+      const assignTypeNum   = assignTypeMap[permission.assigneeType] ?? permission.assigneeType;
+      const scopesNum   = Array.isArray(permission.scopes)
+                            ? permission.scopes.map((s: string | number) => {
+                                // اگر string است، به عدد تبدیل کن
+                                if (typeof s === 'string') return scopeMap[s] ?? s;
+                                return s; // اگر عدد بود، همان را برگردان
+                              })
+                            : null;
+
+      const permissionData: UpdatePermissionCommand = {
+        Id: permission.id,
+        Action: actionNum,
+        AssigneeType: assignTypeNum,
+        effect: effectNum,
+        AssigneeId: permission.assigneeId,
+        Description: permission.description,
+        scopes: scopesNum,          // مقادیر عددی
+        EffectiveFrom: permission.effectiveFrom
+          ? new Date(permission.effectiveFrom)
+          : null,
+        ExpiresAt: permission.expiresAt
+          ? new Date(permission.expiresAt)
+          : null,
+        IsActive: permission.isActive,
+        ResourceId: permission.resourceId
+      };
+
+      setFormData(permissionData);
+    } catch (err) {
+      console.error("Failed to fetch :", err);
+      setError("خطا در بارگذاری اطلاعات.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchPermission();
+}, [permissionId]);
+
+
 
   // مدیریت تغییرات فیلدهای فرم
   const handleChange = <K extends keyof PermissionFormCommand>(field: K, value: PermissionFormCommand[K]) => {

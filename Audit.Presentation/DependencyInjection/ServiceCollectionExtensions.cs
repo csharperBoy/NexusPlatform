@@ -1,6 +1,7 @@
 ﻿using Audit.Presentation.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json.Serialization;
 
 namespace Audit.Presentation.DependencyInjection
 {
@@ -10,7 +11,9 @@ namespace Audit.Presentation.DependencyInjection
         {
             services.AddControllers()
                 .AddApplicationPart(typeof(AuditLogsController).Assembly)
-                .AddControllersAsServices();
+                .AddControllersAsServices()
+               ;
+            ;
 
             services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(typeof(AuditLogsController).Assembly));

@@ -1,6 +1,9 @@
 ﻿using Core.Infrastructure.DependencyInjection;
+using Newtonsoft.Json.Converters;
 using Notification.Presentation.Hubs;
 using Serilog;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 try
 {
@@ -17,7 +20,7 @@ try
 
     var configuration = builder.Configuration;
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
-
+   
     var app = builder.Build();
 
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);

@@ -24,7 +24,8 @@ interface PermissionCreateUpdateFormProps {
 
 const toInputDateTime = (date?: Date | null) => {
   if (!date) return "";
-  return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+  // toISOString() already returns UTC. Slice to "YYYY-MM-DDTHH:mm"
+  return date.toISOString().slice(0, 16);
 };
 
 export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProps> = ({
@@ -39,48 +40,38 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
   handleScopesChange,
   handleSubmit,
   handleAssignTypeChange,
-
 }) => {
   return (
-     <Card className="max-w-2xl mx-auto p-6">
-        
-    <form onSubmit={handleSubmit} className="p-4 space-y-4">
-      <h2 className="text-2xl font-bold text-center mb-4">
-        {isEdit ? "ویرایش مجوز" : "افزودن مجوز جدید"}
-      </h2>
+    
+        <Card className="max-w-2xl mx-auto p-6">
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <h2 className="text-2xl font-bold text-center mb-4">
+              {isEdit ? "ویرایش مجوز" : "افزودن مجوز جدید"}
+            </h2>
 
-      {error && <div className="alert alert-error">{error}</div>}
+            {error && <div className="alert alert-error">{error}</div>}
 
-      {/* <div>
-        <label htmlFor="ResourceId">ResourceId:</label>
-        <Input
-          id="ResourceId"
-          type="text"
-          value={formData.ResourceId || ""}
-          onChange={(e) => handleChange("ResourceId", e.target.value)}
-          className="input input-bordered w-full"
-          required={true} // همیشه الزامی است
-        />
-      </div> */}
-      <div className="mb-4">
+            {/* ----- فیلدهای فرم ----- */}
+            <div className="mb-4">
               <label className="block mb-1">منبع</label>
               <select
                 value={formData.ResourceId}
-                onChange={(e) => handleChange('ResourceId',e.target.value)}
+                onChange={(e) => handleChange("ResourceId", e.target.value)}
                 className="w-full p-2 border rounded"
                 disabled={loading}
-                required={true}
+                required
               >
-          
-                 <option value="" disabled>انتخاب کنید...</option>
-                  {resourceList.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.display}
-                    </option>
-                  ))}
-                
+                <option value="" disabled>
+                  انتخاب کنید...
+                </option>
+                {resourceList.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.display}
+                  </option>
+                ))}
               </select>
-       </div>
+            </div>
+
 
        <div className="mb-4">
               <label className="block mb-1">عملیات</label>
@@ -148,17 +139,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
               </select>
        </div>
       
-      {/* <div>
-        <label htmlFor="AssigneeId">AssigneeId :</label>
-        <Input
-          id="AssigneeId"
-          type="text"
-          value={formData.AssigneeId || ""}
-          onChange={(e) => handleChange("AssigneeId", e.target.value)}
-          className="input input-bordered w-full"
-          required={true} // همیشه الزامی است
-        />
-      </div> */}
+ 
 
  <div>
         <label htmlFor="Description"> توضیحات:</label>
@@ -186,23 +167,33 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
 
       
       <div>
-        <label htmlFor="IsActive">تاریخ اعمال:</label>
+        <label htmlFor="EffectiveFrom">تاریخ اعمال:</label>
         <Input
-          id="IsActive"
+          id="EffectiveFrom"
           type="datetime-local"
-          value={toInputDateTime( formData.EffectiveFrom )}
-          onChange={(e) => handleChange("EffectiveFrom", e.target.valueAsDate)}
+          value={toInputDateTime(formData.EffectiveFrom)}
+          onChange={(e) =>
+            handleChange(
+              "EffectiveFrom",
+              e.target.value ? new Date(e.target.value) : null
+            )
+          }
           className="input input-bordered w-full"
         />
       </div>
 
       <div>
-        <label htmlFor="IsActive"> تاریخ انقضا:</label>
+        <label htmlFor="ExpiresAt">تاریخ انقضا:</label>
         <Input
-          id="IsActive"
+          id="ExpiresAt"
           type="datetime-local"
-          value={toInputDateTime(formData.ExpiresAt) }
-          onChange={(e) => handleChange("EffectiveFrom", e.target.valueAsDate)}
+          value={toInputDateTime(formData.ExpiresAt)}
+          onChange={(e) =>
+            handleChange(
+              "ExpiresAt",
+              e.target.value ? new Date(e.target.value) : null
+            )
+          }
           className="input input-bordered w-full"
         />
       </div>
@@ -227,10 +218,20 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         ))}
       </div>
 
-      <Button type="submit" disabled={loading} className="btn btn-primary w-full">
-        {loading ? "در حال پردازش..." : (isEdit ? "ذخیره تغییرات" : "افزودن مجوز")}
-      </Button>
-    </form>
-    </Card>
+      {/* ۴. دکمه‌ی submit */}
+            <Button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary w-full"
+            >
+              {loading
+                ? "در حال پردازش..."
+                : isEdit
+                ? "ذخیره تغییرات"
+                : "افزودن مجوز"}
+            </Button>
+          </form>
+        </Card>
+     
   );
 };

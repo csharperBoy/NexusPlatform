@@ -20,7 +20,7 @@ const ProtectedRoute = ({ children, loadingComponent }: ProtectedRouteProps) => 
     console.log(" ! isAuthenticated");
     return <Navigate to="/login" replace />;
   }
-console.log("  children");
+  console.log("  children");
   return children;
 };
 

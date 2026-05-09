@@ -47,6 +47,7 @@ createPermission: async (data: CreatePermissionCommand): Promise<string> => {
 // ویرایش منبع (PUT)
   updatePermission: async (data: UpdatePermissionCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
+     console.info(data);
     const response = await api.put<boolean>(
       `/api/authorization/admin/permissions/${data.Id}`, data,
       {  withCredentials: true }

@@ -216,7 +216,7 @@ namespace Authorization.Infrastructure.Services
 
                 // انتشار ایونت
                 permission.AddDomainEvent(new PermissionChangedEvent((Guid)request.AssigneeId, (Guid)request.ResourceId));
-
+                await _permissionRepository.UpdateAsync(permission);                
                 await _unitOfWork.SaveChangesAsync();
                 await InvalidatePermissionCachesAsync();
 
@@ -395,7 +395,7 @@ namespace Authorization.Infrastructure.Services
             {
                 Id = permission.Id,
                 ResourceId = permission.ResourceId,
-                ResourceKey = permission.Resource.Key,
+                ResourceKey = permission.Resource?.Key,
                 AssigneeType = permission.AssigneeType,
                 AssigneeId = permission.AssigneeId,
                 Action = permission.Action,
@@ -404,7 +404,7 @@ namespace Authorization.Infrastructure.Services
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                Scopes = permission.Scopes?.Select(p => new ScopeDto
+                Scopes = permission.Scopes == null ? null : permission.Scopes?.Select(p => new ScopeDto
                 {
                     scope = p.scope,
                     PermissionId = p.Id

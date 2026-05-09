@@ -46,7 +46,7 @@ namespace Authorization.Presentation.Controllers.Admin
         /// ✏️ به‌روزرسانی نقش
         /// </summary>
         [HttpPut("{id:guid}")]
-        [AuthorizeResource("authorization.permission", "Edit")]
+        //[AuthorizeResource("authorization.permission", "Edit")]
         public async Task<IActionResult> UpdatePermission(Guid id, [FromBody] UpdatePermissionCommand command)
         {
             var updatedCommand = command with { Id = id };
