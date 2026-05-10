@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.Commands.Resource;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;

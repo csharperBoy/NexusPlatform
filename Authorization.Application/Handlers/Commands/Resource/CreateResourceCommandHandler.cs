@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.DTOs.Resource;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Core.Application.Abstractions.Caching;
 using Core.Shared.Results;
 using MediatR;

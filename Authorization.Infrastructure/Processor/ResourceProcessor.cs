@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.DTOs.Resource;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Processor;
 using Authorization.Domain.Entities;
 using Core.Shared.DTOs.Authorization;
 using System;

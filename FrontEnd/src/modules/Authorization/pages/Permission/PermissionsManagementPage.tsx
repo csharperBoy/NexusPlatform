@@ -26,12 +26,12 @@ const PermissionsManagementPage: React.FC = () => {
     {
       id: 'assigneeType',
       label: 'نوع گیرنده مجوز',
-      accessor: (row) =>assignTypeMap[ row.assigneeType],
+      accessor: (row) => row.assigneeType,
     },
     {
       id: 'effect',
       label: 'مجاز یا غیرمجاز',
-      accessor: (row) => effectMap[ row.effect],
+      accessor: (row) =>  row.effect,
     },
     {
       id: 'actions',      

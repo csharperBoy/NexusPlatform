@@ -58,7 +58,8 @@ namespace Core.Application.Abstractions
        where TEntity : class
        where TKey : IEquatable<TKey>
     {
-        Task<TEntity?> GetByIdAsync(TKey id);
+        //Task<TEntity?> GetByIdAsync(TKey id);
+        Task<TEntity?> GetByIdAsync(TKey id, params Expression<Func<TEntity, object>>[] includes);
         Task<IEnumerable<TEntity>> GetAllAsync();
         Task AddAsync(TEntity entity);
         Task AddRangeAsync(IEnumerable<TEntity> entities);

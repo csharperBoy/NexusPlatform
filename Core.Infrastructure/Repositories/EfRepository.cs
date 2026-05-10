@@ -81,10 +81,27 @@ namespace Core.Infrastructure.Repositories
         // فقط دقت کنید در متد GetByIdAsync و ... از _scopeProcessor استفاده کرده‌اید که عالی است
         // اما حواستان باشد خود ScopeProcessor هم باید برای Permission چک نشود (که در پاسخ قبلی حل کردیم)
 
-        public virtual async Task<TEntity?> GetByIdAsync(TKey id)
+        //public virtual async Task<TEntity?> GetByIdAsync(TKey id)
+        //{
+        //    var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
+        //    return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
+        //}
+        public virtual async Task<TEntity?> GetByIdAsync(TKey id,
+                                                         params Expression<Func<TEntity, object>>[] includes)
         {
+            // ۱. اعمال فیلتر سطوح دسترسی
             var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
-            return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
+
+            // ۲. اضافه کردن Include ها
+            if (includes != null)
+            {
+                foreach (var include in includes)
+                    query = query.Include(include);
+            }
+
+            // ۳. دریافت رکورد بر اساس کلید
+            return await query
+                .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
         }
 
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
@@ -160,9 +177,9 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task<IQueryable<TEntity>> AsQueryable()
         {
             return await _authorizationProcessor.ApplyFilter(_dbSet);
-           
+
         }
-      
+
         public virtual async Task<IQueryable<TEntity>> AsNoTrackingQueryable()
         {
             return await _authorizationProcessor.ApplyFilter(_dbSet.AsNoTracking());
@@ -170,6 +187,6 @@ namespace Core.Infrastructure.Repositories
         }
 
 
-        
+
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.Commands.Permissions;
 using Authorization.Application.DTOs.Permissions;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Authorization.Application.Queries.Permissions;
 using Authorization.Domain.Entities;
 using Authorization.Domain.Enums;
@@ -30,9 +30,10 @@ namespace Authorization.Infrastructure.Services
         private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resourceRepository;
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<PermissionService> _logger;
+        private readonly ICachePublicService _cache;
         //private readonly ICurrentUserService _currentUser;
         private readonly UserDataContext _currentUserContext;
-        private readonly ICachePublicService _cache;
+        private readonly IScopeInternalService _scopeService;
         private readonly string baseCacheKey = "authorization:permission";
 
         //private readonly IRolePublicService _roleService;
@@ -45,9 +46,10 @@ namespace Authorization.Infrastructure.Services
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
-             UserDataContext currentUserContext,
+            UserDataContext currentUserContext,
             //ICurrentUserService currentUser, //IRolePublicService roleService, IUserPublicService userService,
-            ICachePublicService cache)
+            ICachePublicService cache,
+            IScopeInternalService scopeService)
         {
             _permissionRepository = permissionRepository;
             _permissionSpecRepository = permissionSpecRepository;
@@ -58,44 +60,62 @@ namespace Authorization.Infrastructure.Services
             _currentUserContext = currentUserContext;
             //_currentUser = currentUser;
             _cache = cache;
+            _scopeService = scopeService;
             //_roleService = roleService;
             //_userService = userService;
         }
 
-        public async Task<Guid> AssignPermissionAsync(CreatePermissionCommand command)
+        public async Task<Guid> AssignPermissionAsync(
+             Guid ResourceId,
+        Guid AssigneeId,
+        AssigneeType AssigneeType = AssigneeType.User,
+        PermissionAction Action = PermissionAction.Full,
+        PermissionEffect effect = PermissionEffect.allow,
+        bool IsActive = true,
+        DateTime? EffectiveFrom = null,
+        DateTime? ExpiresAt = null,
+        string? Description = null,
+
+        List<ScopeType>? scopes = null
+            )
         {
             try
             {
                 _logger.LogInformation(
                     "Starting permission assignment for {AssigneeType}:{AssigneeId} to resource {ResourceId}",
-                    command.AssigneeType, command.AssigneeId, command.ResourceId);
+                    AssigneeType, AssigneeId, ResourceId);
 
                 // اعتبارسنجی وجود Resource
-                var resource = await _resourceRepository.GetByIdAsync(command.ResourceId);
+                var resource = await _resourceRepository.GetByIdAsync(ResourceId);
                 if (resource == null)
                 {
-                    throw new ArgumentException($"Resource with ID {command.ResourceId} not found");
+                    throw new ArgumentException($"Resource with ID {ResourceId} not found");
                 }
 
                 // بررسی تداخل
-                var hasConflict = await CheckPermissionConflictAsync(command);
+                var hasConflict = await CheckPermissionConflictAsync(
+                      ResourceId,
+                      AssigneeId,
+                      AssigneeType,
+                      Action
+                    );
                 if (hasConflict)
                 {
                     throw new InvalidOperationException(
-                        $"Permission conflict detected for {command.AssigneeType}:{command.AssigneeId} " +
-                        $"on resource {command.ResourceId} with action {command.Action}");
+                        $"Permission conflict detected for {AssigneeType}:{AssigneeId} " +
+                        $"on resource {ResourceId} with action {Action}");
                 }
 
                 // ایجاد Permission جدید
                 var permission = new Permission(
-                    command.ResourceId,
-                    command.AssigneeType,
-                    command.AssigneeId,
-                    command.Action,
-                    command.effect,
-                    command.EffectiveFrom,
-                    command.ExpiresAt,
-                    command.Description,
+                     ResourceId,
+                     AssigneeType,
+                     AssigneeId,
+                     Action,
+                     effect,
+                     EffectiveFrom,
+                     ExpiresAt,
+                     Description,
                     createdBy: _currentUserContext.UserName ?? "system"
                 );
 
@@ -103,17 +123,20 @@ namespace Authorization.Infrastructure.Services
                 await _permissionRepository.AddAsync(permission);
 
                 // انتشار ایونت
-                permission.AddDomainEvent(new PermissionChangedEvent(command.AssigneeId, command.ResourceId));
-
+                permission.AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
                 // ذخیره تغییرات
                 await _unitOfWork.SaveChangesAsync();
 
+                await _scopeService.AddScopesToPermission(permission.Id, scopes);
+
+                await _unitOfWork.SaveChangesAsync();
                 // پاک کردن کش‌های مرتبط
-                await InvalidatePermissionCachesAsync(command.AssigneeId, command.ResourceId);
+                await InvalidatePermissionCachesAsync(AssigneeId, ResourceId);
+                await InvalidatePermissionCachesAsync();
 
                 _logger.LogInformation(
                     "Permission assigned successfully: {PermissionId} for {AssigneeType}:{AssigneeId} to resource {ResourceId}",
-                    permission.Id, command.AssigneeType, command.AssigneeId, command.ResourceId);
+                    permission.Id, AssigneeType, AssigneeId, ResourceId);
 
                 return permission.Id;
             }
@@ -122,7 +145,7 @@ namespace Authorization.Infrastructure.Services
                 _logger.LogError(
                     ex,
                     "Failed to assign permission for {AssigneeType}:{AssigneeId} to resource {ResourceId}",
-                    command.AssigneeType, command.AssigneeId, command.ResourceId);
+                     AssigneeType, AssigneeId, ResourceId);
                 throw;
             }
         }
@@ -153,6 +176,7 @@ namespace Authorization.Infrastructure.Services
 
                 // پاک کردن کش
                 await InvalidatePermissionCachesAsync(assigneeId, resourceId);
+                await InvalidatePermissionCachesAsync();
 
                 _logger.LogInformation("Permission revoked successfully: {PermissionId}", permissionId);
             }
@@ -200,23 +224,33 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task UpdatePermissionAsync(UpdatePermissionCommand request)
+        public async Task UpdatePermissionAsync(Guid Id,
+        Guid? ResourceId = null,
+        AssigneeType? AssigneeType = null,
+        Guid? AssigneeId = null,
+        PermissionAction? Action = null,
+        PermissionEffect? effect = null,
+        DateTime? EffectiveFrom = null,
+        DateTime? ExpiresAt = null,
+        bool? IsActive = null,
+        string? Description = null,
+        List<ScopeType>? scopes = null)
         {
             try
             {
                 _logger.LogInformation(
                     "Starting permission toggle");
 
-                var permission = await _permissionRepository.GetByIdAsync(request.Id);
+                var permission = await _permissionRepository.GetByIdAsync(Id);
                 if (permission == null)
                 {
-                    throw new ArgumentException($"Permission with ID {request.Id} not found");
+                    throw new ArgumentException($"Permission with ID {Id} not found");
                 }
-                permission.ApplyChange(request.ResourceId, request.AssigneeType, request.AssigneeId, request.Action, request.effect, request.EffectiveFrom, request.ExpiresAt, request.IsActive, request.Description);
-
+                permission.ApplyChange(ResourceId, AssigneeType, AssigneeId, Action, effect, EffectiveFrom, ExpiresAt, IsActive, Description);
                 // انتشار ایونت
-                permission.AddDomainEvent(new PermissionChangedEvent((Guid)request.AssigneeId, (Guid)request.ResourceId));
-                await _permissionRepository.UpdateAsync(permission);                
+                permission.AddDomainEvent(new PermissionChangedEvent((Guid)AssigneeId, (Guid)ResourceId));
+                await _permissionRepository.UpdateAsync(permission);
+                await _scopeService.UpdateScopeOfPermission(permission.Id, scopes);
                 await _unitOfWork.SaveChangesAsync();
                 await InvalidatePermissionCachesAsync();
 
@@ -235,7 +269,8 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var permission = await _permissionRepository.GetByIdAsync(permissionId);
+                var permission = await _permissionRepository.GetByIdAsync(permissionId , p=>p.Scopes);
+                
                 if (permission == null)
                 {
                     _logger.LogWarning("Permission not found: {PermissionId}", permissionId);
@@ -276,22 +311,27 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task<bool> CheckPermissionConflictAsync(CreatePermissionCommand command)
+        public async Task<bool> CheckPermissionConflictAsync(
+             Guid ResourceId,
+             Guid AssigneeId,
+             AssigneeType AssigneeType,
+             PermissionAction Action 
+            )
         {
             try
             {
                 var conflictSpec = new PermissionConflictSpec(
-                    command.AssigneeType,
-                    command.AssigneeId,
-                    command.ResourceId,
-                    command.Action);
+                     AssigneeType,
+                     AssigneeId,
+                     ResourceId,
+                     Action);
 
                 var existingPermissions = await _permissionSpecRepository.ListBySpecAsync(conflictSpec);
                 var hasConflict = existingPermissions.Any();
 
                 _logger.LogDebug(
                     "Permission conflict check for {AssigneeType}:{AssigneeId} on {ResourceId}:{Action} = {HasConflict}",
-                    command.AssigneeType, command.AssigneeId, command.ResourceId, command.Action, hasConflict);
+                     AssigneeType, AssigneeId, ResourceId, Action, hasConflict);
 
                 return hasConflict;
             }
@@ -300,7 +340,7 @@ namespace Authorization.Infrastructure.Services
                 _logger.LogError(
                     ex,
                     "Error checking permission conflict for {AssigneeType}:{AssigneeId} on {ResourceId}",
-                    command.AssigneeType, command.AssigneeId, command.ResourceId);
+                     AssigneeType, AssigneeId, ResourceId);
                 throw;
             }
         }
@@ -355,6 +395,7 @@ namespace Authorization.Infrastructure.Services
 
                 // پاک کردن کش
                 await InvalidatePermissionCachesAsync(userId, resource.Id);
+                await InvalidatePermissionCachesAsync();
 
                 _logger.LogInformation(
                     "Permission conflicts resolved successfully for user {UserId} on resource {Resource}",
@@ -369,7 +410,6 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
 
         private async Task InvalidatePermissionCachesAsync(Guid assigneeId, Guid resourceId)
         {
@@ -404,7 +444,7 @@ namespace Authorization.Infrastructure.Services
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                Scopes = permission.Scopes == null ? null : permission.Scopes?.Select(p => new ScopeDto
+                Scopes =  permission.Scopes?.Select(p => new ScopeDto
                 {
                     scope = p.scope,
                     PermissionId = p.Id

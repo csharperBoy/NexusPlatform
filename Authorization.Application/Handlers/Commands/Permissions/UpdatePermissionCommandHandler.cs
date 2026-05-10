@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.Commands.Permissions;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -30,8 +30,8 @@ namespace Authorization.Application.Handlers.Commands.Permissions
             {
                 _logger.LogInformation("Toggling permission ");
 
-                await _permissionService.UpdatePermissionAsync(request);
-
+                await _permissionService.UpdatePermissionAsync(request.Id,request.ResourceId,request.AssigneeType,request.AssigneeId,request.Action,request.effect,request.EffectiveFrom,request.ExpiresAt,request.IsActive,request.Description,request.scopes);
+          
                 _logger.LogInformation(
                     "Permission toggled successfully");
 

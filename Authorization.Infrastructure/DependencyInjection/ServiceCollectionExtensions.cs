@@ -1,4 +1,5 @@
-﻿using Authorization.Application.Interfaces;
+﻿using Authorization.Application.Interfaces.Processor;
+using Authorization.Application.Interfaces.Service;
 using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.HostedServices;
@@ -47,21 +48,29 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<ResourceService>();
             services.AddScoped<PermissionService>();
+            services.AddScoped<ScopeService>();
+
             services.AddScoped<IResourceInternalService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionInternalService>(sp => sp.GetRequiredService<PermissionService>());
+            services.AddScoped<IScopeInternalService>(sp => sp.GetRequiredService<ScopeService>());
+
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
+            services.AddScoped<IScopePublicService>(sp => sp.GetRequiredService<ScopeService>());
 
 
             services.AddTransient(typeof(IRowLevelSecurityProcessor<>), typeof(RowLevelSecurityProcessor<>));
             services.AddTransient<IResourceProcessor, ResourceProcessor>();
+            services.AddTransient<IScopeProcessor, ScopeProcessor>();
             services.AddTransient<IAuthorizationProcessor, AuthorizationProcessor>();
 
             services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<IRepository<AuthorizationDbContext,Scope, Guid>, EfRepository<AuthorizationDbContext, Scope, Guid>>();
            
             services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<ISpecificationRepository<Scope, Guid>, EfSpecificationRepository<AuthorizationDbContext, Scope, Guid>>();
             
 
             services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();

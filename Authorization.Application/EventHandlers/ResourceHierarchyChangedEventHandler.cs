@@ -1,4 +1,4 @@
-﻿using Authorization.Application.Interfaces;
+﻿using Authorization.Application.Interfaces.Service;
 using Authorization.Domain.Events;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Common.Events;

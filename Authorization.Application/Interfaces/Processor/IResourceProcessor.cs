@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Authorization.Application.Interfaces
+namespace Authorization.Application.Interfaces.Processor
 {
     public interface IResourceProcessor
     {

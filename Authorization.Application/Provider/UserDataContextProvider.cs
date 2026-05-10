@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.DTOs.Permissions;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;

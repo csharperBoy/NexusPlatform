@@ -140,18 +140,15 @@ useEffect(() => {
       setLoading(true);
       const permission = await permissionApi.getById(permissionId);
 
-      // تبدیل مقادیر به نوع مورد انتظار فرم
       const actionNum   = actionMap[permission.action] ?? permission.action;
       const effectNum   = effectMap[permission.effect] ?? permission.effect;
       const assignTypeNum   = assignTypeMap[permission.assigneeType] ?? permission.assigneeType;
-      const scopesNum   = Array.isArray(permission.scopes)
-                            ? permission.scopes.map((s: string | number) => {
-                                // اگر string است، به عدد تبدیل کن
-                                if (typeof s === 'string') return scopeMap[s] ?? s;
-                                return s; // اگر عدد بود، همان را برگردان
-                              })
-                            : null;
 
+      const scopesNum = Array.isArray(permission.scopes)
+        ? permission.scopes.map((s: any) =>  scopeMap[s.scope])   // <-- تغییر اصلی
+        : null;
+       console.info('scopesNum: ');
+       console.info(scopesNum);
       const permissionData: UpdatePermissionCommand = {
         Id: permission.id,
         Action: actionNum,
@@ -159,13 +156,9 @@ useEffect(() => {
         effect: effectNum,
         AssigneeId: permission.assigneeId,
         Description: permission.description,
-        scopes: scopesNum,          // مقادیر عددی
-        EffectiveFrom: permission.effectiveFrom
-          ? new Date(permission.effectiveFrom)
-          : null,
-        ExpiresAt: permission.expiresAt
-          ? new Date(permission.expiresAt)
-          : null,
+        scopes: scopesNum,
+        EffectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
+        ExpiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
         IsActive: permission.isActive,
         ResourceId: permission.resourceId
       };
@@ -180,6 +173,7 @@ useEffect(() => {
   };
   fetchPermission();
 }, [permissionId]);
+
 
 
 

@@ -1,4 +1,4 @@
-﻿using Authorization.Application.Interfaces;
+﻿using Authorization.Application.Interfaces.Service;
 using Authorization.Application.Queries.Permissions;
 using Authorization.Domain.Entities;
 using Core.Shared.DTOs.Authorization;

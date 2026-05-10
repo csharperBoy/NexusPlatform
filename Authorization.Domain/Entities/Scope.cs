@@ -20,7 +20,7 @@ namespace Authorization.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
-        public Guid PermissionId { get; private set; }
+        public Guid PermissionId { get;  set; }
         public ScopeType scope { get; set; }
     }
 }

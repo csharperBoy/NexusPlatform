@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.Commands.Permissions;
-using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Service;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -32,7 +32,7 @@ namespace Authorization.Application.Handlers.Commands.Permissions
                     "Assigning permission for {AssigneeType}:{AssigneeId} to resource {ResourceId}",
                     request.AssigneeType, request.AssigneeId, request.ResourceId);
 
-                var permissionId = await _permissionService.AssignPermissionAsync(request);
+                var permissionId = await _permissionService.AssignPermissionAsync(request.ResourceId,request.AssigneeId,request.AssigneeType,request.Action,request.effect,request.IsActive,request.EffectiveFrom,request.ExpiresAt,request.Description,request.scopes);
 
                 _logger.LogInformation(
                     "Permission assigned successfully: {PermissionId}", permissionId);
