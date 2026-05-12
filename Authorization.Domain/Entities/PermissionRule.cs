@@ -23,19 +23,11 @@ namespace Authorization.Domain.Entities
         #endregion
         public Guid PermissionId { get; private set; }
 
-        //public RuleType Type { get; private set; }
-        // Scope
-        // Field
-        // Relation
 
         // For Field
         public string? FieldName { get; private set; }
 
-        // For Relation
-       /* public string? JoinEntity { get; private set; }
-        public string? JoinLocalKey { get; private set; }
-        public string? JoinForeignKey { get; private set; }
-        public string? JoinField { get; private set; }*/
+        
         public Guid? JoinDetailId {  get; private set; }
 
         public ComparisonOperator Operator { get; private set; } // = ، < ، > ، !=
@@ -43,5 +35,65 @@ namespace Authorization.Domain.Entities
 
         public LogicalOperator LogicalOperator { get; private set; } // AND / OR
         public int GroupOrder { get; private set; } // برای Nested Group
+        public virtual JoinDetail? JoinDetail { get; private set; }
+        public virtual Permission Permission { get; private set; } // navigation
+
+        public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator _Operator, string? _Value, LogicalOperator _LogicalOperator, int _GroupOrder,Guid? _JoinDetailId = null)
+        {
+            PermissionId = _PermissionId;
+            FieldName = _FieldName;
+            JoinDetailId = _JoinDetailId;
+            Operator = _Operator;
+            Value = _Value;
+            LogicalOperator = _LogicalOperator;
+            GroupOrder = _GroupOrder;
+        }
+
+        public bool ApplyChange(
+            Guid? _permissionId,
+            string? _fieldName,
+            ComparisonOperator? _comparisonOperator,
+            string? _value,
+            LogicalOperator? _logicalOperator,
+            int? _groupOrder)
+        {
+            bool hasChange = false;
+            // آپدیت فیلدها
+            if (_permissionId != null && _permissionId != this.PermissionId)
+            {
+                this.PermissionId = (Guid)_permissionId;
+                hasChange = true;
+            }
+            if (_fieldName != null && _fieldName != this.FieldName)
+            {
+                this.FieldName = _fieldName;
+                hasChange = true;
+            }
+
+
+            if (_value != null && _value != this.Value)
+            {
+                this.Value = _value;
+                hasChange = true;
+            }
+            if (_logicalOperator != null && _logicalOperator != this.LogicalOperator)
+            {
+                this.LogicalOperator = (LogicalOperator)_logicalOperator;
+                hasChange = true;
+            }
+            if (_groupOrder != null && _groupOrder != this.GroupOrder)
+            {
+                this.GroupOrder =(int)_groupOrder;
+                hasChange = true;
+            }
+            
+            if (hasChange)
+            {
+                Touch();
+            }
+            return hasChange;
+        }
+        private void Touch() => ModifiedAt = DateTime.UtcNow;
+
     }
 }

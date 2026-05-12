@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 namespace Core.Shared.Enums.Authorization
 {
     
-    public enum RuleType : byte
+   /* public enum RuleType : byte
     {
 
         Scope = 1,
         Field = 2,
         Relation = 3
-    }
+    }*/
 }

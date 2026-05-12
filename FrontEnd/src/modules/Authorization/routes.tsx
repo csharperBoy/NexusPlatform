@@ -7,6 +7,9 @@ import ResourceManagementPage from "./pages/Resource/ResourceManagementPage";
 import PermissionCreatePage from "./pages/Permission/PermissionCreatePage";
 import PermissionsManagementPage from "./pages/Permission/PermissionsManagementPage";
 import PermissionUpdatePage from "./pages/Permission/PermissionUpdatePage";
+import PermissionRuleCreatePage from "./pages/PermissionRule/PermissionRuleCreatePage";
+import PermissionRuleUpdatePage from "./pages/PermissionRule/PermissionRuleUpdatePage";
+import PermissionRulesManagementPage from "./pages/PermissionRule/PermissionRulesManagemetPage";
 
 export const authorizationPublicRoutes: RouteObject[] = [
   
@@ -22,4 +25,9 @@ export const authorizationPanelRoutes: RouteObject[] = [
   { path: "permissions/create/:resourceId", element: <PermissionCreatePage /> }, 
   { path: "permissions/edit/:id", element: <PermissionUpdatePage /> }, 
   { path: "permissions", element: <PermissionsManagementPage /> },
+
+  { path: "permissionRules/create", element: <PermissionRuleCreatePage /> },   
+  { path: "permissionRules/create/:permissionId", element: <PermissionRuleCreatePage /> }, 
+  { path: "permissionRules/edit/:id", element: <PermissionRuleUpdatePage /> }, 
+  { path: "permissionRules", element: <PermissionRulesManagementPage /> },
 ];

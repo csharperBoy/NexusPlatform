@@ -23,5 +23,7 @@ namespace Authorization.Domain.Entities
         public string JoinLocalKey { get; private set; }
         public string JoinForeignKey { get; private set; }
         public string JoinEntity { get; private set; }
+        public virtual PermissionRule PermissionRule { get; private set; } // navigation
+
     }
 }

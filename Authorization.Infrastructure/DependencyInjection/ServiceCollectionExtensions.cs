@@ -48,14 +48,17 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<ResourceService>();
             services.AddScoped<PermissionService>();
+            services.AddScoped<PermissionRuleService>();
             services.AddScoped<ScopeService>();
 
             services.AddScoped<IResourceInternalService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionInternalService>(sp => sp.GetRequiredService<PermissionService>());
+            services.AddScoped<IPermissionRuleInternalService>(sp => sp.GetRequiredService<PermissionRuleService>());
             services.AddScoped<IScopeInternalService>(sp => sp.GetRequiredService<ScopeService>());
 
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
+            services.AddScoped<IPermissionRulePublicService>(sp => sp.GetRequiredService<PermissionRuleService>());
             services.AddScoped<IScopePublicService>(sp => sp.GetRequiredService<ScopeService>());
 
 
@@ -66,10 +69,12 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<IRepository<AuthorizationDbContext,PermissionRule, Guid>, EfRepository<AuthorizationDbContext, PermissionRule, Guid>>();
             services.AddScoped<IRepository<AuthorizationDbContext,Scope, Guid>, EfRepository<AuthorizationDbContext, Scope, Guid>>();
            
             services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<ISpecificationRepository<PermissionRule, Guid>, EfSpecificationRepository<AuthorizationDbContext, PermissionRule, Guid>>();
             services.AddScoped<ISpecificationRepository<Scope, Guid>, EfSpecificationRepository<AuthorizationDbContext, Scope, Guid>>();
             
 
