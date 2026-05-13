@@ -10,6 +10,10 @@ export interface CreatePermissionRuleCommand {
   logicalOperator?: LogicalOperator;
   groupOrder?: number;           
   permissionId: string;     
+
+  joinLocalKey: string;
+  joinForeignKey: string;
+  joinEntity: string;
 }
 
 export type UpdatePermissionRuleCommand = {
@@ -21,6 +25,11 @@ export type UpdatePermissionRuleCommand = {
   logicalOperator?: LogicalOperator | null;
   groupOrder?: number | null;
   permissionId?: string | null;    
+
+  
+  joinLocalKey?: string | null; 
+  joinForeignKey?: string | null; 
+  joinEntity?: string | null; 
 } & Partial<CreatePermissionRuleCommand>;
 
 

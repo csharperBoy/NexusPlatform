@@ -1,3 +1,5 @@
+import { PermissionRuleDto } from "./PermissionRuleDto";
+
 // src/modules/Authorization/models/PermissionDto.ts
 export interface PermissionDto {
   id: string;
@@ -12,5 +14,7 @@ export interface PermissionDto {
   expiresAt: Date;
   isActive: boolean;
   scopes: number[];
+  
+  rules: PermissionRuleDto[]; 
 } 
  

@@ -6,6 +6,7 @@ import { usePermissionCreateUpdateForm } from '../../hooks/Forms/Permission/useP
 import LoadingIndicator from '@/core/components/LoadingIndicator'; // کامپوننت لودینگ
 import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand } from '../../models/PermissionCommands'; // مدل‌های یکپارچه شده
 import { SelectionListDto } from '@/core/models/SelectionListDto';
+import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
 
 // --- تعریف اینترفیس‌ها ---
 
@@ -26,6 +27,11 @@ export interface RenderFormProps {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   handleAssignTypeChange: (newAssignType: number)  => void;
   isEdit: boolean; // اضافه شد برای اینکه بدانیم در حالت ویرایش هستیم یا ایجاد
+
+   handleAddRule: () => void;
+  handleRemoveRule: (index: number) => void;
+  handleRuleChange: <K extends keyof PermissionRuleFormCommand>(index: number, field: K, value: PermissionRuleFormCommand[K]) => void;
+
 }
 
 // اینترفیس Props کامپوننت والد IPermissionCreateUpdatePage
