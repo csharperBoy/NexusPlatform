@@ -37,6 +37,7 @@ namespace Authorization.Domain.Entities
         public int GroupOrder { get; private set; } // برای Nested Group
         public virtual JoinDetail? JoinDetail { get; private set; }
         public virtual Permission Permission { get; private set; } // navigation
+        protected PermissionRule() { }
 
         public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator _Operator, string? _Value, LogicalOperator _LogicalOperator, int _GroupOrder,Guid? _JoinDetailId = null)
         {
