@@ -19,24 +19,25 @@ namespace Core.Shared.DTOs.Authorization
     public class PermissionDto
     {
         public Guid Id { get; init; }
-        public AssigneeType AssigneeType { get;  set; }
-        public Guid AssigneeId { get;  set; } 
-        public Guid ResourceId { get;  set; }
-        public string ResourceKey { get;  set; }
+        public AssigneeType AssigneeType { get; set; }
+        public Guid AssigneeId { get; set; }
+        public Guid ResourceId { get; set; }
+        public string ResourceKey { get; set; }
         public PermissionAction Action { get; set; }
 
-        public PermissionEffect Effect { get;  set; }  // برای Deny یا allow کردن
+        public PermissionEffect Effect { get; set; }  // برای Deny یا allow کردن
 
 
         public DateTime? EffectiveFrom { get; set; }
-        public DateTime? ExpiresAt { get;   set; }
+        public DateTime? ExpiresAt { get; set; }
 
-        public string? Description { get;   set; }
+        public string? Description { get; set; }
         public bool IsActive { get; set; }
 
 
 
         public List<ScopeDto>? Scopes { get; set; } = new();
+        public List<PermissionRuleDto>? rules { get; set; } = new();
         //public List<PermissionRuleDto> Rules { get; set; } = new();
         public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
         {

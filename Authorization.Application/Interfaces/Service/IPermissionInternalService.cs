@@ -28,7 +28,8 @@ namespace Authorization.Application.Interfaces.Service
         DateTime? ExpiresAt = null,
         string? Description = null,
 
-        List<ScopeType>? scopes = null
+        List<ScopeType>? scopes = null,
+        List<PermissionRuleDto>? rules = null
             );
         Task RevokePermissionAsync(Guid permissionId);
         Task DeletePermissionAsync(Guid permissionId);

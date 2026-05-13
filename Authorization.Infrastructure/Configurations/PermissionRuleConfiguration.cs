@@ -20,10 +20,10 @@ namespace Authorization.Infrastructure.Configurations
             builder.ToTable("PermissionRules", "authorization");
 
             //relation
-            builder.HasOne(pr => pr.JoinDetail)
-                   .WithOne(jd => jd.PermissionRule)
-                   .HasForeignKey<JoinDetail>(jd => jd.PermissionRuleId)
-                   .OnDelete(DeleteBehavior.Cascade); // یا Cascade اگر می‌خواهید JoinDetail هم حذف شود
+            //builder.HasOne(pr => pr.JoinDetail)
+            //       .WithOne(jd => jd.PermissionRule)
+            //       .HasForeignKey<JoinDetail>(jd => jd.PermissionRuleId)
+            //       .OnDelete(DeleteBehavior.Cascade); // یا Cascade اگر می‌خواهید JoinDetail هم حذف شود
 
 
             builder.HasKey(ds => ds.Id);

@@ -45,7 +45,7 @@ namespace Authorization.Domain.Entities
 
         // Navigation
         public virtual Resource Resource { get; private set; } = null!;
-        public virtual ICollection<PermissionRule> Rules { get; private set; }
+        public virtual ICollection<PermissionRule>? Rules { get; private set; }
 
         public virtual ICollection<Scope> Scopes { get; private set; }
         [NotMapped]

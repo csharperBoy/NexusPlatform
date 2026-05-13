@@ -1,5 +1,6 @@
 ﻿using Authorization.Application.Commands.Permissions;
 using Authorization.Application.DTOs.Permissions;
+using Authorization.Application.Interfaces.Processor;
 using Authorization.Application.Interfaces.Service;
 using Authorization.Application.Queries.Permissions;
 using Authorization.Domain.Entities;
@@ -31,13 +32,17 @@ namespace Authorization.Infrastructure.Services
         private readonly IUnitOfWork<AuthorizationDbContext> _unitOfWork;
         private readonly ILogger<PermissionService> _logger;
         private readonly ICachePublicService _cache;
-        //private readonly ICurrentUserService _currentUser;
         private readonly UserDataContext _currentUserContext;
-        private readonly IScopeInternalService _scopeService;
+
+        private readonly IRepository<AuthorizationDbContext, Scope, Guid> _scopeRepository;
+        private readonly ISpecificationRepository<Scope, Guid> _scopeSpecRepository;
+        private readonly IScopeProcessor _scopeProcessor;
+
+        private readonly IRepository<AuthorizationDbContext, PermissionRule, Guid> _permissionRuleRepository;
+        private readonly ISpecificationRepository<PermissionRule, Guid> _permissionRuleSpecRepository;
+
         private readonly string baseCacheKey = "authorization:permission";
 
-        //private readonly IRolePublicService _roleService;
-        //private readonly IUserPublicService _userService;
 
         public PermissionService(
             IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
@@ -47,9 +52,14 @@ namespace Authorization.Infrastructure.Services
             IUnitOfWork<AuthorizationDbContext> unitOfWork,
             ILogger<PermissionService> logger,
             UserDataContext currentUserContext,
-            //ICurrentUserService currentUser, //IRolePublicService roleService, IUserPublicService userService,
             ICachePublicService cache,
-            IScopeInternalService scopeService)
+            IScopeProcessor scopeProcessor,
+            IRepository<AuthorizationDbContext, Scope, Guid> scopeRepository,
+            ISpecificationRepository<Scope, Guid> scopeSpecRepository,
+            IRepository<AuthorizationDbContext, PermissionRule, Guid> permissionRuleRepository,
+            ISpecificationRepository<PermissionRule, Guid> permissionRuleSpecRepository
+
+         )
         {
             _permissionRepository = permissionRepository;
             _permissionSpecRepository = permissionSpecRepository;
@@ -58,13 +68,245 @@ namespace Authorization.Infrastructure.Services
             _unitOfWork = unitOfWork;
             _logger = logger;
             _currentUserContext = currentUserContext;
-            //_currentUser = currentUser;
             _cache = cache;
-            _scopeService = scopeService;
-            //_roleService = roleService;
-            //_userService = userService;
+            _scopeProcessor = scopeProcessor;
+            _scopeRepository = scopeRepository;
+            _scopeSpecRepository = scopeSpecRepository;
+            _permissionRuleRepository = permissionRuleRepository;
+            _permissionRuleSpecRepository = permissionRuleSpecRepository;
+
+        }
+        #region Rule
+        //private async Task<Guid> CreateRuleAsync(Guid permissionId, string fieldName, ComparisonOperator comparisonOperator, string? value, LogicalOperator logicalOperator, int groupOrder)
+        //{
+        //    try
+        //    {
+        //        _logger.LogInformation(
+        //            "Starting permission Rule create ");
+
+
+        //        // ایجاد Permission جدید
+        //        var permissionRule = new PermissionRule(
+        //             permissionId,
+        //             fieldName,
+        //             comparisonOperator,
+        //             value,
+        //             logicalOperator,
+        //             groupOrder
+
+        //        );
+
+        //        // ذخیره در Repository
+        //        await _permissionRuleRepository.AddAsync(permissionRule);
+
+        //        // انتشار ایونت
+        //        //permissionRule.AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
+        //        // ذخیره تغییرات
+        //        await _unitOfWork.SaveChangesAsync();
+        //        /*
+        //        await _scopeService.AddScopesToPermission(permission.Id, scopes);
+
+        //        await _unitOfWork.SaveChangesAsync();
+        //        // پاک کردن کش‌های مرتبط
+        //        await InvalidatePermissionCachesAsync(AssigneeId, ResourceId);
+        //        */
+        //        await InvalidatePermissionCachesAsync();
+        //        _logger.LogInformation(
+        //            "Permission rule create successfully");
+
+        //        return permissionRule.Id;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(
+        //            ex,
+        //            "Failed to create permission rule ");
+        //        throw;
+        //    }
+        //}
+        ////private async Task CreateRuleRangeAsync(Guid permissionId, List<PermissionRule> rules)
+        //{
+        //    try
+        //    {
+
+
+        //        // ذخیره در Repository
+        //        await _permissionRuleRepository.AddRangeAsync(rules);
+
+        //        // ذخیره تغییرات
+        //        await _unitOfWork.SaveChangesAsync();
+
+        //        await InvalidatePermissionCachesAsync();
+        //        _logger.LogInformation(
+        //            "Permission rule create successfully");
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(
+        //            ex,
+        //            "Failed to create permission rule ");
+        //        throw;
+        //    }
+        //}
+
+        private async Task DeletePermissionRuleAsync(Guid id)
+        {
+            try
+            {
+                _logger.LogInformation("Starting permissionRule Delete : {id}", id);
+
+                await _permissionRuleRepository.DeleteAsync(id);
+
+                // ذخیره تغییرات
+                await _unitOfWork.SaveChangesAsync();
+
+                // پاک کردن کش
+                await InvalidatePermissionCachesAsync();
+
+                _logger.LogInformation("Permission Rule Delete successfully: {id}", id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed Permission Rule Delete : {id}", id);
+                throw;
+            }
         }
 
+        private async Task<PermissionRuleDto?> PermissionRuleGetById(Guid id)
+        {
+            try
+            {
+                var permission = await _permissionRuleRepository.GetByIdAsync(id);
+
+                if (permission == null)
+                {
+                    _logger.LogWarning("PermissionRule not found: {id}", id);
+                    return null;
+                }
+
+                PermissionRuleDto dto = MapToDto(permission);
+                _logger.LogDebug("Retrieved permissionRule: {id}", id);
+
+                return dto;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving permission: {id}", id);
+                throw;
+            }
+        }
+
+        private PermissionRuleDto MapToDto(PermissionRule model)
+        {
+
+            return new PermissionRuleDto()
+            {
+                Id = model.Id,
+                PermissionId = model.PermissionId,
+                FieldName = model.FieldName,
+                GroupOrder = model.GroupOrder,
+                Operator = model.Operator,
+                LogicalOperator = model.LogicalOperator,
+                Value = model.Value,
+                JoinEntity = model.JoinEntity,
+                JoinForeignKey = model.JoinForeignKey,
+                JoinLocalKey = model.JoinLocalKey,
+            };
+
+        }
+
+        private async Task<IReadOnlyList<PermissionRuleDto>> GetPermissionRules(Guid? permissionId)
+        {
+            var cacheKey = $"{baseCacheKey}:full";
+            var cached = await _cache.GetAsync<IReadOnlyList<PermissionRuleDto>>(cacheKey);
+            if (cached != null)
+            {
+                _logger.LogDebug("Cache hit for full resource tree");
+                return cached;
+            }
+            var spec = new GetPermissionRulesSpec(permissionId);
+            var permissions = await _permissionRuleSpecRepository.ListBySpecAsync(spec);
+
+
+            var result = permissions.Select(MapToDto).ToList();
+
+
+            await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
+            return result;
+        }
+
+        private async Task UpdatePermissionRuleAsync(Guid id, Guid? permissionId, string? fieldName, ComparisonOperator? comparisonOperator, string? value, LogicalOperator? logicalOperator, int? groupOrder,
+             string? joinLocalKey,
+            string? joinForeignKey,
+            string? joinEntity)
+        {
+            try
+            {
+                _logger.LogInformation(
+                    "Starting permission rule update");
+
+                var permissionRule = await _permissionRuleRepository.GetByIdAsync(id);
+                if (permissionRule == null)
+                {
+                    throw new ArgumentException($"Permission with ID {id} not found");
+                }
+                permissionRule.ApplyChange(permissionId, fieldName, comparisonOperator, value, logicalOperator, groupOrder,
+                     joinLocalKey,
+                    joinForeignKey,
+                    joinEntity
+
+                    );
+                // انتشار ایونت
+                //permissionRule.AddDomainEvent(new PermissionChangedEvent((Guid)AssigneeId, (Guid)ResourceId));
+                await _permissionRuleRepository.UpdateAsync(permissionRule);
+                await _unitOfWork.SaveChangesAsync();
+                await InvalidatePermissionCachesAsync();
+
+                _logger.LogInformation("Permission rule update successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to update permission rule");
+                throw;
+            }
+        }
+
+        #endregion
+        #region Scope
+        private async Task UpdateScopeOfPermission(Guid permissionId, List<ScopeType>? newScopes)
+        {
+            var existScopeList = await GetPermissionScopesList(permissionId);
+            //bool isEqual = await _scopeProcessor.compareTwoScopeList(existScopeList.Select(s => s.scope).ToList(), newScopes);
+            if (!existScopeList.Equals(newScopes))
+            {
+                await _scopeRepository.RemoveRangeAsync(existScopeList);
+                await AddScopesToPermission(permissionId, newScopes);
+
+            }
+
+        }
+
+
+        private async Task AddScopesToPermission(Guid permissionId, List<ScopeType>? scopes)
+        {
+            List<Scope> newList = scopes.Select(s => new Scope
+            {
+                scope = s,
+                PermissionId = permissionId
+            }).ToList();
+            await _scopeRepository.AddRangeAsync(newList);
+        }
+
+
+        private async Task<List<Scope>> GetPermissionScopesList(Guid permissionId)
+        {
+            var list = await _scopeSpecRepository.ListBySpecAsync(new GetScopesByPermissionIdSpec(permissionId));
+            return list.ToList();
+        }
+        #endregion
         public async Task<Guid> AssignPermissionAsync(
              Guid ResourceId,
         Guid AssigneeId,
@@ -76,7 +318,8 @@ namespace Authorization.Infrastructure.Services
         DateTime? ExpiresAt = null,
         string? Description = null,
 
-        List<ScopeType>? scopes = null
+        List<ScopeType>? scopes = null,
+        List<PermissionRuleDto>? rules = null
             )
         {
             try
@@ -122,13 +365,15 @@ namespace Authorization.Infrastructure.Services
                 // ذخیره در Repository
                 await _permissionRepository.AddAsync(permission);
 
+                // ذخیره تغییرات
+                await AddScopesToPermission(permission.Id, scopes);
+                if (permission.Rules != null)
+                {
+                    await _permissionRuleRepository.AddRangeAsync(permission.Rules.Select(r => new PermissionRule(permission.Id, r.FieldName, r.Operator, r.Value, r.LogicalOperator, r.GroupOrder, r.JoinLocalKey, r.JoinForeignKey, r.JoinEntity)));
+                }
+
                 // انتشار ایونت
                 permission.AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
-                // ذخیره تغییرات
-                await _unitOfWork.SaveChangesAsync();
-
-                await _scopeService.AddScopesToPermission(permission.Id, scopes);
-
                 await _unitOfWork.SaveChangesAsync();
                 // پاک کردن کش‌های مرتبط
                 await InvalidatePermissionCachesAsync(AssigneeId, ResourceId);
@@ -250,7 +495,7 @@ namespace Authorization.Infrastructure.Services
                 // انتشار ایونت
                 permission.AddDomainEvent(new PermissionChangedEvent((Guid)AssigneeId, (Guid)ResourceId));
                 await _permissionRepository.UpdateAsync(permission);
-                await _scopeService.UpdateScopeOfPermission(permission.Id, scopes);
+                await UpdateScopeOfPermission(permission.Id, scopes);
                 await _unitOfWork.SaveChangesAsync();
                 await InvalidatePermissionCachesAsync();
 
@@ -269,8 +514,8 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var permission = await _permissionRepository.GetByIdAsync(permissionId , p=>p.Scopes);
-                
+                var permission = await _permissionRepository.GetByIdAsync(permissionId, p => p.Scopes);
+
                 if (permission == null)
                 {
                     _logger.LogWarning("Permission not found: {PermissionId}", permissionId);
@@ -315,7 +560,7 @@ namespace Authorization.Infrastructure.Services
              Guid ResourceId,
              Guid AssigneeId,
              AssigneeType AssigneeType,
-             PermissionAction Action 
+             PermissionAction Action
             )
         {
             try
@@ -444,7 +689,7 @@ namespace Authorization.Infrastructure.Services
                 EffectiveFrom = permission.EffectiveFrom,
                 ExpiresAt = permission.ExpiresAt,
                 Description = permission.Description,
-                Scopes =  permission.Scopes?.Select(p => new ScopeDto
+                Scopes = permission.Scopes?.Select(p => new ScopeDto
                 {
                     scope = p.scope,
                     PermissionId = p.Id

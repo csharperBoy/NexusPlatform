@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.PermissionRule
-{
+{/*
     public class GetPermissionRuleByIdQueryHandler
 : IRequestHandler<GetPermissionRuleByIdQuery, Result<PermissionRuleDto>>
     {
@@ -51,5 +51,5 @@ namespace Authorization.Application.Handlers.Queries.PermissionRule
                 return Result<PermissionRuleDto>.Fail(ex.Message);
             }
         }
-    }
+    }*/
 }

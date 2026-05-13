@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.PermissionRule
-{
+{/*
     public class GetPermissionRulesQueryHandler : IRequestHandler<GetPermissionRulesQuery, Result<IList<PermissionRuleDto>>>
     {
         private readonly IPermissionRuleInternalService _permissionRuleService;
@@ -24,5 +24,5 @@ namespace Authorization.Application.Handlers.Queries.PermissionRule
             return Result<IList<PermissionRuleDto>>.Ok(permissionRules.ToList());
         }
     }
-
+    */
 }

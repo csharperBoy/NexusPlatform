@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Queries.PermissionRule
-{
+{/*
     public record GetPermissionRulesQuery(
         Guid? permissionId = null) : IRequest<Result<IList<PermissionRuleDto>>>;
-
+    */
 }

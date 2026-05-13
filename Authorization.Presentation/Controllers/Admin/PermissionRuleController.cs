@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Presentation.Controllers.Admin
 {
-   
+   /*
     [ApiController]
     [Route("api/authorization/admin/[controller]")]
     //[Authorize(Policy = "RequireAdminRole")]
@@ -70,5 +70,5 @@ namespace Authorization.Presentation.Controllers.Admin
         #endregion
         
     }
-
+   */
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Authorization.Domain.Entities
 {
 
-    [SecuredResource("Authorization.JoinDetail")]
+    /*[SecuredResource("Authorization.JoinDetail")]
     public class JoinDetail : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
@@ -25,5 +25,5 @@ namespace Authorization.Domain.Entities
         public string JoinEntity { get; private set; }
         public virtual PermissionRule PermissionRule { get; private set; } // navigation
 
-    }
+    }*/
 }

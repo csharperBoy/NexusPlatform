@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Commands.PermissionRule
 {
-    public record CreatePermissionRuleCommand
+ /*   public record CreatePermissionRuleCommand
      (
      Guid PermissionId,
      string FieldName,
@@ -23,5 +23,5 @@ namespace Authorization.Application.Commands.PermissionRule
      //JoinDetailDto? JoinDetail = null // لیست محدوده های مجاز یا غیر مجاز
 
  ) : IRequest<Result<Guid>>;
-
+ */
 }

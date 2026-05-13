@@ -1,4 +1,5 @@
-﻿using Core.Shared.Enums;
+﻿using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 using MediatR;
@@ -28,6 +29,7 @@ namespace Authorization.Application.Commands.Permissions
         bool? IsActive = null,
         string? Description = null,
 
-        List<ScopeType>? scopes = null
+        List<ScopeType>? scopes = null,
+         List<PermissionRuleDto>? rules = null
     ) : IRequest<Result<bool>>;
 }

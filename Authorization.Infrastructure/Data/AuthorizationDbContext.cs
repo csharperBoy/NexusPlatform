@@ -32,7 +32,7 @@ namespace Authorization.Infrastructure.Data
         public DbSet<Resource> Resources { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<PermissionRule> PermissionRules { get; set; } = null!;
-        public DbSet<JoinDetail> JoinDetails { get; set; } = null!;
+        //public DbSet<JoinDetail> JoinDetails { get; set; } = null!;
         public DbSet<Scope> Scopes { get; set; } = null!;
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
@@ -44,7 +44,7 @@ namespace Authorization.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new ResourceConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionRuleConfiguration());
-            modelBuilder.ApplyConfiguration(new JoinDetailConfiguration());
+            //modelBuilder.ApplyConfiguration(new JoinDetailConfiguration());
             modelBuilder.ApplyConfiguration(new ScopeConfiguration());
         }
     }

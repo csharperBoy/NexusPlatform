@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Commands.PermissionRule
-{
+{/*
     public record UpdatePermissionRuleCommand(
      Guid Id,
      Guid? PermissionId,
@@ -18,5 +18,5 @@ namespace Authorization.Application.Commands.PermissionRule
      string? Value,
      LogicalOperator? LogicalOperator,
      int? GroupOrder
-   ) : IRequest<Result<bool>>;
+   ) : IRequest<Result<bool>>;*/
 }

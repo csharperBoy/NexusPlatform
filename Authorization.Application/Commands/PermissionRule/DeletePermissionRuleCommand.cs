@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Commands.PermissionRule
 {
-    public record DeletePermissionRuleCommand(
+  /*  public record DeletePermissionRuleCommand(
        Guid Id
-   ) : IRequest<Result<bool>>;
+   ) : IRequest<Result<bool>>;*/
 }

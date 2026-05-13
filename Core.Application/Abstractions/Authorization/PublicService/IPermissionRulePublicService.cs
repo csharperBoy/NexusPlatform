@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.Authorization.PublicService
 {
-    public interface IPermissionRulePublicService
+   /* public interface IPermissionRulePublicService
     {
-    }
+    }*/
 }

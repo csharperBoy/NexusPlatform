@@ -48,17 +48,17 @@ namespace Authorization.Infrastructure.DependencyInjection
 
             services.AddScoped<ResourceService>();
             services.AddScoped<PermissionService>();
-            services.AddScoped<PermissionRuleService>();
+            //services.AddScoped<PermissionRuleService>();
             services.AddScoped<ScopeService>();
 
             services.AddScoped<IResourceInternalService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionInternalService>(sp => sp.GetRequiredService<PermissionService>());
-            services.AddScoped<IPermissionRuleInternalService>(sp => sp.GetRequiredService<PermissionRuleService>());
+            //services.AddScoped<IPermissionRuleInternalService>(sp => sp.GetRequiredService<PermissionRuleService>());
             services.AddScoped<IScopeInternalService>(sp => sp.GetRequiredService<ScopeService>());
 
             services.AddScoped<IResourcePublicService>(sp => sp.GetRequiredService<ResourceService>());
             services.AddScoped<IPermissionPublicService>(sp => sp.GetRequiredService<PermissionService>());
-            services.AddScoped<IPermissionRulePublicService>(sp => sp.GetRequiredService<PermissionRuleService>());
+            //services.AddScoped<IPermissionRulePublicService>(sp => sp.GetRequiredService<PermissionRuleService>());
             services.AddScoped<IScopePublicService>(sp => sp.GetRequiredService<ScopeService>());
 
 

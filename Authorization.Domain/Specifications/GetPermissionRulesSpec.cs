@@ -16,7 +16,7 @@ namespace Authorization.Domain.Specifications
             : base(p =>
                         (permissionId == null || p.PermissionId == permissionId))
         {
-            AddInclude(p => p.JoinDetail);
+            //AddInclude(p => p.JoinDetail);
             ApplyOrderBy(p => p.GroupOrder);
             ApplyThenOrderBy(p => p.Id);
         }

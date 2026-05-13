@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Services
 {
-    public class PermissionRuleService : IPermissionRuleInternalService
+  /*  public class PermissionRuleService : IPermissionRuleInternalService
     {
         private readonly IRepository<AuthorizationDbContext, PermissionRule, Guid> _permissionRuleRepository;
         private readonly ISpecificationRepository<PermissionRule, Guid> _permissionRuleSpecRepository;
@@ -71,13 +71,7 @@ namespace Authorization.Infrastructure.Services
                 //permissionRule.AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
                 // ذخیره تغییرات
                 await _unitOfWork.SaveChangesAsync();
-                /*
-                await _scopeService.AddScopesToPermission(permission.Id, scopes);
-
-                await _unitOfWork.SaveChangesAsync();
-                // پاک کردن کش‌های مرتبط
-                await InvalidatePermissionCachesAsync(AssigneeId, ResourceId);
-                */
+               
                 await InvalidatePermissionRuleCachesAsync();
                 _logger.LogInformation(
                     "Permission rule create successfully");
@@ -132,7 +126,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var permission = await _permissionRuleRepository.GetByIdAsync(id, p => p.JoinDetail);
+                var permission = await _permissionRuleRepository.GetByIdAsync(id);
 
                 if (permission == null)
                 {
@@ -164,9 +158,9 @@ namespace Authorization.Infrastructure.Services
                 Operator = model.Operator,
                 LogicalOperator = model.LogicalOperator,
                 Value = model.Value,
-                JoinEntity = model.JoinDetail?.JoinEntity,
-                JoinForeignKey = model.JoinDetail?.JoinForeignKey,
-                JoinLocalKey = model.JoinDetail?.JoinLocalKey,
+                JoinEntity = model.JoinEntity,
+                JoinForeignKey = model.JoinForeignKey,
+                JoinLocalKey = model.JoinLocalKey,
             };
         
         }
@@ -221,4 +215,4 @@ namespace Authorization.Infrastructure.Services
             }
         }
     }
-}
+*/}

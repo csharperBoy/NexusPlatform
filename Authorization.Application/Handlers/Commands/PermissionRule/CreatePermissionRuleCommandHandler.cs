@@ -14,7 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.PermissionRule
-{
+{/*
     public class CreatePermissionRuleCommandHandler : IRequestHandler<CreatePermissionRuleCommand, Result<Guid>>
     {
         private readonly IPermissionRuleInternalService _permissionRuleService;
@@ -61,5 +61,5 @@ namespace Authorization.Application.Handlers.Commands.PermissionRule
             }
         }
     }
-
+    */
 }

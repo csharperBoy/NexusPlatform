@@ -10,10 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.PermissionRule
-{
-    internal class UpdatePermissionRuleRuleCommandHandler
-    {
-    }
+{/*
     public class UpdatePermissionRuleCommandHandler : IRequestHandler<UpdatePermissionRuleCommand, Result<bool>>
     {
         private readonly IPermissionRuleInternalService _permissionRuleService;
@@ -56,5 +53,5 @@ namespace Authorization.Application.Handlers.Commands.PermissionRule
                 return Result<bool>.Fail(ex.Message);
             }
         }
-    }
+    }*/
 }

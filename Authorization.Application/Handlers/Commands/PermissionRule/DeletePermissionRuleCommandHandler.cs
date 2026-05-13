@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Commands.PermissionRule
 {
-    
+    /*
     public class DeletePermissionRuleCommandHandler : IRequestHandler<DeletePermissionRuleCommand, Result<bool>>
     {
         private readonly IPermissionRuleInternalService _permissionRuleService;
@@ -44,5 +44,5 @@ namespace Authorization.Application.Handlers.Commands.PermissionRule
             }
         }
     }
-
+    */
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Application.Queries.PermissionRule
 {
-    public record GetPermissionRuleByIdQuery(Guid Id)
+    /*public record GetPermissionRuleByIdQuery(Guid Id)
        : IRequest<Result<PermissionRuleDto>>;
-
+    */
 }

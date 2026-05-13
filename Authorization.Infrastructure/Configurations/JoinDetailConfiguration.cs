@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Configurations
 {
-    public class JoinDetailConfiguration : BaseConfiguration<JoinDetail>
+    /*public class JoinDetailConfiguration : BaseConfiguration<JoinDetail>
     {
         public override void Configure(EntityTypeBuilder<JoinDetail> builder)
         {
@@ -24,5 +24,5 @@ namespace Authorization.Infrastructure.Configurations
 
 
         }
-    }
+    }*/
 }

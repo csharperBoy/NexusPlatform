@@ -28,26 +28,38 @@ namespace Authorization.Domain.Entities
         public string? FieldName { get; private set; }
 
         
-        public Guid? JoinDetailId {  get; private set; }
 
         public ComparisonOperator Operator { get; private set; } // = ، < ، > ، !=
         public string? Value { get; private set; }
 
         public LogicalOperator LogicalOperator { get; private set; } // AND / OR
         public int GroupOrder { get; private set; } // برای Nested Group
-        public virtual JoinDetail? JoinDetail { get; private set; }
+
+        public string? JoinLocalKey { get; private set; }
+        public string? JoinForeignKey { get; private set; }
+        public string? JoinEntity { get; private set; }
+        //public Guid? JoinDetailId {  get; private set; }
+        //public virtual JoinDetail? JoinDetail { get; private set; }
         public virtual Permission Permission { get; private set; } // navigation
         protected PermissionRule() { }
 
-        public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator _Operator, string? _Value, LogicalOperator _LogicalOperator, int _GroupOrder,Guid? _JoinDetailId = null)
+        public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator _Operator, string? _Value, LogicalOperator _LogicalOperator, int _GroupOrder,
+            //Guid? _JoinDetailId = null
+            string? _JoinLocalKey = null,
+            string? _JoinForeignKey = null,
+            string? _JoinEntity = null                
+            )
         {
             PermissionId = _PermissionId;
             FieldName = _FieldName;
-            JoinDetailId = _JoinDetailId;
+            //JoinDetailId = _JoinDetailId;
             Operator = _Operator;
             Value = _Value;
             LogicalOperator = _LogicalOperator;
             GroupOrder = _GroupOrder;
+            JoinLocalKey= _JoinLocalKey;
+            JoinForeignKey= _JoinForeignKey;
+            JoinEntity = _JoinEntity;
         }
 
         public bool ApplyChange(
@@ -56,7 +68,11 @@ namespace Authorization.Domain.Entities
             ComparisonOperator? _comparisonOperator,
             string? _value,
             LogicalOperator? _logicalOperator,
-            int? _groupOrder)
+            int? _groupOrder,
+             string? _JoinLocalKey ,
+            string? _JoinForeignKey ,
+            string? _JoinEntity 
+            )
         {
             bool hasChange = false;
             // آپدیت فیلدها
@@ -87,7 +103,23 @@ namespace Authorization.Domain.Entities
                 this.GroupOrder =(int)_groupOrder;
                 hasChange = true;
             }
-            
+
+            if (_JoinLocalKey != null && _JoinLocalKey != this.JoinLocalKey)
+            {
+                this.JoinLocalKey = _JoinLocalKey;
+                hasChange = true;
+            }
+            if (_JoinForeignKey != null && _JoinForeignKey != this.JoinForeignKey)
+            {
+                this.JoinForeignKey = _JoinForeignKey;
+                hasChange = true;
+            }
+            if (_JoinEntity != null && _JoinEntity != this.JoinEntity)
+            {
+                this.JoinEntity = _JoinEntity;
+                hasChange = true;
+            }
+
             if (hasChange)
             {
                 Touch();
