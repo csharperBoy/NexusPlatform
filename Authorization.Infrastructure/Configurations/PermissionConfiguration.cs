@@ -19,8 +19,14 @@ namespace Authorization.Infrastructure.Configurations
 
             builder.ToTable("Permissions", "authorization");
 
-            // relation
+            // relation rule
             builder.HasMany(p => p.Rules)
+                     .WithOne(pr => pr.Permission)
+                     .HasForeignKey(pr => pr.PermissionId)
+                     .OnDelete(DeleteBehavior.Cascade);
+
+            // relation scope
+            builder.HasMany(p => p.Scopes)
                      .WithOne(pr => pr.Permission)
                      .HasForeignKey(pr => pr.PermissionId)
                      .OnDelete(DeleteBehavior.Cascade);

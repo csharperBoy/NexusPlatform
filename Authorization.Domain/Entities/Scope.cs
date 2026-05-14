@@ -22,5 +22,6 @@ namespace Authorization.Domain.Entities
         #endregion
         public Guid PermissionId { get;  set; }
         public ScopeType scope { get; set; }
+        public virtual Permission Permission { get; set; }
     }
 }

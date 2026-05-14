@@ -3,13 +3,12 @@ import { ComparisonOperator ,LogicalOperator} from "./PermissionRuleEnum";
 
 
 export interface CreatePermissionRuleCommand {
-    fieldName?: string;             
-  joinDetailId?: string;          
+    fieldName?: string;            
   operator?: ComparisonOperator; 
   value?: string;               
   logicalOperator?: LogicalOperator;
   groupOrder?: number;           
-  permissionId: string;     
+  // permissionId: string;     
 
   joinLocalKey: string;
   joinForeignKey: string;
@@ -19,12 +18,11 @@ export interface CreatePermissionRuleCommand {
 export type UpdatePermissionRuleCommand = {
   id: string;
    fieldName?: string | null;
-  joinDetailId?: string | null;
   operator?: ComparisonOperator | null;
   value?: string | null;
   logicalOperator?: LogicalOperator | null;
   groupOrder?: number | null;
-  permissionId?: string | null;    
+  // permissionId?: string | null;    
 
   
   joinLocalKey?: string | null; 

@@ -30,7 +30,7 @@ namespace Authorization.Application.Handlers.Commands.Permissions
             {
                 _logger.LogInformation("Toggling permission ");
 
-                await _permissionService.UpdatePermissionAsync(request.Id,request.ResourceId,request.AssigneeType,request.AssigneeId,request.Action,request.effect,request.EffectiveFrom,request.ExpiresAt,request.IsActive,request.Description,request.scopes);
+                await _permissionService.UpdatePermissionAsync(request.Id,request.ResourceId,request.AssigneeType,request.AssigneeId,request.Action,request.effect,request.EffectiveFrom,request.ExpiresAt,request.IsActive,request.Description,request.scopes,request.rules);
           
                 _logger.LogInformation(
                     "Permission toggled successfully");

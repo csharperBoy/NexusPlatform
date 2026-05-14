@@ -1,15 +1,4 @@
-﻿using Authorization.Application.Commands.PermissionRule;
-using Authorization.Application.Commands.Permissions;
-using Authorization.Application.Queries.PermissionRule;
-using Authorization.Application.Queries.Permissions;
-using Core.Presentation.Controllers;
-using Core.Presentation.Filters;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 
 namespace Authorization.Presentation.Controllers.Admin
 {

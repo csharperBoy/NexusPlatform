@@ -15,14 +15,14 @@ namespace Core.Shared.DTOs.Authorization
       
         public string? FieldName { get;  set; }
 
-        public string JoinLocalKey { get;  set; }
-        public string JoinForeignKey { get;  set; }
-        public string JoinEntity { get;  set; }
+        public string? JoinLocalKey { get;  set; }
+        public string? JoinForeignKey { get;  set; }
+        public string? JoinEntity { get;  set; }
 
         public ComparisonOperator Operator { get;  set; }
         public string? Value { get;  set; }
 
-        public LogicalOperator LogicalOperator { get;  set; } 
-        public int GroupOrder { get;  set; }
+        public LogicalOperator? LogicalOperator { get;  set; } 
+        public int? GroupOrder { get;  set; }
     }
 }

@@ -22,9 +22,10 @@ namespace Authorization.Domain.Specifications
                         (ResourceId == null || p.ResourceId == ResourceId) && 
                         (description == null || p.Description.Contains(description)))
         {
-            AddInclude(p => p.Resource);
-            ApplyOrderBy(p => p.ResourceId);
-            ApplyThenOrderBy(p => p.Action);
+            AddInclude(p => p.Resource);            
+            ApplyOrderByDescending(p => p.CreatedAt);
+            //ApplyThenOrderBy(p => p.ResourceId);
+            //ApplyThenOrderBy(p => p.Action);
         }
     }
 }

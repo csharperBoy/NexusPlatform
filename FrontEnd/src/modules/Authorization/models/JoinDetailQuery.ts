@@ -1,4 +1,4 @@
-export interface GetJoinDetailQuery {
-  PermissionRuleId: string;
-} 
+// export interface GetJoinDetailQuery {
+//   PermissionRuleId: string;
+// } 
  

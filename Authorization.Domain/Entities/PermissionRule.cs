@@ -32,8 +32,8 @@ namespace Authorization.Domain.Entities
         public ComparisonOperator Operator { get; private set; } // = ، < ، > ، !=
         public string? Value { get; private set; }
 
-        public LogicalOperator LogicalOperator { get; private set; } // AND / OR
-        public int GroupOrder { get; private set; } // برای Nested Group
+        public LogicalOperator? LogicalOperator { get; private set; } // AND / OR
+        public int? GroupOrder { get; private set; } // برای Nested Group
 
         public string? JoinLocalKey { get; private set; }
         public string? JoinForeignKey { get; private set; }
@@ -43,7 +43,7 @@ namespace Authorization.Domain.Entities
         public virtual Permission Permission { get; private set; } // navigation
         protected PermissionRule() { }
 
-        public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator _Operator, string? _Value, LogicalOperator _LogicalOperator, int _GroupOrder,
+        public PermissionRule(Guid _PermissionId, string? _FieldName,  ComparisonOperator? _Operator, string? _Value, LogicalOperator? _LogicalOperator, int? _GroupOrder,
             //Guid? _JoinDetailId = null
             string? _JoinLocalKey = null,
             string? _JoinForeignKey = null,
@@ -53,7 +53,7 @@ namespace Authorization.Domain.Entities
             PermissionId = _PermissionId;
             FieldName = _FieldName;
             //JoinDetailId = _JoinDetailId;
-            Operator = _Operator;
+            Operator = _Operator ?? ComparisonOperator.Equal;
             Value = _Value;
             LogicalOperator = _LogicalOperator;
             GroupOrder = _GroupOrder;

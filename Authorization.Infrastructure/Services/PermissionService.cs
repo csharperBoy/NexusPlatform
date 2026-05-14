@@ -77,79 +77,7 @@ namespace Authorization.Infrastructure.Services
 
         }
         #region Rule
-        //private async Task<Guid> CreateRuleAsync(Guid permissionId, string fieldName, ComparisonOperator comparisonOperator, string? value, LogicalOperator logicalOperator, int groupOrder)
-        //{
-        //    try
-        //    {
-        //        _logger.LogInformation(
-        //            "Starting permission Rule create ");
-
-
-        //        // ایجاد Permission جدید
-        //        var permissionRule = new PermissionRule(
-        //             permissionId,
-        //             fieldName,
-        //             comparisonOperator,
-        //             value,
-        //             logicalOperator,
-        //             groupOrder
-
-        //        );
-
-        //        // ذخیره در Repository
-        //        await _permissionRuleRepository.AddAsync(permissionRule);
-
-        //        // انتشار ایونت
-        //        //permissionRule.AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
-        //        // ذخیره تغییرات
-        //        await _unitOfWork.SaveChangesAsync();
-        //        /*
-        //        await _scopeService.AddScopesToPermission(permission.Id, scopes);
-
-        //        await _unitOfWork.SaveChangesAsync();
-        //        // پاک کردن کش‌های مرتبط
-        //        await InvalidatePermissionCachesAsync(AssigneeId, ResourceId);
-        //        */
-        //        await InvalidatePermissionCachesAsync();
-        //        _logger.LogInformation(
-        //            "Permission rule create successfully");
-
-        //        return permissionRule.Id;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(
-        //            ex,
-        //            "Failed to create permission rule ");
-        //        throw;
-        //    }
-        //}
-        ////private async Task CreateRuleRangeAsync(Guid permissionId, List<PermissionRule> rules)
-        //{
-        //    try
-        //    {
-
-
-        //        // ذخیره در Repository
-        //        await _permissionRuleRepository.AddRangeAsync(rules);
-
-        //        // ذخیره تغییرات
-        //        await _unitOfWork.SaveChangesAsync();
-
-        //        await InvalidatePermissionCachesAsync();
-        //        _logger.LogInformation(
-        //            "Permission rule create successfully");
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(
-        //            ex,
-        //            "Failed to create permission rule ");
-        //        throw;
-        //    }
-        //}
-
+     
         private async Task DeletePermissionRuleAsync(Guid id)
         {
             try
@@ -273,7 +201,42 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
+        private async Task AddRulesToPermission(Guid permissionId, List<PermissionRuleCreateDto>? rules)
+        {
+            List<PermissionRule> newList = rules.Select(r =>
+                    new PermissionRule(permissionId,r.FieldName,r.Operator,r.Value,r.LogicalOperator,r.GroupOrder,r.JoinLocalKey,r.JoinForeignKey,r.JoinEntity)
+            ).ToList();
+            await _permissionRuleRepository.AddRangeAsync(newList);
+        }
 
+        private async Task UpdateRuleOfPermission(Guid permissionId, List<PermissionRuleCreateDto>? newRules)
+        {
+            var existRuleList = await GetPermissionRulesList(permissionId);
+            //bool isEqual = await _scopeProcessor.compareTwoScopeList(existScopeList.Select(s => s.scope).ToList(), newScopes);
+            if (!existRuleList.Select(r=>new PermissionRuleDto
+            {
+                PermissionId = r.PermissionId,
+                FieldName=r.FieldName,
+                GroupOrder=r.GroupOrder,
+                JoinEntity=r.JoinEntity,
+                JoinForeignKey=r.JoinForeignKey   ,
+                JoinLocalKey=r.JoinLocalKey,
+                LogicalOperator=r.LogicalOperator,
+                Operator=r.Operator,
+                Value = r.Value
+
+            }).Equals(newRules))
+            {
+                await _permissionRuleRepository.RemoveRangeAsync(existRuleList);
+                await AddRulesToPermission(permissionId, newRules);
+            }
+
+        }
+        private async Task<List<PermissionRule>> GetPermissionRulesList(Guid permissionId)
+        {
+            var list = await _permissionRuleSpecRepository.ListBySpecAsync(new GetRulesByPermissionIdSpec(permissionId));
+            return list.ToList();
+        }
         #endregion
         #region Scope
         private async Task UpdateScopeOfPermission(Guid permissionId, List<ScopeType>? newScopes)
@@ -319,7 +282,7 @@ namespace Authorization.Infrastructure.Services
         string? Description = null,
 
         List<ScopeType>? scopes = null,
-        List<PermissionRuleDto>? rules = null
+        List<PermissionRuleCreateDto>? rules = null
             )
         {
             try
@@ -367,9 +330,9 @@ namespace Authorization.Infrastructure.Services
 
                 // ذخیره تغییرات
                 await AddScopesToPermission(permission.Id, scopes);
-                if (permission.Rules != null)
+                if (rules != null)
                 {
-                    await _permissionRuleRepository.AddRangeAsync(permission.Rules.Select(r => new PermissionRule(permission.Id, r.FieldName, r.Operator, r.Value, r.LogicalOperator, r.GroupOrder, r.JoinLocalKey, r.JoinForeignKey, r.JoinEntity)));
+                    await _permissionRuleRepository.AddRangeAsync(rules.Select(r => new PermissionRule(permission.Id, r.FieldName, r.Operator, r.Value, r.LogicalOperator, r.GroupOrder, r.JoinLocalKey, r.JoinForeignKey, r.JoinEntity)));
                 }
 
                 // انتشار ایونت
@@ -437,7 +400,7 @@ namespace Authorization.Infrastructure.Services
             try
             {
                 _logger.LogInformation("Starting permission revocation: {PermissionId}", permissionId);
-
+                
                 await _permissionRepository.DeleteAsync(permissionId);
 
                 // ذخیره تغییرات
@@ -479,7 +442,9 @@ namespace Authorization.Infrastructure.Services
         DateTime? ExpiresAt = null,
         bool? IsActive = null,
         string? Description = null,
-        List<ScopeType>? scopes = null)
+        List<ScopeType>? scopes = null, List<PermissionRuleCreateDto>? rules = null
+
+        )
         {
             try
             {
@@ -496,6 +461,7 @@ namespace Authorization.Infrastructure.Services
                 permission.AddDomainEvent(new PermissionChangedEvent((Guid)AssigneeId, (Guid)ResourceId));
                 await _permissionRepository.UpdateAsync(permission);
                 await UpdateScopeOfPermission(permission.Id, scopes);
+                await UpdateRuleOfPermission(permission.Id, rules);
                 await _unitOfWork.SaveChangesAsync();
                 await InvalidatePermissionCachesAsync();
 
@@ -514,7 +480,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var permission = await _permissionRepository.GetByIdAsync(permissionId, p => p.Scopes);
+                var permission = await _permissionRepository.GetByIdAsync(permissionId, p => p.Scopes , p=>p.Rules);
 
                 if (permission == null)
                 {
@@ -692,9 +658,22 @@ namespace Authorization.Infrastructure.Services
                 Scopes = permission.Scopes?.Select(p => new ScopeDto
                 {
                     scope = p.scope,
-                    PermissionId = p.Id
+                    PermissionId = permission.Id
                 }).ToList(),
-
+                rules = permission.Rules?.Select(r => new PermissionRuleDto
+                {
+                    PermissionId = permission.Id,
+                    FieldName = r.FieldName,
+                    JoinEntity=r.JoinEntity,
+                    JoinForeignKey=r.JoinForeignKey,
+                    GroupOrder = r.GroupOrder,
+                    Id = r.Id,
+                    JoinLocalKey=r.JoinLocalKey,
+                    LogicalOperator = r.LogicalOperator,
+                    Operator = r.Operator,
+                    Value = r.Value
+                    
+                }).ToList(),
             };
         }
 

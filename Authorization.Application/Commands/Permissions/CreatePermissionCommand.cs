@@ -1,4 +1,5 @@
-﻿using Authorization.Domain.Enums;
+﻿using Authorization.Application.DTOs.Permissions;
+using Authorization.Domain.Enums;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
@@ -31,7 +32,7 @@ namespace Authorization.Application.Commands.Permissions
         string? Description = null,
         
         List<ScopeType>? scopes = null, // لیست محدوده های مجاز یا غیر مجاز
-        List<PermissionRuleDto>? rules = null
+        List<PermissionRuleCreateDto>? rules = null
 
     ) : IRequest<Result<Guid>>;
 }

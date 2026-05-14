@@ -6,7 +6,7 @@ import {
   UpdatePermissionCommand,
   PermissionFormCommand,
 } from '../../../models/PermissionCommands';
-import { PermissionRuleFormCommand } from '@/modules/Authorization/models/PermissionRuleCommands';
+import { CreatePermissionRuleCommand, PermissionRuleFormCommand } from '@/modules/Authorization/models/PermissionRuleCommands';
 import { useParams } from 'react-router-dom';
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { resourceApi } from '@/modules/Authorization/api/ResourceApi';
@@ -206,24 +206,22 @@ export const usePermissionCreateUpdateForm = (
 
   /* ----------- rule‑related helpers ----------- */
   const handleAddRule = () => {
-    setFormData(prev => ({
-      ...prev,
-      rules: [
-        ...(prev.rules ?? []),
-        {
-          id:'',
-          fieldName: '',
-          operator: ComparisonOperator.Equal,
-          value: '',
-          logicalOperator: LogicalOperator.And,
-          groupOrder: 0,
-          joinEntity:'',
-          joinForeignKey:'',
-          joinLocalKey:'',
+    const newRule: CreatePermissionRuleCommand = {
+    fieldName: '',
+    operator: ComparisonOperator.Equal,
+    value: '',
+    logicalOperator: LogicalOperator.And,
+    groupOrder: 0,
+    // permissionId: permissionId ?? '',
+    joinLocalKey: '',
+    joinForeignKey: '',
+    joinEntity: '',
+  };
 
-        },
-      ],
-    }));
+  setFormData(prev => ({
+    ...prev,
+    rules: [...(prev.rules ?? []), newRule] as CreatePermissionRuleCommand[],
+  }));
   };
 
   const handleRemoveRule = (index: number) => {

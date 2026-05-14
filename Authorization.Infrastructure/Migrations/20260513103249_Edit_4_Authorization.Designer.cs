@@ -4,6 +4,7 @@ using Authorization.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authorization.Infrastructure.Migrations
 {
     [DbContext(typeof(AuthorizationDbContext))]
-    partial class AuthorizationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513103249_Edit_4_Authorization")]
+    partial class Edit_4_Authorization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,7 +140,7 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<string>("FieldName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("GroupOrder")
+                    b.Property<int>("GroupOrder")
                         .HasColumnType("int");
 
                     b.Property<string>("JoinEntity")
@@ -149,7 +152,7 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<string>("JoinLocalKey")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<byte?>("LogicalOperator")
+                    b.Property<byte>("LogicalOperator")
                         .HasColumnType("tinyint");
 
                     b.Property<DateTime?>("ModifiedAt")
@@ -444,13 +447,11 @@ namespace Authorization.Infrastructure.Migrations
 
             modelBuilder.Entity("Authorization.Domain.Entities.Scope", b =>
                 {
-                    b.HasOne("Authorization.Domain.Entities.Permission", "Permission")
+                    b.HasOne("Authorization.Domain.Entities.Permission", null)
                         .WithMany("Scopes")
                         .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("Authorization.Domain.Entities.Permission", b =>

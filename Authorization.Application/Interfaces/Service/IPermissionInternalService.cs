@@ -29,7 +29,7 @@ namespace Authorization.Application.Interfaces.Service
         string? Description = null,
 
         List<ScopeType>? scopes = null,
-        List<PermissionRuleDto>? rules = null
+        List<PermissionRuleCreateDto>? rules = null
             );
         Task RevokePermissionAsync(Guid permissionId);
         Task DeletePermissionAsync(Guid permissionId);
@@ -43,7 +43,8 @@ namespace Authorization.Application.Interfaces.Service
         DateTime? ExpiresAt = null,
         bool? IsActive = null,
         string? Description = null,
-        List<ScopeType>? scopes = null);
+        List<ScopeType>? scopes = null, List<PermissionRuleCreateDto>? rules = null
+       );
 
         // عملیات Read
         Task<PermissionDto> GetById(Guid permissionId);

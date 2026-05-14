@@ -1,4 +1,5 @@
-﻿using Core.Shared.DTOs.Authorization;
+﻿using Authorization.Application.DTOs.Permissions;
+using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
@@ -30,6 +31,6 @@ namespace Authorization.Application.Commands.Permissions
         string? Description = null,
 
         List<ScopeType>? scopes = null,
-         List<PermissionRuleDto>? rules = null
+         List<PermissionRuleCreateDto>? rules = null
     ) : IRequest<Result<bool>>;
 }
