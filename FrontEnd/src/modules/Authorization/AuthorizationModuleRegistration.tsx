@@ -22,8 +22,7 @@ export const AuthorizationModuleRegistration = () => {
       title: 'مدیریت منابع',
       path: '/resources',
       icon: <ResourceIcon />,
-      // permissions: ['admin'], // در صورت نیاز
-      order: 20, // بعد از مدیریت کاربران
+      order: 20, 
     });
 // ثبت منوی مدیریت منابع
     registerMenuItem({
@@ -31,8 +30,7 @@ export const AuthorizationModuleRegistration = () => {
       title: 'مدیریت مجوزها',
       path: '/permissions',
       icon: <ResourceIcon />,
-      // permissions: ['admin'], // در صورت نیاز
-      order: 30, // بعد از مدیریت کاربران
+      order: 30, 
     });
     // ثبت زیرمنو برای ایجاد منبع (اختیاری)
     // registerMenuItem({

@@ -19,8 +19,7 @@ export interface MenuItem {
   title: string;
   path: string;
   icon?: React.ReactNode;
-  permissions?: string[];
   order?: number;
-  parentId?: string; // برای منوهای چند سطحی (اختیاری)
+  parentId?: string; 
 }
 

@@ -20,26 +20,6 @@ namespace Authorization.Domain.Entities
     [SecuredResource("Authorization.Resource")]
     public class Resource : BaseEntity , IAuditableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
-        public   ResourceDto ToDto( Resource resource)
-        {
-            ResourceDto result = new ResourceDto()
-            {
-                Category = resource.Category,
-                Children = resource.Children?.Select(m=>m.ToDto(m)).ToList(),
-                Description = resource.Description,
-                DisplayOrder = resource.DisplayOrder,
-                Icon = resource.Icon,
-                Id = resource.Id,
-                IsActive = resource.IsActive,
-                Key = resource.Key,
-                Name = resource.Name,
-                ParentId = resource.ParentId,
-                ParentKey = resource.Parent?.Key,
-                Path = resource.ResourcePath,
-                Type = resource.Type
-            };
-            return result;
-        }
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
@@ -51,10 +31,10 @@ namespace Authorization.Domain.Entities
         public Guid? ParentId { get; private set; }
         public virtual Resource? Parent { get; private set; }
         public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
-      
+
         #endregion
 
-        #region IDataScopedEntity Impelement
+        #region IOwnerableEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
         public Guid? OwnerPersonId { get; protected set; }
@@ -132,6 +112,26 @@ namespace Authorization.Domain.Entities
             CreatedBy = createdBy;
             CreatedAt = DateTime.UtcNow;
             GeneratePath();
+        }
+        public ResourceDto ToDto(Resource resource)
+        {
+            ResourceDto result = new ResourceDto()
+            {
+                Category = resource.Category,
+                Children = resource.Children?.Select(m => m.ToDto(m)).ToList(),
+                Description = resource.Description,
+                DisplayOrder = resource.DisplayOrder,
+                Icon = resource.Icon,
+                Id = resource.Id,
+                IsActive = resource.IsActive,
+                Key = resource.Key,
+                Name = resource.Name,
+                ParentId = resource.ParentId,
+                ParentKey = resource.Parent?.Key,
+                Path = resource.ResourcePath,
+                Type = resource.Type
+            };
+            return result;
         }
 
         public void SetPath(string path) => ResourcePath = path;

@@ -25,6 +25,37 @@ namespace Authorization.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
+        #region IOwnerableEntity Impelement
+        public Guid? OwnerOrganizationUnitId { get; protected set; }
+        public Guid? OwnerPositionId { get; protected set; }
+        public Guid? OwnerPersonId { get; protected set; }
+        public Guid? OwnerUserId { get; protected set; }
+
+        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        {
+            OwnerUserId = userId;
+            OwnerPersonId = personId;
+            OwnerPositionId = positiontId;
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        public void SetPersonOwner(Guid personId)
+        {
+            OwnerPersonId = personId;
+        }
+        public void SetUserOwner(Guid userId)
+        {
+            OwnerUserId = userId;
+        }
+        public void SetPositionOwner(Guid positiontId)
+        {
+            OwnerPositionId = positiontId;
+        }
+        public void SetOrganizationUnitOwner(Guid orgUnitId)
+        {
+            OwnerOrganizationUnitId = orgUnitId;
+        }
+        #endregion
+
         // 1. چه کسی؟
         public AssigneeType AssigneeType { get; private set; }
         public Guid AssigneeId { get; private set; } // RoleId, PositionId, or PersonId
@@ -221,36 +252,6 @@ namespace Authorization.Domain.Entities
             return AssigneeType == assigneeType &&   assigneeId.Any(a=>a == AssigneeId);
         }
 
-        #region IDataScopedEntity Impelement
-        public Guid? OwnerOrganizationUnitId { get; protected set; }
-        public Guid? OwnerPositionId { get; protected set; }
-        public Guid? OwnerPersonId { get; protected set; }
-        public Guid? OwnerUserId { get; protected set; }
-
-        public void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
-        {
-            OwnerUserId = userId;
-            OwnerPersonId = personId;
-            OwnerPositionId = positiontId;
-            OwnerOrganizationUnitId = orgUnitId;
-        }
-        public void SetPersonOwner(Guid personId)
-        {
-            OwnerPersonId = personId;
-        }
-        public void SetUserOwner(Guid userId)
-        {
-            OwnerUserId = userId;
-        }
-        public void SetPositionOwner(Guid positiontId)
-        {
-            OwnerPositionId = positiontId;
-        }
-        public void SetOrganizationUnitOwner(Guid orgUnitId)
-        {
-            OwnerOrganizationUnitId = orgUnitId;
-        }
-        #endregion
-
+    
     }
 }
