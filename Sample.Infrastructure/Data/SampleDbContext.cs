@@ -41,7 +41,7 @@ namespace Sample.Infrastructure.Data
      و چطور اسکیمای جداگانه برای ماژول‌ها داشته باشیم تا معماری ماژولار حفظ شود.
     */
 
-    public class SampleDbContext : BaseDbContext
+    public class SampleDbContext : Base_DbContext
     {
         public SampleDbContext(
               DbContextOptions<SampleDbContext> options,

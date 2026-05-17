@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace Audit.Infrastructure.Data
 {
-    public class AuditDbContext : BaseDbContext 
+    public class AuditDbContext : Base_DbContext
     {
         public AuditDbContext(
         DbContextOptions<AuditDbContext> options,

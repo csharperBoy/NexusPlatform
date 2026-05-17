@@ -1,7 +1,6 @@
 ﻿using Core.Application.Helper;
 using Core.Application.Models;
-using Core.Domain.Enums;
-using Core.Presentation.Filters;
+using Core.Presentation.Controllers;
 using Core.Shared.Results;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -10,10 +9,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Presentation.Controllers
+namespace Base.Presentation.Controllers
 {
     [ApiController]
-    [Route("api/core/[controller]")]
+    [Route("api/base/[controller]")]
     public class SettingController : BaseController
     {
         [HttpGet("GetActiveModules")]

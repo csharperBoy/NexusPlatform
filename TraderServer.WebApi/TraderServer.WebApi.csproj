@@ -31,6 +31,10 @@
     <ProjectReference Include="..\Authorization.Domain\Authorization.Domain.csproj" />
     <ProjectReference Include="..\Authorization.Infrastructure\Authorization.Infrastructure.csproj" />
     <ProjectReference Include="..\Authorization.Presentation\Authorization.Presentation.csproj" />
+    <ProjectReference Include="..\Base.Application\Base.Application.csproj" />
+    <ProjectReference Include="..\Base.Domain\Base.Domain.csproj" />
+    <ProjectReference Include="..\Base.Infrastructure\Base.Infrastructure.csproj" />
+    <ProjectReference Include="..\Base.Presentation\Base.Presentation.csproj" />
     <ProjectReference Include="..\BrokerageOperations.Application\BrokerageOperations.Application.csproj" />
     <ProjectReference Include="..\BrokerageOperations.Domain\BrokerageOperations.Domain.csproj" />
     <ProjectReference Include="..\BrokerageOperations.Infrastructure\BrokerageOperations.Infrastructure.csproj" />

@@ -12,5 +12,6 @@ namespace Core.Domain.Common.EntityProperties
         TParentId ParentId { get; }
         TEntity? Parent { get; }
         ICollection<TEntity>? Children { get; }
+        void ChangeParent(TParentId? newParentId);
     }
 }

@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Infrastructure.Data
 {
-    public class AuthorizationDbContext : BaseDbContext
+    public class AuthorizationDbContext : Base_DbContext
     {
         public AuthorizationDbContext(
         DbContextOptions<AuthorizationDbContext> options,

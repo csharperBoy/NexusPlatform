@@ -13,7 +13,7 @@ using TraderServer.Domain.Entities;
 using TraderServer.Infrastructure.Configurations;
 namespace TraderServer.Infrastructure.DependencyInjection
 {
-    public class TraderDbContext : BaseDbContext
+    public class TraderDbContext : Base_DbContext
     {
         public TraderDbContext(
              DbContextOptions<TraderDbContext> options,

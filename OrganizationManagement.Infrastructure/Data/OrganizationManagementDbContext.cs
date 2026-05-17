@@ -14,7 +14,7 @@ namespace OrganizationManagement.Infrastructure.Data
 {
 
 
-    public class OrganizationManagementDbContext : BaseDbContext
+    public class OrganizationManagementDbContext : Base_DbContext
     {
         public OrganizationManagementDbContext(
             DbContextOptions<OrganizationManagementDbContext> options,

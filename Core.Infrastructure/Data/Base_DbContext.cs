@@ -8,11 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Core.Infrastructure.Data
 {
-    public abstract class BaseDbContext : DbContext
+    public abstract class Base_DbContext : DbContext
     {
         private readonly IServiceProvider _serviceProvider;
 
-         protected BaseDbContext(DbContextOptions options, IServiceProvider serviceProvider)
+         protected Base_DbContext(DbContextOptions options, IServiceProvider serviceProvider)
              : base(options)
          {
              _serviceProvider = serviceProvider;

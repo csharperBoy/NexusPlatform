@@ -3,10 +3,12 @@ using Audit.Domain.Entities;
 using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
+using Core.Shared.DTOs.Base;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -19,6 +21,9 @@ namespace Audit.Infrastructure.Data
 
     public static class AuditSeedData
     {
+        #region ForAuthorization
+
+       
         // تعریف ساختار درختی منابع ماژول Audit
         private static List<ResourceDto> GetAuditResourceDefinitions()
         {
@@ -112,5 +117,61 @@ namespace Audit.Infrastructure.Data
                 throw;
             }
         }
+        #endregion
+
+        #region ForAuthorization
+
+        // تعریف ساختار درختی منابع ماژول Audit
+        private static List<MenuDto> GetAuditMenuDefinitions()
+        {
+            return new List<MenuDto>
+            {
+                new()
+                {
+                    Title = "مدیریت لاگ",
+                    Description = "مدیریت لاگ های سیستم",
+                    Icon = Core.Shared.Enums.Base.Icon.Folder,
+                    Order = 100,
+                    Path = "/Audit",
+                    Children = new List<MenuDto>
+                    {
+                        new()
+                        {
+                            Title = "مشاهده لاگ ها",
+                            Description = "مشاهده لاگ های سیستم",
+                            Icon = Core.Shared.Enums.Base.Icon.Folder,
+                            Order = 101,
+                            Path = "/Audit/Get"
+                        }
+                    }
+                }
+            };
+        }
+
+       
+        // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
+        public static async Task SeedAuditsForBaseAsync(
+            IMenuPublicService menuPublicService,           
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Audit module Fot Base seeding...");
+
+            try
+            {
+               
+                    // 1. ثبت منو (Menus)
+                    var menus = GetAuditMenuDefinitions();
+                    await menuPublicService.SyncModuleMenusAsync(menus, cancellationToken);
+                    logger.LogInformation("✅ Audit Menu synced successfully.");
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Audit module seeding");
+                throw;
+            }
+        }
+        #endregion
     }
 }

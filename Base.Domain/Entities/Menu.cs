@@ -1,6 +1,7 @@
 ﻿using Core.Domain.Attributes;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
+using Core.Shared.Enums.Base;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,17 +9,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Domain.Entities
+namespace Base.Domain.Entities
 {
 
     [SecuredResource("Core.Menu")]
-    public class Menu : BaseEntity,IHierarchicalStructureEntity<Menu , Guid?> , IAuditableEntity, IOwnerableEntity, IAggregateRoot
+    public class Menu : BaseEntity, IHierarchicalStructureEntity<Menu, Guid?>, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        private void Touch() => ModifiedAt = DateTime.UtcNow;
         #endregion
 
         #region IOwnerableEntity Impelement
@@ -50,26 +52,52 @@ namespace Core.Domain.Entities
         {
             OwnerOrganizationUnitId = orgUnitId;
         }
+
+      
+
         #endregion
         #region IHierarchicalStructureEntity Impelement
         public Guid? ParentId { get; private set; }
         public virtual Menu? Parent { get; private set; }
         public virtual ICollection<Menu> Children { get; private set; } = new List<Menu>();
+        public void ChangeParent(Guid? newParentId)
+        {
+            if (newParentId == Id)
+                throw new InvalidOperationException("Menu cannot be its own parent.");
 
+            ParentId = newParentId;
+            Touch();
+
+            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+            //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+        }
         #endregion
         public string Title { get; set; }
-        public string Description { get; set; }
+        public string Key { get; set; }
+        public string? Description { get; set; }
         public string Path { get; set; }
         /// <summary>
         ///  به صورت "fa-solid:folder" یا "md-folder" ذخیره می‌شود.
         ///  مثال: "fa-solid:folder" (Font Awesome) یا "md-folder" (Material Design).
         /// </summary>
-        public Icon Icon { get; set; }
-        public int Order { get; set; }
-      
+        public Icon? Icon { get; set; }
+        public int? Order { get; set; }
+        public Menu(string _Title, string _Key, string? _Description, string _Path, Icon? _Icon, int? _Order)
+        {
+            Title = _Title; Key = _Key; Description = _Description; Path = _Path; Icon = _Icon; Order = _Order;
+        }
+
+        public void Update(string _title, string? _description, Icon? _icon, int? _order, string _key)
+        {
+            Title = _title; Description = _description; Icon = _icon; Order = _order; Key = _key;
+        }
+        public Menu()
+        {
+            
+        }
     }
 
-    
+
 
 
 }
