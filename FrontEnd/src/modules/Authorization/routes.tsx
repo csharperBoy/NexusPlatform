@@ -16,18 +16,18 @@ export const authorizationPublicRoutes: RouteObject[] = [
 ];
 
 export const authorizationPanelRoutes: RouteObject[] = [
-  { path: "resources/create", element: <ResourceCreatePage /> },   
-  { path: "resources/create/:parentId", element: <ResourceCreatePage /> }, 
-  { path: "resources/edit/:id", element: <ResourceUpdatePage /> }, 
-  { path: "resources", element: <ResourceManagementPage /> },
+  { path: "authorization/resources/create", element: <ResourceCreatePage /> },   
+  { path: "authorization/resources/create/:parentId", element: <ResourceCreatePage /> }, 
+  { path: "authorization/resources/edit/:id", element: <ResourceUpdatePage /> }, 
+  { path: "authorization/resources", element: <ResourceManagementPage /> },
 
-  { path: "permissions/create", element: <PermissionCreatePage /> },   
-  { path: "permissions/create/:resourceId", element: <PermissionCreatePage /> }, 
-  { path: "permissions/edit/:id", element: <PermissionUpdatePage /> }, 
-  { path: "permissions", element: <PermissionsManagementPage /> },
+  { path: "authorization/permissions/create", element: <PermissionCreatePage /> },   
+  { path: "authorization/permissions/create/:resourceId", element: <PermissionCreatePage /> }, 
+  { path: "authorization/permissions/edit/:id", element: <PermissionUpdatePage /> }, 
+  { path: "authorization/permissions", element: <PermissionsManagementPage /> },
 
-  { path: "permissionRules/create", element: <PermissionRuleCreatePage /> },   
-  { path: "permissionRules/create/:permissionId", element: <PermissionRuleCreatePage /> }, 
-  { path: "permissionRules/edit/:id", element: <PermissionRuleUpdatePage /> }, 
-  { path: "permissionRules", element: <PermissionRulesManagementPage /> },
+  { path: "authorization/permissionRules/create", element: <PermissionRuleCreatePage /> },   
+  { path: "authorization/permissionRules/create/:permissionId", element: <PermissionRuleCreatePage /> }, 
+  { path: "authorization/permissionRules/edit/:id", element: <PermissionRuleUpdatePage /> }, 
+  { path: "authorization/permissionRules", element: <PermissionRulesManagementPage /> },
 ];

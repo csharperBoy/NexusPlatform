@@ -6,4 +6,5 @@ export interface MenuDto {
   icon: string; // مثلاً "fa-solid:folder"
   order: number;
   parentId?: string | null;
+  children?: MenuDto[] | null;
 }

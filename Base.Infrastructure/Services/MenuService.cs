@@ -9,6 +9,7 @@ using Core.Application.Context;
 using Core.Infrastructure.Repositories;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.DTOs.Base;
+using Core.Shared.Enums;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -93,8 +94,9 @@ namespace Base.Infrastructure.Services
                             def.Key,
                             def.Description,
                             def.Path,
-                            def.Icon,
-                            def.Order
+                            def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default),
+                            def.Order,
+                            parentId
                         );
                       
                         await _menuRepository.AddAsync(newMenu);
@@ -108,7 +110,7 @@ namespace Base.Infrastructure.Services
                         bool hasChanges = existingMenu.Title != def.Title ||
                                           existingMenu.ParentId != parentId ||
                                           existingMenu.Path != def.Path ||
-                                          existingMenu.Icon != def.Icon || 
+                                          existingMenu.Icon != def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default) || 
                                           existingMenu.Order != def.Order || 
                                           existingMenu.Key != def.Key || 
                                           existingMenu.Description != def.Description 
@@ -120,7 +122,7 @@ namespace Base.Infrastructure.Services
                             existingMenu.Update(
                                 def.Title,
                                 def.Description,
-                                def.Icon,
+                                def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default),
                                 def.Order,
                                 def.Key
                             );
@@ -155,9 +157,12 @@ namespace Base.Infrastructure.Services
         }
         private async Task<Menu?> GetMenuEntityByKeyAsync(string key)
         {
-            
+            //var lst = await  _menuRepository.AsNoTrackingQueryable();
+            //var all = lst.ToList();
+            //var ent = lst.Where(l=>l.Key == key).ToList();
             var spec = new MenuByKeySpec(key);
             return await _menuSpecRepository.GetBySpecAsync(spec);
+
         }
         public async Task<IReadOnlyList<MenuDto>> GetByTreeStructure(Guid? RootId = null)
         {
@@ -194,7 +199,7 @@ namespace Base.Infrastructure.Services
             {
                 Title = x.Title,
                 Description = x.Description,
-                Icon = x.Icon,
+                Icon = x.Icon.GetIconString(),
                 Id = x.Id,
                 Order = x.Order,
                 Path = x.Path,

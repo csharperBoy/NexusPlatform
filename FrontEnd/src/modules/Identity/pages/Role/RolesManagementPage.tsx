@@ -36,7 +36,7 @@ const RolesManagementPage: React.FC = () => {
         <div className="p-4">
           {/* دکمه اضافه کردن کاربر جدید */}
           <button onClick={() => addAction('')} className="mb-4 px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600">
-            افزودن کاربر جدید
+            افزودن نقش جدید
           </button>
           
           {/* کامپوننت جدول */}

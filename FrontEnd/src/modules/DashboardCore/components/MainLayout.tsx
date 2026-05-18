@@ -22,7 +22,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   contentClassName = 'p-4',
   render,
 }) => {
-  const sidebar = <Sidebar className={sidebarClassName} />;
+  const sidebar = <Sidebar  />;
   const header = <Header className={headerClassName} />;
   const content = (
     <main className={`flex-1 overflow-y-auto ${contentClassName}`}>

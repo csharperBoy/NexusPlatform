@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Shared.Enums.Base;
+using Core.Shared.Enums;
 
 namespace Base.Infrastructure.Processor
 {
@@ -25,7 +27,7 @@ namespace Base.Infrastructure.Processor
                     Title = menu.Title,
                     Order = menu.Order,
                     Path = menu.Path,
-                    Icon = menu.Icon,
+                    Icon =  menu.Icon.GetIconString(),
                     Description = menu.Description,
                     ParentId = menu.ParentId,
                     Key = menu.Key,

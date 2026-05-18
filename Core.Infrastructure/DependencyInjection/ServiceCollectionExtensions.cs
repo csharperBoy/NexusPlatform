@@ -5,6 +5,7 @@ using Core.Application.Behaviors;
 using Core.Application.Models;
 using Core.Infrastructure.Database;
 using Core.Infrastructure.HealthChecks;
+using Core.Infrastructure.Hosted;
 using Core.Infrastructure.Logging;
 using Core.Infrastructure.Repositories;
 using Core.Infrastructure.Resilience;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Cors; // اضافه کردن این using
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -119,6 +121,9 @@ namespace Core.Infrastructure.DependencyInjection
             ConfigureSwagger(services, configuration);
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+            services.AddSingleton<IHostedService, ApplicationLifetimeTracker>();
+            services.AddSingleton<ApplicationLifetimeTracker>();
 
             services.AddResiliencePolicies(configuration);
             services.AddMediatR(cfg =>

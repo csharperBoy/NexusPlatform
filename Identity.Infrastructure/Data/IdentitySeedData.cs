@@ -1,8 +1,10 @@
 ﻿using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
+using Core.Shared.DTOs.Base;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Identity.Domain.Entities;
@@ -15,11 +17,81 @@ namespace Identity.Infrastructure.Data
 {
     public static class IdentitySeedData
     {
+        #region ForBase
+
+        // تعریف ساختار درختی  منوها
+        private static List<MenuDto> GetMenuDefinitions()
+        {
+            return new List<MenuDto>
+            {
+                new()
+                {
+                    Title = "مدیریت حساب های کاربری",
+                    Description = "مدیریت حساب های کاربری سیستم",
+                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                    Order = 300,
+                    Key = "identity",
+                    ParentKey = null,
+                    Path = "/Identity",
+                    Children = new List<MenuDto>
+                    {
+                        new()
+                        {
+                            Title = "مدیریت کاربران",
+                            Description = " مدیریت کاربران سیستم",
+                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Order = 210,
+                            Key = "identity.user",
+                            ParentKey = "identity",
+                            Path = "/Identity/Users"
+                        },
+                        new()
+                        {
+                            Title = "مدیریت نقش ها",
+                            Description = "مدیریت نقش های سیستم",
+                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Order = 220,
+                            Key = "identity.role",
+                            ParentKey = "identity",
+                            Path = "/Identity/Roles"
+                        }
+                    }
+                }
+            };
+        }
+
+
+        // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
+        public static async Task SeedForBaseAsync(
+            IMenuPublicService menuService,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Identity module Fot Base seeding...");
+
+            try
+            {
+
+                // 1. ثبت منو (Menus)
+                var menus = GetMenuDefinitions();
+                await menuService.SyncModuleMenusAsync(menus, cancellationToken);
+                logger.LogInformation("✅ Identity Menu synced successfully.");
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Identity module seeding");
+                throw;
+            }
+        }
+        #endregion
+
         public static async Task StartSeedAsync(RoleManager<ApplicationRole> roleManager,
             UserManager<ApplicationUser> userManager,
             IResourcePublicService resourcePublicService,
             IPermissionPublicService permissionPublicService,
             IRolePublicService roleService,
+             IMenuPublicService menuService,
             ILogger logger,
             IConfiguration config)
         {
@@ -27,6 +99,7 @@ namespace Identity.Infrastructure.Data
             await SeedAdminUserAsync(userManager, config); 
             await AssignAdminRoleToAdminUserAsync(userManager, config);
             await SeedIdentotiesForAuthorizationAsync(resourcePublicService,permissionPublicService,roleService,logger);
+            await SeedForBaseAsync(menuService, logger);
         }
         public static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager)
         {

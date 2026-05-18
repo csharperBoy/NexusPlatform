@@ -4,9 +4,11 @@ using Authorization.Domain.Enums;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
+using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
+using Core.Shared.DTOs.Base;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,6 +22,75 @@ namespace Authorization.Infrastructure.Data
 
     public static class AuthorizationSeedData
     {
+        #region ForBase
+
+        // تعریف ساختار درختی  منوها
+        private static List<MenuDto> GetMenuDefinitions()
+        {
+            return new List<MenuDto>
+            {
+                new()
+                {
+                    Title = "مدیریت دسترسی",
+                    Description = "مدیریت دسترسی های سیستم",
+                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                    Order = 200,
+                    Key = "authorization",
+                    ParentKey = null,
+                    Path = "/Authorization",
+                    Children = new List<MenuDto>
+                    {
+                        new()
+                        {
+                            Title = "مدیریت منابع",
+                            Description = " مدیریت منابع سیستم",
+                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Order = 210,
+                            Key = "authorization.resources",
+                            ParentKey = "authorization",
+                            Path = "/Authorization/Resources"
+                        },
+                        new()
+                        {
+                            Title = "مدیریت مجوزها",
+                            Description = "مدیریت مجوزهای سیستم",
+                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Order = 220,
+                            Key = "authorization.permissions",
+                            ParentKey = "authorization",
+                            Path = "/Authorization/Permissions"
+                        }
+                    }
+                }
+            };
+        }
+
+
+        // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
+        public static async Task SeedForBaseAsync(
+            IMenuPublicService menuPublicService,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Authorization module Fot Base seeding...");
+
+            try
+            {
+
+                // 1. ثبت منو (Menus)
+                var menus = GetMenuDefinitions();
+                await menuPublicService.SyncModuleMenusAsync(menus, cancellationToken);
+                logger.LogInformation("✅ Authorization Menu synced successfully.");
+
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Authorization module seeding");
+                throw;
+            }
+        }
+        #endregion
+
         // تعریف منابع به صورت درختی (Hierarchical)
         private static List<ResourceDto> GetResourceDefinitions()
         {
@@ -512,6 +583,7 @@ namespace Authorization.Infrastructure.Data
         public static async Task SeedAuthorizationDataAsync(
             AuthorizationDbContext dbContext,
             IRolePublicService roleService,
+            IMenuPublicService menuService,
             IConfiguration config,
             ILogger logger)
         {
@@ -519,9 +591,10 @@ namespace Authorization.Infrastructure.Data
 
             // 1. Seed منابع
             await SeedResourcesAsync(dbContext, config, logger);
-
             // 2. Seed پرمیژن‌ها
             await SeedPermissionsAsync(dbContext, roleService, logger);
+            //3.منوها
+            await SeedForBaseAsync(menuService,logger);
 
             logger.LogInformation("✅ Authorization data seeding completed!");
         }

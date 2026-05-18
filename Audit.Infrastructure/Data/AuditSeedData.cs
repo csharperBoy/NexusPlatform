@@ -119,7 +119,7 @@ namespace Audit.Infrastructure.Data
         }
         #endregion
 
-        #region ForAuthorization
+        #region ForBase
 
         // تعریف ساختار درختی منابع ماژول Audit
         private static List<MenuDto> GetAuditMenuDefinitions()
@@ -130,8 +130,10 @@ namespace Audit.Infrastructure.Data
                 {
                     Title = "مدیریت لاگ",
                     Description = "مدیریت لاگ های سیستم",
-                    Icon = Core.Shared.Enums.Base.Icon.Folder,
+                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
                     Order = 100,
+                    Key = "audit",
+                    ParentKey = null,
                     Path = "/Audit",
                     Children = new List<MenuDto>
                     {
@@ -139,8 +141,10 @@ namespace Audit.Infrastructure.Data
                         {
                             Title = "مشاهده لاگ ها",
                             Description = "مشاهده لاگ های سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder,
+                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
                             Order = 101,
+                            Key = "audit.get",
+                            ParentKey = "audit",
                             Path = "/Audit/Get"
                         }
                     }

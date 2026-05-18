@@ -1,7 +1,7 @@
 // core/api/settingApi.ts
 import getAPI from "@/core/api/axiosClient";
 import { ModuleItem } from "../models/ModuleItem";
-const API_MODULE = "base";
+const API_MODULE = "core";
 
 export const settingApi = {
 

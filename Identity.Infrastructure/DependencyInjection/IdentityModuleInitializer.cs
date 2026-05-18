@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Identity.PublicService;
@@ -48,8 +49,9 @@ namespace Identity.Infrastructure.DependencyInjection
                 var resourcePublicService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
                 var permissionPublicService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+                var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
 
-                await IdentitySeedData.StartSeedAsync(roleManager, userManager, resourcePublicService, permissionPublicService, roleService,_logger, _configuration);
+                await IdentitySeedData.StartSeedAsync(roleManager, userManager, resourcePublicService, permissionPublicService, roleService, menuService, _logger, _configuration);
 
                 _logger.LogInformation("Identity module initialization completed successfully.");
             }

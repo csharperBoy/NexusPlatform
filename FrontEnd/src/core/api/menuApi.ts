@@ -12,7 +12,7 @@ export const menuApi = {
     const api = getAPI(API_MODULE);
     
     const response = await api.get<MenuDto[]>(
-      "/api/core/menu/GetMenus"
+      "/api/base/Menu/GetMenuTreeQuery"
     );
     console.warn(response);
     console.log(response);

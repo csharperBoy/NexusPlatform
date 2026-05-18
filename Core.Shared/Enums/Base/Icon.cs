@@ -10,6 +10,8 @@ namespace Core.Shared.Enums.Base
     public enum Icon
     {
         [Description("fa-solid:circle-user")]
+        Default,
+        [Description("fa-solid:circle-user")]
         User,
         [Description("md-account-circle")]
         Account,

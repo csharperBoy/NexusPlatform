@@ -11,7 +11,7 @@ namespace Base.Domain.Specifications
     public class MenuByKeySpec : BaseSpecification<Menu>
     {
         public MenuByKeySpec(string key)
-            : base(r => r.Key == key)
+            : base(r => r.Key.Trim() == key.Trim())
         {
 
             // بارگذاری Parent و Children

@@ -1,6 +1,7 @@
 ﻿using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -34,11 +35,13 @@ namespace Authorization.Infrastructure.DependencyInjection
                 // اجرای seed داده‌ها
                 var dbContext = scope.ServiceProvider.GetRequiredService<AuthorizationDbContext>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+                var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
                
                 // روش 1: استفاده از متد یکپارچه
                 await AuthorizationSeedData.SeedAuthorizationDataAsync(
                     dbContext,
                     roleService,
+                    menuService,
                     _configuration,
                     _logger);
                 

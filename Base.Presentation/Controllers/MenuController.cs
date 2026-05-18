@@ -18,7 +18,7 @@ namespace Base.Presentation.Controllers
     public class MenuController : BaseController
     {
         [HttpGet("GetMenuTreeQuery")]
-        //[AuthorizeResource("base.menu", "View")]
+        [AuthorizeResource("base.menu", "View")]
         public async Task<IActionResult> GetMenuTreeQuery()
         {
 
@@ -26,5 +26,6 @@ namespace Base.Presentation.Controllers
             var result = await Mediator.Send(query);
             return HandleResult(result);
         }
+
     }
 }

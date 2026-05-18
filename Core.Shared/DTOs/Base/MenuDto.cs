@@ -18,7 +18,8 @@ namespace Core.Shared.DTOs.Base
         ///  به صورت "fa-solid:folder" یا "md-folder" ذخیره می‌شود.
         ///  مثال: "fa-solid:folder" (Font Awesome) یا "md-folder" (Material Design).
         /// </summary>
-        public Icon? Icon { get; set; }
+        //public Icon? Icon { get; set; }
+        public string? Icon { get; set; }
         public int? Order { get; set; }
 
         public Guid? ParentId { get; set; }

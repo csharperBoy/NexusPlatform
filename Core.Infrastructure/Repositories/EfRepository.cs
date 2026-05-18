@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Authorization.Processor;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
+using Core.Infrastructure.Hosted;
 using Core.Infrastructure.Security;
 using Core.Shared.Enums.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -67,14 +68,17 @@ namespace Core.Infrastructure.Repositories
         protected readonly DbSet<TEntity> _dbSet;
         protected readonly IRowLevelSecurityProcessor<TEntity> _authorizationProcessor;
 
+        //private readonly ApplicationLifetimeTracker _lifetimeTracker;
         public EfRepository(
             TDbContext dbContext,
             IRowLevelSecurityProcessor<TEntity> authorizationProcessor
+            //,             ApplicationLifetimeTracker lifetimeTracker
             )
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();
             _authorizationProcessor = authorizationProcessor;
+            //_lifetimeTracker = lifetimeTracker;
         }
 
         // ... (متدهای GetByIdAsync, GetAllAsync, CountAsync, ExistsAsync بدون تغییر) ...
@@ -128,7 +132,10 @@ namespace Core.Infrastructure.Repositories
         public virtual async Task AddAsync(TEntity entity)
         {
             await _authorizationProcessor.SetOwnerDefaults(entity);
-            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
+            // فقط زمانی که میزبانی روشن است، مجوز چک می‌شود
+           
+                await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
+            
             await _dbSet.AddAsync(entity);
         }
 

@@ -33,6 +33,8 @@ const iconMap: Record<string, React.ComponentType> = {
 };
 
 export const getIconComponent = (iconKey: string): React.ReactNode => {
+  
+    console.warn(`iconKey: ${iconKey}`);
   if (!iconKey) return null;
 
   const compKey = parseIconKey(iconKey);

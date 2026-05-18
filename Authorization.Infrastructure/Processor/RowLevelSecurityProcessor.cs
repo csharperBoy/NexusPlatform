@@ -12,6 +12,7 @@ using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Enums;
 using Core.Domain.Interfaces;
+using Core.Infrastructure.Hosted;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
@@ -34,6 +35,7 @@ namespace Authorization.Infrastructure.Processor
         ICachePublicService _cacheService;
         ILogger<RowLevelSecurityProcessor<TEntity>> _logger;
         private readonly UserDataContext _scope;
+        private readonly ApplicationLifetimeTracker _lifetimeTracker;
 
         public async Task SetOwnerDefaults(TEntity entity)
         {
@@ -61,17 +63,25 @@ namespace Authorization.Infrastructure.Processor
 
         }
 
-        public RowLevelSecurityProcessor(ICachePublicService cacheService , ILogger<RowLevelSecurityProcessor<TEntity>> logger, UserDataContext scope)
+        public RowLevelSecurityProcessor(ICachePublicService cacheService ,
+            ILogger<RowLevelSecurityProcessor<TEntity>> logger,
+            UserDataContext scope,
+            ApplicationLifetimeTracker lifetimeTracker)
         {
             _cacheService = cacheService;
             _logger = logger;
             _scope = scope;
+            _lifetimeTracker = lifetimeTracker;
         }
         public async Task<IQueryable<TEntity>> ApplyFilter(IQueryable<TEntity> query)
         {
             try
             {
-                //return query;
+                if (!_lifetimeTracker.IsStarted)
+                {
+                    // اگر در حال اجرای اولیه پروژه بود اعمال نشود
+                    return query;
+                }
                 // 🚨 جلوگیری از لوپ منطقی
                 if (typeof(TEntity) == typeof(Permission) || typeof(TEntity) == typeof(Resource))
                     return query;
@@ -101,15 +111,19 @@ namespace Authorization.Infrastructure.Processor
 
         public async Task CheckPermissionAsync(TEntity entity, PermissionAction action)
         {
-            //return;
-            // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
-            // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
-            // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
-             if (typeof(TEntity) == typeof(Permission) ||
-                 typeof(TEntity) == typeof(Resource) ) // UserSession هم در زنجیره لاگین است
-             {
-                 return;
-             }
+            if (!_lifetimeTracker.IsStarted)
+            {
+                // اگر در حال اجرای اولیه پروژه بود اعمال نشود
+                return;
+            }
+                // تغییر ۲: جلوگیری از لوپ منطقی (بسیار مهم)
+                // اگر داریم روی جدول Permission یا Resource عملیات انجام می‌دهیم، نباید چک کنیم
+                // چون خود AuthorizationService برای چک کردن نیاز به خواندن اینها دارد.
+             //   if (typeof(TEntity) == typeof(Permission) ||
+             //    typeof(TEntity) == typeof(Resource) ) 
+             //{
+             //    return;
+             //}
             List<PermissionDto> allPermissions = _scope.Permissions.ToList();
 
             var resourceAttr = typeof(TEntity).GetCustomAttribute<SecuredResourceAttribute>();
@@ -254,6 +268,7 @@ namespace Authorization.Infrastructure.Processor
             {
                 return personPerm.Effect == PermissionEffect.Deny ? ScopeType.None : personPerm.Scopes.FirstOrDefault().scope;
             }
+            
 
             // اولویت ۲: وجود Deny در نقش/پست
             if (permissions.Any(p => p.Effect == PermissionEffect.Deny))
@@ -264,7 +279,7 @@ namespace Authorization.Infrastructure.Processor
             // اولویت ۳: Max Scope
             return permissions
                 .Where(p => p.Effect == PermissionEffect.allow)
-                .Select(p => p.Scopes.FirstOrDefault().scope)
+                .Select(p => p.Scopes != null ? p.Scopes.FirstOrDefault().scope : ScopeType.All)
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
         }

@@ -32,10 +32,19 @@ namespace Core.Shared.Enums
         }
         public static string GetIconString(this Icon icon)
         {
+            //if (icon == null)
+            //    return null;
             var field = typeof(Icon).GetField(icon.ToString());
             var attr = field?.GetCustomAttribute<DescriptionAttribute>();
             return attr?.Description ?? icon.ToString();
         }
-
+        public static string GetIconString(this Icon? icon)
+        {
+            if (icon == null)
+                return null;
+            var field = typeof(Icon).GetField(icon.ToString());
+            var attr = field?.GetCustomAttribute<DescriptionAttribute>();
+            return attr?.Description ?? icon.ToString();
+        }
     }
 }

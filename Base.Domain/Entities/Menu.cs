@@ -2,17 +2,19 @@
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums.Base;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Base.Domain.Entities
 {
 
-    [SecuredResource("Core.Menu")]
+    [SecuredResource("Base.Menu")]
     public class Menu : BaseEntity, IHierarchicalStructureEntity<Menu, Guid?>, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
@@ -82,9 +84,18 @@ namespace Base.Domain.Entities
         /// </summary>
         public Icon? Icon { get; set; }
         public int? Order { get; set; }
-        public Menu(string _Title, string _Key, string? _Description, string _Path, Icon? _Icon, int? _Order)
+        public Menu(string _Title, string _Key, string? _Description, string _Path, Icon? _Icon, int? _Order,Guid? _ParentId)
         {
-            Title = _Title; Key = _Key; Description = _Description; Path = _Path; Icon = _Icon; Order = _Order;
+            if (string.IsNullOrWhiteSpace(_Key)) throw new ArgumentException("Menu key cannot be empty.");
+            if (string.IsNullOrWhiteSpace(_Title)) throw new ArgumentException("Menu Title cannot be empty.");
+
+            Key = _Key.Trim().ToLowerInvariant();
+            Title = _Title.Trim();
+            Description = _Description;
+            Path = _Path;
+            Icon = _Icon;
+            Order = _Order;
+            ParentId = _ParentId;
         }
 
         public void Update(string _title, string? _description, Icon? _icon, int? _order, string _key)
