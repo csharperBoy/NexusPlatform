@@ -11,7 +11,7 @@ const PermissionsManagementPage: React.FC = () => {
     {
       id: 'action',
       label: 'عملیات',
-      accessor: (row) =>actionMap[ row.action],
+      accessor: (row) => row.action,
     },
      {
       id: 'resourceKey',
