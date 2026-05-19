@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Domain.Common.EntityProperties
+namespace Core.Shared.DTOs.Authorization
 {
-    public interface IHasPermissionRuleEntity
+    public class JoinDetailDto
     {
-
-        List<string> FieldList { get; }
     }
 }

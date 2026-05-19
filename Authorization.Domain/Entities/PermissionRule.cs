@@ -38,8 +38,6 @@ namespace Authorization.Domain.Entities
         public string? JoinLocalKey { get; private set; }
         public string? JoinForeignKey { get; private set; }
         public string? JoinEntity { get; private set; }
-        //public Guid? JoinDetailId {  get; private set; }
-        //public virtual JoinDetail? JoinDetail { get; private set; }
         public virtual Permission Permission { get; private set; } // navigation
         protected PermissionRule() { }
 

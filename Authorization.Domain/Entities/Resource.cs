@@ -18,8 +18,30 @@ namespace Authorization.Domain.Entities
 {
 
     [SecuredResource("Authorization.Resource")]
-    public class Resource : BaseEntity , IAuditableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
+    public class Resource : BaseEntity , IAuditableEntity,IHasPermissionRuleEntity, IJoinDetaileableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
+        #region IHasPermissionRuleEntity Impelement
+
+        public List<string> FieldList
+        {
+            get => new List<string> { "Type", "Category" };
+        }
+        #endregion
+        #region IJoinDetaileableEntity Impelement
+        public List<JoinDetailDefine> joinList { get => new List<JoinDetailDefine>()
+        {
+            new JoinDetailDefine()
+            {
+                Title = "محدوده ها",
+                JoinEntity = "Scopes",
+                JoinForeignKey = "PermissionId",
+                JoinLocalKey = "Id",
+                FieldList = new List<string> { "scope" }
+            }
+        };
+        }
+
+        #endregion
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
