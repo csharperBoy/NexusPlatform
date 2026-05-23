@@ -1,4 +1,7 @@
-﻿using Core.Infrastructure.DependencyInjection;
+﻿using Authorization.Application.Interfaces;
+using Authorization.Application.Provider;
+using Core.Infrastructure.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Converters;
 using Notification.Presentation.Hubs;
 using Serilog;
@@ -11,8 +14,7 @@ try
     Log.Information("🚀 Starting Trader Management application...");
 
     var builder = WebApplication.CreateBuilder(args);
-
-    builder.Configuration
+   builder.Configuration
         .SetBasePath(builder.Environment.ContentRootPath)
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
@@ -20,9 +22,9 @@ try
 
     var configuration = builder.Configuration;
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
-   
-    var app = builder.Build();
+    builder.Services.AddEnableModulesServiceCollectionExtensions_InApp(configuration);
 
+    var app = builder.Build();
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);
     await app.UseSwaggerApplicationBuilderExtensions(configuration);
 

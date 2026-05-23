@@ -16,7 +16,8 @@ namespace Authorization.Application.DependencyInjection
        
         public static IServiceCollection Authorization_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            
+            services.AddSingleton<IResourceMetadataProvider, ResourceMetadataProvider>();
+
             // رجیستر MediatR و همه Handlerهای موجود در اسمبلی Application
             services.AddMediatR(cfg =>
                cfg.RegisterServicesFromAssembly(typeof(ServiceCollectionExtensions).Assembly));

@@ -9,6 +9,6 @@ namespace Core.Domain.Common.EntityProperties
     public interface IHasPermissionRuleEntity
     {
 
-        List<string> FieldList { get; }
+        //List<string> FieldList { get; }
     }
 }

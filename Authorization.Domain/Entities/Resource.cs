@@ -20,6 +20,7 @@ namespace Authorization.Domain.Entities
     [SecuredResource("Authorization.Resource")]
     public class Resource : BaseEntity , IAuditableEntity,IHasPermissionRuleEntity, IJoinDetaileableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
+        /*
         #region IHasPermissionRuleEntity Impelement
 
         public List<string> FieldList
@@ -27,6 +28,7 @@ namespace Authorization.Domain.Entities
             get => new List<string> { "Type", "Category" };
         }
         #endregion
+       
         #region IJoinDetaileableEntity Impelement
         public List<JoinDetailDefine> joinList { get => new List<JoinDetailDefine>()
         {
@@ -42,6 +44,7 @@ namespace Authorization.Domain.Entities
         }
 
         #endregion
+       */
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده

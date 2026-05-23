@@ -60,6 +60,41 @@ namespace Core.Infrastructure.DependencyInjection
 
     public static class ModuleLoaderExtensions
     {
+        public static IServiceCollection AddEnableModulesServiceCollectionExtensions_InApp(
+           this IServiceCollection services,
+           IConfiguration configuration)
+        {
+            var enabledModules = configuration
+                .GetSection("Modules:Enabled")
+                .Get<List<ModuleConfig>>() ?? new();
+
+            foreach (var module in enabledModules.OrderBy(m => m.Order))
+            {
+                var methods = new[]
+                {
+                    $"{module.Name}_AddInfrastructure_InApp",
+                    $"{module.Name}_AddApplication_InApp",
+                    $"{module.Name}_AddDomain_InApp",
+                    $"{module.Name}_AddPresentation_InApp"
+                };
+
+                foreach (var methodName in methods)
+                {
+                    var method = FindExtensionMethod(module.Name, methodName, typeof(IServiceCollection));
+                    if (method != null)
+                    {
+                        Console.WriteLine($"✅ اجرای متد {methodName} از ماژول {module.Name}");
+                        method.Invoke(null, new object[] { services, configuration });
+                    }
+                    else
+                    {
+                        Console.WriteLine($"⚠️ متد {methodName} در ماژول {module.Name} پیدا نشد.");
+                    }
+                }
+            }
+
+            return services;
+        }
         public static IServiceCollection AddEnableModulesServiceCollectionExtensions(
             this IServiceCollection services,
             IConfiguration configuration)

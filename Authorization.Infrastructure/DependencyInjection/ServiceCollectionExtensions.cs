@@ -1,5 +1,7 @@
-﻿using Authorization.Application.Interfaces.Processor;
+﻿using Authorization.Application.Interfaces;
+using Authorization.Application.Interfaces.Processor;
 using Authorization.Application.Interfaces.Service;
+using Authorization.Application.Provider;
 using Authorization.Domain.Entities;
 using Authorization.Infrastructure.Data;
 using Authorization.Infrastructure.HostedServices;
@@ -65,15 +67,15 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddTransient<IAuthorizationProcessor, AuthorizationProcessor>();
 
             services.AddScoped<IRepository<AuthorizationDbContext, Resource, Guid>, EfRepository<AuthorizationDbContext, Resource, Guid>>();
-            services.AddScoped<IRepository<AuthorizationDbContext,Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
-            services.AddScoped<IRepository<AuthorizationDbContext,PermissionRule, Guid>, EfRepository<AuthorizationDbContext, PermissionRule, Guid>>();
-            services.AddScoped<IRepository<AuthorizationDbContext,Scope, Guid>, EfRepository<AuthorizationDbContext, Scope, Guid>>();
-           
+            services.AddScoped<IRepository<AuthorizationDbContext, Permission, Guid>, EfRepository<AuthorizationDbContext, Permission, Guid>>();
+            services.AddScoped<IRepository<AuthorizationDbContext, PermissionRule, Guid>, EfRepository<AuthorizationDbContext, PermissionRule, Guid>>();
+            services.AddScoped<IRepository<AuthorizationDbContext, Scope, Guid>, EfRepository<AuthorizationDbContext, Scope, Guid>>();
+
             services.AddScoped<ISpecificationRepository<Resource, Guid>, EfSpecificationRepository<AuthorizationDbContext, Resource, Guid>>();
             services.AddScoped<ISpecificationRepository<Permission, Guid>, EfSpecificationRepository<AuthorizationDbContext, Permission, Guid>>();
             services.AddScoped<ISpecificationRepository<PermissionRule, Guid>, EfSpecificationRepository<AuthorizationDbContext, PermissionRule, Guid>>();
             services.AddScoped<ISpecificationRepository<Scope, Guid>, EfSpecificationRepository<AuthorizationDbContext, Scope, Guid>>();
-            
+
 
             services.AddScoped<IUnitOfWork<AuthorizationDbContext>, EfUnitOfWork<AuthorizationDbContext>>();
             var registration = services.BuildServiceProvider().GetRequiredService<IOutboxProcessorRegistration>();
@@ -82,6 +84,28 @@ namespace Authorization.Infrastructure.DependencyInjection
             services.AddHostedService<ModuleInitializer>();
             services.AddScoped<IPermissionInternalService, PermissionService>();
             services.AddScoped<IResourceInternalService, ResourceService>();
+           
+            return services;
+        }
+        public static IServiceCollection Authorization_AddInfrastructure_InApp(this IServiceCollection services, IConfiguration configuration)
+        {
+            #region test
+
+
+            // 2. گرفتن لیست DbContextهای ثبت‌شده
+            var dbContextTypes = services
+                .Where(sd => typeof(DbContext).IsAssignableFrom(sd.ServiceType) && !sd.ServiceType.IsAbstract)
+                .Select(sd => sd.ServiceType)
+                .ToList();
+
+            // 3. ثبت provider
+            services.AddSingleton<IResourceMetadataProvider>(sp =>
+            {
+                return new ResourceMetadataProvider(sp, dbContextTypes);
+            });
+
+
+            #endregion
             return services;
         }
     }
