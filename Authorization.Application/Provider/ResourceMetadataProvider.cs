@@ -12,7 +12,20 @@ namespace Authorization.Application.Provider
     public class ResourceMetadataProvider : IResourceMetadataProvider
     {
         public IReadOnlyList<ResourceMetadataDto> Resources { get; }
-
+        private static List<FieldDto> GetScalarFields(IEntityType entityType)
+        {
+            return entityType.GetProperties()
+                .Where(p => !p.IsForeignKey())
+                .Select(p => new FieldDto(
+                    p.Name,
+                    p.ClrType.BaseType?.Name,
+                    p.IsNullable
+                        ? p.ClrType.GenericTypeArguments.FirstOrDefault()?.Name ?? p.ClrType.Name
+                        : p.ClrType.Name,
+                    p.Name
+                ))
+                .ToList();
+        }
         public ResourceMetadataProvider(IServiceProvider rootProvider, IEnumerable<Type> dbContextTypes)
         {
             var resources = new List<ResourceMetadataDto>();
@@ -25,31 +38,18 @@ namespace Authorization.Application.Provider
 
                 foreach (var entityType in dbContext.Model.GetEntityTypes())
                 {
-                    var scalarFieldst = entityType.GetProperties()
-                       .Where(p => !p.IsForeignKey())
-                       .ToList();
-
-                    // فیلدهای اسکلر
-                    var scalarFields = entityType.GetProperties()
-                        .Where(p => !p.IsForeignKey())
-                        .Select(p => new FieldDto(
-                           p.Name ,
-                           p.ClrType.BaseType?.Name,
-                           p.IsNullable ? p.ClrType.GenericTypeArguments.FirstOrDefault()?.Name ?? p.ClrType.Name : p.ClrType.Name,
-                           $"{p.Name}" 
-                           //p.GetCustomAttribute<DisplayAttribute>()?.Name
-                            )
-                        )
-                        .ToList();
+                    var scalarFields = GetScalarFields(entityType);
 
                     // ارتباطات
                     var joins = entityType.GetNavigations()
-                        .Select(nav => new JoinDto(
-                            nav.Name,
-                            nav.TargetEntityType.ClrType.Name,
-                            nav.ForeignKey.Properties.Select(p => p.Name).FirstOrDefault(),
-                            nav.ForeignKey.PrincipalKey.Properties.Select(p => p.Name).FirstOrDefault()))
-                        .ToList();
+                                .Select(nav => new JoinDto(
+                                    nav.Name,
+                                    nav.TargetEntityType.ClrType.Name,
+                                    nav.ForeignKey.Properties.Select(p => p.Name).FirstOrDefault(),
+                                    nav.ForeignKey.PrincipalKey.Properties.Select(p => p.Name).FirstOrDefault(),
+                                    GetScalarFields(nav.TargetEntityType)
+                                ))
+                                .ToList();
 
                     // کلید منبع
                     var securedAttr = entityType.ClrType.GetCustomAttribute<SecuredResourceAttribute>();

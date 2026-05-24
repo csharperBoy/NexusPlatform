@@ -11,8 +11,10 @@ namespace Authorization.Application.DTOs.Resource
     public record JoinDto(
         string NavigationName,
         string TargetEntity,
-        string LocalKeys,      // FK property names on the current entity
-        string ForeignKeys     // PK property names on the target entity
+        string TargetKey,      // PK property names on the target entity
+        string CurrentKey,     // FK property names on the current entity
+
+        List<FieldDto> TargetScalarFields
     );
 
     public record ResourceMetadataDto(

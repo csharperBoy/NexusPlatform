@@ -17,6 +17,17 @@ export const resourceApi = {
     console.warn(response);
     console.log(response);
     return response.data;
+  }, 
+  // دریافت فیلد ها و روابط من (GET)
+  getMetadata: async (resourceKey: string): Promise<ResourceDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<ResourceDto[]>(
+      "/api/authorization/admin/resources/tree",
+      { params: { rootId }, withCredentials: true }
+    );
+    console.warn(response);
+    console.log(response);
+    return response.data;
   },
   // دریافت منابع (GET)
   GetSelectionList: async (): Promise<SelectionListDto[]> => {
