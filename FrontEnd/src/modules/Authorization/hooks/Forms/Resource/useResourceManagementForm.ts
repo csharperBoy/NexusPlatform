@@ -22,14 +22,14 @@ export const useResourceManagement = () => {
   };
  const editNode = async (id: string) => {
     try {
-       navigate(`/resources/edit/${id}`)
+       navigate(`/authorization/resources/edit/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
    const addNode = async (id: string) => {
     try {
-       navigate(`/resources/create/${id}`)
+       navigate(`/authorization/resources/create/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }

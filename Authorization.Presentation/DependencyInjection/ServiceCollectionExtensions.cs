@@ -48,7 +48,7 @@ namespace Authorization.Presentation.DependencyInjection
                 .AddApplicationPart(typeof(DataScopesController).Assembly) // اسمبلی کنترلرهای Sample
                 .AddApplicationPart(typeof(AuthorizationController).Assembly) // اسمبلی کنترلرهای Sample
                 .AddApplicationPart(typeof(AccessController).Assembly) // اسمبلی کنترلرهای Sample
-                .AddApplicationPart(typeof(ResourceMetadataController).Assembly) // اسمبلی کنترلرهای Sample
+                //.AddApplicationPart(typeof(ResourceMetadataController).Assembly) // اسمبلی کنترلرهای Sample
                 .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
 
             // 📌 رجیستر MediatR برای مدیریت Command/Queryها
@@ -58,7 +58,7 @@ namespace Authorization.Presentation.DependencyInjection
                 .RegisterServicesFromAssembly(typeof(DataScopesController).Assembly)
                 .RegisterServicesFromAssembly(typeof(AuthorizationController).Assembly)
                 .RegisterServicesFromAssembly(typeof(AccessController).Assembly)
-                .RegisterServicesFromAssembly(typeof(ResourceMetadataController).Assembly)
+                //.RegisterServicesFromAssembly(typeof(ResourceMetadataController).Assembly)
                 );
 
             return services;

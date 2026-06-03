@@ -27,14 +27,14 @@ export const useRoleManagement = () => {
   };
  const editAction = async (id: string) => {
     try {
-       navigate(`/role/edit/${id}`)
+       navigate(`/identity/role/edit/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
    const addAction = async (id: string) => {
     try {
-       navigate(`/role/create/${id}`)
+       navigate(`/identity/role/create/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }

@@ -6,17 +6,18 @@ export interface fieldDto {
   displayName: string;
   
 } 
+export interface joinDto {
+  navigationName: string;
+  targetEntity: number;
+  targetKey: string;
+  currentKey: string;
+  targetScalarFields: fieldDto[];
+}
 
-public record JoinDto(
-    string NavigationName,
-    string TargetEntity,
-    string TargetKey,      // PK property names on the target entity
-    string CurrentKey     // FK property names on the current entity
-);
 
-public record ResourceMetadataDto(
-    string ResourceKey,
-    string EntityName,
-    List<FieldDto> ScalarFields,
-    List<JoinDto> Joins
-);
+export interface resourceMetadataDto {
+     resourceKey: string;
+     entityName: string;
+     scalarFields: fieldDto[];
+     joins: joinDto[];
+} 

@@ -29,14 +29,14 @@ export const usePermissionManagement = () => {
   };
  const editNode = async (id: string) => {
     try {
-       navigate(`/permissions/edit/${id}`)
+       navigate(`/authorization/permissions/edit/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
    const addNode = async (id: string) => {
     try {
-       navigate(`/permissions/create/${id}`)
+       navigate(`/authorization/permissions/create/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }

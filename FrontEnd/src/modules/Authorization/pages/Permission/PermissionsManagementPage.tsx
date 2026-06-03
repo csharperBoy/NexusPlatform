@@ -5,7 +5,7 @@ import { Table, ColumnDef } from '@/core/components/Table';
 import { PermissionDto } from '../../models/PermissionDto'; 
 import { actionMap, assignTypeMap, effectMap } from '../../models/PermissionEnum';
 const PermissionsManagementPage: React.FC = () => {
-
+  
   // تعریف ستون‌های جدول برای نمایش اطلاعات کاربران
   const permissionColumns: ColumnDef<PermissionDto>[] = [
     {
@@ -46,9 +46,10 @@ const PermissionsManagementPage: React.FC = () => {
       renderForm={({ FormData,filters, loading, error, refresh, deleteNode, editNode, addNode }: RenderFormProps) => (
         <div className="p-4">
           {/* دکمه اضافه کردن کاربر جدید */}
-          <button onClick={() => addNode('')} className="mb-4 px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600">
-            افزودن مجوز جدید
-          </button>
+         <button onClick={() => addNode('')} className="mb-4 px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600"> 
+        
+  افزودن مجوز جدید
+</button>
           
           {/* کامپوننت جدول */}
           <Table
@@ -56,7 +57,7 @@ const PermissionsManagementPage: React.FC = () => {
             columns={permissionColumns}
             onEdit={editNode}
             onDelete={deleteNode}
-          />
+          /> 
         </div>
       )}
     />

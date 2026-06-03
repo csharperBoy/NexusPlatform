@@ -28,14 +28,14 @@ export const useUserManagement = () => {
   };
  const editAction = async (id: string) => {
     try {
-       navigate(`/user/edit/${id}`)
+       navigate(`/identity/user/edit/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }
   };
    const addAction = async (id: string) => {
     try {
-       navigate(`/user/create/${id}`)
+       navigate(`/identity/user/create/${id}`)
     } catch (err: any) {
       throw err?.response?.data || "ویرایش ناموفق بود";
     }

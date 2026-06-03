@@ -3,6 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 import type { ResourceDto } from "../models/ResourceDto";
 import type { CreateResourceCommand , UpdateResourceCommand } from "../models/ResourceCommands";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
+import { resourceMetadataDto } from "../models/ResourceMetadataDto";
 
 const API_MODULE = "authorization"; // دقت کنید که با حروف کوچک در env تعریف شده باشد
 
@@ -19,11 +20,11 @@ export const resourceApi = {
     return response.data;
   }, 
   // دریافت فیلد ها و روابط من (GET)
-  getMetadata: async (resourceKey: string): Promise<ResourceDto[]> => {
+  getMetadata: async (resourceKey: string): Promise<resourceMetadataDto[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<ResourceDto[]>(
-      "/api/authorization/admin/resources/tree",
-      { params: { rootId }, withCredentials: true }
+    const response = await api.get<resourceMetadataDto[]>(
+      `/api/authorization/admin/resources/metadata/${resourceKey}`,
+      {  withCredentials: true }
     );
     console.warn(response);
     console.log(response);
