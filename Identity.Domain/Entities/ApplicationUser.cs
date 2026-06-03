@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +19,8 @@ namespace Identity.Domain.Entities
 
     RefreshTokens برای مدیریت سشن‌ها.
      */
+
+    [SecuredResource("Identity.User")]
     public class ApplicationUser : IdentityUser<Guid>, IAggregateRoot , IAuditableEntity
     {
         #region IAuditableEntity Impelement

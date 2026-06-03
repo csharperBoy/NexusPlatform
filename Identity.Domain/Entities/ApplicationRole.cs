@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -14,6 +15,8 @@ namespace Identity.Domain.Entities
 
     قابل گسترش برای سیستم سلسله‌مراتب نقش‌ها در آینده.
      */
+
+    [SecuredResource("Identity.Role")]
     public class ApplicationRole : IdentityRole<Guid>, IAggregateRoot , IAuditableEntity
     {
         #region IAuditableEntity Impelement
