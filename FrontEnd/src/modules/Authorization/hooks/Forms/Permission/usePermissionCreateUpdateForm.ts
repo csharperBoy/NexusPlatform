@@ -300,7 +300,7 @@ const fetchMetadata = async (resourceId: string) => {
     }
   } catch (err) {
     console.error('Failed to fetch metadata:', err);
-    setError('خطا در بارگذاری ساختار فیلدهای منبع');
+    // setError('خطا در بارگذاری ساختار فیلدهای منبع');
     setFieldOptions([]);
       setJoinOptions([]);
           setUseDynamicFilter(false);
