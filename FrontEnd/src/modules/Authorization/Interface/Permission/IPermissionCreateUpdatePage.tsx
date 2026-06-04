@@ -7,6 +7,7 @@ import LoadingIndicator from '@/core/components/LoadingIndicator'; // کامپو
 import { CreatePermissionCommand, UpdatePermissionCommand, PermissionFormCommand } from '../../models/PermissionCommands'; // مدل‌های یکپارچه شده
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
+import { joinDto } from '../../models/ResourceMetadataDto';
 
 // --- تعریف اینترفیس‌ها ---
 
@@ -15,7 +16,7 @@ import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
 // اما هوک یکپارچه ما PermissionFormCommand را برمی‌گرداند که Union Type است.
 // برای انعطاف‌پذیری بیشتر، اجازه می‌دهیم formData از نوع Union باشد.
 // در کامپوننت فرم فرزند، بر اساس isEdit می‌توان نوع دقیق را مشخص کرد.
-export interface RenderFormProps {
+export interface PermissionCreateUpdateFormProps {
   formData: PermissionFormCommand; // هوک ما این نوع را برمی‌گرداند
   scopesList: { value: number; display: string }[];
   resourceList: SelectionListDto[];  
@@ -32,13 +33,22 @@ export interface RenderFormProps {
   handleRemoveRule: (index: number) => void;
   handleRuleChange: <K extends keyof PermissionRuleFormCommand>(index: number, field: K, value: PermissionRuleFormCommand[K]) => void;
 
+  fieldOptions: { value: string; label: string }[];
+  joinOptions: { value: string; label: string; joinData: joinDto }[];
+  metadataLoading: boolean;
+
+  ruleMode: Record<number, 'local' | 'navigated'>;
+  selectedNav: Record<number, string>;
+  handleRuleModeChange: (idx: number, mode: 'local' | 'navigated') => void;
+  handleNavigationSelect: (idx: number, navValue: string) => void;
+  getFieldOptionsForRule: (idx: number) => { value: string; label: string }[];
 }
 
 // اینترفیس Props کامپوننت والد IPermissionCreateUpdatePage
 export interface IPermissionCreateUpdatePageProps {
   formMode: 'create' | 'update'; // مشخص می‌کند که صفحه برای ایجاد است یا ویرایش
   redirectTo?: string; // مسیر بازگشت پس از عملیات موفق
-  renderForm: (props: RenderFormProps) => React.ReactNode; // تابعی که فرم را رندر می‌کند
+  renderForm: (props: PermissionCreateUpdateFormProps) => React.ReactNode; // تابعی که فرم را رندر می‌کند
   loadingComponent?: React.ReactNode; // کامپوننت لودینگ سفارشی
 }
 

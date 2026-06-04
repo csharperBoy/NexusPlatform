@@ -8,27 +8,8 @@ import { data } from 'react-router-dom';
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
 import { ComparisonOperator, LogicalOperator } from '../../models/PermissionRuleEnum';
+import { PermissionCreateUpdateFormProps } from '../../Interface/Permission/IPermissionCreateUpdatePage';
 
-interface PermissionCreateUpdateFormProps {
-  formData: PermissionFormCommand;
-  scopesList: { value: number; display: string }[];
-  resourceList: SelectionListDto[];
-  
-  assignList  : SelectionListDto[];  
-  loading: boolean;
-  error: string | null;
-  isEdit: boolean;
-  handleChange: <K extends keyof PermissionFormCommand>(field: K, value: PermissionFormCommand[K]) => void;
-  handleScopesChange: (scopeValue: number, checked: boolean) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  handleAssignTypeChange: (newAssignType: number)  => void;
-
-   // --- rule helpers
-  handleAddRule: () => void;
-  handleRemoveRule: (index: number) => void;
-  handleRuleChange: <K extends keyof PermissionRuleFormCommand>(index: number, field: K, value: PermissionRuleFormCommand[K]) => void;
-
-}
 const operatorOptions: { value: ComparisonOperator; display: string }[] = [
   { value: ComparisonOperator.Equal, display: 'Equal' },
   { value: ComparisonOperator.GreaterThan, display: 'GreaterThan' },
@@ -62,6 +43,14 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
   handleAddRule,
   handleRemoveRule,
   handleRuleChange,
+  fieldOptions,
+  joinOptions,
+  metadataLoading,
+  ruleMode,
+  getFieldOptionsForRule,
+  handleNavigationSelect,
+  handleRuleModeChange,
+  selectedNav
 }) => {
    const [showRules, setShowRules] = useState<boolean>(true);
 
@@ -255,145 +244,145 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           </label>
         </div>
 
-        {showRules && (
+                {showRules && (
           <>
             {formData.rules && formData.rules.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="table w-full">
-                  <thead>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                  <thead className="bg-gray-100">
                     <tr>
-                      <th>فیلد</th>
-                      <th>عملگر</th>
-                      <th>مقدار</th>
-                      <th>عملگر منطقی</th>
-                      <th>ترتیب گروه</th>
-                      <th>Join Local Key</th>
-                      <th>Join Foreign Key</th>
-                      <th>Join Entity</th>
-                      <th>عملیات</th>
+                      <th className="border p-2">نوع</th>
+                      <th className="border p-2">ناویگیشن</th>
+                      <th className="border p-2">فیلد</th>
+                      <th className="border p-2">عملگر</th>
+                      <th className="border p-2">مقدار</th>
+                      <th className="border p-2">عملگر منطقی</th>
+                      <th className="border p-2">ترتیب گروه</th>
+                      <th className="border p-2">عملیات</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {formData.rules.map((rule, idx) => (
-                      <tr key={idx}>
-                        <td>
-                          <Input
-                            value={rule.fieldName ?? ''}
-                            onChange={e =>
-                              handleRuleChange(idx, 'fieldName', e.target.value)
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        <td>
-                          <select
-                            value={rule.operator ?? ComparisonOperator.Equal}
-                            onChange={e =>
-                              handleRuleChange(
-                                idx,
-                                'operator',
-                                Number(e.target.value) as ComparisonOperator
-                              )
-                            }
-                            className="select select-bordered w-full"
-                          >
-                            {operatorOptions.map(opt => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.display}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <Input
-                            value={rule.value ?? ''}
-                            onChange={e =>
-                              handleRuleChange(idx, 'value', e.target.value)
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        <td>
-                          <select
-                            value={rule.logicalOperator ?? LogicalOperator.And}
-                            onChange={e =>
-                              handleRuleChange(
-                                idx,
-                                'logicalOperator',
-                                Number(e.target.value) as LogicalOperator
-                              )
-                            }
-                            className="select select-bordered w-full"
-                          >
-                            {logicalOperatorOptions.map(opt => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.display}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <Input
-                            type="number"
-                            value={rule.groupOrder ?? 0}
-                            onChange={e =>
-                              handleRuleChange(idx, 'groupOrder', parseInt(e.target.value, 10))
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        {/* Join Detail fields */}
-                        <td>
-                          <Input
-                            value={rule.joinLocalKey ?? ''}
-                            onChange={e =>
-                              handleRuleChange(idx, 'joinLocalKey', e.target.value)
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            value={rule.joinForeignKey ?? ''}
-                            onChange={e =>
-                              handleRuleChange(idx, 'joinForeignKey', e.target.value)
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        <td>
-                          <Input
-                            value={rule.joinEntity ?? ''}
-                            onChange={e =>
-                              handleRuleChange(idx, 'joinEntity', e.target.value)
-                            }
-                            className="input input-bordered w-full"
-                          />
-                        </td>
-                        <td>
-                          <Button
-                            type="button"
-                            color="error"
-                            size="sm"
-                            onClick={() => handleRemoveRule(idx)}
-                          >
-                            حذف
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {formData.rules.map((rule, idx) => {
+                      const currentMode = ruleMode[idx] || 'local';
+                      const selectedNavValue = selectedNav[idx] || '';
+                      const fieldOpts = getFieldOptionsForRule(idx);
+                      const isFieldDisabled = (currentMode === 'navigated' && !selectedNavValue) || metadataLoading;
+
+                      return (
+                        <tr key={idx} className="border-b">
+                          {/* ستون نوع */}
+                          <td className="border p-2">
+                            <select
+                              value={currentMode}
+                              onChange={(e) => handleRuleModeChange(idx, e.target.value as 'local' | 'navigated')}
+                              className="select select-bordered w-28"
+                            >
+                              <option value="local">بدون جوین</option>
+                              <option value="navigated">با جوین</option>
+                            </select>
+                          </td>
+
+                          {/* ستون ناویگیشن (فقط در حالت navigated) */}
+                          <td className="border p-2">
+                            {currentMode === 'navigated' ? (
+                              <select
+                                value={selectedNavValue}
+                                onChange={(e) => handleNavigationSelect(idx, e.target.value)}
+                                className="select select-bordered w-full"
+                                disabled={metadataLoading}
+                              >
+                                <option value="">انتخاب ناویگیشن...</option>
+                                {metadataLoading ? (
+                                  <option disabled>در حال بارگذاری...</option>
+                                ) : joinOptions.length === 0 ? (
+                                  <option disabled>هیچ ناویگیشنی موجود نیست</option>
+                                ) : (
+                                  joinOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ))
+                                )}
+                              </select>
+                            ) : (
+                              <span className="text-gray-400 text-sm">—</span>
+                            )}
+                          </td>
+
+                          {/* ستون فیلد */}
+                          <td className="border p-2">
+                            <select
+                              value={rule.fieldName || ''}
+                              onChange={(e) => handleRuleChange(idx, 'fieldName', e.target.value)}
+                              className="select select-bordered w-full"
+                              disabled={isFieldDisabled}
+                            >
+                              <option value="">انتخاب فیلد...</option>
+                              {fieldOpts.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* ستون عملگر */}
+                          <td className="border p-2">
+                            <select
+                              value={rule.operator ?? ComparisonOperator.Equal}
+                              onChange={(e) => handleRuleChange(idx, 'operator', Number(e.target.value))}
+                              className="select select-bordered w-full"
+                            >
+                              {operatorOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.display}</option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* ستون مقدار */}
+                          <td className="border p-2">
+                            <Input
+                              value={rule.value ?? ''}
+                              onChange={(e) => handleRuleChange(idx, 'value', e.target.value)}
+                              className="input input-bordered w-full"
+                            />
+                          </td>
+
+                          {/* ستون عملگر منطقی */}
+                          <td className="border p-2">
+                            <select
+                              value={rule.logicalOperator ?? LogicalOperator.And}
+                              onChange={(e) => handleRuleChange(idx, 'logicalOperator', Number(e.target.value))}
+                              className="select select-bordered w-full"
+                            >
+                              {logicalOperatorOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>{opt.display}</option>
+                              ))}
+                            </select>
+                          </td>
+
+                          {/* ستون ترتیب گروه */}
+                          <td className="border p-2">
+                            <Input
+                              type="number"
+                              value={rule.groupOrder ?? 0}
+                              onChange={(e) => handleRuleChange(idx, 'groupOrder', parseInt(e.target.value, 10))}
+                              className="input input-bordered w-20"
+                            />
+                          </td>
+
+                          {/* ستون عملیات (حذف) */}
+                          <td className="border p-2 text-center">
+                            <Button type="button" color="error" size="sm" onClick={() => handleRemoveRule(idx)}>
+                              حذف
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-center text-gray-500">هیچ قانونی اضافه نشده است.</p>
+              <p className="text-center text-gray-500 py-4">هیچ قانونی اضافه نشده است.</p>
             )}
-            <Button
-              type="button"
-              color="primary"
-              onClick={handleAddRule}
-              className="mt-2"
-            >
+            <Button type="button" color="primary" onClick={handleAddRule} className="mt-2">
               افزودن قانون جدید
             </Button>
           </>

@@ -8,7 +8,7 @@ export interface fieldDto {
 } 
 export interface joinDto {
   navigationName: string;
-  targetEntity: number;
+  targetEntity: string;
   targetKey: string;
   currentKey: string;
   targetScalarFields: fieldDto[];

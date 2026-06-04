@@ -15,6 +15,7 @@ import { personApi } from '@/modules/HR/api/personApi';
 import { positionApi } from '@/modules/HR/api/positionApi';
 import { roleApi } from '@/modules/Identity/api/roleApi';
 import { ComparisonOperator , LogicalOperator } from '@/modules/Authorization/models/PermissionRuleEnum';
+import { resourceMetadataDto, fieldDto, joinDto }  from '@/modules/Authorization/models/ResourceMetadataDto';
 
 export const usePermissionCreateUpdateForm = (
   permissionId?: string,
@@ -59,6 +60,12 @@ export const usePermissionCreateUpdateForm = (
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [metadata, setMetadata] = useState<resourceMetadataDto | null>(null);
+  const [fieldOptions, setFieldOptions] = useState<{ value: string; label: string }[]>([]);
+  const [joinOptions, setJoinOptions] = useState<{ value: string; label: string; joinData: joinDto }[]>([]);
+  const [metadataLoading, setMetadataLoading] = useState(false);
+  const [ruleMode, setRuleMode] = useState<Record<number, 'local' | 'navigated'>>({});
+const [selectedNav, setSelectedNav] = useState<Record<number, string>>({});
   /* ----------- maps ----------- */
   const assignTypeMap: Record<string, number> = {
     Person: 0,
@@ -87,7 +94,40 @@ export const usePermissionCreateUpdateForm = (
     SpecificProperty: 5,
     All: 99,
   };
+// مقداردهی اولیه ruleMode و selectedNav از روی قوانین موجود (برای ویرایش)
+useEffect(() => {
+  // بررسی می‌کنیم که rules وجود داشته باشد، آرایه باشد و حداقل یک عضو داشته باشد
+  // همچنین joinOptions نیز باید بارگذاری شده باشد
+  if (formData.rules && Array.isArray(formData.rules) && formData.rules.length > 0 && joinOptions.length > 0) {
+    setRuleMode(prevMode => {
+      const newMode = { ...prevMode };
+      const newNav = { ...selectedNav };
+      let changed = false;
 
+      // حالا مطمئن هستیم rules وجود دارد و آرایه است
+      formData.rules!.forEach((rule, idx) => {
+        if (newMode[idx] === undefined) {
+          changed = true;
+          if (rule.joinEntity && rule.joinEntity.trim() !== '') {
+            newMode[idx] = 'navigated';
+            const matchedNav = joinOptions.find(j => 
+              j.joinData.targetEntity === rule.joinEntity || j.value === rule.joinEntity
+            );
+            newNav[idx] = matchedNav ? matchedNav.value : rule.joinEntity;
+          } else {
+            newMode[idx] = 'local';
+          }
+        }
+      });
+
+      if (changed) {
+        setSelectedNav(newNav);
+        return newMode;
+      }
+      return prevMode;
+    });
+  }
+}, [formData.rules, joinOptions]); // وابستگی‌ها
   /* ----------- list fetch ----------- */
   useEffect(() => {
     const fetchAssignees = async () => {
@@ -204,6 +244,57 @@ export const usePermissionCreateUpdateForm = (
     fetchPermission();
   }, [permissionId]);
 
+// useEffect برای نظارت بر تغییر ResourceId
+useEffect(() => {
+  if (formData.ResourceId) {
+    fetchMetadata(formData.ResourceId);
+  } else {
+    setMetadata(null);
+    setFieldOptions([]);
+    setJoinOptions([]);
+  }
+}, [formData.ResourceId]);
+
+  // تابع دریافت متادیتا بر اساس ResourceId
+const fetchMetadata = async (resourceId: string) => {
+  if (!resourceId) {
+    setMetadata(null);
+    setFieldOptions([]);
+    setJoinOptions([]);
+    return;
+  }
+  try {
+    setMetadataLoading(true);
+    // 2. دریافت متادیتا با استفاده از resourceId
+    const metadataList = await resourceApi.getMetadata(resourceId);
+    console.log('📦 Metadata response:', metadataList);
+    if (metadataList && metadataList.length > 0) {
+      const meta = metadataList[0];
+      setMetadata(meta);
+      // ساخت گزینه‌های فیلدهای اسکالر
+      const scalarOpts = meta.scalarFields.map((f: fieldDto) => ({
+        value: f.name,
+        label: f.displayName || f.name,
+      }));
+      setFieldOptions(scalarOpts);
+      // ساخت گزینه‌های جوین (ناویگیشن)
+      const joinOpts = meta.joins.map((j: joinDto) => ({
+        value: j.navigationName,
+        label: j.navigationName,
+        joinData: j,
+      }));
+      setJoinOptions(joinOpts);
+    } else {
+      setFieldOptions([]);
+      setJoinOptions([]);
+    }
+  } catch (err) {
+    console.error('Failed to fetch metadata:', err);
+    setError('خطا در بارگذاری ساختار فیلدهای منبع');
+  } finally {
+    setMetadataLoading(false);
+  }
+};
   /* ----------- rule‑related helpers ----------- */
   const handleAddRule = () => {
     const newRule: CreatePermissionRuleCommand = {
@@ -311,7 +402,57 @@ export const usePermissionCreateUpdateForm = (
       setLoading(false);
     }
   };
+// تغییر نوع قانون (local/navigated)
+const handleRuleModeChange = (idx: number, mode: 'local' | 'navigated') => {
+  setRuleMode(prev => ({ ...prev, [idx]: mode }));
+  if (mode === 'local') {
+    // پاک کردن اطلاعات جوین
+    handleRuleChange(idx, 'joinLocalKey', '');
+    handleRuleChange(idx, 'joinForeignKey', '');
+    handleRuleChange(idx, 'joinEntity', '');
+    setSelectedNav(prev => ({ ...prev, [idx]: '' }));
+    handleRuleChange(idx, 'fieldName', '');
+  } else {
+    handleRuleChange(idx, 'joinLocalKey', '');
+    handleRuleChange(idx, 'joinForeignKey', '');
+    handleRuleChange(idx, 'joinEntity', '');
+    setSelectedNav(prev => ({ ...prev, [idx]: '' }));
+    handleRuleChange(idx, 'fieldName', '');
+  }
+};
 
+// انتخاب ناویگیشن
+const handleNavigationSelect = (idx: number, navValue: string) => {
+  const nav = joinOptions.find(j => j.value === navValue);
+  if (nav) {
+    handleRuleChange(idx, 'joinLocalKey', nav.joinData.currentKey);
+    handleRuleChange(idx, 'joinForeignKey', nav.joinData.targetKey);
+    handleRuleChange(idx, 'joinEntity', nav.joinData.targetEntity);
+    setSelectedNav(prev => ({ ...prev, [idx]: navValue }));
+    handleRuleChange(idx, 'fieldName', '');
+  } else {
+    handleRuleChange(idx, 'joinLocalKey', '');
+    handleRuleChange(idx, 'joinForeignKey', '');
+    handleRuleChange(idx, 'joinEntity', '');
+    setSelectedNav(prev => ({ ...prev, [idx]: '' }));
+    handleRuleChange(idx, 'fieldName', '');
+  }
+};
+
+// تابع دریافت لیست فیلدها برای یک قانون خاص
+const getFieldOptionsForRule = (idx: number) => {
+  const mode = ruleMode[idx];
+  if (mode === 'navigated' && selectedNav[idx]) {
+    const nav = joinOptions.find(j => j.value === selectedNav[idx]);
+    if (nav?.joinData.targetScalarFields) {
+      return nav.joinData.targetScalarFields.map((f: any) => ({
+        value: f.name,
+        label: f.displayName || f.name,
+      }));
+    }
+  }
+  return fieldOptions;
+};
   return {
     formData,
     scopesList,
@@ -328,5 +469,14 @@ export const usePermissionCreateUpdateForm = (
     handleRemoveRule,
     handleRuleChange,
     isEdit: !!permissionId,
+    ruleMode,
+  selectedNav,
+  handleRuleModeChange,
+  handleNavigationSelect,
+  getFieldOptionsForRule,
+  fieldOptions,
+  joinOptions,
+  metadataLoading,
+    
   };
 };

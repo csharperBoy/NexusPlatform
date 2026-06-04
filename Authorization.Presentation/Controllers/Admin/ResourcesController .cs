@@ -21,14 +21,23 @@ namespace Authorization.Presentation.Controllers.Admin
     //[Authorize(Policy = "RequireAdminRole")]
     public class ResourcesController : BaseController
     {
-        [HttpGet("metadata/{resourceKey}")]
-        //[AuthorizeResource("authorization.resource", "View")]
+        /*[HttpGet("metadata/{resourceKey}")]
+        [AuthorizeResource("authorization.resource", "View")]
         public async Task<IActionResult> Get(string? resourceKey)//[FromQuery] GetResourceMetaDataQuery? request = null)
         {
             GetResourceMetaDataQuery request = new GetResourceMetaDataQuery(resourceKey);
             var result = await Mediator.Send(request);
             return HandleResult(result);
+        }*/
+        [HttpGet("metadata/{id:guid}")]
+        [AuthorizeResource("authorization.resource", "View")]
+        public async Task<IActionResult> Get(Guid id)
+        {
+            GetResourceMetaDataQuery request = new GetResourceMetaDataQuery(id);
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
         }
+
         /// <summary>
         /// 📋 دریافت درخت کامل منابع
         /// </summary>

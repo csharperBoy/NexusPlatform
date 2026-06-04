@@ -11,6 +11,6 @@ using System.Threading.Tasks;
 namespace Authorization.Application.Queries.Resource
 {
    
-    public record GetResourceMetaDataQuery(string resourceKey)
+    public record GetResourceMetaDataQuery(Guid id)
       : IRequest<Result<List<ResourceMetadataDto>>>;
 }

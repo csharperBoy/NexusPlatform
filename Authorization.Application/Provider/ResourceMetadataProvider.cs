@@ -56,7 +56,7 @@ namespace Authorization.Application.Provider
                     var resourceKey = securedAttr?.ResourceKey ?? entityType.ClrType.Name;
 
                     resources.Add(new ResourceMetadataDto(
-                        resourceKey,
+                        resourceKey.ToLower(),
                         entityType.ClrType.Name,
                         scalarFields,
                         joins));

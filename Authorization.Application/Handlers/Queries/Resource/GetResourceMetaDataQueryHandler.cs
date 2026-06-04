@@ -18,13 +18,16 @@ namespace Authorization.Application.Handlers.Queries.Resource
       : IRequestHandler<GetResourceMetaDataQuery, Result<List<ResourceMetadataDto>>>
     {
         private readonly IResourceMetadataProvider _metaDataProvider;
+        private readonly IResourceInternalService _resourceService;
         private readonly ILogger<GetResourceMetaDataQueryHandler> _logger;
 
         public GetResourceMetaDataQueryHandler(
             IResourceMetadataProvider metaDataProvider,
+             IResourceInternalService resourceService,
             ILogger<GetResourceMetaDataQueryHandler> logger)
         {
             _metaDataProvider = metaDataProvider;
+            _resourceService = resourceService;
             _logger = logger;
         }
 
@@ -35,19 +38,23 @@ namespace Authorization.Application.Handlers.Queries.Resource
             try
             {
                 _logger.LogDebug("Getting resource meta Data");
-
-                List<ResourceMetadataDto> metaData =  _metaDataProvider.Resources.Where(r=>string.IsNullOrEmpty( request.resourceKey) ||  r.ResourceKey == request.resourceKey).ToList();
-
-                if (metaData == null || metaData.Count() == 0 )
+                var resource =await _resourceService.GetById(request.id);
+                if (resource == null )
                 {
-                    return Result<List<ResourceMetadataDto>>.Fail($"Resource with Key {request.resourceKey} not found");
+                    return Result<List<ResourceMetadataDto>>.Fail($"Resource with Id {request.id} not found");
                 }
+                List<ResourceMetadataDto> metaData =  _metaDataProvider.Resources.Where(r=>string.IsNullOrEmpty(resource.Key ) ||  r.ResourceKey == resource.Key.ToLower()).ToList();
+                if (metaData == null || metaData.Count() == 0)
+                {
+                    return Result<List<ResourceMetadataDto>>.Fail($"Resource with Key {resource.Key} not found");
+                }
+
 
                 return Result<List<ResourceMetadataDto>>.Ok(metaData);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to get resource by resourceKey: {resourceKey}", request.resourceKey);
+                _logger.LogError(ex, "Failed to get resource by resourceId: {resourceId}", request.id);
                 return Result<List<ResourceMetadataDto>>.Fail(ex.Message);
             }
         }

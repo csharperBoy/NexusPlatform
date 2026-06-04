@@ -20,10 +20,10 @@ export const resourceApi = {
     return response.data;
   }, 
   // دریافت فیلد ها و روابط من (GET)
-  getMetadata: async (resourceKey: string): Promise<resourceMetadataDto[]> => {
+  getMetadata: async (resourceId: string): Promise<resourceMetadataDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<resourceMetadataDto[]>(
-      `/api/authorization/admin/resources/metadata/${resourceKey}`,
+      `/api/authorization/admin/resources/metadata/${resourceId}`,
       {  withCredentials: true }
     );
     console.warn(response);
