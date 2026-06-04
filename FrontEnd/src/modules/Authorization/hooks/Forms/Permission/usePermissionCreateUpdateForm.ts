@@ -66,6 +66,10 @@ export const usePermissionCreateUpdateForm = (
   const [metadataLoading, setMetadataLoading] = useState(false);
   const [ruleMode, setRuleMode] = useState<Record<number, 'local' | 'navigated'>>({});
 const [selectedNav, setSelectedNav] = useState<Record<number, string>>({});
+
+const [useDynamicFilter, setUseDynamicFilter] = useState(false);
+const [useNavigate, setUseNavigate] = useState(false);
+const [useScope, setUseScope] = useState(false);
   /* ----------- maps ----------- */
   const assignTypeMap: Record<string, number> = {
     Person: 0,
@@ -284,13 +288,24 @@ const fetchMetadata = async (resourceId: string) => {
         joinData: j,
       }));
       setJoinOptions(joinOpts);
+      setUseDynamicFilter(meta.useDynamicFilter);
+      setUseNavigate(meta.useNavigate);
+      setUseScope(meta.useScope);
     } else {
       setFieldOptions([]);
       setJoinOptions([]);
+          setUseDynamicFilter(false);
+    setUseNavigate(false);
+    setUseScope(false);
     }
   } catch (err) {
     console.error('Failed to fetch metadata:', err);
     setError('خطا در بارگذاری ساختار فیلدهای منبع');
+    setFieldOptions([]);
+      setJoinOptions([]);
+          setUseDynamicFilter(false);
+    setUseNavigate(false);
+    setUseScope(false);
   } finally {
     setMetadataLoading(false);
   }
@@ -477,6 +492,8 @@ const getFieldOptionsForRule = (idx: number) => {
   fieldOptions,
   joinOptions,
   metadataLoading,
-    
+    useDynamicFilter,
+    useNavigate,
+    useScope,
   };
 };

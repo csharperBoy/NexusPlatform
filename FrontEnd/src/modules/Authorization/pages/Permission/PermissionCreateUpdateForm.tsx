@@ -50,7 +50,10 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
   getFieldOptionsForRule,
   handleNavigationSelect,
   handleRuleModeChange,
-  selectedNav
+  selectedNav,
+  useDynamicFilter,
+  useNavigate,
+  useScope
 }) => {
    const [showRules, setShowRules] = useState<boolean>(true);
 
@@ -213,24 +216,27 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
 
       
       
-      {/* بخش انتخاب نقش‌ها */}
-      <div>
-        <label className="block mb-2 font-medium">محدوده ها:</label>
-        {scopesList.length === 0 && !error && <p>در حال بارگذاری محدوده ها...</p>}
-        {scopesList.map(scope => (
-          <div key={scope.value} className="flex items-center space-x-2 mb-1">
-            <input
-              type="checkbox"
-              id={`${scope.value}`}
-              checked={formData.scopes?.includes(scope.value) || false}
-              onChange={(e) => handleScopesChange(scope.value, e.target.checked)}              
-              className="mr-2"
-            />
-            <label htmlFor={`${scope.value}`}>{scope.display}</label>
-          </div>
-        ))}
+      {useScope && (
+  <div>
+    <label className="block mb-2 font-medium">محدوده ها:</label>
+    {scopesList.length === 0 && !error && <p>در حال بارگذاری محدوده ها...</p>}
+    {scopesList.map(scope => (
+      <div key={scope.value} className="flex items-center space-x-2 mb-1">
+        <input
+          type="checkbox"
+          id={`${scope.value}`}
+          checked={formData.scopes?.includes(scope.value) || false}
+          onChange={(e) => handleScopesChange(scope.value, e.target.checked)}              
+          className="mr-2"
+        />
+        <label htmlFor={`${scope.value}`}>{scope.display}</label>
       </div>
+    ))}
+  </div>
+)}
 {/* ===== Rules section ===== */}
+{useDynamicFilter && (
+  <>
         <div className="flex items-center justify-between mt-6 mb-2">
           <label className="font-medium">قوانین مجوز</label>
           <label className="flex items-center space-x-2">
@@ -278,7 +284,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
                               className="select select-bordered w-28"
                             >
                               <option value="local">بدون جوین</option>
-                              <option value="navigated">با جوین</option>
+                               {useNavigate && <option value="navigated">با جوین</option>}
                             </select>
                           </td>
 
@@ -387,6 +393,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
             </Button>
           </>
         )}
+          </>
+)}
       {/* ۴. دکمه‌ی submit */}
             <Button
               type="submit"

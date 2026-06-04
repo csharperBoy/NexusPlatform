@@ -20,6 +20,9 @@ namespace Authorization.Application.DTOs.Resource
     public record ResourceMetadataDto(
         string ResourceKey,
         string EntityName,
+        bool useDynamicFilter,
+        bool useNavigate,
+        bool useScope,
         List<FieldDto> ScalarFields,
         List<JoinDto> Joins
     );

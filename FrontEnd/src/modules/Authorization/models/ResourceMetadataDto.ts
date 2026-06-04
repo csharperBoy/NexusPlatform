@@ -18,6 +18,9 @@ export interface joinDto {
 export interface resourceMetadataDto {
      resourceKey: string;
      entityName: string;
+      useDynamicFilter:boolean;
+      useNavigate:boolean;
+      useScope:boolean;
      scalarFields: fieldDto[];
      joins: joinDto[];
 } 

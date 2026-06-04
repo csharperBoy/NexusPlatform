@@ -42,6 +42,9 @@ export interface PermissionCreateUpdateFormProps {
   handleRuleModeChange: (idx: number, mode: 'local' | 'navigated') => void;
   handleNavigationSelect: (idx: number, navValue: string) => void;
   getFieldOptionsForRule: (idx: number) => { value: string; label: string }[];
+  useDynamicFilter: boolean;
+    useNavigate: boolean;
+    useScope: boolean;
 }
 
 // اینترفیس Props کامپوننت والد IPermissionCreateUpdatePage

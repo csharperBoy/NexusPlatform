@@ -9,6 +9,8 @@ using Core.Shared.Enums.Authorization;
 using MediatR;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -16,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
-
+    [DynamicFilterable(UseNavigation = true)]
     [SecuredResource("Authorization.Resource")]
     public class Resource : BaseEntity , IAuditableEntity,IHasPermissionRuleEntity, IJoinDetaileableEntity, IOwnerableEntity, IAggregateRoot, IHierarchicalStructureEntity<Resource, Guid?>
     {
@@ -90,11 +92,18 @@ namespace Authorization.Domain.Entities
         }
         #endregion
 
-        public string Key { get; private set; } 
+        [Display(Name="کلید")]
+        public string Key { get; private set; }
+        
+        [Display(Name="نام")]
         public string Name { get; private set; }
+        [Display(Name="توضیحات")]
         public string Description { get; private set; }
+        [Display(Name="نوع")]
         public ResourceType Type { get; private set; }
+        [Display(Name="دسته بندی")]
         public ResourceCategory Category { get; private set; }
+        [Display(Name="فعال/غیرفعال")]
         public bool IsActive { get; private set; } = true;
         public int DisplayOrder { get; private set; }
         public string Icon { get; private set; }
