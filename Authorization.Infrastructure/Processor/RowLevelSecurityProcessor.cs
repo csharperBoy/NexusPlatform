@@ -283,7 +283,7 @@ namespace Authorization.Infrastructure.Processor
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
         }
-     
+      
        private async Task<bool> IsEntityInScope(IOwnerableEntity entity, ScopeType scope, Guid userId)
         {
             switch (scope)
