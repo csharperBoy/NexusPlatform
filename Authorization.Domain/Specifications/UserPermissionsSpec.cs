@@ -24,6 +24,8 @@ namespace Authorization.Domain.Specifications
                 ))
         {
             AddInclude(p => p.Resource);
+            AddInclude(p => p.Rules);
+            
         }
     }
 }

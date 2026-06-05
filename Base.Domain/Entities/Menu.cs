@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ using System.Xml.Linq;
 
 namespace Base.Domain.Entities
 {
-
+    [DynamicFilterable(UseNavigation =false)]
     [SecuredResource("Base.Menu")]
     public class Menu : BaseEntity, IHierarchicalStructureEntity<Menu, Guid?>, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
@@ -74,8 +75,11 @@ namespace Base.Domain.Entities
             //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
         }
         #endregion
+        [Display(Name ="عنوان")]
         public string Title { get; set; }
+        [Display(Name ="کلید")]
         public string Key { get; set; }
+        [Display(Name ="توضیحات")]
         public string? Description { get; set; }
         public string Path { get; set; }
         /// <summary>

@@ -9,6 +9,7 @@ using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
+    [DynamicFilterable(UseNavigation =true)]
     [SecuredResource("Authorization.Permission")]
     public class Permission : BaseEntity ,IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
@@ -70,8 +72,9 @@ namespace Authorization.Domain.Entities
         public PermissionEffect Effect { get; private set; } = PermissionEffect.allow; // برای Deny یا allow کردن
         public DateTime? EffectiveFrom { get; private set; }
         public DateTime? ExpiresAt { get; private set; }
-
+        [Display(Name ="توضیحات")]
         public string? Description { get; private set; }
+        [Display(Name ="فعال/غیرفعال")]
         public bool IsActive { get; private set; } = true;
 
         // Navigation

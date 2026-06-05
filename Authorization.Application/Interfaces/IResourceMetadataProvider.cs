@@ -10,5 +10,6 @@ namespace Authorization.Application.Interfaces
     public interface IResourceMetadataProvider
     {
         IReadOnlyList<ResourceMetadataDto> Resources { get; }
+        ResourceMetadataDto? GetMetadata(string resourceKey);
     }
 }

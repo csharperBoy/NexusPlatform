@@ -133,6 +133,18 @@ namespace Authorization.Infrastructure.Data
                         Icon = "users",
                         Path = "/authorization/permission"
 
+                    },
+                     new()
+                    {
+                        Key = "authorization.permissionRule",
+                        Name = "permission Rule Management",
+                        Type =ResourceType.Data,
+                        Category =ResourceCategory.System,
+                        Description = "Manage permission Rule",
+                        DisplayOrder = 1002,
+                        Icon = "users",
+                        Path = "/authorization/permissionRule"
+
                     }
 
                 }
@@ -180,12 +192,12 @@ namespace Authorization.Infrastructure.Data
 
                 // 1. دریافت تمام کلیدهای موجود
                 var existingKeys = await dbContext.Set<Resource>()
-                    .Select(r => r.Key)
+                    .Select(r => r.Key.ToLower())
                     .ToHashSetAsync();
 
                 // 2. فیلتر کردن منابع جدید
                 var newDefinitions = flatDefinitions
-                    .Where(x => !existingKeys.Contains(x.Definition.Key))
+                    .Where(x => !existingKeys.Contains(x.Definition.Key.ToLower()))
                     .ToList();
 
                 if (!newDefinitions.Any())
@@ -196,7 +208,7 @@ namespace Authorization.Infrastructure.Data
 
                 // 3. ایجاد dictionary برای نگهداری کلید به Id
                 var allResources = await dbContext.Set<Resource>()
-                    .ToDictionaryAsync(r => r.Key, r => r.Id);
+                    .ToDictionaryAsync(r => r.Key.ToLower(), r => r.Id);
 
                 // 4. ایجاد منابع جدید
                 var newResources = new List<Resource>();
@@ -211,7 +223,7 @@ namespace Authorization.Infrastructure.Data
                     }
 
                     var resource = new Resource(
-                        definition.Key,
+                        definition.Key.ToLower(),
                         definition.Name,
                         definition.Type,
                             definition.Category,
@@ -414,6 +426,20 @@ namespace Authorization.Infrastructure.Data
                 },
                 Effect =PermissionEffect.allow,
                 Description = "Full access to all authorization permission"
+            },
+            new()
+            {
+                ResourceKey = "authorization.permissionRule", // فرض می‌کنیم این کلید وجود دارد
+                Action =PermissionAction.Full,
+                Scopes = new List<ScopeDto>()
+                {
+                    new()
+                    {
+                        scope = ScopeType.All,
+                    }
+                },
+                Effect =PermissionEffect.allow,
+                Description = "Full access to all authorization permission Rule"
             }
             //,
             //new()
@@ -449,18 +475,18 @@ namespace Authorization.Infrastructure.Data
 
                 // 3. دریافت کلیدهای مورد نیاز
                 var resourceKeys = PermissionDefinitions
-                    .Select(p => p.ResourceKey)
+                    .Select(p => p.ResourceKey.ToLower())
                     .Distinct()
                     .ToList();
 
                 // 4. دریافت ResourceIdها از دیتابیس
                 var resources = await dbContext.Set<Resource>()
-                    .Where(r => resourceKeys.Contains(r.Key))
+                    .Where(r => resourceKeys.Contains(r.Key.ToLower()))
                     .ToDictionaryAsync(r => r.Key, r => r.Id);
 
                 // 5. بررسی وجود Resourceها
                 var missingResources = resourceKeys
-                    .Where(key => !resources.ContainsKey(key))
+                    .Where(key => !resources.ContainsKey(key.ToLower()))
                     .ToList();
 
                 if (missingResources.Any())
@@ -476,7 +502,7 @@ namespace Authorization.Infrastructure.Data
                 var permissionsCreated = 0;
                 foreach (var definition in PermissionDefinitions)
                 {
-                    var resourceId = resources[definition.ResourceKey];
+                    var resourceId = resources[definition.ResourceKey.ToLower()];
 
                     // بررسی وجود پرمیژن تکراری
                     var existingPermission = await dbContext.Set<Permission>()

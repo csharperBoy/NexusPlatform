@@ -821,7 +821,7 @@ namespace Authorization.Infrastructure.Services
             if (cached != null)
             {
                 _logger.LogDebug("Cache hit for full resource tree");
-                return cached;
+               // return cached;
             }
             var spec = new GetPermissionsSpec(request.AssigneeType, request.AssigneeId, request.ResourceId, request.description);
             var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);

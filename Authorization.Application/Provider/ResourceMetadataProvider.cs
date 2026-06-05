@@ -14,7 +14,10 @@ namespace Authorization.Application.Provider
     {
         public IReadOnlyList<ResourceMetadataDto> Resources { get; }
 
-
+        public ResourceMetadataDto? GetMetadata(string resourceKey)
+        {
+            return Resources.FirstOrDefault(r => r.ResourceKey.Equals(resourceKey, StringComparison.OrdinalIgnoreCase));
+        }
         private static List<FieldDto> GetScalarFields(IEntityType entityType)
         {
             return entityType.GetProperties()
