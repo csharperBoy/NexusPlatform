@@ -16,41 +16,29 @@ import { positionApi } from '@/modules/HR/api/positionApi';
 import { roleApi } from '@/modules/Identity/api/roleApi';
 import { ComparisonOperator , comparisonOperatorFromText, comparisonOperatorText, LogicalOperator, logicalOperatorFromText } from '@/modules/Authorization/models/PermissionRuleEnum';
 import { resourceMetadataDto, fieldDto, joinDto }  from '@/modules/Authorization/models/ResourceMetadataDto';
+import { comparisonScopeFromText } from '@/modules/Authorization/models/PermissionEnum';
 
 export const usePermissionCreateUpdateForm = (
   permissionId?: string,
   onSuccess?: () => void
 ) => {
   const { resourceId } = useParams<{ resourceId: string }>();
+// حالت اضافه کردن (permissionId وجود ندارد)
+const initialFormState: PermissionFormCommand = {
+  Id:permissionId ?? '',
+  AssigneeType: undefined,   // تغییر از 0 به undefined
+  AssigneeId: '',
+  Action: undefined,         // تغییر از 1 به undefined
+  ResourceId: '',
+  scopes: [],
+  Description: '',
+  effect: undefined,         // تغییر از 1 به undefined
+  IsActive: true,
+  ExpiresAt: null,
+  EffectiveFrom: null,
+  rules: [],
+};
 
-  const initialFormState: PermissionFormCommand = permissionId
-    ? {
-        Id: permissionId,
-        AssigneeType: 0,
-        AssigneeId: '',
-        Action: 1,
-        ResourceId: resourceId,
-        scopes: null,
-        Description: '',
-        effect: 1,
-        IsActive: true,
-        ExpiresAt: null,
-        EffectiveFrom: null,
-        rules: [],                           // <‑- اضافه شد
-      }
-    : {
-        AssigneeType: 0,
-        AssigneeId: '',
-        Action: 1,
-        ResourceId: '',
-        scopes: null,
-        Description: '',
-        effect: 1,
-        IsActive: true,
-        ExpiresAt: null,
-        EffectiveFrom: null,
-        rules: [],                           // <‑- اضافه شد
-      };
 
   const [formData, setFormData] = useState<PermissionFormCommand>(initialFormState);
 
@@ -71,33 +59,33 @@ const [useDynamicFilter, setUseDynamicFilter] = useState(false);
 const [useNavigate, setUseNavigate] = useState(false);
 const [useScope, setUseScope] = useState(false);
   /* ----------- maps ----------- */
-  const assignTypeMap: Record<string, number> = {
-    Person: 0,
-    Position: 1,
-    Role: 2,
-    User: 3,
-  };
+  // const assignTypeMap: Record<string, number> = {
+  //   Person: 0,
+  //   Position: 1,
+  //   Role: 2,
+  //   User: 3,
+  // };
 
-  const actionMap: Record<string, number> = {
-    View: 0,
-    Create: 1,
-    Edit: 2,
-    Delete: 3,
-    Export: 4,
-    Full: 99,
-  };
+  // const actionMap: Record<string, number> = {
+  //   View: 0,
+  //   Create: 1,
+  //   Edit: 2,
+  //   Delete: 3,
+  //   Export: 4,
+  //   Full: 99,
+  // };
 
-  const effectMap: Record<string, number> = { allow: 0, Deny: 1 };
+  // const effectMap: Record<string, number> = { allow: 0, Deny: 1 };
 
-  const scopeMap: Record<string, number> = {
-    None: 0,
-    Account: 1,
-    Self: 2,
-    Unit: 3,
-    UnitAndBelow: 4,
-    SpecificProperty: 5,
-    All: 99,
-  };
+  // const scopeMap: Record<string, number> = {
+  //   None: 0,
+  //   Account: 1,
+  //   Self: 2,
+  //   Unit: 3,
+  //   UnitAndBelow: 4,
+  //   SpecificProperty: 5,
+  //   All: 99,
+  // };
 // مقداردهی اولیه ruleMode و selectedNav از روی قوانین موجود (برای ویرایش)
 useEffect(() => {
   // بررسی می‌کنیم که rules وجود داشته باشد، آرایه باشد و حداقل یک عضو داشته باشد
@@ -168,7 +156,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchScopes = async () => {
       try {
-        const list = Object.entries(scopeMap).map(([key, value]) => ({
+        const list = Object.entries(comparisonScopeFromText).map(([key, value]) => ({
           value,
           display: key,
         }));
@@ -199,15 +187,7 @@ useEffect(() => {
         setLoading(true);
         const permission = await permissionApi.getById(permissionId);
 
-        const actionNum = actionMap[permission.action] ?? permission.action;
-        const effectNum = effectMap[permission.effect] ?? permission.effect;
-        const assignTypeNum = assignTypeMap[permission.assigneeType] ?? permission.assigneeType;
-
-        // map scopes
-        const scopesNum = Array.isArray(permission.scopes)
-          ? permission.scopes.map((s: any) => scopeMap[s.scope])
-          : null;
-        
+       
         // map rules + join details
         const rules: (CreatePermissionRuleCommand)[] = (permission.rules ?? []).map((r: any) => ({
            
@@ -224,16 +204,17 @@ useEffect(() => {
             joinForeignKey: r.joinDetail?.joinForeignKey ?? '',
             joinEntity: r.joinDetail?.joinEntity ?? '',
         }));
-
+        console.info(`permission = ${permission}`);
+         console.info(permission);
         const permissionData: UpdatePermissionCommand = {
             Id: permission.id,
             ResourceId: permission.resourceId,
             AssigneeId: permission.assigneeId,
-            AssigneeType: assignTypeNum,
-            Action: actionNum,
-            effect: effectNum,
+            AssigneeType: permission.assigneeType,
+            Action: permission.action,
+            effect: permission.effect,
             Description: permission.description,
-            scopes: scopesNum,
+            scopes: permission.scopes,
             EffectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
             ExpiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
             IsActive: permission.isActive,
@@ -387,6 +368,18 @@ const fetchMetadata = async (resourceId: string) => {
       setError('منبع ضروری است.');
       return;
     }
+    if (formData.AssigneeType === undefined) {
+      setError('لطفاً نوع گیرنده مجوز را انتخاب کنید.');
+      return;
+    }
+    if (formData.Action === undefined) {
+      setError('لطفاً عملیات را انتخاب کنید.');
+      return;
+    }
+    if (formData.effect === undefined) {
+      setError('لطفاً مجاز یا غیرمجاز بودن را انتخاب کنید.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -394,17 +387,8 @@ const fetchMetadata = async (resourceId: string) => {
       // در صورت لزوم، joinDetail را به شکل nested object تبدیل می‌کنیم
       const payload = {
         ...formData,
-        rules: (formData.rules ?? []).map(r => ({
-          ...r,
-          // اگر می‌خواهید joinDetail به‌صورت nested ارسال شود
-          // joinDetail: r.JoinLocalKey
-          //   ? {
-          //       joinLocalKey: r.JoinLocalKey,
-          //       joinForeignKey: r.JoinForeignKey,
-          //       joinEntity: r.JoinEntity,
-          //     }
-          //   : undefined,
-        })),
+        scopes: formData.scopes ?? [],
+        rules: (formData.rules ?? []).map(r => ({ ...r })),
       };
 
       if (permissionId) {

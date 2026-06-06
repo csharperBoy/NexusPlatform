@@ -1,19 +1,20 @@
 
 // src/modules/Authorization/models/PermissionCommands.ts
 
+import { Action, AssignType, Effect, Scope } from "./PermissionEnum";
 import { CreatePermissionRuleCommand, PermissionRuleFormCommand, UpdatePermissionRuleCommand } from "./PermissionRuleCommands";
 
 export interface CreatePermissionCommand {
   ResourceId: string;
   AssigneeId: string;
-  AssigneeType: number;       
-  Action: number;  
-  effect: number;
+  AssigneeType: AssignType;       
+  Action: Action;  
+  effect: Effect;
   EffectiveFrom?: Date | null;
   ExpiresAt?: Date | null;
   IsActive?: boolean;
   Description?: string;
-  scopes?: number[] | null;
+  scopes?: Scope[] | null;
   rules? : CreatePermissionRuleCommand[] | null;
 }
 
@@ -21,14 +22,14 @@ export type UpdatePermissionCommand = {
   Id: string;
   ResourceId?: string | null;
   AssigneeId?: string | null;
-  AssigneeType?: number | null;
-  Action?: number | null;
-  effect?: number | null;
+  AssigneeType?: AssignType | null;
+  Action?: Action | null;
+  effect?: Effect | null;
   EffectiveFrom?: Date | null;
   ExpiresAt?: Date | null;
   IsActive?: boolean | null;
   Description?: string | null;
-  scopes?: number[] | null;
+  scopes?: Scope[] | null;
   rules?: CreatePermissionRuleCommand[]; 
 } & Partial<CreatePermissionCommand>;
 

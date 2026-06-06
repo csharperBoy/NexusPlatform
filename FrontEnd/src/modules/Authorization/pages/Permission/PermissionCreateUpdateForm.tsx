@@ -7,20 +7,12 @@ import Input from '@/core/components/Input';
 import { data } from 'react-router-dom';
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
-import { ComparisonOperator, LogicalOperator } from '../../models/PermissionRuleEnum';
+import { ComparisonOperator, ComparisonOperatorOptions, LogicalOperator, LogicalOperatorOptions } from '../../models/PermissionRuleEnum';
 import { PermissionCreateUpdateFormProps } from '../../Interface/Permission/IPermissionCreateUpdatePage';
+import { EnumSelect } from '@/core/components/Selection/EnumSelect';
+import { enumToSelectionList } from '@/core/helpers/enumHelpers';
+import { Action, ActionDisplayMap, ActionOptions, AssignType, AssignTypeDisplayMap, AssignTypeOptions, Effect, EffectDisplayMap, EffectOptions } from '../../models/PermissionEnum';
 
-const operatorOptions: { value: ComparisonOperator; display: string }[] = [
-  { value: ComparisonOperator.Equal, display: 'Equal' },
-  { value: ComparisonOperator.GreaterThan, display: 'GreaterThan' },
-  { value: ComparisonOperator.LessThan, display: 'LessThan' },
-  { value: ComparisonOperator.NotEqual, display: 'NotEqual' },
-];
-
-const logicalOperatorOptions: { value: LogicalOperator; display: string }[] = [
-  { value: LogicalOperator.And, display: 'AND' },
-  { value: LogicalOperator.Or, display: 'OR' },
-];
 const toInputDateTime = (date?: Date | null) => {
   if (!date) return "";
   // toISOString() already returns UTC. Slice to "YYYY-MM-DDTHH:mm"
@@ -68,93 +60,49 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
             {error && <div className="alert alert-error">{error}</div>}
 
             {/* ----- فیلدهای فرم ----- */}
-            <div className="mb-4">
-              <label className="block mb-1">منبع</label>
-              <select
-                value={formData.ResourceId}
-                onChange={(e) => handleChange("ResourceId", e.target.value)}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-                required
-              >
-                <option value="" disabled>
-                  انتخاب کنید...
-                </option>
-                {resourceList.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.display}
-                  </option>
-                ))}
-              </select>
-            </div>
+            
 
+        <EnumSelect
+          options={resourceList}
+          value={formData.ResourceId}
+          onChange={(val) => handleChange('ResourceId', val as string)}
+          label="منبع"
+          disabled={loading}
+          required={true}
+        />          
 
-       <div className="mb-4">
-              <label className="block mb-1">عملیات</label>
-              <select
-                value={formData.Action}
-                onChange={(e) => handleChange('Action',Number(e.target.value))}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-              >
-          
-                <option value='0' label="View">مشاهده (View)</option>
-                <option value='1' label="Create">ایجاد (Create)</option>
-                <option value='2' label="Edit">ویرایش (Edit)</option>
-                
-                <option value='3' label="Delete">حذف (Delete)</option>
-                
-                <option value='4' label="Export">خروجی (Export)</option>
-                
-                <option value='99' label="Full">کامل (Full)</option>
-              </select>
-       </div>
-       <div className="mb-4">
-              <label className="block mb-1">مجاز / غیر مجاز</label>
-              <select
-                value={formData.effect}
-                onChange={(e) => handleChange('effect',Number(e.target.value))}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-              >
-                <option value='0' label="allow">مجاز (Module)</option>
-                <option value='1' label="Deny">غیر مجاز (Ui)</option>
-              </select>
-       </div>
-      <div className="mb-4">
-              <label className="block mb-1">نوع</label>
-              <select
-                value={formData.AssigneeType}
-                onChange={(e) => handleAssignTypeChange(Number(e.target.value))}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-              >
-                <option value='0' label="Person">شخص (Person)</option>
-                <option value='1' label="Position">موقعیت (Position)</option>
-                <option value='2' label="Role">نقش (Role)</option>
-                <option value='3' label="User">کاربر (User)</option>
-              </select>
-       </div>
-       <div className="mb-4">
-              <label className="block mb-1">AssigneeId</label>
-              <select
-                value={formData.AssigneeId}
-                onChange={(e) => handleChange('AssigneeId',e.target.value)}
-                className="w-full p-2 border rounded"
-                disabled={loading}
-                required={true}
-              >
-          
-                 <option value="" disabled>انتخاب کنید...</option>
-                  {assignList.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.display}
-                    </option>
-                  ))}
-                
-              </select>
-       </div>
-      
+       
+       <EnumSelect
+          options={ActionOptions}
+          value={formData.Action}
+          onChange={(val) => handleChange('Action', val as number)}
+          label="عملیات"
+          disabled={loading}
+        />
+       
+       
+       <EnumSelect
+          options={EffectOptions}
+          value={formData.effect}
+          onChange={(val) => handleChange('effect', val as number)}
+          label="مجاز / غیر مجاز"
+          disabled={loading}
+        />
+       <EnumSelect
+          options={AssignTypeOptions}
+          value={formData.AssigneeType}
+          onChange={(val) => handleAssignTypeChange(val as number ?? 0)}
+          label="نوع"
+          disabled={loading}
+        />
+       
+      <EnumSelect
+          options={assignList}
+          value={formData.AssigneeId}
+          onChange={(val) => handleChange('AssigneeId', val as string)}
+          label="AssigneeId"
+          disabled={loading}
+        />
  
 
  <div>
@@ -335,7 +283,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
                               onChange={(e) => handleRuleChange(idx, 'operator', Number(e.target.value))}
                               className="select select-bordered w-full"
                             >
-                              {operatorOptions.map((opt) => (
+                              {ComparisonOperatorOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.display}</option>
                               ))}
                             </select>
@@ -357,7 +305,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
                               onChange={(e) => handleRuleChange(idx, 'logicalOperator', Number(e.target.value))}
                               className="select select-bordered w-full"
                             >
-                              {logicalOperatorOptions.map((opt) => (
+                              {LogicalOperatorOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>{opt.display}</option>
                               ))}
                             </select>

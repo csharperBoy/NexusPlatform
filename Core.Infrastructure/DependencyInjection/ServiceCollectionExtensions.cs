@@ -82,7 +82,7 @@ namespace Core.Infrastructure.DependencyInjection
                         // این گزینه باعث می‌شود تمام DateTime در خروجی به ISO 8601 تبدیل شود
                         opts.JsonSerializerOptions.WriteIndented = true;
                         //opts.JsonSerializerOptions.PropertyNamingPolicy = null; // اگر می‌خواهید snake_case یا camelCase
-                        opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); // برای انوم‌ها
+                        //opts.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()); // برای انوم‌ها - رشته میفرستد
                         // گزینه زیر باعث می‌شود DateTime به رشته ISO 8601 برگردد (default)
                         // opts.JsonSerializerOptions.Converters.Add(new JsonConverter<DateTime?>(new DateTimeIsoConverter()));
                     });

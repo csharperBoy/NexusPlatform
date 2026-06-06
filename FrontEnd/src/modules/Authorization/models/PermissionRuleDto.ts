@@ -1,12 +1,14 @@
+import { LogicalOperator ,ComparisonOperator } from "./PermissionRuleEnum";
+
 // src/modules/Authorization/models/PermissionRuleDto.ts
 export interface PermissionRuleDto {
   id: string;
   permissionId: string;
   fieldName?: string;
   joinDetailId?: string;
-  operator: number;
+  operator: ComparisonOperator;
   value: string;
-  logicalOperator: number;
+  logicalOperator: LogicalOperator;
   groupOrder: number;
 
    joinLocalKey: string;
