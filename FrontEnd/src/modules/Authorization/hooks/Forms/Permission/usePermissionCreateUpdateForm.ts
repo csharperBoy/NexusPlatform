@@ -6,7 +6,7 @@ import {
   UpdatePermissionCommand,
   PermissionFormCommand,
 } from '../../../models/PermissionCommands';
-import { CreatePermissionRuleCommand, PermissionRuleFormCommand } from '@/modules/Authorization/models/PermissionRuleCommands';
+import { CreatePermissionRuleCommand, PermissionRuleFormCommand, UpdatePermissionRuleCommand } from '@/modules/Authorization/models/PermissionRuleCommands';
 import { useParams } from 'react-router-dom';
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { resourceApi } from '@/modules/Authorization/api/ResourceApi';
@@ -14,7 +14,7 @@ import { userApi } from '@/modules/Identity/api/userApi';
 import { personApi } from '@/modules/HR/api/personApi';
 import { positionApi } from '@/modules/HR/api/positionApi';
 import { roleApi } from '@/modules/Identity/api/roleApi';
-import { ComparisonOperator , LogicalOperator } from '@/modules/Authorization/models/PermissionRuleEnum';
+import { ComparisonOperator , comparisonOperatorFromText, comparisonOperatorText, LogicalOperator, logicalOperatorFromText } from '@/modules/Authorization/models/PermissionRuleEnum';
 import { resourceMetadataDto, fieldDto, joinDto }  from '@/modules/Authorization/models/ResourceMetadataDto';
 
 export const usePermissionCreateUpdateForm = (
@@ -207,34 +207,37 @@ useEffect(() => {
         const scopesNum = Array.isArray(permission.scopes)
           ? permission.scopes.map((s: any) => scopeMap[s.scope])
           : null;
-
+        
         // map rules + join details
-        const rules = (permission.rules ?? []).map((r: any) => ({
-          Id: r.id,
-          FieldName: r.fieldName,
-          Operator: r.operator,
-          Value: r.value,
-          LogicalOperator: r.logicalOperator,
-          GroupOrder: r.groupOrder,
-          JoinLocalKey: r.joinDetail?.joinLocalKey ?? '',
-          JoinForeignKey: r.joinDetail?.joinForeignKey ?? '',
-          JoinEntity: r.joinDetail?.joinEntity ?? '',
-          JoinDetailId: r.joinDetail?.id ?? '',
+        const rules: (CreatePermissionRuleCommand)[] = (permission.rules ?? []).map((r: any) => ({
+           
+          fieldName: r.fieldName,
+            operator: typeof r.operator === 'string' 
+                ? (comparisonOperatorFromText[r.operator] ?? ComparisonOperator.Equal)
+                : (r.operator ?? ComparisonOperator.Equal),
+            value: r.value,
+            logicalOperator: typeof r.logicalOperator === 'string'
+                ? (logicalOperatorFromText[r.logicalOperator] ?? LogicalOperator.And)
+                : (r.logicalOperator ?? LogicalOperator.And),
+            groupOrder: r.groupOrder ?? 0,
+            joinLocalKey: r.joinDetail?.joinLocalKey ?? '',
+            joinForeignKey: r.joinDetail?.joinForeignKey ?? '',
+            joinEntity: r.joinDetail?.joinEntity ?? '',
         }));
 
         const permissionData: UpdatePermissionCommand = {
-          Id: permission.id,
-          ResourceId: permission.resourceId,
-          AssigneeId: permission.assigneeId,
-          AssigneeType: assignTypeNum,
-          Action: actionNum,
-          effect: effectNum,
-          Description: permission.description,
-          scopes: scopesNum,
-          EffectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
-          ExpiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
-          IsActive: permission.isActive,
-          rules: permission.rules,
+            Id: permission.id,
+            ResourceId: permission.resourceId,
+            AssigneeId: permission.assigneeId,
+            AssigneeType: assignTypeNum,
+            Action: actionNum,
+            effect: effectNum,
+            Description: permission.description,
+            scopes: scopesNum,
+            EffectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
+            ExpiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
+            IsActive: permission.isActive,
+            rules: rules,  // ✅ استفاده از آرایه تبدیل شده
         };
 
         setFormData(permissionData);

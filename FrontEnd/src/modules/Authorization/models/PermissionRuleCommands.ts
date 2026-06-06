@@ -7,8 +7,7 @@ export interface CreatePermissionRuleCommand {
   operator?: ComparisonOperator; 
   value?: string;               
   logicalOperator?: LogicalOperator;
-  groupOrder?: number;           
-  // permissionId: string;     
+  groupOrder?: number;         
 
   joinLocalKey: string;
   joinForeignKey: string;
@@ -22,7 +21,6 @@ export type UpdatePermissionRuleCommand = {
   value?: string | null;
   logicalOperator?: LogicalOperator | null;
   groupOrder?: number | null;
-  // permissionId?: string | null;    
 
   
   joinLocalKey?: string | null; 
