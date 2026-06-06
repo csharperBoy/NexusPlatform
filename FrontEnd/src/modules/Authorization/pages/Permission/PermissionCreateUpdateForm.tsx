@@ -9,7 +9,7 @@ import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
 import { ComparisonOperator, ComparisonOperatorOptions, LogicalOperator, LogicalOperatorOptions } from '../../models/PermissionRuleEnum';
 import { PermissionCreateUpdateFormProps } from '../../Interface/Permission/IPermissionCreateUpdatePage';
-import { EnumSelect } from '@/core/components/Selection/EnumSelect';
+import { SingleSelect } from '@/core/components/Selection/SingleSelect';
 import { enumToSelectionList } from '@/core/helpers/enumHelpers';
 import { Action, ActionDisplayMap, ActionOptions, AssignType, AssignTypeDisplayMap, AssignTypeOptions, Effect, EffectDisplayMap, EffectOptions } from '../../models/PermissionEnum';
 
@@ -62,7 +62,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
             {/* ----- فیلدهای فرم ----- */}
             
 
-        <EnumSelect
+        <SingleSelect
           options={resourceList}
           value={formData.ResourceId}
           onChange={(val) => handleChange('ResourceId', val as string)}
@@ -72,7 +72,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         />          
 
        
-       <EnumSelect
+       <SingleSelect
           options={ActionOptions}
           value={formData.Action}
           onChange={(val) => handleChange('Action', val as number)}
@@ -81,14 +81,14 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         />
        
        
-       <EnumSelect
+       <SingleSelect
           options={EffectOptions}
           value={formData.effect}
           onChange={(val) => handleChange('effect', val as number)}
           label="مجاز / غیر مجاز"
           disabled={loading}
         />
-       <EnumSelect
+       <SingleSelect
           options={AssignTypeOptions}
           value={formData.AssigneeType}
           onChange={(val) => handleAssignTypeChange(val as number ?? 0)}
@@ -96,7 +96,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           disabled={loading}
         />
        
-      <EnumSelect
+      <SingleSelect
           options={assignList}
           value={formData.AssigneeId}
           onChange={(val) => handleChange('AssigneeId', val as string)}

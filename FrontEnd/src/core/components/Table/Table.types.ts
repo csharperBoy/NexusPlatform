@@ -1,4 +1,5 @@
 // src/core/components/Table/Table.types.ts
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 import React from "react";
 
 
@@ -9,6 +10,7 @@ export interface ColumnDef<T> {
   sortable?: boolean;
   render?: (row: T) => React.ReactNode;
   accessor?: (row: T) => any; // اگر render نبود
+  valueOptions?: SelectionListDto[];
 }
 
 

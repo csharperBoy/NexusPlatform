@@ -1,5 +1,4 @@
-// src/core/components/Selection/EnumSelect.tsx
-// src/core/components/EnumSelect.tsx
+// src/core/components/Selection/SingleSelect.tsx
 import React from 'react';
 import { SelectionListDto } from '@/core/models/SelectionListDto';
 
@@ -13,7 +12,7 @@ interface EnumSelectProps {
   required?: boolean;          // اضافه شد
 }
 
-export const EnumSelect: React.FC<EnumSelectProps> = ({
+export const SingleSelect: React.FC<EnumSelectProps> = ({
   options,
   value,
   onChange,

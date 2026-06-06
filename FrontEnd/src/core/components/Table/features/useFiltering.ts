@@ -1,6 +1,6 @@
 // features/useFiltering.ts
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { FilterState, ColumnDef, TableProps } from '../Table.types';
+import {  ColumnDef, UseTableProps } from '../Table.types';
 
 interface UseFilteringParams<T> extends Pick<TableProps<T>, 'filterable' | 'defaultFilters' | 'onFiltersChange' | 'serverFiltering'> {
   controlledFilters?: FilterState[];
