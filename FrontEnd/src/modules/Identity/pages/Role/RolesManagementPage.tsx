@@ -9,24 +9,20 @@ const RolesManagementPage: React.FC = () => {
   const roleColumns: ColumnDef<RoleDto>[] = [
     {
       id: 'Name',
-      label: 'نام ',
+      header: 'نام ',
       accessor: (row) => row.name,
     },
     {
       id: 'Description',
-      label: 'توضیح ',
+      header: 'توضیح ',
       accessor: (row) => row.description,
     },
     {
       id: 'OrderNum',
-      label: 'ترتیب',
+      header: 'ترتیب',
       accessor: (row) => row.orderNum,
     },
-    {
-      id: 'actions',      
-      label: 'عملیات',
-      
-    },
+    
   ];
 
   return (
@@ -43,8 +39,10 @@ const RolesManagementPage: React.FC = () => {
           <Table
             data={Data}
             columns={roleColumns}
-            onEdit={editAction}
-            onDelete={deleteAction}
+            onEdit={(row) => editAction(row.id)}
+            onDelete={(row) => deleteAction(row.id)}
+            keyExtractor={(row) => row.id}
+            emptyMessage='هیچ رکوردی یافت نشد'
           />
         </div>
       )}

@@ -3,40 +3,41 @@ import React from 'react';
 import { PermissionRuleManagementForm, RenderFormProps } from '../../Interface/PermissionRule/IPermissionRuleManagementPage';
 import { Table, ColumnDef } from '@/core/components/Table';
 import { PermissionRuleDto } from '../../models/PermissionRuleDto'; 
-import { ComparisonOperator,LogicalOperator , comparisonOperatorFromText,comparisonOperatorText,logicalOperatorFromText,logicalOperatorText } from '../../models/PermissionRuleEnum';
+import { ComparisonOperator,ComparisonOperatorOptions,LogicalOperator , LogicalOperatorOptions, comparisonOperatorFromText,comparisonOperatorText,logicalOperatorFromText,logicalOperatorText } from '../../models/PermissionRuleEnum';
 const PermissionRulesManagementPage: React.FC = () => {
 
   // تعریف ستون‌های جدول برای نمایش اطلاعات کاربران
   const PermissionRuleColumns: ColumnDef<PermissionRuleDto>[] = [
     {
       id: 'fieldName',
-      label: 'fieldName',
+      header: 'fieldName',
       accessor: (row) =>row.fieldName,
     },
      {
       id: 'operator',
-      label: 'operator',
-      accessor: (row) =>comparisonOperatorText[ row.operator as ComparisonOperator],
+      header: 'operator',
+      type: 'select',
+      options: ComparisonOperatorOptions,
+      // accessor: (row) =>comparisonOperatorText[ row.operator as ComparisonOperator],
+      accessor: (row) => row.operator,
     },
     {
       id: 'value',
-      label: 'value ',
+      header: 'value ',
       accessor: (row) => row.value,
     },
     {
       id: 'logicalOperator',
-      label: 'logicalOperator',
-      accessor: (row) =>logicalOperatorText[ row.logicalOperator as LogicalOperator],
+      header: 'logicalOperator',
+      type: 'select',
+      options: LogicalOperatorOptions,
+      // accessor: (row) =>logicalOperatorText[ row.logicalOperator as LogicalOperator],
+      accessor: (row) => row.logicalOperator,
     },
     {
       id: 'groupOrder',
-      label: 'groupOrder',
+      header: 'groupOrder',
       accessor: (row) =>  row.groupOrder,
-    },
-    {
-      id: 'actions',      
-      label: 'عملیات',
-      
     },
   ];
 
@@ -51,12 +52,15 @@ const PermissionRulesManagementPage: React.FC = () => {
           </button>
           
           {/* کامپوننت جدول */}
-          <Table
+          <Table<PermissionRuleDto>
             data={FormData}
             columns={PermissionRuleColumns}
-            onEdit={editNode}
-            onDelete={deleteNode}
-          />
+            onEdit={(row) => editNode(row.id)}
+            onDelete={(row) => deleteNode(row.id)}
+            keyExtractor={(row) => row.id}
+            pageSize={10} 
+            emptyMessage="هیچ رکوردی یافت نشد"
+          />;
         </div>
       )}
     />

@@ -1,77 +1,39 @@
 // src/core/components/Table/Table.types.ts
 import { SelectionListDto } from "@/core/models/SelectionListDto";
-import React from "react";
+
+import { ReactNode } from "react";
+
+export type ColumnType = 'text' | 'select' | 'date' | 'checkbox' | 'action' | 'custom';
 
 
 export interface ColumnDef<T> {
-  id: string;
-  label: string;
+  id: keyof T | string;
+  header: string;
+  type?: ColumnType;                // نوع ستون
   width?: string | number;
   sortable?: boolean;
-  render?: (row: T) => React.ReactNode;
-  accessor?: (row: T) => any; // اگر render نبود
-  valueOptions?: SelectionListDto[];
+  options?: SelectionListDto[];         // برای type='select'
+  render?: (row: T, index: number) => ReactNode; // برای type='custom'
+  accessor?: (row: T) => any;       // دسترسی به مقدار (اختیاری)
+  onCellChange?: (row: T, newValue: any, index: number) => void;   // جدید
+  
 }
-
-
-export interface UseTableProps<T> {
+export interface TableProps<T> {
   data: T[];
   columns: ColumnDef<T>[];
-
-// ——— Action ———  
-  onEdit? : (id:string) => void;
-onDelete? : (id:string) => void;
+  keyExtractor: (row: T, index: number) => string | number;
+  onEdit?: (row: T, index: number) => void;   // اضافه کردن index
+  onDelete?: (row: T, index: number) => void; // اضافه کردن index
   
-// ——— Pagination ———
-  pageSize?: number;
-  defaultPage?: number;
-  controlledPage?: number;
-  onPageChange?: (page: number) => void;
-
-  // ——— Sorting ———
-  defaultSort?: { columnId: string; direction: "asc" | "desc" };
-  sort?: { columnId: string; direction: "asc" | "desc" }; // controlled
-  onSortChange?: (sort: { columnId: string; direction: "asc" | "desc" }) => void;
-
-  // ——— Selection ———
   selectable?: boolean;
-  cascadeSelection?: boolean;
-  selected?: string[]; // external control
-  defaultSelected?: string[]; // internal
-  onSelectionChange?: (selectedIds: string[], selectedRows: T[]) => void;
-
-  // ——— Generic helpers ———
-  getRowId?: (row: T) => string;
-
-  dir?: string ;
-   className?: string;
-}
-
-
-export interface SortState {
-  columnId: string;
-  direction: "asc" | "desc";
-}
-
-
-export interface UseTableReturn<T> {
-  paginatedData: T[];
-  totalPages: number;
-
-  // sorting
-  sort: { columnId: string; direction: "asc" | "desc" } | null;
-  toggleSort: (columnId: string) => void;
-
-  // selection
-  selectedSet: Set<string>;
-  toggleSelect: (row: T) => void;
-  isSelected: (row: T) => boolean;
-  selectAllPage: () => void;
-  clearSelection: () => void;
-
-  // pagination
-  page: number;
-  setPage: (p: number) => void;
-
-  getRowId: (row: T) => string;
+  selectedIds?: Set<string | number>;
+  onSelectionChange?: (selectedIds: Set<string | number>, selectedRows: T[]) => void;
+  pageSize?: number;                // اگر undefined باشد صفحه‌بندی غیرفعال می‌شود
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
+  onSortChange?: (columnId: string, direction: 'asc' | 'desc') => void;
+  className?: string;
+  emptyMessage?: string;
 }

@@ -1,63 +1,100 @@
 // modules/identity/pages/PermissionsManagementPage.tsx
 import React from 'react';
-import { PermissionManagementForm, RenderFormProps } from '../../Interface/Permission/IPermissionManagementPage';
-import { Table, ColumnDef } from '@/core/components/Table';
-import { PermissionDto } from '../../models/PermissionDto'; 
-import { actionMap, assignTypeMap, effectMap } from '../../models/PermissionEnum';
+import { PermissionManagementForm } from '../../Interface/Permission/IPermissionManagementPage';
+import { ColumnDef } from '@/core/components/SmartDataGrid/SmartDataGrid.types';
+import { PermissionDto } from '../../models/PermissionDto';
+import { ActionOptions, AssignTypeOptions, EffectOptions } from '../../models/PermissionEnum';
+import SmartDataGrid from '@/core/components/SmartDataGrid/SmartDataGrid';
+
 const PermissionsManagementPage: React.FC = () => {
-  
-  // تعریف ستون‌های جدول برای نمایش اطلاعات کاربران
+  // تعریف ستون‌های جدول
   const permissionColumns: ColumnDef<PermissionDto>[] = [
     {
       id: 'action',
-      label: 'عملیات',
+      header: 'عملیات',
+      type: 'select',
+      options: ActionOptions,      
       accessor: (row) => row.action,
+      editable: true,
     },
-     {
+    {
       id: 'resourceKey',
-      label: 'منبع',
+      header: 'منبع',
+      type: 'text',
       accessor: (row) => row.resourceKey,
+      editable: true,
     },
     {
       id: 'description',
-      label: 'توضیحات ',
+      header: 'توضیحات',
+      type: 'text',
       accessor: (row) => row.description,
+      editable: true,
     },
     {
       id: 'assigneeType',
-      label: 'نوع گیرنده مجوز',
+      header: 'نوع گیرنده مجوز',
+      type: 'select',
+      options: AssignTypeOptions,
       accessor: (row) => row.assigneeType,
+      editable: true,
     },
     {
       id: 'effect',
-      label: 'مجاز یا غیرمجاز',
-      accessor: (row) =>  row.effect,
-    },
-    {
-      id: 'actions',      
-      label: 'عملیات',
-      
+      header: 'مجاز یا غیرمجاز',
+      type: 'select',
+      options: EffectOptions,
+      accessor: (row) => row.effect,
+      editable: true,
     },
   ];
 
   return (
     <PermissionManagementForm
       redirectTo="/dashboard"
-      renderForm={({ FormData,filters, loading, error, refresh, deleteNode, editNode, addNode }: RenderFormProps) => (
+      renderForm={({ FormData }) => (
         <div className="p-4">
-          {/* دکمه اضافه کردن کاربر جدید */}
-         <button onClick={() => addNode('')} className="mb-4 px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600"> 
-        
-  افزودن مجوز جدید
-</button>
-          
-          {/* کامپوننت جدول */}
-          <Table
+          <SmartDataGrid<PermissionDto>
             data={FormData}
             columns={permissionColumns}
-            onEdit={editNode}
-            onDelete={deleteNode}
-          /> 
+            keyExtractor={(row) => row.id || `${row.resourceKey}_${row.assigneeType}_${row.action}`}
+            allowAdd
+            allowEdit
+            allowDelete
+            allowExcelImport
+            
+            // فکتوری کاملاً بهینه و بدون خطای تایپ
+            emptyRowFactory={() => ({
+              id: '',
+              resourceId: '',
+              resourceKey: '',
+              description: '',
+              assigneeId: '',
+              isActive: true,
+              action: undefined as any,
+              assigneeType: undefined as any,
+              effect: undefined as any,
+              effectiveFrom: null as any,
+              expiresAt: null as any,
+              scopes: [], 
+              rules: []   
+            } as PermissionDto)}
+
+            // اعتبارسنجی فیلدهای اجباری بر اساس DTO واقعی شما
+            validateRow={(row) => {
+              const errors: string[] = [];
+              if (!row.resourceKey) errors.push("وارد کردن کلید منبع اجباری است.");
+              if (!row.action) errors.push("انتخاب نوع عملیات اجباری است.");
+              if (!row.assigneeType) errors.push("انتخاب نوع گیرنده مجوز اجباری است.");
+              if (!row.effect) errors.push("تعیین وضعیت مجاز/غیرمجاز اجباری است.");
+              return errors.length > 0 ? errors : null;
+            }}
+
+            onSaveBatch={(changes) => {
+              console.log("تمام تغییرات اعمال شده جهت ارسال به API:", changes);
+            }}
+            pageSize={10}
+          />
         </div>
       )}
     />

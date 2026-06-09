@@ -1,172 +1,136 @@
 // src/core/components/Table/useTable.ts
-// src/core/components/Table/useTable.ts
-import { useState, useMemo, useCallback } from "react";
-import { UseTableProps, UseTableReturn, SortState } from "./Table.types"; // Assuming SortState is the correct type for sorting
+import { useState, useMemo, useCallback } from 'react';
+import { ColumnDef, TableProps } from './Table.types';
 
 export function useTable<T>({
   data,
   columns,
-  pageSize = 10,
-  defaultPage = 1,
-  controlledPage,
-  onPageChange,
-
-  defaultSort,
-  sort: controlledSort,
-  onSortChange,
-
-  selectable = false,
-  cascadeSelection = false,
-  selected: controlledSelected,
-  defaultSelected = [],
+  keyExtractor,
+  selectable,
+  selectedIds: externalSelectedIds,
   onSelectionChange,
-
-  getRowId = (row: any) => row.id,
-}: UseTableProps<T>): UseTableReturn<T> {
+  pageSize,
+  currentPage: externalCurrentPage,
+  onPageChange,
+  sortColumn: externalSortColumn,
+  sortDirection: externalSortDirection,
+  onSortChange,
+}: Pick<TableProps<T>, 'data' | 'columns' | 'keyExtractor' | 'selectable' | 'selectedIds' | 'onSelectionChange' | 'pageSize' | 'currentPage' | 'onPageChange' | 'sortColumn' | 'sortDirection' | 'onSortChange'>) {
   // ---------- Sorting ----------
-  const isSortControlled = controlledSort !== undefined;
-  // Initialize internalSort with a type that matches SortState or null
-  const [internalSort, setInternalSort] = useState<SortState | null>(defaultSort || null);
-
-  // Ensure sortState has the correct type
-  const sortState = isSortControlled ? controlledSort : internalSort;
-
-  const sortedData = useMemo(() => {
-    if (!sortState) return data;
-    const col = columns.find(c => c.id === sortState.columnId);
-    if (!col) return data;
-
-    // Ensure accessor is correctly typed or handled
-    const accessor = col.accessor || ((row: T) => row[col.id as keyof T]); // Use keyof T for better type safety
-
-    return [...data].sort((a: T, b: T) => { // Explicitly type a and b
-      const va = accessor(a);
-      const vb = accessor(b);
-      
-      // Handle potential null/undefined values for robust sorting
-      if (va == null && vb == null) return 0;
-      if (va == null) return sortState.direction === "asc" ? -1 : 1;
-      if (vb == null) return sortState.direction === "asc" ? 1 : -1;
-
-      if (va < vb) return sortState.direction === "asc" ? -1 : 1;
-      if (va > vb) return sortState.direction === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [data, sortState, columns]);
+  const [internalSortColumn, setInternalSortColumn] = useState<string | undefined>(externalSortColumn);
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc' | undefined>(externalSortDirection);
+  const sortColumn = externalSortColumn !== undefined ? externalSortColumn : internalSortColumn;
+  const sortDirection = externalSortDirection !== undefined ? externalSortDirection : internalSortDirection;
 
   const toggleSort = useCallback(
     (columnId: string) => {
-      // Define the type for the next sort state explicitly
-      let nextDirection: "asc" | "desc";
-      if (sortState?.columnId === columnId) {
-        nextDirection = sortState.direction === "asc" ? "desc" : "asc";
+      const col = columns.find(c => c.id === columnId);
+      if (!col?.sortable) return;
+      let newDirection: 'asc' | 'desc' = 'asc';
+      if (sortColumn === columnId && sortDirection === 'asc') newDirection = 'desc';
+      if (externalSortColumn !== undefined && onSortChange) {
+        onSortChange(columnId, newDirection);
       } else {
-        nextDirection = "asc";
-      }
-      
-      const next: SortState = { columnId, direction: nextDirection };
-
-      if (isSortControlled) {
-        // Type safety for onSortChange
-        onSortChange?.(next);
-      } else {
-        // Type safety for setInternalSort
-        setInternalSort(next);
+        setInternalSortColumn(columnId);
+        setInternalSortDirection(newDirection);
       }
     },
-    [sortState, isSortControlled, onSortChange] // Include sortState in dependencies
+    [columns, sortColumn, sortDirection, externalSortColumn, onSortChange]
   );
 
-  // ---------- Pagination ----------
-  const isPageControlled = controlledPage !== undefined;
-  const [internalPage, setInternalPage] = useState(defaultPage);
+  const sortedData = useMemo(() => {
+    if (!sortColumn || !sortDirection) return data;
+    const col = columns.find(c => c.id === sortColumn);
+    if (!col) return data;
+    const accessor = col.accessor || ((row: T) => (row as any)[col.id]);
+    return [...data].sort((a, b) => {
+      let aVal = accessor(a);
+      let bVal = accessor(b);
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return sortDirection === 'asc' ? -1 : 1;
+      if (bVal == null) return sortDirection === 'asc' ? 1 : -1;
+      // اعداد
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      // رشته‌ها
+      aVal = String(aVal);
+      bVal = String(bVal);
+      return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    });
+  }, [data, sortColumn, sortDirection, columns]);
 
-  const page = isPageControlled ? controlledPage : internalPage;
-  const totalPages = Math.ceil(sortedData.length / pageSize);
+  // ---------- Pagination ----------
+  const hasPagination = pageSize !== undefined && pageSize > 0;
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const currentPage = externalCurrentPage !== undefined ? externalCurrentPage : internalCurrentPage;
+  const totalPages = hasPagination ? Math.ceil(sortedData.length / pageSize!) : 1;
 
   const paginatedData = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return sortedData.slice(start, start + pageSize);
-  }, [page, pageSize, sortedData]);
+    if (!hasPagination) return sortedData;
+    const start = (currentPage - 1) * pageSize!;
+    return sortedData.slice(start, start + pageSize!);
+  }, [sortedData, currentPage, pageSize, hasPagination]);
 
   const setPage = useCallback(
-    (p: number) => {
-      const valid = Math.min(Math.max(1, p), totalPages);
-      if (isPageControlled) onPageChange?.(valid);
-      else setInternalPage(valid);
+    (page: number) => {
+      const valid = Math.min(Math.max(1, page), totalPages);
+      if (externalCurrentPage !== undefined && onPageChange) {
+        onPageChange(valid);
+      } else {
+        setInternalCurrentPage(valid);
+      }
     },
-    [isPageControlled, totalPages, onPageChange]
+    [externalCurrentPage, onPageChange, totalPages]
   );
 
   // ---------- Selection ----------
-  const isSelectionControlled = controlledSelected !== undefined;
-  const [internalSelected, setInternalSelected] = useState<Set<string>>(
-    new Set(defaultSelected)
-  );
-
-  const selectedSet = isSelectionControlled
-    ? new Set(controlledSelected)
-    : internalSelected;
-
-  const updateSelection = useCallback(
-    (newSet: Set<string>) => {
-      if (!isSelectionControlled) setInternalSelected(newSet);
-      // Ensure onSelectionChange receives correct types
-      onSelectionChange?.(
-        Array.from(newSet),
-        data.filter(row => newSet.has(getRowId(row)))
-      );
-    },
-    [isSelectionControlled, onSelectionChange, data, getRowId]
-  );
+  const [internalSelectedIds, setInternalSelectedIds] = useState<Set<string | number>>(new Set());
+  const selectedIds = externalSelectedIds !== undefined ? externalSelectedIds : internalSelectedIds;
 
   const toggleSelect = useCallback(
-    (row: T) => {
-      if (!selectable) return;
-      const id = getRowId(row);
-      const newSet = new Set(selectedSet);
-
+    (row: T, idx: number) => {
+      const id = keyExtractor(row, idx);
+      const newSet = new Set(selectedIds);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
-
-      updateSelection(newSet);
+      if (externalSelectedIds === undefined) setInternalSelectedIds(newSet);
+      if (onSelectionChange) {
+        const selectedRows = data.filter((r, i) => newSet.has(keyExtractor(r, i)));
+        onSelectionChange(newSet, selectedRows);
+      }
     },
-    [selectedSet, selectable, getRowId, updateSelection]
+    [keyExtractor, selectedIds, data, externalSelectedIds, onSelectionChange]
   );
 
-  const selectAllPage = useCallback(() => {
-    if (!selectable) return;
-    const newSet = new Set(selectedSet);
-
-    paginatedData.forEach(row => newSet.add(getRowId(row)));
-    updateSelection(newSet);
-  }, [paginatedData, selectable, updateSelection, getRowId, selectedSet]);
-
-  const clearSelection = useCallback(() => {
-    updateSelection(new Set());
-  }, [updateSelection]);
-
-  const isSelected = useCallback(
-    (row: T) => selectedSet.has(getRowId(row)),
-    [selectedSet, getRowId]
-  );
+  const toggleSelectAll = useCallback(() => {
+    const pageIds = paginatedData.map((row, i) => keyExtractor(row, i));
+    const allSelected = pageIds.every(id => selectedIds.has(id));
+    const newSet = new Set(selectedIds);
+    if (allSelected) {
+      pageIds.forEach(id => newSet.delete(id));
+    } else {
+      pageIds.forEach(id => newSet.add(id));
+    }
+    if (externalSelectedIds === undefined) setInternalSelectedIds(newSet);
+    if (onSelectionChange) {
+      const selectedRows = data.filter((r, i) => newSet.has(keyExtractor(r, i)));
+      onSelectionChange(newSet, selectedRows);
+    }
+  }, [paginatedData, keyExtractor, selectedIds, data, externalSelectedIds, onSelectionChange]);
 
   return {
+    sortedData,
     paginatedData,
+    currentPage,
     totalPages,
-
-    sort: sortState,
-    toggleSort,
-
-    selectedSet,
-    toggleSelect,
-    isSelected,
-    selectAllPage,
-    clearSelection,
-
-    page,
     setPage,
-
-    getRowId,
+    sortColumn,
+    sortDirection,
+    toggleSort,
+    selectedIds,
+    toggleSelect,
+    toggleSelectAll,
+    hasPagination,
   };
 }

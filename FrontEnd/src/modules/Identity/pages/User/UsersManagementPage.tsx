@@ -9,29 +9,25 @@ const UsersManagementPage: React.FC = () => {
   const userColumns: ColumnDef<UserDto>[] = [
     {
       id: 'UserName',
-      label: 'نام کاربری',
+      header: 'نام کاربری',
       accessor: (row) => row.userName,
     },
     {
       id: 'NickName',
-      label: 'نام ',
+      header: 'نام ',
       accessor: (row) => row.nickName,
     },
     {
       id: 'phoneNumber',
-      label: 'شماره تلفن',
+      header: 'شماره تلفن',
       accessor: (row) => row.phoneNumber,
     },
     {
       id: 'email',
-      label: 'ایمیل',
+      header: 'ایمیل',
       accessor: (row) => row.email,
     },
-    {
-      id: 'actions',      
-      label: 'عملیات',
-      
-    },
+    
   ];
 
   return (
@@ -48,8 +44,10 @@ const UsersManagementPage: React.FC = () => {
           <Table
             data={Data}
             columns={userColumns}
-            onEdit={editAction}
-            onDelete={deleteAction}
+            onEdit={(row) => editAction(row.id)}
+            onDelete={(row) => deleteAction(row.id)}
+            keyExtractor={(row) => row.id}
+            emptyMessage='هیچ رکوردی یافت نشد'
           />
         </div>
       )}
