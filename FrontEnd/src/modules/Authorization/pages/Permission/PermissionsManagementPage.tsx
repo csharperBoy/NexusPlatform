@@ -61,8 +61,10 @@ const PermissionsManagementPage: React.FC = () => {
             // allowAdd
             // allowEdit
             allowDelete
+             onSaveRow={()=>null}
+             onSaveBatch={()=>null}
             // allowExcelImport
-            allowExcelExport
+            // allowExcelExport
             // emptyRowFactory={() => ({
             //   id: '',
             //   resourceId: '',

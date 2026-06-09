@@ -50,48 +50,48 @@ function SmartDataGrid<T>(props: SmartDataGridProps<T>) {
     <div className={`w-full flex flex-col gap-4 ${className}`} dir="rtl">
         
         {/* --- Toolbar --- */}      
-        <div className="flex flex-wrap justify-between items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
-          {hasToolbar && (
+        {hasToolbar && (
+          <div className="flex flex-wrap justify-between items-center gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
             <div className="flex gap-2">
-            {allowAdd && (
+              {allowAdd && (
                 <button
-                onClick={handleAddNewRow}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded shadow transition"
+                  onClick={handleAddNewRow}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded shadow transition"
                 >
-                + افزودن سطر جدید
+                  + افزودن سطر جدید
                 </button>
-            )}
+              )}
 
-            {allowExcelImport && (
+              {allowExcelImport && (
                 <label className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded shadow transition cursor-pointer">
-                📥 بارگذاری از اکسل
-                <input
+                  📥 بارگذاری از اکسل
+                  <input
                     type="file"
                     accept=".xlsx, .xls"
                     onChange={handleExcelUpload}
                     className="hidden"
-                />
+                  />
                 </label>
-            )}
-            {allowExcelExport && (
-            <button
-                onClick={handleExcelExport}
-                className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 rounded shadow transition"
-            >
-                📤 خروجی اکسل
-            </button>
-            )}
+              )}
+              {allowExcelExport && (
+                <button
+                  onClick={handleExcelExport}
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 rounded shadow transition"
+                >
+                  📤 خروجی اکسل
+                </button>
+              )}
             </div>
 
             {isDirty && (onSaveBatch || onSaveRow) && (
-            <button
+              <button
                 onClick={processSaveBatch}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold px-5 py-2 rounded shadow transition"
-            >
+              >
                 💾 ذخیره کل تغییرات
-            </button>
+              </button>
             )}
-        </div>
+          </div>
         )}
       {/* --- Data Table --- */}
       <div className="overflow-x-auto border border-gray-200 rounded-lg shadow bg-white">
