@@ -3,28 +3,28 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { SmartDataGridProps, BatchChanges } from './SmartDataGrid.types';
 import * as XLSX from 'xlsx';
 
-export function useSmartDataGrid<T>({
-  data: initialData,
-  columns,
-  keyExtractor,
-  allowExcelImport,
-  pageSize,
-  validateRow,
-  emptyRowFactory,
-}: SmartDataGridProps<T>) {
-  
-  // لایه اصلی داده‌های محلی جدول
+export function useSmartDataGrid<T>(props: SmartDataGridProps<T>) {
+  const {
+    data: initialData,
+    columns,
+    keyExtractor,
+    allowEdit,
+    allowDelete,
+    allowExcelImport,
+    allowExcelExport,
+    pageSize,
+    validateRow,
+    emptyRowFactory,
+    onSaveRow,
+    onSaveBatch
+  } = props;
+
   const [localData, setLocalData] = useState<T[]>([]);
-  
-  // وضعیت‌های پیش‌نویس (Draft States)
   const [addedKeys, setAddedKeys] = useState<Set<string | number>>(new Set());
   const [modifiedKeys, setModifiedKeys] = useState<Set<string | number>>(new Set());
   const [deletedKeys, setDeletedKeys] = useState<Set<string | number>>(new Set());
-  
-  // وضعیت رکوردهایی که هم‌اکنون در حال ویرایش درون‌خطی (Inline) هستند
   const [editingKeys, setEditingKeys] = useState<Set<string | number>>(new Set());
 
-  // همگام‌سازی داده‌های بیرونی با دیتای داخلی جدول
   useEffect(() => {
     setLocalData(initialData);
     setAddedKeys(new Set());
@@ -33,7 +33,6 @@ export function useSmartDataGrid<T>({
     setEditingKeys(new Set());
   }, [initialData]);
 
-  // محاسبه‌ی خطاهای سطرها جهت نمایش رنگ قرمز
   const rowErrors = useMemo(() => {
     const errorsMap = new Map<string | number, string[]>();
     if (!validateRow) return errorsMap;
@@ -50,7 +49,6 @@ export function useSmartDataGrid<T>({
     return errorsMap;
   }, [localData, deletedKeys, keyExtractor, validateRow]);
 
-  // ---------- افزودن سطر جدید ----------
   const handleAddNewRow = useCallback(() => {
     if (!emptyRowFactory) return;
     const newRow = emptyRowFactory();
@@ -61,26 +59,21 @@ export function useSmartDataGrid<T>({
     setEditingKeys(prev => { const n = new Set(prev); n.add(key); return n; });
   }, [emptyRowFactory, keyExtractor]);
 
-  // ---------- حذف سطر (علامت‌گذاری برای حذف) ----------
   const handleDeleteRow = useCallback((row: T, idx: number) => {
     const key = keyExtractor(row, idx);
     if (addedKeys.has(key)) {
-      // اگر سطر کلاً جدید بوده و هنوز ذخیره نشده، کلاً از حافظه محلی پاکش کن
       setLocalData(prev => prev.filter((r, i) => keyExtractor(r, i) !== key));
       setAddedKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
       setEditingKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
     } else {
-      // اگر از قبل در دیتابیس بوده، علامت حذف بزن
       setDeletedKeys(prev => { const n = new Set(prev); n.add(key); return n; });
       setEditingKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
     }
   }, [keyExtractor, addedKeys]);
 
-  // ---------- تغییرات درون سلولی ----------
   const handleCellChange = useCallback((key: string | number, field: string, value: any) => {
     setLocalData(prev => prev.map(row => {
-      const rKey = keyExtractor(row);
-      if (rKey === key) {
+      if (keyExtractor(row) === key) {
         return { ...row, [field]: value };
       }
       return row;
@@ -91,7 +84,6 @@ export function useSmartDataGrid<T>({
     }
   }, [keyExtractor, addedKeys]);
 
-  // ---------- کنترل وضعیت ویرایش تکی (Inline Edit) ----------
   const startEditing = useCallback((key: string | number) => {
     setEditingKeys(prev => { const n = new Set(prev); n.add(key); return n; });
   }, []);
@@ -102,7 +94,6 @@ export function useSmartDataGrid<T>({
       setLocalData(prev => prev.filter((r, i) => keyExtractor(r, i) !== key));
       setAddedKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
     } else {
-      // بازگرداندن به مقدار اولیه از دیتای اصلی پروژه
       const originalRow = initialData.find((r, i) => keyExtractor(r, i) === key);
       if (originalRow) {
         setLocalData(prev => prev.map(r => keyExtractor(r) === key ? originalRow : r));
@@ -111,7 +102,6 @@ export function useSmartDataGrid<T>({
     }
   }, [addedKeys, initialData, keyExtractor]);
 
-  // ---------- بارگذاری هوشمند فایل اکسل (Upsert) ----------
   const handleExcelUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!allowExcelImport || !e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -123,30 +113,54 @@ export function useSmartDataGrid<T>({
       const wb = XLSX.read(bstr, { type: 'binary' });
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
-      const importedData = XLSX.utils.sheet_to_json<any>(ws);
+      const importedRows = XLSX.utils.sheet_to_json<any>(ws);
 
       setLocalData(prev => {
         let updatedList = [...prev];
         const newAddedKeys = new Set(addedKeys);
         const newModifiedKeys = new Set(modifiedKeys);
 
-        importedData.forEach((excelRow) => {
-          // استخراج کلید بر اساس فانکشن داینامیک معرفی شده توسط کاربر
-          const excelKey = keyExtractor(excelRow, -1);
+        importedRows.forEach((excelRow) => {
+          const parsedRow: any = emptyRowFactory ? emptyRowFactory() : {};
+
+          columns.forEach(col => {
+            if (col.id === '__actions') return;
+
+            const excelKey = Object.keys(excelRow).find(k => 
+              k.trim().toLowerCase() === String(col.id).toLowerCase() || 
+              k.trim() === col.header
+            );
+
+            if (excelKey !== undefined) {
+              let rawValue = excelRow[excelKey];
+
+              if (col.type === 'select' && col.options) {
+                const matchedOption = col.options.find((opt) => 
+                  String(opt.value) === String(rawValue) ||
+                  String(opt.label).toLowerCase() === String(rawValue).toLowerCase() ||
+                  String(opt.display) === String(rawValue)
+                );
+
+                if (matchedOption) {
+                  rawValue = isNaN(Number(matchedOption.value)) ? matchedOption.value : Number(matchedOption.value);
+                }
+              }
+              parsedRow[col.id] = rawValue;
+            }
+          });
+
+          const excelKey = keyExtractor(parsedRow, -1);
           const existingIndex = updatedList.findIndex(r => keyExtractor(r) === excelKey);
 
           if (existingIndex > -1) {
-            // سناریو: سطر وجود دارد -> بازنویسی داده‌ها (Merge/Overwrite)
-            updatedList[existingIndex] = { ...updatedList[existingIndex], ...excelRow };
+            updatedList[existingIndex] = { ...updatedList[existingIndex], ...parsedRow };
             if (!newAddedKeys.has(excelKey)) {
               newModifiedKeys.add(excelKey);
             }
           } else {
-            // سناریو: سطر جدید است -> ایجاد سطر جدید و افزودن به پیش‌نویس‌ها
-            updatedList = [excelRow, ...updatedList];
+            updatedList = [parsedRow, ...updatedList];
             newAddedKeys.add(excelKey);
           }
-          // رکوردهای وارد شده از اکسل اتوماتیک به وضعیت ویرایش انبوه می‌روند
           setEditingKeys(prevEdit => { const n = new Set(prevEdit); n.add(excelKey); return n; });
         });
 
@@ -156,10 +170,44 @@ export function useSmartDataGrid<T>({
       });
     };
     reader.readAsBinaryString(file);
-    e.target.value = ''; // ریست کردن اینپوت فایل
-  }, [allowExcelImport, keyExtractor, addedKeys, modifiedKeys]);
+    e.target.value = '';
+  }, [allowExcelImport, columns, keyExtractor, emptyRowFactory, addedKeys, modifiedKeys]);
 
-  // ---------- پکیج کردن کل تغییرات برای ذخیره دسته‌ای ----------
+  const handleExcelExport = useCallback(() => {
+    if(!allowExcelExport) return;
+    const visibleData = localData.filter(row => !deletedKeys.has(keyExtractor(row)));
+    
+    const exportRows = visibleData.map((row) => {
+      const exportedRow: Record<string, any> = {};
+      
+      columns.forEach(col => {
+        if (col.id === '__actions') return;
+        
+        let val = col.accessor ? col.accessor(row) : (row as any)[col.id];
+        
+        if (col.type === 'select' && col.options) {
+          const matchedOption = col.options.find(opt => String(opt.value) === String(val));
+          if (matchedOption) {
+            val = matchedOption.display || matchedOption.label;
+          }
+        } else if (col.type === 'date' && val) {
+          val = new Date(val).toLocaleDateString('fa-IR');
+        } else if (col.type === 'checkbox') {
+          val = val ? 'بله' : 'خیر';
+        }
+        
+        exportedRow[col.header] = val ?? '';
+      });
+      
+      return exportedRow;
+    });
+    
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "لیست داده‌ها");
+    XLSX.writeFile(wb, `DataGrid_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }, [localData, deletedKeys, columns, keyExtractor]);
+
   const getBatchChanges = useCallback((): BatchChanges<T> => {
     const added: T[] = [];
     const modified: T[] = [];
@@ -179,7 +227,50 @@ export function useSmartDataGrid<T>({
 
   const isDirty = addedKeys.size > 0 || modifiedKeys.size > 0 || deletedKeys.size > 0;
 
-  // ---------- مدیریت مرتب‌سازی و صفحه‌بندی محلی ----------
+  // ------------------ منطق‌های منتقل‌شده به داخل هوک ------------------
+  
+  // ۱. آماده‌سازی هوشمند ستون‌ها
+  const hasActions = allowEdit || allowDelete;
+  const finalColumns = useMemo(() => {
+    if (!hasActions) return columns;
+    return [
+      ...columns,
+      {
+        id: '__actions',
+        header: 'عملیات سیستم',
+        width: '140px',
+        type: 'custom' as const,
+      },
+    ];
+  }, [columns, hasActions]);
+
+  // ۲. مدیریت اعتبارسنجی و ذخیره تک‌سطری
+  const processSaveRow = useCallback(async (row: T, idx: number) => {
+    const key = keyExtractor(row, idx);
+    if (rowErrors.has(key)) {
+      alert(`لطفا خطاهای سطر را ابتدا برطرف کنید:\n${rowErrors.get(key)?.join('\n')}`);
+      return;
+    }
+    if (onSaveRow) {
+      const type = addedKeys.has(key) ? 'add' : 'edit';
+      await onSaveRow(row, type, idx);
+    }
+    cancelEditing(key, idx);
+  }, [keyExtractor, rowErrors, onSaveRow, addedKeys, cancelEditing]);
+
+  // ۳. مدیریت اعتبارسنجی و ذخیره دسته‌ای (Batch)
+  const processSaveBatch = useCallback(async () => {
+    if (rowErrors.size > 0) {
+      alert('جدول حاوی سطر‌های دارای خطا (قرمز رنگ) است. لطفا ابتدا آن‌ها را اصلاح کنید.');
+      return;
+    }
+    if (onSaveBatch) {
+      const changes = getBatchChanges();
+      await onSaveBatch(changes);
+    }
+  }, [rowErrors, onSaveBatch, getBatchChanges]);
+
+  // ------------------ مرتب‌سازی و صفحه‌بندی ------------------
   const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | undefined>(undefined);
 
@@ -191,7 +282,6 @@ export function useSmartDataGrid<T>({
   }, [columns, sortColumn]);
 
   const sortedData = useMemo(() => {
-    // رکوردهای حذف شده را در نمای ظاهری فیلتر کن
     const visibleData = localData.filter(row => !deletedKeys.has(keyExtractor(row)));
     if (!sortColumn || !sortDirection) return visibleData;
 
@@ -225,7 +315,6 @@ export function useSmartDataGrid<T>({
   }, [sortedData, currentPage, pageSize, hasPagination]);
 
   return {
-    localData,
     paginatedData,
     currentPage,
     totalPages,
@@ -235,7 +324,6 @@ export function useSmartDataGrid<T>({
     toggleSort,
     editingKeys,
     addedKeys,
-    modifiedKeys,
     rowErrors,
     isDirty,
     handleAddNewRow,
@@ -244,6 +332,9 @@ export function useSmartDataGrid<T>({
     startEditing,
     cancelEditing,
     handleExcelUpload,
-    getBatchChanges,
+    handleExcelExport,
+    finalColumns,        // خروجی جدید
+    processSaveRow,      // خروجی جدید
+    processSaveBatch,    // خروجی جدید
   };
 }

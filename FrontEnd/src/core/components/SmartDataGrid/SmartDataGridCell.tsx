@@ -14,19 +14,17 @@ function SmartDataGridCell<T>({ row, column, index, isEditing, onValueChange }: 
   const rawValue = column.accessor ? column.accessor(row) : (row as any)[column.id];
   const type = column.type || 'text';
 
-  // اگر ستون یا سطر قابل ویرایش نباشد، فقط مقدار را نمایش بده
   if (!isEditing || column.editable === false || type === 'custom') {
     if (type === 'custom' && column.render) return <>{column.render(row, index)}</>;
     if (type === 'checkbox') return <input type="checkbox" checked={!!rawValue} disabled className="accent-blue-500" />;
     if (type === 'date' && rawValue) return <span>{new Date(rawValue).toLocaleDateString('fa-IR')}</span>;
     if (type === 'select' && column.options) {
       const option = column.options.find(o => String(o.value) === String(rawValue));
-      return <span>{option ? option.label : String(rawValue || '-')}</span>;
+      return <span>{option ? (option.display || option.label) : String(rawValue || '-')}</span>;
     }
     return <span>{rawValue != null ? String(rawValue) : '-'}</span>;
   }
 
-  // --- در حالت ویرایش (Inline Edit Mode) ---
   switch (type) {
     case 'select':
       return (
@@ -41,7 +39,7 @@ function SmartDataGridCell<T>({ row, column, index, isEditing, onValueChange }: 
         >
           <option value="">انتخاب کنید...</option>
           {column.options?.map(opt => (
-            <option key={opt.value} value={String(opt.value)}>{opt.label}</option>
+            <option key={opt.value} value={String(opt.value)}>{opt.display || opt.label}</option>
           ))}
         </select>
       );

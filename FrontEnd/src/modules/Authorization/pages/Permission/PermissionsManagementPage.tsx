@@ -58,27 +58,26 @@ const PermissionsManagementPage: React.FC = () => {
             data={FormData}
             columns={permissionColumns}
             keyExtractor={(row) => row.id || `${row.resourceKey}_${row.assigneeType}_${row.action}`}
-            allowAdd
-            allowEdit
+            // allowAdd
+            // allowEdit
             allowDelete
-            allowExcelImport
-            
-            // فکتوری کاملاً بهینه و بدون خطای تایپ
-            emptyRowFactory={() => ({
-              id: '',
-              resourceId: '',
-              resourceKey: '',
-              description: '',
-              assigneeId: '',
-              isActive: true,
-              action: undefined as any,
-              assigneeType: undefined as any,
-              effect: undefined as any,
-              effectiveFrom: null as any,
-              expiresAt: null as any,
-              scopes: [], 
-              rules: []   
-            } as PermissionDto)}
+            // allowExcelImport
+            allowExcelExport
+            // emptyRowFactory={() => ({
+            //   id: '',
+            //   resourceId: '',
+            //   resourceKey: '',
+            //   description: '',
+            //   assigneeId: '',
+            //   isActive: true,
+            //   action: undefined as any,
+            //   assigneeType: undefined as any,
+            //   effect: undefined as any,
+            //   effectiveFrom: null as any,
+            //   expiresAt: null as any,
+            //   scopes: [], 
+            //   rules: []   
+            // } as PermissionDto)}
 
             // اعتبارسنجی فیلدهای اجباری بر اساس DTO واقعی شما
             validateRow={(row) => {
@@ -93,7 +92,7 @@ const PermissionsManagementPage: React.FC = () => {
             onSaveBatch={(changes) => {
               console.log("تمام تغییرات اعمال شده جهت ارسال به API:", changes);
             }}
-            pageSize={10}
+            pageSize={20}
           />
         </div>
       )}
