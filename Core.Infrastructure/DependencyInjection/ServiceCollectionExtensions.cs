@@ -31,7 +31,7 @@ namespace Core.Infrastructure.DependencyInjection
      ------------------------------
      این کلاس مجموعه‌ای از **Extension Methods** برای IServiceCollection است
      که وظیفه‌ی ثبت سرویس‌های زیرساختی (Infrastructure Services) در DI Container را بر عهده دارد.
-
+     
      ✅ نکات کلیدی:
      - Core_AddInfrastructure:
        • نقطه‌ی ورودی برای ثبت همه‌ی سرویس‌های زیرساختی.
