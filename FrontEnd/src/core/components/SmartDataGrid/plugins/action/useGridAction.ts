@@ -4,8 +4,8 @@ import { BatchChanges } from '../../SmartDataGrid.types';
 import React from 'react';
 import { RowActionsUI } from './RowActionsUI';
 
-export function useGridEditing<T>(instance: GridInstance<T>, config: {
-  allowEdit?: boolean; allowDelete?: boolean;
+export function useGridAction<T>(instance: GridInstance<T>, config: {
+  allowAdd?: boolean;   allowEdit?: boolean; allowDelete?: boolean;
   validateRow?: (row: T) => string[] | null;
   emptyRowFactory?: () => T;
   onSaveRow?: (row: T, actionType: 'add' | 'edit' | 'delete', index: number) => Promise<void> | void;
@@ -73,7 +73,7 @@ export function useGridEditing<T>(instance: GridInstance<T>, config: {
   const isDirty = addedKeys.size > 0 || modifiedKeys.size > 0 || deletedKeys.size > 0;
 
   useEffect(() => {
-    instance.setPluginState('editing', { editingKeys, addedKeys, modifiedKeys, deletedKeys, rowErrors, isDirty, allowAdd: !!config.emptyRowFactory });
+    instance.setPluginState('actions', { editingKeys, addedKeys, modifiedKeys, deletedKeys, rowErrors, isDirty, allowAdd: !!config.emptyRowFactory });
     instance.registerAction('handleCellChange', handleCellChange);
     instance.registerAction('handleAddNewRow', handleAddNewRow);
     instance.registerAction('startEditing', (key: any) => setEditingKeys(prev => new Set(prev).add(key)));

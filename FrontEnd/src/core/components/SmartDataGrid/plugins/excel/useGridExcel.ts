@@ -19,7 +19,7 @@ export function useGridExcel<T>(instance: GridInstance<T>, config: ExcelPluginCo
     if (!allowExport) return;
 
     // استخراج لیست شناسه سطرهای حذف شده از کانتکست ویرایش
-    const deletedIds = instance.pluginState.editing?.deletedIds || new Set();
+    const deletedIds = instance.pluginState.actions?.deletedIds || new Set();
     
     // فیلتر کردن سطرهای حذف شده در سشن فعلی
     const visibleData = instance.rawData.filter(row => {
@@ -57,7 +57,7 @@ export function useGridExcel<T>(instance: GridInstance<T>, config: ExcelPluginCo
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "لیست داده‌ها");
     XLSX.writeFile(wb, `DataGrid_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  }, [instance.rawData, instance.pluginState.editing?.deletedIds, columns, keyExtractor, allowExport]);
+  }, [instance.rawData, instance.pluginState.actions?.deletedIds, columns, keyExtractor, allowExport]);
 
 
   // 🔥 ۲. بازنویسی کامل ایمپورت با قابلیت تطبیق متون کمبوباکس و فعال کردن مد ادیت سطرها
@@ -78,10 +78,10 @@ export function useGridExcel<T>(instance: GridInstance<T>, config: ExcelPluginCo
         let updatedList = [...prev];
 
         // خواندن وضعیت‌های ویرایشی فعلی از افزونه ادیت برای ادغام دیتای جدید
-        const currentEditingState = instance.pluginState.editing || {};
-        const newAddedKeys = new Set<string | number>(currentEditingState.addedKeys || []);
-        const newModifiedKeys = new Set<string | number>(currentEditingState.modifiedKeys || []);
-        const newEditingKeys = new Set<string | number>(currentEditingState.editingKeys || []);
+        const currentActionsState = instance.pluginState.actions || {};
+        const newAddedKeys = new Set<string | number>(currentActionsState.addedKeys || []);
+        const newModifiedKeys = new Set<string | number>(currentActionsState.modifiedKeys || []);
+        const newEditingKeys = new Set<string | number>(currentActionsState.editingKeys || []);
 
         importedRows.forEach((excelRow) => {
           const parsedRow: any = emptyRowFactory ? emptyRowFactory() : {};
@@ -140,12 +140,12 @@ export function useGridExcel<T>(instance: GridInstance<T>, config: ExcelPluginCo
         });
 
         // هماهنگ‌سازی و تزریق استیت‌های تغییر یافته به افزونه سیستم ویرایش (useGridEditing)
-        instance.setPluginState('editing', {
-          ...currentEditingState,
+        instance.setPluginState('actions', {
+          ...currentActionsState,
           addedKeys: newAddedKeys,
           modifiedKeys: newModifiedKeys,
           editingKeys: newEditingKeys,
-          isDirty: newAddedKeys.size > 0 || newModifiedKeys.size > 0 || (currentEditingState.deletedIds?.size > 0),
+          isDirty: newAddedKeys.size > 0 || newModifiedKeys.size > 0 || (currentActionsState.deletedIds?.size > 0),
         });
 
         return updatedList;
@@ -153,7 +153,7 @@ export function useGridExcel<T>(instance: GridInstance<T>, config: ExcelPluginCo
     };
     
     reader.readAsBinaryString(file);
-  }, [allowImport, columns, keyExtractor, emptyRowFactory, instance.pluginState.editing]);
+  }, [allowImport, columns, keyExtractor, emptyRowFactory, instance.pluginState.actions]);
 
   // ثبت اکشن‌ها و استیت افزونه در کانتکست گرید
   useEffect(() => {

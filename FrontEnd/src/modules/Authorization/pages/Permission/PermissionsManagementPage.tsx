@@ -4,7 +4,7 @@ import { PermissionManagementForm } from '../../Interface/Permission/IPermission
 import { BatchChanges, ColumnDef } from '@/core/components/SmartDataGrid1/SmartDataGrid.types';
 import { PermissionDto } from '../../models/PermissionDto';
 import { ActionOptions, AssignTypeOptions, EffectOptions } from '../../models/PermissionEnum';
-import SmartDataGrid from '@/core/components/SmartDataGrid';
+import SmartDataGrid from '@/core/components/SmartDataGrid/SmartDataGrid';
 
 const PermissionsManagementPage: React.FC = () => {
   // تعریف ستون‌های جدول با تایپ اصلاح‌شده و استاندارد آرایه‌ای
@@ -89,20 +89,36 @@ const PermissionsManagementPage: React.FC = () => {
       redirectTo="/dashboard"
       renderForm={({ FormData }) => (
         <div className="p-4">
-          <SmartDataGrid<PermissionDto>
-            data={FormData}
+          
+
+          <SmartDataGrid
+           data={FormData}
             columns={permissionColumns}
             keyExtractor={(row) => row.id || `${row.resourceKey}_${row.assigneeType}_${row.action}`}
-            allowAdd
-            allowEdit
-            allowDelete
-            allowExcelImport
-            allowExcelExport
             pageSize={20}
-            emptyRowFactory={createEmptyRow}
-            validateRow={handleValidateRow}
-            onSaveBatch={handleSaveBatch}
-            onSaveRow={() => {}}
+            
+            // تنظیمات درختی شیک و مجتمع
+            // treeConfig={{
+            //   enabled: true,
+            //   parentKey: 'parentId'
+            // }}
+
+            // تنظیمات ادیت و اکشن‌ها یکجا
+            actionConfig={{
+              allowAdd: true,
+              allowEdit: true,
+              allowDelete: true,
+              onSaveBatch: handleSaveBatch,
+              onSaveRow: () => {},
+              emptyRowFactory: createEmptyRow,
+              validateRow: handleValidateRow
+            }}
+
+            // تنظیمات اکسل یکجا
+            excelConfig={{
+              allowExport: true,
+              allowImport: true
+            }}
           />
         </div>
       )}
