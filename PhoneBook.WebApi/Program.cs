@@ -1,18 +1,18 @@
 ﻿using Core.Infrastructure.DependencyInjection;
-using Notification.Presentation.Hubs;
+//using Notification.Presentation.Hubs;
 using Serilog;
 
 try
 {
     Console.OutputEncoding = System.Text.Encoding.UTF8;
-    Log.Information("🚀 Starting Trader Management application...");
+    Log.Information("🚀 Starting PhoneBook Management application...");
 
     var builder = WebApplication.CreateBuilder(args);
-   builder.Configuration
-        .SetBasePath(builder.Environment.ContentRootPath)
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-        .AddEnvironmentVariables();
+    builder.Configuration
+         .SetBasePath(builder.Environment.ContentRootPath)
+         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+         .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+         .AddEnvironmentVariables();
 
     var configuration = builder.Configuration;
     builder.Services.AddEnableModulesServiceCollectionExtensions(configuration);
@@ -29,9 +29,9 @@ try
     app.UseAuthorization();
     app.MapControllers();
 
-    app.MapHub<NotificationHub>("/hubs/notifications");
+    //app.MapHub<NotificationHub>("/hubs/notifications");
 
-    Log.Information("🎉  Trader Management application started successfully");
+    Log.Information("🎉  PhoneBook Management application started successfully");
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
