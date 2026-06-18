@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Data
 {
-    public class PersonDbContextFactory : IDesignTimeDbContextFactory<PersonDbContext>
+    public class PeopleDbContextFactory : IDesignTimeDbContextFactory<PeopleDbContext>
     {
-        public PersonDbContext CreateDbContext(string[] args)
+        public PeopleDbContext CreateDbContext(string[] args)
         {
             var basePath = Directory.GetCurrentDirectory();
 
@@ -24,14 +24,14 @@ namespace People.Infrastructure.Data
 
             var conn = config.GetConnectionString("DefaultConnection");
 
-            var optionsBuilder = new DbContextOptionsBuilder<PersonDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<PeopleDbContext>();
             optionsBuilder.UseSqlServer(conn, b =>
             {
-                b.MigrationsAssembly(typeof(PersonDbContext).Assembly.GetName().Name);
-                b.MigrationsHistoryTable("__PersonMigrationsHistory", "person");
+                b.MigrationsAssembly(typeof(PeopleDbContext).Assembly.GetName().Name);
+                b.MigrationsHistoryTable("__PeopleMigrationsHistory", "people");
             });
 
-            return new PersonDbContext(optionsBuilder.Options);
+            return new PeopleDbContext(optionsBuilder.Options);
         }
     }
 }

@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.HR
+namespace People.Application.Queries.Person
 {
-    public interface IPersonPublicService
+    internal class GetPersonsSelectionListQuery
     {
-       
     }
 }

@@ -14,7 +14,7 @@ namespace People.Domain.Entities
     /// اطلاعات ثابت و غیرقابل تغییر افراد
     /// مثل: کد ملی، نام، نام خانوادگی، تاریخ تولد
     /// </summary>
-    public class Person : BaseEntity, IAuditableEntity, IAggregateRoot, IEntity<Guid>
+    public class naturalPerson : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -28,7 +28,7 @@ namespace People.Domain.Entities
         // اطلاعات ثابت (هرگز تغییر نمی‌کنند)
         public NationalCode NationalCode { get; private set; } = null!;
         public FullName FullName { get; private set; } = null!;
-
+        public Guid fkPartyId { get; private set; }
         public DateTime? BirthDate { get; private set; }
         public string? BirthPlace { get; private set; }
 
@@ -37,11 +37,12 @@ namespace People.Domain.Entities
         
         //navigation
         public virtual ICollection<PersonProfile>? Profiles { get; private set; }
+        public virtual Parties? Party { get; private set; }
 
         // Constructor for EF
-        protected Person() { }
-
-        public Person(NationalCode nationalCode, FullName fullName,
+        protected naturalPerson() { }
+        
+        public naturalPerson(NationalCode nationalCode, FullName fullName,
                       DateTime birthDate, string birthPlace, string createdBy)
         {
             NationalCode = nationalCode ?? throw new ArgumentNullException(nameof(nationalCode));
@@ -49,6 +50,17 @@ namespace People.Domain.Entities
             BirthDate = birthDate;
             BirthPlace = birthPlace;
             CreatedBy = createdBy;
+        }
+        public naturalPerson(
+         string? _NationalCode,
+         string? _FirstName,
+         string? _LastName,
+                      DateTime? _birthDate, string? _birthPlace)
+        {
+            NationalCode = NationalCode.Create(_NationalCode);
+            SetFullName(_FirstName , _LastName);
+            BirthDate = _birthDate;
+            BirthPlace = _birthPlace;
         }
 
         // روش‌های کسب اطلاعات

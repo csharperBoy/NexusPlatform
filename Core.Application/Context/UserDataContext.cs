@@ -15,7 +15,7 @@ namespace Core.Application.Context
         public string UserName { get; init; }
         public Guid? PersonId { get; init; }
         public IReadOnlySet<Guid>? OrganizationUnitIds { get; init; } = new HashSet<Guid>();
-        public IReadOnlySet<Guid>? PositionIds { get; init; } = new HashSet<Guid>();
+        public IReadOnlySet<Guid>? PostIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<Guid>? RoleIds { get; init; } = new HashSet<Guid>();
 
         public IReadOnlySet<PermissionDto> Permissions { get; init; } = new HashSet<PermissionDto>();

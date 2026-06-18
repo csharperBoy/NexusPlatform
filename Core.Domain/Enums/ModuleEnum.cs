@@ -16,7 +16,7 @@ namespace Core.Domain.Enums
         Event = 5,
         Identity = 6,
         Notification = 7,
-        OrganizationManagement = 8,
+        HR = 8,
         User = 9,
         WebScrapper = 10,
 

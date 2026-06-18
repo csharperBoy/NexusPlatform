@@ -53,7 +53,6 @@ namespace People.Domain.Entities
         }
         #endregion
 
-        public Guid Id { get; private set; } = Guid.NewGuid();
 
         public Guid FkPersonId { get; private set; }
 
@@ -67,7 +66,7 @@ namespace People.Domain.Entities
         //public short? StudentChildCount { get; private set; }
 
         public DateOnly EffectiveFrom { get; private set; }
-        public DateOnly EffectiveTo { get; private set; }
+        public DateOnly? EffectiveTo { get; private set; }
         public bool? IsCurrent { get; private set; }
         public bool? Enablity { get; private set; }
         public bool? Visiblity { get; private set; }
@@ -76,11 +75,22 @@ namespace People.Domain.Entities
         //public Guid? FkchildId { get; private set; }
 
         // Navigation
-        public virtual Person Person { get; private set; } = null!;
+        public virtual naturalPerson Person { get; private set; } = null!;
 
         // Constructor for EF
         protected PersonProfile() { }
-
+        public PersonProfile(
+            Guid _FkPersonId
+            )
+        {
+            _FkPersonId = FkPersonId;
+            IsCurrent = true;
+            Enablity = true;
+            Visiblity = true;
+            Remove = false;
+            EffectiveFrom =DateOnly.FromDateTime( DateTime.Now);
+            
+        }
        
     }
 

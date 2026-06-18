@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.HR
 {
-    public interface IPositionPublicService
+    public interface IEmployeePublicService
     {
-        Task<List<Guid>?> GetUserOrganizeId(Guid userId);
-        Task<List<Guid>?> GetUserPositionsId(Guid userId);
+
+        Task<Guid?> GetEmployeeId(Guid? personId);
+        Task SaveAsync();
     }
 }

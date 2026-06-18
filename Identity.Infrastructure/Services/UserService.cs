@@ -42,7 +42,7 @@ namespace Identity.Infrastructure.Services
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly ILogger<UserService> _logger;
 
-        private readonly IPositionPublicService _positionService;
+        private readonly IOrgChartPublicService _positionService;
         private readonly IRoleInternalService _roleService;
         private readonly IPermissionPublicService _permissionService;
 
@@ -54,7 +54,7 @@ namespace Identity.Infrastructure.Services
             IRepository<IdentityDbContext, IdentityUserRole<Guid>, Guid> userRoleRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
             UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager,
-            IPositionPublicService positionService,
+            IOrgChartPublicService positionService,
             IRoleInternalService roleService,
             IPermissionPublicService permissionService,
             ICachePublicService cache,

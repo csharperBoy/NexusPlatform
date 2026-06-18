@@ -1,12 +1,12 @@
 ﻿
 using Core.Application.Abstractions.Events;
-using Core.Application.Abstractions.HR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using People.Infrastructure.Data;
 using People.Infrastructure.Services;
 using People.Application.Interfaces;
+using Core.Application.Abstractions.People;
 namespace People.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
@@ -14,10 +14,10 @@ namespace People.Infrastructure.DependencyInjection
         public static IServiceCollection People_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             var conn = configuration.GetConnectionString("DefaultConnection");
-            var migrationsAssembly = typeof(PersonDbContext).Assembly.GetName().Name;
+            var migrationsAssembly = typeof(PeopleDbContext).Assembly.GetName().Name;
 
             // DbContext برای Peopleها
-            services.AddDbContext<PersonDbContext>((serviceProvider, options) =>
+            services.AddDbContext<PeopleDbContext>((serviceProvider, options) =>
             {
                 options.UseSqlServer(conn, b =>
                 {
@@ -30,7 +30,7 @@ namespace People.Infrastructure.DependencyInjection
             // Resolve از DI
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
-            registration.AddOutboxProcessor<PersonDbContext>(services);
+            registration.AddOutboxProcessor<PeopleDbContext>(services);
             return services;
         }
 

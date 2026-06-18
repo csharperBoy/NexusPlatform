@@ -11,7 +11,7 @@ namespace People.Infrastructure.DependencyInjection
             var conn = config.GetConnectionString("DefaultConnection");
 
             services.AddHealthChecks()
-                    .AddDbContextCheck<PersonDbContext>("PeopleDatabase");
+                    .AddDbContextCheck<PeopleDbContext>("PeopleDatabase");
 
 
             return services;

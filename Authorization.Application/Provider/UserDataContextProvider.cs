@@ -3,6 +3,7 @@ using Authorization.Application.Interfaces.Service;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.People;
 using Core.Application.Context;
 using Core.Application.Provider;
 using Core.Domain.Enums;
@@ -22,8 +23,9 @@ namespace Authorization.Application.Provider
         private readonly IPermissionInternalService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
-        private readonly IPositionPublicService _positionService;
+        private readonly IOrgChartPublicService _positionService;
         private readonly IRolePublicService _roleService;
+        private readonly IEmployeePublicService _employeeService;
 
         private readonly UserDataContext _userDataContext;
 
@@ -32,8 +34,9 @@ namespace Authorization.Application.Provider
            UserDataContext userDataContext,
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
-            IPositionPublicService positionService,
-            IRolePublicService roleService
+            IOrgChartPublicService positionService,
+            IRolePublicService roleService,
+             IEmployeePublicService employeeService
             )
         {
             _permissionService = permissionService;
@@ -42,6 +45,7 @@ namespace Authorization.Application.Provider
             _positionService = positionService;
             _roleService = roleService;
             _userDataContext = userDataContext;
+            _employeeService = employeeService;
         }
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
@@ -54,17 +58,18 @@ namespace Authorization.Application.Provider
                 return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
 
             Guid? PersonId = await _userService.GetPersonId(userId);
+            Guid? EmployeeId = await _employeeService.GetEmployeeId(PersonId);
             string? userName = await _userService.GetUserName(userId);
-            List<Guid>? PositionId = await _positionService.GetUserPositionsId(userId);
+            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
-            List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(userId);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PositionId, RoleIds);
+            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PostId, RoleIds);
             
             return new UserDataContext
             {
                 UserId = userId,
                 PersonId = PersonId,
-                PositionIds = PositionId?.ToHashSet(),
+                PostIds = PostId?.ToHashSet(),
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
                 RoleIds = RoleIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
@@ -89,8 +94,8 @@ namespace Authorization.Application.Provider
                 .SetValue(_userDataContext, ctx.OrganizationUnitIds);
 
             typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PositionIds))!
-                .SetValue(_userDataContext, ctx.PositionIds);
+                .GetProperty(nameof(UserDataContext.PostIds))!
+                .SetValue(_userDataContext, ctx.PostIds);
 
             typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.RoleIds))!

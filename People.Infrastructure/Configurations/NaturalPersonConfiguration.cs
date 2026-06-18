@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class PersonConfiguration : BaseConfiguration<Person>
+    public class NaturalPersonConfiguration : BaseConfiguration<naturalPerson>
     {
-        public override void Configure(EntityTypeBuilder<Person> builder)
+        public override void Configure(EntityTypeBuilder<naturalPerson> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 
-            builder.ToTable("Persons", "authorization");
+            builder.ToTable("naturalPerson", "people");
 
             builder.OwnsOne(p => p.NationalCode, nc =>
             {

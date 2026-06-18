@@ -16,7 +16,7 @@ namespace People.Infrastructure.Configurations
         {
             base.Configure(builder); // اعمال CreatedAt و...
 
-            builder.ToTable("PersonProfiles", "authorization");
+            builder.ToTable("PersonProfiles", "people");
 
             
         }

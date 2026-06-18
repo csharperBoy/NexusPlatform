@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions.Security;
+﻿using Core.Application.Abstractions.People;
+using Core.Application.Abstractions.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,26 +14,33 @@ namespace Core.Application.Abstractions.HR
     {
         public static IServiceCollection HR_NullServiceInject(this IServiceCollection services, IConfiguration configuration)
         {
-
-            services.AddScoped<IPersonPublicService, NullPersonService>();
-            services.AddScoped<IPositionPublicService, NullPositionService>();
+            services.AddScoped<IOrgChartPublicService, NullOrgChartService>();
+            services.AddScoped<IEmployeePublicService, NullEmployeeService>();
             return services;
         }
     }
-    public class NullPersonService : IPersonPublicService
+    
+    public class NullOrgChartService : IOrgChartPublicService
     {
-    }
-    public class NullPositionService : IPositionPublicService
-    {
-        public Task<List<Guid>?> GetUserOrganizeId(Guid userId)
+
+        public Task<List<Guid>?> GetEmployeeOrganizeId(Guid? employeeId)
         {
             return Task.FromResult<List<Guid>?>(null);
         }
 
-        public Task<List<Guid>?> GetUserPositionsId(Guid userId)
+
+        public Task<List<Guid>?> GetEmployeePostsId(Guid? employeeId)
         {
-            return Task.FromResult<List<Guid>?>( null);
+            return Task.FromResult<List<Guid>?>(null);
         }
-    }
+
 
     }
+    public class NullEmployeeService : IEmployeePublicService
+    {
+        public Task<Guid?> GetEmployeeId(Guid? personId)
+        {
+            return Task.FromResult<Guid?>(null);
+        }
+    }
+}

@@ -8,8 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
-    <ProjectReference Include="..\OrganizationManagement.Application\OrganizationManagement.Application.csproj" />
-    <ProjectReference Include="..\OrganizationManagement.Domain\OrganizationManagement.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
