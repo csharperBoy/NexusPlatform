@@ -42,5 +42,10 @@ namespace Core.Application.Abstractions.HR
         {
             return Task.FromResult<Guid?>(null);
         }
+
+        public async Task SaveAsync()
+        {
+            await Task.CompletedTask;
+        }
     }
 }

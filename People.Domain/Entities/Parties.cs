@@ -24,7 +24,7 @@ namespace People.Domain.Entities
         public virtual ICollection<legalPersons>? legalPersons { get; private set; }
 
         // Constructor for EF
-        protected Parties() { }
+        public Parties() { }
 
        
         private void Touch() => ModifiedAt = DateTime.UtcNow;

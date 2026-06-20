@@ -117,7 +117,7 @@ namespace Authorization.Infrastructure.Processor
                 var allPermissions = _userDataContext.Permissions;
 
                 Guid? personId = _userDataContext.PersonId;
-                List<Guid>? positionId = _userDataContext.PositionIds?.ToList();
+                List<Guid>? positionId = _userDataContext.PostIds?.ToList();
                 List<Guid>? allUserRoles = _userDataContext.RoleIds?.ToList();
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions

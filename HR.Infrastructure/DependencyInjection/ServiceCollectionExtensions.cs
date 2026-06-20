@@ -58,7 +58,7 @@ namespace HR.Infrastructure.DependencyInjection
                     b.MigrationsAssembly(migrationsAssembly);
 
                     // تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
-                    b.MigrationsHistoryTable("__HRHistory", "organization");
+                    b.MigrationsHistoryTable("__HRHistory", "hr");
                 });
             });
 
@@ -68,6 +68,9 @@ namespace HR.Infrastructure.DependencyInjection
             
             services.AddScoped<IOrgChartPublicService>(sp => sp.GetRequiredService<OrgChartService>());
             services.AddScoped<IOrgChartInternalService>(sp => sp.GetRequiredService<OrgChartService>());
+
+            services.AddScoped<IEmployeePublicService>(sp => sp.GetRequiredService<EmployeeService>());
+            services.AddScoped<IEmployeeInternalService>(sp => sp.GetRequiredService<EmployeeService>());
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

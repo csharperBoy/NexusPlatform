@@ -17,16 +17,17 @@ namespace People.Infrastructure.Services
 {
     public class PersonService : IPersonInternalService, IPersonPublicService
     {
-        private readonly IRepository<PeopleDbContext, naturalPerson, Guid> _personRepository;
+        private readonly IRepository<PeopleDbContext, naturalPerson, Guid> _naturalPersonRepository;
+        private readonly IRepository<PeopleDbContext, Parties, Guid> _partyRepository;
         private readonly ISpecificationRepository< naturalPerson, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
         private readonly IUnitOfWork<PeopleDbContext> _uow;
 
-        public PersonService(IRepository<PeopleDbContext, naturalPerson, Guid> personRepository, ILogger<PersonService> logger, 
+        public PersonService(IRepository<PeopleDbContext, naturalPerson, Guid> naturalPersonRepository, ILogger<PersonService> logger, 
             ISpecificationRepository< naturalPerson, Guid> personSpecRepository,
             IUnitOfWork<PeopleDbContext> uow)
         {
-            _personRepository = personRepository;
+            _naturalPersonRepository = naturalPersonRepository;
             _personSpecRepository = personSpecRepository;
             _logger = logger;
             _uow = uow;
@@ -34,9 +35,12 @@ namespace People.Infrastructure.Services
 
         public async Task<Guid> CreatePersonAsync(string nationalCode, string firstName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, Gender? gender)
         {
-            naturalPerson person = new naturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace);
-            await _personRepository.AddAsync(person);
-            return person.Id;
+            naturalPerson naturalPerson = new naturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace);
+            Parties party = new Parties();
+            await _partyRepository.AddAsync(party);
+            naturalPerson.setParty( party.Id);
+            await _naturalPersonRepository.AddAsync(naturalPerson);
+            return naturalPerson.Id;
         }
 
         public async Task SaveAsync()

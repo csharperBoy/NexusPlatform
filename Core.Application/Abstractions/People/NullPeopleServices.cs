@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Shared.Enums.HR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -21,6 +22,15 @@ namespace Core.Application.Abstractions.People
     }
     public class NullPersonService : IPersonPublicService
     {
+        public Task<Guid> CreatePersonAsync(string nationalCode, string firstName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, Gender? gender)
+        {
+            return Task.FromResult<Guid>(Guid.Empty);
+        }
+
+        public async Task SaveAsync()
+        {
+            await Task.CompletedTask;
+        }
     }
- 
+
 }

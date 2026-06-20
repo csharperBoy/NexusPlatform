@@ -61,8 +61,8 @@ namespace Authorization.Application.Provider
             Guid? EmployeeId = await _employeeService.GetEmployeeId(PersonId);
             string? userName = await _userService.GetUserName(userId);
             List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
-            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PostId, RoleIds);
             
             return new UserDataContext

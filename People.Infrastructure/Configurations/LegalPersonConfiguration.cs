@@ -20,20 +20,20 @@ namespace People.Infrastructure.Configurations
             builder.ToTable("legalPersons", "people");
 
             // relation 
-            builder.HasMany(p => p.Profiles)
-                     .WithOne(pr => pr.Person)
-                     .HasForeignKey(pr => pr.FkPersonId)
+            builder.HasOne(p => p.party)
+                     .WithMany(pr => pr.legalPersons)
+                     .HasForeignKey(pr => pr.fkPartyId)
                      .OnDelete(DeleteBehavior.Cascade);
 
             // ایندکس ترکیبی طلایی برای چک کردن دسترسی
-            builder.HasIndex(p => new { p.NationalCode })
+            builder.HasIndex(p => new { p.RegisterCode })
                    .HasDatabaseName("IX_Persons_FastLookup");
-            builder.HasIndex(p => new { p.FullName })
+            builder.HasIndex(p => new { p.Title })
                  .HasDatabaseName("IX_Persons_FullName_FastLookup");
 
             // عدم ثبت دسترسی تکراری
             builder.HasIndex(p => new {
-                p.NationalCode
+                p.RegisterCode
             })
             .HasDatabaseName("IX_Persons_Unique")
             .IsUnique();

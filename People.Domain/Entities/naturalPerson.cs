@@ -51,6 +51,10 @@ namespace People.Domain.Entities
             BirthPlace = birthPlace;
             CreatedBy = createdBy;
         }
+        public void setParty(Guid partyId)
+        {
+            fkPartyId = partyId;
+        }
         public naturalPerson(
          string? _NationalCode,
          string? _FirstName,

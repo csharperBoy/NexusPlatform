@@ -46,6 +46,7 @@ namespace Identity.Infrastructure.Services
         private readonly IRoleInternalService _roleService;
         private readonly IPermissionPublicService _permissionService;
 
+        private readonly IEmployeePublicService _employeeService;
         private readonly ICachePublicService _cache;
         private readonly string baseCacheKey = "identity:user";
 
@@ -55,7 +56,8 @@ namespace Identity.Infrastructure.Services
             IUnitOfWork<IdentityDbContext> unitOfWork,
             UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager,
             IOrgChartPublicService positionService,
-            IRoleInternalService roleService,
+            IEmployeePublicService employeeService,
+        IRoleInternalService roleService,
             IPermissionPublicService permissionService,
             ICachePublicService cache,
             ILogger<UserService> logger)
@@ -70,6 +72,7 @@ namespace Identity.Infrastructure.Services
             _positionService = positionService;
             _roleService = roleService;
             _permissionService = permissionService;
+            _employeeService = employeeService;
         }
 
         public async Task DeleteUserAsync(Guid Id)
@@ -141,16 +144,18 @@ namespace Identity.Infrastructure.Services
 
 
             Guid? PersonId = await GetPersonId(user.Id);
-            List<Guid>? PositionId = await _positionService.GetUserPositionsId(user.Id);
+            Guid? EmployeeId = await _employeeService.GetEmployeeId(PersonId);
+            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
+            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(user.Id);
-            List<Guid>? OrgIds = await _positionService.GetUserOrganizeId(user.Id);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(user.Id, PersonId, PositionId, RoleIds);
+            var allPermission = await _permissionService.GetUserAllPermissionsAsync(user.Id, PersonId, PostId, RoleIds);
 
             return new UserDataContext
             {
                 UserId = user.Id,
                 PersonId = PersonId,
-                PositionIds = PositionId?.ToHashSet(),
+                PostIds = PostId?.ToHashSet(),
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
                 RoleIds = RoleIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),

@@ -55,7 +55,7 @@ namespace Authorization.Infrastructure.Processor
                 }
                 if (scopedEntity.OwnerPositionId == null || scopedEntity.OwnerPositionId == Guid.Empty)
                 {
-                    Guid? positionId = _scope.PositionIds?.FirstOrDefault();
+                    Guid? positionId = _scope.PostIds?.FirstOrDefault();
                     scopedEntity.SetPositionOwner(positionId ?? Guid.Empty);
                 }
                 if (scopedEntity.OwnerUserId == null || scopedEntity.OwnerUserId == Guid.Empty)

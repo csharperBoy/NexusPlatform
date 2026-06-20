@@ -19,15 +19,21 @@ namespace People.Infrastructure.Configurations
 
             builder.ToTable("naturalPerson", "people");
 
+            // 1. تنظیمات و ایندکس‌های مربوط به NationalCode
             builder.OwnsOne(p => p.NationalCode, nc =>
             {
                 nc.Property(x => x.Value)
                   .IsRequired()
                   .HasMaxLength(10)
                   .HasColumnName("NationalCode");
+
+                // ✅ ایندکس و یونیک بودن باید اینجا و روی Value تعریف شود
+                nc.HasIndex(x => x.Value)
+                  .HasDatabaseName("IX_Persons_Unique_NationalCode")
+                  .IsUnique();
             });
 
-            // FullName به عنوان ValueObject
+            // 2. تنظیمات و ایندکس‌های مربوط به FullName
             builder.OwnsOne(p => p.FullName, fn =>
             {
                 fn.Property(x => x.FirstName)
@@ -39,26 +45,17 @@ namespace People.Infrastructure.Configurations
                   .IsRequired()
                   .HasMaxLength(100)
                   .HasColumnName("LastName");
+
+                // ✅ ایندکس روی نام و نام خانوادگی باید اینجا تعریف شود
+                fn.HasIndex(x => new { x.FirstName, x.LastName })
+                  .HasDatabaseName("IX_Persons_FullName_FastLookup");
             });
 
-            // relation 
+            // 3. روابط (Relations)
             builder.HasMany(p => p.Profiles)
                      .WithOne(pr => pr.Person)
                      .HasForeignKey(pr => pr.FkPersonId)
                      .OnDelete(DeleteBehavior.Cascade);
-
-            // ایندکس ترکیبی طلایی برای چک کردن دسترسی
-            builder.HasIndex(p => new { p.NationalCode })
-                   .HasDatabaseName("IX_Persons_FastLookup");
-            builder.HasIndex(p => new { p.FullName })
-                 .HasDatabaseName("IX_Persons_FullName_FastLookup");
-
-            // عدم ثبت دسترسی تکراری
-            builder.HasIndex(p => new {
-                p.NationalCode
-            })
-            .HasDatabaseName("IX_Persons_Unique")
-            .IsUnique();
         }
     }
 
