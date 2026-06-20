@@ -62,6 +62,8 @@ namespace HR.Infrastructure.DependencyInjection
                 });
             });
 
+            services.AddScoped<OrgChartService>();
+            services.AddScoped<EmployeeService>();
             services.AddScoped<IUnitOfWork<HRDbContext>, EfUnitOfWork<HRDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
@@ -75,6 +77,8 @@ namespace HR.Infrastructure.DependencyInjection
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();
 
+            services.AddScoped<IOrgChartInternalService, OrgChartService>();
+            services.AddScoped<IEmployeeInternalService, EmployeeService>();
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();

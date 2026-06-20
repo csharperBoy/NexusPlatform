@@ -17,7 +17,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<OrganizationUnit> builder)
         {
             base.Configure(builder);
-            builder.ToTable("OrganizationUnits", "organization");
+            builder.ToTable("OrganizationUnits", "hr");
 
             builder.Property(ou => ou.Name).IsRequired().HasMaxLength(200);
             builder.Property(ou => ou.Code).IsRequired().HasMaxLength(50);

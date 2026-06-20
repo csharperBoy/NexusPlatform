@@ -28,19 +28,33 @@ namespace HR.Infrastructure.Data
         {
         }
         public DbSet<Assignment> Assignment { get; set; }
+        public DbSet<CostCenter> CostCenter { get; set; }
+        public DbSet<Employment> Employment { get; set; }
+        public DbSet<EmploymentStatus> EmploymentStatus { get; set; }
+        public DbSet<EmploymentType> EmploymentType { get; set; }
+        public DbSet<Grade> Grade { get; set; }
+        public DbSet<JobLevel> JobLevel { get; set; }
+        public DbSet<JobTitle> JobTitle { get; set; }
         public DbSet<OrganizationUnit> OrganizationUnit { get; set; }
-        public DbSet<Post> Position { get; set; }
+        public DbSet<Post> Post { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             // اعمال اسکیما
-            modelBuilder.HasDefaultSchema("organization");
+            modelBuilder.HasDefaultSchema("hr");
 
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("organization"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("hr"));
             modelBuilder.ApplyConfiguration(new AssignmentConfiguration());
+            modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentStatusConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentTypeConfiguration());
+            modelBuilder.ApplyConfiguration(new GradeConfiguration());
+            modelBuilder.ApplyConfiguration(new JobLevelConfiguration());
+            modelBuilder.ApplyConfiguration(new JobTitleConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
-            modelBuilder.ApplyConfiguration(new PositionConfiguration());
+            modelBuilder.ApplyConfiguration(new PostConfiguration());
 
         }
     }

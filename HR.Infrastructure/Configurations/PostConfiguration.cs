@@ -10,7 +10,7 @@ using HR.Domain.Entities;
 
 namespace HR.Infrastructure.Configurations
 {
-    public class PositionConfiguration : BaseConfiguration<Post>
+    public class PostConfiguration : BaseConfiguration<Post>
     {
         public override void Configure(EntityTypeBuilder<Post> builder)
         {

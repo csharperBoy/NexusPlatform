@@ -29,8 +29,8 @@ namespace People.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("people"));
             modelBuilder.ApplyConfiguration(new LegalPersonConfiguration());
-            modelBuilder.ApplyConfiguration(new PartiesConfiguration());
             modelBuilder.ApplyConfiguration(new NaturalPersonConfiguration());
+            modelBuilder.ApplyConfiguration(new PartiesConfiguration());
             modelBuilder.ApplyConfiguration(new PersonProfileConfiguration());
             modelBuilder.ApplyConfiguration(new PersonContactConfiguration());
             
