@@ -75,7 +75,7 @@ namespace People.Domain.Entities
         //public Guid? FkchildId { get; private set; }
 
         // Navigation
-        public virtual naturalPerson Person { get; private set; } = null!;
+        public virtual naturalPersons Person { get; private set; } = null!;
 
         // Constructor for EF
         protected PersonProfile() { }

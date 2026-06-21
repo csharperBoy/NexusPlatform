@@ -50,16 +50,19 @@ namespace People.Domain.Entities
 
         public ContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
-        public Guid FkPersonId { get; private set; }
-        public virtual naturalPerson Person { get; private set; } = null!;
+        public Guid FkPartyId { get; private set; }
+        public virtual Parties Person { get; private set; } = null!;
 
         // Constructor for EF
         protected PersonContact() { }
-        public PersonContact(ContactType _ContactType, string _Value , Guid _PersonId)
+        public PersonContact
+            (ContactType _ContactType,
+            string _Value,
+            Guid _PartyId)
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPersonId = _PersonId;
+            FkPartyId = _PartyId;
         }
     }
 }

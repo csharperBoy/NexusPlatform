@@ -29,6 +29,19 @@ namespace Core.Infrastructure.Database.Configurations
             {
                 ConfigureBaseEntity(builder);
             }
+
+            if (typeof(IHierarchicalStructureEntity<TEntity,Guid>).IsAssignableFrom(typeof(TEntity)))
+            {
+                ConfigureHierarchicalStructureEntity(builder);
+            }
+        }
+
+        private void ConfigureHierarchicalStructureEntity(EntityTypeBuilder<TEntity> builder)
+        {
+            builder.HasOne(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Parent)
+                .WithMany(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Children)
+                .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).ParentId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         private void ConfigureAuditable(EntityTypeBuilder<TEntity> builder)
@@ -39,7 +52,7 @@ namespace Core.Infrastructure.Database.Configurations
 
             builder.Property("CreatedBy")
                 .HasMaxLength(256)
-                .IsRequired();
+                .IsRequired(false);
 
             builder.Property("ModifiedAt")
                 .IsRequired(false);
@@ -70,5 +83,4 @@ namespace Core.Infrastructure.Database.Configurations
             // اگر خاصیتی در BaseEntity داری، اینجا تنظیم کن
         }
     }
-
 }

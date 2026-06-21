@@ -14,7 +14,7 @@ namespace People.Domain.Entities
     /// اطلاعات ثابت و غیرقابل تغییر افراد
     /// مثل: کد ملی، نام، نام خانوادگی، تاریخ تولد
     /// </summary>
-    public class naturalPerson : BaseEntity, IAuditableEntity
+    public class naturalPersons : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -34,37 +34,52 @@ namespace People.Domain.Entities
 
         public string? FatherName { get; private set; }
         public Gender? Gender { get; private set; }
-        
+
         //navigation
         public virtual ICollection<PersonProfile>? Profiles { get; private set; }
         public virtual Parties? Party { get; private set; }
 
         // Constructor for EF
-        protected naturalPerson() { }
-        
-        public naturalPerson(NationalCode nationalCode, FullName fullName,
-                      DateTime birthDate, string birthPlace, string createdBy)
+        protected naturalPersons() { }
+
+        public naturalPersons(
+            NationalCode nationalCode,
+            FullName fullName,
+            DateTime birthDate,
+            string birthPlace,
+            string fatherName,
+            Gender? gender,
+            string? createdBy )
         {
             NationalCode = nationalCode ?? throw new ArgumentNullException(nameof(nationalCode));
             FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
             BirthDate = birthDate;
             BirthPlace = birthPlace;
+            FatherName = fatherName;
+            Gender = gender;
             CreatedBy = createdBy;
         }
         public void setParty(Guid partyId)
         {
             fkPartyId = partyId;
         }
-        public naturalPerson(
-         string? _NationalCode,
-         string? _FirstName,
-         string? _LastName,
-                      DateTime? _birthDate, string? _birthPlace)
+        public naturalPersons(
+            string? _NationalCode,
+            string? _FirstName,
+            string? _LastName,
+            DateTime? _birthDate,
+            string? _birthPlace,
+            string _fatherName,
+            Gender? _gender,
+            string? _createdBy)
         {
             NationalCode = NationalCode.Create(_NationalCode);
-            SetFullName(_FirstName , _LastName);
+            SetFullName(_FirstName, _LastName);
             BirthDate = _birthDate;
             BirthPlace = _birthPlace;
+            FatherName = _fatherName;
+            Gender = _gender ?? Core.Shared.Enums.HR.Gender.Other ;
+            CreatedBy = _createdBy;
         }
 
         // روش‌های کسب اطلاعات

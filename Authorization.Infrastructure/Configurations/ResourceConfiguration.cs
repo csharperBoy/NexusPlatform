@@ -20,6 +20,7 @@ namespace Authorization.Infrastructure.Configurations
             builder.Property(r => r.Key).IsRequired().HasMaxLength(100).IsUnicode(false);
             builder.HasIndex(r => r.Key).IsUnique();
 
+          
             // ایندکس روی Path برای کوئری‌های بازگشتی (Hierarchical)
             builder.HasIndex(r => r.ResourcePath);
         }

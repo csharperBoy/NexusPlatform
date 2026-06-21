@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using HR.Application.Interfaces;
+using HR.Domain.Entities;
 
 namespace HR.Infrastructure.DependencyInjection
 {
@@ -73,6 +74,36 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<IEmployeePublicService>(sp => sp.GetRequiredService<EmployeeService>());
             services.AddScoped<IEmployeeInternalService>(sp => sp.GetRequiredService<EmployeeService>());
+
+            services.AddScoped<IRepository<HRDbContext, Employment, Guid>, EfRepository<HRDbContext, Employment, Guid>>();
+            services.AddScoped<ISpecificationRepository<Employment, Guid>, EfSpecificationRepository<HRDbContext, Employment, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, Assignment, Guid>, EfRepository<HRDbContext, Assignment, Guid>>();
+            services.AddScoped<ISpecificationRepository<Assignment, Guid>, EfSpecificationRepository<HRDbContext, Assignment, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, CostCenter, Guid>, EfRepository<HRDbContext, CostCenter, Guid>>();
+            services.AddScoped<ISpecificationRepository<CostCenter, Guid>, EfSpecificationRepository<HRDbContext, CostCenter, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, EmploymentStatus, Guid>, EfRepository<HRDbContext, EmploymentStatus, Guid>>();
+            services.AddScoped<ISpecificationRepository<EmploymentStatus, Guid>, EfSpecificationRepository<HRDbContext, EmploymentStatus, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, EmploymentType, Guid>, EfRepository<HRDbContext, EmploymentType, Guid>>();
+            services.AddScoped<ISpecificationRepository<EmploymentType, Guid>, EfSpecificationRepository<HRDbContext, EmploymentType, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, Grade, Guid>, EfRepository<HRDbContext, Grade, Guid>>();
+            services.AddScoped<ISpecificationRepository<Grade, Guid>, EfSpecificationRepository<HRDbContext, Grade, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, JobLevel, Guid>, EfRepository<HRDbContext, JobLevel, Guid>>();
+            services.AddScoped<ISpecificationRepository<JobLevel, Guid>, EfSpecificationRepository<HRDbContext, JobLevel, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, JobTitle, Guid>, EfRepository<HRDbContext, JobTitle, Guid>>();
+            services.AddScoped<ISpecificationRepository<JobTitle, Guid>, EfSpecificationRepository<HRDbContext, JobTitle, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, OrganizationUnit, Guid>, EfRepository<HRDbContext, OrganizationUnit, Guid>>();
+            services.AddScoped<ISpecificationRepository<OrganizationUnit, Guid>, EfSpecificationRepository<HRDbContext, OrganizationUnit, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, Post, Guid>, EfRepository<HRDbContext, Post, Guid>>();
+            services.AddScoped<ISpecificationRepository<Post, Guid>, EfSpecificationRepository<HRDbContext, Post, Guid>>();
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

@@ -2,7 +2,6 @@
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using People.Domain.Entities;
-using People.Domain.Entities;
 using People.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
@@ -19,7 +18,8 @@ namespace People.Infrastructure.Data
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         public DbSet<Parties> Parties { get; set; } = null!;
-        public DbSet<naturalPerson> naturalPerson { get; set; } = null!;
+        public DbSet<PartiesRelations> PartiesRelations { get; set; } = null!;
+        public DbSet<naturalPersons> naturalPerson { get; set; } = null!;
         public DbSet<legalPersons> legalPersons { get; set; } = null!;
         public DbSet<PersonProfile> PersonProfiles { get; set; } = null!;
         public DbSet<PersonContact> PersonContacts { get; set; } = null!;
@@ -31,6 +31,7 @@ namespace People.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new LegalPersonConfiguration());
             modelBuilder.ApplyConfiguration(new NaturalPersonConfiguration());
             modelBuilder.ApplyConfiguration(new PartiesConfiguration());
+            modelBuilder.ApplyConfiguration(new PartiesRelationsConfiguration());
             modelBuilder.ApplyConfiguration(new PersonProfileConfiguration());
             modelBuilder.ApplyConfiguration(new PersonContactConfiguration());
             

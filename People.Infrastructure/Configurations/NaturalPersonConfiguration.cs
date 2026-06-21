@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class NaturalPersonConfiguration : BaseConfiguration<naturalPerson>
+    public class NaturalPersonConfiguration : BaseConfiguration<naturalPersons>
     {
-        public override void Configure(EntityTypeBuilder<naturalPerson> builder)
+        public override void Configure(EntityTypeBuilder<naturalPersons> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 
-            builder.ToTable("naturalPerson", "people");
+            builder.ToTable("naturalPersons", "people");
 
             // 1. تنظیمات و ایندکس‌های مربوط به NationalCode
             builder.OwnsOne(p => p.NationalCode, nc =>

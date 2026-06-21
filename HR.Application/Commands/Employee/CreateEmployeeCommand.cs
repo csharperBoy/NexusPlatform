@@ -69,7 +69,8 @@ namespace HR.Application.Commands.Employee
 
                   );
 
-                Guid employeeId = await _employeeService.CreateEmployeeAsync(request.EmployeeCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
+                Guid employeeId = await _employeeService.CreateEmployeeAsync(
+                    request.EmployeeCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
                 
 
                 await _personService.SaveAsync();

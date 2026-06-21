@@ -37,6 +37,7 @@ namespace HR.Infrastructure.Data
         public DbSet<JobTitle> JobTitle { get; set; }
         public DbSet<OrganizationUnit> OrganizationUnit { get; set; }
         public DbSet<Post> Post { get; set; }
+        public DbSet<Location> Location { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -55,6 +56,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new JobTitleConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
+            modelBuilder.ApplyConfiguration(new LocationConfiguration());
 
         }
     }

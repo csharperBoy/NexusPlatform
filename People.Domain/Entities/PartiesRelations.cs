@@ -1,9 +1,15 @@
 ﻿using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
+using People.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace People.Domain.Entities
 {
-    public class Parties : BaseEntity, IAuditableEntity, IAggregateRoot
+    public class PartiesRelations : BaseEntity, IAuditableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -12,18 +18,17 @@ namespace People.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
 
+        public Guid sourcePartyId { get; set; }
+        public Guid destinationPartyId { get; set; }
+        public PartiesRelationsType relationType { get; set; }
         //navigation
-        public virtual ICollection<naturalPersons>? NaturalPersons { get; private set; }
-        public virtual ICollection<legalPersons>? legalPersons { get; private set; }
+        public virtual Parties? sourceParty { get; private set; }
+        public virtual Parties? destinationParty { get; private set; }
 
-        public virtual ICollection<PartiesRelations>? sourceRealations { get; private set; }
-        public virtual ICollection<PartiesRelations>? destinationRealations { get; private set; }
         // Constructor for EF
-        public Parties() { }
+        public PartiesRelations() { }
 
-       
+
         private void Touch() => ModifiedAt = DateTime.UtcNow;
-        
     }
-
 }

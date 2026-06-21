@@ -16,7 +16,7 @@ namespace HR.Presentation.Controller
     public class EmployeeController : BaseController
     {
         [HttpPost("Create")]
-        [AuthorizeResource("hr.employee", "Create")]
+        //[AuthorizeResource("hr.employee", "Create")]
         public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeCommand command)
         {
             var result = await Mediator.Send(command);
