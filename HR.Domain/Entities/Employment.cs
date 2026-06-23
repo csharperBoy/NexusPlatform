@@ -16,6 +16,7 @@ namespace HR.Domain.Entities
         public Guid EmploymentStatusId { get; private set; }
         public DateOnly StartDate { get; private set; }
         public DateOnly? EndDate { get; private set; }
+        public virtual ICollection<EmploymentLocations> employementLocations { get; private set; }
         protected Employment()
         {
 
@@ -37,5 +38,6 @@ namespace HR.Domain.Entities
             EndDate = _EndDate;
 
         }
+
     }
 }

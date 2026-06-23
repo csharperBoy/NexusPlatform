@@ -7,6 +7,16 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
+    /// <summary>
+    /// وضعیت کارمندان
+    /// فعال / در حال خدمت (Active)
+    ///در دوره‌ی آزمایشی(Probation)
+    ///مرخصی بدون حقوق(LeaveOfAbsence)
+    ///استعفا داده(Resigned)
+    ///اخراج / تعدیل شده(Terminated)
+    ///بازنشسته(Retired)
+    ///در حال انتقال(Transferring)
+    /// </summary>
     public class EmploymentStatus : BaseEntity
     {
         public string Code { get; private set; }

@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
-
+    /// <summary>
+    /// پست سازمانی (برای ساخت چارت سازمانی)
+    /// </summary>
     public class Post : BaseEntity, IAuditableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
@@ -24,7 +26,7 @@ namespace HR.Domain.Entities
         public Guid? JobLevelId { get; private set; }
         public Guid? GradeId { get; private set; }
         public Guid? CostCenterId { get; private set; }
-        public Guid? ReportsToPositionId { get; private set; }
+        public Guid? ReportsToPostId { get; private set; }
         public bool IsActive { get; private set; }
 
 
@@ -47,7 +49,7 @@ namespace HR.Domain.Entities
             Guid? _JobLevelId = null,
             Guid? _GradeId = null,
             Guid? _CostCenterId = null,
-            Guid? _ReportsToPositionId = null
+            Guid? _ReportsToPostId = null
             )
         {
             Code = _Code;
@@ -56,7 +58,7 @@ namespace HR.Domain.Entities
             JobLevelId = _JobLevelId;
             GradeId = _GradeId;
             CostCenterId = _CostCenterId;
-            ReportsToPositionId = _ReportsToPositionId;
+            ReportsToPostId = _ReportsToPostId;
 
         }
     }

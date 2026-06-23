@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
+    /// <summary>
+    /// عنوان شغلی
+    /// 
+    /// مهندس نرم‌افزار، مدیر بازاریابی، حسابدار ارشد، مشاور حقوقی، اپراتور تولید
+    /// </summary>
     public class JobTitle :BaseEntity 
     {
         public string Code { get; private set; }

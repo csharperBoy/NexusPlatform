@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
-    
+    /// <summary>
+    /// مرکز هزینه
+    /// </summary>
     public class CostCenter :BaseEntity
     {
         public string Code { get; private set; }

@@ -28,6 +28,7 @@ namespace HR.Domain.Entities
         public DateOnly? EffectiveTo { get; private set; }
         public bool IsCurrent { get; private set; }
         public virtual Post Post { get; private set; } = null!;
+        public virtual Employment Employee { get; private set; } = null!;
         protected Assignment() { }
         public Assignment(Guid _PostId, Guid _EmploymentId, PostAssignmentType? _AssignmentType =null , DateOnly? _EffectiveFrom = null, DateOnly? _EffectiveTo = null)
         {
@@ -40,6 +41,12 @@ namespace HR.Domain.Entities
             }
             EffectiveFrom = (DateOnly) _EffectiveFrom;
             EffectiveTo = _EffectiveTo;
+            IsCurrent = true;
+        }
+        public async Task TerminationEmployeeOnPost()
+        {
+            EffectiveTo = DateOnly.FromDateTime(DateTime.UtcNow);
+            IsCurrent = false;
         }
     }
 }

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
+    /// <summary>
+    /// مکان ها
+    /// </summary>
     public class Location : BaseEntity, IAuditableEntity , IHierarchicalStructureEntity<Location,Guid?>
     {
         #region IAuditableEntity Impelement
@@ -34,6 +37,8 @@ namespace HR.Domain.Entities
         public string Title { get; set; }
 
         private void Touch() => ModifiedAt = DateTime.UtcNow;
+
+        public virtual ICollection<EmploymentLocations> employementLocations { get;private set; }
 
     }
 }

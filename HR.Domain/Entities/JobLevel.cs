@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
+    /// <summary>
+    /// سطح شغلی
+    /// 
+    /// کارشناس (۱)، کارشناس ارشد (۲)، سرپرست (۳)، مدیر (۴)، مدیرکل (۵)، معاون (۶)
+    /// </summary>
     public class JobLevel : BaseEntity
     {
         public string Code { get; private set; }

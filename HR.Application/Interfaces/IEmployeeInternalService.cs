@@ -9,6 +9,7 @@ namespace HR.Application.Interfaces
 {
     public interface IEmployeeInternalService : IEmployeePublicService
     {
+        Task AssignLocationsToEmployee(Guid employeeId, List<Guid> locationsId);
         Task<Guid> CreateEmployeeAsync(
             string _EmployeeCode,
         Guid _PersonId,

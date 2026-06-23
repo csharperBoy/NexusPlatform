@@ -38,11 +38,12 @@ namespace HR.Infrastructure.Data
         public DbSet<OrganizationUnit> OrganizationUnit { get; set; }
         public DbSet<Post> Post { get; set; }
         public DbSet<Location> Location { get; set; }
+        public DbSet<EmploymentLocations> EmploymentLocations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            // اعمال اسکیما
+            
             modelBuilder.HasDefaultSchema("hr");
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("hr"));
@@ -57,6 +58,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
 
         }
     }

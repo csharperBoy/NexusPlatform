@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
+    /// <summary>
+    /// واحد سازمانی
+    /// </summary>
     public class OrganizationUnit :BaseEntity,IAuditableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement

@@ -1,4 +1,5 @@
-﻿using Core.Shared.Enums.HR;
+﻿using Core.Domain.ValueObjects;
+using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,15 @@ namespace Core.Application.Abstractions.People
 {
     public interface IPersonPublicService
     {
-        Task<Guid> CreatePersonAsync(string nationalCode, string firstName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, Gender? gender);
+        Task<Guid> CreatePersonAsync(string nationalCode, string firstName, string lastName,
+            DateTime? birthDate = null, 
+            string? birthPlace = null, 
+            string? fatherName = null,
+            Gender? gender = null,
+             PhoneNumber? Phone = null,
+        string? Address = null,
+        Email? Email = null,
+        PhoneNumber? Mobile = null);
         Task SaveAsync();
     }
 }

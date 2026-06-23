@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 namespace HR.Infrastructure.Services
 {
     public class OrgChartService :
-        IOrgChartInternalService, 
+        IOrgChartInternalService,
         IOrgChartPublicService
     {
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
@@ -45,25 +45,25 @@ namespace HR.Infrastructure.Services
         {
             try
             {
-                if(employeeId == null) {return null;}
+                if (employeeId == null) { return null; }
                 var post = await GetEmployeePostAsync((Guid)employeeId);
-                return post.Select(p=>p.Id).ToList();
+                return post.Select(p => p.Id).ToList();
             }
             catch (Exception ex)
             {
-                
+
                 throw;
             }
         }
 
-      
+
         public async Task<List<Guid>?> GetEmployeeOrganizeId(Guid? employeeId)
         {
             try
             {
 
                 if (employeeId == null) { return null; }
-                var posts = await GetEmployeePostAsync((Guid) employeeId);
+                var posts = await GetEmployeePostAsync((Guid)employeeId);
                 return posts.Select(p => p.OrganizationUnitId).ToList();
             }
             catch (Exception ex)
@@ -73,16 +73,27 @@ namespace HR.Infrastructure.Services
             }
         }
 
-        public async Task<Guid> AssignToEmployeeAsync(Guid postId, Guid employeeId , PostAssignmentType? assigneType = null , DateOnly? EffectiveFrom = null , DateOnly? EffectiveTo  = null   )
+        public async Task<Guid> AssignToEmployeeAsync(Guid postId, Guid employeeId, PostAssignmentType? assigneType = null, DateOnly? EffectiveFrom = null, DateOnly? EffectiveTo = null)
         {
-            Assignment assign=new Assignment(postId, employeeId,assigneType,EffectiveFrom,EffectiveTo);
+            Assignment assign = new Assignment(postId, employeeId, assigneType, EffectiveFrom, EffectiveTo);
+            var assignments = await GetPostAssignmentAsync(postId);
+            if (assignments.Count > 0)
+            {
+                foreach (var item in assignments)
+                {
+                    await item.TerminationEmployeeOnPost();
+
+                }
+            }
             await _assignmentRepository.AddAsync(assign);
             return assign.Id;
         }
 
+        
+
         public async Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true)
         {
-            Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId,costCenterId, reportsToPositionId);
+            Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId, costCenterId, reportsToPositionId);
             await _postRepository.AddAsync(post);
             return post.Id;
         }
@@ -119,8 +130,58 @@ namespace HR.Infrastructure.Services
                 throw;
             }
         }
+        public async Task<List<Employment>?> GetPostEmployeeAsync(Guid postId)
+        {
+            try
+            {
+                _logger.LogDebug("Getting employee for post {postId}", postId);
 
-       
+                // استفاده از Specification شیک
+                var assignmentSpec = new ActiveAssignmentsByPostSpec(postId);
+                var assignments = await _assignmentSpecRepository.ListBySpecAsync(assignmentSpec);
+
+                var assignment = assignments.ToList();
+                if (assignment == null)
+                {
+                    _logger.LogWarning("No active assignment found for postId {postId}", postId);
+                    return null;
+                }
+
+                var employee = assignment.Select(a => a.Employee);
+                if (employee == null)
+                {
+                    _logger.LogError("employee not found for assignment ");
+                    return null;
+                }
+
+                return employee.ToList();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting post for employee {postId}", postId);
+                throw;
+            }
+        }
+        public async Task<List<Assignment>?> GetPostAssignmentAsync(Guid postId)
+        {
+            try
+            {
+                _logger.LogDebug("Getting Assignment for post {postId}", postId);
+
+                // استفاده از Specification شیک
+                var assignmentSpec = new ActiveAssignmentsByPostSpec(postId);
+                var assignments = await _assignmentSpecRepository.ListBySpecAsync(assignmentSpec);
+
+                return assignments.ToList();
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting post for employee {postId}", postId);
+                throw;
+            }
+        }
 
         public async Task SaveAsync()
         {
