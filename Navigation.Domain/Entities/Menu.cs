@@ -2,6 +2,7 @@
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
+using Core.Shared.Enums.Base;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

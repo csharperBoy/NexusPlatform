@@ -44,14 +44,14 @@ namespace Navigation.Infrastructure.DependencyInjection
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
 
                 // روش 1: استفاده از متد یکپارچه
-                await BaseSeedData.SeedBaseForAuthorizationAsync(resourcePublicService,
+                await NavigationSeedData.SeedBaseForAuthorizationAsync(resourcePublicService,
                     permissionPublicService, roleService,
                     _logger);
 
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                var repo = scope.ServiceProvider.GetRequiredService<IRepository<BaseDbContext, Menu, Guid>>();
-                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<BaseDbContext>>();
-                await BaseSeedData.SeedBaseAsync(repo, uow, _configuration, _logger);
+                var repo = scope.ServiceProvider.GetRequiredService<IRepository<NavigationDbContext, Menu, Guid>>();
+                var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<NavigationDbContext>>();
+                await NavigationSeedData.SeedBaseAsync(repo, uow, _configuration, _logger);
 
 
                 _logger.LogInformation("Base module initialization completed successfully.");

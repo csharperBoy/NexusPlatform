@@ -21,19 +21,19 @@ namespace Navigation.Infrastructure.Services
 {
     public class MenuService : IMenuInternalService
     {
-        private readonly IRepository<BaseDbContext, Menu, Guid> _menuRepository;
+        private readonly IRepository<NavigationDbContext, Menu, Guid> _menuRepository;
         private readonly ISpecificationRepository<Menu, Guid> _menuSpecRepository;
-        private readonly IUnitOfWork<BaseDbContext> _uow;
+        private readonly IUnitOfWork<NavigationDbContext> _uow;
         private readonly ILogger<MenuService> _logger;
         private readonly UserDataContext _currentUser;
         private readonly ICachePublicService _cache;
         private readonly IMenuProcessor _menuProcessor;
-        private readonly string baseCacheKey = "base:menu";
+        private readonly string baseCacheKey = "navigation:menu";
 
         public MenuService(
-            IRepository<BaseDbContext, Menu, Guid> menuRepository,
+            IRepository<NavigationDbContext, Menu, Guid> menuRepository,
             ISpecificationRepository<Menu, Guid> menuSpecRepository,
-        IUnitOfWork<BaseDbContext> uow,
+        IUnitOfWork<NavigationDbContext> uow,
             ILogger<MenuService> logger,
             UserDataContext currentUser,
             ICachePublicService cache,
@@ -108,7 +108,7 @@ namespace Navigation.Infrastructure.Services
                         // --- UPDATE ---
                         // فقط در صورتی آپدیت می‌کنیم که تغییری کرده باشد
                         bool hasChanges = existingMenu.Title != def.Title ||
-                                          existingMenu.ParentId != parentId ||
+                                          existingMenu.FkParentId != parentId ||
                                           existingMenu.Path != def.Path ||
                                           existingMenu.Icon != def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default) || 
                                           existingMenu.Order != def.Order || 
@@ -127,7 +127,7 @@ namespace Navigation.Infrastructure.Services
                                 def.Key
                             );
                             // اگر والد تغییر کرده
-                            if (existingMenu.ParentId != parentId)
+                            if (existingMenu.FkParentId != parentId)
                             {
                                 existingMenu.ChangeParent(parentId);
                             }

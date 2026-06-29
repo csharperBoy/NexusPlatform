@@ -20,7 +20,7 @@ namespace Navigation.Infrastructure.DependencyInjection
 
             // 📌 اضافه کردن Health Check برای دیتابیس BaseDbContext
             services.AddHealthChecks()
-                    .AddDbContextCheck<BaseDbContext>("BaseDatabase");
+                    .AddDbContextCheck<NavigationDbContext>("BaseDatabase");
 
             return services;
         }

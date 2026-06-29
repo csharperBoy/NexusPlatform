@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Navigation.Infrastructure.Data
 {
-    public class BaseDbContextFactory : IDesignTimeDbContextFactory<BaseDbContext>
+    public class NavigationDbContextFactory : IDesignTimeDbContextFactory<NavigationDbContext>
     {
         public NavigationDbContext CreateDbContext(string[] args)
         {
@@ -29,18 +29,18 @@ namespace Navigation.Infrastructure.Data
             var conn = config.GetConnectionString("DefaultConnection");
 
             // 📌 تنظیم DbContextOptions برای EF Core
-            var optionsBuilder = new DbContextOptionsBuilder<BaseDbContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<NavigationDbContext>();
             optionsBuilder.UseSqlServer(conn, b =>
             {
                 // 📌 تعیین اسمبلی محل Migrationها
-                b.MigrationsAssembly(typeof(BaseDbContext).Assembly.GetName().Name);
+                b.MigrationsAssembly(typeof(NavigationDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "base"
-                b.MigrationsHistoryTable("__BaseMigrationsHistory", "base");
+                b.MigrationsHistoryTable("__NavigationMigrationsHistory", "navigation");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده
-            return new BaseDbContext(optionsBuilder.Options);
+            return new NavigationDbContext(optionsBuilder.Options);
         }
     }
 }

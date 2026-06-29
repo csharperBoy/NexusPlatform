@@ -1,5 +1,5 @@
-﻿using Base.Domain.Entities;
-using Base.Infrastructure.Configurations;
+﻿using Navigation.Domain.Entities;
+using Navigation.Infrastructure.Configurations;
 using Core.Application.Helper;
 using Core.Domain.Common;
 using Core.Infrastructure.Data;
@@ -15,15 +15,15 @@ using System.Threading.Tasks;
 namespace Navigation.Infrastructure.Data
 {
 
-    public class BaseDbContext : Base_DbContext
+    public class NavigationDbContext : Base_DbContext
     {
-        public BaseDbContext(
-              DbContextOptions<BaseDbContext> options,
+        public NavigationDbContext(
+              DbContextOptions<NavigationDbContext> options,
               IServiceProvider serviceProvider)
               : base(options, serviceProvider)
         {
         }
-        public BaseDbContext(DbContextOptions<BaseDbContext> options)
+        public NavigationDbContext(DbContextOptions<NavigationDbContext> options)
       : base(options, new ServiceCollection().BuildServiceProvider())
         {
         }
