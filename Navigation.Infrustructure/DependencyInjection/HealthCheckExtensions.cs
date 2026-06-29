@@ -13,7 +13,7 @@ namespace Navigation.Infrastructure.DependencyInjection
 
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection Base_AddHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection Navigation_AddHealthChecks(this IServiceCollection services, IConfiguration config)
         {
             // 📌 گرفتن Connection String (در صورت نیاز برای Health Checkهای سفارشی)
             var conn = config.GetConnectionString("DefaultConnection");

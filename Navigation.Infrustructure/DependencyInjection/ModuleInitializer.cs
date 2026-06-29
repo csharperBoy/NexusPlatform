@@ -37,7 +37,7 @@ namespace Navigation.Infrastructure.DependencyInjection
 
             try
             {
-                _logger.LogInformation("Starting base module initialization...");
+                _logger.LogInformation("Starting navigation module initialization...");
 
                 var resourcePublicService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
                 var permissionPublicService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();

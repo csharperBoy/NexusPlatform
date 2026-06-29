@@ -20,13 +20,13 @@ namespace Navigation.Infrastructure.Data
     public static class NavigationSeedData
     {
         // تعریف ساختار درختی منابع ماژول Audit
-        private static List<ResourceDto> GetAuditResourceDefinitions()
+        private static List<ResourceDto> GetNavigationResourceDefinitions()
         {
             return new List<ResourceDto>
             {
                 new()
                 {
-                    Key = "base",
+                    Key = "navigation",
                     Name = "Navigation",
                     Type =ResourceType.Module,
                     Category = ResourceCategory.System,
@@ -37,7 +37,7 @@ namespace Navigation.Infrastructure.Data
                     {
                         new()
                         {
-                            Key = "base.menu",
+                            Key = "navigation.menu",
                             Name = "Navigation Menus",
                             Type =ResourceType.Data,
                             Category =ResourceCategory.System,
@@ -51,13 +51,13 @@ namespace Navigation.Infrastructure.Data
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDto> GetAuditPermissionDefinitions(Guid roleId)
+        private static List<PermissionDto> GetNavigationPermissionDefinitions(Guid roleId)
         {
             return new List<PermissionDto>
             {
                new()
                {
-                   ResourceKey = "base.menu",
+                   ResourceKey = "navigation.menu",
                    Action = PermissionAction.Full,
                    Scopes = new List<ScopeDto>()
                    {
@@ -70,7 +70,7 @@ namespace Navigation.Infrastructure.Data
                    AssigneeType= AssigneeType.Role,
                    AssigneeId = roleId,
 
-                   Description = "Full access to base menu"
+                   Description = "Full access to navigation menu"
                }
             };
         }
@@ -89,7 +89,7 @@ namespace Navigation.Infrastructure.Data
                 {
                     // 1. ثبت منابع (Resources)
                     // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
-                    var resources = GetAuditResourceDefinitions();
+                    var resources = GetNavigationResourceDefinitions();
                     await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
                     logger.LogInformation("✅ Navigation resources synced successfully.");
 
@@ -97,7 +97,7 @@ namespace Navigation.Infrastructure.Data
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
                     var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
-                    var permissions = GetAuditPermissionDefinitions(adminRoleId);
+                    var permissions = GetNavigationPermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
                     logger.LogInformation("✅ Navigation permissions seeded successfully.");
                 }

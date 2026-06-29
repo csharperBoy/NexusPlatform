@@ -11,7 +11,7 @@ namespace Navigation.Domain.DependencyInjection
     
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Base_AddDomain(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Navigation_AddDomain(this IServiceCollection services, IConfiguration configuration)
         {
             // فعلاً هیچ سرویس خاصی رجیستر نمی‌شود.
             // در آینده می‌توانیم سرویس‌های مرتبط با Domain را اینجا اضافه کنیم.

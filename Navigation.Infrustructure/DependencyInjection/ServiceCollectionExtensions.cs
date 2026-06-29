@@ -19,7 +19,7 @@ namespace Navigation.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Base_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Navigation_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 گرفتن Connection String از تنظیمات
             var conn = configuration.GetConnectionString("DefaultConnection");
@@ -33,8 +33,8 @@ namespace Navigation.Infrastructure.DependencyInjection
                     // تعیین Assembly محل Migrationها
                     b.MigrationsAssembly(migrationsAssembly);
 
-                    // تعیین جدول تاریخچه Migrationها در اسکیمای "base"
-                    b.MigrationsHistoryTable("__BaseMigrationsHistory", "base");
+                    // تعیین جدول تاریخچه Migrationها در اسکیمای "navigation"
+                    b.MigrationsHistoryTable("__NavigationMigrationsHistory", "navigation");
                 });
             });
 

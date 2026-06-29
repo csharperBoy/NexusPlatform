@@ -12,7 +12,7 @@ namespace Navigation.Presentation.DependencyInjection
 
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Base_AddPresentation(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Navigation_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 رجیستر کنترلرهای API
             services.AddControllers()

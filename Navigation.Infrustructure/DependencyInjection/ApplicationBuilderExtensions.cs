@@ -12,7 +12,7 @@ namespace Navigation.Infrastructure.DependencyInjection
     public static class ApplicationBuilderExtensions
     {
         // 📌 متد اصلی برای استفاده در Startup
-        public static async Task<IApplicationBuilder> Base_UseInfrastructure(this IApplicationBuilder app)
+        public static async Task<IApplicationBuilder> Navigation_UseInfrastructure(this IApplicationBuilder app)
         {
             await app.RunSmartMigrations();
             return app;

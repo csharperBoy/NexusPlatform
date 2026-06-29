@@ -10,7 +10,7 @@ namespace Navigation.Application.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection Base_AddApplication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Navigation_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             // رجیستر MediatR و همه Handlerهای موجود در اسمبلی Application
             services.AddMediatR(cfg =>

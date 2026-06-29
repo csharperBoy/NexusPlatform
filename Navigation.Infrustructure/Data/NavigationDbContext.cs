@@ -36,10 +36,10 @@ namespace Navigation.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // 📌 تعیین اسکیمای پیش‌فرض برای جداول این ماژول
-            modelBuilder.HasDefaultSchema("base");
+            modelBuilder.HasDefaultSchema("navigation");
 
             // 📌 اعمال تنظیمات OutboxMessageConfiguration
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("base"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("navigation"));
 
             modelBuilder.ApplyConfiguration(new MenuConfiguration());
 
