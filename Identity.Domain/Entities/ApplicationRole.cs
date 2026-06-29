@@ -28,12 +28,17 @@ namespace Identity.Domain.Entities
         public string? Description { get; private set; }
         public int? OrderNum { get; private set; }
 
+        public Guid FkPermissionAssigneeId { get; private set; }
+
         
+        public virtual ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+
         protected ApplicationRole() : base() { }
 
-        public ApplicationRole(string name, string? description = null, int? orderNum = null)
+        public ApplicationRole(string name, Guid fkPermissionAssigneeId , string? description = null, int? orderNum = null)
             : base(name)
         {
+            FkPermissionAssigneeId = fkPermissionAssigneeId;
             Description = description;
             OrderNum = orderNum;
             NormalizedName = name.ToUpperInvariant();

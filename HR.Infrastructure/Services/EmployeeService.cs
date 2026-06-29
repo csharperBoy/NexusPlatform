@@ -17,13 +17,13 @@ namespace HR.Infrastructure.Services
     public class EmployeeService : IEmployeeInternalService, IEmployeePublicService
     {
         private readonly IRepository<HRDbContext, Employment, Guid> _employeeRepository;
-        private readonly IRepository<HRDbContext, EmploymentLocations, Guid> _employeeLocationsRepository;
+        private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employeeLocationsRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employeeSpecRepository;
         private readonly ILogger<EmployeeService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
         public EmployeeService(IRepository<HRDbContext, Employment, Guid> employeeRepository, ILogger<EmployeeService> logger,
-            ISpecificationRepository<Employment, Guid> employeeSpecRepository, IRepository<HRDbContext, EmploymentLocations, Guid> employeeLocationsRepository,
+            ISpecificationRepository<Employment, Guid> employeeSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employeeLocationsRepository,
             IUnitOfWork<HRDbContext> uow)
         {
             _employeeRepository = employeeRepository;
@@ -64,7 +64,7 @@ namespace HR.Infrastructure.Services
 
         public async Task AssignLocationsToEmployee(Guid employeeId, List<Guid> locationsId)
         {
-            List<EmploymentLocations> lst = locationsId.Select(l => new EmploymentLocations(l, employeeId)).ToList();
+            List<EmploymentLocation> lst = locationsId.Select(l => new EmploymentLocation(l, employeeId)).ToList();
             await _employeeLocationsRepository.AddRangeAsync(lst);
         }
     }

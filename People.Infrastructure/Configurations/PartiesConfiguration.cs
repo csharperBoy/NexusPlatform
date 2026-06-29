@@ -5,9 +5,9 @@ using People.Domain.Entities;
 
 namespace People.Infrastructure.Configurations
 {   
-    public class PartiesConfiguration : BaseConfiguration<Parties>
+    public class PartiesConfiguration : BaseConfiguration<Party>
     {
-        public override void Configure(EntityTypeBuilder<Parties> builder)
+        public override void Configure(EntityTypeBuilder<Party> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 

@@ -20,19 +20,19 @@ namespace People.Infrastructure.Services
     public class PersonService : IPersonInternalService, IPersonPublicService
     {
         private readonly IUserDataContextProvider _userProvider;
-        private readonly IRepository<PeopleDbContext, naturalPersons, Guid> _naturalPersonRepository;
-        private readonly IRepository<PeopleDbContext, Parties, Guid> _partyRepository;
-        private readonly IRepository<PeopleDbContext, PersonContact, Guid> _personContactRepository;
-        private readonly ISpecificationRepository< naturalPersons, Guid> _personSpecRepository;
+        private readonly IRepository<PeopleDbContext, NaturalPerson, Guid> _naturalPersonRepository;
+        private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
+        private readonly IRepository<PeopleDbContext, PartyContact, Guid> _personContactRepository;
+        private readonly ISpecificationRepository< NaturalPerson, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
         private readonly IUnitOfWork<PeopleDbContext> _uow;
 
-        public PersonService(IRepository<PeopleDbContext, naturalPersons, Guid> naturalPersonRepository,
+        public PersonService(IRepository<PeopleDbContext, NaturalPerson, Guid> naturalPersonRepository,
             IUserDataContextProvider userProvider,
             ILogger<PersonService> logger, 
-            ISpecificationRepository< naturalPersons, Guid> personSpecRepository,
-            IRepository<PeopleDbContext, Parties, Guid> partyRepository,
-            IRepository<PeopleDbContext, PersonContact, Guid> personContactRepository,
+            ISpecificationRepository< NaturalPerson, Guid> personSpecRepository,
+            IRepository<PeopleDbContext, Party, Guid> partyRepository,
+            IRepository<PeopleDbContext, PartyContact, Guid> personContactRepository,
             IUnitOfWork<PeopleDbContext> uow)
         {
             _naturalPersonRepository = naturalPersonRepository;
@@ -56,7 +56,7 @@ namespace People.Infrastructure.Services
             )
         {
             var user =await _userProvider.GetAsync(new CancellationToken());
-           naturalPersons naturalPerson = new naturalPersons(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, user.UserName);            
+           NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, user.UserName);            
             naturalPerson.setParty(await CreatePartyAsync(Phone,Address,Email,Mobile));
             await _naturalPersonRepository.AddAsync(naturalPerson);
             return naturalPerson.Id;
@@ -67,7 +67,7 @@ namespace People.Infrastructure.Services
         Email? Email,
         PhoneNumber? Mobile)
         {
-            Parties party = new Parties();
+            Party party = new Party();
             await _partyRepository.AddAsync(party);
 
             await CreatePartyContact(ContactType.Mobile, Mobile.Value, party.Id);
@@ -81,7 +81,7 @@ namespace People.Infrastructure.Services
         {
             if (value != null)
             {
-                PersonContact contact = new PersonContact(type, value, partyId);
+                PartyContact contact = new PartyContact(type, value, partyId);
                 await _personContactRepository.AddAsync(contact);
             }
         }

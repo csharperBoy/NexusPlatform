@@ -1,4 +1,5 @@
-﻿using Core.Infrastructure.Database.Configurations;
+﻿using Core.Domain.Interfaces;
+using Core.Infrastructure.Database.Configurations;
 using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,18 +16,9 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<EmploymentStatus> builder)
         {
             base.Configure(builder);
+
             builder.ToTable(" EmploymentStatus", "hr");
 
-            //builder.Property(p => p.Title).IsRequired().HasMaxLength(200);
-
-            // هر پست متعلق به یک واحد سازمانی است
-            //builder.HasOne(p => p.OrganizationUnit)
-            //    .WithMany(ou => ou.Posts)
-            //    .HasForeignKey(p => p.OrganizationUnitId)
-            //    .OnDelete(DeleteBehavior.Cascade);
-
-            // ایندکس برای جستجوی سریع پست‌ها در یک واحد
-            //builder.HasIndex(p => p.OrganizationUnitId);
         }
     }
 }

@@ -1,12 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Core.Domain.Interfaces;
+using Core.Infrastructure.Database.Configurations;
+using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Infrastructure.Database.Configurations;
-using HR.Domain.Entities;
 
 namespace HR.Infrastructure.Configurations
 {
@@ -17,23 +18,18 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<OrganizationUnit> builder)
         {
             base.Configure(builder);
+
+            
+
             builder.ToTable("OrganizationUnits", "hr");
+            builder.HasIndex(e => e.Code, "IX_OrganizationUnits_Code").IsUnique();
+            builder.HasIndex(e => e.Path, "IX_OrganizationUnits_Path");
+            builder.Property(e => e.Code).HasMaxLength(50);
+            builder.Property(e => e.Name).HasMaxLength(200);
+            builder.Property(e => e.Path)
+                .HasMaxLength(1000)
+                .IsUnicode(false);
 
-            builder.Property(ou => ou.Name).IsRequired().HasMaxLength(200);
-            builder.Property(ou => ou.Code).IsRequired().HasMaxLength(50);
-
-            // مسیر سلسله‌مراتبی (مثلا: /1/5/12/) برای کوئری‌های سریع
-            builder.Property(ou => ou.Path).HasMaxLength(1000).IsUnicode(false);
-
-            // ایندکس‌ها
-            builder.HasIndex(ou => ou.Code).IsUnique();
-            builder.HasIndex(ou => ou.Path); // بسیار حیاتی برای Scoping
-
-            // رابطه خود-ارجاعی
-            builder.HasOne(ou => ou.Parent)
-                .WithMany(ou => ou.Children)
-                .HasForeignKey(ou => ou.ParentId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

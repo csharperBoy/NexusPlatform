@@ -11,12 +11,22 @@ namespace HR.Domain.Entities
     public class Employment : BaseEntity
     {
         public string EmployeeCode { get; private set; }
-        public Guid PersonId { get; private set; }
-        public Guid EmploymentTypeId { get; private set; }
-        public Guid EmploymentStatusId { get; private set; }
-        public DateOnly StartDate { get; private set; }
-        public DateOnly? EndDate { get; private set; }
-        public virtual ICollection<EmploymentLocations> employementLocations { get; private set; }
+        public Guid FkNaturalPersonId { get; private set; }
+        public Guid FkEmploymentTypeId { get; private set; }
+        public Guid FkEmploymentStatusId { get; private set; }
+        public DateOnly EffectiveFrom { get; private set; }
+        public DateOnly? EffectiveTo { get; private set; }
+
+        //navigate
+        public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
+
+        public virtual ICollection<EmploymentLocation> EmploymentLocations { get; set; } = new List<EmploymentLocation>();
+
+        public virtual EmploymentStatus? EmploymentStatus { get; set; }
+
+        public virtual EmploymentType? EmploymentType { get; set; }
+
+
         protected Employment()
         {
 

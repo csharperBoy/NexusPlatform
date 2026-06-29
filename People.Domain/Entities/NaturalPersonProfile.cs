@@ -13,7 +13,7 @@ namespace People.Domain.Entities
     /// اطلاعات قابل تغییر افراد - با هر تغییر یک رکورد جدید ایجاد می‌شود
     /// مثل: تعداد فرزندان، آدرس، وضعیت تأهل
     /// </summary>
-    public class PersonProfile : BaseEntity, IAuditableEntity, IOwnerableEntity
+    public class NaturalPersonProfile : BaseEntity, IAuditableEntity, IOwnerableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -54,7 +54,10 @@ namespace People.Domain.Entities
         #endregion
 
 
-        public Guid FkPersonId { get; private set; }
+
+
+
+        public Guid FkNaturalPersonId { get; private set; }
 
         //public MaritalStatus MaritalStatus { get; private set; }
 
@@ -75,15 +78,15 @@ namespace People.Domain.Entities
         //public Guid? FkchildId { get; private set; }
 
         // Navigation
-        public virtual naturalPersons person { get; private set; } = null!;
 
+        public virtual NaturalPerson FkNaturalPerson { get; private set; } = null!;
         // Constructor for EF
-        protected PersonProfile() { }
-        public PersonProfile(
+        protected NaturalPersonProfile() { }
+        public NaturalPersonProfile(
             Guid _FkPersonId
             )
         {
-            _FkPersonId = FkPersonId;
+            FkNaturalPersonId = _FkPersonId;
             IsCurrent = true;
             Enablity = true;
             Visiblity = true;

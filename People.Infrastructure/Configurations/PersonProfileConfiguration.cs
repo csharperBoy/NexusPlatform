@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class PersonProfileConfiguration : BaseConfiguration<PersonProfile>
+    public class PersonProfileConfiguration : BaseConfiguration<NaturalPersonProfile>
     {
-        public override void Configure(EntityTypeBuilder<PersonProfile> builder)
+        public override void Configure(EntityTypeBuilder<NaturalPersonProfile> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 

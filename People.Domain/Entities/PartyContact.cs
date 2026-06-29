@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace People.Domain.Entities
 {
-    public class PersonContact : BaseEntity , IAuditableEntity , IOwnerableEntity 
+    public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity 
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -48,14 +48,18 @@ namespace People.Domain.Entities
         }
         #endregion
 
+
+
+
+
         public ContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
         public Guid FkPartyId { get; private set; }
-        public virtual Parties party { get; private set; } = null!;
 
+        public virtual Party FkParty { get; private set; } = null!;
         // Constructor for EF
-        protected PersonContact() { }
-        public PersonContact
+        protected PartyContact() { }
+        public PartyContact
             (ContactType _ContactType,
             string _Value,
             Guid _PartyId)

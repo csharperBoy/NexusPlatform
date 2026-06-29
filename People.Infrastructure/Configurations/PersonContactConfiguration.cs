@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class PersonContactConfiguration : BaseConfiguration<PersonContact>
+    public class PersonContactConfiguration : BaseConfiguration<PartyContact>
     {
-        public override void Configure(EntityTypeBuilder<PersonContact> builder)
+        public override void Configure(EntityTypeBuilder<PartyContact> builder)
         {
             base.Configure(builder); 
 

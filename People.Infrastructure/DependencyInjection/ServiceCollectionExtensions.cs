@@ -36,20 +36,20 @@ namespace People.Infrastructure.DependencyInjection
             services.AddScoped<IPersonPublicService>(sp => sp.GetRequiredService<PersonService>());
             services.AddScoped<IPersonInternalService>(sp => sp.GetRequiredService<PersonService>());
 
-            services.AddScoped<IRepository<PeopleDbContext, legalPersons, Guid>, EfRepository<PeopleDbContext, legalPersons, Guid>>();
-            services.AddScoped<ISpecificationRepository<legalPersons, Guid>, EfSpecificationRepository<PeopleDbContext, legalPersons, Guid>>();
+            services.AddScoped<IRepository<PeopleDbContext, LegalPerson, Guid>, EfRepository<PeopleDbContext, LegalPerson, Guid>>();
+            services.AddScoped<ISpecificationRepository<LegalPerson, Guid>, EfSpecificationRepository<PeopleDbContext, LegalPerson, Guid>>();
 
-            services.AddScoped<IRepository<PeopleDbContext, naturalPersons, Guid>, EfRepository<PeopleDbContext, naturalPersons, Guid>>();
-            services.AddScoped<ISpecificationRepository<naturalPersons, Guid>, EfSpecificationRepository<PeopleDbContext, naturalPersons, Guid>>();
+            services.AddScoped<IRepository<PeopleDbContext, NaturalPerson, Guid>, EfRepository<PeopleDbContext, NaturalPerson, Guid>>();
+            services.AddScoped<ISpecificationRepository<NaturalPerson, Guid>, EfSpecificationRepository<PeopleDbContext, NaturalPerson, Guid>>();
 
-            services.AddScoped<IRepository<PeopleDbContext, Parties, Guid>, EfRepository<PeopleDbContext, Parties, Guid>>();
-            services.AddScoped<ISpecificationRepository<Parties, Guid>, EfSpecificationRepository<PeopleDbContext, Parties, Guid>>();
+            services.AddScoped<IRepository<PeopleDbContext, Party, Guid>, EfRepository<PeopleDbContext, Party, Guid>>();
+            services.AddScoped<ISpecificationRepository<Party, Guid>, EfSpecificationRepository<PeopleDbContext, Party, Guid>>();
 
-            services.AddScoped<IRepository<PeopleDbContext, PersonContact, Guid>, EfRepository<PeopleDbContext, PersonContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<PersonContact, Guid>, EfSpecificationRepository<PeopleDbContext, PersonContact, Guid>>();
+            services.AddScoped<IRepository<PeopleDbContext, PartyContact, Guid>, EfRepository<PeopleDbContext, PartyContact, Guid>>();
+            services.AddScoped<ISpecificationRepository<PartyContact, Guid>, EfSpecificationRepository<PeopleDbContext, PartyContact, Guid>>();
 
-            services.AddScoped<IRepository<PeopleDbContext, PersonProfile, Guid>, EfRepository<PeopleDbContext, PersonProfile, Guid>>();
-            services.AddScoped<ISpecificationRepository<PersonProfile, Guid>, EfSpecificationRepository<PeopleDbContext, PersonProfile, Guid>>();
+            services.AddScoped<IRepository<PeopleDbContext, NaturalPersonProfile, Guid>, EfRepository<PeopleDbContext, NaturalPersonProfile, Guid>>();
+            services.AddScoped<ISpecificationRepository<NaturalPersonProfile, Guid>, EfSpecificationRepository<PeopleDbContext, NaturalPersonProfile, Guid>>();
 
             // Resolve از DI
             var registration = services.BuildServiceProvider()

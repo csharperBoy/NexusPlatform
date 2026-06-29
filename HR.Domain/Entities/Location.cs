@@ -38,7 +38,10 @@ namespace HR.Domain.Entities
 
         private void Touch() => ModifiedAt = DateTime.UtcNow;
 
-        public virtual ICollection<EmploymentLocations> employementLocations { get;private set; }
+//navigate
+        public virtual ICollection<EmploymentLocation> EmploymentLocations { get; set; } = new List<EmploymentLocation>();
+
+
 
     }
 }

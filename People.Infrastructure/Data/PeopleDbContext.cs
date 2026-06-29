@@ -17,12 +17,12 @@ namespace People.Infrastructure.Data
         public PeopleDbContext(DbContextOptions<PeopleDbContext> options) : base(options) { }
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
-        public DbSet<Parties> Parties { get; set; } = null!;
-        public DbSet<PartiesRelations> PartiesRelations { get; set; } = null!;
-        public DbSet<naturalPersons> naturalPerson { get; set; } = null!;
-        public DbSet<legalPersons> legalPersons { get; set; } = null!;
-        public DbSet<PersonProfile> PersonProfiles { get; set; } = null!;
-        public DbSet<PersonContact> PersonContacts { get; set; } = null!;
+        public DbSet<Party> Parties { get; set; } = null!;
+        public DbSet<PartiesRelation> PartiesRelations { get; set; } = null!;
+        public DbSet<NaturalPerson> naturalPerson { get; set; } = null!;
+        public DbSet<LegalPerson> legalPersons { get; set; } = null!;
+        public DbSet<NaturalPersonProfile> PersonProfiles { get; set; } = null!;
+        public DbSet<PartyContact> PersonContacts { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasDefaultSchema("people");

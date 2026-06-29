@@ -18,6 +18,8 @@ namespace HR.Domain.Entities
         public string Code { get; private set; }
         public string Title { get; private set; }
         public bool IsActive { get; private set; }
+
+        public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
         protected Grade()
         {
             

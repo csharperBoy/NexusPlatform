@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace People.Domain.Entities
 {
-    public class PartiesRelations : BaseEntity, IAuditableEntity, IAggregateRoot
+    public class PartiesRelation : BaseEntity, IAuditableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -17,16 +17,18 @@ namespace People.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
-
-        public Guid sourcePartyId { get; set; }
-        public Guid destinationPartyId { get; set; }
-        public PartiesRelationsType relationType { get; set; }
+       
+        public Guid FkSourcePartyId { get; set; }
+        public Guid FkDestinationPartyId { get; set; }
+        public PartiesRelationsType RelationType { get; set; }
         //navigation
-        public virtual Parties? sourceParty { get; private set; }
-        public virtual Parties? destinationParty { get; private set; }
+       
+        public virtual Party FkDestinationParty { get; set; } = null!;
+
+        public virtual Party FkSourceParty { get; set; } = null!;
 
         // Constructor for EF
-        public PartiesRelations() { }
+        public PartiesRelation() { }
 
 
         private void Touch() => ModifiedAt = DateTime.UtcNow;

@@ -14,7 +14,7 @@ namespace People.Domain.Entities
     /// اطلاعات ثابت و غیرقابل تغییر افراد
     /// مثل: کد ملی، نام، نام خانوادگی، تاریخ تولد
     /// </summary>
-    public class naturalPersons : BaseEntity, IAuditableEntity
+    public class NaturalPerson : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -23,12 +23,12 @@ namespace People.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
 
-        //public Guid Id { get; private set; } = Guid.NewGuid();
 
+        
         // اطلاعات ثابت (هرگز تغییر نمی‌کنند)
         public NationalCode NationalCode { get; private set; } = null!;
         public FullName FullName { get; private set; } = null!;
-        public Guid fkPartyId { get; private set; }
+        public Guid FkPartyId { get; private set; }
         public DateTime? BirthDate { get; private set; }
         public string? BirthPlace { get; private set; }
 
@@ -36,13 +36,14 @@ namespace People.Domain.Entities
         public Gender? Gender { get; private set; }
 
         //navigation
-        public virtual ICollection<PersonProfile>? Profiles { get; private set; }
-        public virtual Parties? Party { get; private set; }
 
+        public virtual Party FkParty { get; private set; } = null!;
+
+        public virtual ICollection<NaturalPersonProfile> NaturalPersonProfiles { get; private set; } = new List<NaturalPersonProfile>();
         // Constructor for EF
-        protected naturalPersons() { }
+        protected NaturalPerson() { }
 
-        public naturalPersons(
+        public NaturalPerson(
             NationalCode nationalCode,
             FullName fullName,
             DateTime birthDate,
@@ -63,7 +64,7 @@ namespace People.Domain.Entities
         {
             fkPartyId = partyId;
         }
-        public naturalPersons(
+        public NaturalPerson(
             string? _NationalCode,
             string? _FirstName,
             string? _LastName,

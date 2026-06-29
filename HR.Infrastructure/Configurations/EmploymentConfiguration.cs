@@ -1,4 +1,5 @@
-﻿using Core.Infrastructure.Database.Configurations;
+﻿using Core.Domain.Interfaces;
+using Core.Infrastructure.Database.Configurations;
 using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -17,16 +18,16 @@ namespace HR.Infrastructure.Configurations
             base.Configure(builder);
             builder.ToTable(" Employment", "hr");
 
-            //builder.Property(p => p.Title).IsRequired().HasMaxLength(200);
 
-            // هر پست متعلق به یک واحد سازمانی است
-            //builder.HasOne(p => p.OrganizationUnit)
-            //    .WithMany(ou => ou.Posts)
-            //    .HasForeignKey(p => p.OrganizationUnitId)
-            //    .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne(d => d.EmploymentStatus).WithMany(p => p.Employments)
+                .HasForeignKey(d => d.FkEmploymentStatusId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ Employment_ EmploymentStatus1");
 
-            // ایندکس برای جستجوی سریع پست‌ها در یک واحد
-            //builder.HasIndex(p => p.OrganizationUnitId);
+            builder.HasOne(d => d.EmploymentType).WithMany(p => p.Employments)
+                .HasForeignKey(d => d.FkEmploymentTypeId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_ Employment_ EmploymentType1");
         }
     }
 }

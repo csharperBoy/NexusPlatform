@@ -20,20 +20,23 @@ namespace HR.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
-        public Guid PostId { get; private set; }
-        public Guid EmploymentId { get; private set; }
+
+        public Guid FkPostId { get; private set; }
+        public Guid FkEmploymentId { get; private set; }
         //public Guid AssignmentTypeId { get; private set; }
         public PostAssignmentType AssigneeType { get; private set; }
         public DateOnly EffectiveFrom { get; private set; }
         public DateOnly? EffectiveTo { get; private set; }
         public bool IsCurrent { get; private set; }
+        // navigate
+
         public virtual Post Post { get; private set; } = null!;
-        public virtual Employment Employee { get; private set; } = null!;
+        public virtual Employment Employment { get; private set; } = null!;
         protected Assignment() { }
         public Assignment(Guid _PostId, Guid _EmploymentId, PostAssignmentType? _AssignmentType =null , DateOnly? _EffectiveFrom = null, DateOnly? _EffectiveTo = null)
         {
-            PostId = _PostId;
-            EmploymentId = _EmploymentId;
+            FkPostId = _PostId;
+            FkEmploymentId = _EmploymentId;
             AssigneeType = _AssignmentType ?? PostAssignmentType.Delegation;
             if (_EffectiveFrom == null)
             {

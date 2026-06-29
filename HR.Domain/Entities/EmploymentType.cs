@@ -22,6 +22,8 @@ namespace HR.Domain.Entities
         public string Code { get; private set; }
         public string Name { get; private set; }
         public bool IsActive { get; private set; }
+
+        public virtual ICollection<Employment> Employments { get; set; } = new List<Employment>();
         protected EmploymentType()
         {
 

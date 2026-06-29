@@ -38,10 +38,14 @@ namespace Core.Infrastructure.Database.Configurations
 
         private void ConfigureHierarchicalStructureEntity(EntityTypeBuilder<TEntity> builder)
         {
+
             builder.HasOne(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Parent)
                 .WithMany(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Children)
                 .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).FkParentId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+
+            builder.HasIndex("FkParentId").HasDatabaseName($"IX_{typeof(TEntity).Name}_ParentId");
         }
 
         private void ConfigureAuditable(EntityTypeBuilder<TEntity> builder)
@@ -80,6 +84,10 @@ namespace Core.Infrastructure.Database.Configurations
 
         private void ConfigureBaseEntity(EntityTypeBuilder<TEntity> builder)
         {
+
+            builder.HasIndex("Id").IsUnique();
+            builder.Property("Id").ValueGeneratedNever();
+
             // اگر خاصیتی در BaseEntity داری، اینجا تنظیم کن
         }
     }

@@ -2,13 +2,14 @@
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace People.Domain.Entities
 {
-    public class legalPersons : BaseEntity, IAuditableEntity
+    public class LegalPerson : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -17,20 +18,25 @@ namespace People.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
 
-        public Guid fkPartyId { get; private set; }
-        public string Title { get; private set; }
-        public string Description { get; private set; }
+        public Guid FkPartyId { get; private set; }
+
+        public string Title { get; private set; } = null!;
+
+        public string Description { get; private set; } = null!;
+
         public string? RegisterCode { get; private set; }
-        public virtual Parties party { get; private set; }
-        protected legalPersons() { }
-        public legalPersons(
-            Guid _fkPartyId,
+
+        public virtual Party FkParty { get; private set; } = null!;
+
+        protected LegalPerson() { }
+        public LegalPerson(
+            Guid _FkPartyId,
             string _Title,
             string _Description,
             string? _RegisterCode
             )
         {
-            fkPartyId = _fkPartyId;
+            FkPartyId = _FkPartyId;
             Title = _Title;
             Description = _Description;
             RegisterCode = _RegisterCode;

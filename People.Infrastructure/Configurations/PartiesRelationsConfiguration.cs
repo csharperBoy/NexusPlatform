@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class PartiesRelationsConfiguration : BaseConfiguration<PartiesRelations>
+    public class PartiesRelationsConfiguration : BaseConfiguration<PartiesRelation>
     {
-        public override void Configure(EntityTypeBuilder<PartiesRelations> builder)
+        public override void Configure(EntityTypeBuilder<PartiesRelation> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 

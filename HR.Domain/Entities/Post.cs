@@ -12,7 +12,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// پست سازمانی (برای ساخت چارت سازمانی)
     /// </summary>
-    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot 
+    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot , IHierarchicalStructureEntity<Post, Guid?>
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -20,24 +20,52 @@ namespace HR.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
+
+        #region IHierarchicalStructureEntity Impelement
+        public Guid? FkParentId { get; private set; }
+        public virtual Post? Parent { get; private set; }
+        public virtual ICollection<Post> Children { get; private set; } = new List<Post>();
+        public void ChangeParent(Guid? newParentId)
+        {
+            if (newParentId == Id)
+                throw new InvalidOperationException("Menu cannot be its own parent.");
+
+            FkParentId = newParentId;
+            Touch();
+
+            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+            //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+        }
+        #endregion
+
+        private void Touch() => ModifiedAt = DateTime.UtcNow;
+
         public string Code { get; private set; }
-        public Guid OrganizationUnitId { get; private set; }
-        public Guid JobTitleId { get; private set; }
-        public Guid? JobLevelId { get; private set; }
-        public Guid? GradeId { get; private set; }
-        public Guid? CostCenterId { get; private set; }
-        public Guid? ReportsToPostId { get; private set; }
+        public Guid FkOrganizationUnitId { get; private set; }
+        public Guid FkJobTitleId { get; private set; }
+        public Guid? FkJobLevelId { get; private set; }
+        public Guid? FkGradeId { get; private set; }
+        public Guid? FkCostCenterId { get; private set; }
         public bool IsActive { get; private set; }
 
 
+        public Guid FkPermissionAssigneeId { get; set; }
         // Navigation
-        public virtual OrganizationUnit OrganizationUnit { get; private set; } = null!;
-        public virtual JobTitle JobTitle { get; private set; } = null!;
-        public virtual JobLevel? JobLevel { get; private set; } = null!;
-        public virtual Grade? Grade { get; private set; } = null!;
-        public virtual CostCenter? CostCenter { get; private set; } = null!;
-        public virtual Post? ReportsTo { get; private set; }
-        public virtual ICollection<Assignment> Assignments { get; private set; } = new List<Assignment>();
+
+        public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
+
+        public virtual CostCenter? CostCenter { get; set; }
+
+        public virtual Grade? Grade { get; set; }
+
+        public virtual JobLevel? JobLevel { get; set; }
+
+        public virtual JobTitle JobTitle { get; set; } = null!;
+
+        public virtual OrganizationUnit OrganizationUnit { get; set; } = null!;
+
+
+
 
 
         protected Post() { }
@@ -49,17 +77,16 @@ namespace HR.Domain.Entities
             Guid? _JobLevelId = null,
             Guid? _GradeId = null,
             Guid? _CostCenterId = null,
-            Guid? _ReportsToPostId = null
+            Guid? _parentId = null
             )
         {
             Code = _Code;
-            OrganizationUnitId = _OrganizationUnitId;
-            JobTitleId = _JobTitleId;
-            JobLevelId = _JobLevelId;
-            GradeId = _GradeId;
-            CostCenterId = _CostCenterId;
-            ReportsToPostId = _ReportsToPostId;
-
+            FkOrganizationUnitId = _OrganizationUnitId;
+            FkJobTitleId = _JobTitleId;
+            FkJobLevelId = _JobLevelId;
+            FkGradeId = _GradeId;
+            FkCostCenterId = _CostCenterId;
+            FkParentId = _parentId;
         }
     }
 

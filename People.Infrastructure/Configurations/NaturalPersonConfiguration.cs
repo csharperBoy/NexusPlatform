@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Configurations
 {
-    public class NaturalPersonConfiguration : BaseConfiguration<naturalPersons>
+    public class NaturalPersonConfiguration : BaseConfiguration<NaturalPerson>
     {
-        public override void Configure(EntityTypeBuilder<naturalPersons> builder)
+        public override void Configure(EntityTypeBuilder<NaturalPerson> builder)
         {
             base.Configure(builder); // اعمال CreatedAt و...
 

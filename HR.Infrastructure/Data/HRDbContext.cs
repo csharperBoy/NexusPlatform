@@ -27,18 +27,18 @@ namespace HR.Infrastructure.Data
       : base(options, new ServiceCollection().BuildServiceProvider()) 
         {
         }
-        public DbSet<Assignment> Assignment { get; set; }
-        public DbSet<CostCenter> CostCenter { get; set; }
-        public DbSet<Employment> Employment { get; set; }
-        public DbSet<EmploymentStatus> EmploymentStatus { get; set; }
-        public DbSet<EmploymentType> EmploymentType { get; set; }
-        public DbSet<Grade> Grade { get; set; }
-        public DbSet<JobLevel> JobLevel { get; set; }
-        public DbSet<JobTitle> JobTitle { get; set; }
-        public DbSet<OrganizationUnit> OrganizationUnit { get; set; }
-        public DbSet<Post> Post { get; set; }
-        public DbSet<Location> Location { get; set; }
-        public DbSet<EmploymentLocations> EmploymentLocations { get; set; }
+        public virtual DbSet<Assignment> Assignments { get; set; }
+        public virtual DbSet<CostCenter> CostCenters { get; set; }
+        public virtual DbSet<Employment> Employments { get; set; }
+        public virtual DbSet<EmploymentStatus> EmploymentStatuses { get; set; }
+        public virtual DbSet<EmploymentType> EmploymentTypes { get; set; }
+        public virtual DbSet<Grade> Grades { get; set; }
+        public virtual DbSet<JobLevel> JobLevels { get; set; }
+        public virtual DbSet<JobTitle> JobTitles { get; set; }
+        public virtual DbSet<OrganizationUnit> OrganizationUnits { get; set; }
+        public virtual DbSet<Post> Posts { get; set; }
+        public virtual DbSet<Location> Locations { get; set; }
+        public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

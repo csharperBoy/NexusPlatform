@@ -10,7 +10,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// مکان های مرتبط با کارمندان در سازمان
     /// </summary>
-    public class EmploymentLocations : BaseEntity, IAuditableEntity
+    public class EmploymentLocation : BaseEntity, IAuditableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -19,19 +19,21 @@ namespace HR.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
 
-        public Guid fkLocationId { get; private set; }
-        public Guid fkEmployeeId { get; private set; }
+        public Guid FkLocationId { get; private set; }
+        public Guid FkEmployeeId { get; private set; }
 
-        public virtual Location location { get; private set; }
-        public virtual Employment employee { get; private set; }
-        protected EmploymentLocations() { }
-        public EmploymentLocations(
+
+        public virtual Employment Employee { get; set; } = null!;
+
+        public virtual Location Location { get; set; } = null!;
+        protected EmploymentLocation() { }
+        public EmploymentLocation(
              Guid _fkLocationId,
              Guid _fkEmployeeId
             )
         {
-            fkLocationId = _fkLocationId;
-            fkEmployeeId = _fkEmployeeId;
+            FkLocationId = _fkLocationId;
+            FkEmployeeId = _fkEmployeeId;
 
         }
 

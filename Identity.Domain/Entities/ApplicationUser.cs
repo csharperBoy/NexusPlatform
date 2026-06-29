@@ -39,13 +39,15 @@ namespace Identity.Domain.Entities
         public bool IsLocked { get; private set; }
 
 
+        public Guid FkPermissionAssigneeId { get; private set; }
 
-        public ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
-        public ICollection<UserSession> Sessions { get; private set; } = new List<UserSession>();
+        public virtual ICollection<RefreshToken> RefreshTokens { get; private set; } = new List<RefreshToken>();
+        public virtual ICollection<UserSession> Sessions { get; private set; } = new List<UserSession>();
+        public virtual ICollection<ApplicationRole> Roles { get; set; } = new List<ApplicationRole>();
 
         protected ApplicationUser() : base() { }
 
-        public ApplicationUser(Guid personId, string userName, string email)
+        public ApplicationUser(Guid personId, string userName, string email, Guid fkPermissionAssigneeId)
             : base(userName)
         {
             FkPersonId = personId;
@@ -56,6 +58,7 @@ namespace Identity.Domain.Entities
             NormalizedEmail = email.ToUpperInvariant();
 
             SecurityStamp = Guid.NewGuid().ToString();
+            FkPermissionAssigneeId = fkPermissionAssigneeId;
         }
         public ApplicationUser(Guid id, string userName, string email, string nickName , string phoneNumber )
            : base(userName)
