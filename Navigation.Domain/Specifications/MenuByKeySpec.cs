@@ -1,4 +1,4 @@
-﻿using Base.Domain.Entities;
+﻿using Navigation.Domain.Entities;
 using Core.Domain.Specifications;
 using System;
 using System.Collections.Generic;

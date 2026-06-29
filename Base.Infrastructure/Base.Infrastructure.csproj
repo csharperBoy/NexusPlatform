@@ -12,4 +12,11 @@
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configurations\" />
+    <Folder Include="Migrations\" />
+    <Folder Include="Processor\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

@@ -1,12 +1,6 @@
-﻿using Base.Application.Interfaces.Processor;
-using Base.Application.Interfaces.Service;
-using Base.Domain.Entities;
-using Base.Infrastructure.Data;
-using Base.Infrastructure.Processor;
-using Base.Infrastructure.Services;
+﻿using Base.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Helper;
 using Core.Infrastructure.Repositories;
@@ -39,18 +33,6 @@ namespace Base.Infrastructure.DependencyInjection
             });
 
 
-            services.AddScoped<MenuService>();
-
-            services.AddScoped<IMenuInternalService>(sp => sp.GetRequiredService<MenuService>());
-
-
-            services.AddScoped<IMenuPublicService>(sp => sp.GetRequiredService<MenuService>());
-
-            services.AddScoped<IRepository<BaseDbContext, Menu, Guid>, EfRepository<BaseDbContext, Menu, Guid>>();
-
-            services.AddScoped<ISpecificationRepository<Menu, Guid>, EfSpecificationRepository<BaseDbContext, Menu, Guid>>();
-
-            services.AddScoped<IMenuProcessor, MenuProcessor>();
 
             services.AddScoped<IUnitOfWork<BaseDbContext>, EfUnitOfWork<BaseDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification

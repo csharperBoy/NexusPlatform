@@ -55,7 +55,7 @@ namespace Authorization.Domain.Entities
         #endregion
 
         #region IHierarchicalStructureEntity Impelement
-        public Guid? ParentId { get; private set; }
+        public Guid? FkParentId { get; private set; }
         public virtual Resource? Parent { get; private set; }
         public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
 
@@ -139,7 +139,7 @@ namespace Authorization.Domain.Entities
             Name = name.Trim();
             Type = type;
             Category = category;
-            ParentId = parentId;
+            FkParentId = parentId;
             Description = description;
             DisplayOrder = displayOrder;
             Icon = icon;
@@ -160,7 +160,7 @@ namespace Authorization.Domain.Entities
                 IsActive = resource.IsActive,
                 Key = resource.Key,
                 Name = resource.Name,
-                ParentId = resource.ParentId,
+                ParentId = resource.FkParentId,
                 ParentKey = resource.Parent?.Key,
                 Path = resource.ResourcePath,
                 Type = resource.Type
@@ -194,7 +194,7 @@ namespace Authorization.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Resource cannot be its own parent.");
 
-            ParentId = newParentId;
+            FkParentId = newParentId;
             GeneratePath();
             ModifiedAt = DateTime.UtcNow;
 
@@ -225,7 +225,7 @@ namespace Authorization.Domain.Entities
 
         public void GeneratePath()
         {
-            if (ParentId.HasValue && Parent != null)
+            if (FkParentId.HasValue && Parent != null)
             {
                 ResourcePath = $"{Parent.ResourcePath}/{Key}";
             }
@@ -239,7 +239,7 @@ namespace Authorization.Domain.Entities
         [NotMapped]
         public bool IsDataResource => Type == ResourceType.Data;
         [NotMapped]
-        public bool IsRoot => !ParentId.HasValue;
+        public bool IsRoot => !FkParentId.HasValue;
 
     }
 

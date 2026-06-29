@@ -1,5 +1,4 @@
-﻿using Base.Domain.Entities;
-using Base.Infrastructure.Configurations;
+﻿
 using Core.Application.Helper;
 using Core.Domain.Common;
 using Core.Infrastructure.Data;
@@ -27,9 +26,7 @@ namespace Base.Infrastructure.Data
       : base(options, new ServiceCollection().BuildServiceProvider())
         {
         }
-        // 📌 جدول مربوط به موجودیت BaseEntity
-        public DbSet<Menu> Menu { get; set; } = null!;
-
+      
         // 📌 جدول مربوط به OutboxMessage برای ذخیره رویدادهای دامنه
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
@@ -41,7 +38,6 @@ namespace Base.Infrastructure.Data
             // 📌 اعمال تنظیمات OutboxMessageConfiguration
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("base"));
 
-            modelBuilder.ApplyConfiguration(new MenuConfiguration());
 
         }
     }

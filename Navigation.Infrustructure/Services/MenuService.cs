@@ -8,7 +8,6 @@ using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Context;
 using Core.Infrastructure.Repositories;
 using Core.Shared.DTOs.Authorization;
-using Core.Shared.DTOs.Base;
 using Core.Shared.Enums;
 using Microsoft.Extensions.Logging;
 using System;
@@ -16,6 +15,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Shared.DTOs.Navigation;
+using Core.Shared.Enums.Navigation;
 
 namespace Navigation.Infrastructure.Services
 {
@@ -94,7 +95,7 @@ namespace Navigation.Infrastructure.Services
                             def.Key,
                             def.Description,
                             def.Path,
-                            def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default),
+                            def.Icon.ToEnumOrDefault(Icon.Default),
                             def.Order,
                             parentId
                         );
@@ -110,7 +111,7 @@ namespace Navigation.Infrastructure.Services
                         bool hasChanges = existingMenu.Title != def.Title ||
                                           existingMenu.FkParentId != parentId ||
                                           existingMenu.Path != def.Path ||
-                                          existingMenu.Icon != def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default) || 
+                                          existingMenu.Icon != def.Icon.ToEnumOrDefault(Icon.Default) || 
                                           existingMenu.Order != def.Order || 
                                           existingMenu.Key != def.Key || 
                                           existingMenu.Description != def.Description 
@@ -122,7 +123,7 @@ namespace Navigation.Infrastructure.Services
                             existingMenu.Update(
                                 def.Title,
                                 def.Description,
-                                def.Icon.ToEnumOrDefault(Core.Shared.Enums.Base.Icon.Default),
+                                def.Icon.ToEnumOrDefault(Icon.Default),
                                 def.Order,
                                 def.Key
                             );

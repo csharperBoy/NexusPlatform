@@ -1,10 +1,10 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Application.Context;
 using Core.Application.Provider;
 using Identity.Domain.Entities;

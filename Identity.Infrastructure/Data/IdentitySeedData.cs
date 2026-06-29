@@ -1,12 +1,13 @@
 ﻿using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
-using Core.Shared.DTOs.Base;
+using Core.Shared.DTOs.Navigation;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Navigation;
 using Identity.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +29,7 @@ namespace Identity.Infrastructure.Data
                 {
                     Title = "مدیریت حساب های کاربری",
                     Description = "مدیریت حساب های کاربری سیستم",
-                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                    Icon = Icon.Folder.GetIconString(),
                     Order = 300,
                     Key = "identity",
                     ParentKey = null,
@@ -39,7 +40,7 @@ namespace Identity.Infrastructure.Data
                         {
                             Title = "مدیریت کاربران",
                             Description = " مدیریت کاربران سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Icon = Icon.Folder.GetIconString(),
                             Order = 210,
                             Key = "identity.user",
                             ParentKey = "identity",
@@ -49,7 +50,7 @@ namespace Identity.Infrastructure.Data
                         {
                             Title = "مدیریت نقش ها",
                             Description = "مدیریت نقش های سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Icon = Icon.Folder.GetIconString(),
                             Order = 220,
                             Key = "identity.role",
                             ParentKey = "identity",

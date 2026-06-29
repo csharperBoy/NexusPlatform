@@ -1,11 +1,10 @@
-﻿using Core.Shared.DTOs.Base;
-using Base.Domain.Entities;
-using Core.Shared.DTOs.Base;
+﻿using Navigation.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Shared.DTOs.Navigation;
 
 namespace Navigation.Application.Interfaces.Processor
 {

@@ -146,7 +146,7 @@ namespace Authorization.Infrastructure.Services
                         // --- UPDATE ---
                         // فقط در صورتی آپدیت می‌کنیم که تغییری کرده باشد
                         bool hasChanges = existingResource.Name != def.Name ||
-                                          existingResource.ParentId != parentId ||
+                                          existingResource.FkParentId != parentId ||
                                           existingResource.ResourcePath != def.Path;
                         // و سایر فیلدها...
 
@@ -161,7 +161,7 @@ namespace Authorization.Infrastructure.Services
                                 def.Icon
                             );
                             // اگر والد تغییر کرده
-                            if (existingResource.ParentId != parentId)
+                            if (existingResource.FkParentId != parentId)
                             {
                                 existingResource.ChangeParent(parentId);
                             }
@@ -252,7 +252,7 @@ namespace Authorization.Infrastructure.Services
             );
 
             // تغییر والد با منطق خاص
-            if (command.ParentId != resource.ParentId)
+            if (command.ParentId != resource.FkParentId)
             {
                 // اینجا بهتر است لاجیک ValidateResourceHierarchyAsync صدا زده شود
                 // اما برای خلاصه شدن کد، مستقیم تغییر می‌دهیم (فرض بر چک شدن در API)
@@ -274,7 +274,7 @@ namespace Authorization.Infrastructure.Services
             if (resource == null) return;
 
             // چک کردن فرزندان
-            var hasChildren = await _resourceRepository.ExistsAsync(r => r.ParentId == resourceId);
+            var hasChildren = await _resourceRepository.ExistsAsync(r => r.FkParentId == resourceId);
             if (hasChildren)
                 throw new InvalidOperationException("Cannot delete resource with children.");
 
@@ -341,7 +341,7 @@ namespace Authorization.Infrastructure.Services
                     Id = r.Id,
                     IsActive = r.IsActive,
                     Key = r.Key,
-                    ParentId = r.ParentId,
+                    ParentId = r.FkParentId,
                     ParentKey = r.Parent?.Key,
                     Type = r.Type,
                 }).ToList();

@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="DTOs\Base\" />
+    <Folder Include="Enums\Base\" />
     <Folder Include="Events\Authentication\" />
   </ItemGroup>
 

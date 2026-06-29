@@ -1,4 +1,4 @@
-﻿using Base.Domain.Entities;
+﻿
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
@@ -24,34 +24,12 @@ namespace Base.Infrastructure.Data
         {
             return new List<ResourceDto>
             {
-                new()
-                {
-                    Key = "base",
-                    Name = "Base",
-                    Type =ResourceType.Module,
-                    Category = ResourceCategory.System,
-                    Description = "Base management module",
-                    DisplayOrder = 2000,
-                    Icon = "shield",
-                    Children = new List<ResourceDto>
-                    {
-                        new()
-                        {
-                            Key = "base.menu",
-                            Name = "Base Menus",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
-                            Description = "Menu management",
-                            DisplayOrder = 2001,
-                            Icon = "list",
-                        }
-                    }
-                }
+                
             };
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDto> GetAuditPermissionDefinitions(Guid roleId)
+        private static List<PermissionDto> GetBasePermissionDefinitions(Guid roleId)
         {
             return new List<PermissionDto>
             {
@@ -97,7 +75,7 @@ namespace Base.Infrastructure.Data
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
                     var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
 
-                    var permissions = GetAuditPermissionDefinitions(adminRoleId);
+                    var permissions = GetBasePermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
                     logger.LogInformation("✅ Base permissions seeded successfully.");
                 }
@@ -110,7 +88,6 @@ namespace Base.Infrastructure.Data
         }
 
         public static async Task SeedBaseAsync(
-            IRepository<BaseDbContext,Menu, Guid> menuRepository,
             IUnitOfWork<BaseDbContext> unitOfWork,
             IConfiguration config,
             ILogger logger)

@@ -1,11 +1,11 @@
-﻿using Core.Shared.DTOs.Base;
+﻿using Core.Shared.DTOs.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.Base.PublicService
+namespace Core.Application.Abstractions.Navigation.PublicService
 {
     public interface IMenuPublicService
     {

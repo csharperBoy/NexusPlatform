@@ -4,13 +4,14 @@ using Authorization.Domain.Enums;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
-using Core.Shared.DTOs.Base;
+using Core.Shared.DTOs.Navigation;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Navigation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -33,7 +34,7 @@ namespace Authorization.Infrastructure.Data
                 {
                     Title = "مدیریت دسترسی",
                     Description = "مدیریت دسترسی های سیستم",
-                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                    Icon = Icon.Folder.GetIconString(),
                     Order = 200,
                     Key = "authorization",
                     ParentKey = null,
@@ -44,7 +45,7 @@ namespace Authorization.Infrastructure.Data
                         {
                             Title = "مدیریت منابع",
                             Description = " مدیریت منابع سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Icon = Icon.Folder.GetIconString(),
                             Order = 210,
                             Key = "authorization.resources",
                             ParentKey = "authorization",
@@ -54,7 +55,7 @@ namespace Authorization.Infrastructure.Data
                         {
                             Title = "مدیریت مجوزها",
                             Description = "مدیریت مجوزهای سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Icon = Icon.Folder.GetIconString(),
                             Order = 220,
                             Key = "authorization.permissions",
                             ParentKey = "authorization",

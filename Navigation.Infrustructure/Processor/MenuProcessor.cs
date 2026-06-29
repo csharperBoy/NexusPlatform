@@ -1,15 +1,14 @@
-﻿using Core.Shared.DTOs.Base;
-using Navigation.Application.Interfaces.Processor;
+﻿using Navigation.Application.Interfaces.Processor;
 using Navigation.Domain.Entities;
 using Core.Shared.DTOs.Authorization;
-using Core.Shared.DTOs.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Shared.Enums.Base;
+using Core.Shared.Enums.Navigation;
 using Core.Shared.Enums;
+using Core.Shared.DTOs.Navigation;
 
 namespace Navigation.Infrastructure.Processor
 {
@@ -18,7 +17,7 @@ namespace Navigation.Infrastructure.Processor
         public IReadOnlyList<MenuDto> BuildTree(IEnumerable<Menu> menus, Guid? parentId = null)
         {
             var nodes = menus
-                .Where(r => r.ParentId == parentId)
+                .Where(r => r.FkParentId == parentId)
                 .OrderBy(r => r.Order)
                 .ThenBy(r => r.Title)
                 .Select(menu => new MenuDto
@@ -29,7 +28,7 @@ namespace Navigation.Infrastructure.Processor
                     Path = menu.Path,
                     Icon =  menu.Icon.GetIconString(),
                     Description = menu.Description,
-                    ParentId = menu.ParentId,
+                    ParentId = menu.FkParentId,
                     Key = menu.Key,
                     ParentKey = menu.Parent?.Key,
                     Children = BuildTree(menus, menu.Id)

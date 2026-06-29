@@ -1,5 +1,5 @@
-﻿using Core.Application.Abstractions.Base.PublicService;
-using Core.Shared.DTOs.Base;
+﻿using Core.Application.Abstractions.Navigation.PublicService;
+using Core.Shared.DTOs.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;

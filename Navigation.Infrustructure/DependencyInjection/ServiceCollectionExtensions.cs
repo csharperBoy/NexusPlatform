@@ -6,13 +6,13 @@ using Navigation.Infrastructure.Processor;
 using Navigation.Infrastructure.Services;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Application.Helper;
 using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Core.Application.Abstractions.Navigation.PublicService;
 
 
 namespace Navigation.Infrastructure.DependencyInjection

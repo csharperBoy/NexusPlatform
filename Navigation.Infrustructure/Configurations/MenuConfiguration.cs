@@ -1,4 +1,4 @@
-﻿using Base.Domain.Entities;
+﻿using Navigation.Domain.Entities;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,7 +15,7 @@ namespace Navigation.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<Menu> builder)
         {
             base.Configure(builder);
-            builder.ToTable("Menu", "base");
+            builder.ToTable("Menu", "navigation");
 
             builder.Property(r => r.Key).IsRequired().HasMaxLength(100).IsUnicode(false);
             builder.HasIndex(r => r.Key).IsUnique();

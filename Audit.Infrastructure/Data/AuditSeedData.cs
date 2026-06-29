@@ -3,14 +3,15 @@ using Audit.Domain.Entities;
 using Audit.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
-using Core.Application.Abstractions.Base.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
-using Core.Shared.DTOs.Base;
+using Core.Shared.DTOs.Navigation;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Navigation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -130,7 +131,7 @@ namespace Audit.Infrastructure.Data
                 {
                     Title = "مدیریت لاگ",
                     Description = "مدیریت لاگ های سیستم",
-                    Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                    Icon = Icon.Folder.GetIconString(),
                     Order = 100,
                     Key = "audit",
                     ParentKey = null,
@@ -141,7 +142,7 @@ namespace Audit.Infrastructure.Data
                         {
                             Title = "مشاهده لاگ ها",
                             Description = "مشاهده لاگ های سیستم",
-                            Icon = Core.Shared.Enums.Base.Icon.Folder.GetIconString(),
+                            Icon = Icon.Folder.GetIconString(),
                             Order = 101,
                             Key = "audit.get",
                             ParentKey = "audit",

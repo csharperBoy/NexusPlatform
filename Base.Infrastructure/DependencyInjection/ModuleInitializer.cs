@@ -1,5 +1,4 @@
-﻿using Base.Domain.Entities;
-using Base.Infrastructure.Data;
+﻿using Base.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
@@ -49,9 +48,8 @@ namespace Base.Infrastructure.DependencyInjection
                     _logger);
 
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                var repo = scope.ServiceProvider.GetRequiredService<IRepository<BaseDbContext, Menu, Guid>>();
                 var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<BaseDbContext>>();
-                await BaseSeedData.SeedBaseAsync(repo, uow, _configuration, _logger);
+                await BaseSeedData.SeedBaseAsync( uow, _configuration, _logger);
 
 
                 _logger.LogInformation("Base module initialization completed successfully.");

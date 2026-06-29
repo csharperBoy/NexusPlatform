@@ -1,5 +1,5 @@
 ﻿using Core.Shared.Enums.Authorization;
-using Core.Shared.Enums.Base;
+using Core.Shared.Enums.Navigation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

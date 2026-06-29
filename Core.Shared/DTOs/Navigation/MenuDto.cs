@@ -1,11 +1,11 @@
-﻿using Core.Shared.Enums.Base;
+﻿using Core.Shared.Enums.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Shared.DTOs.Base
+namespace Core.Shared.DTOs.Navigation
 {
     public class MenuDto
     {

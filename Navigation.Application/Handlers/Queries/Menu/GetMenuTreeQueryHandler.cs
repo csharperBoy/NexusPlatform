@@ -1,6 +1,5 @@
-﻿using Core.Shared.DTOs.Base;
-using Base.Application.Interfaces.Service;
-using Base.Application.Queries.Menu;
+﻿using Navigation.Application.Interfaces.Service;
+using Navigation.Application.Queries.Menu;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
 using MediatR;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Core.Shared.DTOs.Navigation;
 
 namespace Navigation.Application.Handlers.Queries.Menu
 {

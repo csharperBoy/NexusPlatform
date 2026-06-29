@@ -14,15 +14,7 @@ namespace Base.Presentation.DependencyInjection
     {
         public static IServiceCollection Base_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
-            // 📌 رجیستر کنترلرهای API
-            services.AddControllers()
-                .AddApplicationPart(typeof(MenuController).Assembly) // اسمبلی کنترلرهای Base
-                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
-
-            // 📌 رجیستر MediatR برای مدیریت Command/Queryها
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(MenuController).Assembly));
-
+           
             services.AddControllers()
                .AddApplicationPart(typeof(SettingController).Assembly) // اسمبلی کنترلرهای Base
                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
