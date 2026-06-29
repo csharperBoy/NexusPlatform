@@ -24,12 +24,12 @@ namespace People.Infrastructure.Configurations
             builder.HasOne(p => p.sourceParty)
                      .WithMany(pr => pr.sourceRealations)
                      .HasForeignKey(pr => pr.sourcePartyId)
-                     .OnDelete(DeleteBehavior.Cascade);
+                     .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(p => p.destinationParty)
                      .WithMany(pr => pr.destinationRealations)
                      .HasForeignKey(pr => pr.destinationPartyId)
-                     .OnDelete(DeleteBehavior.Cascade);
+                     .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

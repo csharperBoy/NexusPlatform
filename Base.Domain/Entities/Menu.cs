@@ -60,7 +60,7 @@ namespace Base.Domain.Entities
 
         #endregion
         #region IHierarchicalStructureEntity Impelement
-        public Guid? ParentId { get; private set; }
+        public Guid? FkParentId { get; private set; }
         public virtual Menu? Parent { get; private set; }
         public virtual ICollection<Menu> Children { get; private set; } = new List<Menu>();
         public void ChangeParent(Guid? newParentId)
@@ -99,7 +99,7 @@ namespace Base.Domain.Entities
             Path = _Path;
             Icon = _Icon;
             Order = _Order;
-            ParentId = _ParentId;
+            FkParentId = _ParentId;
         }
 
         public void Update(string _title, string? _description, Icon? _icon, int? _order, string _key)

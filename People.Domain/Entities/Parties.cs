@@ -18,6 +18,8 @@ namespace People.Domain.Entities
 
         public virtual ICollection<PartiesRelations>? sourceRealations { get; private set; }
         public virtual ICollection<PartiesRelations>? destinationRealations { get; private set; }
+
+        public virtual ICollection<PersonContact>? contacts { get; private set; }
         // Constructor for EF
         public Parties() { }
 

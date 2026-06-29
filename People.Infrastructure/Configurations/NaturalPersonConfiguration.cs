@@ -52,8 +52,13 @@ namespace People.Infrastructure.Configurations
             });
 
             // 3. روابط (Relations)
+            builder.HasOne(p => p.Party)
+                   .WithMany(pr => pr.NaturalPersons)
+                   .HasForeignKey(pr => pr.fkPartyId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasMany(p => p.Profiles)
-                     .WithOne(pr => pr.Person)
+                     .WithOne(pr => pr.person)
                      .HasForeignKey(pr => pr.FkPersonId)
                      .OnDelete(DeleteBehavior.Cascade);
         }

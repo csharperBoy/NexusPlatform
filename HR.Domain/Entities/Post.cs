@@ -12,7 +12,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// پست سازمانی (برای ساخت چارت سازمانی)
     /// </summary>
-    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot
+    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot 
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد

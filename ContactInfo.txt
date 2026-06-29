@@ -1,1 +1,30 @@
 Email: maharplatform@gmail.com
+
+
+
+
+{
+  "phone": "03155415488",
+  "address": "kashan",
+  "email": "m29@gmail.com",
+  "mobile": "09137852413",
+  "nationalCode": "1250382831",
+  "firstlName": "mahdi",
+  "lastName": "abbasian",
+  "birthDate": "2026-06-28T10:39:57.407Z",
+  "birthPlace": "kashoo",
+  "fatherName": "mohammad",
+  "gender": 1,
+  "employeeCode": "868",
+  "employmentTypeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "employmentStatusId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "startDate": "2026-06-28",
+  "endDate": "2027-06-28",
+  "locationsId": [
+    "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+  ],
+  "postId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "assigneeType": 1,
+  "effectiveFrom": "2026-06-28",
+  "effectiveTo": "2026-07-28"
+}

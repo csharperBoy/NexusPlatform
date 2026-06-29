@@ -51,7 +51,7 @@ namespace People.Domain.Entities
         public ContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
         public Guid FkPartyId { get; private set; }
-        public virtual Parties Person { get; private set; } = null!;
+        public virtual Parties party { get; private set; } = null!;
 
         // Constructor for EF
         protected PersonContact() { }

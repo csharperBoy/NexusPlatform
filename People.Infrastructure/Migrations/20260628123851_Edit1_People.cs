@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace People.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial_People : Migration
+    public partial class Edit1_People : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -44,7 +44,7 @@ namespace People.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true)
                 },
@@ -60,7 +60,7 @@ namespace People.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     fkPartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -81,13 +81,13 @@ namespace People.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "naturalPerson",
+                name: "naturalPersons",
                 schema: "people",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NationalCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
@@ -101,14 +101,47 @@ namespace People.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_naturalPerson", x => x.Id);
+                    table.PrimaryKey("PK_naturalPersons", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_naturalPerson_Parties_fkPartyId",
+                        name: "FK_naturalPersons_Parties_fkPartyId",
                         column: x => x.fkPartyId,
                         principalSchema: "people",
                         principalTable: "Parties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PartiesRelations",
+                schema: "people",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    sourcePartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    destinationPartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    relationType = table.Column<byte>(type: "tinyint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PartiesRelations", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PartiesRelations_Parties_destinationPartyId",
+                        column: x => x.destinationPartyId,
+                        principalSchema: "people",
+                        principalTable: "Parties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PartiesRelations_Parties_sourcePartyId",
+                        column: x => x.sourcePartyId,
+                        principalSchema: "people",
+                        principalTable: "Parties",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -118,7 +151,7 @@ namespace People.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -127,17 +160,16 @@ namespace People.Infrastructure.Migrations
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ContactType = table.Column<byte>(type: "tinyint", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FkPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FkPartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_PersonContacts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PersonContacts_naturalPerson_PersonId",
-                        column: x => x.PersonId,
+                        name: "FK_PersonContacts_Parties_FkPartyId",
+                        column: x => x.FkPartyId,
                         principalSchema: "people",
-                        principalTable: "naturalPerson",
+                        principalTable: "Parties",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -149,7 +181,7 @@ namespace People.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -168,10 +200,10 @@ namespace People.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_PersonProfiles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PersonProfiles_naturalPerson_FkPersonId",
+                        name: "FK_PersonProfiles_naturalPersons_FkPersonId",
                         column: x => x.FkPersonId,
                         principalSchema: "people",
-                        principalTable: "naturalPerson",
+                        principalTable: "naturalPersons",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -221,45 +253,45 @@ namespace People.Infrastructure.Migrations
                 filter: "[RegisterCode] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_naturalPerson_CreatedAt",
+                name: "IX_naturalPersons_CreatedAt",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_naturalPerson_CreatedBy",
+                name: "IX_naturalPersons_CreatedBy",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
-                name: "IX_naturalPerson_fkPartyId",
+                name: "IX_naturalPersons_fkPartyId",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "fkPartyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_naturalPerson_ModifiedAt",
+                name: "IX_naturalPersons_ModifiedAt",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_naturalPerson_ModifiedBy",
+                name: "IX_naturalPersons_ModifiedBy",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Persons_FullName_FastLookup",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 columns: new[] { "FirstName", "LastName" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Persons_Unique_NationalCode",
                 schema: "people",
-                table: "naturalPerson",
+                table: "naturalPersons",
                 column: "NationalCode",
                 unique: true);
 
@@ -306,6 +338,42 @@ namespace People.Infrastructure.Migrations
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_CreatedAt",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_CreatedBy",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_destinationPartyId",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "destinationPartyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_ModifiedAt",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_ModifiedBy",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PartiesRelations_sourcePartyId",
+                schema: "people",
+                table: "PartiesRelations",
+                column: "sourcePartyId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PersonContact_CreatedAt",
                 schema: "people",
                 table: "PersonContacts",
@@ -348,10 +416,10 @@ namespace People.Infrastructure.Migrations
                 columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PersonContacts_PersonId",
+                name: "IX_PersonContacts_FkPartyId",
                 schema: "people",
                 table: "PersonContacts",
-                column: "PersonId");
+                column: "FkPartyId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PersonProfile_CreatedAt",
@@ -414,6 +482,10 @@ namespace People.Infrastructure.Migrations
                 schema: "people");
 
             migrationBuilder.DropTable(
+                name: "PartiesRelations",
+                schema: "people");
+
+            migrationBuilder.DropTable(
                 name: "PersonContacts",
                 schema: "people");
 
@@ -422,7 +494,7 @@ namespace People.Infrastructure.Migrations
                 schema: "people");
 
             migrationBuilder.DropTable(
-                name: "naturalPerson",
+                name: "naturalPersons",
                 schema: "people");
 
             migrationBuilder.DropTable(

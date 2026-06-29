@@ -122,6 +122,58 @@ namespace People.Infrastructure.Migrations
                     b.ToTable("Parties", "people");
                 });
 
+            modelBuilder.Entity("People.Domain.Entities.PartiesRelations", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("destinationPartyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("relationType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<Guid>("sourcePartyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_PartiesRelations_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_PartiesRelations_CreatedBy");
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_PartiesRelations_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_PartiesRelations_ModifiedBy");
+
+                    b.HasIndex("destinationPartyId");
+
+                    b.HasIndex("sourcePartyId");
+
+                    b.ToTable("PartiesRelations", "people");
+                });
+
             modelBuilder.Entity("People.Domain.Entities.PersonContact", b =>
                 {
                     b.Property<Guid>("Id")
@@ -140,7 +192,7 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<Guid>("FkPersonId")
+                    b.Property<Guid>("FkPartyId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ModifiedAt")
@@ -162,9 +214,6 @@ namespace People.Infrastructure.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("PersonId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -177,6 +226,8 @@ namespace People.Infrastructure.Migrations
                     b.HasIndex("CreatedBy")
                         .HasDatabaseName("IX_PersonContact_CreatedBy");
 
+                    b.HasIndex("FkPartyId");
+
                     b.HasIndex("ModifiedAt")
                         .HasDatabaseName("IX_PersonContact_ModifiedAt");
 
@@ -188,8 +239,6 @@ namespace People.Infrastructure.Migrations
 
                     b.HasIndex("OwnerPersonId")
                         .HasDatabaseName("IX_PersonContact_OwnerPerson");
-
-                    b.HasIndex("PersonId");
 
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_PersonContact_ScopedLookup");
@@ -399,26 +448,45 @@ namespace People.Infrastructure.Migrations
                     b.ToTable("naturalPersons", "people");
                 });
 
+            modelBuilder.Entity("People.Domain.Entities.PartiesRelations", b =>
+                {
+                    b.HasOne("People.Domain.Entities.Parties", "destinationParty")
+                        .WithMany("destinationRealations")
+                        .HasForeignKey("destinationPartyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("People.Domain.Entities.Parties", "sourceParty")
+                        .WithMany("sourceRealations")
+                        .HasForeignKey("sourcePartyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("destinationParty");
+
+                    b.Navigation("sourceParty");
+                });
+
             modelBuilder.Entity("People.Domain.Entities.PersonContact", b =>
                 {
-                    b.HasOne("People.Domain.Entities.naturalPersons", "Person")
-                        .WithMany()
-                        .HasForeignKey("PersonId")
+                    b.HasOne("People.Domain.Entities.Parties", "party")
+                        .WithMany("contacts")
+                        .HasForeignKey("FkPartyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Person");
+                    b.Navigation("party");
                 });
 
             modelBuilder.Entity("People.Domain.Entities.PersonProfile", b =>
                 {
-                    b.HasOne("People.Domain.Entities.naturalPersons", "Person")
+                    b.HasOne("People.Domain.Entities.naturalPersons", "person")
                         .WithMany("Profiles")
                         .HasForeignKey("FkPersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Person");
+                    b.Navigation("person");
                 });
 
             modelBuilder.Entity("People.Domain.Entities.legalPersons", b =>
@@ -504,7 +572,13 @@ namespace People.Infrastructure.Migrations
                 {
                     b.Navigation("NaturalPersons");
 
+                    b.Navigation("contacts");
+
+                    b.Navigation("destinationRealations");
+
                     b.Navigation("legalPersons");
+
+                    b.Navigation("sourceRealations");
                 });
 
             modelBuilder.Entity("People.Domain.Entities.naturalPersons", b =>

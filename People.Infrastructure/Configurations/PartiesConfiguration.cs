@@ -24,6 +24,12 @@ namespace People.Infrastructure.Configurations
                     .HasForeignKey(pr => pr.fkPartyId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+
+            builder.HasMany(p => p.contacts)
+                    .WithOne(pr => pr.party)
+                    .HasForeignKey(pr => pr.FkPartyId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

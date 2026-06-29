@@ -18,7 +18,11 @@ namespace People.Infrastructure.Configurations
 
             builder.ToTable("PersonProfiles", "people");
 
-            
+            builder.HasOne(p => p.person)
+                   .WithMany(pr => pr.Profiles)
+                   .HasForeignKey(pr => pr.FkPersonId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 

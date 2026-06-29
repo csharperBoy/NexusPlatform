@@ -11,4 +11,9 @@
     <ProjectReference Include="..\Navigation.Domain\Navigation.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Commands\" />
+    <Folder Include="DTOs\" />
+  </ItemGroup>
+
 </Project>

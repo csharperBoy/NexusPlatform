@@ -19,7 +19,7 @@ namespace HR.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
         #region IHierarchicalStructureEntity Impelement
-        public Guid? ParentId { get; private set; }
+        public Guid? FkParentId { get; private set; }
         public virtual Location? Parent { get; private set; }
         public virtual ICollection<Location> Children { get; private set; } = new List<Location>();
         public void ChangeParent(Guid? newParentId)
@@ -27,7 +27,7 @@ namespace HR.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Menu cannot be its own parent.");
 
-            ParentId = newParentId;
+            FkParentId = newParentId;
             Touch();
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند

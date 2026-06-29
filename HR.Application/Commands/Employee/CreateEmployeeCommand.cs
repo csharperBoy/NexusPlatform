@@ -16,10 +16,10 @@ namespace HR.Application.Commands.Employee
 {
     public record CreateEmployeeCommand(
     #region party
-        PhoneNumber? Phone,
+        string? Phone,
         string? Address,
-        Email Email,
-        PhoneNumber? Mobile,
+        string? Email,
+        string? Mobile,
     #endregion
     #region Person
 
@@ -89,7 +89,7 @@ namespace HR.Application.Commands.Employee
                     request.BirthPlace,
                     request.FatherName,
                     request.Gender,
-                    request.Phone,request.Address,request.Email,request.Mobile
+                    PhoneNumber.Create( request.Phone),request.Address,Email.Create( request.Email), PhoneNumber.Create(request.Mobile)
                   );
                 #endregion
                 #region ایجاد کارمند

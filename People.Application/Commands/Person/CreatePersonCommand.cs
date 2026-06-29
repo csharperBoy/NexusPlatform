@@ -15,13 +15,19 @@ using System.Threading.Tasks;
 namespace People.Application.Commands.Person
 {
     public record CreatePersonCommand(
-        string NationalCode ,
-     string FirstlName ,
-     string LastName ,
-     DateTime? BirthDate ,
-     string? BirthPlace ,
-     string? FatherName ,
-     Gender? Gender 
+    #region party
+        PhoneNumber? Phone,
+        string? Address,
+        Email Email,
+        PhoneNumber? Mobile,
+    #endregion
+        string NationalCode,
+     string FirstlName,
+     string LastName,
+     DateTime? BirthDate,
+     string? BirthPlace,
+     string? FatherName,
+     Gender? Gender
   ) : IRequest<Result<Guid>>;
 
     public class CreatePersonCommandHandler : IRequestHandler<CreatePersonCommand, Result<Guid>>
@@ -49,13 +55,14 @@ namespace People.Application.Commands.Person
                       request.NationalCode,
                       request.FirstlName,
                       request.LastName,
-                      request.BirthDate ,
-                      request.BirthPlace ,
-                      request.FatherName ,
-                      request.Gender
-                      
+                      request.BirthDate,
+                      request.BirthPlace,
+                      request.FatherName,
+                      request.Gender,
+                    request.Phone, request.Address, request.Email, request.Mobile
+
                     );
-                
+
 
                 await _personService.SaveAsync();
                 _logger.LogInformation(

@@ -1,23 +1,29 @@
-﻿using Core.Domain.Common;
+﻿using Core.Domain.Attributes;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Navigation.Domain.Entities
 {
-    public class Menu :BaseEntity, IAuditableEntity, IOwnerableEntity, IAggregateRoot
+    [DynamicFilterable(UseNavigation = false)]
+    [SecuredResource("Base.Menu")]
+    public class Menu : BaseEntity, IHierarchicalStructureEntity<Menu, Guid?>, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+        private void Touch() => ModifiedAt = DateTime.UtcNow;
         #endregion
-        #region IDataScopedEntity Impelement
+
+        #region IOwnerableEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
         public Guid? OwnerPersonId { get; protected set; }
@@ -46,28 +52,61 @@ namespace Navigation.Domain.Entities
         {
             OwnerOrganizationUnitId = orgUnitId;
         }
+
+
+
         #endregion
-
-        public string Title { get; private set; }
-        public string? Icon { get; private set; }
-        public string? Path { get; private set; }
-        public int DisplayOrder { get; private set; }
-        public Guid? ParentId { get; private set; }
-        public bool IsActive { get; private set; } = true;
-
-        // Navigation properties
+        #region IHierarchicalStructureEntity Impelement
+        public Guid? FkParentId { get; private set; }
         public virtual Menu? Parent { get; private set; }
         public virtual ICollection<Menu> Children { get; private set; } = new List<Menu>();
-
-        protected Menu() { }
-
-        public Menu(string title, string? icon, string? path, int displayOrder, Guid? parentId)
+        public void ChangeParent(Guid? newParentId)
         {
-            Title = title;
-            Icon = icon;
-            Path = path;
-            DisplayOrder = displayOrder;
-            ParentId = parentId;
+            if (newParentId == Id)
+                throw new InvalidOperationException("Menu cannot be its own parent.");
+
+            FkParentId = newParentId;
+            Touch();
+
+            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+            //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+        }
+        #endregion
+        [Display(Name = "عنوان")]
+        public string Title { get; set; }
+        [Display(Name = "کلید")]
+        public string Key { get; set; }
+        [Display(Name = "توضیحات")]
+        public string? Description { get; set; }
+        public string Path { get; set; }
+        /// <summary>
+        ///  به صورت "fa-solid:folder" یا "md-folder" ذخیره می‌شود.
+        ///  مثال: "fa-solid:folder" (Font Awesome) یا "md-folder" (Material Design).
+        /// </summary>
+        public Icon? Icon { get; set; }
+        public int? Order { get; set; }
+        public Menu(string _Title, string _Key, string? _Description, string _Path, Icon? _Icon, int? _Order, Guid? _ParentId)
+        {
+            if (string.IsNullOrWhiteSpace(_Key)) throw new ArgumentException("Menu key cannot be empty.");
+            if (string.IsNullOrWhiteSpace(_Title)) throw new ArgumentException("Menu Title cannot be empty.");
+
+            Key = _Key.Trim().ToLowerInvariant();
+            Title = _Title.Trim();
+            Description = _Description;
+            Path = _Path;
+            Icon = _Icon;
+            Order = _Order;
+            FkParentId = _ParentId;
+        }
+
+        public void Update(string _title, string? _description, Icon? _icon, int? _order, string _key)
+        {
+            Title = _title; Description = _description; Icon = _icon; Order = _order; Key = _key;
+        }
+        public Menu()
+        {
+
         }
     }
+
 }

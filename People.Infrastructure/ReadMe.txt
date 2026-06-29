@@ -8,6 +8,7 @@ dotnet ef migrations add <migration_name> --project User.Infrastructure/User.Inf
 dotnet ef migrations add Initial_User -p User.Infrastructure -s "AkSteel Welfare Platform"
 or
 Add-Migration EditPeople1 -Project People.Infrastructure -Context PeopleDbContext -Start "AkSteel Welfare Platform"
+Add-Migration Edit5_People -Project People.Infrastructure -Context PeopleDbContext -Start "PhoneBook.WebApi"
 
 3- for update database execute this command in developer powershell or package manager console 
 dotnet ef database update -p User.Infrastructure -s  "AkSteel Welfare Platform"
