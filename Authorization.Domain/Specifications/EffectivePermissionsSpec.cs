@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Specifications
 {
-    public class EffectivePermissionsSpec : BaseSpecification<Permission>
+   /* public class EffectivePermissionsSpec : BaseSpecification<Permission>
     {
         public EffectivePermissionsSpec(Guid? userId, Guid? personId, List<Guid>? positionsId, List<Guid>? roleIds, string resourceKey, PermissionAction action)
             : base(p => p.Resource.Key == resourceKey &&
@@ -27,5 +27,5 @@ namespace Authorization.Domain.Specifications
         {
             AddInclude(p => p.Resource);
         }
-    }
+    }*/
 }

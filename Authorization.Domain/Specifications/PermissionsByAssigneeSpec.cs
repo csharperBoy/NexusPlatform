@@ -16,7 +16,7 @@ namespace Authorization.Domain.Specifications
       تمام Permissionهای وابسته به یک تخصیص‌گیرنده (Assignee = User یا Role)
       */
 
-    public class PermissionsByAssigneeSpec : BaseSpecification<Permission>
+   /* public class PermissionsByAssigneeSpec : BaseSpecification<Permission>
     {
         public PermissionsByAssigneeSpec(AssigneeType assigneeType, Guid assigneeId)
             : base(p => p.AssigneeType == assigneeType && p.AssigneeId == assigneeId)
@@ -28,5 +28,5 @@ namespace Authorization.Domain.Specifications
             ApplyOrderBy(p => p.ResourceId);
             ApplyThenOrderBy(p => p.Action);
         }
-    }
+    }*/
 }

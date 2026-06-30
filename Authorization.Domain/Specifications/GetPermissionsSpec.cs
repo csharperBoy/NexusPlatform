@@ -12,14 +12,14 @@ namespace Authorization.Domain.Specifications
 
     public class GetPermissionsSpec : BaseSpecification<Permission>
     {
-        public GetPermissionsSpec(AssigneeType? AssigneeType = null,
+        public GetPermissionsSpec(
                                  Guid? AssigneeId = null,
                                  Guid? ResourceId = null,
                                  string? description = null)
             : base(p => 
-                        (AssigneeType == null || p.AssigneeType == AssigneeType ) && 
-                        (AssigneeId == null || p.AssigneeId == AssigneeId) && 
-                        (ResourceId == null || p.ResourceId == ResourceId) && 
+                        //(AssigneeType == null || p.AssigneeType == AssigneeType ) && 
+                        (AssigneeId == null || p.FkPermissionAssigneeId == AssigneeId) && 
+                        (ResourceId == null || p.FkResourceId == ResourceId) && 
                         (description == null || p.Description.Contains(description)))
         {
             AddInclude(p => p.Resource);            

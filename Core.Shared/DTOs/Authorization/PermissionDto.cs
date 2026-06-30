@@ -19,7 +19,7 @@ namespace Core.Shared.DTOs.Authorization
     public class PermissionDto
     {
         public Guid Id { get; init; }
-        //public AssigneeType AssigneeType { get; set; }
+        public AssigneeType AssigneeType { get; set; }
         public Guid AssigneeId { get; set; }
         public Guid ResourceId { get; set; }
         public string ResourceKey { get; set; }
@@ -41,12 +41,13 @@ namespace Core.Shared.DTOs.Authorization
         //public List<PermissionRuleDto> Rules { get; set; } = new();
         public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
         {
-            return  AssigneeId == assigneeId;
+            return AssigneeType == assigneeType && AssigneeId == assigneeId;
         }
         public bool AppliesTo(AssigneeType assigneeType, List<Guid> assigneeId)
         {
-            return  assigneeId.Any(a => a == AssigneeId);
+            return AssigneeType == assigneeType && assigneeId.Any(a => a == AssigneeId);
         }
+
 
     }
 }

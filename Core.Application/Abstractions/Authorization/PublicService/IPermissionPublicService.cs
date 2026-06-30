@@ -1,4 +1,5 @@
 ﻿using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,7 @@ namespace Core.Application.Abstractions.Authorization.PublicService
         /// </summary>
         Task SeedRolePermissionsAsync( List<PermissionDto> permissions, CancellationToken cancellationToken = default);
         Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds);
-        Task<Guid> CreatePermissionAssigneeAsync(CancellationToken cancellationToken = default);
+        Task<Guid> CreatePermissionAssigneeAsync(AssigneeType type , CancellationToken cancellationToken = default);
         Task SaveAsync();
     }
 }

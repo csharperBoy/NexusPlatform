@@ -1,19 +1,20 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.People;
+using Core.Application.Provider;
+using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
+using Core.Shared.Enums.HR;
 using Microsoft.Extensions.Logging;
+using People.Application.Interfaces;
+using People.Domain.Entities;
+using People.Domain.Enums;
+using People.Domain.Specifications;
 using People.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using People.Application.Interfaces;
-using People.Domain.Entities;
-using Core.Application.Abstractions.People;
-using Core.Domain.ValueObjects;
-using Core.Shared.Enums.HR;
-using Core.Application.Provider;
-using People.Domain.Enums;
 
 namespace People.Infrastructure.Services
 {
@@ -89,6 +90,25 @@ namespace People.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
+        }
+
+        public async Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId)
+        {
+            var person = await _naturalPersonRepository.GetByIdAsync(personId.Value,a=>a.Party);
+            return person.Party.FkPermissionAssigneeId;
+        }
+        public async Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId)
+        {
+            var party = await _partyRepository.GetByIdAsync(partyId.Value);
+            return party.FkPermissionAssigneeId;
+        }
+
+        public async Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId)
+        {
+            GetNaturalPersonByPartyId spec = new GetNaturalPersonByPartyId(partyId.Value);
+            var person = await _personSpecRepository.GetBySpecAsync(spec);
+            return person?.Id;
+
         }
     }
 }

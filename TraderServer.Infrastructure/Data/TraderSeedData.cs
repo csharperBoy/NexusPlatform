@@ -93,7 +93,7 @@ namespace TraderServer.Infrastructure.DependencyInjection
 
                     // 2. ثبت پرمیشن‌ها (Permissions)
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
-                    var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
 
                     var permissions = GetTraderPermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);

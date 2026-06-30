@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Auditing;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Domain.Common;
 using FluentAssertions;
@@ -46,6 +47,7 @@ namespace Identity.Test
                         .ReturnsAsync(new List<RoleDto> { new RoleDto { Name = "User"} });
 
             var refreshRepo = new Mock<IRepository<IdentityDbContext, RefreshToken, Guid>>();
+            var perService = new Mock<IPermissionPublicService>();
             var specRepo = new Mock<ISpecificationRepository<RefreshToken, Guid>>();
             var unitOfWork = new Mock<IUnitOfWork<IdentityDbContext>>();
 
@@ -57,12 +59,11 @@ namespace Identity.Test
                 signInManager.Object,
                 tokenService.Object,
                 jwtOptions,
-                //outbox.Object,
+                perService.Object,
                 refreshRepo.Object,
                 specRepo.Object,
                 unitOfWork.Object,
                 roleResolver.Object
-                //logger.Object
             );
 
             var request = new RegisterRequest("ali", "ali@test.com", "Pass123!", "Ali");

@@ -8,8 +8,8 @@ namespace Core.Shared.Enums.Authorization
 {
     public enum AssigneeType : byte
     {
-        Person = 0,      // اولویت ۱: تنظیم خاص برای شخص
-        Position = 1,    // اولویت ۲: پست سازمانی
+        Party = 0,      // اولویت ۱: تنظیم خاص برای شخص
+        Post = 1,    // اولویت ۲: پست سازمانی
         Role = 2 ,        // اولویت ۳: نقش کاربری
         User = 3
     }

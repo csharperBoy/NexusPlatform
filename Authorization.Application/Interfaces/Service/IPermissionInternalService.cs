@@ -31,7 +31,7 @@ namespace Authorization.Application.Interfaces.Service
         List<ScopeType>? scopes = null,
         List<PermissionRuleCreateDto>? rules = null
             );
-        Task RevokePermissionAsync(Guid permissionId);
+       // Task RevokePermissionAsync(Guid permissionId);
         Task DeletePermissionAsync(Guid permissionId);
         Task UpdatePermissionAsync(Guid Id,
         Guid? ResourceId = null,
@@ -58,10 +58,10 @@ namespace Authorization.Application.Interfaces.Service
         PermissionAction Action 
 
             );
-        Task ResolvePermissionConflictsAsync(Guid userId, string resourceKey);
-        Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds);
-        Task<IReadOnlyList<PermissionDto>> GetPersonPermissionsAsync(Guid? personId);
-        Task<IReadOnlyList<PermissionDto>> GetPositionPermissionsAsync(List<Guid>? positionIds);
+     //   Task ResolvePermissionConflictsAsync(Guid userId, string resourceKey);
+      //  Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds);
+      //  Task<IReadOnlyList<PermissionDto>> GetPersonPermissionsAsync(Guid? personId);
+      //  Task<IReadOnlyList<PermissionDto>> GetPositionPermissionsAsync(List<Guid>? positionIds);
         //Task<Permission?> GetById(Guid id);
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Infrastructure.Repositories;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 using Identity.Application.Commands.Role;
 using Identity.Application.Commands.User;
@@ -32,6 +34,7 @@ namespace Identity.Infrastructure.Services
         private readonly UserManager<ApplicationUser> _userManager;
 
         private readonly ICachePublicService _cache;
+        private readonly IPermissionPublicService _permissionService;
         private readonly string baseCacheKey = "identity:role";
         //private readonly IRepository<IdentityDbContext, ApplicationRole, Guid> _roleRepository;
         //private readonly ISpecificationRepository<ApplicationRole, Guid> _roleSpecRepository;
@@ -42,6 +45,7 @@ namespace Identity.Infrastructure.Services
             ILogger<RoleService> logger,
             RoleManager<ApplicationRole> roleManager,
             UserManager<ApplicationUser> userManager,
+            IPermissionPublicService permissionService,
              ICachePublicService cache
             //IRepository<IdentityDbContext, ApplicationRole, Guid> roleRepository,
             //ISpecificationRepository<ApplicationRole, Guid> roleSpecRepository,
@@ -54,6 +58,7 @@ namespace Identity.Infrastructure.Services
             _roleManager = roleManager;
             _userManager = userManager;
             _cache = cache;
+            _permissionService = permissionService;
             //_roleRepository = roleRepository;
             //_roleSpecRepository = roleSpecRepository;
         }
@@ -71,8 +76,9 @@ namespace Identity.Infrastructure.Services
 
         public async Task<Guid> CreateRoleAsync(CreateRoleCommand command)
         {
-            var role = new ApplicationRole( command.Name , command.Description,command.OrderNum
-               
+            Guid perAssignId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Role);
+            var role = new ApplicationRole( command.Name, perAssignId, command.Description,command.OrderNum 
+
             );
             var createRes = await _roleManager.CreateAsync(role);
             if (!createRes.Succeeded)
@@ -244,7 +250,18 @@ namespace Identity.Infrastructure.Services
                                 }).ToListAsync();
         }
 
-        
+        public async Task<List<Guid>> GetAllUserRolesPermissionAssigneeId(Guid userId)
+        {
+            List<Guid> RolesPermissionAssigneeId = new List<Guid>();
+            ApplicationUser? user = await _userManager.FindByIdAsync(userId.ToString());
+            var rolesName = await _userManager.GetRolesAsync(user);
+            foreach (var roleName in rolesName)
+            {
+                var role = await _roleManager.FindByNameAsync(roleName);
+                RolesPermissionAssigneeId.Add(role.FkPermissionAssigneeId);
+            }
+            return RolesPermissionAssigneeId;
+        }
     }
 
 }

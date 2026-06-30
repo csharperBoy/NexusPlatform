@@ -25,6 +25,7 @@ namespace Authorization.Application.Provider
         private readonly IUserPublicService _userService;
         private readonly IOrgChartPublicService _positionService;
         private readonly IRolePublicService _roleService;
+        private readonly IPersonPublicService _personService;
         private readonly IEmployeePublicService _employeeService;
 
         private readonly UserDataContext _userDataContext;
@@ -36,9 +37,11 @@ namespace Authorization.Application.Provider
             IUserPublicService userService,
             IOrgChartPublicService positionService,
             IRolePublicService roleService,
+            IPersonPublicService personService,
              IEmployeePublicService employeeService
             )
         {
+            _personService = personService;
             _permissionService = permissionService;
             _httpContext = httpContext;
             _userService = userService;
@@ -57,21 +60,29 @@ namespace Authorization.Application.Provider
             if (userId == Guid.Empty)
                 return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
 
-            Guid? PersonId = await _userService.GetPersonId(userId);
-            Guid? EmployeeId = await _employeeService.GetEmployeeId(PersonId);
-            string? userName = await _userService.GetUserName(userId);
-            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
-            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
-            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userId, PersonId, PostId, RoleIds);
             
+
+            Guid? PartyId = await _userService.GetPartyId(userId);
+            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+            Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
+            Guid userPermissionAssigneeId = await _userService.GetUserPermissionAssigneeIdAsync(userId);
+            Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
+            //List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
+            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
+            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+
+            List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
+            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
+
+
+
             return new UserDataContext
             {
                 UserId = userId,
-                PersonId = PersonId,
-                PostIds = PostId?.ToHashSet(),
+                PartyId = PartyId,
+                PostIds = PostPermissionAssigneeId?.ToHashSet(),
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
-                RoleIds = RoleIds.ToHashSet(),
+                RoleIds = RolePermissionAssigneeIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
             };
         }
@@ -86,8 +97,8 @@ namespace Authorization.Application.Provider
                 .SetValue(_userDataContext, ctx.UserId);
 
             typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PersonId))!
-                .SetValue(_userDataContext, ctx.PersonId);
+                .GetProperty(nameof(UserDataContext.PartyId))!
+                .SetValue(_userDataContext, ctx.PartyId);
 
             typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!

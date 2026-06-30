@@ -9,9 +9,10 @@ namespace Core.Application.Abstractions.Identity.PublicService
 {
     public interface IUserPublicService
     {
-        Task<Guid?> GetPersonId(Guid userId);
+        Task<Guid?> GetPartyId(Guid userId);
         Task<Guid> GetUserId(string userName);
         Task<UserDataContext> GetInitializerUserContext();
         Task<string?> GetUserName(Guid userId);
+        Task<Guid> GetUserPermissionAssigneeIdAsync(Guid userId);
     }
 }

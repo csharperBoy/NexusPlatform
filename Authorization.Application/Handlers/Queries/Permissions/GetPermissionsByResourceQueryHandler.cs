@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Application.Handlers.Queries.Permissions
-{
+{/*
     public class GetPermissionsByResourceQueryHandler
         : IRequestHandler<GetPermissionsByResourceQuery, Result<IReadOnlyList<PermissionDto>>>
     {
@@ -46,4 +46,5 @@ namespace Authorization.Application.Handlers.Queries.Permissions
             }
         }
     }
+*/
 }

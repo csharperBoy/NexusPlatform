@@ -12,18 +12,19 @@ namespace Authorization.Domain.Specifications
 {
     public class UserPermissionsSpec : BaseSpecification<Permission>
     {
-        public UserPermissionsSpec(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds)
+        public UserPermissionsSpec(Guid userId, Guid? partyId, List<Guid>? postIds, List<Guid> roleIds)
             : base(p =>
                 (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow) &&
                 (p.EffectiveFrom == null || p.EffectiveFrom <= DateTime.UtcNow) &&
                 (
-                    (p.AssigneeType == AssigneeType.User && p.AssigneeId == userId) ||
-                    (personId != null ? (p.AssigneeType == AssigneeType.Person && p.AssigneeId == personId) : false) ||
-                    (positionsId != null ? (positionsId.Count() > 0 && p.AssigneeType == AssigneeType.Position && positionsId.Any(q => q == p.AssigneeId)) : false) ||
-                   (roleIds != null ? (roleIds.Count() > 0 && p.AssigneeType == AssigneeType.Role && roleIds.Any(q => q == p.AssigneeId)) : false)
+                    ( p.FkPermissionAssigneeId == userId) ||
+                    (partyId != null ? ( p.FkPermissionAssigneeId == partyId) : false) ||
+                    (postIds != null ? (postIds.Count() > 0  && postIds.Any(q => q == p.FkPermissionAssigneeId)) : false) ||
+                   (roleIds != null ? (roleIds.Count() > 0  && roleIds.Any(q => q == p.FkPermissionAssigneeId)) : false)
                 ))
         {
             AddInclude(p => p.Resource);
+            AddInclude(p => p.PermissionAssignee);
             AddInclude(p => p.Rules);
             
         }

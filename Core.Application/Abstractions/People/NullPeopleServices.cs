@@ -36,6 +36,21 @@ namespace Core.Application.Abstractions.People
             return Task.FromResult<Guid>(Guid.Empty);
         }
 
+        public Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId)
+        {
+            return null;
+        }
+
+        public Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId)
+        {
+            return null;
+        }
+
+        public Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId)
+        {
+            return null;
+        }
+
         public async Task SaveAsync()
         {
             await Task.CompletedTask;

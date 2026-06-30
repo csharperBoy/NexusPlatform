@@ -13,7 +13,7 @@ namespace Core.Application.Context
     {
         public Guid UserId { get; init; }
         public string UserName { get; init; }
-        public Guid? PersonId { get; init; }
+        public Guid? PartyId { get; init; }
         public IReadOnlySet<Guid>? OrganizationUnitIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<Guid>? PostIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<Guid>? RoleIds { get; init; } = new HashSet<Guid>();

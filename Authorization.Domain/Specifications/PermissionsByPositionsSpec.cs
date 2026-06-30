@@ -12,11 +12,10 @@ namespace Authorization.Domain.Specifications
     public class PermissionsByPositionsSpec : BaseSpecification<Permission>
     {
         public PermissionsByPositionsSpec(List<Guid> positionIds)
-            : base(p => p.AssigneeType == AssigneeType.Position && // تغییر از User به Person
-                      positionIds.Any(r => r == p.AssigneeId))
+            : base(p => positionIds.Any(r => r == p.FkPermissionAssigneeId))
         {
             AddInclude(p => p.Resource);
-            ApplyOrderBy(p => p.ResourceId);
+            ApplyOrderBy(p => p.FkResourceId);
             ApplyThenOrderBy(p => p.Action);
         }
     }

@@ -4,31 +4,17 @@ using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.People;
 using Core.Application.Context;
 using Core.Application.Helper;
-using Core.Shared.DTOs;
-
-//using Core.Shared.DTOs.Identity;
-using Core.Shared.Results;
 using Identity.Application.Commands.User;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
-using Identity.Application.Queries.User;
 using Identity.Domain.Entities;
 using Identity.Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
 using Microsoft.Extensions.Logging;
-using Polly;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Identity.Infrastructure.Services
 {
@@ -45,6 +31,7 @@ namespace Identity.Infrastructure.Services
         private readonly IOrgChartPublicService _positionService;
         private readonly IRoleInternalService _roleService;
         private readonly IPermissionPublicService _permissionService;
+        private readonly IPersonPublicService _personService;
 
         private readonly IEmployeePublicService _employeeService;
         private readonly ICachePublicService _cache;
@@ -57,11 +44,13 @@ namespace Identity.Infrastructure.Services
             UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager,
             IOrgChartPublicService positionService,
             IEmployeePublicService employeeService,
+             IPersonPublicService personService,
         IRoleInternalService roleService,
             IPermissionPublicService permissionService,
             ICachePublicService cache,
             ILogger<UserService> logger)
         {
+            _personService = personService;
             _userRepository = userRepository;
             _userRoleRepository = userRoleRepository;
             _unitOfWork = unitOfWork;
@@ -140,24 +129,27 @@ namespace Identity.Infrastructure.Services
             {
                 throw new Exception($"user with name intitializer not found.");
             }
-            var peronId = await GetPersonId(user.Id);
+            
 
-
-            Guid? PersonId = await GetPersonId(user.Id);
-            Guid? EmployeeId = await _employeeService.GetEmployeeId(PersonId);
-            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
+            Guid? PartyId = await GetPartyId(user.Id);
+            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+            Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
+            Guid userPermissionAssigneeId = await GetUserPermissionAssigneeIdAsync(user.Id);
+            Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
+            //List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
+            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
             List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
 
-            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(user.Id);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(user.Id, PersonId, PostId, RoleIds);
+            List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(user.Id);
+            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
             return new UserDataContext
             {
                 UserId = user.Id,
-                PersonId = PersonId,
-                PostIds = PostId?.ToHashSet(),
+                PartyId = partyPermissionAssigneeId,
+                PostIds = PostPermissionAssigneeId?.ToHashSet(),
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
-                RoleIds = RoleIds.ToHashSet(),
+                RoleIds = RolePermissionAssigneeIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
                 //userPermissions = userPermissions.ToHashSet(),
                 //rolePermissions = rolePermissions.ToHashSet(),
@@ -167,7 +159,13 @@ namespace Identity.Infrastructure.Services
 
         }
 
-        public async Task<Guid?> GetPersonId(Guid userId)
+        public async Task<Guid> GetUserPermissionAssigneeIdAsync(Guid userId)
+        {
+            var usr = await _userRepository.GetByIdAsync(userId);
+            return usr.FkPermissionAssigneeId;
+        }
+
+        public async Task<Guid?> GetPartyId(Guid userId)
         {
             if (!ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.User))
                 return null;
@@ -179,9 +177,9 @@ namespace Identity.Infrastructure.Services
                 throw new Exception($"user with name '{userId}' not found.");
             }
 
-            return user.FkPersonId;
+            return user.FkPartyId;
         }
-
+        
         public async Task<Guid> GetUserId(string userName)
         {
             var user = await _userManager.FindByNameAsync(userName);

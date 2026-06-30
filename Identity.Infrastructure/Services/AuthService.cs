@@ -2,6 +2,7 @@
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Domain.ValueObjects;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Results;
 using Identity.Application.Commands;
 using Identity.Application.DTOs;
@@ -86,7 +87,7 @@ namespace Identity.Infrastructure.Services
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email , await _permissionService.CreatePermissionAssigneeAsync());
+            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email , await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.User));
             user.NickName = request.NickName;
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)

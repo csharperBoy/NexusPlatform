@@ -10,5 +10,6 @@ namespace Core.Application.Abstractions.HR
     {
         Task<List<Guid>?> GetEmployeeOrganizeId(Guid? employeeId);
         Task<List<Guid>?> GetEmployeePostsId(Guid? employeeId);
+        Task<List<Guid>?> GetEmployeePostsPermissionAssigneeId(Guid? employeeId);
     }
 }

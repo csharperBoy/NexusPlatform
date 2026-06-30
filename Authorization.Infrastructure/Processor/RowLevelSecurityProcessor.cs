@@ -46,7 +46,7 @@ namespace Authorization.Infrastructure.Processor
             {
                 if (scopedEntity.OwnerPersonId == null || scopedEntity.OwnerPersonId == Guid.Empty)
                 {
-                    var personId = _scope.PersonId ?? Guid.Empty;
+                    var personId = _scope.PartyId ?? Guid.Empty;
                     scopedEntity.SetPersonOwner(personId);
                 }
                 if (scopedEntity.OwnerOrganizationUnitId == null || scopedEntity.OwnerOrganizationUnitId == Guid.Empty)
@@ -216,7 +216,7 @@ namespace Authorization.Infrastructure.Processor
 
                 if (scope == ScopeType.Self)
                 {
-                    return query.Where("OwnerPersonId == @0", _scope.PersonId);
+                    return query.Where("OwnerPersonId == @0", _scope.PartyId);
                 }
 
 
@@ -428,7 +428,7 @@ namespace Authorization.Infrastructure.Processor
             if (permissions == null || !permissions.Any()) return ScopeType.None;
 
             // اولویت ۱: شخص
-            var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Person);
+            var personPerm = permissions.FirstOrDefault(p => p.AssigneeType == AssigneeType.Party);
             if (personPerm != null)
             {
                 return personPerm.Effect == PermissionEffect.Deny ? ScopeType.None : personPerm.Scopes.FirstOrDefault().scope;
@@ -458,7 +458,7 @@ namespace Authorization.Infrastructure.Processor
                 case ScopeType.Account:
                     return entity.OwnerUserId == userId;
                 case ScopeType.Self:
-                    var userPersonId = _scope.PersonId;
+                    var userPersonId = _scope.PartyId;
                     return entity.OwnerPersonId == userId;
                 case ScopeType.Unit:
                     return _scope.OrganizationUnitIds.Any(a=>a ==  entity.OwnerOrganizationUnitId ) ;

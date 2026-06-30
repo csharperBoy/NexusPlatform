@@ -19,6 +19,9 @@ namespace Core.Application.Abstractions.People
         string? Address = null,
         Email? Email = null,
         PhoneNumber? Mobile = null);
+        Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId);
+        Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId);
         Task SaveAsync();
+        Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId);
     }
 }

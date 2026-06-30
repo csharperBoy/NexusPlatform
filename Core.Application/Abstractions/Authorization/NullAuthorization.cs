@@ -38,10 +38,22 @@ namespace Core.Application.Abstractions.Authorization
     }
     public class NullPermissionService : IPermissionPublicService
     {
+      
+
+        public Task<Guid> CreatePermissionAssigneeAsync(AssigneeType type, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
         public Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds)
         {
             IReadOnlyList<PermissionDto> ret = new List<PermissionDto>();
             return Task.FromResult(ret);
+        }
+
+        public Task SaveAsync()
+        {
+            return Task.CompletedTask;
         }
 
         public Task SeedRolePermissionsAsync(List<PermissionDto> permissions, CancellationToken cancellationToken = default)

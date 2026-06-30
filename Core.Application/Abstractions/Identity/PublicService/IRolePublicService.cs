@@ -10,6 +10,7 @@ namespace Core.Application.Abstractions.Identity.PublicService
     {
         Task<Guid> GetAdminRolePermissionAssigneeIdAsync(CancellationToken cancellationToken = default);
 
+        Task<List<Guid>> GetAllUserRolesPermissionAssigneeId(Guid id);
         Task<Guid> GetAdminRoleIdAsync(CancellationToken cancellationToken = default);
         Task<List<Guid>> GetAllUserRolesId(Guid userId);
 

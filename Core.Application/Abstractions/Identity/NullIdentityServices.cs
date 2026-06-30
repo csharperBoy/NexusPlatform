@@ -28,9 +28,19 @@ namespace Core.Application.Abstractions.Identity
             return null;
         }
 
+        public Task<Guid> GetAdminRolePermissionAssigneeIdAsync(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
         public Task<List<Guid>> GetAllUserRolesId(Guid userId)
         {
             return null;
+        }
+
+        public Task<List<Guid>> GetAllUserRolesPermissionAssigneeId(Guid id)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<IList<string>> GetUserRolesAsync(Guid userId)
@@ -41,6 +51,11 @@ namespace Core.Application.Abstractions.Identity
     public class NullUserService : IUserPublicService
     {
         public Task<UserDataContext> GetInitializerUserContext()
+        {
+            return null;
+        }
+
+        public Task<Guid?> GetPartyId(Guid userId)
         {
             return null;
         }
@@ -56,6 +71,11 @@ namespace Core.Application.Abstractions.Identity
         }
 
         public Task<string?> GetUserName(Guid userId)
+        {
+            return null;
+        }
+
+        public Task<Guid> GetUserPermissionAssigneeIdAsync(Guid userId)
         {
             return null;
         }

@@ -30,7 +30,7 @@ namespace Identity.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
 
-        public Guid? FkPersonId { get; private set; }
+        public Guid? FkPartyId { get; private set; }
         public string? NickName {  get;  set; }
         public bool IsActive { get; private set; } = true;
 
@@ -47,10 +47,10 @@ namespace Identity.Domain.Entities
 
         protected ApplicationUser() : base() { }
 
-        public ApplicationUser(Guid personId, string userName, string email, Guid fkPermissionAssigneeId)
+        public ApplicationUser(Guid partyId, string userName, string email, Guid fkPermissionAssigneeId)
             : base(userName)
         {
-            FkPersonId = personId;
+            FkPartyId = partyId;
             UserName = userName;
             Email = email;
             EmailConfirmed = true;
@@ -78,11 +78,11 @@ namespace Identity.Domain.Entities
         string _Email,
         string? _NickName,
         string? _phoneNumber,
-        Guid? _personId = null
+        Guid? _partyId = null
             )
              : base(_UserName)
         {
-            FkPersonId = _personId;
+            FkPartyId = _partyId;
             UserName = _UserName;
             Email = _Email;
             EmailConfirmed = true;
@@ -105,7 +105,7 @@ namespace Identity.Domain.Entities
         }
         public void SetPersonId(Guid personId)
         {
-            FkPersonId = personId;
+            FkPartyId = personId;
             Touch();
         }
 
@@ -182,7 +182,7 @@ namespace Identity.Domain.Entities
                 hasChange = true;
             }
 
-            if (_personId != null && _personId != this.FkPersonId)
+            if (_personId != null && _personId != this.FkPartyId)
             {
                 this.SetPersonId((Guid)_personId);
                 hasChange = true;

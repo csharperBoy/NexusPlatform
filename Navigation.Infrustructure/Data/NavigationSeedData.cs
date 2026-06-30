@@ -67,7 +67,7 @@ namespace Navigation.Infrastructure.Data
                        }
                    },
                    Effect = PermissionEffect.allow,
-                   //AssigneeType= AssigneeType.Role,
+                   AssigneeType= AssigneeType.Role,
                    AssigneeId = roleId,
 
                    Description = "Full access to navigation menu"

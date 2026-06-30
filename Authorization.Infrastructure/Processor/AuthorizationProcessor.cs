@@ -116,15 +116,15 @@ namespace Authorization.Infrastructure.Processor
                 //var allPermissions = await _permissionSpecRepository.ListBySpecAsync(activePermissionsSpec);
                 var allPermissions = _userDataContext.Permissions;
 
-                Guid? personId = _userDataContext.PersonId;
-                List<Guid>? positionId = _userDataContext.PostIds?.ToList();
+                Guid? personId = _userDataContext.PartyId;
+                List<Guid>? postId = _userDataContext.PostIds?.ToList();
                 List<Guid>? allUserRoles = _userDataContext.RoleIds?.ToList();
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions
                     .Where(p => (p.AppliesTo(AssigneeType.User, userId)
                                     || p.AppliesTo(AssigneeType.Role, allUserRoles)
-                                    || (personId != null && p.AppliesTo(AssigneeType.Person, (Guid)personId))
-                                    || (positionId != null && p.AppliesTo(AssigneeType.Position, positionId)))
+                                    || (personId != null && p.AppliesTo(AssigneeType.Party, (Guid)personId))
+                                    || (postId != null && p.AppliesTo(AssigneeType.Post, postId)))
                                 && p.ResourceKey == resourceKey)
                     .ToList();
 

@@ -64,7 +64,7 @@ namespace HR.Infrastructure.Services
 
                 if (employeeId == null) { return null; }
                 var posts = await GetEmployeePostAsync((Guid)employeeId);
-                return posts.Select(p => p.OrganizationUnitId).ToList();
+                return posts.Select(p => p.FkOrganizationUnitId).ToList();
             }
             catch (Exception ex)
             {
@@ -147,7 +147,7 @@ namespace HR.Infrastructure.Services
                     return null;
                 }
 
-                var employee = assignment.Select(a => a.Employee);
+                var employee = assignment.Select(a => a.Employment);
                 if (employee == null)
                 {
                     _logger.LogError("employee not found for assignment ");
@@ -186,6 +186,13 @@ namespace HR.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
+        }
+
+        public async Task<List<Guid>?> GetEmployeePostsPermissionAssigneeId(Guid? employeeId)
+        {
+            if (employeeId == null) { return null; }
+            var post = await GetEmployeePostAsync((Guid)employeeId);
+            return post.Select(p => p.FkPermissionAssigneeId).ToList();
         }
     }
 }

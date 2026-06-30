@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Core.Shared.Enums.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +16,13 @@ namespace Authorization.Domain.Entities
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
-
+        public AssigneeType Type { get; private set; }
         //navigate
         public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();
+
+        public PermissionAssignee(AssigneeType _Type)
+        {
+            Type = _Type;
+        }
     }
 }

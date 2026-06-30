@@ -34,7 +34,10 @@ namespace Core.Application.Abstractions.HR
             return Task.FromResult<List<Guid>?>(null);
         }
 
-
+        public Task<List<Guid>?> GetEmployeePostsPermissionAssigneeId(Guid? employeeId)
+        {
+            return null;
+        }
     }
     public class NullEmployeeService : IEmployeePublicService
     {

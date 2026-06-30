@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Core.Shared.Enums.Authorization;
 namespace Authorization.Domain.Specifications
-{
+{/*
     public class PermissionsByRolesSpec : BaseSpecification<Permission>
     {
         public PermissionsByRolesSpec(List<Guid> rolesId)
@@ -18,5 +18,5 @@ namespace Authorization.Domain.Specifications
             ApplyOrderBy(p => p.ResourceId);
             ApplyThenOrderBy(p => p.Action);
         }
-    }
+    }*/
 }

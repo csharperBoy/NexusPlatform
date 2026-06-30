@@ -80,7 +80,7 @@ namespace Authorization.Infrastructure.Services
 
         }
         #region Rule
-     
+     /*
         private async Task DeletePermissionRuleAsync(Guid id)
         {
             try
@@ -127,7 +127,7 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
+        
         private PermissionRuleDto MapToDto(PermissionRule model)
         {
 
@@ -146,7 +146,7 @@ namespace Authorization.Infrastructure.Services
             };
 
         }
-
+        
         private async Task<IReadOnlyList<PermissionRuleDto>> GetPermissionRules(Guid? permissionId)
         {
             var cacheKey = $"{baseCacheKey}:full";
@@ -204,6 +204,7 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
+       */
         private async Task AddRulesToPermission(Guid permissionId, List<PermissionRuleCreateDto>? rules)
         {
             List<PermissionRule> newList = rules.Select(r =>
@@ -359,7 +360,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task RevokePermissionAsync(Guid permissionId)
+      /*  public async Task RevokePermissionAsync(Guid permissionId)
         {
             try
             {
@@ -395,7 +396,7 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
+*/
         public async Task DeletePermissionAsync(Guid permissionId)
         {
             try
@@ -555,7 +556,7 @@ namespace Authorization.Infrastructure.Services
             }
         }
 
-        public async Task ResolvePermissionConflictsAsync(Guid userId, string resourceKey)
+      /*  public async Task ResolvePermissionConflictsAsync(Guid userId, string resourceKey)
         {
             try
             {
@@ -620,7 +621,7 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
+        */
         private async Task InvalidatePermissionCachesAsync(Guid assigneeId, Guid resourceId)
         {
             try
@@ -647,6 +648,7 @@ namespace Authorization.Infrastructure.Services
                 ResourceId = permission.FkResourceId,
                 ResourceKey = permission.Resource?.Key,
                 AssigneeId = permission.FkPermissionAssigneeId,
+                AssigneeType = permission.PermissionAssignee?.Type ?? AssigneeType.User,
                 Action = permission.Action,
                 Effect = permission.Effect,
                 IsActive = permission.IsActive,
@@ -718,7 +720,7 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
+        /*
         public async Task<IReadOnlyList<PermissionDto>> GetRolePermissionsAsync(List<Guid>? roleIds)
         {
             try
@@ -786,12 +788,12 @@ namespace Authorization.Infrastructure.Services
                 throw;
             }
         }
-
-        public async Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds)
+        */
+        public async Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? partyId, List<Guid>? postIds, List<Guid> roleIds)
         {
             try
             {
-                var spec = new UserPermissionsSpec(userId, personId, positionsId, roleIds);
+                var spec = new UserPermissionsSpec(userId, partyId, postIds, roleIds);
                 var allPermissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
 
@@ -820,7 +822,7 @@ namespace Authorization.Infrastructure.Services
                 _logger.LogDebug("Cache hit for full resource tree");
                // return cached;
             }
-            var spec = new GetPermissionsSpec(request.AssigneeType, request.AssigneeId, request.ResourceId, request.description);
+            var spec = new GetPermissionsSpec( request.AssigneeId, request.ResourceId, request.description);
             var permissions = await _permissionSpecRepository.ListBySpecAsync(spec);
 
 
@@ -832,10 +834,10 @@ namespace Authorization.Infrastructure.Services
 
         }
 
-        public async Task<Guid> CreatePermissionAssigneeAsync(CancellationToken cancellationToken = default)
+        public async Task<Guid> CreatePermissionAssigneeAsync(AssigneeType type, CancellationToken cancellationToken = default)
         {
-            PermissionAssignee newModel = new PermissionAssignee();
-          await  _permissionAssigneeRepository.AddAsync(new PermissionAssignee());
+            PermissionAssignee newModel = new PermissionAssignee(type);
+          await  _permissionAssigneeRepository.AddAsync(newModel);
             return newModel.Id;
         }
         public async Task SaveAsync()

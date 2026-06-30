@@ -111,7 +111,7 @@ namespace Identity.Infrastructure.Data
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
-                    Guid permissionAssigneeId = await permissionPublicService.CreatePermissionAssigneeAsync();
+                    Guid permissionAssigneeId = await permissionPublicService.CreatePermissionAssigneeAsync(AssigneeType.Role);
                     var role = new ApplicationRole
                     (
                          roleName, permissionAssigneeId,
@@ -137,7 +137,7 @@ namespace Identity.Infrastructure.Data
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
             {
-                adminUser = new ApplicationUser(Guid.Empty, adminUserName, adminEmail , await permissionPublicService.CreatePermissionAssigneeAsync() )
+                adminUser = new ApplicationUser(Guid.Empty, adminUserName, adminEmail , await permissionPublicService.CreatePermissionAssigneeAsync(AssigneeType.User) )
                 {
                     EmailConfirmed = true
                 };
@@ -152,7 +152,7 @@ namespace Identity.Infrastructure.Data
             var initializerUser = await userManager.FindByEmailAsync("intitializer@info.com");
             if (initializerUser == null)
             {
-                initializerUser = new ApplicationUser(Guid.Empty, "intitializer", "intitializer@info.com", await permissionPublicService.CreatePermissionAssigneeAsync())
+                initializerUser = new ApplicationUser(Guid.Empty, "intitializer", "intitializer@info.com", await permissionPublicService.CreatePermissionAssigneeAsync(AssigneeType.User))
                 {
                     EmailConfirmed = true
                 };
@@ -251,7 +251,7 @@ namespace Identity.Infrastructure.Data
                         }
                     },
                     Effect = PermissionEffect.allow,
-                    //AssigneeType= AssigneeType.Role,
+                    AssigneeType= AssigneeType.Role,
                     AssigneeId = roleId,
 
                     Description = "Full access to Identity Users"
@@ -267,7 +267,7 @@ namespace Identity.Infrastructure.Data
                         }
                     },
                     Effect = PermissionEffect.allow,
-                    //AssigneeType= AssigneeType.Role,
+                    AssigneeType= AssigneeType.Role,
                     AssigneeId = roleId,
 
                     Description = "Full access to Identity Roles"
