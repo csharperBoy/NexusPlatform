@@ -16,8 +16,9 @@ namespace Authorization.Domain.Specifications
                        (!p.ExpiresAt.HasValue || p.ExpiresAt > DateTime.UtcNow))
         {
             AddInclude(p => p.Resource);
-            ApplyOrderBy(p => p.AssigneeType);
-            ApplyThenOrderBy(p => p.AssigneeId);
+            ApplyOrderBy(p => p.FkPermissionAssigneeId);
+            //ApplyOrderBy(p => p.AssigneeType);
+            //ApplyThenOrderBy(p => p.AssigneeId);
         }
     }
 }

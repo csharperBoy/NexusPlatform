@@ -36,16 +36,16 @@ namespace HR.Domain.Entities
          Guid _PersonId,
          Guid _EmploymentTypeId,
          Guid _EmploymentStatusId,
-         DateOnly _StartDate,
-         DateOnly? _EndDate
+         DateOnly _EffectiveFrom,
+         DateOnly? _EffectiveTo
             )
         {
             EmployeeCode = _EmployeeCode;
-            PersonId = _PersonId;
-            EmploymentTypeId = _EmploymentTypeId;
-            EmploymentStatusId = _EmploymentStatusId;
-            StartDate = _StartDate;
-            EndDate = _EndDate;
+            FkNaturalPersonId = _PersonId;
+            FkEmploymentTypeId = _EmploymentTypeId;
+            FkEmploymentStatusId = _EmploymentStatusId;
+            EffectiveFrom = _EffectiveFrom;
+            EffectiveTo = _EffectiveTo;
 
         }
 

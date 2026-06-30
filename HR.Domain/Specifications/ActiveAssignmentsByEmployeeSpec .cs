@@ -14,7 +14,7 @@ namespace HR.Domain.Specifications
     public class ActiveAssignmentsByEmployeeSpec : BaseSpecification<Assignment>
     {
         public ActiveAssignmentsByEmployeeSpec(Guid employeeId)
-            : base(a => a.EmploymentId == employeeId &&
+            : base(a => a.FkEmploymentId == employeeId &&
                        a.IsCurrent &&
                        (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime( DateTime.UtcNow)))
         {

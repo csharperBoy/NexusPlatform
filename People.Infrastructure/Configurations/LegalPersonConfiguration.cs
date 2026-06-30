@@ -1,4 +1,5 @@
-﻿using Core.Infrastructure.Database.Configurations;
+﻿using Core.Domain.Interfaces;
+using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using People.Domain.Entities;
@@ -19,24 +20,17 @@ namespace People.Infrastructure.Configurations
 
             builder.ToTable("legalPersons", "people");
 
-            // relation 
-            builder.HasOne(p => p.party)
-                     .WithMany(pr => pr.legalPersons)
-                     .HasForeignKey(pr => pr.fkPartyId)
-                     .OnDelete(DeleteBehavior.Cascade);
+            builder.HasIndex(e => e.Title, "IX_Persons_FullName_FastLookup");
 
-            // ایندکس ترکیبی طلایی برای چک کردن دسترسی
-            builder.HasIndex(p => new { p.RegisterCode })
-                   .HasDatabaseName("IX_Persons_FastLookup");
-            builder.HasIndex(p => new { p.Title })
-                 .HasDatabaseName("IX_Persons_FullName_FastLookup");
+            builder.HasIndex(e => e.RegisterCode, "IX_Persons_Unique")
+                .IsUnique()
+                .HasFilter("([RegisterCode] IS NOT NULL)");
 
-            // عدم ثبت دسترسی تکراری
-            builder.HasIndex(p => new {
-                p.RegisterCode
-            })
-            .HasDatabaseName("IX_Persons_Unique")
-            .IsUnique();
+            builder.HasIndex(e => e.FkPartyId, "IX_legalPersons_fkPartyId");
+            builder.HasOne(d => d.Party).WithMany(p => p.LegalPeople)
+                .HasForeignKey(d => d.FkPartyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_legalPersons_Parties");
         }
     }
 

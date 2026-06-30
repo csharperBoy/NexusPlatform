@@ -55,7 +55,6 @@ namespace Authorization.Application.Interfaces.Service
         Task<bool> CheckPermissionConflictAsync(
              Guid ResourceId,
         Guid AssigneeId,
-        AssigneeType AssigneeType,
         PermissionAction Action 
 
             );

@@ -56,7 +56,7 @@ namespace People.Domain.Entities
         public string Value { get; protected set; }
         public Guid FkPartyId { get; private set; }
 
-        public virtual Party FkParty { get; private set; } = null!;
+        public virtual Party Party { get; private set; } = null!;
         // Constructor for EF
         protected PartyContact() { }
         public PartyContact

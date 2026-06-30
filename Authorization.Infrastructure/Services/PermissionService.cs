@@ -26,6 +26,7 @@ namespace Authorization.Infrastructure.Services
     public class PermissionService : IPermissionInternalService
     {
         private readonly IRepository<AuthorizationDbContext, Permission, Guid> _permissionRepository;
+        private readonly IRepository<AuthorizationDbContext, PermissionAssignee, Guid> _permissionAssigneeRepository;
         private readonly ISpecificationRepository<Permission, Guid> _permissionSpecRepository;
         private readonly ISpecificationRepository<Resource, Guid> _resourceSpecRepository;
         private readonly IRepository<AuthorizationDbContext, Resource, Guid> _resourceRepository;
@@ -46,6 +47,7 @@ namespace Authorization.Infrastructure.Services
 
         public PermissionService(
             IRepository<AuthorizationDbContext, Permission, Guid> permissionRepository,
+            IRepository<AuthorizationDbContext, PermissionAssignee, Guid> permissionAssigneeRepository,
             ISpecificationRepository<Permission, Guid> permissionSpecRepository,
             IRepository<AuthorizationDbContext, Resource, Guid> resourceRepository,
             ISpecificationRepository<Resource, Guid> resourceSpecRepository,
@@ -62,6 +64,7 @@ namespace Authorization.Infrastructure.Services
          )
         {
             _permissionRepository = permissionRepository;
+            _permissionAssigneeRepository = permissionAssigneeRepository;
             _permissionSpecRepository = permissionSpecRepository;
             _resourceRepository = resourceRepository;
             _resourceSpecRepository = resourceSpecRepository;
@@ -302,7 +305,6 @@ namespace Authorization.Infrastructure.Services
                 var hasConflict = await CheckPermissionConflictAsync(
                       ResourceId,
                       AssigneeId,
-                      AssigneeType,
                       Action
                     );
                 if (hasConflict)
@@ -315,7 +317,6 @@ namespace Authorization.Infrastructure.Services
                 // ایجاد Permission جدید
                 var permission = new Permission(
                      ResourceId,
-                     AssigneeType,
                      AssigneeId,
                      Action,
                      effect,
@@ -370,8 +371,8 @@ namespace Authorization.Infrastructure.Services
                     throw new ArgumentException($"Permission with ID {permissionId} not found");
                 }
 
-                var assigneeId = permission.AssigneeId;
-                var resourceId = permission.ResourceId;
+                var assigneeId = permission.FkPermissionAssigneeId;
+                var resourceId = permission.FkResourceId;
 
                 // غیرفعال کردن Permission
                 permission.Deactivate();
@@ -456,7 +457,7 @@ namespace Authorization.Infrastructure.Services
                 {
                     throw new ArgumentException($"Permission with ID {Id} not found");
                 }
-                permission.ApplyChange(ResourceId, AssigneeType, AssigneeId, Action, effect, EffectiveFrom, ExpiresAt, IsActive, Description);
+                permission.ApplyChange(ResourceId,  AssigneeId, Action, effect, EffectiveFrom, ExpiresAt, IsActive, Description);
                 // انتشار ایونت
                 permission.AddDomainEvent(new PermissionChangedEvent((Guid)AssigneeId, (Guid)ResourceId));
                 await _permissionRepository.UpdateAsync(permission);
@@ -525,14 +526,12 @@ namespace Authorization.Infrastructure.Services
         public async Task<bool> CheckPermissionConflictAsync(
              Guid ResourceId,
              Guid AssigneeId,
-             AssigneeType AssigneeType,
              PermissionAction Action
             )
         {
             try
             {
                 var conflictSpec = new PermissionConflictSpec(
-                     AssigneeType,
                      AssigneeId,
                      ResourceId,
                      Action);
@@ -541,8 +540,8 @@ namespace Authorization.Infrastructure.Services
                 var hasConflict = existingPermissions.Any();
 
                 _logger.LogDebug(
-                    "Permission conflict check for {AssigneeType}:{AssigneeId} on {ResourceId}:{Action} = {HasConflict}",
-                     AssigneeType, AssigneeId, ResourceId, Action, hasConflict);
+                    "Permission conflict check for {AssigneeId} on {ResourceId}:{Action} = {HasConflict}",
+                      AssigneeId, ResourceId, Action, hasConflict);
 
                 return hasConflict;
             }
@@ -550,8 +549,8 @@ namespace Authorization.Infrastructure.Services
             {
                 _logger.LogError(
                     ex,
-                    "Error checking permission conflict for {AssigneeType}:{AssigneeId} on {ResourceId}",
-                     AssigneeType, AssigneeId, ResourceId);
+                    "Error checking permission conflict for {AssigneeId} on {ResourceId}",
+                      AssigneeId, ResourceId);
                 throw;
             }
         }
@@ -577,7 +576,7 @@ namespace Authorization.Infrastructure.Services
                 var allUserPermissions = await _permissionSpecRepository.ListBySpecAsync(userPermissionsSpec);
 
                 var userPermissions = allUserPermissions
-                    .Where(p => p.ResourceId == resource.Id && p.IsValid)
+                    .Where(p => p.FkResourceId == resource.Id && p.IsValid)
                     .ToList();
 
                 if (!userPermissions.Any())
@@ -645,10 +644,9 @@ namespace Authorization.Infrastructure.Services
             return new PermissionDto()
             {
                 Id = permission.Id,
-                ResourceId = permission.ResourceId,
+                ResourceId = permission.FkResourceId,
                 ResourceKey = permission.Resource?.Key,
-                AssigneeType = permission.AssigneeType,
-                AssigneeId = permission.AssigneeId,
+                AssigneeId = permission.FkPermissionAssigneeId,
                 Action = permission.Action,
                 Effect = permission.Effect,
                 IsActive = permission.IsActive,
@@ -685,7 +683,7 @@ namespace Authorization.Infrastructure.Services
                 ResourceByKeySpec specByKey = new ResourceByKeySpec(permissionDefinition.ResourceKey);
                 var specRet = await _resourceSpecRepository.FindBySpecAsync(specByKey);
                 Permission permission = new Permission(
-                    specRet.Items.FirstOrDefault().Id, permissionDefinition.AssigneeType,
+                    specRet.Items.FirstOrDefault().Id, 
                     permissionDefinition.AssigneeId,
                     permissionDefinition.Action,
                     //permissionDefinition.Scope.ToEnumOrDefault(ScopeType.Self),
@@ -706,12 +704,11 @@ namespace Authorization.Infrastructure.Services
             try
             {
                 return await _permissionRepository.ExistsAsync(
-                    p => p.ResourceId == permission.ResourceId &&
+                    p => p.FkResourceId == permission.FkResourceId &&
                     //p.Scope == permission.Scope &&
                     //p.SpecificScopeId == permission.SpecificScopeId && // همیشه مقدار دارد
                     p.Action == permission.Action &&
-                    p.AssigneeType == permission.AssigneeType &&
-                    p.AssigneeId == permission.AssigneeId &&
+                    p.FkPermissionAssigneeId == permission.FkPermissionAssigneeId &&
                     p.Effect == permission.Effect
          );
             }
@@ -833,6 +830,17 @@ namespace Authorization.Infrastructure.Services
             await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
             return result;
 
+        }
+
+        public async Task<Guid> CreatePermissionAssigneeAsync(CancellationToken cancellationToken = default)
+        {
+            PermissionAssignee newModel = new PermissionAssignee();
+          await  _permissionAssigneeRepository.AddAsync(new PermissionAssignee());
+            return newModel.Id;
+        }
+        public async Task SaveAsync()
+        {
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

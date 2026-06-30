@@ -14,7 +14,7 @@ namespace HR.Domain.Specifications
     public class PostsByUnitSpec : BaseSpecification<Post>
     {
         public PostsByUnitSpec(Guid unitId, bool includeOrganizationUnit = true)
-            : base(p => p.OrganizationUnitId == unitId)
+            : base(p => p.FkOrganizationUnitId == unitId)
         {
             if (includeOrganizationUnit)
             {

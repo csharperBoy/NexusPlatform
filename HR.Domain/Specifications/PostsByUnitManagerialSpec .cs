@@ -11,7 +11,7 @@ namespace HR.Domain.Specifications
     public class PostsByUnitManagerialSpec : BaseSpecification<Post>
     {
         public PostsByUnitManagerialSpec(Guid unitId)
-            : base(p => p.OrganizationUnitId == unitId )
+            : base(p => p.FkOrganizationUnitId == unitId )
         {
             AddInclude(p => p.OrganizationUnit);
             ApplyOrderBy(p => p.Code);

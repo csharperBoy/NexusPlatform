@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Events;
 using Core.Domain.ValueObjects;
 using Core.Shared.Results;
@@ -29,6 +30,8 @@ namespace Identity.Infrastructure.Services
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IJwtTokenService _tokenService;
         private readonly JwtOptions _jwtOptions;
+
+        private readonly IPermissionPublicService _permissionService;
         private readonly IRepository<IdentityDbContext, RefreshToken, Guid> _refreshTokenRepository;
         private readonly ISpecificationRepository<RefreshToken, Guid> _refreshTokenSpecRepository;
         private readonly IUnitOfWork<IdentityDbContext> _unitOfWork;
@@ -39,11 +42,13 @@ namespace Identity.Infrastructure.Services
             SignInManager<ApplicationUser> signInManager,
             IJwtTokenService tokenService,
             IOptions<JwtOptions> jwtOptions,
+             IPermissionPublicService permissionService,
             IRepository<IdentityDbContext, RefreshToken, Guid> refreshTokenRepository,
             ISpecificationRepository<RefreshToken, Guid> refreshTokenSpecRepository,
             IUnitOfWork<IdentityDbContext> unitOfWork,
             IRoleInternalService roleService)
         {
+            _permissionService = permissionService;
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
@@ -81,7 +86,7 @@ namespace Identity.Infrastructure.Services
 
         public async Task<Result<AuthResponse>> RegisterAsync(RegisterRequest request)
         {
-            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email);
+            var user = new ApplicationUser(Guid.NewGuid(), request.Username, request.Email , await _permissionService.CreatePermissionAssigneeAsync());
             user.NickName = request.NickName;
             var createRes = await _userManager.CreateAsync(user, request.Password);
             if (!createRes.Succeeded)

@@ -26,7 +26,7 @@ namespace People.Domain.Entities
 
         public string? RegisterCode { get; private set; }
 
-        public virtual Party FkParty { get; private set; } = null!;
+        public virtual Party Party { get; private set; } = null!;
 
         protected LegalPerson() { }
         public LegalPerson(

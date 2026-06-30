@@ -11,11 +11,11 @@ namespace HR.Domain.Specifications
     public class ActiveAssignmentsByPostSpec : BaseSpecification<Assignment>
     {
         public ActiveAssignmentsByPostSpec(Guid postId)
-            : base(a => a.PostId == postId &&
+            : base(a => a.FkPostId == postId &&
                        a.IsCurrent &&
                        (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime(DateTime.UtcNow)))
         {
-            AddInclude(a => a.Employee);
+            AddInclude(a => a.Employment);
             AddInclude(a => a.Post.OrganizationUnit);
             ApplyOrderByDescending(a => a.EffectiveFrom);
         }

@@ -18,6 +18,10 @@ namespace People.Infrastructure.Configurations
             base.Configure(builder); // اعمال CreatedAt و...
 
             builder.ToTable("naturalPersons", "people");
+            builder.HasIndex(e => e.FkPartyId, "IX_naturalPersons_fkPartyId");
+            builder.HasOne(d => d.Party).WithMany(p => p.NaturalPeople)
+                .HasForeignKey(d => d.FkPartyId)
+                .HasConstraintName("FK_naturalPersons_Parties");
 
             // 1. تنظیمات و ایندکس‌های مربوط به NationalCode
             builder.OwnsOne(p => p.NationalCode, nc =>
@@ -51,16 +55,7 @@ namespace People.Infrastructure.Configurations
                   .HasDatabaseName("IX_Persons_FullName_FastLookup");
             });
 
-            // 3. روابط (Relations)
-            builder.HasOne(p => p.Party)
-                   .WithMany(pr => pr.NaturalPersons)
-                   .HasForeignKey(pr => pr.fkPartyId)
-                   .OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasMany(p => p.Profiles)
-                     .WithOne(pr => pr.person)
-                     .HasForeignKey(pr => pr.FkPersonId)
-                     .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

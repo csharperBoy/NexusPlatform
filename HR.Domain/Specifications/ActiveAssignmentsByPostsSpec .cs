@@ -14,7 +14,7 @@ namespace HR.Domain.Specifications
     public class ActiveAssignmentsByPostsSpec : BaseSpecification<Assignment>
     {
         public ActiveAssignmentsByPostsSpec(IEnumerable<Guid> postIds)
-            : base(a => postIds.Contains(a.PostId) &&
+            : base(a => postIds.Contains(a.FkPostId) &&
                        a.IsCurrent &&
                        (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime( DateTime.UtcNow)))
         {

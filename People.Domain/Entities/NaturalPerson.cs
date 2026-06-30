@@ -37,7 +37,7 @@ namespace People.Domain.Entities
 
         //navigation
 
-        public virtual Party FkParty { get; private set; } = null!;
+        public virtual Party Party { get; private set; } = null!;
 
         public virtual ICollection<NaturalPersonProfile> NaturalPersonProfiles { get; private set; } = new List<NaturalPersonProfile>();
         // Constructor for EF
@@ -62,7 +62,7 @@ namespace People.Domain.Entities
         }
         public void setParty(Guid partyId)
         {
-            fkPartyId = partyId;
+            FkPartyId = partyId;
         }
         public NaturalPerson(
             string? _NationalCode,

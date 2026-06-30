@@ -467,7 +467,8 @@ namespace Authorization.Infrastructure.Data
             try
             {
                 // 1. دریافت RoleId نقش Admin
-                var adminRoleId = await roleService.GetAdminRoleIdAsync();
+                //var adminRoleId = await roleService.GetAdminRoleIdAsync();
+                var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync();
                 //var initializerUserId = await userService.GetUserId("intitializer");
                 logger.LogInformation($"Admin Role ID: {adminRoleId}");
 
@@ -508,9 +509,8 @@ namespace Authorization.Infrastructure.Data
                     // بررسی وجود پرمیژن تکراری
                     var existingPermission = await dbContext.Set<Permission>()
                         .FirstOrDefaultAsync(p =>
-                            p.AssigneeType == AssigneeType.Role &&
-                            p.AssigneeId == adminRoleId &&
-                            p.ResourceId == resourceId &&
+                            p.FkPermissionAssigneeId == adminRoleId &&
+                            p.FkResourceId == resourceId &&
                             p.Action == definition.Action &&
                             //p.Scope == definition.Scope.ToEnumOrDefault(ScopeType.Self) &&
                             p.Effect == definition.Effect);
@@ -524,8 +524,7 @@ namespace Authorization.Infrastructure.Data
                     // ایجاد پرمیژن جدید
                     var permission = new Permission(
                         resourceId: resourceId,
-                        assigneeType: AssigneeType.Role,
-                        assigneeId: adminRoleId,
+                        permissionAssigneeId: adminRoleId,
                         action: definition.Action,
                         //scope: definition.Scope.ToEnumOrDefault(ScopeType.Self),
                         //specificScopeId: null, // چون ScopeType.All است

@@ -147,6 +147,17 @@ namespace Identity.Infrastructure.Services
             return role.Id;
         }
 
+        public  async Task<Guid> GetAdminRolePermissionAssigneeIdAsync(CancellationToken cancellationToken = default)
+        {
+            var role = await _roleManager.FindByNameAsync("Admin");
+
+            if (role == null)
+            {
+                throw new Exception($"Role with name Admin not found.");
+            }
+
+            return role.FkPermissionAssigneeId;
+        }
         public async Task<Guid> GetAdminRoleIdAsync(CancellationToken cancellationToken = default)
         {
             return await GetRoleId("Admin");
@@ -233,6 +244,7 @@ namespace Identity.Infrastructure.Services
                                 }).ToListAsync();
         }
 
+        
     }
 
 }

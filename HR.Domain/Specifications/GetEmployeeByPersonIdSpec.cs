@@ -13,7 +13,7 @@ namespace HR.Domain.Specifications
     {
         public GetEmployeeByPersonIdSpec(Guid? personId = null)
             : base(p =>
-                        personId == null || p.PersonId == personId)
+                        personId == null || p.FkNaturalPersonId == personId)
         {
         }
     }

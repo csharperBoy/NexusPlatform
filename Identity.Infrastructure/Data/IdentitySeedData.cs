@@ -96,13 +96,14 @@ namespace Identity.Infrastructure.Data
             ILogger logger,
             IConfiguration config)
         {
-            await SeedRolesAsync(roleManager);
-            await SeedAdminUserAsync(userManager, config); 
+            await SeedRolesAsync(roleManager, permissionPublicService);
+            await SeedAdminUserAsync(userManager, permissionPublicService, config); 
             await AssignAdminRoleToAdminUserAsync(userManager, config);
             await SeedIdentotiesForAuthorizationAsync(resourcePublicService,permissionPublicService,roleService,logger);
             await SeedForBaseAsync(menuService, logger);
         }
-        public static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager)
+        public static async Task SeedRolesAsync(RoleManager<ApplicationRole> roleManager,
+            IPermissionPublicService permissionPublicService)
         {
             string[] roleNames = { "Admin", "User" };
 
@@ -110,9 +111,10 @@ namespace Identity.Infrastructure.Data
             {
                 if (!await roleManager.RoleExistsAsync(roleName))
                 {
+                    Guid permissionAssigneeId = await permissionPublicService.CreatePermissionAssigneeAsync();
                     var role = new ApplicationRole
                     (
-                         roleName,
+                         roleName, permissionAssigneeId,
                          $"{roleName} role"
                     );
 
@@ -126,7 +128,7 @@ namespace Identity.Infrastructure.Data
             }
         }
 
-        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IConfiguration config)
+        public static async Task SeedAdminUserAsync(UserManager<ApplicationUser> userManager, IPermissionPublicService permissionPublicService, IConfiguration config)
         {
             var adminEmail = config["Seed:AdminEmail"] ?? "admin@local";
             var adminPassword = config["Seed:AdminPassword"] ?? "ChangeMe123!";
@@ -135,7 +137,7 @@ namespace Identity.Infrastructure.Data
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
             {
-                adminUser = new ApplicationUser(Guid.Empty, adminUserName, adminEmail)
+                adminUser = new ApplicationUser(Guid.Empty, adminUserName, adminEmail , await permissionPublicService.CreatePermissionAssigneeAsync() )
                 {
                     EmailConfirmed = true
                 };
@@ -150,7 +152,7 @@ namespace Identity.Infrastructure.Data
             var initializerUser = await userManager.FindByEmailAsync("intitializer@info.com");
             if (initializerUser == null)
             {
-                initializerUser = new ApplicationUser(Guid.Empty, "intitializer", "intitializer@info.com")
+                initializerUser = new ApplicationUser(Guid.Empty, "intitializer", "intitializer@info.com", await permissionPublicService.CreatePermissionAssigneeAsync())
                 {
                     EmailConfirmed = true
                 };
@@ -249,7 +251,7 @@ namespace Identity.Infrastructure.Data
                         }
                     },
                     Effect = PermissionEffect.allow,
-                    AssigneeType= AssigneeType.Role,
+                    //AssigneeType= AssigneeType.Role,
                     AssigneeId = roleId,
 
                     Description = "Full access to Identity Users"
@@ -265,7 +267,7 @@ namespace Identity.Infrastructure.Data
                         }
                     },
                     Effect = PermissionEffect.allow,
-                    AssigneeType= AssigneeType.Role,
+                    //AssigneeType= AssigneeType.Role,
                     AssigneeId = roleId,
 
                     Description = "Full access to Identity Roles"
@@ -293,7 +295,8 @@ namespace Identity.Infrastructure.Data
 
                     // 2. ثبت پرمیشن‌ها (Permissions)
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
-                    var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    //var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
 
                     var permissions = GetIdentityPermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);

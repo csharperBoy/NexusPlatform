@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
+using Core.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -84,7 +85,7 @@ namespace Core.Infrastructure.Database.Configurations
 
         private void ConfigureBaseEntity(EntityTypeBuilder<TEntity> builder)
         {
-
+            builder.HasKey("Id").HasName($"PK_{typeof(TEntity).Name}");
             builder.HasIndex("Id").IsUnique();
             builder.Property("Id").ValueGeneratedNever();
 

@@ -79,7 +79,7 @@ namespace People.Domain.Entities
 
         // Navigation
 
-        public virtual NaturalPerson FkNaturalPerson { get; private set; } = null!;
+        public virtual NaturalPerson NaturalPerson { get; private set; } = null!;
         // Constructor for EF
         protected NaturalPersonProfile() { }
         public NaturalPersonProfile(

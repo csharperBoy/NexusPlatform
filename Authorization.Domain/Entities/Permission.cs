@@ -17,9 +17,9 @@ using System.Threading.Tasks;
 
 namespace Authorization.Domain.Entities
 {
-    [DynamicFilterable(UseNavigation =true)]
+    [DynamicFilterable(UseNavigation = true)]
     [SecuredResource("Authorization.Permission")]
-    public class Permission : BaseEntity ,IAuditableEntity, IOwnerableEntity, IAggregateRoot
+    public class Permission : BaseEntity, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -59,11 +59,10 @@ namespace Authorization.Domain.Entities
         #endregion
 
         // 1. چه کسی؟
-        public AssigneeType AssigneeType { get; private set; }
-        public Guid AssigneeId { get; private set; } // RoleId, PositionId, or PersonId
 
+        public Guid FkPermissionAssigneeId { get; set; }
         // 2. روی چه چیزی؟
-        public Guid ResourceId { get; private set; }
+        public Guid FkResourceId { get; private set; }
 
         // 3. چه کاری؟
         public PermissionAction Action { get; private set; }
@@ -72,16 +71,21 @@ namespace Authorization.Domain.Entities
         public PermissionEffect Effect { get; private set; } = PermissionEffect.allow; // برای Deny یا allow کردن
         public DateTime? EffectiveFrom { get; private set; }
         public DateTime? ExpiresAt { get; private set; }
-        [Display(Name ="توضیحات")]
+        [Display(Name = "توضیحات")]
         public string? Description { get; private set; }
-        [Display(Name ="فعال/غیرفعال")]
+        [Display(Name = "فعال/غیرفعال")]
         public bool IsActive { get; private set; } = true;
 
         // Navigation
-        public virtual Resource Resource { get; private set; } = null!;
-        public virtual ICollection<PermissionRule>? Rules { get; private set; }
 
-        public virtual ICollection<Scope> Scopes { get; private set; }
+        public virtual PermissionAssignee PermissionAssignee { get; set; } = null!;
+
+        public virtual Resource Resource { get; set; } = null!;
+
+        public virtual ICollection<PermissionRule> Rules { get; set; } = new List<PermissionRule>();
+
+        public virtual ICollection<Scope> Scopes { get; set; } = new List<Scope>();
+
         [NotMapped]
         public bool IsExpired => ExpiresAt.HasValue && ExpiresAt < DateTime.UtcNow;
         [NotMapped]
@@ -93,34 +97,30 @@ namespace Authorization.Domain.Entities
 
         public Permission(
             Guid resourceId,
-            AssigneeType assigneeType,
-            Guid assigneeId,
+           Guid permissionAssigneeId,
             PermissionAction action,
             PermissionEffect effect = PermissionEffect.allow)
         {
-            ResourceId = resourceId;
-            AssigneeType = assigneeType;
-            AssigneeId = assigneeId;
+            FkResourceId = resourceId;
+            FkPermissionAssigneeId = permissionAssigneeId;
             Action = action;
             Effect = effect;
         }
         public Permission(
             Guid resourceId,
-            AssigneeType assigneeType,
-            Guid assigneeId,
+           Guid permissionAssigneeId,
             PermissionAction action,
-            PermissionEffect effect = PermissionEffect.allow,            
+            PermissionEffect effect = PermissionEffect.allow,
             DateTime? effectiveFrom = null,
             DateTime? expiresAt = null,
-            string? description = null,            
+            string? description = null,
             string createdBy = "system")
         {
             if (resourceId == Guid.Empty) throw new ArgumentException("Resource ID cannot be empty.");
-            if (assigneeId == Guid.Empty) throw new ArgumentException("Assignee ID cannot be empty.");
-            
-            ResourceId = resourceId;
-            AssigneeType = assigneeType;
-            AssigneeId = assigneeId;
+            if (permissionAssigneeId == Guid.Empty) throw new ArgumentException("Assignee ID cannot be empty.");
+
+            FkResourceId = resourceId;
+            FkPermissionAssigneeId = permissionAssigneeId;
             Action = action;
             Effect = effect;
             EffectiveFrom = effectiveFrom;
@@ -133,11 +133,10 @@ namespace Authorization.Domain.Entities
 
         private void Touch() => ModifiedAt = DateTime.UtcNow;
 
-        
+
 
         public bool ApplyChange(
                 Guid? _ResourceId = null,
-                AssigneeType? _AssigneeType = null,
                 Guid? _AssigneeId = null,
                 PermissionAction? _Action = null,
                 PermissionEffect? _effect = null,
@@ -150,21 +149,17 @@ namespace Authorization.Domain.Entities
         {
             bool hasChange = false;
             // آپدیت فیلدها
-            if (_ResourceId != null && _ResourceId != this.ResourceId)
+            if (_ResourceId != null && _ResourceId != this.FkResourceId)
             {
-                this.ResourceId =(Guid) _ResourceId;
+                this.FkResourceId = (Guid)_ResourceId;
                 hasChange = true;
             }
-            if (_AssigneeType != null && _AssigneeType != this.AssigneeType)
-            {
-                this.AssigneeType =(AssigneeType) _AssigneeType;
-                hasChange = true;
-            }
+            
 
 
-            if (_AssigneeId != null && _AssigneeId != this.AssigneeId)
+            if (_AssigneeId != null && _AssigneeId != this.FkPermissionAssigneeId)
             {
-                this.AssigneeId =(Guid) _AssigneeId;
+                this.FkPermissionAssigneeId = (Guid)_AssigneeId;
                 hasChange = true;
             }
             if (_Action != null && _Action != this.Action)
@@ -189,7 +184,7 @@ namespace Authorization.Domain.Entities
             }
             if (_IsActive != null && _IsActive != this.IsActive)
             {
-                this.IsActive =(bool) _IsActive;
+                this.IsActive = (bool)_IsActive;
                 hasChange = true;
             }
             if (_Description != null && _Description != this.Description)
@@ -208,19 +203,19 @@ namespace Authorization.Domain.Entities
 
         public void Update(
            PermissionAction action,
-          
+
            string description)
         {
-            
+
             Action = action;
             Description = description;
             ModifiedAt = DateTime.UtcNow;
 
             // ارسال ایونت وقتی دسترسی تغییر می‌کند
-            AddDomainEvent(new PermissionChangedEvent(AssigneeId, ResourceId));
+            AddDomainEvent(new PermissionChangedEvent(FkPermissionAssigneeId, FkResourceId));
         }
 
-     
+
 
         public void SetTemporalRange(DateTime? effectiveFrom, DateTime? expiresAt)
         {
@@ -246,15 +241,15 @@ namespace Authorization.Domain.Entities
             ModifiedAt = DateTime.UtcNow;
         }
 
-        public bool AppliesTo(AssigneeType assigneeType, Guid assigneeId)
+        public bool AppliesTo( Guid assigneeId)
         {
-            return AssigneeType == assigneeType && AssigneeId == assigneeId;
+            return  FkPermissionAssigneeId == assigneeId;
         }
-        public bool AppliesTo(AssigneeType assigneeType, List<Guid> assigneeId)
+        public bool AppliesTo( List<Guid> assigneeId)
         {
-            return AssigneeType == assigneeType &&   assigneeId.Any(a=>a == AssigneeId);
+            return  assigneeId.Any(a => a == FkPermissionAssigneeId);
         }
 
-    
+
     }
 }

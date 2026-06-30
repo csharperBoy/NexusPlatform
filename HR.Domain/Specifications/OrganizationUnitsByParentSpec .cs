@@ -14,7 +14,7 @@ namespace HR.Domain.Specifications
     public class OrganizationUnitsByParentSpec : BaseSpecification<OrganizationUnit>
     {
         public OrganizationUnitsByParentSpec(Guid? parentId)
-            : base(u => u.ParentId == parentId)
+            : base(u => u.FkParentId == parentId)
         {
             AddInclude(u => u.Parent);
             ApplyOrderBy(u => u.Name);

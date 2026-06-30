@@ -30,10 +30,10 @@ namespace People.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("people"));
             modelBuilder.ApplyConfiguration(new LegalPersonConfiguration());
             modelBuilder.ApplyConfiguration(new NaturalPersonConfiguration());
-            modelBuilder.ApplyConfiguration(new PartiesConfiguration());
-            modelBuilder.ApplyConfiguration(new PartiesRelationsConfiguration());
-            modelBuilder.ApplyConfiguration(new PersonProfileConfiguration());
-            modelBuilder.ApplyConfiguration(new PersonContactConfiguration());
+            modelBuilder.ApplyConfiguration(new PartyConfiguration());
+            modelBuilder.ApplyConfiguration(new PartiesRelationConfiguration());
+            modelBuilder.ApplyConfiguration(new NaturalPersonProfileConfiguration());
+            modelBuilder.ApplyConfiguration(new PartyContactConfiguration());
             
         }
 

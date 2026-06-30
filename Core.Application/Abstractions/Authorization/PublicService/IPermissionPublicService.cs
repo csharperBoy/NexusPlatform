@@ -14,7 +14,8 @@ namespace Core.Application.Abstractions.Authorization.PublicService
         /// ثبت پرمیشن‌های اولیه برای یک نقش خاص (مثلاً ادمین)
         /// </summary>
         Task SeedRolePermissionsAsync( List<PermissionDto> permissions, CancellationToken cancellationToken = default);
-
         Task<IReadOnlyList<PermissionDto>> GetUserAllPermissionsAsync(Guid userId, Guid? personId, List<Guid>? positionsId, List<Guid> roleIds);
+        Task<Guid> CreatePermissionAssigneeAsync(CancellationToken cancellationToken = default);
+        Task SaveAsync();
     }
 }

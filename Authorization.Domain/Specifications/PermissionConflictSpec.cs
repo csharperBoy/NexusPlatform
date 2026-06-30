@@ -13,10 +13,9 @@ namespace Authorization.Domain.Specifications
 {
     public class PermissionConflictSpec : BaseSpecification<Permission>
     {
-        public PermissionConflictSpec(AssigneeType assigneeType, Guid assigneeId, Guid resourceId, PermissionAction action)
-            : base(p => p.AssigneeType == assigneeType &&
-                       p.AssigneeId == assigneeId &&
-                       p.ResourceId == resourceId &&
+        public PermissionConflictSpec(Guid assigneeId, Guid resourceId, PermissionAction action)
+            : base(p => p.FkPermissionAssigneeId == assigneeId &&
+                       p.FkResourceId == resourceId &&
                        p.Action == action &&
                        (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow) && // !IsExpired
                        (p.EffectiveFrom == null || p.EffectiveFrom <= DateTime.UtcNow)) // IsEffective
