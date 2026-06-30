@@ -35,6 +35,7 @@ namespace Authorization.Infrastructure.Data
         //public DbSet<JoinDetail> JoinDetails { get; set; } = null!;
         public DbSet<Scope> Scopes { get; set; } = null!;
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+        public DbSet<PermissionAssignee> PermissionAssignees { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -44,6 +45,7 @@ namespace Authorization.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new ResourceConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionConfiguration());
             modelBuilder.ApplyConfiguration(new PermissionRuleConfiguration());
+            modelBuilder.ApplyConfiguration(new PermissionAssigneeConfiguration());
             //modelBuilder.ApplyConfiguration(new JoinDetailConfiguration());
             modelBuilder.ApplyConfiguration(new ScopeConfiguration());
         }

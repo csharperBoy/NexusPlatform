@@ -12,8 +12,8 @@ namespace HR.Domain.Entities
     {
         public string EmployeeCode { get; private set; }
         public Guid FkNaturalPersonId { get; private set; }
-        public Guid FkEmploymentTypeId { get; private set; }
-        public Guid FkEmploymentStatusId { get; private set; }
+        public Guid? FkEmploymentTypeId { get; private set; }
+        public Guid? FkEmploymentStatusId { get; private set; }
         public DateOnly EffectiveFrom { get; private set; }
         public DateOnly? EffectiveTo { get; private set; }
 

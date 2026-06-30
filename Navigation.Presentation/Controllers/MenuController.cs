@@ -18,7 +18,7 @@ namespace Navigation.Presentation.Controllers
     public class MenuController : BaseController
     {
         [HttpGet("GetMenuTreeQuery")]
-        [AuthorizeResource("base.menu", "View")]
+        [AuthorizeResource("navigation.menu", "View")]
         public async Task<IActionResult> GetMenuTreeQuery()
         {
 

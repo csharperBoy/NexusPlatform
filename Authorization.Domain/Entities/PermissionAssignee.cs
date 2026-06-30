@@ -19,7 +19,10 @@ namespace Authorization.Domain.Entities
         public AssigneeType Type { get; private set; }
         //navigate
         public virtual ICollection<Permission> Permissions { get; set; } = new List<Permission>();
-
+        protected PermissionAssignee()
+        {
+            
+        }
         public PermissionAssignee(AssigneeType _Type)
         {
             Type = _Type;

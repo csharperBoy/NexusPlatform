@@ -1,4 +1,4 @@
-﻿
+﻿using Navigation.Domain.Entities;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
@@ -15,35 +15,73 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Base.Infrastructure.Data
+namespace Navigation.Infrastructure.Data
 {
-    public static class BaseSeedData
+    public static class NavigationSeedData
     {
         // تعریف ساختار درختی منابع ماژول Audit
-        private static List<ResourceDto> GetAuditResourceDefinitions()
+        private static List<ResourceDto> GetNavigationResourceDefinitions()
         {
             return new List<ResourceDto>
             {
-                
+                new()
+                {
+                    Key = "navigation",
+                    Name = "Navigation",
+                    Type =ResourceType.Module,
+                    Category = ResourceCategory.System,
+                    Description = "Navigation management module",
+                    DisplayOrder = 2000,
+                    Icon = "shield",
+                    Children = new List<ResourceDto>
+                    {
+                        new()
+                        {
+                            Key = "navigation.menu",
+                            Name = "Navigation Menus",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "Menu management",
+                            DisplayOrder = 2001,
+                            Icon = "list",
+                        }
+                    }
+                }
             };
         }
 
         // تعریف پرمیشن‌های پیش‌فرض ماژول Audit
-        private static List<PermissionDto> GetBasePermissionDefinitions(Guid roleId)
+        private static List<PermissionDto> GetNavigationPermissionDefinitions(Guid roleId)
         {
             return new List<PermissionDto>
             {
-              
+               new()
+               {
+                   ResourceKey = "navigation.menu",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to navigation menu"
+               }
             };
         }
-        public static async Task SeedBaseForAuthorizationAsync(
+        public static async Task SeedNavigationForAuthorizationAsync(
           IResourcePublicService resourcePublicService,
           IPermissionPublicService permissionPublicService,
           IRolePublicService roleService,
           ILogger logger,
           CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("🚀 Starting Base module seeding...");
+            logger.LogInformation("🚀 Starting Navigation module seeding...");
 
             try
             {
@@ -51,18 +89,18 @@ namespace Base.Infrastructure.Data
                 {
                     // 1. ثبت منابع (Resources)
                     // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
-                    var resources = GetAuditResourceDefinitions();
+                    var resources = GetNavigationResourceDefinitions();
                     await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
-                    logger.LogInformation("✅ Base resources synced successfully.");
+                    logger.LogInformation("✅ Navigation resources synced successfully.");
 
                     // 2. ثبت پرمیشن‌ها (Permissions)
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
                     //var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
                     var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
 
-                    var permissions = GetBasePermissionDefinitions(adminRoleId);
+                    var permissions = GetNavigationPermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
-                    logger.LogInformation("✅ Base permissions seeded successfully.");
+                    logger.LogInformation("✅ Navigation permissions seeded successfully.");
                 }
             }
             catch (Exception ex)
@@ -72,8 +110,9 @@ namespace Base.Infrastructure.Data
             }
         }
 
-        public static async Task SeedBaseAsync(
-            IUnitOfWork<BaseDbContext> unitOfWork,
+        public static async Task SeedNavigationAsync(
+            IRepository<NavigationDbContext,Menu, Guid> menuRepository,
+            IUnitOfWork<NavigationDbContext> unitOfWork,
             IConfiguration config,
             ILogger logger)
         {

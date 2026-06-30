@@ -4,6 +4,7 @@ using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Infrastructure.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    partial class HRDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260630103804_Edit_1_HR")]
+    partial class Edit_1_HR
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -187,10 +190,10 @@ namespace HR.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("FkEmploymentStatusId")
+                    b.Property<Guid>("FkEmploymentStatusId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FkEmploymentTypeId")
+                    b.Property<Guid>("FkEmploymentTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkNaturalPersonId")
@@ -624,12 +627,14 @@ namespace HR.Infrastructure.Migrations
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentStatusId")
                         .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
                         .HasConstraintName("FK_ Employment_ EmploymentStatus1");
 
                     b.HasOne("HR.Domain.Entities.EmploymentType", "EmploymentType")
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentTypeId")
                         .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
                         .HasConstraintName("FK_ Employment_ EmploymentType1");
 
                     b.Navigation("EmploymentStatus");

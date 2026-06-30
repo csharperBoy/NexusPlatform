@@ -43,6 +43,9 @@
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\Identity.Presentation\Identity.Presentation.csproj" />
+    <ProjectReference Include="..\Navigation.Application\Navigation.Application.csproj" />
+    <ProjectReference Include="..\Navigation.Infrastructure\Navigation.Infrastructure.csproj" />
+    <ProjectReference Include="..\Navigation.Presentation\Navigation.Presentation.csproj" />
     <ProjectReference Include="..\People.Application\People.Application.csproj" />
     <ProjectReference Include="..\People.Infrastructure\People.Infrastructure.csproj" />
     <ProjectReference Include="..\People.Presentation\People.Presentation.csproj" />

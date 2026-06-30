@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Navigation.Domain.Entities
 {
     [DynamicFilterable(UseNavigation = false)]
-    [SecuredResource("Base.Menu")]
+    [SecuredResource("Navigation.Menu")]
     public class Menu : BaseEntity, IHierarchicalStructureEntity<Menu, Guid?>, IAuditableEntity, IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
