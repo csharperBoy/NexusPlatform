@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core.Domain\Core.Domain.csproj" />
+    <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Entities\" />
+    <Folder Include="Events\" />
+    <Folder Include="Specifications\" />
+  </ItemGroup>
+
+</Project>

@@ -22,12 +22,12 @@ namespace HR.Infrastructure.Configurations
             builder.HasOne(d => d.EmploymentStatus).WithMany(p => p.Employments)
                 .HasForeignKey(d => d.FkEmploymentStatusId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK_ Employment_ EmploymentStatus1");
+                .HasConstraintName("FK_ Employment_ EmploymentStatus");
 
             builder.HasOne(d => d.EmploymentType).WithMany(p => p.Employments)
                 .HasForeignKey(d => d.FkEmploymentTypeId)
                 .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK_ Employment_ EmploymentType1");
+                .HasConstraintName("FK_ Employment_ EmploymentType");
         }
     }
 }

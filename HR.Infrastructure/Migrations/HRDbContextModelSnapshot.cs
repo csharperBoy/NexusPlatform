@@ -624,13 +624,13 @@ namespace HR.Infrastructure.Migrations
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentStatusId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_ Employment_ EmploymentStatus1");
+                        .HasConstraintName("FK_ Employment_ EmploymentStatus");
 
                     b.HasOne("HR.Domain.Entities.EmploymentType", "EmploymentType")
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentTypeId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_ Employment_ EmploymentType1");
+                        .HasConstraintName("FK_ Employment_ EmploymentType");
 
                     b.Navigation("EmploymentStatus");
 

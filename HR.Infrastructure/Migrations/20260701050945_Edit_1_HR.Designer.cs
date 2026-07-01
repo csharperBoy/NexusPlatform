@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Infrastructure.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    [Migration("20260630103804_Edit_1_HR")]
+    [Migration("20260701050945_Edit_1_HR")]
     partial class Edit_1_HR
     {
         /// <inheritdoc />
@@ -190,10 +190,10 @@ namespace HR.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("FkEmploymentStatusId")
+                    b.Property<Guid?>("FkEmploymentStatusId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FkEmploymentTypeId")
+                    b.Property<Guid?>("FkEmploymentTypeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkNaturalPersonId")
@@ -627,15 +627,13 @@ namespace HR.Infrastructure.Migrations
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentStatusId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired()
-                        .HasConstraintName("FK_ Employment_ EmploymentStatus1");
+                        .HasConstraintName("FK_ Employment_ EmploymentStatus");
 
                     b.HasOne("HR.Domain.Entities.EmploymentType", "EmploymentType")
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentTypeId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired()
-                        .HasConstraintName("FK_ Employment_ EmploymentType1");
+                        .HasConstraintName("FK_ Employment_ EmploymentType");
 
                     b.Navigation("EmploymentStatus");
 

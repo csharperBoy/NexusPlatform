@@ -188,8 +188,8 @@ namespace HR.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FkNaturalPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkEmploymentTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkEmploymentStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FkEmploymentTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FkEmploymentStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
                     EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true)
                 },
@@ -197,14 +197,14 @@ namespace HR.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Employment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ Employment_ EmploymentStatus1",
+                        name: "FK_ Employment_ EmploymentStatus",
                         column: x => x.FkEmploymentStatusId,
                         principalSchema: "hr",
                         principalTable: " EmploymentStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_ Employment_ EmploymentType1",
+                        name: "FK_ Employment_ EmploymentType",
                         column: x => x.FkEmploymentTypeId,
                         principalSchema: "hr",
                         principalTable: " EmploymentType",
