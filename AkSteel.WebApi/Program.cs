@@ -5,7 +5,7 @@ using Serilog;
 try
 {
     Console.OutputEncoding = System.Text.Encoding.UTF8;
-    Log.Information("🚀 Starting PhoneBook Management application...");
+    Log.Information("🚀 Starting AkSteel Management application...");
 
     var builder = WebApplication.CreateBuilder(args);
     builder.Configuration
@@ -31,7 +31,7 @@ try
 
     //app.MapHub<NotificationHub>("/hubs/notifications");
 
-    Log.Information("🎉  PhoneBook Management application started successfully");
+    Log.Information("🎉  AkSteel Management application started successfully");
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
@@ -43,7 +43,7 @@ try
         Console.WriteLine("🚀 Application started. Listening on:");
         foreach (var address in addresses!.Addresses)
         {
-            Console.WriteLine($"   {address}");
+            Console.WriteLine($" {address}");
         }
     });
     app.Run();

@@ -31,7 +31,7 @@ namespace Core.Infrastructure.Database.Configurations
                 ConfigureBaseEntity(builder);
             }
 
-            if (typeof(IHierarchicalStructureEntity<TEntity,Guid>).IsAssignableFrom(typeof(TEntity)))
+            if (typeof(IHierarchicalStructureEntity<TEntity, Guid>).IsAssignableFrom(typeof(TEntity)))
             {
                 ConfigureHierarchicalStructureEntity(builder);
             }
@@ -45,6 +45,11 @@ namespace Core.Infrastructure.Database.Configurations
                 .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).FkParentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+
+            //builder.HasMany(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Children)
+            //.WithOne(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Parent)
+            //.HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).FkParentId)
+            //.OnDelete(DeleteBehavior.Cascade);
 
             builder.HasIndex("FkParentId").HasDatabaseName($"IX_{typeof(TEntity).Name}_ParentId");
         }

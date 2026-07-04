@@ -22,6 +22,7 @@ namespace People.Infrastructure.Services
     {
         private readonly IUserDataContextProvider _userProvider;
         private readonly IRepository<PeopleDbContext, NaturalPerson, Guid> _naturalPersonRepository;
+        private readonly IRepository<PeopleDbContext, NaturalPersonProfile, Guid> _naturalPersonProfileRepository;
         private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
         private readonly IRepository<PeopleDbContext, PartyContact, Guid> _personContactRepository;
         private readonly ISpecificationRepository< NaturalPerson, Guid> _personSpecRepository;
@@ -29,6 +30,7 @@ namespace People.Infrastructure.Services
         private readonly IUnitOfWork<PeopleDbContext> _uow;
 
         public PersonService(IRepository<PeopleDbContext, NaturalPerson, Guid> naturalPersonRepository,
+            IRepository<PeopleDbContext, NaturalPersonProfile, Guid> naturalPersonProfileRepository ,
             IUserDataContextProvider userProvider,
             ILogger<PersonService> logger, 
             ISpecificationRepository< NaturalPerson, Guid> personSpecRepository,
@@ -37,6 +39,7 @@ namespace People.Infrastructure.Services
             IUnitOfWork<PeopleDbContext> uow)
         {
             _naturalPersonRepository = naturalPersonRepository;
+            _naturalPersonProfileRepository = naturalPersonProfileRepository;
             _personSpecRepository = personSpecRepository;
             _partyRepository = partyRepository;
             _personContactRepository = personContactRepository;
@@ -60,6 +63,7 @@ namespace People.Infrastructure.Services
            NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, user.UserName);            
             naturalPerson.setParty(await CreatePartyAsync(Phone,Address,Email,Mobile));
             await _naturalPersonRepository.AddAsync(naturalPerson);
+            await _naturalPersonProfileRepository.AddAsync(new NaturalPersonProfile(naturalPerson.Id));
             return naturalPerson.Id;
         }
         private async Task<Guid> CreatePartyAsync(

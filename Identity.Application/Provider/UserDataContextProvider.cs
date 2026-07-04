@@ -54,17 +54,23 @@ namespace Identity.Application.Provider
             if (userId == Guid.Empty)
                 return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
 
+            Guid userPermissionAssigneeId = await _userService.GetUserPermissionAssigneeIdAsync(userId);
+
+
 
             Guid? PartyId = await _userService.GetPartyId(userId);
-            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
             Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
-            Guid userPermissionAssigneeId = await _userService.GetUserPermissionAssigneeIdAsync(userId);
-            Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
-            //List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
-            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
-            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
 
+            Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
+
+            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
+            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
+
+            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
+
+            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
 
@@ -72,10 +78,19 @@ namespace Identity.Application.Provider
             return new UserDataContext
             {
                 UserId = userId,
+                UserPermissionAssigneeId = userPermissionAssigneeId,
+
                 PartyId = PartyId,
-                PostIds = PostPermissionAssigneeId?.ToHashSet(),
+                PartyPermissionAssigneeId = partyPermissionAssigneeId,
+
+                PostIds = PostId?.ToHashSet(),
+                PostPermissionAssigneeIds = PostPermissionAssigneeId?.ToHashSet(),
+
+
+                RoleIds = RoleIds.ToHashSet(),
+                RolePermissionAssigneeIds = RolePermissionAssigneeIds.ToHashSet(),
+
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
-                RoleIds = RolePermissionAssigneeIds.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
             };
         }
@@ -90,8 +105,16 @@ namespace Identity.Application.Provider
                 .SetValue(_userDataContext, ctx.UserId);
 
             typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.UserPermissionAssigneeId))!
+                .SetValue(_userDataContext, ctx.UserPermissionAssigneeId);
+
+            typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.PartyId))!
                 .SetValue(_userDataContext, ctx.PartyId);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PartyPermissionAssigneeId))!
+                .SetValue(_userDataContext, ctx.PartyPermissionAssigneeId);
 
             typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
@@ -102,8 +125,16 @@ namespace Identity.Application.Provider
                 .SetValue(_userDataContext, ctx.PostIds);
 
             typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.PostPermissionAssigneeIds))!
+                .SetValue(_userDataContext, ctx.PostPermissionAssigneeIds);
+
+            typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.RoleIds))!
                 .SetValue(_userDataContext, ctx.RoleIds);
+
+            typeof(UserDataContext)
+                .GetProperty(nameof(UserDataContext.RolePermissionAssigneeIds))!
+                .SetValue(_userDataContext, ctx.RolePermissionAssigneeIds);
 
             typeof(UserDataContext)
                 .GetProperty(nameof(UserDataContext.Permissions))!

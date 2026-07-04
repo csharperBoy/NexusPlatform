@@ -92,6 +92,7 @@ namespace HR.Application.Commands.Employee
                     PhoneNumber.Create( request.Phone),request.Address,Email.Create( request.Email), PhoneNumber.Create(request.Mobile)
                   );
                 #endregion
+                
                 #region ایجاد کارمند
 
                 Guid employeeId = await _employeeService.CreateEmployeeAsync(
