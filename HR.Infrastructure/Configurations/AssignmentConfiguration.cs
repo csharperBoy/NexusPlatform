@@ -17,7 +17,11 @@ namespace HR.Infrastructure.Configurations
         {
             base.Configure(builder);
 
-            builder.ToTable("Assignments", "hr");
+            //builder.ToTable("Assignments", "hr");
+            
+            builder.ToTable("Assignments", "hr", t => t.HasTrigger("trg_Assignments_CheckOverlap"));
+
+
             builder.HasIndex(e => e.FkEmploymentId, "IX_Assignments_EmploymentId");
             builder.HasIndex(e => e.FkPostId, "IX_Assignments_PostId");
 

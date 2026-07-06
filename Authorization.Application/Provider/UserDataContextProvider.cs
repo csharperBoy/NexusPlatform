@@ -12,35 +12,40 @@ namespace Authorization.Application.Provider
 {
     public class UserDataContextProvider : IUserDataContextProvider
     {
-        private readonly IPermissionInternalService _permissionService;
-        private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
-        private readonly IOrgChartPublicService _positionService;
-        private readonly IRolePublicService _roleService;
         private readonly IPersonPublicService _personService;
+
+        private readonly IRolePublicService _roleService;
         private readonly IEmployeePublicService _employeeService;
 
+        private readonly IOrgChartPublicService _positionService;
+       private readonly IPermissionInternalService _permissionService;
+        private readonly IHttpContextAccessor _httpContext;
         private readonly UserDataContext _userDataContext;
 
         public UserDataContextProvider(
-            IPermissionInternalService permissionService,
            UserDataContext userDataContext,
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
-            IOrgChartPublicService positionService,
-            IRolePublicService roleService,
             IPersonPublicService personService,
-            IEmployeePublicService employeeService
+
+            IRolePublicService roleService,
+            IEmployeePublicService employeeService,
+
+            IOrgChartPublicService positionService,
+            IPermissionInternalService permissionService
             )
         {
-            _personService = personService;
-            _permissionService = permissionService;
             _httpContext = httpContext;
-            _userService = userService;
-            _positionService = positionService;
-            _roleService = roleService;
             _userDataContext = userDataContext;
+           _userService = userService;
+            _personService = personService;
+
+            _roleService = roleService;
             _employeeService = employeeService;
+
+            _positionService = positionService;
+            _permissionService = permissionService;
         }
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
@@ -74,6 +79,7 @@ namespace Authorization.Application.Provider
 
             return new UserDataContext
             {
+                
                 UserId = userId,
                 UserPermissionAssigneeId = userPermissionAssigneeId,
                 
@@ -89,6 +95,10 @@ namespace Authorization.Application.Provider
               
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
+
+                
+
+
             };
         }
 

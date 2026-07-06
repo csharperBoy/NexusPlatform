@@ -1,4 +1,6 @@
 ﻿using Core.Application.Abstractions.People;
+using Core.Application.Context;
+using Core.Application.Provider;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
@@ -59,17 +61,19 @@ namespace HR.Application.Commands.Employee
         private readonly IPersonPublicService _personService;
         private readonly IEmployeeInternalService _employeeService;
         private readonly ILogger<CreateEmployeeCommandHandler> _logger;
-
+        private readonly IUserDataContextProvider _userProvider;
         public CreateEmployeeCommandHandler(
             IOrgChartInternalService orgChartService,
             IPersonPublicService personService,
             IEmployeeInternalService employeeService,
-            ILogger<CreateEmployeeCommandHandler> logger)
+           IUserDataContextProvider userProvider,
+        ILogger<CreateEmployeeCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;
             _personService = personService;
             _employeeService = employeeService;
+            _userProvider = userProvider;
         }
 
         public async Task<Result<Guid>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
@@ -79,6 +83,7 @@ namespace HR.Application.Commands.Employee
                 _logger.LogInformation(
                     "Creating employeeCode: {EmployeeCode}",
                     request.EmployeeCode);
+                UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
                 #region ساخت شخصیت حقیقی
 
                 Guid personId = await _personService.CreatePersonAsync(
@@ -90,7 +95,8 @@ namespace HR.Application.Commands.Employee
                     request.FatherName,
                     request.Gender,
                     PhoneNumber.Create( request.Phone),request.Address,Email.Create( request.Email), PhoneNumber.Create(request.Mobile)
-                  );
+                  ,userContext.UserName
+                    );
                 #endregion
                 
                 #region ایجاد کارمند

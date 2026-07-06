@@ -39,7 +39,10 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<Post> Posts { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
-
+        public override void EnsureTriggers()
+        {
+            EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

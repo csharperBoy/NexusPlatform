@@ -1,4 +1,5 @@
 ﻿using Core.Application.Context;
+using Core.Application.Helper;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Microsoft.AspNetCore.Http;
@@ -17,8 +18,25 @@ namespace Core.Infrastructure.Data
          {
              _serviceProvider = serviceProvider;
          }
-        //public BaseDbContext(DbContextOptions options) : base(options) { }
+        public virtual void EnsureTriggers()
+        {
 
+        }
+        //public BaseDbContext(DbContextOptions options) : base(options) { }
+        public void EnsureTrigger(string RootNamespace, string fileName , string triggerName)
+        {
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName );
+
+            // بررسی وجود تریگر و ایجاد آن در صورت نبود
+            var checkTriggerSql = @"
+                                        IF NOT EXISTS (SELECT 1 FROM sys.triggers WHERE name = '" + triggerName + @"' AND parent_class = 1)
+                                        BEGIN
+                                            EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
+                                        END
+                                    ";
+
+            Database.ExecuteSqlRaw(checkTriggerSql);
+        }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             UpdateAuditableEntities();

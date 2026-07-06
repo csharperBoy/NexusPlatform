@@ -1,8 +1,10 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.People;
 using Core.Application.Provider;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
 using Microsoft.Extensions.Logging;
 using People.Application.Interfaces;
@@ -20,7 +22,9 @@ namespace People.Infrastructure.Services
 {
     public class PersonService : IPersonInternalService, IPersonPublicService
     {
-        private readonly IUserDataContextProvider _userProvider;
+        //private readonly IUserDataContextProvider _userProvider;
+
+        private readonly IPermissionPublicService _permissionService;
         private readonly IRepository<PeopleDbContext, NaturalPerson, Guid> _naturalPersonRepository;
         private readonly IRepository<PeopleDbContext, NaturalPersonProfile, Guid> _naturalPersonProfileRepository;
         private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
@@ -31,7 +35,8 @@ namespace People.Infrastructure.Services
 
         public PersonService(IRepository<PeopleDbContext, NaturalPerson, Guid> naturalPersonRepository,
             IRepository<PeopleDbContext, NaturalPersonProfile, Guid> naturalPersonProfileRepository ,
-            IUserDataContextProvider userProvider,
+            //IUserDataContextProvider userProvider,
+            IPermissionPublicService permissionService,
             ILogger<PersonService> logger, 
             ISpecificationRepository< NaturalPerson, Guid> personSpecRepository,
             IRepository<PeopleDbContext, Party, Guid> partyRepository,
@@ -43,7 +48,8 @@ namespace People.Infrastructure.Services
             _personSpecRepository = personSpecRepository;
             _partyRepository = partyRepository;
             _personContactRepository = personContactRepository;
-            _userProvider = userProvider;
+            //_userProvider = userProvider;
+            _permissionService = permissionService;
             _logger = logger;
             _uow = uow;
         }
@@ -56,11 +62,12 @@ namespace People.Infrastructure.Services
              PhoneNumber? Phone = null,
         string? Address = null,
         Email? Email = null,
-        PhoneNumber? Mobile = null
+        PhoneNumber? Mobile = null,
+        string? createBy = null
             )
         {
-            var user =await _userProvider.GetAsync(new CancellationToken());
-           NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, user.UserName);            
+            //var user =await _userProvider.GetAsync(new CancellationToken());
+           NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, createBy);            
             naturalPerson.setParty(await CreatePartyAsync(Phone,Address,Email,Mobile));
             await _naturalPersonRepository.AddAsync(naturalPerson);
             await _naturalPersonProfileRepository.AddAsync(new NaturalPersonProfile(naturalPerson.Id));
@@ -72,7 +79,8 @@ namespace People.Infrastructure.Services
         Email? Email,
         PhoneNumber? Mobile)
         {
-            Party party = new Party();
+            Guid perAssigneeId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Party);
+            Party party = new Party(perAssigneeId);
             await _partyRepository.AddAsync(party);
 
             await CreatePartyContact(ContactType.Mobile, Mobile.Value, party.Id);
