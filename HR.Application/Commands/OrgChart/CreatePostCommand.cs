@@ -14,14 +14,14 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Commands.OrgChart
 {
-    public record CreateOrgChartCommand(
+    public record CreatePostCommand(
    string Code,
    Guid OrganizationUnitId,
    Guid JobTitleId,
    Guid? JobLevelId,
    Guid? GradeId,
    Guid? CostCenterId,
-   Guid? ReportsToPositionId,
+   Guid? ReportsToPostId,
    bool IsActive,
 
    Guid? EmployeeId,
@@ -30,20 +30,20 @@ namespace HR.Application.Commands.OrgChart
 ) : IRequest<Result<Guid>>;
 
 
-    public class CreateOrgChartCommandHandler : IRequestHandler<CreateOrgChartCommand, Result<Guid>>
+    public class CreatePostCommandHandler : IRequestHandler<CreatePostCommand, Result<Guid>>
     {
         private readonly IOrgChartInternalService _orgChartService;
-        private readonly ILogger<CreateOrgChartCommandHandler> _logger;
+        private readonly ILogger<CreatePostCommandHandler> _logger;
 
-        public CreateOrgChartCommandHandler(
+        public CreatePostCommandHandler(
             IOrgChartInternalService orgChartService,
-            ILogger<CreateOrgChartCommandHandler> logger)
+            ILogger<CreatePostCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;
         }
 
-        public async Task<Result<Guid>> Handle(CreateOrgChartCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreatePostCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -58,7 +58,7 @@ namespace HR.Application.Commands.OrgChart
                        request.JobLevelId,
                        request.GradeId,
                        request.CostCenterId,
-                       request.ReportsToPositionId,
+                       request.ReportsToPostId,
                        request.IsActive
                     );
                 if (request.EmployeeId != Guid.Empty && request.EmployeeId != null)

@@ -16,8 +16,8 @@ namespace HR.Presentation.Controller
     public class OrgChartController : BaseController
     {
         [HttpPost("Create")]
-        [AuthorizeResource("hr.orgchart", "Create")]
-        public async Task<IActionResult> CreateResource([FromBody] CreateOrgChartCommand command)
+        //[AuthorizeResource("hr.orgchart", "Create")]
+        public async Task<IActionResult> CreateResource([FromBody] CreatePostCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
