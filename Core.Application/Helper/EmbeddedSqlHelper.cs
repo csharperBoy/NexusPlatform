@@ -12,10 +12,12 @@ namespace Core.Application.Helper
     {
         //private const string RootNamespace = "YourApp.Persistence.SqlScripts"; // فضای نام پروژه خود را جایگزین کنید
 
-        public static string Read(string RootNamespace , string fileName)
+        public static string Read(string RootNamespace , string fileName, Assembly? assembly = null)
         {
+            if (assembly == null)
+                assembly = Assembly.GetCallingAssembly();
             var resourceName = $"{RootNamespace}.{fileName}";
-            var assembly = Assembly.GetExecutingAssembly();
+            //var assembly = Assembly.GetExecutingAssembly();
 
             using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)

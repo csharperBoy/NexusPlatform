@@ -5,11 +5,19 @@ using Core.Domain.Common.EntityProperties;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Core.Infrastructure.Data
 {
-    public abstract class Base_DbContext : DbContext
+    public interface IBase_DbContext 
+    {
+        void EnsureTrigger(string RootNamespace, string fileName, string triggerName, Assembly? assembly = null);
+        void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken));
+    }
+    public abstract class Base_DbContext : DbContext , IBase_DbContext
     {
         private readonly IServiceProvider _serviceProvider;
 
@@ -18,14 +26,15 @@ namespace Core.Infrastructure.Data
          {
              _serviceProvider = serviceProvider;
          }
-        public virtual void EnsureTriggers()
+        public virtual void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
 
         }
-        //public BaseDbContext(DbContextOptions options) : base(options) { }
-        public void EnsureTrigger(string RootNamespace, string fileName , string triggerName)
+         public void EnsureTrigger(string RootNamespace, string fileName , string triggerName , Assembly? assembly = null)
         {
-            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName );
+            if (assembly == null)
+                assembly = Assembly.GetCallingAssembly();
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName , assembly);
 
             // بررسی وجود تریگر و ایجاد آن در صورت نبود
             var checkTriggerSql = @"
@@ -102,11 +111,6 @@ namespace Core.Infrastructure.Data
 
     }
 
-    public abstract class BaseDbContext2 : DbContext
-    {
-        public BaseDbContext2(DbContextOptions options) : base(options) { }
+   
 
-    
-        
-    }
 }

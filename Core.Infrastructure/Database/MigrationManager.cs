@@ -2,7 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.DependencyInjection; // استفاده از Microsoft.Data.SqlClient
+using Microsoft.Extensions.DependencyInjection;
+using Core.Infrastructure.Data; // استفاده از Microsoft.Data.SqlClient
 namespace Core.Infrastructure.Database
 {
     /*
@@ -72,7 +73,7 @@ namespace Core.Infrastructure.Database
             _logger = logger;
         }
 
-        public async Task MigrateAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext
+        public async Task MigrateAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext, IBase_DbContext
         {
             const int maxRetries = 3;
             int retryCount = 0;
@@ -111,7 +112,7 @@ namespace Core.Infrastructure.Database
             await FinalMigrationAttempt<TContext>(cancellationToken);
         }
 
-        private async Task AttemptMigration<TContext>(CancellationToken cancellationToken) where TContext : DbContext
+        private async Task AttemptMigration<TContext>(CancellationToken cancellationToken) where TContext : DbContext , IBase_DbContext 
         {
             using var scope = _serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<TContext>();
@@ -122,6 +123,7 @@ namespace Core.Infrastructure.Database
             {
                 _logger.LogWarning("Database not accessible. Attempting to create...");
                 await context.Database.EnsureCreatedAsync(cancellationToken);
+                context.EnsureTriggers(cancellationToken);
                 _logger.LogInformation("✅ Database created successfully.");
                 return;
             }
@@ -132,6 +134,7 @@ namespace Core.Infrastructure.Database
             if (!pendingList.Any())
             {
                 _logger.LogInformation("✅ No pending migrations for {DbContext}.", typeof(TContext).Name);
+                context.EnsureTriggers(cancellationToken);
                 return;
             }
 
@@ -139,6 +142,8 @@ namespace Core.Infrastructure.Database
                 pendingList.Count, typeof(TContext).Name);
 
             await context.Database.MigrateAsync(cancellationToken);
+
+            context.EnsureTriggers(cancellationToken);
 
             _logger.LogInformation("🎉 Successfully applied {Count} migrations for {DbContext}",
                 pendingList.Count, typeof(TContext).Name);
@@ -188,7 +193,7 @@ namespace Core.Infrastructure.Database
             Unknown
         }
 
-        public async Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext
+        public async Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext, IBase_DbContext
         {
             try
             {
@@ -207,7 +212,7 @@ namespace Core.Infrastructure.Database
             }
         }
 
-        private async Task FinalMigrationAttempt<TContext>(CancellationToken cancellationToken) where TContext : DbContext
+        private async Task FinalMigrationAttempt<TContext>(CancellationToken cancellationToken) where TContext : DbContext, IBase_DbContext
         {
             try
             {

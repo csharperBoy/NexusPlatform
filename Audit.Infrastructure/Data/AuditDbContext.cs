@@ -19,6 +19,9 @@ namespace Audit.Infrastructure.Data
 {
     public class AuditDbContext : Base_DbContext
     {
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+        }
         public AuditDbContext(
         DbContextOptions<AuditDbContext> options,
         IServiceProvider serviceProvider)
@@ -28,9 +31,10 @@ namespace Audit.Infrastructure.Data
         public AuditDbContext(DbContextOptions<AuditDbContext> options)
        : base(options
              , new ServiceCollection().BuildServiceProvider()
-             ) {
+             )
+        {
         }
-        
+
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 

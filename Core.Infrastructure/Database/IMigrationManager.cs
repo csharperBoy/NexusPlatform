@@ -1,4 +1,5 @@
 ﻿// Core/Infrastructure/Database/IMigrationManager.cs
+using Core.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 namespace Core.Infrastructure.Database
 {
@@ -36,9 +37,9 @@ namespace Core.Infrastructure.Database
     public interface IMigrationManager
     {
         // 📌 اجرای Migrationها روی دیتابیس مشخص‌شده
-        Task MigrateAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext;
+        Task MigrateAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext, IBase_DbContext;
 
         // 📌 بررسی وجود Migrationهای اعمال‌نشده
-        Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext;
+        Task<bool> HasPendingMigrationsAsync<TContext>(CancellationToken cancellationToken = default) where TContext : DbContext, IBase_DbContext;
     }
 }

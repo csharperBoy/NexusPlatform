@@ -1,6 +1,8 @@
 ﻿using Core.Domain.Common;
+using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using People.Domain.Entities;
 using People.Infrastructure.Configurations;
 using System;
@@ -12,10 +14,24 @@ using System.Threading.Tasks;
 
 namespace People.Infrastructure.Data
 {
-    public class PeopleDbContext : DbContext
+    public class PeopleDbContext : Base_DbContext
     {
-        public PeopleDbContext(DbContextOptions<PeopleDbContext> options) : base(options) { }
-        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+        }
+        public PeopleDbContext(
+        DbContextOptions<PeopleDbContext> options,
+        IServiceProvider serviceProvider)
+        : base(options, serviceProvider)
+        {
+        }
+        public PeopleDbContext(DbContextOptions<PeopleDbContext> options)
+       : base(options
+             , new ServiceCollection().BuildServiceProvider()
+             )
+        {
+        }
+         public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         public DbSet<Party> Parties { get; set; } = null!;
         public DbSet<PartiesRelation> PartiesRelations { get; set; } = null!;

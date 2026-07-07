@@ -16,6 +16,9 @@ namespace Base.Infrastructure.Data
 
     public class BaseDbContext : Base_DbContext
     {
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+        }
         public BaseDbContext(
               DbContextOptions<BaseDbContext> options,
               IServiceProvider serviceProvider)

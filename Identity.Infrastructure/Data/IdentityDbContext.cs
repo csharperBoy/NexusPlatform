@@ -1,10 +1,13 @@
-﻿using Core.Domain.Common;
+﻿using Core.Application.Helper;
+using Core.Domain.Common;
+using Core.Infrastructure.Data;
+using Core.Infrastructure.Database.Configurations;
+using Identity.Domain.Entities;
+using Identity.Infrastructure.Configuration;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Identity.Domain.Entities;
-using Core.Infrastructure.Database.Configurations;
-using Identity.Infrastructure.Configuration;
+using System.Reflection;
 
 namespace Identity.Infrastructure.Data
 {
@@ -12,7 +15,27 @@ namespace Identity.Infrastructure.Data
            : IdentityDbContext<ApplicationUser, ApplicationRole, Guid,
                                IdentityUserClaim<Guid>, IdentityUserRole<Guid>, IdentityUserLogin<Guid>,
                                IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
+        ,IBase_DbContext
     {
+        public virtual void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+        }
+        public void EnsureTrigger(string RootNamespace, string fileName, string triggerName, Assembly? assembly = null)
+        {
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName);
+
+            // بررسی وجود تریگر و ایجاد آن در صورت نبود
+            var checkTriggerSql = @"
+                                        IF NOT EXISTS (SELECT 1 FROM sys.triggers WHERE name = '" + triggerName + @"' AND parent_class = 1)
+                                        BEGIN
+                                            EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
+                                        END
+                                    ";
+
+            Database.ExecuteSqlRaw(checkTriggerSql);
+        }
+
         public IdentityDbContext(DbContextOptions<IdentityDbContext> options)
             : base(options)
         {

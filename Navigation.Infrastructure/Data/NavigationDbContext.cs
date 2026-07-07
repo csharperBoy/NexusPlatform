@@ -17,6 +17,9 @@ namespace Navigation.Infrastructure.Data
 
     public class NavigationDbContext : Base_DbContext
     {
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+        }
         public NavigationDbContext(
               DbContextOptions<NavigationDbContext> options,
               IServiceProvider serviceProvider)

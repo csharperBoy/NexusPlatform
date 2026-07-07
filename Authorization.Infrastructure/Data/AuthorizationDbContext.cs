@@ -16,6 +16,9 @@ namespace Authorization.Infrastructure.Data
 {
     public class AuthorizationDbContext : Base_DbContext
     {
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+        }
         public AuthorizationDbContext(
         DbContextOptions<AuthorizationDbContext> options,
         IServiceProvider serviceProvider)
