@@ -1,6 +1,7 @@
 Email: maharplatform@gmail.com
 
-
+scaffold-dbcontext "Server = .; Database = PMIS; User Id = devdb; Password = Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.sqlserver -outputdir "TempEntities" -ContextDir "Persistence/EfCore/Contexts" -Context "SqlSrvDbContext" -force
+scaffold-dbcontext "Server = 192.168.6.65; Database = PMIS; User Id = devlogin; Password = Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true" Microsoft.EntityFrameworkCore.sqlserver -outputdir "TempEntities" -ContextDir "Persistence/EfCore/Contexts" -Context "SqlSrvDbContext" -force
 
 
 {

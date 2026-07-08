@@ -43,6 +43,7 @@
     <ProjectReference Include="..\Event.Presentation\Event.Presentation.csproj" />
     <ProjectReference Include="..\HR.Application\HR.Application.csproj" />
     <ProjectReference Include="..\HR.Infrastructure\HR.Infrastructure.csproj" />
+    <ProjectReference Include="..\HR.IrisaSync.Extention\HR.IrisaSync.Extention.csproj" />
     <ProjectReference Include="..\HR.Presentation\HR.Presentation.csproj" />
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />

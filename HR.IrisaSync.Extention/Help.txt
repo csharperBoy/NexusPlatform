@@ -1,0 +1,12 @@
+﻿connection string =>
+"User Id=devdb;Password=F@123;Data Source=127.0.0.1/XE" 
+"User Id=TPOUT_PDS;Password=irisatpout;Data Source=127.0.0.1/XE" 
+or 
+"User ID=devdb;Password=F@123;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=your_host)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=your_service_name)))"
+
+Scaffold-DbContext "Your_Oracle_Connection_String" Oracle.EntityFrameworkCore -OutputDir "TempEntities" -ContextDir "Contexts" -Context "OracleDbContext" -force
+
+
+Scaffold-DbContext "User Id=TPOUT_PDS;Password=irisatpout;Data Source=//192.168.7.5:1521/prod;" Oracle.EntityFrameworkCore -OutputDir "TempEntities" -ContextDir "Contexts" -Context "OracleDbContext" -Tables "PDS_IDEA_INFORMATION_VIW" -force
+
+Scaffold-DbContext "User Id=TPOUT_PDS;Password=irisatpout;Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.7.5)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=prod)));" Oracle.EntityFrameworkCore -OutputDir "TempEntities" -ContextDir "Contexts" -Context "OracleDbContext" -Tables "PDS_IDEA_INFORMATION_VIW" -force

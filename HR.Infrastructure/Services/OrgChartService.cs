@@ -106,15 +106,15 @@ namespace HR.Infrastructure.Services
         {
             Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId, costCenterId, reportsToPostId);
             await _postRepository.AddAsync(post);
-            if (Mobile != null)
+            if (OrgMobile != null)
             {
                 await CreatePostContact(PostContactType.OrgMobile, OrgMobile, post.Id);
             }
-            if (Email != null)
+            if (OrgEmail != null)
             {
                 await CreatePostContact(PostContactType.OrgEmail, OrgEmail, post.Id);
             }
-            if (Phone != null)
+            if (OfficePhone != null)
             {
                 await CreatePostContact(PostContactType.OfficePhone, OfficePhone, post.Id);
             }
