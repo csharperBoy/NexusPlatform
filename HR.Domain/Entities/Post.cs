@@ -65,6 +65,7 @@ namespace HR.Domain.Entities
         public virtual OrganizationUnit OrganizationUnit { get; set; } = null!;
 
 
+        public virtual ICollection<PostContact> PostContacts { get; set; } = new List<PostContact>();
 
 
 

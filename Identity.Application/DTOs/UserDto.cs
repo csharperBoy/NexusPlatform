@@ -16,7 +16,6 @@ namespace Identity.Application.DTOs
         public string? phoneNumber { get;  set; }
         public string? NickName { get; set; }
         public string? Email { get;  set; }
-        public PersonDto? person { get; set; } = null;
         //public ICollection<RoleDto>? roles { get; set; } = null;
         public ICollection<string>? roles { get; set; } = null;
     }

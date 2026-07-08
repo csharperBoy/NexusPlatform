@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace People.Domain.Enums
+namespace Core.Shared.Enums.People
 {
-    public enum ContactType : byte
+    public enum PartyContactType : byte
     {
         Phone = 0,
         Mobile = 1,

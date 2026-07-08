@@ -6,6 +6,7 @@ using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
 using Microsoft.Extensions.Logging;
 using People.Application.Interfaces;
 using People.Domain.Entities;
@@ -83,14 +84,14 @@ namespace People.Infrastructure.Services
             Party party = new Party(perAssigneeId);
             await _partyRepository.AddAsync(party);
 
-            await CreatePartyContact(ContactType.Mobile, Mobile.Value, party.Id);
-            await CreatePartyContact(ContactType.Phone, Phone.Value, party.Id);
-            await CreatePartyContact(ContactType.Address, Address, party.Id);
-            await CreatePartyContact(ContactType.Email, Email.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Mobile, Mobile.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Phone, Phone.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Address, Address, party.Id);
+            await CreatePartyContact(PartyContactType.Email, Email.Value, party.Id);
             return party.Id;
         }
 
-        private async Task CreatePartyContact(ContactType type,  string? value , Guid partyId)
+        private async Task CreatePartyContact(PartyContactType type,  string? value , Guid partyId)
         {
             if (value != null)
             {

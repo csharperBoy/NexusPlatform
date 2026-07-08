@@ -1,6 +1,8 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.HR;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
@@ -10,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,6 +24,7 @@ namespace HR.Infrastructure.Services
     {
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
         private readonly IRepository<HRDbContext, Post, Guid> _postRepository;
+        private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly ISpecificationRepository<Assignment, Guid> _assignmentSpecRepository;
         private readonly ILogger<OrgChartService> _logger;
@@ -28,12 +32,15 @@ namespace HR.Infrastructure.Services
 
         public OrgChartService(
             ISpecificationRepository<Post, Guid> postSpecRepository,
-        IRepository<HRDbContext, Post, Guid> postRepository, ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
+        IRepository<HRDbContext, Post, Guid> postRepository,
+        IRepository<HRDbContext, PostContact, Guid> postContactRepository,
+        ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
         IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
         IUnitOfWork<HRDbContext> uow,
         ILogger<OrgChartService> logger)
         {
             _postRepository = postRepository;
+            _postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
             _logger = logger;
             _assignmentSpecRepository = assignmentSpecRepository;
@@ -89,13 +96,37 @@ namespace HR.Infrastructure.Services
             return assign.Id;
         }
 
-        
 
-        public async Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPostId = null, bool isActive = true)
+
+        public async Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPostId = null, bool isActive = true
+            , string? OfficePhone = null,
+            string? OrgEmail = null,
+            string? OrgMobile = null
+            )
         {
             Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId, costCenterId, reportsToPostId);
             await _postRepository.AddAsync(post);
+            if (Mobile != null)
+            {
+                await CreatePostContact(PostContactType.OrgMobile, OrgMobile, post.Id);
+            }
+            if (Email != null)
+            {
+                await CreatePostContact(PostContactType.OrgEmail, OrgEmail, post.Id);
+            }
+            if (Phone != null)
+            {
+                await CreatePostContact(PostContactType.OfficePhone, OfficePhone, post.Id);
+            }
             return post.Id;
+        }
+        private async Task CreatePostContact(PostContactType type, string? value, Guid postId)
+        {
+            if (value != null)
+            {
+                PostContact contact = new PostContact(type, value, postId);
+                await _postContactRepository.AddAsync(contact);
+            }
         }
         public async Task<List<Post>?> GetEmployeePostAsync(Guid employeeId)
         {

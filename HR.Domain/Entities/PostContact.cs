@@ -1,15 +1,15 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
-using People.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace People.Domain.Entities
+namespace HR.Domain.Entities
 {
-    public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity 
+    public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -53,21 +53,21 @@ namespace People.Domain.Entities
 
 
 
-        public PartyContactType ContactType { get; protected set; }
+        public PostContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
-        public Guid FkPartyId { get; private set; }
+        public Guid FkPostId { get; private set; }
 
-        public virtual Party Party { get; private set; } = null!;
+        public virtual Post Post { get; private set; } = null!;
         // Constructor for EF
-        protected PartyContact() { }
-        public PartyContact
-            (PartyContactType _ContactType,
+        protected PostContact() { }
+        public PostContact
+            (PostContactType _ContactType,
             string _Value,
-            Guid _PartyId)
+            Guid _PostId)
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPartyId = _PartyId;
+            FkPostId = _PostId;
         }
     }
 }

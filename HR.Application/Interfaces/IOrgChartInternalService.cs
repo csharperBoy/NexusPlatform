@@ -12,7 +12,13 @@ namespace HR.Application.Interfaces
     {
         Task<Guid> AssignToEmployeeAsync(Guid postId, Guid employeeId, PostAssignmentType? assigneType = null, DateOnly? EffectiveFrom = null, DateOnly? EffectiveTo = null);
 
-        Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true);
+        Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true
+             
+
+    , string? OfficePhone = null,
+            string? OrgEmail = null,
+            string? OrgMobile = null
+            );
         Task<List<Post>?> GetEmployeePostAsync(Guid employeeId);
 
         Task SaveAsync();

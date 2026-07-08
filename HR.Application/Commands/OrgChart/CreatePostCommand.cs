@@ -15,17 +15,21 @@ using System.Threading.Tasks;
 namespace HR.Application.Commands.OrgChart
 {
     public record CreatePostCommand(
-   string Code,
-   Guid OrganizationUnitId,
-   Guid JobTitleId,
-   Guid? JobLevelId,
-   Guid? GradeId,
-   Guid? CostCenterId,
-   Guid? ReportsToPostId,
-   bool IsActive,
+    string Code,
+    Guid OrganizationUnitId,
+    Guid JobTitleId,
+    Guid? JobLevelId,
+    Guid? GradeId,
+    Guid? CostCenterId,
+    Guid? ReportsToPostId,
+    bool IsActive,
 
-   Guid? EmployeeId,
-   PostAssignmentType? AssignType
+    Guid? EmployeeId,
+    PostAssignmentType? AssignType,
+
+     string? OfficePhone ,
+            string? OrgEmail ,
+            string? OrgMobile 
 
 ) : IRequest<Result<Guid>>;
 
@@ -59,11 +63,11 @@ namespace HR.Application.Commands.OrgChart
                        request.GradeId,
                        request.CostCenterId,
                        request.ReportsToPostId,
-                       request.IsActive
+                       request.IsActive , request.OfficePhone,request.OrgEmail , request.OrgMobile
                     );
                 if (request.EmployeeId != Guid.Empty && request.EmployeeId != null)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmployeeAsync(postId,(Guid) request.EmployeeId , request.AssignType);
+                    Guid assignId = await _orgChartService.AssignToEmployeeAsync(postId, (Guid)request.EmployeeId, request.AssignType);
                 }
 
                 await _orgChartService.SaveAsync();

@@ -37,6 +37,7 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<JobTitle> JobTitles { get; set; }
         public virtual DbSet<OrganizationUnit> OrganizationUnits { get; set; }
         public virtual DbSet<Post> Posts { get; set; }
+        public virtual DbSet<PostContact> PostContacts { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
@@ -60,6 +61,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new JobTitleConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
+            modelBuilder.ApplyConfiguration(new PostContactConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
 
