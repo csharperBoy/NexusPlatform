@@ -36,10 +36,10 @@ namespace HR.Infrastructure.Services
         public async Task<Guid> CreateEmployeeAsync(
              string _EmployeeCode,
          Guid _PersonId,
-         Guid _EmploymentTypeId,
-         Guid _EmploymentStatusId,
-         DateOnly _StartDate,
-         DateOnly? _EndDate
+        Guid? _EmploymentTypeId,
+        Guid? _EmploymentStatusId,
+        DateOnly? _StartDate = null,
+        DateOnly? _EndDate = null
             )
         {
             Employment person = new Employment(_EmployeeCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);

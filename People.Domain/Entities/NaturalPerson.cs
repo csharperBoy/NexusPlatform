@@ -2,6 +2,7 @@
 using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +25,7 @@ namespace People.Domain.Entities
         #endregion
 
 
-        
+
         // اطلاعات ثابت (هرگز تغییر نمی‌کنند)
         public NationalCode NationalCode { get; private set; } = null!;
         public FullName FullName { get; private set; } = null!;
@@ -50,7 +51,7 @@ namespace People.Domain.Entities
             string birthPlace,
             string fatherName,
             Gender? gender,
-            string? createdBy )
+            string? createdBy)
         {
             NationalCode = nationalCode ?? throw new ArgumentNullException(nameof(nationalCode));
             FullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
@@ -79,7 +80,7 @@ namespace People.Domain.Entities
             BirthDate = _birthDate;
             BirthPlace = _birthPlace;
             FatherName = _fatherName;
-            Gender = _gender ?? Core.Shared.Enums.HR.Gender.Other ;
+            Gender = _gender ?? Core.Shared.Enums.HR.Gender.Other;
             CreatedBy = _createdBy;
         }
 
@@ -104,14 +105,19 @@ namespace People.Domain.Entities
             Touch();
         }
         private void Touch() => ModifiedAt = DateTime.UtcNow;
-        public bool ApplyChange(
+        public async Task<bool> ApplyChange(
          string? _NationalCode,
          string? _FirstName,
          string? _LastName,
         DateTime? _BirthDate,
          string? _BirthPlace,
         string? _FatherName,
-         Gender? _Gender
+         Gender? _Gender,
+
+         PhoneNumber? _phone,
+         PhoneNumber? _mobile,
+         string? address,
+         Email? email
           )
         {
             bool hasChange = false;
@@ -146,6 +152,8 @@ namespace People.Domain.Entities
                 Gender = _Gender;
                 hasChange = true;
             }
+
+
             if (hasChange)
                 Touch();
             return hasChange;

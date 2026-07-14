@@ -13,10 +13,10 @@ namespace HR.Application.Interfaces
         Task<Guid> CreateEmployeeAsync(
             string _EmployeeCode,
         Guid _PersonId,
-        Guid _EmploymentTypeId,
-        Guid _EmploymentStatusId,
-        DateOnly _StartDate,
-        DateOnly? _EndDate
+        Guid? _EmploymentTypeId,
+        Guid? _EmploymentStatusId,
+        DateOnly? _StartDate = null,
+        DateOnly? _EndDate = null
            );
     }
 }

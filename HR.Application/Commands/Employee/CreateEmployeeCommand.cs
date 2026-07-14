@@ -36,9 +36,9 @@ namespace HR.Application.Commands.Employee
     #region employee
 
      string EmployeeCode,
-     Guid EmploymentTypeId,
-     Guid EmploymentStatusId,
-     DateOnly StartDate,
+     Guid? EmploymentTypeId,
+     Guid? EmploymentStatusId,
+     DateOnly? StartDate,
      DateOnly? EndDate,
 
      List<Guid> locationsId,

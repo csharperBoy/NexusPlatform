@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Infrastructure.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    [Migration("20260701050945_Edit_1_HR")]
+    [Migration("20260713121930_Edit_1_HR")]
     partial class Edit_1_HR
     {
         /// <inheritdoc />
@@ -147,7 +147,12 @@ namespace HR.Infrastructure.Migrations
 
                     b.HasIndex(new[] { "FkPostId" }, "IX_Assignments_PostId");
 
-                    b.ToTable("Assignments", "hr");
+                    b.ToTable("Assignments", "hr", t =>
+                        {
+                            t.HasTrigger("trg_Assignments_CheckOverlap");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.CostCenter", b =>
@@ -226,11 +231,20 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<Guid>("FkEmployeeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkLocationId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -351,7 +365,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Order")
+                    b.Property<int?>("Order")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -547,7 +561,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid>("FkJobTitleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FkOrganizationUnitId")
+                    b.Property<Guid?>("FkOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("FkParentId")
@@ -600,6 +614,81 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex(new[] { "FkOrganizationUnitId" }, "IX_Post_OrganizationUnitId");
 
                     b.ToTable("Post", "hr");
+                });
+
+            modelBuilder.Entity("HR.Domain.Entities.PostContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("ContactType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("FkPostId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("OwnerOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_PostContact");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_PostContact_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_PostContact_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_PostContact_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_PostContact_ModifiedBy");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_PostContact_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_PostContact_OwnerPerson");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_PostContact_ScopedLookup");
+
+                    b.HasIndex(new[] { "FkPostId" }, "IX_PersonContacts_FkPostId");
+
+                    b.ToTable("PostContacts", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.Assignment", b =>
@@ -705,7 +794,6 @@ namespace HR.Infrastructure.Migrations
                     b.HasOne("HR.Domain.Entities.OrganizationUnit", "OrganizationUnit")
                         .WithMany("Posts")
                         .HasForeignKey("FkOrganizationUnitId")
-                        .IsRequired()
                         .HasConstraintName("FK_Post_OrganizationUnits");
 
                     b.HasOne("HR.Domain.Entities.Post", "Parent")
@@ -723,6 +811,18 @@ namespace HR.Infrastructure.Migrations
                     b.Navigation("OrganizationUnit");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("HR.Domain.Entities.PostContact", b =>
+                {
+                    b.HasOne("HR.Domain.Entities.Post", "Post")
+                        .WithMany("PostContacts")
+                        .HasForeignKey("FkPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_PostContacts_Posts");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.CostCenter", b =>
@@ -781,6 +881,8 @@ namespace HR.Infrastructure.Migrations
                     b.Navigation("Assignments");
 
                     b.Navigation("Children");
+
+                    b.Navigation("PostContacts");
                 });
 #pragma warning restore 612, 618
         }

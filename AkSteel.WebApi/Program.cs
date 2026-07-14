@@ -1,10 +1,23 @@
 ﻿using Core.Infrastructure.DependencyInjection;
+using HR.IrisaSync.Extention;
+using HR.IrisaSync.Extention.Contexts;
+using Microsoft.EntityFrameworkCore;
+
+
 //using Notification.Presentation.Hubs;
 using Serilog;
 
 try
 {
-    Console.OutputEncoding = System.Text.Encoding.UTF8;
+    #region test
+
+    using (var context = new IrisaOracleDbContext())
+    {
+        var a = context.PdsIdeaInformationViws.Where(a=>a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
+    }
+    #endregion
+
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
     Log.Information("🚀 Starting AkSteel Management application...");
 
     var builder = WebApplication.CreateBuilder(args);

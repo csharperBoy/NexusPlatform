@@ -228,11 +228,20 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<Guid>("FkEmployeeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkLocationId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -353,7 +362,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Order")
+                    b.Property<int?>("Order")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -549,7 +558,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid>("FkJobTitleId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FkOrganizationUnitId")
+                    b.Property<Guid?>("FkOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("FkParentId")
@@ -782,7 +791,6 @@ namespace HR.Infrastructure.Migrations
                     b.HasOne("HR.Domain.Entities.OrganizationUnit", "OrganizationUnit")
                         .WithMany("Posts")
                         .HasForeignKey("FkOrganizationUnitId")
-                        .IsRequired()
                         .HasConstraintName("FK_Post_OrganizationUnits");
 
                     b.HasOne("HR.Domain.Entities.Post", "Parent")

@@ -10,7 +10,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// مکان های مرتبط با کارمندان در سازمان
     /// </summary>
-    public class EmploymentLocation : BaseEntity, IAuditableEntity
+    public class EmploymentLocation : BaseEntity, IAuditableEntity, IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -26,6 +26,13 @@ namespace HR.Domain.Entities
         public virtual Employment Employee { get; set; } = null!;
 
         public virtual Location Location { get; set; } = null!;
+        #region Impelement IHasEffectivePeriod
+        public DateOnly EffectiveFrom { get; private set; }
+        public DateOnly? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
+
+        #endregion
+
         protected EmploymentLocation() { }
         public EmploymentLocation(
              Guid _fkLocationId,

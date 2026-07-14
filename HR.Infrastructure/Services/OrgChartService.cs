@@ -64,7 +64,7 @@ namespace HR.Infrastructure.Services
         }
 
 
-        public async Task<List<Guid>?> GetEmployeeOrganizeId(Guid? employeeId)
+        public async Task<List<Guid?>?> GetEmployeeOrganizeId(Guid? employeeId)
         {
             try
             {

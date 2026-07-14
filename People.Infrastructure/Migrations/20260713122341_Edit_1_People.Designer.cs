@@ -12,7 +12,7 @@ using People.Infrastructure.Data;
 namespace People.Infrastructure.Migrations
 {
     [DbContext(typeof(PeopleDbContext))]
-    [Migration("20260630105716_Edit_1_People")]
+    [Migration("20260713122341_Edit_1_People")]
     partial class Edit_1_People
     {
         /// <inheritdoc />
@@ -143,7 +143,7 @@ namespace People.Infrastructure.Migrations
 
                     b.HasIndex(new[] { "RegisterCode" }, "IX_Persons_Unique")
                         .IsUnique()
-                        .HasFilter("([RegisterCode] IS NOT NULL)");
+                        .HasFilter("[RegisterCode] IS NOT NULL");
 
                     b.HasIndex(new[] { "FkPartyId" }, "IX_legalPersons_fkPartyId");
 
@@ -418,8 +418,17 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<Guid>("FkPartyId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");

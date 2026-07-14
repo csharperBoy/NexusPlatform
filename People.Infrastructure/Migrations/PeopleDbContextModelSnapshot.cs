@@ -140,7 +140,7 @@ namespace People.Infrastructure.Migrations
 
                     b.HasIndex(new[] { "RegisterCode" }, "IX_Persons_Unique")
                         .IsUnique()
-                        .HasFilter("([RegisterCode] IS NOT NULL)");
+                        .HasFilter("[RegisterCode] IS NOT NULL");
 
                     b.HasIndex(new[] { "FkPartyId" }, "IX_legalPersons_fkPartyId");
 
@@ -415,8 +415,17 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EffectiveTo")
+                        .HasColumnType("date");
+
                     b.Property<Guid>("FkPartyId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");

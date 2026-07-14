@@ -82,7 +82,7 @@ namespace HR.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Order = table.Column<int>(type: "int", nullable: false),
+                    Order = table.Column<int>(type: "int", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -225,8 +225,8 @@ namespace HR.Infrastructure.Migrations
                     FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FkOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkJobTitleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FkOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkJobLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkGradeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkCostCenterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -285,7 +285,10 @@ namespace HR.Infrastructure.Migrations
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     FkLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FkEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    IsCurrent = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -338,6 +341,36 @@ namespace HR.Infrastructure.Migrations
                         principalSchema: "hr",
                         principalTable: "Post",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PostContacts",
+                schema: "hr",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ContactType = table.Column<byte>(type: "tinyint", nullable: false),
+                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FkPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PostContact", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PostContacts_Posts",
+                        column: x => x.FkPostId,
+                        principalSchema: "hr",
+                        principalTable: "Post",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -658,6 +691,61 @@ namespace HR.Infrastructure.Migrations
                 schema: "hr",
                 table: "Post",
                 column: "ParentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PersonContacts_FkPostId",
+                schema: "hr",
+                table: "PostContacts",
+                column: "FkPostId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_CreatedAt",
+                schema: "hr",
+                table: "PostContacts",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_CreatedBy",
+                schema: "hr",
+                table: "PostContacts",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_ModifiedAt",
+                schema: "hr",
+                table: "PostContacts",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_ModifiedBy",
+                schema: "hr",
+                table: "PostContacts",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_OwnerOrgUnit",
+                schema: "hr",
+                table: "PostContacts",
+                column: "OwnerOrganizationUnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_OwnerPerson",
+                schema: "hr",
+                table: "PostContacts",
+                column: "OwnerPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContact_ScopedLookup",
+                schema: "hr",
+                table: "PostContacts",
+                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PostContacts_Id",
+                schema: "hr",
+                table: "PostContacts",
+                column: "Id",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -673,6 +761,10 @@ namespace HR.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "OutboxMessages",
+                schema: "hr");
+
+            migrationBuilder.DropTable(
+                name: "PostContacts",
                 schema: "hr");
 
             migrationBuilder.DropTable(

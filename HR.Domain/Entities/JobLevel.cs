@@ -16,10 +16,19 @@ namespace HR.Domain.Entities
     {
         public string Code { get; private set; }
         public string Title { get; private set; }
-        public int Order { get; private set; }
+        public int? Order { get; private set; }
         public bool IsActive { get; private set; }
 
         public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
         protected JobLevel() { }
+        public JobLevel(
+            string _Code,
+            string _Title
+            )
+        {
+            Code =_Code;
+            Title = _Title;
+            IsActive = true;
+        }
     }
 }

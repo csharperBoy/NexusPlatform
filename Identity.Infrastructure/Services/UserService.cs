@@ -138,7 +138,7 @@ namespace Identity.Infrastructure.Services
             Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
             //List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
             List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
-            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            List<Guid?>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
 
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(user.Id);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);

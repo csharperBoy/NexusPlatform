@@ -42,7 +42,6 @@ namespace HR.Infrastructure.Configurations
 
             builder.HasOne(d => d.OrganizationUnit).WithMany(p => p.Posts)
                 .HasForeignKey(d => d.FkOrganizationUnitId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Post_OrganizationUnits");
 
         }

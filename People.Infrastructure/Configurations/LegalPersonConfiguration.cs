@@ -24,7 +24,8 @@ namespace People.Infrastructure.Configurations
 
             builder.HasIndex(e => e.RegisterCode, "IX_Persons_Unique")
                 .IsUnique()
-                .HasFilter("([RegisterCode] IS NOT NULL)");
+                //.HasFilter("([RegisterCode] IS NOT NULL)")
+                ;
 
             builder.HasIndex(e => e.FkPartyId, "IX_legalPersons_fkPartyId");
             builder.HasOne(d => d.Party).WithMany(p => p.LegalPeople)

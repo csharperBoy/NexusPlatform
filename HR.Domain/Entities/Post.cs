@@ -41,8 +41,8 @@ namespace HR.Domain.Entities
         private void Touch() => ModifiedAt = DateTime.UtcNow;
 
         public string Code { get; private set; }
-        public Guid FkOrganizationUnitId { get; private set; }
         public Guid FkJobTitleId { get; private set; }
+        public Guid? FkOrganizationUnitId { get; private set; }
         public Guid? FkJobLevelId { get; private set; }
         public Guid? FkGradeId { get; private set; }
         public Guid? FkCostCenterId { get; private set; }
@@ -62,7 +62,7 @@ namespace HR.Domain.Entities
 
         public virtual JobTitle JobTitle { get; set; } = null!;
 
-        public virtual OrganizationUnit OrganizationUnit { get; set; } = null!;
+        public virtual OrganizationUnit? OrganizationUnit { get; set; } = null!;
 
 
         public virtual ICollection<PostContact> PostContacts { get; set; } = new List<PostContact>();
@@ -73,8 +73,8 @@ namespace HR.Domain.Entities
 
         public Post(
             string _Code,
-            Guid _OrganizationUnitId,
             Guid _JobTitleId,
+            Guid? _OrganizationUnitId,
             Guid? _JobLevelId = null,
             Guid? _GradeId = null,
             Guid? _CostCenterId = null,

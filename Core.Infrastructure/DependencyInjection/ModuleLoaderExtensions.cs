@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Core.Application.Models;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -66,7 +67,7 @@ namespace Core.Infrastructure.DependencyInjection
         {
             var enabledModules = configuration
                 .GetSection("Modules:Enabled")
-                .Get<List<ModuleConfig>>() ?? new();
+                .Get<List<ModuleItem>>() ?? new();
 
             foreach (var module in enabledModules.OrderBy(m => m.Order))
             {
@@ -80,7 +81,7 @@ namespace Core.Infrastructure.DependencyInjection
 
                 foreach (var methodName in methods)
                 {
-                    var method = FindExtensionMethod(module.Name, methodName, typeof(IServiceCollection));
+                    var method = FindModuleMethod(module.Name, methodName, typeof(IServiceCollection));
                     if (method != null)
                     {
                         Console.WriteLine($"✅ اجرای متد {methodName} از ماژول {module.Name}");
@@ -91,6 +92,7 @@ namespace Core.Infrastructure.DependencyInjection
                         Console.WriteLine($"⚠️ متد {methodName} در ماژول {module.Name} پیدا نشد.");
                     }
                 }
+
             }
 
             return services;
@@ -101,7 +103,7 @@ namespace Core.Infrastructure.DependencyInjection
         {
             var enabledModules = configuration
                 .GetSection("Modules:Enabled")
-                .Get<List<ModuleConfig>>() ?? new();
+                .Get<List<ModuleItem>>() ?? new();
 
             foreach (var module in enabledModules.OrderBy(m => m.Order))
             {
@@ -116,7 +118,7 @@ namespace Core.Infrastructure.DependencyInjection
 
                 foreach (var methodName in methods)
                 {
-                    var method = FindExtensionMethod(module.Name, methodName, typeof(IServiceCollection));
+                    var method = FindModuleMethod(module.Name, methodName, typeof(IServiceCollection));
                     if (method != null)
                     {
                         Console.WriteLine($"✅ اجرای متد {methodName} از ماژول {module.Name}");
@@ -125,6 +127,27 @@ namespace Core.Infrastructure.DependencyInjection
                     else
                     {
                         Console.WriteLine($"⚠️ متد {methodName} در ماژول {module.Name} پیدا نشد.");
+                    }
+                }
+                if (module.Extentions?.Count > 0)
+                {
+                    foreach (var exModule in module.Extentions.OrderBy(m => m.Order))
+                    {
+
+
+                        var exMethodName = $"{exModule.Name}_AddDependency";
+                        var exMethod = FindModuleExtentionMethod($"{module.Name}.{exModule.Name}.Extention", exMethodName, typeof(IServiceCollection));
+
+                        if (exMethod != null)
+                        {
+                            Console.WriteLine($"✅ اجرای متد {exMethodName} از ماژول {exModule.Name}");
+                            exMethod.Invoke(null, new object[] { services, configuration });
+                        }
+                        else
+                        {
+                            Console.WriteLine($"⚠️ متد {exMethodName} در ماژول {exModule.Name} پیدا نشد.");
+                        }
+
                     }
                 }
             }
@@ -138,12 +161,12 @@ namespace Core.Infrastructure.DependencyInjection
         {
             var enabledModules = configuration
                 .GetSection("Modules:Enabled")
-                .Get<List<ModuleConfig>>() ?? new();
+                .Get<List<ModuleItem>>() ?? new();
 
             foreach (var module in enabledModules.OrderBy(m => m.Order))
             {
                 var methodName = $"{module.Name}_UseInfrastructure";
-                var method = FindExtensionMethod(module.Name, methodName, typeof(IApplicationBuilder));
+                var method = FindModuleMethod(module.Name, methodName, typeof(IApplicationBuilder));
 
                 if (method != null)
                 {
@@ -158,12 +181,34 @@ namespace Core.Infrastructure.DependencyInjection
                 {
                     Console.WriteLine($"⚠️ متد {methodName} در ماژول {module.Name} پیدا نشد.");
                 }
+                if (module.Extentions?.Count > 0)
+                {
+                    foreach (var exModule in module.Extentions.OrderBy(m => m.Order))
+                    {
+                        var exMethodName = $"{exModule.Name}_UseDependency";
+                        var exMethod = FindModuleExtentionMethod($"{module.Name}.{exModule.Name}.Extention", exMethodName, typeof(IApplicationBuilder));
+
+                        if (exMethod != null)
+                        {
+                            Console.WriteLine($"✅ اجرای متد {exMethodName} از ماژول {exModule.Name}");
+                            var result = exMethod.Invoke(null, new object[] { app });
+                            if (result is Task task)
+                            {
+                                await task;
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"⚠️ متد {exMethodName} در ماژول {exModule.Name} پیدا نشد.");
+                        }
+                    }
+                }
             }
 
             return app;
         }
 
-        private static MethodInfo? FindExtensionMethod(string moduleName, string methodName, Type firstParamType)
+        private static MethodInfo? FindModuleMethod(string moduleName, string methodName, Type firstParamType)
         {
             var candidateAssemblies = new[]
             {
@@ -202,11 +247,43 @@ namespace Core.Infrastructure.DependencyInjection
 
             return null;
         }
+        private static MethodInfo? FindModuleExtentionMethod(string moduleName, string methodName, Type firstParamType)
+        {
+            var asmName = $"{moduleName}";
+
+
+            try
+            {
+                var asm = Assembly.Load(asmName);
+                Console.WriteLine($"➡️ جستجو در اسمبلی: {asm.FullName}");
+
+                foreach (var type in asm.GetTypes().Where(t => t.IsSealed && t.IsAbstract))
+                {
+                    foreach (var m in type.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                    {
+                        if (m.Name == methodName &&
+                            m.GetParameters().Length >= 1 &&
+                            m.GetParameters()[0].ParameterType == firstParamType)
+                        {
+                            Console.WriteLine($"✅ متد {methodName} پیدا شد در {asm.GetName().Name} :: {type.FullName}");
+                            return m;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ نتونستم اسمبلی {asmName} رو لود کنم: {ex.Message}");
+            }
+
+
+            return null;
+        }
     }
 
-    public class ModuleConfig
-    {
-        public string Name { get; set; } = "";
-        public int Order { get; set; }
-    }
+    //public class ModuleConfig
+    //{
+    //    public string Name { get; set; } = "";
+    //    public int Order { get; set; }
+    //}
 }

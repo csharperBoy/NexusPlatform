@@ -9,9 +9,14 @@ namespace Core.Domain.Common.EntityProperties
     public interface IHierarchicalStructureEntity<TEntity, TParentId>
      where TEntity : class
     {
-        TParentId FkParentId { get; }
+        TParentId FkParentId { get;  }
         TEntity? Parent { get; }
-        ICollection<TEntity>? Children { get; }
+        ICollection<TEntity>? Children { get;    }
         void ChangeParent(TParentId? newParentId);
     }
-}
+    public static class HierarchicalStructureEntityExtention
+    {
+        
+    }
+     
+    }

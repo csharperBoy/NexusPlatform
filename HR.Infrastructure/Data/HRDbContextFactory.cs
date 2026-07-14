@@ -63,7 +63,7 @@ namespace HR.Infrastructure.Data
                 b.MigrationsAssembly(typeof(HRDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "HR"
-                b.MigrationsHistoryTable("__organizationMigrationsHistory", "organization");
+                b.MigrationsHistoryTable("__hrMigrationsHistory", "hr");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده

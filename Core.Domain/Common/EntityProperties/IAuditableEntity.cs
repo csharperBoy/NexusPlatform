@@ -21,4 +21,13 @@ namespace Core.Domain.Common.EntityProperties
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
          */
     }
+
+    public static class AuditableEntityExtention
+    {
+        public static void SetCreateAtNow(this IAuditableEntity entity)
+        {
+             entity.CreatedAt = DateTime.Now;
+        }
+       
+    }
 }

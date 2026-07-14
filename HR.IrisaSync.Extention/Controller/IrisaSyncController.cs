@@ -1,0 +1,67 @@
+﻿using Core.Presentation.Controllers;
+using Core.Presentation.Filters;
+using Core.Shared.Results;
+using HR.IrisaSync.Extention.Interface;
+using HR.IrisaSync.Extention.Queries;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace HR.IrisaSync.Extention.Controller
+{
+    [ApiController]
+    [Route("api/HR/[controller]")]
+    public class IrisaSyncController : BaseController
+    {
+        private readonly ISyncService _syncService;
+        public IrisaSyncController(ISyncService syncService)
+        {
+            _syncService = syncService;
+        }
+
+        [HttpGet("GetList")]
+        //[AuthorizeResource("hr.orgchart", "View")]
+        public async Task<IActionResult> GetList([FromQuery] GetEmployeeQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+
+        [HttpPost("FillJobTitle")]
+        //[AuthorizeResource("hr.employee", "Create")]
+        public async Task<IActionResult> FillJobTitle()
+        {
+            await _syncService.FillJobTitle();
+
+            return HandleResult(Result<bool>.Ok(true));
+        }
+        [HttpPost("FillJobLevel")]
+        //[AuthorizeResource("hr.employee", "Create")]
+        public async Task<IActionResult> FillJobLevel()
+        {
+            await _syncService.FillJobLevel();
+
+            return HandleResult(Result<bool>.Ok(true));
+        }
+        [HttpPost("FillOrganizationUnit")]
+        //[AuthorizeResource("hr.employee", "Create")]
+        public async Task<IActionResult> FillOrganizationUnit()
+        {
+            await _syncService.FillOrganizationUnit();
+
+            return HandleResult(Result<bool>.Ok(true));
+        }
+        [HttpPost("FillPost")]
+        //[AuthorizeResource("hr.employee", "Create")]
+        public async Task<IActionResult> FillPost()
+        {
+            await _syncService.FillPost();
+
+            return HandleResult(Result<bool>.Ok(true));
+        }
+    }
+
+}

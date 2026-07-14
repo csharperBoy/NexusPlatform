@@ -13,15 +13,15 @@ namespace Core.Domain.Common.EntityProperties
     public interface IOwnerableEntity
     {
         // مشخص می‌کند این رکورد متعلق به کدام واحد است (برای اسکوپ‌های Unit و UnitAndBelow)
-        Guid? OwnerOrganizationUnitId { get; }
+        Guid? OwnerOrganizationUnitId { get;    }
 
         // مشخص می‌کند این رکورد متعلق به کدام پست سازمانی است (برای اسکوپ Self)
-        Guid? OwnerPositionId { get; }
+        Guid? OwnerPositionId { get;  }
 
         // مشخص می‌کند این رکورد متعلق به کدام شخص است (برای اسکوپ Self)
-        Guid? OwnerPersonId { get; }
+        Guid? OwnerPersonId { get;  }
 
-        Guid? OwnerUserId { get; }
+        Guid? OwnerUserId { get;  }
         void SetOwners(Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId);
         void SetPersonOwner(Guid personId);
         void SetUserOwner(Guid userId);
@@ -60,5 +60,33 @@ namespace Core.Domain.Common.EntityProperties
         
          */
 
+    }
+    public static class OwnerableEntityExtention
+    {
+        /*
+        public static void SetOwners(this IOwnerableEntity entity,Guid? userId, Guid? personId, Guid? positiontId, Guid? orgUnitId)
+        {
+            entity.OwnerUserId = userId;
+            entity.OwnerPersonId = personId;
+            entity.OwnerPositionId = positiontId;
+            entity.OwnerOrganizationUnitId = orgUnitId;
+        }
+        public static void SetPersonOwner(this IOwnerableEntity entity, Guid personId)
+        {
+            entity.OwnerPersonId = personId;
+        }
+        public static void SetUserOwner(this IOwnerableEntity entity, Guid userId)
+        {
+            entity.OwnerUserId = userId;
+        }
+        public static void SetPositionOwner(this IOwnerableEntity entity, Guid positiontId)
+        {
+            entity.OwnerPositionId = positiontId;
+        }
+        public static void SetOrganizationUnitOwner(this IOwnerableEntity entity, Guid orgUnitId)
+        {
+            entity.OwnerOrganizationUnitId = orgUnitId;
+        }
+        */
     }
 }

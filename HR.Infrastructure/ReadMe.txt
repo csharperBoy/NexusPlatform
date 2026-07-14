@@ -7,6 +7,7 @@ dotnet ef migrations add Initial_HR -p HR.Infrastructure -s "AkSteel Welfare Pla
 or
 Add-Migration Initial_HR -Project HR.Infrastructure -Context HRDbContext -Start "AkSteel Welfare Platform"
 Add-Migration Edit2_HR -Project HR.Infrastructure -Context HRDbContext -Start "AkSteel.WebApi"
+
 Remove-Migration -Project HR.Infrastructure -Context HRDbContext -Start "AkSteel.WebApi"
 
 3- for update database execute this command in developer powershell or package manager console 

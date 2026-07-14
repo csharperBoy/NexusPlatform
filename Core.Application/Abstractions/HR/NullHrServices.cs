@@ -23,9 +23,9 @@ namespace Core.Application.Abstractions.HR
     public class NullOrgChartService : IOrgChartPublicService
     {
 
-        public Task<List<Guid>?> GetEmployeeOrganizeId(Guid? employeeId)
+        public Task<List<Guid?>?> GetEmployeeOrganizeId(Guid? employeeId)
         {
-            return Task.FromResult<List<Guid>?>(null);
+            return Task.FromResult<List<Guid?>?>(null);
         }
 
 

@@ -149,6 +149,9 @@ namespace People.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -256,7 +259,7 @@ namespace People.Infrastructure.Migrations
                 table: "legalPersons",
                 column: "RegisterCode",
                 unique: true,
-                filter: "([RegisterCode] IS NOT NULL)");
+                filter: "[RegisterCode] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NaturalPersonProfile_CreatedAt",

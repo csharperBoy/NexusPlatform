@@ -122,7 +122,8 @@ namespace Core.Infrastructure.Database
             if (!await context.Database.CanConnectAsync(cancellationToken))
             {
                 _logger.LogWarning("Database not accessible. Attempting to create...");
-                await context.Database.EnsureCreatedAsync(cancellationToken);
+                //await context.Database.EnsureCreatedAsync(cancellationToken);
+                await context.Database.MigrateAsync(cancellationToken);
                 context.EnsureTriggers(cancellationToken);
                 _logger.LogInformation("✅ Database created successfully.");
                 return;

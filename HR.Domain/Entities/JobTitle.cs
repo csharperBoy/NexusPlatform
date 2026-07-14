@@ -23,5 +23,15 @@ namespace HR.Domain.Entities
         {
             
         }
+        public JobTitle(
+             string _Code,
+             string _Name
+
+            )
+        {
+            Code= _Code;
+            Name= _Name;
+            IsActive = true;
+        }
     }
 }

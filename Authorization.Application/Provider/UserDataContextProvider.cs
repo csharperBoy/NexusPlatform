@@ -72,7 +72,7 @@ namespace Authorization.Application.Provider
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
             
-            List<Guid>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            List<Guid?>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
 

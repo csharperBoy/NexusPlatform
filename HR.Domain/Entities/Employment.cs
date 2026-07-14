@@ -34,17 +34,19 @@ namespace HR.Domain.Entities
         public Employment(
               string _EmployeeCode,
          Guid _PersonId,
-         Guid _EmploymentTypeId,
-         Guid _EmploymentStatusId,
-         DateOnly _EffectiveFrom,
-         DateOnly? _EffectiveTo
+         Guid? _EmploymentTypeId,
+         Guid? _EmploymentStatusId,
+         DateOnly? _EffectiveFrom = null,
+         DateOnly? _EffectiveTo = null
             )
         {
             EmployeeCode = _EmployeeCode;
             FkNaturalPersonId = _PersonId;
             FkEmploymentTypeId = _EmploymentTypeId;
             FkEmploymentStatusId = _EmploymentStatusId;
-            EffectiveFrom = _EffectiveFrom;
+
+            EffectiveFrom = _EffectiveFrom ?? DateOnly.FromDateTime( DateTime.UtcNow);
+
             EffectiveTo = _EffectiveTo;
 
         }

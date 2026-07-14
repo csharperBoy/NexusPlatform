@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Core.Domain.ValueObjects;
 using Core.Shared.Enums.People;
 using People.Domain.Enums;
 using System;
@@ -9,8 +10,14 @@ using System.Threading.Tasks;
 
 namespace People.Domain.Entities
 {
-    public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity 
+    public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity , IHasEffectivePeriod
     {
+        #region Impelement IHasEffectivePeriod
+        public DateOnly EffectiveFrom { get; private set; }
+        public DateOnly? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
+
+        #endregion
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
@@ -47,6 +54,7 @@ namespace People.Domain.Entities
         {
             OwnerOrganizationUnitId = orgUnitId;
         }
+
         #endregion
 
 
@@ -69,5 +77,6 @@ namespace People.Domain.Entities
             Value = _Value;
             FkPartyId = _PartyId;
         }
+
     }
 }

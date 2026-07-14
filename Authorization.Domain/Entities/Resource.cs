@@ -58,7 +58,18 @@ namespace Authorization.Domain.Entities
         public Guid? FkParentId { get; private set; }
         public virtual Resource? Parent { get; private set; }
         public virtual ICollection<Resource> Children { get; private set; } = new List<Resource>();
+        public void ChangeParent(Guid? newParentId)
+        {
+            if (newParentId == Id)
+                throw new InvalidOperationException("Resource cannot be its own parent.");
 
+            FkParentId = newParentId;
+            GeneratePath();
+            ModifiedAt = DateTime.UtcNow;
+
+            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+            AddDomainEvent(new ResourceHierarchyChangedEvent(Id));
+        }
         #endregion
 
         #region IOwnerableEntity Impelement
@@ -88,7 +99,7 @@ namespace Authorization.Domain.Entities
         }
         public void SetOrganizationUnitOwner(Guid orgUnitId)
         {
-            OwnerOrganizationUnitId = orgUnitId;
+           OwnerOrganizationUnitId = orgUnitId;
         }
         #endregion
 
@@ -189,18 +200,7 @@ namespace Authorization.Domain.Entities
             ModifiedAt = DateTime.UtcNow;
         }
 
-        public void ChangeParent(Guid? newParentId)
-        {
-            if (newParentId == Id)
-                throw new InvalidOperationException("Resource cannot be its own parent.");
-
-            FkParentId = newParentId;
-            GeneratePath();
-            ModifiedAt = DateTime.UtcNow;
-
-            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
-            AddDomainEvent(new ResourceHierarchyChangedEvent(Id));
-        }
+        
 
         public void Activate()
         {
