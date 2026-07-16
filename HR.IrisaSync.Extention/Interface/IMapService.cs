@@ -14,7 +14,6 @@ namespace HR.IrisaSync.Extention.Interface
         Task FillJobLevelMap();
 
         Task FillOrganizationUnitMap();
-      
-
+        //Guid GetPostId(decimal? codJobpo);
     }
 }

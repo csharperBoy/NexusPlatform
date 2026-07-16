@@ -30,5 +30,6 @@ namespace HR.Domain.Entities
             Title = _Title;
             IsActive = true;
         }
+        public void SetTitle(string _Title) { Title = _Title; }
     }
 }

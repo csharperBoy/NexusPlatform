@@ -19,9 +19,9 @@ namespace HR.IrisaSync.Extention.Services
     public class IrisaSyncUnitOfWork : EfUnitOfWork<IrisaExtentionDbContext>, IIrisaSyncUnitOfWork<IrisaExtentionDbContext>
     {
         public IrisaSyncUnitOfWork(
-            IRepository<IrisaExtentionDbContext, JobTitleMap, Guid> jobTitleMapRepository,
-            IRepository<IrisaExtentionDbContext, JobLevelMap, Guid> jobLevelMapRepository,
-            IRepository<IrisaExtentionDbContext, OrganizationUnitMap, Guid> organizationUnitMapRepository,
+            IRepository<IrisaExtentionDbContext, IrisaSyncJobTitleMap, Guid> jobTitleMapRepository,
+            IRepository<IrisaExtentionDbContext, IrisaSyncJobLevelMap, Guid> jobLevelMapRepository,
+            IRepository<IrisaExtentionDbContext, IrisaSyncOrganizationUnitMap, Guid> organizationUnitMapRepository,
 
             IrisaExtentionDbContext dbContext,
             IOutboxService<IrisaExtentionDbContext> outboxService,
@@ -34,8 +34,8 @@ namespace HR.IrisaSync.Extention.Services
 
         }
 
-      public IRepository<IrisaExtentionDbContext, JobTitleMap, Guid> JobTitleMapRepository { get; }
-      public IRepository<IrisaExtentionDbContext, JobLevelMap, Guid> JobLevelMapRepository { get; }
-        public IRepository<IrisaExtentionDbContext, OrganizationUnitMap, Guid> OrganizationUnitMapRepository { get; }
+      public IRepository<IrisaExtentionDbContext, IrisaSyncJobTitleMap, Guid> JobTitleMapRepository { get; }
+      public IRepository<IrisaExtentionDbContext, IrisaSyncJobLevelMap, Guid> JobLevelMapRepository { get; }
+        public IRepository<IrisaExtentionDbContext, IrisaSyncOrganizationUnitMap, Guid> OrganizationUnitMapRepository { get; }
     }
 }

@@ -29,9 +29,9 @@ namespace HR.IrisaSync.Extention.Data
       : base(options, new ServiceCollection().BuildServiceProvider()) 
         {
         }
-        public virtual DbSet<JobTitleMap> JobTitleMap { get; set; }
-        public virtual DbSet<JobLevelMap> JobLevelMap { get; set; }
-        public virtual DbSet<OrganizationUnitMap> OrganizationUnitMap { get; set; }
+        public virtual DbSet<IrisaSyncJobTitleMap> JobTitleMap { get; set; }
+        public virtual DbSet<IrisaSyncJobLevelMap> JobLevelMap { get; set; }
+        public virtual DbSet<IrisaSyncOrganizationUnitMap> OrganizationUnitMap { get; set; }
         
         //public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         //{
@@ -43,9 +43,9 @@ namespace HR.IrisaSync.Extention.Data
             
             modelBuilder.HasDefaultSchema("hr");
 
-            modelBuilder.ApplyConfiguration(new JobTitleMapConfiguration());
-            modelBuilder.ApplyConfiguration(new JobLevelMapConfiguration());
-            modelBuilder.ApplyConfiguration(new OrganizationUnitMapConfiguration());
+            modelBuilder.ApplyConfiguration(new IrisaSyncJobTitleMapConfiguration());
+            modelBuilder.ApplyConfiguration(new IrisaSyncJobLevelMapConfiguration());
+            modelBuilder.ApplyConfiguration(new IrisaSyncOrganizationUnitMapConfiguration());
             
 
         }

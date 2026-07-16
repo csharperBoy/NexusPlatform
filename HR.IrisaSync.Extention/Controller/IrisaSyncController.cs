@@ -29,12 +29,19 @@ namespace HR.IrisaSync.Extention.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
+        [HttpPost("SyncEmployement")]
+        //[AuthorizeResource("hr.employee", "Create")]
+        public async Task<IActionResult> SyncEmployement()
+        {
+            await _syncService.SyncEmployeesAsync();
 
+            return HandleResult(Result<bool>.Ok(true));
+        }
         [HttpPost("FillJobTitle")]
         //[AuthorizeResource("hr.employee", "Create")]
         public async Task<IActionResult> FillJobTitle()
         {
-            await _syncService.FillJobTitle();
+            await _syncService.SyncJobTitle();
 
             return HandleResult(Result<bool>.Ok(true));
         }
@@ -42,7 +49,7 @@ namespace HR.IrisaSync.Extention.Controller
         //[AuthorizeResource("hr.employee", "Create")]
         public async Task<IActionResult> FillJobLevel()
         {
-            await _syncService.FillJobLevel();
+            await _syncService.SyncJobLevel();
 
             return HandleResult(Result<bool>.Ok(true));
         }
@@ -50,7 +57,7 @@ namespace HR.IrisaSync.Extention.Controller
         //[AuthorizeResource("hr.employee", "Create")]
         public async Task<IActionResult> FillOrganizationUnit()
         {
-            await _syncService.FillOrganizationUnit();
+            await _syncService.SyncOrganizationUnit();
 
             return HandleResult(Result<bool>.Ok(true));
         }
@@ -58,7 +65,7 @@ namespace HR.IrisaSync.Extention.Controller
         //[AuthorizeResource("hr.employee", "Create")]
         public async Task<IActionResult> FillPost()
         {
-            await _syncService.FillPost();
+            await _syncService.SyncPostAsync();
 
             return HandleResult(Result<bool>.Ok(true));
         }

@@ -67,7 +67,20 @@ namespace HR.Domain.Entities
 
         public virtual ICollection<PostContact> PostContacts { get; set; } = new List<PostContact>();
 
-
+        public void UpdateDetails(
+    Guid? organizationUnitId,
+    Guid? jobLevelId,
+    Guid? gradeId = null,
+    Guid? costCenterId = null,
+    Guid? parentId = null)
+        {
+            FkOrganizationUnitId = organizationUnitId;
+            FkJobLevelId = jobLevelId;
+            FkGradeId = gradeId;
+            FkCostCenterId = costCenterId;
+            FkParentId = parentId;
+            Touch(); // به‌روزرسانی ModifiedAt
+        }
 
         protected Post() { }
 

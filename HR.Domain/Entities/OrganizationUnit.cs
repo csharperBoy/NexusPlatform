@@ -39,7 +39,7 @@ namespace HR.Domain.Entities
 
         private void Touch() => ModifiedAt = DateTime.UtcNow;
 
-        public string Name { get; private set; }
+        public string Name { get;  set; }
         public string Code { get; private set; }
 
         // Materialized Path: مثلا "/RootGuid/ParentGuid/MyGuid/"
@@ -50,7 +50,10 @@ namespace HR.Domain.Entities
         public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
 
 
-
+        public void SetName(string _Name)
+        {
+            Name = _Name;
+        }
         protected OrganizationUnit() { }
 
         public OrganizationUnit(string name, string code, Guid? parentId)

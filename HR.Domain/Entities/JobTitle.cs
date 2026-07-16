@@ -33,5 +33,9 @@ namespace HR.Domain.Entities
             Name= _Name;
             IsActive = true;
         }
+        public void SetName(string _Name)
+        {
+            Name = _Name;
+        }
     }
 }

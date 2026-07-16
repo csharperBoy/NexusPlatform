@@ -13,9 +13,9 @@ namespace HR.IrisaSync.Extention.Interface
     public interface IIrisaSyncUnitOfWork<TContext> : IUnitOfWork<TContext>
         where TContext : DbContext
     {
-        IRepository<TContext, JobTitleMap, Guid> JobTitleMapRepository { get; }
-        IRepository<TContext, JobLevelMap, Guid> JobLevelMapRepository { get; }
-        IRepository<TContext, OrganizationUnitMap, Guid> OrganizationUnitMapRepository { get; }
+        IRepository<TContext, IrisaSyncJobTitleMap, Guid> JobTitleMapRepository { get; }
+        IRepository<TContext, IrisaSyncJobLevelMap, Guid> JobLevelMapRepository { get; }
+        IRepository<TContext, IrisaSyncOrganizationUnitMap, Guid> OrganizationUnitMapRepository { get; }
 
     }
 }

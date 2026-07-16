@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace HR.IrisaSync.Extention.Configurations
 {
-    public class JobTitleMapConfiguration : BaseConfiguration<JobTitleMap>
+    public class IrisaSyncJobTitleMapConfiguration : BaseConfiguration<IrisaSyncJobTitleMap>
     {
-        public override void Configure(EntityTypeBuilder<JobTitleMap> builder)
+        public override void Configure(EntityTypeBuilder<IrisaSyncJobTitleMap> builder)
         {
             base.Configure(builder);
 
-            builder.ToTable("JobTitleMap", "hr");
+            builder.ToTable("IrisaSyncJobTitleMap", "hr");
 
 
             builder.HasIndex(e => e.FkJobTitleId, "IX_Assignments_JobTitleId");

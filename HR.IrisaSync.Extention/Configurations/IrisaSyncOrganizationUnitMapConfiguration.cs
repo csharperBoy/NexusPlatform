@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace HR.IrisaSync.Extention.Configurations
 {
-    public class OrganizationUnitMapConfiguration : BaseConfiguration<OrganizationUnitMap>
+    public class IrisaSyncOrganizationUnitMapConfiguration : BaseConfiguration<IrisaSyncOrganizationUnitMap>
     {
-        public override void Configure(EntityTypeBuilder<OrganizationUnitMap> builder)
+        public override void Configure(EntityTypeBuilder<IrisaSyncOrganizationUnitMap> builder)
         {
             base.Configure(builder);
 
-            builder.ToTable("OrganizationUnitMap", "hr");
+            builder.ToTable("IrisaSyncOrganizationUnitMap", "hr");
 
 
             builder.HasIndex(e => e.FkOrganizationUnitId, "IX_Assignments_OrganizationUnitId");

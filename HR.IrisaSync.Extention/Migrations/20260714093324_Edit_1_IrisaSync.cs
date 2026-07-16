@@ -15,7 +15,7 @@ namespace HR.IrisaSync.Extention.Migrations
                 name: "hr");
 
             migrationBuilder.CreateTable(
-                name: "JobLevelMap",
+                name: "IrisaSyncJobLevelMap",
                 schema: "hr",
                 columns: table => new
                 {
@@ -27,11 +27,11 @@ namespace HR.IrisaSync.Extention.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_JobLevelMap", x => x.Id);
+                    table.PrimaryKey("PK_IrisaSyncJobLevelMap", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "JobTitleMap",
+                name: "IrisaSyncJobTitleMap",
                 schema: "hr",
                 columns: table => new
                 {
@@ -44,11 +44,11 @@ namespace HR.IrisaSync.Extention.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_JobTitleMap", x => x.Id);
+                    table.PrimaryKey("PK_IrisaSyncJobTitleMap", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "OrganizationUnitMap",
+                name: "IrisaSyncOrganizationUnitMap",
                 schema: "hr",
                 columns: table => new
                 {
@@ -60,19 +60,19 @@ namespace HR.IrisaSync.Extention.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_OrganizationUnitMap", x => x.Id);
+                    table.PrimaryKey("PK_IrisaSyncOrganizationUnitMap", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Assignments_JobLevelId",
                 schema: "hr",
-                table: "JobLevelMap",
+                table: "IrisaSyncJobLevelMap",
                 column: "FkJobLevelId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FkJobLevelId_Unique",
                 schema: "hr",
-                table: "JobLevelMap",
+                table: "IrisaSyncJobLevelMap",
                 column: "FkJobLevelId",
                 unique: true,
                 filter: "[FkJobLevelId] IS NOT NULL");
@@ -80,28 +80,28 @@ namespace HR.IrisaSync.Extention.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_IrisaJobLevelId_Unique",
                 schema: "hr",
-                table: "JobLevelMap",
+                table: "IrisaSyncJobLevelMap",
                 column: "IrisaJobLevelId",
                 unique: true,
                 filter: "[IrisaJobLevelId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobLevelMap_Id",
+                name: "IX_IrisaSyncJobLevelMap_Id",
                 schema: "hr",
-                table: "JobLevelMap",
+                table: "IrisaSyncJobLevelMap",
                 column: "Id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Assignments_JobTitleId",
                 schema: "hr",
-                table: "JobTitleMap",
+                table: "IrisaSyncJobTitleMap",
                 column: "FkJobTitleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FkJobTitleId_Unique",
                 schema: "hr",
-                table: "JobTitleMap",
+                table: "IrisaSyncJobTitleMap",
                 column: "FkJobTitleId",
                 unique: true,
                 filter: "[FkJobTitleId] IS NOT NULL");
@@ -109,28 +109,28 @@ namespace HR.IrisaSync.Extention.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_IrisaJobTitleId_Unique",
                 schema: "hr",
-                table: "JobTitleMap",
+                table: "IrisaSyncJobTitleMap",
                 column: "IrisaJobTitleId",
                 unique: true,
                 filter: "[IrisaJobTitleId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_JobTitleMap_Id",
+                name: "IX_IrisaSyncJobTitleMap_Id",
                 schema: "hr",
-                table: "JobTitleMap",
+                table: "IrisaSyncJobTitleMap",
                 column: "Id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Assignments_OrganizationUnitId",
                 schema: "hr",
-                table: "OrganizationUnitMap",
+                table: "IrisaSyncOrganizationUnitMap",
                 column: "FkOrganizationUnitId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FkOrganizationUnitId_Unique",
                 schema: "hr",
-                table: "OrganizationUnitMap",
+                table: "IrisaSyncOrganizationUnitMap",
                 column: "FkOrganizationUnitId",
                 unique: true,
                 filter: "[FkOrganizationUnitId] IS NOT NULL");
@@ -138,15 +138,15 @@ namespace HR.IrisaSync.Extention.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_IrisaOrganizationUnitId_Unique",
                 schema: "hr",
-                table: "OrganizationUnitMap",
+                table: "IrisaSyncOrganizationUnitMap",
                 column: "IrisaOrganizationUnitId",
                 unique: true,
                 filter: "[IrisaOrganizationUnitId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationUnitMap_Id",
+                name: "IX_IrisaSyncOrganizationUnitMap_Id",
                 schema: "hr",
-                table: "OrganizationUnitMap",
+                table: "IrisaSyncOrganizationUnitMap",
                 column: "Id",
                 unique: true);
         }
@@ -155,15 +155,15 @@ namespace HR.IrisaSync.Extention.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "JobLevelMap",
+                name: "IrisaSyncJobLevelMap",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: "JobTitleMap",
+                name: "IrisaSyncJobTitleMap",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: "OrganizationUnitMap",
+                name: "IrisaSyncOrganizationUnitMap",
                 schema: "hr");
         }
     }

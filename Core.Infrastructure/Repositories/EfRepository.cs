@@ -180,6 +180,15 @@ namespace Core.Infrastructure.Repositories
             }
             _dbSet.RemoveRange(entities);
         }
+        public virtual async Task UpdateRangeAsync(IEnumerable<TEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Edit);
+            }
+            _dbSet.UpdateRange(entities);
+        }
+        
 
         public virtual async Task<IQueryable<TEntity>> AsQueryable()
         {

@@ -67,7 +67,7 @@ namespace Core.Application.Abstractions
         Task DeleteAsync(TKey id);
         Task DeleteAsync(TEntity entity);
         Task RemoveRangeAsync(IEnumerable<TEntity> entities);
-
+        Task UpdateRangeAsync(IEnumerable<TEntity> entities);
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
 

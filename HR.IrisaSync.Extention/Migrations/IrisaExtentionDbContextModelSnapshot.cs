@@ -23,7 +23,7 @@ namespace HR.IrisaSync.Extention.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.JobLevelMap", b =>
+            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.IrisaSyncJobLevelMap", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -41,7 +41,7 @@ namespace HR.IrisaSync.Extention.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
-                        .HasName("PK_JobLevelMap");
+                        .HasName("PK_IrisaSyncJobLevelMap");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -56,10 +56,10 @@ namespace HR.IrisaSync.Extention.Migrations
                         .IsUnique()
                         .HasFilter("[IrisaJobLevelId] IS NOT NULL");
 
-                    b.ToTable("JobLevelMap", "hr");
+                    b.ToTable("IrisaSyncJobLevelMap", "hr");
                 });
 
-            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.JobTitleMap", b =>
+            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.IrisaSyncJobTitleMap", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -80,7 +80,7 @@ namespace HR.IrisaSync.Extention.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
-                        .HasName("PK_JobTitleMap");
+                        .HasName("PK_IrisaSyncJobTitleMap");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -95,10 +95,10 @@ namespace HR.IrisaSync.Extention.Migrations
                         .IsUnique()
                         .HasFilter("[IrisaJobTitleId] IS NOT NULL");
 
-                    b.ToTable("JobTitleMap", "hr");
+                    b.ToTable("IrisaSyncJobTitleMap", "hr");
                 });
 
-            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.OrganizationUnitMap", b =>
+            modelBuilder.Entity("HR.IrisaSync.Extention.Entities.IrisaSyncOrganizationUnitMap", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -116,7 +116,7 @@ namespace HR.IrisaSync.Extention.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
-                        .HasName("PK_OrganizationUnitMap");
+                        .HasName("PK_IrisaSyncOrganizationUnitMap");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -131,7 +131,7 @@ namespace HR.IrisaSync.Extention.Migrations
                         .IsUnique()
                         .HasFilter("[IrisaOrganizationUnitId] IS NOT NULL");
 
-                    b.ToTable("OrganizationUnitMap", "hr");
+                    b.ToTable("IrisaSyncOrganizationUnitMap", "hr");
                 });
 #pragma warning restore 612, 618
         }

@@ -39,7 +39,7 @@ namespace HR.IrisaSync.Extention.Services
             var lst = irisaList
                      .Where(e => e.CodEmtyp == true)
                      .GroupBy(a => a.CodJobpo)
-                     .Select(group => new JobTitleMap(group.Key, group.First().DesJobpo, group.Count()))//$"{group.Count().ToString()} - {group.First().DesJobpo}"))                    
+                     .Select(group => new IrisaSyncJobTitleMap(group.Key, group.First().DesJobpo, group.Count()))//$"{group.Count().ToString()} - {group.First().DesJobpo}"))                    
                      .ToList();
             var existlist = await _uow.JobTitleMapRepository.GetAllAsync();
             foreach (var item in lst)
@@ -73,7 +73,7 @@ namespace HR.IrisaSync.Extention.Services
             var lst = irisaList
                      .Where(e => e.CodEmtyp == true)
                      .GroupBy(a => a.CodPosit)
-                     .Select(group => new JobLevelMap(group.Key, group.First().DesPosit))
+                     .Select(group => new IrisaSyncJobLevelMap(group.Key, group.First().DesPosit))
                      .ToList();
             var existlist = await _uow.JobLevelMapRepository.GetAllAsync();
             foreach (var item in lst)
@@ -107,7 +107,7 @@ namespace HR.IrisaSync.Extention.Services
             var lst = irisaList
                      .Where(e => e.CodEmtyp == true)
                      .GroupBy(a => a.CodBusun)
-                     .Select(group => new OrganizationUnitMap(group.Key, group.First().DesBusun))
+                     .Select(group => new IrisaSyncOrganizationUnitMap(group.Key, group.First().DesBusun))
                      .ToList();
             var existlist = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             foreach (var item in lst)

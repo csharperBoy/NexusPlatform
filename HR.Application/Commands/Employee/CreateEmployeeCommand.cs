@@ -86,6 +86,14 @@ namespace HR.Application.Commands.Employee
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
                 #region ساخت شخصیت حقیقی
 
+                PhoneNumber? phone = null;
+                Email? email = null;
+                PhoneNumber? mobile = null;
+                try { phone = request.Phone != null ? PhoneNumber.Create(request.Phone) : null; } catch { }
+                try { email = request.Email != null ? Email.Create(request.Email) : null; } catch { }
+                try { mobile = request.Mobile != null ? PhoneNumber.Create(request.Mobile) : null; } catch { }
+
+
                 Guid personId = await _personService.CreatePersonAsync(
                     request.NationalCode,
                     request.FirstlName,
@@ -94,11 +102,11 @@ namespace HR.Application.Commands.Employee
                     request.BirthPlace,
                     request.FatherName,
                     request.Gender,
-                    PhoneNumber.Create( request.Phone),request.Address,Email.Create( request.Email), PhoneNumber.Create(request.Mobile)
-                  ,userContext.UserName
+                    phone, request.Address, email, mobile
+                  , userContext.UserName
                     );
                 #endregion
-                
+
                 #region ایجاد کارمند
 
                 Guid employeeId = await _employeeService.CreateEmployeeAsync(
@@ -106,11 +114,16 @@ namespace HR.Application.Commands.Employee
                 #endregion
 
                 #region انتصاب مکان ها به شخص
-                await _employeeService.AssignLocationsToEmployee(employeeId, request.locationsId);
+                if (request.locationsId != null && request.locationsId.Count() > 0)
+                {
+                    await _employeeService.AssignLocationsToEmployee(employeeId, request.locationsId);
+                }
                 #endregion
 
                 #region انتصاب شخص به پست سازمانی
+
                 Guid AssignId = await _orgChartService.AssignToEmployeeAsync(request.PostId, employeeId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+
                 #endregion
 
                 #region ذخیره تغییرات

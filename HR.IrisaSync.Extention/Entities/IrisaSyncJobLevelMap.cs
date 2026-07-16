@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace HR.IrisaSync.Extention.Entities
 {
   
-    public class JobLevelMap : BaseEntity
+    public class IrisaSyncJobLevelMap : BaseEntity
     {
         public string? JobLevel { get; set; }
         public Guid? FkJobLevelId { get; set; }
@@ -16,11 +16,11 @@ namespace HR.IrisaSync.Extention.Entities
         public string? IrisaJobLevel { get; set; }
 
         //public virtual Post Post { get; private set; } = null!;
-        protected JobLevelMap()
+        protected IrisaSyncJobLevelMap()
         {
 
         }
-        public JobLevelMap(
+        public IrisaSyncJobLevelMap(
             string? _JobLevel,
             Guid? _FkJobLevelId,
                 decimal? _IrisaJobLevelId,
@@ -32,7 +32,7 @@ namespace HR.IrisaSync.Extention.Entities
             IrisaJobLevelId = _IrisaJobLevelId;
             IrisaJobLevel = _IrisaJobLevel;
         }
-        public JobLevelMap(
+        public IrisaSyncJobLevelMap(
                  decimal? _IrisaJobLevelId,
                 string? _IrisaJobLevel
             )

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HR.IrisaSync.Extention.Entities
 {
-    public class JobTitleMap : BaseEntity
+    public class IrisaSyncJobTitleMap : BaseEntity
     {
         public string? JobTitle { get; set; }
         public Guid? FkJobTitleId { get; set; }
@@ -17,11 +17,11 @@ namespace HR.IrisaSync.Extention.Entities
         public int? IrisaJobTitleUseCount { get; set; }
 
         //public virtual Post Post { get; private set; } = null!;
-        protected JobTitleMap()
+        protected IrisaSyncJobTitleMap()
         {
             
         }
-        public JobTitleMap(
+        public IrisaSyncJobTitleMap(
             string? _JobTitle,
             Guid? _FkJobTitleId,
                 decimal? _IrisaJobTitleId,
@@ -35,7 +35,7 @@ namespace HR.IrisaSync.Extention.Entities
             IrisaJobTitle = _IrisaJobTitle;
             IrisaJobTitleUseCount = _IrisaJobTitleUseCount;
         }
-        public JobTitleMap(
+        public IrisaSyncJobTitleMap(
                  decimal? _IrisaJobTitleId,
                 string? _IrisaJobTitle, int? _IrisaJobTitleUseCount
             )

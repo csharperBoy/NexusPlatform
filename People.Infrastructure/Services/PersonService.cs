@@ -84,10 +84,10 @@ namespace People.Infrastructure.Services
             Party party = new Party(perAssigneeId);
             await _partyRepository.AddAsync(party);
 
-            await CreatePartyContact(PartyContactType.Mobile, Mobile.Value, party.Id);
-            await CreatePartyContact(PartyContactType.Phone, Phone.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Mobile, Mobile?.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Phone, Phone?.Value, party.Id);
             await CreatePartyContact(PartyContactType.Address, Address, party.Id);
-            await CreatePartyContact(PartyContactType.Email, Email.Value, party.Id);
+            await CreatePartyContact(PartyContactType.Email, Email?.Value, party.Id);
             return party.Id;
         }
 

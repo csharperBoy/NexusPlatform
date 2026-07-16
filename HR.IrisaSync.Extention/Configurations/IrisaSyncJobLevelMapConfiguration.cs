@@ -11,13 +11,13 @@ using System.Threading.Tasks;
 namespace HR.IrisaSync.Extention.Configurations
 {
     
-    public class JobLevelMapConfiguration : BaseConfiguration<JobLevelMap>
+    public class IrisaSyncJobLevelMapConfiguration : BaseConfiguration<IrisaSyncJobLevelMap>
     {
-        public override void Configure(EntityTypeBuilder<JobLevelMap> builder)
+        public override void Configure(EntityTypeBuilder<IrisaSyncJobLevelMap> builder)
         {
             base.Configure(builder);
 
-            builder.ToTable("JobLevelMap", "hr");
+            builder.ToTable("IrisaSyncJobLevelMap", "hr");
 
 
             builder.HasIndex(e => e.FkJobLevelId, "IX_Assignments_JobLevelId");

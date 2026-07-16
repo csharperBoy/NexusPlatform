@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HR.IrisaSync.Extention.Entities
 {
-    public class OrganizationUnitMap : BaseEntity
+    public class IrisaSyncOrganizationUnitMap : BaseEntity
     {
         public string? OrganizationUnit { get; set; }
         public Guid? FkOrganizationUnitId { get; set; }
@@ -15,11 +15,11 @@ namespace HR.IrisaSync.Extention.Entities
         public string? IrisaOrganizationUnit { get; set; }
 
         //public virtual Post Post { get; private set; } = null!;
-        protected OrganizationUnitMap()
+        protected IrisaSyncOrganizationUnitMap()
         {
 
         }
-        public OrganizationUnitMap(
+        public IrisaSyncOrganizationUnitMap(
             string? _OrganizationUnit,
             Guid? _FkOrganizationUnitId,
                 decimal? _IrisaOrganizationUnitId,
@@ -31,7 +31,7 @@ namespace HR.IrisaSync.Extention.Entities
             IrisaOrganizationUnitId = _IrisaOrganizationUnitId;
             IrisaOrganizationUnit = _IrisaOrganizationUnit;
         }
-        public OrganizationUnitMap(
+        public IrisaSyncOrganizationUnitMap(
                  decimal? _IrisaOrganizationUnitId,
                 string? _IrisaOrganizationUnit
             )
