@@ -9,15 +9,15 @@ using Serilog;
 
 try
 {
-    #region test
+    //#region test
 
-    using (var context = new IrisaOracleDbContext())
-    {
-        var a = context.PdsIdeaInformationViws.Where(a=>a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
-    }
-    #endregion
+    //using (var context = new IrisaOracleDbContext())
+    //{
+    //    var a = context.PdsIdeaInformationViws.Where(a => a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
+    //}
+    //#endregion
 
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
+    Console.OutputEncoding = System.Text.Encoding.UTF8;
     Log.Information("🚀 Starting AkSteel Management application...");
 
     var builder = WebApplication.CreateBuilder(args);

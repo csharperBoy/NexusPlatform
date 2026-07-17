@@ -12,29 +12,36 @@ using System.Reflection;
 
 namespace Core.Infrastructure.Data
 {
-    public interface IBase_DbContext 
+    public interface IBase_DbContext
     {
         void EnsureTrigger(string RootNamespace, string fileName, string triggerName, Assembly? assembly = null);
+        void EnsureView(string RootNamespace, string fileName, string viewName, string schema = "dbo", Assembly? assembly = null);
+
         void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken));
+        void EnsureViews(CancellationToken cancellationToken = default(CancellationToken));
     }
-    public abstract class Base_DbContext : DbContext , IBase_DbContext
+    public abstract class Base_DbContext : DbContext, IBase_DbContext
     {
         private readonly IServiceProvider _serviceProvider;
 
-         protected Base_DbContext(DbContextOptions options, IServiceProvider serviceProvider)
-             : base(options)
-         {
-             _serviceProvider = serviceProvider;
-         }
+        protected Base_DbContext(DbContextOptions options, IServiceProvider serviceProvider)
+            : base(options)
+        {
+            _serviceProvider = serviceProvider;
+        }
         public virtual void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
 
         }
-         public void EnsureTrigger(string RootNamespace, string fileName , string triggerName , Assembly? assembly = null)
+        public virtual void EnsureViews(CancellationToken cancellationToken = default(CancellationToken))
+        {
+
+        }
+        public void EnsureTrigger(string RootNamespace, string fileName, string triggerName, Assembly? assembly = null)
         {
             if (assembly == null)
                 assembly = Assembly.GetCallingAssembly();
-            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName , assembly);
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName, assembly);
 
             // بررسی وجود تریگر و ایجاد آن در صورت نبود
             var checkTriggerSql = @"
@@ -45,6 +52,27 @@ namespace Core.Infrastructure.Data
                                     ";
 
             Database.ExecuteSqlRaw(checkTriggerSql);
+        }
+        public void EnsureView(string RootNamespace, string fileName, string viewName, string schema = "dbo", Assembly? assembly = null)
+        {
+            if (assembly == null)
+                assembly = Assembly.GetCallingAssembly();
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName, assembly);
+
+            var checkViewSql = @"
+                            IF NOT EXISTS (
+                                SELECT 1 
+                                FROM sys.views v
+                                INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
+                                WHERE s.name = {0} AND v.name = {1}
+                            )
+                            BEGIN
+                                EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
+                            END
+                        ";
+
+            // استفاده از ExecuteSqlRaw با آرگومان‌های جداگانه برای پارامتری کردن
+            Database.ExecuteSqlRaw(checkViewSql, schema, viewName);
         }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -74,43 +102,43 @@ namespace Core.Infrastructure.Data
 
         private void UpdateAuditableEntities()
         {
-              var entries = ChangeTracker
-                  .Entries<IAuditableEntity>()
-                  .ToList();
+            var entries = ChangeTracker
+                .Entries<IAuditableEntity>()
+                .ToList();
 
-              if (!entries.Any()) return;
+            if (!entries.Any()) return;
 
-              // دریافت ICurrentUserService به صورت lazy
-              var currentUserContext = _serviceProvider.GetService<UserDataContext>();
-              var currentUserId = currentUserContext.UserId;
-              var currentUserName = currentUserContext.UserName;
+            // دریافت ICurrentUserService به صورت lazy
+            var currentUserContext = _serviceProvider.GetService<UserDataContext>();
+            var currentUserId = currentUserContext.UserId;
+            var currentUserName = currentUserContext.UserName;
 
-              foreach (var entry in entries)
-              {
-                  if (entry.State == EntityState.Added)
-                  {
-                      entry.Entity.CreatedAt = DateTime.UtcNow;
-                      entry.Entity.CreatedBy = currentUserId.ToString();
+            foreach (var entry in entries)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    entry.Entity.CreatedAt = DateTime.UtcNow;
+                    entry.Entity.CreatedBy = currentUserId.ToString();
 
-                      // برای Modified هم در حالت Added مقدار دهی می‌کنیم
-                      entry.Entity.ModifiedAt = DateTime.UtcNow;
-                      entry.Entity.ModifiedBy = currentUserId.ToString();
-                  }
-                  else if (entry.State == EntityState.Modified)
-                  {
-                      entry.Entity.ModifiedAt = DateTime.UtcNow;
-                      entry.Entity.ModifiedBy = currentUserId.ToString();
+                    // برای Modified هم در حالت Added مقدار دهی می‌کنیم
+                    entry.Entity.ModifiedAt = DateTime.UtcNow;
+                    entry.Entity.ModifiedBy = currentUserId.ToString();
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.ModifiedAt = DateTime.UtcNow;
+                    entry.Entity.ModifiedBy = currentUserId.ToString();
 
-                      // از تغییر CreatedAt جلوگیری می‌کنیم
-                      entry.Property(nameof(IAuditableEntity.CreatedAt)).IsModified = false;
-                      entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
-                  }
-              }
+                    // از تغییر CreatedAt جلوگیری می‌کنیم
+                    entry.Property(nameof(IAuditableEntity.CreatedAt)).IsModified = false;
+                    entry.Property(nameof(IAuditableEntity.CreatedBy)).IsModified = false;
+                }
+            }
         }
 
 
     }
 
-   
+
 
 }

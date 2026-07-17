@@ -1,11 +1,12 @@
 ﻿using Core.Domain.Common;
 using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
+using HR.Domain.Entities;
 using HR.Infrastructure.Configurations;
+using HR.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using HR.Domain.Entities;
-using HR.Infrastructure.Services;
+using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,9 +41,15 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<PostContact> PostContacts { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
+
+        public virtual DbSet<EmployementInfoView> EmployementInfoViews { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
+        }
+        public override void EnsureViews(CancellationToken cancellationToken = default)
+        {
+            EnsureView("HR.Infrastructure.SqlScript", "CreateViewsScript.sql", "Employement_Info_View","hr");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,6 +71,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PostContactConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
+            modelBuilder.ApplyConfiguration(new EmployementInfoViewConfiguration());
 
         }
     }

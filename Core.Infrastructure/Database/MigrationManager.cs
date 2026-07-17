@@ -125,6 +125,7 @@ namespace Core.Infrastructure.Database
                 //await context.Database.EnsureCreatedAsync(cancellationToken);
                 await context.Database.MigrateAsync(cancellationToken);
                 context.EnsureTriggers(cancellationToken);
+                context.EnsureViews(cancellationToken);
                 _logger.LogInformation("✅ Database created successfully.");
                 return;
             }
@@ -136,6 +137,8 @@ namespace Core.Infrastructure.Database
             {
                 _logger.LogInformation("✅ No pending migrations for {DbContext}.", typeof(TContext).Name);
                 context.EnsureTriggers(cancellationToken);
+
+                context.EnsureViews(cancellationToken);
                 return;
             }
 
@@ -146,6 +149,7 @@ namespace Core.Infrastructure.Database
 
             context.EnsureTriggers(cancellationToken);
 
+            context.EnsureViews(cancellationToken);
             _logger.LogInformation("🎉 Successfully applied {Count} migrations for {DbContext}",
                 pendingList.Count, typeof(TContext).Name);
         }
