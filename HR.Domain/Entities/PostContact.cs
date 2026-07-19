@@ -87,11 +87,18 @@ namespace HR.Domain.Entities
         public PostContact
             (PostContactType _ContactType,
             string _Value,
-            Guid _PostId)
+            Guid _PostId,
+            DateTime? _EffectiveFrom = null,
+            DateTime? _EffectiveTo =null,
+            bool _isCurrent = true
+            )
         {
             ContactType = _ContactType;
             Value = _Value;
             FkPostId = _PostId;
+            EffectiveFrom = _EffectiveFrom;
+            EffectiveTo = _EffectiveTo;
+            IsCurrent = _isCurrent;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace HR.Domain.Specifications
         public ActiveAssignmentsByPostSpec(Guid postId)
             : base(a => a.FkPostId == postId &&
                        a.IsCurrent &&
-                       (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime(DateTime.UtcNow)))
+                       (!a.EffectiveTo.HasValue || a.EffectiveTo >DateTime.UtcNow))
         {
             AddInclude(a => a.Employment);
             AddInclude(a => a.Post.OrganizationUnit);

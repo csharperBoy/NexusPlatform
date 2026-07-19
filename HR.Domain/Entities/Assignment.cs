@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace HR.Domain.Entities
 {
     
-    public class Assignment : BaseEntity, IAuditableEntity
+    public class Assignment : BaseEntity, IAuditableEntity , IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -22,36 +22,51 @@ namespace HR.Domain.Entities
         public void Touch() => ModifiedAt = DateTime.UtcNow;
 
         #endregion
+        #region Impelement IHasEffectivePeriod
+        public DateTime? EffectiveFrom { get; private set; }
+        public DateTime? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
 
+        public void SetEffectiveFrom(DateTime? value)
+        {
+            EffectiveFrom = value;
+            Touch();
+        }
+
+        public void SetEffectiveTo(DateTime? value)
+        {
+            EffectiveTo = value;
+            Touch();
+        }
+        public void SetIsCurrent(bool value)
+        {
+            IsCurrent = value;
+            Touch();
+        }
+        #endregion
         public Guid FkPostId { get; private set; }
         public Guid FkEmploymentId { get; private set; }
         //public Guid AssignmentTypeId { get; private set; }
         public PostAssignmentType AssigneeType { get; private set; }
-        public DateOnly EffectiveFrom { get; private set; }
-        public DateOnly? EffectiveTo { get; private set; }
-        public bool IsCurrent { get; private set; }
+      
         // navigate
 
         public virtual Post Post { get; private set; } = null!;
         public virtual Employment Employment { get; private set; } = null!;
         protected Assignment() { }
-        public Assignment(Guid _PostId, Guid _EmploymentId, PostAssignmentType? _AssignmentType =null , DateOnly? _EffectiveFrom = null, DateOnly? _EffectiveTo = null)
+        public Assignment(Guid _PostId, Guid _EmploymentId, PostAssignmentType? _AssignmentType =null , DateTime? _EffectiveFrom = null, DateTime? _EffectiveTo = null)
         {
             FkPostId = _PostId;
             FkEmploymentId = _EmploymentId;
             AssigneeType = _AssignmentType ?? PostAssignmentType.Delegation;
             if (_EffectiveFrom == null)
             {
-                _EffectiveFrom = DateOnly.FromDateTime(DateTime.UtcNow);
+                _EffectiveFrom = DateTime.UtcNow;
             }
-            EffectiveFrom = (DateOnly) _EffectiveFrom;
+            EffectiveFrom =  _EffectiveFrom;
             EffectiveTo = _EffectiveTo;
             IsCurrent = true;
         }
-        public async Task TerminationEmployeeOnPost()
-        {
-            EffectiveTo = DateOnly.FromDateTime(DateTime.UtcNow);
-            IsCurrent = false;
-        }
+        
     }
 }

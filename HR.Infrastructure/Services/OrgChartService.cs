@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.HR;
+using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
@@ -83,7 +84,7 @@ namespace HR.Infrastructure.Services
             }
         }
 
-        public async Task<Guid> AssignToEmployeeAsync(Guid postId, Guid employeeId, PostAssignmentType? assigneType = null, DateOnly? EffectiveFrom = null, DateOnly? EffectiveTo = null)
+        public async Task<Guid> AssignToEmployeeAsync(Guid postId, Guid employeeId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null)
         {
             Assignment assign = new Assignment(postId, employeeId, assigneType, EffectiveFrom, EffectiveTo);
             var assignments = await GetPostAssignmentAsync(postId);
@@ -91,7 +92,8 @@ namespace HR.Infrastructure.Services
             {
                 foreach (var item in assignments)
                 {
-                    await item.TerminationEmployeeOnPost();
+                    item.DoExpire();
+                    await _assignmentRepository.UpdateAsync(item);
 
                 }
             }
@@ -131,14 +133,14 @@ namespace HR.Infrastructure.Services
                 PostContact? existContact = await _postContactSpecRepository.GetBySpecAsync(spec);
                 if (existContact != null)
                 {
+                    existContact.DoExpire();
+                    await _postContactRepository.UpdateAsync(existContact);
 
                 }
-                else
-                {
-                    PostContact contact = new PostContact(type, value, postId);
-                    await _postContactRepository.AddAsync(contact);
+                PostContact contact = new PostContact(type, value, postId, DateTime.UtcNow);
+                await _postContactRepository.AddAsync(contact);
 
-                }
+
             }
         }
         public async Task<List<Post>?> GetEmployeePostAsync(Guid employeeId)
