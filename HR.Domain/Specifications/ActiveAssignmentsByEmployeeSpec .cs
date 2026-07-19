@@ -16,7 +16,7 @@ namespace HR.Domain.Specifications
         public ActiveAssignmentsByEmployeeSpec(Guid employeeId)
             : base(a => a.FkEmploymentId == employeeId &&
                        a.IsCurrent &&
-                       (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime( DateTime.UtcNow)))
+                       (!a.EffectiveTo.HasValue || a.EffectiveTo >  DateTime.UtcNow))
         {
             AddInclude(a => a.Post);
             AddInclude(a => a.Post.OrganizationUnit);

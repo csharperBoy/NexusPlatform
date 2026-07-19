@@ -48,8 +48,8 @@ namespace HR.Application.Commands.Employee
 
      Guid PostId,
      PostAssignmentType AssigneeType,
-     DateOnly EffectiveFrom,
-     DateOnly? EffectiveTo
+     DateTime? EffectiveFrom,
+     DateTime? EffectiveTo
     #endregion
 
 ) : IRequest<Result<Guid>>;

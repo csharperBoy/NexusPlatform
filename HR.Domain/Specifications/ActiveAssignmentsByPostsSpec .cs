@@ -16,7 +16,7 @@ namespace HR.Domain.Specifications
         public ActiveAssignmentsByPostsSpec(IEnumerable<Guid> postIds)
             : base(a => postIds.Contains(a.FkPostId) &&
                        a.IsCurrent &&
-                       (!a.EffectiveTo.HasValue || a.EffectiveTo > DateOnly.FromDateTime( DateTime.UtcNow)))
+                       (!a.EffectiveTo.HasValue || a.EffectiveTo >  DateTime.UtcNow))
         {
             AddInclude(a => a.Post);
             ApplyOrderBy(a => a.EffectiveFrom);

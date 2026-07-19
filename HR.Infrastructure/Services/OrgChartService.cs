@@ -215,7 +215,6 @@ namespace HR.Infrastructure.Services
             {
                 _logger.LogDebug("Getting Assignment for post {postId}", postId);
 
-                // استفاده از Specification شیک
                 var assignmentSpec = new ActiveAssignmentsByPostSpec(postId);
                 var assignments = await _assignmentSpecRepository.ListBySpecAsync(assignmentSpec);
 

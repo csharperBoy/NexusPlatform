@@ -182,7 +182,7 @@ namespace HR.IrisaSync.Extention.Services
                                 StartDate: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
                                 PostId: postId,
                                 AssigneeType: PostAssignmentType.Delegation,
-                                EffectiveFrom: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
+                                EffectiveFrom: Convert.ToDateTime(item.DatEmpltEmplyEn),
                                 EffectiveTo: null,EmploymentStatusId: null , EmploymentTypeId: null,EndDate: null,locationsId:null
                             );
 
