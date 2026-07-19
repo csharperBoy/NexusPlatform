@@ -44,7 +44,7 @@ namespace Identity.Domain.Entities
             NormalizedName = name.ToUpperInvariant();
             
         }
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
 
         public void Update(string? description, int? orderNum)
         {

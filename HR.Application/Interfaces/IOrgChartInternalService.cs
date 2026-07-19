@@ -22,5 +22,6 @@ namespace HR.Application.Interfaces
         Task<List<Post>?> GetEmployeePostAsync(Guid employeeId);
 
         Task SaveAsync();
+        Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, string? officePhone, string? orgEmail, string? orgMobile);
     }
 }

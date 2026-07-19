@@ -17,10 +17,12 @@ namespace TraderServer.Domain.Entities
     public class BrokerageAccount :BaseEntity, IAuditableEntity,IOwnerableEntity, IAggregateRoot
     {
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
+
         #endregion
         #region IDataScopedEntity Impelement
         public Guid? OwnerOrganizationUnitId { get; protected set; }

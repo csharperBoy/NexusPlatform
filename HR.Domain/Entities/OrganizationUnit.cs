@@ -37,7 +37,7 @@ namespace HR.Domain.Entities
         }
         #endregion
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
 
         public string Name { get;  set; }
         public string Code { get; private set; }

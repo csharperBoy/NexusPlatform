@@ -32,7 +32,7 @@ namespace People.Domain.Entities
         }
 
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
         
     }
 

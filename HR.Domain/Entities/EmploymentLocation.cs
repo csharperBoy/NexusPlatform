@@ -13,12 +13,35 @@ namespace HR.Domain.Entities
     public class EmploymentLocation : BaseEntity, IAuditableEntity, IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
-        #endregion
 
+        #endregion
+        #region Impelement IHasEffectivePeriod
+        public DateTime? EffectiveFrom { get; private set; }
+        public DateTime? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
+
+        public void SetEffectiveFrom(DateTime? value)
+        {
+            EffectiveFrom = value;
+            Touch();
+        }
+
+        public void SetEffectiveTo(DateTime? value)
+        {
+            EffectiveTo = value;
+            Touch();
+        }
+        public void SetIsCurrent(bool value)
+        {
+            IsCurrent = value;
+            Touch();
+        }
+        #endregion
         public Guid FkLocationId { get; private set; }
         public Guid FkEmployeeId { get; private set; }
 
@@ -26,13 +49,7 @@ namespace HR.Domain.Entities
         public virtual Employment Employee { get; set; } = null!;
 
         public virtual Location Location { get; set; } = null!;
-        #region Impelement IHasEffectivePeriod
-        public DateOnly EffectiveFrom { get; private set; }
-        public DateOnly? EffectiveTo { get; private set; }
-        public bool IsCurrent { get; private set; }
-
-        #endregion
-
+        
         protected EmploymentLocation() { }
         public EmploymentLocation(
              Guid _fkLocationId,

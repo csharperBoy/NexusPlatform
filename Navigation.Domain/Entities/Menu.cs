@@ -21,7 +21,7 @@ namespace Navigation.Domain.Entities
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
         #endregion
 
         #region IOwnerableEntity Impelement

@@ -22,6 +22,7 @@ namespace HR.Infrastructure.Services
         IOrgChartInternalService,
         IOrgChartPublicService
     {
+        private readonly ISpecificationRepository<PostContact, Guid> _postContactSpecRepository;
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
         private readonly IRepository<HRDbContext, Post, Guid> _postRepository;
         private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
@@ -32,6 +33,7 @@ namespace HR.Infrastructure.Services
 
         public OrgChartService(
             ISpecificationRepository<Post, Guid> postSpecRepository,
+            ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
         IRepository<HRDbContext, PostContact, Guid> postContactRepository,
         ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
@@ -42,6 +44,7 @@ namespace HR.Infrastructure.Services
             _postRepository = postRepository;
             _postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
+            _postContactSpecRepository = postContactSpecRepository;
             _logger = logger;
             _assignmentSpecRepository = assignmentSpecRepository;
             _assignmentRepository = assignmentRepository;
@@ -124,8 +127,18 @@ namespace HR.Infrastructure.Services
         {
             if (value != null)
             {
-                PostContact contact = new PostContact(type, value, postId);
-                await _postContactRepository.AddAsync(contact);
+                GetPostContactSpec spec = new GetPostContactSpec(type, postId, value);
+                PostContact? existContact = await _postContactSpecRepository.GetBySpecAsync(spec);
+                if (existContact != null)
+                {
+
+                }
+                else
+                {
+                    PostContact contact = new PostContact(type, value, postId);
+                    await _postContactRepository.AddAsync(contact);
+
+                }
             }
         }
         public async Task<List<Post>?> GetEmployeePostAsync(Guid employeeId)
@@ -224,6 +237,34 @@ namespace HR.Infrastructure.Services
             if (employeeId == null) { return null; }
             var post = await GetEmployeePostAsync((Guid)employeeId);
             return post.Select(p => p.FkPermissionAssigneeId).ToList();
+        }
+
+        public async Task<Guid> UpdatePostAsync(
+            Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive,
+            string? officePhone, string? orgEmail, string? orgMobile)
+        {
+            Post? post = await _postRepository.GetByIdAsync(id);
+            if (post == null)
+                throw new Exception("can not found post!!!");
+
+            bool hasChange = post.ApplyChange(code, jobTitleId, organizationUnitId, jobLevelId, gradeId, costCenterId, isActive);
+            if (hasChange)
+            {
+                await _postRepository.UpdateAsync(post);
+            }
+            if (officePhone != null)
+            {
+                await CreatePostContact(PostContactType.OfficePhone, officePhone, post.Id);
+            }
+            if (orgEmail != null)
+            {
+                await CreatePostContact(PostContactType.OrgEmail, orgEmail, post.Id);
+            }
+            if (orgMobile != null)
+            {
+                await CreatePostContact(PostContactType.OrgMobile, orgMobile, post.Id);
+            }
+            return post.Id;
         }
     }
 }

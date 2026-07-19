@@ -14,8 +14,9 @@ namespace Identity.Domain.Entities
     IsRevoked برای باطل‌کردن دستی RefreshTokenها (مثلاً بعد از تغییر پسورد یا logout all).
       */
     public class RefreshToken :BaseEntity, IAuditableEntity, IEntity<Guid>
-    { 
+    {
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر

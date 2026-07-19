@@ -9,9 +9,10 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
-    public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity
+    public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity,IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر
@@ -47,9 +48,32 @@ namespace HR.Domain.Entities
         {
             OwnerOrganizationUnitId = orgUnitId;
         }
+
+
         #endregion
 
+        #region Impelement IHasEffectivePeriod
+        public DateTime? EffectiveFrom { get; private set; }
+        public DateTime? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
 
+        public void SetEffectiveFrom(DateTime? value)
+        {
+            EffectiveFrom = value;
+            Touch();
+        }
+
+        public void SetEffectiveTo(DateTime? value)
+        {
+            EffectiveTo = value;
+            Touch();
+        }
+        public void SetIsCurrent(bool value)
+        {
+            IsCurrent = value;
+            Touch();
+        }
+        #endregion
 
 
 

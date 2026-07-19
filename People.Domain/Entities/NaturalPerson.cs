@@ -104,7 +104,7 @@ namespace People.Domain.Entities
             FullName = FullName.Create(firstName, lastName);
             Touch();
         }
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
         public async Task<bool> ApplyChange(
          string? _NationalCode,
          string? _FirstName,

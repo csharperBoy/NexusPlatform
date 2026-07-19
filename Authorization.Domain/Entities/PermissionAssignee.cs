@@ -11,6 +11,7 @@ namespace Authorization.Domain.Entities
     public class PermissionAssignee: BaseEntity ,IAuditableEntity
     {
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر

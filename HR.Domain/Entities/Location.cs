@@ -36,7 +36,7 @@ namespace HR.Domain.Entities
         #endregion
         public string Title { get; set; }
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
 
 //navigate
         public virtual ICollection<EmploymentLocation> EmploymentLocations { get; set; } = new List<EmploymentLocation>();

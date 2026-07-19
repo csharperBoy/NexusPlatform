@@ -17,6 +17,31 @@ namespace Identity.Infrastructure.Data
                                IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>
         ,IBase_DbContext
     {
+        public void EnsureView(string RootNamespace, string fileName, string viewName, string schema = "identity", Assembly? assembly = null)
+        {
+            if (assembly == null)
+                assembly = Assembly.GetCallingAssembly();
+            var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName, assembly);
+
+            var checkViewSql = @"
+                            IF NOT EXISTS (
+                                SELECT 1 
+                                FROM sys.views v
+                                INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
+                                WHERE s.name = {0} AND v.name = {1}
+                            )
+                            BEGIN
+                                EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
+                            END
+                        ";
+
+            // استفاده از ExecuteSqlRaw با آرگومان‌های جداگانه برای پارامتری کردن
+            Database.ExecuteSqlRaw(checkViewSql, schema, viewName);
+        }
+
+        public void EnsureViews(CancellationToken cancellationToken = default)
+        {
+        }
         public virtual void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
 
@@ -74,5 +99,7 @@ namespace Identity.Infrastructure.Data
             builder.Entity<IdentityRoleClaim<Guid>>().ToTable("AspNetRoleClaims", "identity");
             builder.Entity<IdentityUserToken<Guid>>().ToTable("AspNetUserTokens", "identity");
         }
+
+       
     }
 }

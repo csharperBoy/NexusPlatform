@@ -124,7 +124,7 @@ namespace Authorization.Domain.Entities
             }
             return hasChange;
         }
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
 
     }
 }

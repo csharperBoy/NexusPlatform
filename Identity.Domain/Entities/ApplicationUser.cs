@@ -94,7 +94,7 @@ namespace Identity.Domain.Entities
             SecurityStamp = Guid.NewGuid().ToString();
         }
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
 
       
         public void UpdateLoginInfo(string ip)

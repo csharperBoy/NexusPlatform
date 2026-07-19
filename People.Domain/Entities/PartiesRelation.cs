@@ -31,6 +31,6 @@ namespace People.Domain.Entities
         public PartiesRelation() { }
 
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+       public void Touch() => ModifiedAt = DateTime.UtcNow;
     }
 }

@@ -20,7 +20,7 @@ namespace HR.Infrastructure.Configurations
 
             builder
                .HasNoKey()
-               .ToView("Employement_Info_View","hr");
+               .ToView("Employement_Info_View", "hr");
 
             builder.Property(e => e.AssignmentsAssigneeType).HasColumnName("Assignments_AssigneeType");
             builder.Property(e => e.AssignmentsEffectiveFrom).HasColumnName("Assignments_EffectiveFrom");
@@ -53,15 +53,5 @@ namespace HR.Infrastructure.Configurations
             builder.Property(e => e.PostContactMobile).HasColumnName("PostContact_Mobile");
             builder.Property(e => e.PostContactPhone).HasColumnName("PostContact_Phone");
         }
-    }
-
-    internal class EmployementInfoViewConfiguration
-    {
-
-        modelBuilder.Entity<EmployementInfoView>(entity =>
-        {
-           
-    });
-
     }
 }

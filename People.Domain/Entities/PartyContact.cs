@@ -13,12 +13,29 @@ namespace People.Domain.Entities
     public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity , IHasEffectivePeriod
     {
         #region Impelement IHasEffectivePeriod
-        public DateOnly EffectiveFrom { get; private set; }
-        public DateOnly? EffectiveTo { get; private set; }
+        public DateTime? EffectiveFrom { get; private set; }
+        public DateTime? EffectiveTo { get; private set; }
         public bool IsCurrent { get; private set; }
 
+        public void SetEffectiveFrom(DateTime? value)
+        {
+            EffectiveFrom = value;
+            Touch();
+        }
+
+        public void SetEffectiveTo(DateTime? value)
+        {
+            EffectiveTo = value;
+            Touch();
+        }
+        public void SetIsCurrent(bool value)
+        {
+            IsCurrent = value;
+            Touch();
+        }
         #endregion
         #region IAuditableEntity Impelement
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
         public string? CreatedBy { get; set; }                      // 📌 کاربر ایجادکننده
         public DateTime? ModifiedAt { get; set; }                   // 📌 زمان آخرین تغییر

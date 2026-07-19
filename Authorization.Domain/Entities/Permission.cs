@@ -131,7 +131,7 @@ namespace Authorization.Domain.Entities
         }
 
 
-        private void Touch() => ModifiedAt = DateTime.UtcNow;
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
 
 
 
@@ -224,21 +224,21 @@ namespace Authorization.Domain.Entities
 
             EffectiveFrom = effectiveFrom;
             ExpiresAt = expiresAt;
-            ModifiedAt = DateTime.UtcNow;
+            Touch();
         }
 
         public void Activate()
         {
             if (IsActive) return;
             IsActive = true;
-            ModifiedAt = DateTime.UtcNow;
+            Touch();
         }
 
         public void Deactivate()
         {
             if (!IsActive) return;
             IsActive = false;
-            ModifiedAt = DateTime.UtcNow;
+            Touch();
         }
 
         public bool AppliesTo( Guid assigneeId)
