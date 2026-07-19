@@ -1,4 +1,4 @@
-// src/apps/Trader/Server/Components/LoadingSpinner.tsx
+// src/core/component/loading/LoadingSpinner.tsx
 import React from 'react';
 
 
