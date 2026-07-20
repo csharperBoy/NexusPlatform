@@ -23,8 +23,8 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
-        [HttpPut("{id:guid}")]
         //[AuthorizeResource("hr.post", "Edit")]
+        [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdatePost(Guid id, [FromBody] UpdatePostCommand command)
         {
             // اطمینان از تطابق ID در route با command
@@ -33,8 +33,8 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
 
-        [HttpGet("GetList")]
         //[AuthorizeResource("hr.post", "View")]
+        [HttpGet("GetList")]
         public async Task<IActionResult> GetList([FromQuery] GetPostListQuery? request = null)
         {
             var result = await Mediator.Send(request);

@@ -3,19 +3,42 @@ import getAPI from "@/core/api/axiosClient";
 
 
 import { SelectionListDto } from "@/core/models/SelectionListDto";
-const API_MODULE = "identity";
+import { PostInfoView } from "../models/postInfoView";
+import { CreatePostCommand, UpdatePostCommand } from "../models/postCommand";
+const API_MODULE = "HR";
 
-export const positionApi = {
+export const postApi = {
 
  // دریافت پست ها (GET)
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+  GetList: async (): Promise<PostInfoView[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
-      "/api/hr/Posts/GetSelectionList",
+    const response = await api.get<PostInfoView[]>(
+      "/api/hr/OrgChart/GetList",
       {  withCredentials: true }
     );
     console.log(response)
     return response.data;
   },
+  
+// ویرایش منبع (PUT)
+  updatePost: async (data: UpdatePostCommand): Promise<boolean> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.put<boolean>(
+      `/api/hr/OrgChart/${data.id}`, data,
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+ createPost: async (data: CreatePostCommand): Promise<string> => {
+   const api = getAPI(API_MODULE);
+   console.info("data= " , data);
+   const response = await api.post<string>(
+     "/api/hr/OrgChart/create",
+     data,
+     { withCredentials: true }
+   );
+   return response.data;
+ },
 
 };
