@@ -31,6 +31,8 @@ namespace HR.Infrastructure.Services
         private readonly ISpecificationRepository<Assignment, Guid> _assignmentSpecRepository;
         private readonly ILogger<OrgChartService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
+        private readonly IHRUnitOfWork<HRDbContext> _hrUow;
+
 
         public OrgChartService(
             ISpecificationRepository<Post, Guid> postSpecRepository,
@@ -39,9 +41,10 @@ namespace HR.Infrastructure.Services
         IRepository<HRDbContext, PostContact, Guid> postContactRepository,
         ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
         IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
-        IUnitOfWork<HRDbContext> uow,
+        IUnitOfWork<HRDbContext> uow, IHRUnitOfWork<HRDbContext> hrUow,
         ILogger<OrgChartService> logger)
         {
+            _hrUow = hrUow; 
             _postRepository = postRepository;
             _postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
@@ -266,6 +269,12 @@ namespace HR.Infrastructure.Services
                 await CreatePostContact(PostContactType.OrgMobile, orgMobile, post.Id);
             }
             return post.Id;
+        }
+
+        public async Task<IReadOnlyList<PostInfoView>> GetPostListAsync()
+        {
+            var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
+            return list.ToList();
         }
     }
 }

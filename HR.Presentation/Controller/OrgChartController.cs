@@ -1,6 +1,7 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
 using HR.Application.Commands.OrgChart;
+using HR.Application.Queries.Post;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -29,6 +30,14 @@ namespace HR.Presentation.Controller
             // اطمینان از تطابق ID در route با command
             var updatedCommand = command with { Id = id };
             var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+
+        [HttpGet("GetList")]
+        //[AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetList([FromQuery] GetPostListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
             return HandleResult(result);
         }
 

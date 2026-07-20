@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
+using PhoneBook.Domain.Entities;
 
 namespace HR.Infrastructure.DependencyInjection
 {
@@ -104,6 +105,13 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<IRepository<HRDbContext, Post, Guid>, EfRepository<HRDbContext, Post, Guid>>();
             services.AddScoped<ISpecificationRepository<Post, Guid>, EfSpecificationRepository<HRDbContext, Post, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, PostInfoView, Guid>, EfRepository<HRDbContext, PostInfoView, Guid>>();
+            services.AddScoped<ISpecificationRepository<PostInfoView, Guid>, EfSpecificationRepository<HRDbContext, PostInfoView, Guid>>();
+            
+
+            services.AddScoped<IRepository<HRDbContext, EmployementInfoView, Guid>, EfRepository<HRDbContext, EmployementInfoView, Guid>>();
+            services.AddScoped<ISpecificationRepository<EmployementInfoView, Guid>, EfSpecificationRepository<HRDbContext, EmployementInfoView, Guid>>();
             
             services.AddScoped<IHRUnitOfWork<HRDbContext>, HRUnitOfWork>();
 

@@ -50,8 +50,8 @@ namespace HR.Infrastructure.Data
         }
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {
-            EnsureView("HR.Infrastructure.SqlScript", "CreateViewsScript.sql", "Employement_Info_View","hr");
-            EnsureView("HR.Infrastructure.SqlScript", "CreateViewsScript.sql", "Post_Info_View", "hr");
+            EnsureView("HR.Infrastructure.SqlScript", "CreateEmploymentInfoViewScript.sql", "Employment_Info_View","hr");
+            EnsureView("HR.Infrastructure.SqlScript", "CreatePostInfoViewScript.sql", "Post_Info_View", "hr");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

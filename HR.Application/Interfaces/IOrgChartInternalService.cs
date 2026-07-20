@@ -20,7 +20,7 @@ namespace HR.Application.Interfaces
             string? OrgMobile = null
             );
         Task<List<Post>?> GetEmployeePostAsync(Guid employeeId);
-
+        Task<IReadOnlyList<PostInfoView>> GetPostListAsync();
         Task SaveAsync();
         Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, string? officePhone, string? orgEmail, string? orgMobile);
     }

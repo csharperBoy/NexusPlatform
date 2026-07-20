@@ -57,21 +57,25 @@ namespace Core.Infrastructure.Data
         {
             if (assembly == null)
                 assembly = Assembly.GetCallingAssembly();
+
             var sqlScript = EmbeddedSqlHelper.Read(RootNamespace, fileName, assembly);
 
-            var checkViewSql = @"
-                            IF NOT EXISTS (
-                                SELECT 1 
-                                FROM sys.views v
-                                INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
-                                WHERE s.name = {0} AND v.name = {1}
-                            )
-                            BEGIN
-                                EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
-                            END
-                        ";
+            // جایگزینی اسکیما در کل اسکریپت
+            sqlScript = sqlScript.Replace("[dbo]", $"[{schema}]");
 
-            // استفاده از ExecuteSqlRaw با آرگومان‌های جداگانه برای پارامتری کردن
+            // استفاده از @p0 و @p1 برای پارامترها
+            var checkViewSql = @"
+                                    IF NOT EXISTS (
+                                        SELECT 1 
+                                        FROM sys.views v
+                                        INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
+                                        WHERE s.name = @p0 AND v.name = @p1
+                                    )
+                                    BEGIN
+                                        EXEC sp_executesql N'" + sqlScript.Replace("'", "''") + @"'
+                                    END
+                                ";
+
             Database.ExecuteSqlRaw(checkViewSql, schema, viewName);
         }
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

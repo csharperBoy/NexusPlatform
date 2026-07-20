@@ -5,6 +5,7 @@ using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
+using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,11 +30,15 @@ namespace HR.Infrastructure.Services
             IRepository<HRDbContext, Location, Guid> locationRepository,
             IRepository<HRDbContext, OrganizationUnit, Guid> organizationUnitRepository,
             IRepository<HRDbContext, PostContact, Guid> postContactRepository,
+            IRepository<HRDbContext, EmployementInfoView, Guid> employementInfoViewRepository,
+            IRepository<HRDbContext, PostInfoView, Guid> postInfoViewRepository,
             HRDbContext dbContext,
             IOutboxService<HRDbContext> outboxService,
             ILogger<EfUnitOfWork<HRDbContext>> logger) : base(dbContext, outboxService, logger)
         {
             AssignmentRepository = assignmentRepository;
+            EmployementInfoViewRepository = employementInfoViewRepository;
+            PostInfoViewRepository = postInfoViewRepository;
             EmploymentRepository = employmentRepository;
             EmploymentLocationRepository = employmentLocationRepository;
             EmploymentStatusRepository = employmentStatusRepository;
@@ -61,5 +66,7 @@ namespace HR.Infrastructure.Services
         public IRepository<HRDbContext, Location, Guid> LocationRepository { get; }
         public IRepository<HRDbContext, OrganizationUnit, Guid> OrganizationUnitRepository { get; }
         public IRepository<HRDbContext, PostContact, Guid> PostContactRepository { get; }
+        public IRepository<HRDbContext, EmployementInfoView, Guid> EmployementInfoViewRepository { get; }
+        public IRepository<HRDbContext, PostInfoView, Guid> PostInfoViewRepository { get; }
     }
 }
