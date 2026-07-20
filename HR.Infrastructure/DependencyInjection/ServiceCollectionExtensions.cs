@@ -106,6 +106,9 @@ namespace HR.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<HRDbContext, Post, Guid>, EfRepository<HRDbContext, Post, Guid>>();
             services.AddScoped<ISpecificationRepository<Post, Guid>, EfSpecificationRepository<HRDbContext, Post, Guid>>();
 
+            services.AddScoped<IRepository<HRDbContext, PostContact, Guid>, EfRepository<HRDbContext, PostContact, Guid>>();
+            services.AddScoped<ISpecificationRepository<PostContact, Guid>, EfSpecificationRepository<HRDbContext, PostContact, Guid>>();
+
             services.AddScoped<IRepository<HRDbContext, PostInfoView, Guid>, EfRepository<HRDbContext, PostInfoView, Guid>>();
             services.AddScoped<ISpecificationRepository<PostInfoView, Guid>, EfSpecificationRepository<HRDbContext, PostInfoView, Guid>>();
             

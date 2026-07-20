@@ -8,10 +8,14 @@
 
   <ItemGroup>
     <None Remove="SqlScript\CreateAssignmentTrigger.sql" />
+    <None Remove="SqlScript\CreateEmploymentInfoViewScript.sql" />
+    <None Remove="SqlScript\CreatePostInfoViewScript.sql" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="SqlScript\CreateAssignmentTrigger.sql" />
+    <EmbeddedResource Include="SqlScript\CreateEmploymentInfoViewScript.sql" />
+    <EmbeddedResource Include="SqlScript\CreatePostInfoViewScript.sql" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,8 +19,9 @@ namespace HR.Infrastructure.Configurations
 
 
             builder
-               .HasNoKey()
-               .ToView("Post_Info_View", "hr");
+                 .HasNoKey()
+               .ToView("Post_Info_View", "hr")
+              ;
 
             builder.Property(e => e.AssignmentsAssigneeType).HasColumnName("Assignments_AssigneeType");
             builder.Property(e => e.CostCenterName).HasColumnName("CostCenter_Name");

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Audit.Infrastructure.Migrations
 {
     [DbContext(typeof(AuditDbContext))]
-    [Migration("20260316130708_Edit_1_Audit")]
+    [Migration("20260720081525_Edit_1_Audit")]
     partial class Edit_1_Audit
     {
         /// <inheritdoc />

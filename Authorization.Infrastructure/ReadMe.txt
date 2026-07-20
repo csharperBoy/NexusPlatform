@@ -5,7 +5,7 @@
 
 dotnet ef migrations add Edit5_Authorization -p Authorization.Infrastructure -s "AkSteel Welfare Platform"
 or
-Add-Migration Edit_5_Authorization -Project Authorization.Infrastructure -Context AuthorizationDbContext -Start "TraderServer.WebApi"
+Add-Migration Edit_1_Authorization -Project Authorization.Infrastructure -Context AuthorizationDbContext -Start "TraderServer.WebApi"
 for debug:
 dotnet ef migrations add Edit5_Authorization --project Authorization.Infrastructure -c AuthorizationDbContext --verbose
 

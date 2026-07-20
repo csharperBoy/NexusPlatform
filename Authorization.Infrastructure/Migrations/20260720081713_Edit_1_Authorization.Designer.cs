@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authorization.Infrastructure.Migrations
 {
     [DbContext(typeof(AuthorizationDbContext))]
-    [Migration("20260630103643_Edit_1_Authorization")]
+    [Migration("20260720081713_Edit_1_Authorization")]
     partial class Edit_1_Authorization
     {
         /// <inheritdoc />

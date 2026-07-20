@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 
 namespace PhoneBook.Domain.Entities;
 
+[Keyless]
 public partial class EmployementInfoView
 {
     public string NationalCode { get; set; } = null!;

@@ -75,6 +75,45 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "EmployementInfoViews",
+                schema: "hr",
+                columns: table => new
+                {
+                    NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmployeeEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    EmployeeEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    PartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    PartyMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PartyAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PartyPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PartyEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmployeeStatusName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmployeeTypeName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
+                    AssignmentsEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    AssignmentsEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    PostCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GradeTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CostCenterName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JobLevelTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JobTitleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrganizationUnitsName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostContactPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostContactMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostContactEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PostContactFax = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmploymentLocationsEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: true),
+                    EmploymentLocationsEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    LocationTitle = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                });
+
+            migrationBuilder.CreateTable(
                 name: "JobLevel",
                 schema: "hr",
                 columns: table => new
@@ -181,6 +220,35 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PostInfoViews",
+                schema: "hr",
+                columns: table => new
+                {
+                    FkJobTitleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FkOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FkJobLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FkGradeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FkCostCenterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
+                    PostCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GradeTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CostCenterName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JobLevelTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    JobTitleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrganizationUnitsName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OfficePhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrgMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OrgEmail = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                });
+
+            migrationBuilder.CreateTable(
                 name: " Employment",
                 schema: "hr",
                 columns: table => new
@@ -284,11 +352,11 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     FkLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
-                    IsCurrent = table.Column<bool>(type: "bit", nullable: false)
+                    FkEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -319,12 +387,12 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     FkPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkEmploymentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AssigneeType = table.Column<int>(type: "int", nullable: false),
-                    EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
-                    IsCurrent = table.Column<bool>(type: "bit", nullable: false)
+                    AssigneeType = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -357,6 +425,9 @@ namespace HR.Infrastructure.Migrations
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     ContactType = table.Column<byte>(type: "tinyint", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FkPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
@@ -760,11 +831,19 @@ namespace HR.Infrastructure.Migrations
                 schema: "hr");
 
             migrationBuilder.DropTable(
+                name: "EmployementInfoViews",
+                schema: "hr");
+
+            migrationBuilder.DropTable(
                 name: "OutboxMessages",
                 schema: "hr");
 
             migrationBuilder.DropTable(
                 name: "PostContacts",
+                schema: "hr");
+
+            migrationBuilder.DropTable(
+                name: "PostInfoViews",
                 schema: "hr");
 
             migrationBuilder.DropTable(

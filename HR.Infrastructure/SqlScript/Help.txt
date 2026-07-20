@@ -1,0 +1,1 @@
+بعد از ساخت فایل sql باید در property قایل رفاه و build action را روی Embeded resource تنظیم شود

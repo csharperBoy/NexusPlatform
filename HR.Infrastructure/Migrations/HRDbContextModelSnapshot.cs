@@ -100,11 +100,11 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("FkEmploymentId")
                         .HasColumnType("uniqueidentifier");
@@ -228,11 +228,11 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("FkEmployeeId")
                         .HasColumnType("uniqueidentifier");
@@ -630,8 +630,17 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
+
                     b.Property<Guid>("FkPostId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -686,6 +695,170 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex(new[] { "FkPostId" }, "IX_PersonContacts_FkPostId");
 
                     b.ToTable("PostContacts", "hr");
+                });
+
+            modelBuilder.Entity("HR.Domain.Entities.PostInfoView", b =>
+                {
+                    b.Property<int>("AssignmentsAssigneeType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CostCenterName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmployeeCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("FkCostCenterId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FkGradeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FkJobLevelId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FkJobTitleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("FkOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("GradeTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JobLevelTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JobTitleName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NationalCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OfficePhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrgEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrgMobile")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrganizationUnitsName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("PostInfoViews", "hr");
+                });
+
+            modelBuilder.Entity("PhoneBook.Domain.Entities.EmployementInfoView", b =>
+                {
+                    b.Property<int>("AssignmentsAssigneeType")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("AssignmentsEffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("AssignmentsEffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("CostCenterName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmployeeCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly>("EmployeeEffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EmployeeEffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("EmployeeStatusName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmployeeTypeName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateOnly?>("EmploymentLocationsEffectiveFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EmploymentLocationsEffectiveTo")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GradeTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JobLevelTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("JobTitleName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LocationTitle")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NationalCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrganizationUnitsName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartyAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartyEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PartyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PartyMobile")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PartyPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostContactEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostContactFax")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostContactMobile")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PostContactPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToTable("EmployementInfoViews", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.Assignment", b =>

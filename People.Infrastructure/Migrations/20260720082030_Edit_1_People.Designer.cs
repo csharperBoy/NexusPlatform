@@ -12,7 +12,7 @@ using People.Infrastructure.Data;
 namespace People.Infrastructure.Migrations
 {
     [DbContext(typeof(PeopleDbContext))]
-    [Migration("20260713122341_Edit_1_People")]
+    [Migration("20260720082030_Edit_1_People")]
     partial class Edit_1_People
     {
         /// <inheritdoc />
@@ -418,11 +418,11 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("FkPartyId")
                         .HasColumnType("uniqueidentifier");

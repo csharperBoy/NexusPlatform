@@ -1,4 +1,5 @@
 ﻿using Core.Infrastructure.DependencyInjection;
+using HR.Infrastructure.Data;
 using HR.IrisaSync.Extention;
 using HR.IrisaSync.Extention.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,14 @@ try
     //    var a = context.PdsIdeaInformationViws.Where(a => a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
     //}
     //#endregion
+    #region test
+    var a = new HRDbContextFactory();
+  using (var context =  a.CreateDbContext(null))
+  {
+        var c = context.EmployementInfoViews.ToList();
+        var b = context.PostInfoViews.ToList();
+  }
+  #endregion
 
     Console.OutputEncoding = System.Text.Encoding.UTF8;
     Log.Information("🚀 Starting AkSteel Management application...");

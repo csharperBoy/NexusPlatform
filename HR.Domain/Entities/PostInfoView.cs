@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
-    public class PostInfoView
+    [Keyless]
+    public partial class PostInfoView
     {
         public Guid? FkJobTitleId { get;  set; } = null!;
         public Guid? FkOrganizationUnitId { get;  set; } = null!;

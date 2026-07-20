@@ -415,11 +415,11 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateOnly>("EffectiveFrom")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
 
-                    b.Property<DateOnly?>("EffectiveTo")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("FkPartyId")
                         .HasColumnType("uniqueidentifier");
