@@ -1,48 +1,53 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace HR.Domain.Entities
+namespace HR.Domain.Entities;
+
+public partial class PostInfoView
 {
-    [Keyless]
-    public partial class PostInfoView
-    {
-        public Guid? FkJobTitleId { get;  set; } = null!;
-        public Guid? FkOrganizationUnitId { get;  set; } = null!;
-        public Guid? FkJobLevelId { get;  set; } = null!;
-        public Guid? FkGradeId { get;  set; } = null!;
-        public Guid? FkCostCenterId { get;  set; } = null!;
-        public string NationalCode { get; set; } = null!;
+    public Guid Id { get; set; }
 
-        public string FirstName { get; set; } = null!;
+    public string PostCode { get; set; } = null!;
 
-        public string LastName { get; set; } = null!;
+    public Guid? ParentId { get; set; }
 
-        public string EmployeeCode { get; set; } = null!;
+    public Guid? FkParentId { get; set; }
 
-        public int AssignmentsAssigneeType { get; set; }
+    public Guid FkJobTitleId { get; set; }
 
-        public string PostCode { get; set; } = null!;
+    public Guid? FkOrganizationUnitId { get; set; }
 
-        public string? GradeTitle { get; set; }
+    public Guid? FkJobLevelId { get; set; }
 
-        public string? CostCenterName { get; set; }
+    public Guid? FkGradeId { get; set; }
 
-        public string? JobLevelTitle { get; set; }
+    public Guid? FkCostCenterId { get; set; }
 
-        public string? JobTitleName { get; set; }
+    public string? CostCenterName { get; set; }
 
-        public string? OrganizationUnitsName { get; set; }
+    public string? GradeTitle { get; set; }
 
-        public string? OfficePhone { get; set; }
+    public string? JobLevelTitle { get; set; }
 
-        public string? OrgMobile { get; set; }
+    public string? JobTitleName { get; set; }
 
-        public string? OrgEmail { get; set; }
+    public string? OfficePhone { get; set; }
 
+    public string? OrgMobile { get; set; }
 
-    }
+    public string? OrgEmail { get; set; }
+
+    public string? EmployeeCode { get; set; }
+
+    public string? FirstName { get; set; }
+
+    public string? LastName { get; set; }
+
+    public string? NationalCode { get; set; }
+
+    public int? Gender { get; set; }
+
+    public int? AssignmentsAssigneeType { get; set; }
+
+    public string OrganizationUnitsName { get; set; } = null!;
 }

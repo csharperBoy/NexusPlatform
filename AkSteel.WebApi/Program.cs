@@ -10,20 +10,25 @@ using Serilog;
 
 try
 {
-    //#region test
+   #region test
 
     //using (var context = new IrisaOracleDbContext())
     //{
     //    var a = context.PdsIdeaInformationViws.Where(a => a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
     //}
-    //#endregion
-    #region test
-    var a = new HRDbContextFactory();
-  using (var context =  a.CreateDbContext(null))
-  {
-        var c = context.EmployementInfoViews.ToList();
-        var b = context.PostInfoViews.ToList();
-  }
+    //var a = new HRDbContextFactory();
+    //using (var context = a.CreateDbContext(null))
+    //{
+    //    var b = context.PostInfoViews.ToList();
+    //    var c = context.EmployementInfoViews.ToList();
+    //}
+
+    //using (var context = new HR2DbContext())
+    //{
+    //    var b = context.PostInfoViews.ToList();
+    //    var c = context.EmployementInfoViews.ToList();
+    //}
+   
   #endregion
 
     Console.OutputEncoding = System.Text.Encoding.UTF8;

@@ -9,6 +9,7 @@ using HR.Domain.Entities;
 using HR.Domain.Enums;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,9 @@ namespace HR.Infrastructure.Services
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
 
 
+        //private readonly HRDbContext _contex;
         public OrgChartService(
+            //HRDbContext contex,
             ISpecificationRepository<Post, Guid> postSpecRepository,
             ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
@@ -44,6 +47,7 @@ namespace HR.Infrastructure.Services
         IUnitOfWork<HRDbContext> uow, IHRUnitOfWork<HRDbContext> hrUow,
         ILogger<OrgChartService> logger)
         {
+            //_contex= contex;
             _hrUow = hrUow; 
             _postRepository = postRepository;
             _postContactRepository = postContactRepository;
@@ -274,7 +278,8 @@ namespace HR.Infrastructure.Services
         public async Task<IReadOnlyList<PostInfoView>> GetPostListAsync()
         {
             var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
-            return list.ToList();
+            var result = list.ToList();
+            return result;
         }
     }
 }

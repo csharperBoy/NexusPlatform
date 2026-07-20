@@ -7,6 +7,7 @@ namespace PhoneBook.Domain.Entities;
 [Keyless]
 public partial class EmployementInfoView
 {
+    public Guid Id { get; set; }
     public string NationalCode { get; set; } = null!;
 
     public string FirstName { get; set; } = null!;

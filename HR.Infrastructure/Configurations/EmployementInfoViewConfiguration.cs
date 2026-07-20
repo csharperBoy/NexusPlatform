@@ -13,7 +13,7 @@ namespace HR.Infrastructure.Configurations
 {
     public class EmployementInfoViewConfiguration : BaseConfiguration<EmployementInfoView>
     {
-        public void Configure(EntityTypeBuilder<EmployementInfoView> builder)
+        public override void Configure(EntityTypeBuilder<EmployementInfoView> builder)
         {
             //base.Configure(builder);
 
