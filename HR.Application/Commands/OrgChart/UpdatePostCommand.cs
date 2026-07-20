@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Commands.OrgChart
 {
-    public record EditPostCommand(
+    public record UpdatePostCommand(
         Guid Id,
   string? Code,
   Guid? OrganizationUnitId,
@@ -32,20 +32,20 @@ namespace HR.Application.Commands.OrgChart
 ) : IRequest<Result<Guid>>;
 
 
-    public class EditPostCommandHandler : IRequestHandler<EditPostCommand, Result<Guid>>
+    public class UpdatePostCommandHandler : IRequestHandler<UpdatePostCommand, Result<Guid>>
     {
         private readonly IOrgChartInternalService _orgChartService;
-        private readonly ILogger<EditPostCommandHandler> _logger;
+        private readonly ILogger<UpdatePostCommandHandler> _logger;
 
-        public EditPostCommandHandler(
+        public UpdatePostCommandHandler(
             IOrgChartInternalService orgChartService,
-            ILogger<EditPostCommandHandler> logger)
+            ILogger<UpdatePostCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;
         }
 
-        public async Task<Result<Guid>> Handle(EditPostCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(UpdatePostCommand request, CancellationToken cancellationToken)
         {
             try
             {

@@ -16,12 +16,22 @@ namespace HR.Presentation.Controller
     public class OrgChartController : BaseController
     {
         [HttpPost("Create")]
-        //[AuthorizeResource("hr.orgchart", "Create")]
-        public async Task<IActionResult> CreateResource([FromBody] CreatePostCommand command)
+        //[AuthorizeResource("hr.post", "Create")]
+        public async Task<IActionResult> CreatePost([FromBody] CreatePostCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
+        [HttpPut("{id:guid}")]
+        //[AuthorizeResource("hr.post", "Edit")]
+        public async Task<IActionResult> UpdatePost(Guid id, [FromBody] UpdatePostCommand command)
+        {
+            // اطمینان از تطابق ID در route با command
+            var updatedCommand = command with { Id = id };
+            var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+
         /*
         [HttpGet("{id:guid}")]
         [AuthorizeResource("hr.orgchart", "View")]
@@ -40,16 +50,7 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
 
-        [HttpPut("{id:guid}")]
-        [AuthorizeResource("hr.orgchart", "Edit")]
-        public async Task<IActionResult> UpdateOrgChart(Guid id, [FromBody] UpdateOrgChartCommand command)
-        {
-            // اطمینان از تطابق ID در route با command
-            var updatedCommand = command with { Id = id };
-            var result = await Mediator.Send(updatedCommand);
-            return HandleResult(result);
-        }
-
+        
         [HttpDelete("{id:guid}")]
         [AuthorizeResource("hr.orgchart", "Delete")]
         public async Task<IActionResult> DeleteOrgChart(Guid id)
