@@ -43,6 +43,7 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
 
         public virtual DbSet<EmployementInfoView> EmployementInfoViews { get; set; }
+        public virtual DbSet<PostInfoView> PostInfoViews { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
             EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
@@ -50,6 +51,7 @@ namespace HR.Infrastructure.Data
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {
             EnsureView("HR.Infrastructure.SqlScript", "CreateViewsScript.sql", "Employement_Info_View","hr");
+            EnsureView("HR.Infrastructure.SqlScript", "CreateViewsScript.sql", "Post_Info_View", "hr");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -72,6 +74,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
             modelBuilder.ApplyConfiguration(new EmployementInfoViewConfiguration());
+            modelBuilder.ApplyConfiguration(new PostInfoViewConfiguration());
 
         }
     }
