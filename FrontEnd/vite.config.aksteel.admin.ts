@@ -1,4 +1,4 @@
-// vite.config.aksteel.adminpanel.phonebook.ts
+// vite.config.aksteel.website.phonebook.ts
 import { defineConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -10,11 +10,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => {
-  // env مخصوص AdminPanel
-  const env = loadEnv(mode, resolve(__dirname, "src/apps/AKSteel/AdminPanel/PhoneBook"));
+  // env مخصوص WebSite
+  const env = loadEnv(mode, resolve(__dirname, "src/apps/AKSteel/Admin"));
 const isDev =  mode.includes('development');
   return {
-    root: resolve(__dirname, "src/apps/AKSteel/AdminPanel/PhoneBook"),
+    root: resolve(__dirname, "src/apps/AKSteel/Admin"),
     plugins: [
       tailwindcss(),
       react(),
@@ -26,14 +26,14 @@ const isDev =  mode.includes('development');
       },
     },
     server: {
-      port: 5175,
+      port: 5174,
         https: isDev ? {} : undefined, // فقط در حالت توسعه فعال باشد
     },
     build: {
-      outDir: resolve(__dirname, "dist/AKSteelAdminPanelPhoneBook"),
+      outDir: resolve(__dirname, "dist/AKSteelAdmin"),
       emptyOutDir: true,
       rollupOptions: {
-        input: resolve(__dirname, "src/apps/AKSteel/AdminPanel/PhoneBook/index.html"),
+        input: resolve(__dirname, "src/apps/AKSteel/Admin/index.html"),
       },
     },
     define: {

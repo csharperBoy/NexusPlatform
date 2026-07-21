@@ -33,7 +33,11 @@
     
     "dev:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run dev",
     "build:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run build",
-    "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview"
+    "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",
+    
+    "dev:aksteel.admin": "pnpm --filter aksteel-admin run dev",
+    "build:aksteel.admin": "pnpm --filter aksteel-admin run build",
+    "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",

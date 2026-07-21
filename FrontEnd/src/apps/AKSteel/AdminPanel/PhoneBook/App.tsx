@@ -7,8 +7,12 @@ import { MainLayout } from "@/modules/DashboardCore";
 import DashboardPage from "./Pages/DashboardPage";
 import LoginPage from "./Pages/LoginPage";
 import { useActiveModules } from "@/core/context/ModuleContext";
+import HomePage from "./Pages/Home";
 
 export default function App() {
+  
+    console.info('start:');
+    console.warn('start=');
   const { activeModules, loading } = useActiveModules();
 
   if (loading) {
@@ -17,36 +21,12 @@ export default function App() {
   }
 
   const routes = useRoutes([
-    /* مسیر لاگین اختصاصی */
-    { path: "/login", element: <LoginPage /> },
 
-    /* مسیرهای عمومی ماژول Identity (مثل /register) فقط اگر Identity فعال باشد */
-    ...(activeModules.has("Identity")
-      ? identityPublicRoutes.filter((r) => r.path !== "/login") // حذف login duplicate
-      : []),
+        { path: "/home", element: <HomePage /> },
 
-    /* مسیرهای محافظت‌شده با Layout */
-    {
-      element: (
-        <ProtectedRoute>
-          <MainLayout>
-            <Outlet />
-          </MainLayout>
-        </ProtectedRoute>
-      ),
-      children: [
-        { path: "/dashboard", element: <DashboardPage /> },
-
-        /* مسیرهای خصوصی Identity */
-        ...(activeModules.has("Identity") ? identityPanelRoutes : []),
-
-        /* مسیرهای خصوصی Authorization */
-        ...(activeModules.has("Authorization") ? authorizationPanelRoutes : []),
-      ],
-    },
 
     /* مسیر پیش‌فرض */
-    { path: "*", element: <Navigate to="/dashboard" replace /> },
+    { path: "*", element: <Navigate to="/home" replace /> },
   ]);
 
   return routes;

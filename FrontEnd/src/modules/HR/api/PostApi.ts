@@ -1,4 +1,4 @@
-// modules/identity/api/userApi.ts
+// modules/hr/api/postApi.ts
 import getAPI from "@/core/api/axiosClient";
 
 
@@ -19,7 +19,15 @@ export const postApi = {
     console.log(response)
     return response.data;
   },
-  
+   GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/hr/OrgChart/GetSelectionList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
 // ویرایش منبع (PUT)
   updatePost: async (data: UpdatePostCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);

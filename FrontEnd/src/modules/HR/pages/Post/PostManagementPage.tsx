@@ -1,17 +1,15 @@
-// pages/PostManagement.tsx
+// pages/PostManagementPage.tsx
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   DndContext,
   DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
   useDraggable,
   useDroppable,
   closestCenter,
 } from '@dnd-kit/core';
 import { postApi } from '../../api/PostApi';
-import { UpdatePostCommand , PostAssignmentType} from '../../models/postCommand';
+import { UpdatePostCommand, PostAssignmentType } from '../../models/postCommand';
 import { PostInfoView } from '../../models/postInfoView';
 
 // کامپوننت هر گره درختی
@@ -79,14 +77,14 @@ const TreeNode: React.FC<TreeNodeProps> = ({ node, allNodes, onDrop, isChanged }
 };
 
 // کامپوننت اصلی
-const PostManagement: React.FC = () => {
+
+const PostManagementPage: React.FC = () => {
   const [posts, setPosts] = useState<PostInfoView[]>([]);
-  const [changedMap, setChangedMap] = useState<Map<string, string | null>>(new Map()); // id -> newParentId (null means root)
+  const [changedMap, setChangedMap] = useState<Map<string, string | null>>(new Map());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // بارگذاری اولیه
   useEffect(() => {
     loadPosts();
   }, []);
@@ -94,7 +92,8 @@ const PostManagement: React.FC = () => {
   const loadPosts = async () => {
     try {
       setLoading(true);
-      const data = await postApi.getPosts();
+      // توجه: postApi.GetList مستقیماً آرایه را برمی‌گرداند
+      const data = await postApi.GetList();
       setPosts(data);
       setChangedMap(new Map());
       setError(null);
@@ -167,13 +166,13 @@ const PostManagement: React.FC = () => {
     setError(null);
 
     try {
-      // برای هر آیتم تغییر کرده، یک درخواست PUT ارسال کن
-      const updatePromises: Promise<void>[] = [];
+      // اصلاح نوع: استفاده از Promise<boolean>
+      const updatePromises: Promise<boolean>[] = [];
+
       for (const [postId, newParentId] of changedMap.entries()) {
         const post = posts.find((p) => p.id === postId);
         if (!post) continue;
 
-        // ساخت command با استفاده از مقادیر فعلی
         const command: UpdatePostCommand = {
           id: postId,
           code: post.postCode,
@@ -182,9 +181,9 @@ const PostManagement: React.FC = () => {
           jobLevelId: post.fkJobLevelId,
           gradeId: post.fkGradeId,
           costCenterId: post.fkCostCenterId,
-          reportsToPostId: newParentId, // مقدار جدید
-          isActive: true, // یا مقدار پیش‌فرض
-          employeeId: null, // در صورت نیاز
+          reportsToPostId: newParentId,
+          isActive: true,
+          employeeId: null,
           assignType: null,
           officePhone: post.officePhone,
           orgEmail: post.orgEmail,
@@ -193,12 +192,12 @@ const PostManagement: React.FC = () => {
 
         updatePromises.push(postApi.updatePost(command));
       }
+      // منتظر می‌مانیم تا همه درخواست‌ها تکمیل شوند
+      const results = await Promise.all(updatePromises);
+      // results شامل boolean برای هر درخواست است (اختیاری می‌توانید چک کنید)
 
-      await Promise.all(updatePromises);
-
-      // پس از موفقیت، تغییرات را پاک کن و دوباره بارگذاری کن
       setChangedMap(new Map());
-      await loadPosts(); // یا به‌روزرسانی local
+      await loadPosts(); // بارگذاری مجدد
       alert('تغییرات با موفقیت ذخیره شد.');
     } catch (err) {
       setError('خطا در ذخیره تغییرات');
@@ -206,7 +205,7 @@ const PostManagement: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
+  };  
 
   if (loading) return <div>در حال بارگذاری...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
@@ -261,4 +260,4 @@ const PostManagement: React.FC = () => {
   );
 };
 
-export default PostManagement;
+export default PostManagementPage;
