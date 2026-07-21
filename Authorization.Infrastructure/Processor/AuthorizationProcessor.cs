@@ -31,8 +31,9 @@ namespace Authorization.Infrastructure.Processor
         {
             //return true;
 
-            Guid userId = _userDataContext.UserId;
-            var cacheKey = $"auth:access:{userId}:{resourceKey}:{action}";
+            //Guid userId = _userDataContext.UserId;
+            Guid userPermissionAssigneeId = _userDataContext.UserPermissionAssigneeId;
+            var cacheKey = $"auth:access:{userPermissionAssigneeId}:{resourceKey}:{action}";
 
             try
             {
@@ -45,14 +46,14 @@ namespace Authorization.Infrastructure.Processor
                 }
 
                 // ارزیابی دسترسی
-                var hasAccess = await HasPermissionAsync(userId, resourceKey, action);
+                var hasAccess = await HasPermissionAsync(userPermissionAssigneeId, resourceKey, action);
 
                 // ذخیره در کش
                 await _cache.SetAsync(cacheKey, hasAccess, TimeSpan.FromMinutes(10));
 
                 _logger.LogInformation(
-                    "Access check for user {UserId} to {Resource}:{Action} = {Result}",
-                    userId, resourceKey, action, hasAccess ? "GRANTED" : "DENIED");
+                    "Access check for user {userPermissionAssigneeId} to {Resource}:{Action} = {Result}",
+                    userPermissionAssigneeId, resourceKey, action, hasAccess ? "GRANTED" : "DENIED");
 
                 return hasAccess;
             }
@@ -60,8 +61,8 @@ namespace Authorization.Infrastructure.Processor
             {
                 _logger.LogError(
                     ex,
-                    "Error in access check for user {UserId} to {Resource}:{Action}",
-                    userId, resourceKey, action);
+                    "Error in access check for user {userPermissionAssigneeId} to {Resource}:{Action}",
+                    userPermissionAssigneeId, resourceKey, action);
                 return false; // Fail secure
             }
         }
@@ -118,11 +119,12 @@ namespace Authorization.Infrastructure.Processor
 
                 Guid? personId = _userDataContext.PartyId;
                 List<Guid>? postId = _userDataContext.PostIds?.ToList();
-                List<Guid>? allUserRoles = _userDataContext.RoleIds?.ToList();
+                //List<Guid>? allUserRoles = _userDataContext.RoleIds?.ToList();
+                List<Guid>? allUserRolesAssigneeId = _userDataContext.RolePermissionAssigneeIds?.ToList();
                 // فیلتر دسترسی‌های مربوط به کاربر و منبع
                 var userPermissions = allPermissions
                     .Where(p => (p.AppliesTo(AssigneeType.User, userId)
-                                    || p.AppliesTo(AssigneeType.Role, allUserRoles)
+                                    || p.AppliesTo(AssigneeType.Role, allUserRolesAssigneeId)
                                     || (personId != null && p.AppliesTo(AssigneeType.Party, (Guid)personId))
                                     || (postId != null && p.AppliesTo(AssigneeType.Post, postId)))
                                 && p.ResourceKey == resourceKey)

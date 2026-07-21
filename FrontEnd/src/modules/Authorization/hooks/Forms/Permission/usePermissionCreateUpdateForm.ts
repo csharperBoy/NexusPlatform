@@ -12,7 +12,7 @@ import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { resourceApi } from '@/modules/Authorization/api/ResourceApi';
 import { userApi } from '@/modules/Identity/api/userApi';
 import { personApi } from '@/modules/HR/api/personApi';
-import { positionApi } from '@/modules/HR/api/positionApi';
+import { postApi } from '@/modules/HR/api/PostApi';
 import { roleApi } from '@/modules/Identity/api/roleApi';
 import { ComparisonOperator , comparisonOperatorFromText, comparisonOperatorText, LogicalOperator, logicalOperatorFromText } from '@/modules/Authorization/models/PermissionRuleEnum';
 import { resourceMetadataDto, fieldDto, joinDto }  from '@/modules/Authorization/models/ResourceMetadataDto';
@@ -131,7 +131,7 @@ useEffect(() => {
             data = await personApi.GetSelectionList();
             break;
           case 1:
-            data = await positionApi.GetSelectionList();
+            data = await postApi.GetSelectionList();
             break;
           case 2:
             data = await roleApi.GetSelectionList();

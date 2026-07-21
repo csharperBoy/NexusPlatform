@@ -444,7 +444,7 @@ namespace Authorization.Infrastructure.Processor
             // اولویت ۳: Max Scope
             return permissions
                 .Where(p => p.Effect == PermissionEffect.allow)
-                .Select(p => p.Scopes != null ? p.Scopes.FirstOrDefault().scope : ScopeType.All)
+                .Select(p => ( p.Scopes != null && p.Scopes.Count > 0) ? p.Scopes.FirstOrDefault().scope : ScopeType.All)
                 .DefaultIfEmpty(ScopeType.None)
                 .Max();
         }

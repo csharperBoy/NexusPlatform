@@ -19,6 +19,7 @@ namespace Core.Domain.Enums
         HR = 8,
         User = 9,
         WebScrapper = 10,
+        Navigation = 11,
 
     }
 }

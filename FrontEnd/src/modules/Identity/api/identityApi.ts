@@ -8,7 +8,8 @@ const API_MODULE = "identity";
 
 export const identityApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const api = getAPI(API_MODULE);
+    
+    const api = getAPI(API_MODULE);    
     const response = await api.post<AuthResponse>(
       "/api/identity/auth/login",
       data,

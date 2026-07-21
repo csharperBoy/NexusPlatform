@@ -26,7 +26,7 @@ const isDev =  mode.includes('development');
       },
     },
     server: {
-      port: 5173,
+      port: 5174,
         https: isDev ? {} : undefined, // فقط در حالت توسعه فعال باشد
     },
     build: {

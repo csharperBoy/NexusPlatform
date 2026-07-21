@@ -85,7 +85,7 @@ namespace Navigation.Infrastructure.Data
 
             try
             {
-                if (ModuleHelper.IsActive(ModuleEnum.Authorization))
+                if (ModuleHelper.IsActive(ModuleEnum.Navigation))
                 {
                     // 1. ثبت منابع (Resources)
                     // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده

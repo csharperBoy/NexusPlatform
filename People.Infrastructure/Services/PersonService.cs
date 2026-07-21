@@ -107,18 +107,18 @@ namespace People.Infrastructure.Services
 
         public async Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId)
         {
-            var person = await _naturalPersonRepository.GetByIdAsync(personId.Value,a=>a.Party);
-            return person.Party.FkPermissionAssigneeId;
+            var person = await _naturalPersonRepository.GetByIdAsync(personId ?? Guid.Empty, a=>a.Party);
+            return person?.Party.FkPermissionAssigneeId;
         }
         public async Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId)
         {
-            var party = await _partyRepository.GetByIdAsync(partyId.Value);
-            return party.FkPermissionAssigneeId;
+            var party = await _partyRepository.GetByIdAsync(partyId ?? Guid.Empty);
+            return party?.FkPermissionAssigneeId;
         }
 
         public async Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId)
         {
-            GetNaturalPersonByPartyId spec = new GetNaturalPersonByPartyId(partyId.Value);
+            GetNaturalPersonByPartyId spec = new GetNaturalPersonByPartyId(partyId);
             var person = await _personSpecRepository.GetBySpecAsync(spec);
             return person?.Id;
 

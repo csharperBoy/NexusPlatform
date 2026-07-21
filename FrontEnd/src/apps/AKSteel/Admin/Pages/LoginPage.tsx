@@ -4,14 +4,14 @@ import { LoginPageWithCustomForm, type RenderFormProps } from '@/modules/Identit
 import Button from '@/core/components/Button';
 import Input from '@/core/components/Input';
 import Card from '@/core/components/Card';
-import LoadingSpinner from '@/core/components/Loading/LoadingSpinner';
+ import LoadingSpinner from '@/core/components/Loading/LoadingSpinner';
 
 
 const LoginPage: React.FC = () => {
   return (
     <LoginPageWithCustomForm
       redirectTo="/dashboard"
-      loadingComponent={<LoadingSpinner />} // استفاده از سفارشی      
+       loadingComponent={<LoadingSpinner />} // استفاده از سفارشی      
       renderForm={({
         identifier,
         password,

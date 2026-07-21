@@ -11,9 +11,13 @@ export const postApi = {
 
  // دریافت پست ها (GET)
   GetList: async (): Promise<PostInfoView[]> => {
+    
+console.log(API_MODULE);
     const api = getAPI(API_MODULE);
+    
+console.log('4');
     const response = await api.get<PostInfoView[]>(
-      "/api/hr/OrgChart/GetList",
+      "/api/HR/OrgChart/GetList",
       {  withCredentials: true }
     );
     console.log(response)

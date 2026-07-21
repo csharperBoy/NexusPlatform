@@ -33,8 +33,8 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
 
-        //[AuthorizeResource("hr.post", "View")]
         [HttpGet("GetList")]
+        [AuthorizeResource("hr.post", "View")]
         public async Task<IActionResult> GetList([FromQuery] GetPostListQuery? request = null)
         {
             var result = await Mediator.Send(request);

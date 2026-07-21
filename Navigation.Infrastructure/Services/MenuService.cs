@@ -171,18 +171,18 @@ namespace Navigation.Infrastructure.Services
 
             try
             {
-                var cached = await _cache.GetAsync<IReadOnlyList<MenuDto>>(cacheKey);
-                if (cached != null)
-                {
-                    _logger.LogDebug("Cache hit for full resource tree");
-                    return cached;
-                }
+                //var cached = await _cache.GetAsync<IReadOnlyList<MenuDto>>(cacheKey);
+                //if (cached != null)
+                //{
+                    //_logger.LogDebug("Cache hit for full resource tree");
+                    //return cached;
+                //}
 
                 //var allResourcesSpec = new ResourceByCategorySpec();
                 var allResources = await _menuRepository.GetAllAsync();
 
                 var tree = _menuProcessor.BuildTree(allResources, RootId);
-                await _cache.SetAsync(cacheKey, tree, TimeSpan.FromMinutes(30));
+                //await _cache.SetAsync(cacheKey, tree, TimeSpan.FromMinutes(30));
 
                 _logger.LogInformation("Built full resource tree with {Count} root nodes", tree.Count);
                 return tree;

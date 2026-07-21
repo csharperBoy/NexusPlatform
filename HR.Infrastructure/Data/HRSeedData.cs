@@ -1,4 +1,11 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Helper;
+using Core.Domain.Enums;
+using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums;
+using Core.Shared.Enums.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -34,9 +41,98 @@ namespace HR.Infrastructure.Data
     */
 
     public static class HRSeedData
-    {/*
-        public static async Task SeedEntityAsync(
-            IRepository<HRDbContext, SampleEntity, Guid> repository,
+    {
+        // تعریف ساختار درختی منابع ماژول HR
+        private static List<ResourceDto> GetHrResourceDefinitions()
+        {
+            return new List<ResourceDto>
+            {
+                new()
+                {
+                    Key = "hr",
+                    Name = "HR",
+                    Type =ResourceType.Module,
+                    Category = ResourceCategory.System,
+                    Description = "HR management module",
+                    DisplayOrder = 3000,
+                    Icon = "shield",
+                    Children = new List<ResourceDto>
+                    {
+                        new()
+                        {
+                            Key = "hr.post",
+                            Name = "HR Posts",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "Post management",
+                            DisplayOrder = 3001,
+                            Icon = "list",
+                        }
+                    }
+                }
+            };
+        }
+
+        // تعریف پرمیشن‌های پیش‌فرض ماژول HR
+        private static List<PermissionDto> GetHrPermissionDefinitions(Guid roleId)
+        {
+            return new List<PermissionDto>
+            {
+               new()
+               {
+                   ResourceKey = "hr.post",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to hr post"
+               }
+            };
+        }
+        public static async Task SeedHrForAuthorizationAsync(
+          IResourcePublicService resourcePublicService,
+          IPermissionPublicService permissionPublicService,
+          IRolePublicService roleService,
+          ILogger logger,
+          CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Navigation module seeding...");
+
+            try
+            {
+                if (ModuleHelper.IsActive(ModuleEnum.Navigation))
+                {
+                    // 1. ثبت منابع (Resources)
+                    // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
+                    var resources = GetHrResourceDefinitions();
+                    await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
+                    logger.LogInformation("✅ Navigation resources synced successfully.");
+
+                    // 2. ثبت پرمیشن‌ها (Permissions)
+                    // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
+                    //var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
+                    var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
+
+                    var permissions = GetHrPermissionDefinitions(adminRoleId);
+                    await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                    logger.LogInformation("✅ Navigation permissions seeded successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Audit module seeding");
+                throw;
+            }
+        }
+       /* public static async Task SeedHrAsync(
             IUnitOfWork<HRDbContext> unitOfWork,
             IConfiguration config,
             ILogger logger)

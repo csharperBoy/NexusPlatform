@@ -88,12 +88,16 @@ const PostManagementPage: React.FC = () => {
   useEffect(() => {
     loadPosts();
   }, []);
-
+console.log('1');
   const loadPosts = async () => {
     try {
       setLoading(true);
+      
+console.log('2');
       // توجه: postApi.GetList مستقیماً آرایه را برمی‌گرداند
       const data = await postApi.GetList();
+      
+console.log('5');
       setPosts(data);
       setChangedMap(new Map());
       setError(null);

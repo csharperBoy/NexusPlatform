@@ -27,10 +27,6 @@
     "build:trader.server": "pnpm --filter trader-server run build",
     "preview:trader.server": "pnpm --filter trader-server run preview",
     
-    "dev:aksteel.adminpanel.phonebook": "pnpm --filter aksteel-adminpanel-phonebook run dev",
-    "build:aksteel.adminpanel.phonebook": "pnpm --filter aksteel-adminpanel-phonebook run build",
-    "preview:aksteel.adminpanel.phonebook": "pnpm --filter aksteel-adminpanel-phonebook run preview",
-    
     "dev:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run dev",
     "build:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run build",
     "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",

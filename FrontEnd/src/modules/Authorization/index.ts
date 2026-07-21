@@ -39,7 +39,7 @@ export { usePermissionManagement } from './hooks/Forms/Permission/usePermissionM
 // PermissionCreateUpdatePage
 export { IPermissionCreateUpdatePage } from './Interface/Permission/IPermissionCreateUpdatePage';
 export type { 
-  RenderFormProps as RenderPermissionFormProps, 
+ PermissionCreateUpdateFormProps as RenderPermissionFormProps, 
   IPermissionCreateUpdatePageProps 
 } from './Interface/Permission/IPermissionCreateUpdatePage';
 export { default as PermissionUpdatePage } from './pages/Permission/PermissionUpdatePage';
