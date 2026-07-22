@@ -3,7 +3,7 @@
 export interface PostInfoView {
   id: string;
   postCode: string;
-  parentId?: string | null;
+  // parentId?: string | null;
   fkParentId?: string | null;
   fkJobTitleId?: string | null;
   fkOrganizationUnitId?: string | null;

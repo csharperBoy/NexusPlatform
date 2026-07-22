@@ -25,6 +25,7 @@ namespace HR.Infrastructure.Services
         IOrgChartPublicService
     {
         private readonly ISpecificationRepository<PostContact, Guid> _postContactSpecRepository;
+        private readonly ISpecificationRepository<PostInfoView, Guid> _postInfoViewSpecRepository;
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
         private readonly IRepository<HRDbContext, Post, Guid> _postRepository;
         private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
@@ -38,6 +39,7 @@ namespace HR.Infrastructure.Services
         //private readonly HRDbContext _contex;
         public OrgChartService(
             //HRDbContext contex,
+            ISpecificationRepository<PostInfoView, Guid> postInfoViewSpecRepository,
             ISpecificationRepository<Post, Guid> postSpecRepository,
             ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
@@ -48,6 +50,7 @@ namespace HR.Infrastructure.Services
         ILogger<OrgChartService> logger)
         {
             //_contex= contex;
+            _postInfoViewSpecRepository = postInfoViewSpecRepository;
             _hrUow = hrUow; 
             _postRepository = postRepository;
             _postContactRepository = postContactRepository;
@@ -255,7 +258,7 @@ namespace HR.Infrastructure.Services
             if (post == null)
                 throw new Exception("can not found post!!!");
 
-            bool hasChange = post.ApplyChange(code, jobTitleId, organizationUnitId, jobLevelId, gradeId, costCenterId, isActive);
+            bool hasChange = post.ApplyChange(code, jobTitleId, organizationUnitId, jobLevelId, gradeId, costCenterId, isActive, reportsToPostId);
             if (hasChange)
             {
                 await _postRepository.UpdateAsync(post);
@@ -277,7 +280,8 @@ namespace HR.Infrastructure.Services
 
         public async Task<IReadOnlyList<PostInfoView>> GetPostListAsync()
         {
-            var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
+            //var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
+            var list = await  _postInfoViewSpecRepository.ListBySpecAsync(new GetAllPostInfoViewSpec());
             var result = list.ToList();
             return result;
         }

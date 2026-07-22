@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using HR.Infrastructure.Data;
+using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Identity.PublicService;
 namespace HR.Infrastructure.DependencyInjection
 {
     /*
@@ -59,7 +61,10 @@ namespace HR.Infrastructure.DependencyInjection
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
                 //var repo = scope.ServiceProvider.GetRequiredService<IRepository<HRDbContext, SampleEntity, Guid>>();
                 //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
-                //await HRSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+                await HRSeedData.SeedHrForAuthorizationAsync(resourceService,permissionService,roleService,/* _configuration,*/ _logger);
 
                 _logger.LogInformation("HR module initialization completed successfully.");
             }

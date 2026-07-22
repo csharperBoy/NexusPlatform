@@ -104,17 +104,17 @@ namespace HR.Infrastructure.Data
           ILogger logger,
           CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("🚀 Starting Navigation module seeding...");
+            logger.LogInformation("🚀 Starting HR module seeding...");
 
             try
             {
-                if (ModuleHelper.IsActive(ModuleEnum.Navigation))
+                if (ModuleHelper.IsActive(ModuleEnum.HR))
                 {
                     // 1. ثبت منابع (Resources)
                     // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
                     var resources = GetHrResourceDefinitions();
                     await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
-                    logger.LogInformation("✅ Navigation resources synced successfully.");
+                    logger.LogInformation("✅ HR resources synced successfully.");
 
                     // 2. ثبت پرمیشن‌ها (Permissions)
                     // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
@@ -123,12 +123,12 @@ namespace HR.Infrastructure.Data
 
                     var permissions = GetHrPermissionDefinitions(adminRoleId);
                     await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
-                    logger.LogInformation("✅ Navigation permissions seeded successfully.");
+                    logger.LogInformation("✅ HR permissions seeded successfully.");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "❌ Error during Audit module seeding");
+                logger.LogError(ex, "❌ Error during HR module seeding");
                 throw;
             }
         }

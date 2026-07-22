@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -55,18 +56,40 @@ namespace Core.Application.Behaviors
         }
 
         public async Task<TResponse> Handle(
-            TRequest request,
-            RequestHandlerDelegate<TResponse> next,
-            CancellationToken cancellationToken)
+    TRequest request,
+    RequestHandlerDelegate<TResponse> next,
+    CancellationToken cancellationToken)
         {
-            // 📌 لاگ قبل از اجرای Handler
             _logger.LogInformation("Handling {RequestName} with payload {@Request}", typeof(TRequest).Name, request);
 
             var response = await next();
 
-            // 📌 لاگ بعد از اجرای Handler
-            _logger.LogInformation("Handled {RequestName} with response {@Response}", typeof(TRequest).Name, response);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
 
+                // تلاش برای استخراج تعداد از پاسخ (اگر لیست باشد)
+                int? count = null;
+                var dataProperty = response.GetType().GetProperty("Data");
+                if (dataProperty != null)
+                {
+                    var data = dataProperty.GetValue(response);
+                    if (data is IEnumerable enumerable && data is not string)
+                    {
+                        count = enumerable.Cast<object>().Count();
+                    }
+                }
+
+                if (count.HasValue)
+                {
+                    _logger.LogInformation("Handled {RequestName} with {Count} items", typeof(TRequest).Name, count.Value);
+                }
+                else
+                {
+                    // اینجا فقط برای کامندهای تکی یا پاسخ‌های غیرلیستی لاگ کامل می‌زنیم
+                    _logger.LogInformation("Handled {RequestName} with response {@Response}", typeof(TRequest).Name, response);
+                }
+
+            }
             return response;
         }
     }
