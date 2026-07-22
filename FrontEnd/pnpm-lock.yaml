@@ -70,6 +70,68 @@ importers:
         specifier: ^7.1.7
         version: 7.3.1(@types/node@24.10.13)
 
+  src/apps/AKSteel/Admin:
+    dependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.13
+        version: 4.1.18(vite@7.3.1)
+      '@tanstack/react-query':
+        specifier: ^5.90.2
+        version: 5.90.21(react@19.2.4)
+      axios:
+        specifier: ^1.12.2
+        version: 1.13.5
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      react:
+        specifier: ^19.1.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.2.4(react@19.2.4)
+      react-router-dom:
+        specifier: ^7.9.2
+        version: 7.13.0(react-dom@19.2.4)(react@19.2.4)
+      tailwindcss:
+        specifier: ^4.1.13
+        version: 4.1.18
+    devDependencies:
+      '@vitejs/plugin-basic-ssl':
+        specifier: ^2.1.4
+        version: 2.1.4(vite@7.3.1)
+
+  src/apps/AKSteel/WebSite/PhoneBook:
+    dependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.13
+        version: 4.1.18(vite@7.3.1)
+      '@tanstack/react-query':
+        specifier: ^5.90.2
+        version: 5.90.21(react@19.2.4)
+      axios:
+        specifier: ^1.12.2
+        version: 1.13.5
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      react:
+        specifier: ^19.1.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.2.4(react@19.2.4)
+      react-router-dom:
+        specifier: ^7.9.2
+        version: 7.13.0(react-dom@19.2.4)(react@19.2.4)
+      tailwindcss:
+        specifier: ^4.1.13
+        version: 4.1.18
+    devDependencies:
+      '@vitejs/plugin-basic-ssl':
+        specifier: ^2.1.4
+        version: 2.1.4(vite@7.3.1)
+
   src/apps/AkSteelWelfarePlatform/AdminPanel:
     dependencies:
       '@tailwindcss/vite':
