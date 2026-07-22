@@ -27,13 +27,20 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
-        //[AuthorizeResource("hr.post", "Edit")]
         [HttpPut("{id:guid}")]
+        [AuthorizeResource("hr.post", "Edit")]
         public async Task<IActionResult> UpdatePost(Guid id, [FromBody] UpdatePostCommand command)
         {
             // اطمینان از تطابق ID در route با command
             var updatedCommand = command with { Id = id };
             var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+        [HttpPut("batch")]
+        [AuthorizeResource("hr.post", "Edit")]
+        public async Task<IActionResult> BatchUpdatePosts([FromBody] BatchUpdatePostsCommand command)
+        {
+            var result = await Mediator.Send(command);
             return HandleResult(result);
         }
 

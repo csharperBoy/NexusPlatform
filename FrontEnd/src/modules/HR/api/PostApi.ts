@@ -12,10 +12,8 @@ export const postApi = {
  // دریافت پست ها (GET)
   GetList: async (): Promise<PostInfoView[]> => {
     
-console.log(API_MODULE);
     const api = getAPI(API_MODULE);
     
-console.log('4');
     const response = await api.get<PostInfoView[]>(
       "/api/HR/OrgChart/GetList",
       {  withCredentials: true }
@@ -41,6 +39,16 @@ console.log('4');
     );
     console.log(response)
     return response.data;
+  },
+  // به‌روزرسانی گروهی
+  batchUpdatePosts: async (commands: UpdatePostCommand[]): Promise<string[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.put<string[]>(
+      `/api/hr/OrgChart/batch`,
+      { posts: commands },
+      { withCredentials: true }
+    );
+    return response.data; // آرایه‌ای از GUIDهای به‌روز شده
   },
  createPost: async (data: CreatePostCommand): Promise<string> => {
    const api = getAPI(API_MODULE);

@@ -1,105 +1,83 @@
 // pages/PostManagementPage.tsx
 
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  DndContext,
-  DragEndEvent,
-  useDraggable,
-  useDroppable,
-  closestCenter,
-} from '@dnd-kit/core';
+import React, { useEffect, useState } from 'react';
+import SortableTree from 'react-sortable-tree';
+import 'react-sortable-tree/style.css'; // استایل پیش‌فرض
 import { postApi } from '../../api/PostApi';
-import { UpdatePostCommand, PostAssignmentType } from '../../models/postCommand';
+import { UpdatePostCommand } from '../../models/postCommand';
 import { PostInfoView } from '../../models/postInfoView';
+import { TreeItem } from 'react-sortable-tree';
 
-// کامپوننت هر گره درختی
-interface TreeNodeProps {
-  node: PostInfoView;
-  allNodes: PostInfoView[];
-  onDrop: (draggedId: string, targetId: string) => void;
-  isChanged: boolean;
-}
+// تبدیل داده‌های مسطح به ساختار درختی
+const buildTree = (items: PostInfoView[]): TreeItem[] => {
+  const itemMap: { [key: string]: TreeItem } = {};
+  const tree: TreeItem[] = [];
 
-const TreeNode: React.FC<TreeNodeProps> = ({ node, allNodes, onDrop, isChanged }) => {
-  const children = allNodes.filter((n) => n.fkParentId === node.id);
-
-  const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
-    id: node.id,
+  // ایجاد map
+  items.forEach((item) => {
+    itemMap[item.id] = {
+      id: item.id,
+      title: item.postCode || 'بدون کد',
+      nodeData: item,
+      children: [],
+    };
   });
 
-  const { setNodeRef: setDropRef } = useDroppable({
-    id: node.id,
+  // ساخت درخت
+  items.forEach((item) => {
+    const node = itemMap[item.id];
+    if (item.fkParentId && itemMap[item.fkParentId]) {
+      // اگر والد وجود دارد، به فرزندان اضافه کن
+      if (!itemMap[item.fkParentId].children) {
+        itemMap[item.fkParentId].children = [];
+      }
+      itemMap[item.fkParentId].children!.push(node);
+    } else {
+      // گره ریشه
+      tree.push(node);
+    }
   });
 
-  // ترکیب refها
-  const setRefs = (element: HTMLDivElement | null) => {
-    setDragRef(element);
-    setDropRef(element);
+  return tree;
+};
+
+// تبدیل درخت به داده‌های مسطح (برای ذخیره‌سازی)
+const flattenTree = (treeData: TreeItem[]): PostInfoView[] => {
+  const result: PostInfoView[] = [];
+  const traverse = (node: TreeItem, parentId: string | null = null) => {
+    // به‌روزرسانی nodeData با parentId جدید
+    const updatedNode: PostInfoView = {
+      ...node.nodeData,
+      fkParentId: parentId,
+    };
+    result.push(updatedNode);
+
+    if (node.children) {
+      node.children.forEach((child) => traverse(child, node.id));
+    }
   };
-
-  return (
-    <div
-      ref={setRefs}
-      {...attributes}
-      {...listeners}
-      style={{
-        paddingLeft: '20px',
-        margin: '4px 0',
-        border: isDragging ? '2px dashed #aaa' : '1px solid #ddd',
-        background: isChanged ? '#fff3cd' : 'transparent',
-        cursor: 'grab',
-        borderRadius: '4px',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span>{node.postCode || 'بدون کد'}</span>
-        <span style={{ fontSize: '0.8rem', color: '#666' }}>
-          {node.firstName} {node.lastName}
-        </span>
-        {isChanged && <span style={{ color: '#856404' }}>✏️</span>}
-      </div>
-
-      {children.length > 0 && (
-        <div style={{ marginLeft: '20px' }}>
-          {children.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-              allNodes={allNodes}
-              onDrop={onDrop}
-              isChanged={isChanged}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  treeData.forEach((root) => traverse(root, null));
+  return result;
 };
 
 // کامپوننت اصلی
-
 const PostManagementPage: React.FC = () => {
-  const [posts, setPosts] = useState<PostInfoView[]>([]);
-  const [changedMap, setChangedMap] = useState<Map<string, string | null>>(new Map());
+  const [treeData, setTreeData] = useState<TreeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // بارگذاری داده‌ها
   useEffect(() => {
     loadPosts();
   }, []);
-console.log('1');
+
   const loadPosts = async () => {
     try {
       setLoading(true);
-      
-console.log('2');
-      // توجه: postApi.GetList مستقیماً آرایه را برمی‌گرداند
       const data = await postApi.GetList();
-      
-console.log('5');
-      setPosts(data);
-      setChangedMap(new Map());
+      const tree = buildTree(data);
+      setTreeData(tree);
       setError(null);
     } catch (err) {
       setError('خطا در بارگذاری لیست پست‌ها');
@@ -109,99 +87,34 @@ console.log('5');
     }
   };
 
-  // ریشه‌ها (گره‌هایی که parentId ندارند یا برابر null هستند)
-  const rootNodes = posts.filter((p) => p.fkParentId === null || p.fkParentId === undefined);
-
-  // بررسی اینکه آیا گره فرزند گره دیگر است یا خیر (برای جلوگیری از ایجاد چرخه)
-  const isDescendant = useCallback(
-    (ancestorId: string, descendantId: string): boolean => {
-      let currentId = descendantId;
-      while (currentId) {
-        const node = posts.find((p) => p.id === currentId);
-        if (!node) break;
-        if (node.fkParentId === ancestorId) return true;
-        currentId = node.fkParentId || '';
-      }
-      return false;
-    },
-    [posts]
-  );
-
-  // مدیریت دراپ
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const draggedId = active.id as string;
-    const targetId = over.id as string;
-
-    // اگر روی خودش رها شده یا هدف در زیرمجموعه درگ‌شونده است، کاری نکن
-    if (draggedId === targetId) return;
-    if (isDescendant(draggedId, targetId)) {
-      alert('نمی‌توانید یک گره را به زیرمجموعه خودش منتقل کنید.');
-      return;
-    }
-
-    // تغییر parentId در state محلی
-    setPosts((prevPosts) =>
-      prevPosts.map((p) =>
-        p.id === draggedId ? { ...p, parentId: targetId } : p
-      )
-    );
-
-    // ثبت تغییر در نقشه
-    setChangedMap((prev) => {
-      const newMap = new Map(prev);
-      // اگر parentId جدید برابر با parentId قبلی است، می‌توانیم حذف کنیم (اختیاری)
-      // اما برای سادگی، هر تغییر را ذخیره می‌کنیم
-      newMap.set(draggedId, targetId);
-      return newMap;
-    });
-  };
-
-  // ذخیره تغییرات
+  // ذخیره تغییرات (با استفاده از flattenTree)
   const handleSave = async () => {
-    if (changedMap.size === 0) {
-      alert('هیچ تغییری برای ذخیره وجود ندارد.');
-      return;
-    }
-
     setSaving(true);
     setError(null);
 
     try {
-      // اصلاح نوع: استفاده از Promise<boolean>
-      const updatePromises: Promise<boolean>[] = [];
+      // تبدیل درخت به لیست مسطح با parentIdهای به‌روز
+      const flatPosts = flattenTree(treeData);
 
-      for (const [postId, newParentId] of changedMap.entries()) {
-        const post = posts.find((p) => p.id === postId);
-        if (!post) continue;
+      // ساخت لیست دستورات به‌روزرسانی برای همه آیتم‌ها
+      const commands: UpdatePostCommand[] = flatPosts.map((post) => ({
+        id: post.id,
+        code: post.postCode,
+        organizationUnitId: post.fkOrganizationUnitId,
+        jobTitleId: post.fkJobTitleId,
+        jobLevelId: post.fkJobLevelId,
+        gradeId: post.fkGradeId,
+        costCenterId: post.fkCostCenterId,
+        reportsToPostId: post.fkParentId,
+        isActive: true,
+        employeeId: null,
+        assignType: null,
+        officePhone: post.officePhone,
+        orgEmail: post.orgEmail,
+        orgMobile: post.orgMobile,
+      }));
 
-        const command: UpdatePostCommand = {
-          id: postId,
-          code: post.postCode,
-          organizationUnitId: post.fkOrganizationUnitId,
-          jobTitleId: post.fkJobTitleId,
-          jobLevelId: post.fkJobLevelId,
-          gradeId: post.fkGradeId,
-          costCenterId: post.fkCostCenterId,
-          reportsToPostId: newParentId,
-          isActive: true,
-          employeeId: null,
-          assignType: null,
-          officePhone: post.officePhone,
-          orgEmail: post.orgEmail,
-          orgMobile: post.orgMobile,
-        };
-
-        updatePromises.push(postApi.updatePost(command));
-      }
-      // منتظر می‌مانیم تا همه درخواست‌ها تکمیل شوند
-      const results = await Promise.all(updatePromises);
-      // results شامل boolean برای هر درخواست است (اختیاری می‌توانید چک کنید)
-
-      setChangedMap(new Map());
-      await loadPosts(); // بارگذاری مجدد
+      await postApi.batchUpdatePosts(commands);
       alert('تغییرات با موفقیت ذخیره شد.');
     } catch (err) {
       setError('خطا در ذخیره تغییرات');
@@ -209,57 +122,56 @@ console.log('5');
     } finally {
       setSaving(false);
     }
-  };  
+  };
+
+  // رندر سفارشی برای هر گره (نمایش اطلاعات بیشتر و فیلدهای ویرایش)
+  const renderNode = ({ node }: { node: TreeItem }) => {
+    const data = node.nodeData as PostInfoView;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontWeight: 'bold' }}>{data.postCode}</span>
+        <span>
+          {data.firstName} {data.lastName}
+        </span>
+        {data.jobTitleName && (
+          <span style={{ background: '#e6f0ff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
+            {data.jobTitleName}
+          </span>
+        )}
+        <span style={{ fontSize: '0.8rem', color: '#666' }}>
+          تلفن: {data.officePhone || '-'}
+        </span>
+        <span style={{ fontSize: '0.8rem', color: '#666' }}>
+          موبایل: {data.orgMobile || '-'}
+        </span>
+      </div>
+    );
+  };
 
   if (loading) return <div>در حال بارگذاری...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '20px', height: '80vh' }}>
       <h2>مدیریت پست‌ها (ساختار سازمانی)</h2>
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={handleSave} disabled={saving || changedMap.size === 0}>
-          {saving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
-        </button>
-        <span style={{ marginLeft: '15px', color: '#666' }}>
-          تعداد تغییرات: {changedMap.size}
-        </span>
+      <button onClick={handleSave} disabled={saving} style={{ marginBottom: '10px' }}>
+        {saving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
+      </button>
+
+      <div style={{ height: '100%', border: '1px solid #ccc' }}>
+        <SortableTree
+          treeData={treeData}
+          onChange={(newTree) => setTreeData(newTree)}
+          generateNodeProps={({ node }) => ({
+            title: renderNode({ node }),
+          })}
+          canDrag={(props) => true}
+          canDrop={(props) => {
+            // جلوگیری از انتقال گره به زیرمجموعه خودش (در صورت نیاز)
+            return true;
+          }}
+        />
       </div>
-
-      <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div style={{ border: '1px solid #ccc', padding: '10px', borderRadius: '8px' }}>
-          {rootNodes.length === 0 ? (
-            <p>هیچ پستی یافت نشد.</p>
-          ) : (
-            rootNodes.map((root) => (
-              <TreeNode
-                key={root.id}
-                node={root}
-                allNodes={posts}
-                onDrop={() => {}} // از DndContext استفاده می‌کنیم
-                isChanged={changedMap.has(root.id)}
-              />
-            ))
-          )}
-        </div>
-      </DndContext>
-
-      {/* نمایش لیست تغییرات (اختیاری) */}
-      {changedMap.size > 0 && (
-        <div style={{ marginTop: '20px', borderTop: '1px solid #ddd', paddingTop: '10px' }}>
-          <h4>تغییرات اعمال شده:</h4>
-          <ul>
-            {Array.from(changedMap.entries()).map(([id, newParent]) => {
-              const post = posts.find((p) => p.id === id);
-              return (
-                <li key={id}>
-                  {post?.postCode || id} → والد جدید: {newParent || '(بدون والد)'}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };
