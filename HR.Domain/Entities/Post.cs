@@ -112,7 +112,8 @@ namespace HR.Domain.Entities
                  Guid? _FkJobLevelId = null,
                  Guid? _FkGradeId = null,
                  Guid? _FkCostCenterId = null,
-                 bool? _IsActive = null
+                 bool? _IsActive = null,
+            Guid? _FkParentId = null
 
            )
         {
@@ -123,13 +124,17 @@ namespace HR.Domain.Entities
                 this.Code = _Code;
                 hasChange = true;
             }
+            if ( _FkParentId != this.FkParentId)
+            {
+                this.ChangeParent(_FkParentId);
+                hasChange = true;
+            }
+
             if (_FkJobTitleId != null && _FkJobTitleId != this.FkJobTitleId)
             {
                 this.FkJobTitleId = (Guid)_FkJobTitleId;
                 hasChange = true;
             }
-
-
             if (_FkOrganizationUnitId != null && _FkOrganizationUnitId != this.FkOrganizationUnitId)
             {
                 this.FkOrganizationUnitId = (Guid)_FkOrganizationUnitId;

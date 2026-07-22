@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Queries.Post
 {
-    public record GetPostListQuery()
+    public record GetPostListQuery(Guid? rootId = null)
         : IRequest<Result<IReadOnlyList<PostInfoView>>>;
 
     public class GetPostListQueryHandler

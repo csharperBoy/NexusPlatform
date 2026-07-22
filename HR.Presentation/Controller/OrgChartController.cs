@@ -1,9 +1,13 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
+using Core.Shared.Results;
 using HR.Application.Commands.OrgChart;
+using HR.Application.Interfaces;
 using HR.Application.Queries.Post;
+using HR.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,10 +37,21 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
 
+        private readonly IOrgChartInternalService _orgChartInternalService;
+        public OrgChartController(IOrgChartInternalService orgChartInternalService)
+        {
+            _orgChartInternalService = orgChartInternalService;
+        }
         [HttpGet("GetList")]
         [AuthorizeResource("hr.post", "View")]
-        public async Task<IActionResult> GetList([FromQuery] GetPostListQuery? request = null)
+        public async Task<IActionResult> GetList([FromQuery] GetPostListQuery request )
         {
+
+            //var posts =await _orgChartInternalService.GetPostListAsync();
+            //var a = posts.ToList();
+            //var result = Result<IReadOnlyList<PostInfoView>>.Ok(posts);
+         
+
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }

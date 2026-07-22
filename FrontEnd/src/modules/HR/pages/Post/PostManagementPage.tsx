@@ -21,7 +21,7 @@ interface TreeNodeProps {
 }
 
 const TreeNode: React.FC<TreeNodeProps> = ({ node, allNodes, onDrop, isChanged }) => {
-  const children = allNodes.filter((n) => n.parentId === node.id);
+  const children = allNodes.filter((n) => n.fkParentId === node.id);
 
   const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
     id: node.id,
@@ -110,7 +110,7 @@ console.log('5');
   };
 
   // ریشه‌ها (گره‌هایی که parentId ندارند یا برابر null هستند)
-  const rootNodes = posts.filter((p) => p.parentId === null || p.parentId === undefined);
+  const rootNodes = posts.filter((p) => p.fkParentId === null || p.fkParentId === undefined);
 
   // بررسی اینکه آیا گره فرزند گره دیگر است یا خیر (برای جلوگیری از ایجاد چرخه)
   const isDescendant = useCallback(
@@ -119,8 +119,8 @@ console.log('5');
       while (currentId) {
         const node = posts.find((p) => p.id === currentId);
         if (!node) break;
-        if (node.parentId === ancestorId) return true;
-        currentId = node.parentId || '';
+        if (node.fkParentId === ancestorId) return true;
+        currentId = node.fkParentId || '';
       }
       return false;
     },

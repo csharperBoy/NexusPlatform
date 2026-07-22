@@ -5,7 +5,7 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { PostInfoView } from "../models/postInfoView";
 import { CreatePostCommand, UpdatePostCommand } from "../models/postCommand";
-const API_MODULE = "HR";
+const API_MODULE = "hr";
 
 export const postApi = {
 
