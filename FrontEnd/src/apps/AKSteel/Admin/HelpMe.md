@@ -1,14 +1,14 @@
 for run:
 
 - افزودن پکیج مخصوص  اپ:
-  pnpm --filter aksteel.website.phonebook add @mui/x-data-grid
+  pnpm --filter aksteel.admin add @mui/x-data-grid
   
  اجرا در حالت develop:
-  pnpm run dev:aksteel.website.phonebook
+  pnpm run dev:aksteel.admin
 
 ساخت خروجی
-  pnpm run build:aksteel.website.phonebook
+  pnpm run build:aksteel.admin
 
 پیش نمایش
-  pnpm run preview:aksteel.website.phonebook
+  pnpm run preview:aksteel.admin
   
