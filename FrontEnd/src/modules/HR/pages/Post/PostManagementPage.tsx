@@ -1,179 +1,529 @@
-// pages/PostManagementPage.tsx
+import { useEffect, useState } from "react";
 
-import React, { useEffect, useState } from 'react';
-import SortableTree from 'react-sortable-tree';
-import 'react-sortable-tree/style.css'; // استایل پیش‌فرض
-import { postApi } from '../../api/PostApi';
-import { UpdatePostCommand } from '../../models/postCommand';
-import { PostInfoView } from '../../models/postInfoView';
-import { TreeItem } from 'react-sortable-tree';
+import { postApi } from "../../api/PostApi";
+import { PostInfoView } from "../../models/postInfoView";
 
-// تبدیل داده‌های مسطح به ساختار درختی
-const buildTree = (items: PostInfoView[]): TreeItem[] => {
-  const itemMap: { [key: string]: TreeItem } = {};
-  const tree: TreeItem[] = [];
+import {
+  useDataTreeGrid,
+} from "@/core/components/DataTreeGrid";
 
-  // ایجاد map
-  items.forEach((item) => {
-    itemMap[item.id] = {
-      id: item.id,
-      title: item.postCode || 'بدون کد',
-      nodeData: item,
-      children: [],
-    };
-  });
+import {
+  postTreeAdapter,
+} from "../../adapters/postTreeAdapter";
 
-  // ساخت درخت
-  items.forEach((item) => {
-    const node = itemMap[item.id];
-    if (item.fkParentId && itemMap[item.fkParentId]) {
-      // اگر والد وجود دارد، به فرزندان اضافه کن
-      if (!itemMap[item.fkParentId].children) {
-        itemMap[item.fkParentId].children = [];
-      }
-      itemMap[item.fkParentId].children!.push(node);
-    } else {
-      // گره ریشه
-      tree.push(node);
-    }
-  });
 
-  return tree;
-};
 
-// تبدیل درخت به داده‌های مسطح (برای ذخیره‌سازی)
-const flattenTree = (treeData: TreeItem[]): PostInfoView[] => {
-  const result: PostInfoView[] = [];
-  const traverse = (node: TreeItem, parentId: string | null = null) => {
-    // به‌روزرسانی nodeData با parentId جدید
-    const updatedNode: PostInfoView = {
-      ...node.nodeData,
-      fkParentId: parentId,
-    };
-    result.push(updatedNode);
+export default function PostManagementPage() {
 
-    if (node.children) {
-      node.children.forEach((child) => traverse(child, node.id));
-    }
-  };
-  treeData.forEach((root) => traverse(root, null));
-  return result;
-};
 
-// کامپوننت اصلی
-const PostManagementPage: React.FC = () => {
-  const [treeData, setTreeData] = useState<TreeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [
+    posts,
+    setPosts
+  ] = useState<PostInfoView[]>([]);
 
-  // بارگذاری داده‌ها
+
+
+  /**
+   * Node انتخاب شده برای عملیات
+   */
+  const [
+    selectedId,
+    setSelectedId
+  ] = useState<string | null>(null);
+
+
+
+  /**
+   * Parent جدیدی که قرار است Node زیر آن منتقل شود
+   */
+  const [
+    newParentId,
+    setNewParentId
+  ] = useState<string | null>(null);
+
+
+
+
+
   useEffect(() => {
-    loadPosts();
+
+
+    postApi
+      .GetList()
+      .then(result => {
+
+        setPosts(result);
+
+      });
+
+
   }, []);
 
-  const loadPosts = async () => {
-    try {
-      setLoading(true);
-      const data = await postApi.GetList();
-      const tree = buildTree(data);
-      setTreeData(tree);
-      setError(null);
-    } catch (err) {
-      setError('خطا در بارگذاری لیست پست‌ها');
-      console.error(err);
-    } finally {
-      setLoading(false);
+
+
+
+
+
+  const tree =
+    useDataTreeGrid({
+
+      data: posts,
+
+      adapter: postTreeAdapter,
+
+      defaultExpandAll: false,
+
+    });
+
+
+
+
+
+
+
+
+  /**
+   * انتقال Node انتخاب شده
+   */
+  const moveSelectedNode = () => {
+
+
+    if (!selectedId) {
+      return;
     }
-  };
 
-  // ذخیره تغییرات (با استفاده از flattenTree)
-  const handleSave = async () => {
-    setSaving(true);
-    setError(null);
 
-    try {
-      // تبدیل درخت به لیست مسطح با parentIdهای به‌روز
-      const flatPosts = flattenTree(treeData);
 
-      // ساخت لیست دستورات به‌روزرسانی برای همه آیتم‌ها
-      const commands: UpdatePostCommand[] = flatPosts.map((post) => ({
-        id: post.id,
-        code: post.postCode,
-        organizationUnitId: post.fkOrganizationUnitId,
-        jobTitleId: post.fkJobTitleId,
-        jobLevelId: post.fkJobLevelId,
-        gradeId: post.fkGradeId,
-        costCenterId: post.fkCostCenterId,
-        reportsToPostId: post.fkParentId,
-        isActive: true,
-        employeeId: null,
-        assignType: null,
-        officePhone: post.officePhone,
-        orgEmail: post.orgEmail,
-        orgMobile: post.orgMobile,
-      }));
+    const validation =
+      tree.validation.canMove(
+        selectedId,
+        newParentId
+      );
 
-      await postApi.batchUpdatePosts(commands);
-      alert('تغییرات با موفقیت ذخیره شد.');
-    } catch (err) {
-      setError('خطا در ذخیره تغییرات');
-      console.error(err);
-    } finally {
-      setSaving(false);
+
+
+    if (!validation.allowed) {
+
+      alert(
+        validation.reason ??
+        "انتقال غیرمجاز است"
+      );
+
+      return;
+
     }
+
+
+
+
+
+    const newData =
+      tree.manipulation.moveNode(
+        selectedId,
+        newParentId
+      );
+
+
+
+    setPosts(newData);
+
+
   };
 
-  // رندر سفارشی برای هر گره (نمایش اطلاعات بیشتر و فیلدهای ویرایش)
-  const renderNode = ({ node }: { node: TreeItem }) => {
-    const data = node.nodeData as PostInfoView;
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ fontWeight: 'bold' }}>{data.postCode}</span>
-        <span>
-          {data.firstName} {data.lastName}
-        </span>
-        {data.jobTitleName && (
-          <span style={{ background: '#e6f0ff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
-            {data.jobTitleName}
-          </span>
-        )}
-        <span style={{ fontSize: '0.8rem', color: '#666' }}>
-          تلفن: {data.officePhone || '-'}
-        </span>
-        <span style={{ fontSize: '0.8rem', color: '#666' }}>
-          موبایل: {data.orgMobile || '-'}
-        </span>
-      </div>
-    );
-  };
 
-  if (loading) return <div>در حال بارگذاری...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+
+
+
+const selectedNode =
+    selectedId
+      ?
+      tree.navigation.findNode(selectedId)
+      :
+      null;
+
+
+console.log(
+  "SELECTED NODE",
+  selectedNode
+);
+
+
+
+
 
   return (
-    <div style={{ padding: '20px', height: '80vh' }}>
-      <h2>مدیریت پست‌ها (ساختار سازمانی)</h2>
-      <button onClick={handleSave} disabled={saving} style={{ marginBottom: '10px' }}>
-        {saving ? 'در حال ذخیره...' : 'ذخیره تغییرات'}
-      </button>
 
-      <div style={{ height: '100%', border: '1px solid #ccc' }}>
-        <SortableTree
-          treeData={treeData}
-          onChange={(newTree) => setTreeData(newTree)}
-          generateNodeProps={({ node }) => ({
-            title: renderNode({ node }),
-          })}
-          canDrag={(props) => true}
-          canDrop={(props) => {
-            // جلوگیری از انتقال گره به زیرمجموعه خودش (در صورت نیاز)
-            return true;
+    <div className="p-6">
+
+
+      <h1 className="text-xl font-bold mb-5">
+        مدیریت چارت سازمانی
+      </h1>
+
+
+
+
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-3 items-center mb-5">
+
+
+        <button
+          className="btn btn-primary"
+          onClick={
+            tree.expansion.expandAll
+          }
+        >
+          باز کردن همه
+        </button>
+
+
+
+
+        <button
+          className="btn btn-secondary"
+          onClick={
+            tree.expansion.collapseAll
+          }
+        >
+          بستن همه
+        </button>
+
+
+
+
+
+
+        <select
+
+          className="select select-bordered"
+
+          value={
+            newParentId ?? ""
+          }
+
+          onChange={(e)=>{
+
+            setNewParentId(
+              e.target.value || null
+            );
+
           }}
-        />
-      </div>
-    </div>
-  );
-};
 
-export default PostManagementPage;
+        >
+
+          <option value="">
+            Root
+          </option>
+
+
+          {
+            tree.rows.map(row => (
+
+              <option
+                key={row.id}
+                value={row.id}
+              >
+
+                {
+                  row.item.jobTitleName
+                }
+
+                {" - "}
+
+                {
+                  row.item.firstName
+                }
+
+                {" "}
+
+                {
+                  row.item.lastName
+                }
+
+              </option>
+
+            ))
+          }
+
+
+        </select>
+
+
+
+
+
+        <button
+
+          className="btn btn-warning"
+
+          disabled={
+            !selectedId
+          }
+
+          onClick={
+            moveSelectedNode
+          }
+
+        >
+
+          تغییر Parent
+
+        </button>
+
+
+
+      </div>
+
+
+
+
+
+
+
+
+      {/* Selected Info */}
+      <div className="mb-5 p-3 border rounded">
+
+
+        <div>
+
+          <b>
+            Node انتخاب شده:
+          </b>
+
+
+          {
+            selectedNode
+              ?
+              (
+                <>
+                  {" "}
+                  {
+                    selectedNode.jobTitleName
+                  }
+
+                  {" - "}
+
+                  {
+                    selectedNode.firstName
+                  }
+
+                  {" "}
+
+                  {
+                    selectedNode.lastName
+                  }
+                </>
+              )
+              :
+              " هیچ موردی انتخاب نشده"
+          }
+
+
+        </div>
+
+
+      </div>
+
+
+
+
+
+
+
+
+      {/* Tree */}
+      <div className="border rounded p-4">
+
+
+        {
+          tree.rows.map(row => (
+
+
+            <div
+
+              key={row.id}
+
+
+              onClick={() =>
+                setSelectedId(row.id)
+              }
+
+
+              className={`
+                flex
+                items-center
+                gap-2
+                p-2
+                mb-1
+                rounded
+                cursor-pointer
+                border
+
+                ${
+                  selectedId === row.id
+                    ?
+                    "bg-blue-200 border-blue-500"
+                    :
+                    "hover:bg-gray-100"
+                }
+
+              `}
+
+
+              style={{
+                paddingRight:
+                  row.depth * 24
+              }}
+
+            >
+
+
+
+              {
+                row.hasChildren && (
+
+                  <button
+
+                    className="w-6 h-6"
+
+                    onClick={(event)=>{
+
+
+                      event.stopPropagation();
+
+
+
+                      tree.expansion.toggle(
+                        row.id
+                      );
+
+
+                    }}
+
+                  >
+
+                    {
+                      tree.expansion.isExpanded(
+                        row.id
+                      )
+                        ?
+                        "-"
+                        :
+                        "+"
+                    }
+
+
+                  </button>
+
+                )
+              }
+
+
+
+
+
+
+              <span>
+
+
+                {
+                  row.item.jobTitleName
+                }
+
+
+                {" - "}
+
+
+                {
+                  row.item.firstName
+                }
+
+
+                {" "}
+
+
+                {
+                  row.item.lastName
+                }
+
+
+              </span>
+
+
+
+            </div>
+
+
+          ))
+
+        }
+
+
+      </div>
+
+
+
+
+
+
+
+
+
+      {/* Debug */}
+      <div className="mt-8">
+
+
+        <h2 className="font-bold mb-3">
+          Debug Information
+        </h2>
+
+
+
+        <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">
+
+          {
+            JSON.stringify(
+
+              {
+
+                totalRows:
+                  tree.rows.length,
+
+
+                rootCount:
+                  tree.index.rootIds.length,
+
+
+                selectedId,
+
+
+                selectedNode,
+
+
+                newParentId,
+
+
+              },
+
+              null,
+
+              2
+
+            )
+          }
+
+
+        </pre>
+
+
+      </div>
+
+
+
+
+    </div>
+
+  );
+
+}
