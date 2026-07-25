@@ -9,7 +9,7 @@
 
 import {
   TreeNodeBase
-} from "./contracts";
+} from "../contracts/tree";
 
 
 

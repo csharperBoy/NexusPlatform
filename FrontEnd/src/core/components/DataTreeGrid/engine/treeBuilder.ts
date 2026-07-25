@@ -1,7 +1,7 @@
 import {
   TreeAdapter,
   TreeNodeBase,
-} from "../contracts";
+} from "../contracts/tree";
 import { TreeBuildResult, TreeDiagnostics, TreeIndex } from "../types";
 
 /**

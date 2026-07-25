@@ -2,7 +2,7 @@ import {
     MoveResult,
     TreeAdapter,
   TreeNodeBase,
-} from "../contracts";
+} from "../contracts/tree";
 import { TreeIndex } from "../types";
 
 

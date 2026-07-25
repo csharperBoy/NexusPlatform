@@ -11,7 +11,7 @@
  * داشته باشد.
  */
 
-import {   TreeIndex,TreeRow } from "./types";
+import {   TreeIndex,TreeRow } from "../types";
 
 
 // =====================================================

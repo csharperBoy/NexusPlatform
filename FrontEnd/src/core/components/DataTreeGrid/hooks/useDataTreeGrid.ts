@@ -22,7 +22,7 @@ import {
   moveNode,
   isDescendant,
 } from "../engine/treeEngine";
-import { DataTreeGridController, TreeNodeBase, UseDataTreeGridOptions } from "../contracts";
+import { DataTreeGridController, TreeNodeBase, UseDataTreeGridOptions } from "../contracts/tree";
 
 
 
