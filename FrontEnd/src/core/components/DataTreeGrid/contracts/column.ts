@@ -1,16 +1,4 @@
-/**
- * DataTreeGrid Column Contracts
- *
- * قرارداد ستون‌ها مستقل از Grid Engine است.
- *
- * این فایل نباید هیچ وابستگی به:
- * - TanStack Table
- * - React
- * - UI Library
- *
- * داشته باشد.
- */
-
+//src/core/components/DataTreeGrid/contracts/column.ts
 import type {
   TreeNodeBase
 } from "./tree";

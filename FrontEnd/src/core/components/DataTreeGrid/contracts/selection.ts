@@ -1,13 +1,4 @@
-/**
- * DataTreeGrid Selection Contract
- *
- * مسئول مدیریت انتخاب Node ها
- *
- * فعلاً Single Selection
- * طراحی به شکلی است که Multi Selection
- * در آینده قابل اضافه شدن باشد.
- */
-
+//src/core/components/DataTreeGrid/contracts/selection.ts
 
 export interface TreeSelectionController {
 

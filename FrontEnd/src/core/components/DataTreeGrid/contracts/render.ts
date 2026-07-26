@@ -1,11 +1,4 @@
-/**
- * DataTreeGrid Render Contracts
- *
- * مخصوص لایه UI
- *
- * این فایل می‌تواند با React ارتباط داشته باشد.
- */
-
+//src/core/components/DataTreeGrid/contracts/render.ts
 
 import type {
   TreeRow

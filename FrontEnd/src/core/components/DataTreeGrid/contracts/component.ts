@@ -1,15 +1,4 @@
-/**
- * DataTreeGrid Component Contracts
- *
- * قرارداد ورودی Component اصلی
- *
- * مستقل از:
- * - TanStack
- * - React UI Library
- * - CSS Framework
- */
-
-
+//src/core/components/DataTreeGrid/contracts/component.ts
 import type {
   DataTreeGridController,
   TreeAdapter,

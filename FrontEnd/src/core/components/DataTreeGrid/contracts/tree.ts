@@ -1,15 +1,4 @@
-/**
- * DataTreeGrid Public Contracts
- *
- * این فایل API عمومی DataTreeGrid است.
- *
- * این فایل نباید هیچ وابستگی به:
- * React
- * UI Framework
- * Backend
- * Business Module
- * داشته باشد.
- */
+//src/core/components/DataTreeGrid/contracts/tree.ts
 
 import {   TreeIndex,TreeRow } from "../types";
 import { TreeSelectionController } from "./selection";

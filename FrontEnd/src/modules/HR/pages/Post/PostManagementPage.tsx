@@ -362,15 +362,15 @@ console.log(
     tree={tree}
 
     defaultExpandAll={false}
-     rowClassName={(row)=>
+    //  rowClassName={(row)=>
       
-      tree.selection.isSelected(row.id)
-        ?
-        "bg-blue-100"
-        :
-        ""
+    //   tree.selection.isSelected(row.id)
+    //     ?
+    //     "bg-blue-100"
+    //     :
+    //     ""
 
-    }
+    // }
 
 />
 

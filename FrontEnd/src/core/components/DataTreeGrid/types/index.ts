@@ -1,10 +1,4 @@
-/**
- * DataTreeGrid Internal Types
- *
- * این فایل فقط برای Implementation داخلی است.
- *
- * مصرف کننده نباید به این Typeها وابسته شود.
- */
+//src/core/components/DataTreeGrid/types/index.ts
 
 
 import {

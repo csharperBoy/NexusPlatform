@@ -1,15 +1,4 @@
-/**
- * DataTreeGrid Formatter Contracts
- *
- * مسئول تبدیل Data به View Model است.
- *
- * مثال:
- *
- * 1  ---> مرد
- *
- * 1405-01-01 ---> 01/01/1405
- *
- */
+//src/core/components/DataTreeGrid/contracts/formatter.ts
 
 
 export interface FormatterContext<T>{

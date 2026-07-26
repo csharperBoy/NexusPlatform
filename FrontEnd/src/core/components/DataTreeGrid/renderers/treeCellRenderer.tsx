@@ -1,4 +1,9 @@
-import TreeCell from "../components/TreeCell";
+//src/core/components/DataTreeGrid/renderers/treeCellRenderer.tsx
+import type {
+  ReactNode
+}
+from "react";
+
 
 import type {
   TreeRow
@@ -13,30 +18,49 @@ import type {
 from "../contracts";
 
 
+import {
+  DefaultTreeCell
+}
+from "./default";
+
+
+
 
 export function renderTreeCell<
   T extends TreeNodeBase
 >(
-  row: TreeRow<T>,
-  value: unknown,
-  tree: DataTreeGridController<T>
+
+  row:
+    TreeRow<T>,
+
+
+  value:
+    ReactNode,
+
+
+  tree:
+    DataTreeGridController<T>
+
 ){
+
 
   return (
 
-    <TreeCell
+    <DefaultTreeCell
 
-      row={row}
+  row={row}
 
-      expansion={
-        tree.expansion
-      }
+  expanded={
+    tree.expansion.isExpanded(row.id)
+  }
 
-      value={
-        value
-      }
+  onToggle={
+    tree.expansion.toggle
+  }
 
-    />
+>
+  {value}
+</DefaultTreeCell>
 
   );
 
