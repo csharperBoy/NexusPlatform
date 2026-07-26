@@ -1,6 +1,6 @@
 //src/apps/AkSteel Wellfare Platform/AdminPanel/App.tsx
 import { useRoutes } from "react-router-dom";
-import { authRoutes, ProtectedRoute } from "../../../modules/Identity";
+import { AuthProvider, ProtectedRoute } from "../../../modules/Identity";
 import Dashboard from "./pages/Dashboard";
 import TailwindTest from "./pages/TailwindTest";
 import LoginForm from "./pages/LoginPage";

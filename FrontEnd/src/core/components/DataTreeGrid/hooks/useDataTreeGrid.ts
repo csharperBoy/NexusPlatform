@@ -1,3 +1,4 @@
+//src/core/components/DataTreeGrid/hooks/useDataTreeGrid.ts
 import {
   useCallback,
   useMemo,
@@ -39,7 +40,6 @@ export function useDataTreeGrid<
     defaultExpandedIds = [],
     defaultExpandAll = false
   } = options;
-
 
 
 
@@ -97,6 +97,11 @@ export function useDataTreeGrid<
 
     }
   );
+
+  const [
+  selectedId,
+  setSelectedId
+] = useState<string | null>(null);
 
 
 
@@ -248,7 +253,39 @@ export function useDataTreeGrid<
 
 
 
+const selection = {
 
+  selectedId,
+
+
+  isSelected(
+    id:string
+  ){
+
+    return selectedId === id;
+
+  },
+
+
+  select(
+    id:string
+  ){
+       console.log(
+   "SELECT In Hook =",
+   id
+ );
+    setSelectedId(id);
+
+  },
+
+
+  clear(){
+
+    setSelectedId(null);
+
+  }
+
+};
   // -----------------------------
   // Controller
   // -----------------------------
@@ -474,7 +511,9 @@ validation:{
 
       }
 
-    }
+    },
+
+    selection
 
   };
 

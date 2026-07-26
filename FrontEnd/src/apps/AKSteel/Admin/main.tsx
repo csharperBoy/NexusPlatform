@@ -1,4 +1,4 @@
-// src/apps/AKSteel/Website/PhoneBook/main.tsx
+// src/apps/AKSteel/Admin/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -24,6 +24,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <IdentityModuleRegistration />
               </RequireModuleActive>
               <RequireModuleActive moduleName="Authorization">
+                <AuthorizationModuleRegistration />
+              </RequireModuleActive>
+               <RequireModuleActive moduleName="HR">
                 <AuthorizationModuleRegistration />
               </RequireModuleActive>
               {/* ... سایر ماژول‌های خود را اینجا اضافه کنید */}

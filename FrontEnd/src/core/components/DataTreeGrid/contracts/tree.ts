@@ -12,6 +12,7 @@
  */
 
 import {   TreeIndex,TreeRow } from "../types";
+import { TreeSelectionController } from "./selection";
 
 
 // =====================================================
@@ -331,5 +332,8 @@ export interface DataTreeGridController<
 
   manipulation:
     TreeManipulationController<T>;
+
+    selection:
+  TreeSelectionController;
 
 }

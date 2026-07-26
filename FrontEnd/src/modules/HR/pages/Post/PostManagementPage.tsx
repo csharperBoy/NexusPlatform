@@ -1,3 +1,4 @@
+//src/modules/HR/pages/Post/PostManagementPage.tsx
 import { useEffect, useState } from "react";
 
 import { postApi } from "../../api/PostApi";
@@ -29,13 +30,7 @@ export default function PostManagementPage() {
 
 
 
-  /**
-   * Node انتخاب شده برای عملیات
-   */
-  const [
-    selectedId,
-    setSelectedId
-  ] = useState<string | null>(null);
+
 
 
 
@@ -81,7 +76,10 @@ export default function PostManagementPage() {
 
     });
 
-
+ console.log(
+  "Selected:",
+  tree.selection.selectedId
+ );
 
 
 
@@ -94,7 +92,7 @@ export default function PostManagementPage() {
   const moveSelectedNode = () => {
 
 
-    if (!selectedId) {
+    if (!tree.selection.selectedId) {
       return;
     }
 
@@ -102,7 +100,7 @@ export default function PostManagementPage() {
 
     const validation =
       tree.validation.canMove(
-        selectedId,
+        tree.selection.selectedId,
         newParentId
       );
 
@@ -125,7 +123,7 @@ export default function PostManagementPage() {
 
     const newData =
       tree.manipulation.moveNode(
-        selectedId,
+        tree.selection.selectedId,
         newParentId
       );
 
@@ -141,9 +139,9 @@ export default function PostManagementPage() {
 
 
 const selectedNode =
-    selectedId
+    tree.selection.selectedId
       ?
-      tree.navigation.findNode(selectedId)
+      tree.navigation.findNode(tree.selection.selectedId)
       :
       null;
 
@@ -153,7 +151,20 @@ console.log(
   selectedNode
 );
 
-
+ console.log(
+   "INDEX CHECK",
+   {
+     
+     exists:
+       tree.index.nodeMap.has(
+         tree.selection.selectedId ?? ""
+       ),
+     node:
+      tree.index.nodeMap.get(
+         tree.selection.selectedId ?? ""
+       )
+   }
+ );
 
 
 
@@ -166,7 +177,9 @@ console.log(
         مدیریت چارت سازمانی
       </h1>
 
-
+<div className="bg-red-500 text-white p-5 rounded">
+  تست Tailwind
+</div>
 
 
       {/* Toolbar */}
@@ -263,7 +276,7 @@ console.log(
           className="btn btn-warning"
 
           disabled={
-            !selectedId
+            !tree.selection.selectedId
           }
 
           onClick={
@@ -338,7 +351,6 @@ console.log(
 
 <div className="border rounded p-4">
 
-
 <DataTreeGrid
 
     data={posts}
@@ -347,7 +359,18 @@ console.log(
 
     columns={postColumns}
 
+    tree={tree}
+
     defaultExpandAll={false}
+     rowClassName={(row)=>
+      
+      tree.selection.isSelected(row.id)
+        ?
+        "bg-blue-100"
+        :
+        ""
+
+    }
 
 />
 
@@ -387,7 +410,7 @@ console.log(
                   tree.index.rootIds.length,
 
 
-                selectedId,
+                selectedId: tree.selection.selectedId,
 
 
                 selectedNode,

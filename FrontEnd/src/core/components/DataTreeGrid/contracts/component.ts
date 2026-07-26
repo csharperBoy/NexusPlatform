@@ -11,6 +11,7 @@
 
 
 import type {
+  DataTreeGridController,
   TreeAdapter,
   TreeNodeBase
 }
@@ -21,6 +22,7 @@ import type {
   DataTreeGridColumn
 }
 from "./column";
+import { TreeRow } from "../types";
 
 
 
@@ -53,8 +55,6 @@ export interface DataTreeGridProps<
   columns:
     DataTreeGridColumn<T>[];
 
-
-
   /**
    * وضعیت اولیه Expansion
    */
@@ -62,11 +62,19 @@ export interface DataTreeGridProps<
     boolean;
 
 
+    tree:
+  DataTreeGridController<T>;
 
   /**
    * کلاس Container
    */
   className?:
+    string;
+
+    rowClassName?:
+    (
+      row: TreeRow<T>
+    )=>
     string;
 
 

@@ -1,3 +1,4 @@
+//src/core/components/DataTreeGrid/components/DataTreeGrid.tsx
 import {
   useMemo
 }
@@ -49,20 +50,8 @@ export default function DataTreeGrid<
 ) {
 
 
-  const tree =
-    useDataTreeGrid({
-
-      data:
-        props.data,
-
-      adapter:
-        props.adapter,
-
-      defaultExpandAll:
-        props.defaultExpandAll
-
-    });
-
+const tree =
+  props.tree;
 
 
 
@@ -82,7 +71,7 @@ export default function DataTreeGrid<
 
     [
       props.columns,
-      tree
+      tree.expansion
     ]
 
   );
@@ -149,14 +138,14 @@ export default function DataTreeGrid<
                           >
 
                             {
- flexRender(
+                              flexRender(
 
-   header.column.columnDef.header,
+                                header.column.columnDef.header,
 
-   header.getContext()
+                                header.getContext()
 
- )
-}
+                              )
+                              }
 
                           </th>
 
@@ -188,6 +177,31 @@ export default function DataTreeGrid<
                     key={
                       row.id
                     }
+
+                    onClick={() => {
+
+                      console.log(
+                        "ROW CLICK",
+                        {
+                          rowId: row.original.id,
+                          original: row.original
+                        }
+                      );
+
+                      tree.selection.select(
+                        row.original.id
+                      );
+
+                      }}
+ 
+                       className={
+                         props.rowClassName
+                           ?
+                           props.rowClassName(row.original)
+                           :
+                           undefined
+                       }
+                     
                   >
 
                     {
@@ -197,9 +211,19 @@ export default function DataTreeGrid<
                           cell => (
 
                             <td
-                              key={
-                                cell.id
-                              }
+                              key={cell.id}
+
+                              style={{
+                                background:
+                                  tree.selection.isSelected(
+                                    row.original.id
+                                  )
+                                  ?
+                                  "red"
+                                  :
+                                  "transparent"
+                              }}
+
                               className="
                                 border
                                 p-2
@@ -209,11 +233,11 @@ export default function DataTreeGrid<
                               {
                                flexRender(
 
-  cell.column.columnDef.cell,
+                                  cell.column.columnDef.cell,
 
-  cell.getContext()
+                                  cell.getContext()
 
-)
+                                )
                               }
 
                             </td>

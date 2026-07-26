@@ -1,4 +1,4 @@
-// vite.config.aksteel.website.phonebook.ts
+// vite.config.aksteel.admin.ts
 import { defineConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -28,6 +28,10 @@ const isDev =  mode.includes('development');
     server: {
       port: 5174,
         https: isDev ? {} : undefined, // فقط در حالت توسعه فعال باشد
+        fs: {
+        // اجازه دسترسی Vite به کل ریشه پروژه
+        allow: [resolve(__dirname)],
+      },
     },
     build: {
       outDir: resolve(__dirname, "dist/AKSteelAdmin"),
