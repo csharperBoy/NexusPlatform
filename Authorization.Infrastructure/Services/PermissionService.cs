@@ -259,12 +259,15 @@ namespace Authorization.Infrastructure.Services
 
         private async Task AddScopesToPermission(Guid permissionId, List<ScopeType>? scopes)
         {
-            List<Scope> newList = scopes.Select(s => new Scope
+            if (scopes?.Count > 0)
             {
-                scope = s,
-                PermissionId = permissionId
-            }).ToList();
-            await _scopeRepository.AddRangeAsync(newList);
+                List<Scope> newList = scopes.Select(s => new Scope
+                {
+                    scope = s,
+                    PermissionId = permissionId
+                }).ToList();
+                await _scopeRepository.AddRangeAsync(newList);
+            }
         }
 
 
@@ -332,7 +335,7 @@ namespace Authorization.Infrastructure.Services
 
                 // ذخیره تغییرات
                 await AddScopesToPermission(permission.Id, scopes);
-                if (rules != null)
+                if (rules?.Count()>0  )
                 {
                     await _permissionRuleRepository.AddRangeAsync(rules.Select(r => new PermissionRule(permission.Id, r.FieldName, r.Operator, r.Value, r.LogicalOperator, r.GroupOrder, r.JoinLocalKey, r.JoinForeignKey, r.JoinEntity)));
                 }

@@ -78,6 +78,7 @@ namespace Identity.Domain.Entities
         string _Email,
         string? _NickName,
         string? _phoneNumber,
+        Guid _FkPermissionAssigneeId,
         Guid? _partyId = null
             )
              : base(_UserName)
@@ -88,6 +89,7 @@ namespace Identity.Domain.Entities
             EmailConfirmed = true;
             NickName = _NickName;
             PhoneNumber = _phoneNumber;
+            FkPermissionAssigneeId = _FkPermissionAssigneeId;
             NormalizedUserName = _UserName.ToUpperInvariant();
             NormalizedEmail = _Email.ToUpperInvariant();
 

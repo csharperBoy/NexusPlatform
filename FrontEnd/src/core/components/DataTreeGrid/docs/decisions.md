@@ -3,73 +3,37 @@
 
 ## ADR-001
 
-Date:
-2026-07-25
-
-
 Decision:
 
-Use flat data internally.
+Tree Engine is framework independent.
 
 
 Reason:
 
-Backend APIs naturally provide parentId relation.
+Allow future support for:
 
-Benefits:
-
-- Easier updates
-- Easier synchronization
-- Less duplication
+- TanStack Table
+- AG Grid
+- MUI DataGrid
+- Custom renderer
 
 
 ---
-
 
 ## ADR-002
 
-
 Decision:
 
-Use Adapter pattern.
-
+Adapters are responsible for mapping entities.
 
 Reason:
 
-Core must remain independent from business models.
+Different modules have different parent structures.
 
+Example:
 
----
+fkParentId
 
+parentId
 
-## ADR-003
-
-
-Decision:
-
-Use dnd-kit for drag and drop.
-
-
-Reason:
-
-- Free
-- Flexible
-- React friendly
-
-
----
-
-
-## ADR-004
-
-
-Decision:
-
-Use TanStack Table for grid functionality.
-
-
-Reason:
-
-- Headless architecture
-- Free
-- Highly customizable
+reportsTo

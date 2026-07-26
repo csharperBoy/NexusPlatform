@@ -22,7 +22,7 @@ namespace Identity.Application.Handlers.Queries.Role
         {
 
             var roles = await _roleService.getRoles(request.Name,request.description);
-            var result = roles.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.Name}"));
+            var result = roles.Select(x => new SelectionListDto(x.FkPermissionAssigneeId.ToString(), $"{x.Name}"));
             return Result<IList<SelectionListDto>>.Ok(result.ToList());
         }
     }

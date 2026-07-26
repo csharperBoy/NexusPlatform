@@ -7,6 +7,7 @@ using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.People;
 using Core.Application.Context;
 using Core.Application.Helper;
+using Core.Shared.Enums.Authorization;
 using Identity.Application.Commands.User;
 using Identity.Application.DTOs;
 using Identity.Application.Interfaces;
@@ -80,11 +81,13 @@ namespace Identity.Infrastructure.Services
                 
         public async Task<Guid> CreateUserAsync(CreateUserCommand command)
         {
+            Guid perAssignId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Role);
             var user = new ApplicationUser(
                 command.UserName,
                 command.Email,
                 command.NickName,
                 command.phoneNumber,
+                perAssignId,
                 command.personId
             );
             var createRes = await _userManager.CreateAsync(user, command.Password);

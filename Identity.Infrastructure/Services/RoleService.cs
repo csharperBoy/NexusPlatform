@@ -85,6 +85,7 @@ namespace Identity.Infrastructure.Services
                 throw new Exception(createRes.Errors.FirstOrDefault().Description);
 
             //await _unitOfWork.SaveChangesAsync();
+            await _permissionService.SaveAsync();
             await InvalidateRoleCachesAsync();
             return role.Id;
         }
@@ -118,6 +119,7 @@ namespace Identity.Infrastructure.Services
                    Name = u.Name,
                    Description = u.Description,
                    OrderNum = u.OrderNum,
+                    FkPermissionAssigneeId = u.FkPermissionAssigneeId
                 }).AsNoTracking().ToListAsync();
 
             await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(30));
