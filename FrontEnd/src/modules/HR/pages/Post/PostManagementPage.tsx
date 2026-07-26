@@ -10,6 +10,12 @@ import {
 import {
   postTreeAdapter,
 } from "../../adapters/postTreeAdapter";
+import {
+  DataTreeGrid
+}
+from "@/core/components/DataTreeGrid";
+import { postColumns } from "./postColumns";
+
 
 
 
@@ -330,137 +336,23 @@ console.log(
 
 
 
+<div className="border rounded p-4">
 
 
-      {/* Tree */}
-      <div className="border rounded p-4">
+<DataTreeGrid
+
+    data={posts}
+
+    adapter={postTreeAdapter}
+
+    columns={postColumns}
+
+    defaultExpandAll={false}
+
+/>
 
 
-        {
-          tree.rows.map(row => (
-
-
-            <div
-
-              key={row.id}
-
-
-              onClick={() =>
-                setSelectedId(row.id)
-              }
-
-
-              className={`
-                flex
-                items-center
-                gap-2
-                p-2
-                mb-1
-                rounded
-                cursor-pointer
-                border
-
-                ${
-                  selectedId === row.id
-                    ?
-                    "bg-blue-200 border-blue-500"
-                    :
-                    "hover:bg-gray-100"
-                }
-
-              `}
-
-
-              style={{
-                paddingRight:
-                  row.depth * 24
-              }}
-
-            >
-
-
-
-              {
-                row.hasChildren && (
-
-                  <button
-
-                    className="w-6 h-6"
-
-                    onClick={(event)=>{
-
-
-                      event.stopPropagation();
-
-
-
-                      tree.expansion.toggle(
-                        row.id
-                      );
-
-
-                    }}
-
-                  >
-
-                    {
-                      tree.expansion.isExpanded(
-                        row.id
-                      )
-                        ?
-                        "-"
-                        :
-                        "+"
-                    }
-
-
-                  </button>
-
-                )
-              }
-
-
-
-
-
-
-              <span>
-
-
-                {
-                  row.item.jobTitleName
-                }
-
-
-                {" - "}
-
-
-                {
-                  row.item.firstName
-                }
-
-
-                {" "}
-
-
-                {
-                  row.item.lastName
-                }
-
-
-              </span>
-
-
-
-            </div>
-
-
-          ))
-
-        }
-
-
-      </div>
+</div>
 
 
 
