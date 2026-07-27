@@ -8,3 +8,8 @@ export {
   default as DataTreeGrid
 }
 from "./DataTreeGrid";
+
+export {
+  default as TreeRow
+}
+from "./TreeRow";

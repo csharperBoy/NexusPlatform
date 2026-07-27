@@ -37,6 +37,7 @@ import type {
   TreeNodeBase
 }
 from "../contracts";
+import TreeRow from "./TreeRow";
 
 
 
@@ -165,97 +166,45 @@ const tree =
 
         <tbody>
 
+{
 
-          {
-            table
-              .getRowModel()
-              .rows
-              .map(
-                row => (
-
-                  <tr
-                    key={
-                      row.id
-                    }
-
-                    onClick={() => {
-
-                      console.log(
-                        "ROW CLICK",
-                        {
-                          rowId: row.original.id,
-                          original: row.original
-                        }
-                      );
-
-                      tree.selection.select(
-                        row.original.id
-                      );
-
-                      }}
- 
-                       className={
-                         props.rowClassName
-                           ?
-                           props.rowClassName(row.original)
-                           :
-                           undefined
-                       }
-                     
-                  >
-
-                    {
-                      row
-                        .getVisibleCells()
-                        .map(
-                          cell => (
-
-                            <td
-                              key={cell.id}
-
-                              style={{
-                                background:
-                                  tree.selection.isSelected(
-                                    row.original.id
-                                  )
-                                  ?
-                                  "red"
-                                  :
-                                  "transparent"
-                              }}
-
-                              className="
-                                border
-                                p-2
-                              "
-                            >
-
-                              {
-                               flexRender(
-
-                                  cell.column.columnDef.cell,
-
-                                  cell.getContext()
-
-                                )
-                              }
-
-                            </td>
-
-                          )
-                        )
-                    }
+table
+.getRowModel()
+.rows
+.map(
+ row => (
 
 
-                  </tr>
+<TreeRow
 
-                )
-              )
+ key={
+   row.id
+ }
 
-          }
+ row={
+   row
+ }
+
+ tree={
+   tree
+ }
 
 
-        </tbody>
+ rowClassName={
+   props.rowClassName
+ }
+
+
+/>
+
+
+)
+
+)
+
+}
+
+</tbody>
 
 
       </table>
