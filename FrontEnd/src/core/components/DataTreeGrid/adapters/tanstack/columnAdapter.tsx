@@ -30,7 +30,7 @@ from "../../types";
 import {
  renderTreeCell
 }
-from "../../renderers";
+from "../../renderers/tanstack";
 
 
 

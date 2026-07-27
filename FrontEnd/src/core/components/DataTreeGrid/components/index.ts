@@ -2,7 +2,7 @@
 export {
   default as TreeCell
 }
-from "../renderers/cell/DefaultTreeCell";
+from "../renderers/tanstack/cell/DefaultTreeCell";
 
 export {
   default as DataTreeGrid

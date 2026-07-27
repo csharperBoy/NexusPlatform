@@ -28,4 +28,4 @@ from "./components/DataTreeGrid";
 export {
  default as TreeCell
 }
-from "./renderers/cell/DefaultTreeCell";
+from "./renderers/tanstack/cell/DefaultTreeCell";

@@ -1,4 +1,5 @@
-//src/core/components/DataTreeGrid/components/DataTreeGrid.tsx
+// src/core/components/DataTreeGrid/components/DataTreeGrid.tsx
+
 import {
   useMemo
 }
@@ -10,10 +11,7 @@ import {
   getCoreRowModel,
 }
 from "@tanstack/react-table";
-import {
- flexRender
-}
-from "@tanstack/react-table";
+
 
 import type {
   DataTreeGridProps
@@ -21,10 +19,10 @@ import type {
 from "../contracts";
 
 
-import {
-  useDataTreeGrid
+import type {
+  TreeNodeBase
 }
-from "../hooks/useDataTreeGrid";
+from "../contracts";
 
 
 import {
@@ -33,16 +31,11 @@ import {
 from "../adapters/tanstack";
 
 
-import type {
-  TreeNodeBase
-}
-from "../contracts";
-
 import {
- DefaultTreeRow
+  DefaultTableBody,
+  DefaultTableHeader
 }
 from "../renderers";
-
 
 
 
@@ -52,34 +45,37 @@ export default function DataTreeGrid<
 >(
   props:
     DataTreeGridProps<T>
-) {
+){
 
 
-const tree =
-  props.tree;
+  const tree =
+    props.tree;
 
 
 
   const columns =
-  useMemo(
+    useMemo(
 
-    () =>
+      () =>
 
-      props.columns.map(
-        column =>
-          toTanStackColumn(
-            column,
-            tree
-          )
-      ),
+        props.columns.map(
+
+          column =>
+
+            toTanStackColumn(
+              column,
+              tree
+            )
+
+        ),
 
 
-    [
-      props.columns,
-      tree.expansion
-    ]
+      [
+        props.columns,
+        tree.expansion
+      ]
 
-  );
+    );
 
 
 
@@ -90,7 +86,9 @@ const tree =
       data:
         tree.rows,
 
+
       columns,
+
 
       getCoreRowModel:
         getCoreRowModel()
@@ -100,173 +98,54 @@ const tree =
 
 
 
+
   return (
 
     <div
+
       className={
         props.className
       }
+
     >
 
-
       <table
-        className="w-full border"
+
+        className="
+          w-full
+          border
+        "
+
       >
 
 
-        <thead>
+        <DefaultTableHeader
 
-          {
+          table={
             table
-              .getHeaderGroups()
-              .map(
-                headerGroup => (
-
-                  <tr
-                    key={
-                      headerGroup.id
-                    }
-                  >
-
-                    {
-                      headerGroup.headers.map(
-                        header => (
-
-                          <th
-                            key={
-                              header.id
-                            }
-                            className="
-                              border
-                              p-2
-                            "
-                          >
-
-                            {
-                              flexRender(
-
-                                header.column.columnDef.header,
-
-                                header.getContext()
-
-                              )
-                              }
-
-                          </th>
-
-                        )
-                      )
-                    }
-
-                  </tr>
-
-                )
-              )
           }
 
-        </thead>
+        />
 
 
 
-        <tbody>
+        <DefaultTableBody
 
-{
-
-table
-.getRowModel()
-.rows
-.map(
- row => (
+          table={
+            table
+          }
 
 
-<DefaultTreeRow
-
- key={
-   row.id
- }
+          tree={
+            tree
+          }
 
 
- row={
-   row.original
- }
+          rowClassName={
+            props.rowClassName
+          }
 
-
- selected={
-   tree.selection.isSelected(
-     row.original.id
-   )
- }
-
-
- onClick={()=>{
- 
-   console.log(
-     "ROW CLICK",
-     {
-       rowId: row.original.id,
-       original: row.original
-     }
-   );
-
-
-   tree.selection.select(
-     row.original.id
-   );
-
- }}
-
-
- className={
-   props.rowClassName
-   ?
-   props.rowClassName(row.original)
-   :
-   undefined
- }
-
-
->
-
-{
-  row
-   .getVisibleCells()
-   .map(
-     cell => (
-
-       <td
-         key={
-           cell.id
-         }
-
-         className="
-           border
-           p-2
-         "
-       >
-
-       {
-         flexRender(
-           cell.column.columnDef.cell,
-           cell.getContext()
-         )
-       }
-
-       </td>
-
-     )
-   )
-}
-
-
-</DefaultTreeRow>
-
-)
-
-)
-
-}
-
-</tbody>
+        />
 
 
       </table>

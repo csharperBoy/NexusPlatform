@@ -6,12 +6,12 @@ import type {
 
 import type {
   TreeNodeBase
-} from "../../contracts";
+} from "../../../contracts";
 
 
 import type {
   TreeRow
-} from "../../types";
+} from "../../../types";
 
 
 
