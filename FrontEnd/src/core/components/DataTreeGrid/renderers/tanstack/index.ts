@@ -3,8 +3,6 @@ export {
   renderTreeCell
 }
 from "../treeCellRenderer";
-
-
 export {
   DefaultTreeCell
 }
@@ -21,3 +19,8 @@ export {
   DefaultTableBody
 }
 from "./table";
+
+export {
+  default as TanStackTableRenderer
+}
+from "./TanStackTableRenderer";

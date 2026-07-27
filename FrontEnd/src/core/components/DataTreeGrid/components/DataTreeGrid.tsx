@@ -1,18 +1,3 @@
-// src/core/components/DataTreeGrid/components/DataTreeGrid.tsx
-
-import {
-  useMemo
-}
-from "react";
-
-
-import {
-  useReactTable,
-  getCoreRowModel,
-}
-from "@tanstack/react-table";
-
-
 import type {
   DataTreeGridProps
 }
@@ -26,14 +11,13 @@ from "../contracts";
 
 
 import {
-  toTanStackColumn
+  useTanStackDataTreeGrid
 }
-from "../adapters/tanstack";
+from "../hooks/useTanStackDataTreeGrid";
 
 
 import {
-  DefaultTableBody,
-  DefaultTableHeader
+  TanStackTableRenderer
 }
 from "../renderers";
 
@@ -53,48 +37,14 @@ export default function DataTreeGrid<
 
 
 
-  const columns =
-    useMemo(
+  const table =
+    useTanStackDataTreeGrid(
 
-      () =>
+      props.columns,
 
-        props.columns.map(
-
-          column =>
-
-            toTanStackColumn(
-              column,
-              tree
-            )
-
-        ),
-
-
-      [
-        props.columns,
-        tree.expansion
-      ]
+      tree
 
     );
-
-
-
-
-  const table =
-    useReactTable({
-
-      data:
-        tree.rows,
-
-
-      columns,
-
-
-      getCoreRowModel:
-        getCoreRowModel()
-
-    });
-
 
 
 
@@ -109,46 +59,23 @@ export default function DataTreeGrid<
 
     >
 
-      <table
+      <TanStackTableRenderer
 
-        className="
-          w-full
-          border
-        "
-
-      >
+        table={
+          table
+        }
 
 
-        <DefaultTableHeader
-
-          table={
-            table
-          }
-
-        />
+        tree={
+          tree
+        }
 
 
+        rowClassName={
+          props.rowClassName
+        }
 
-        <DefaultTableBody
-
-          table={
-            table
-          }
-
-
-          tree={
-            tree
-          }
-
-
-          rowClassName={
-            props.rowClassName
-          }
-
-        />
-
-
-      </table>
+      />
 
 
     </div>
