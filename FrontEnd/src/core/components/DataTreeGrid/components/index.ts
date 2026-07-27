@@ -2,14 +2,10 @@
 export {
   default as TreeCell
 }
-from "../renderers/default/DefaultTreeCell";
+from "../renderers/cell/DefaultTreeCell";
 
 export {
   default as DataTreeGrid
 }
 from "./DataTreeGrid";
 
-export {
-  default as TreeRow
-}
-from "./TreeRow";

@@ -37,7 +37,11 @@ import type {
   TreeNodeBase
 }
 from "../contracts";
-import TreeRow from "./TreeRow";
+
+import {
+ DefaultTreeRow
+}
+from "../renderers";
 
 
 
@@ -175,28 +179,86 @@ table
  row => (
 
 
-<TreeRow
+<DefaultTreeRow
 
  key={
    row.id
  }
 
+
  row={
-   row
- }
-
- tree={
-   tree
+   row.original
  }
 
 
- rowClassName={
+ selected={
+   tree.selection.isSelected(
+     row.original.id
+   )
+ }
+
+
+ onClick={()=>{
+ 
+   console.log(
+     "ROW CLICK",
+     {
+       rowId: row.original.id,
+       original: row.original
+     }
+   );
+
+
+   tree.selection.select(
+     row.original.id
+   );
+
+ }}
+
+
+ className={
    props.rowClassName
+   ?
+   props.rowClassName(row.original)
+   :
+   undefined
  }
 
 
-/>
+>
 
+{
+  row
+   .getVisibleCells()
+   .map(
+     cell => (
+
+       <td
+         key={
+           cell.id
+         }
+
+         className="
+           border
+           p-2
+         "
+       >
+
+       {
+         flexRender(
+           cell.column.columnDef.cell,
+           cell.getContext()
+         )
+       }
+
+       </td>
+
+     )
+   )
+}
+
+
+</DefaultTreeRow>
 
 )
 

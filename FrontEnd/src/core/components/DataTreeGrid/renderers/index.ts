@@ -8,4 +8,10 @@ from "./treeCellRenderer";
 export {
   DefaultTreeCell
 }
-from "./default";
+from "./cell";
+
+
+export {
+  DefaultTreeRow
+}
+from "./row";

@@ -21,7 +21,7 @@ from "../contracts";
 import {
   DefaultTreeCell
 }
-from "./default";
+from "./cell";
 
 
 
