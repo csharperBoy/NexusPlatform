@@ -1,3 +1,4 @@
+//src/core/components/DataTreeGrid/renderers/tanstack/table/DefaultTableBody.tsx
 import type {
   Table
 }
@@ -85,13 +86,9 @@ export default function DefaultTableBody<
                 }
 
 
-                selected={
-
-                  props.tree.selection.isSelected(
-                    row.original.id
-                  )
-
-                }
+              tree={
+                    props.tree
+                    }
 
 
 

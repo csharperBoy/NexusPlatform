@@ -1,3 +1,4 @@
+//src/core/components/DataTreeGrid/renderers/tanstack/row/DefaultTreeRow.tsx
 import type {
   ReactNode
 } from "react";
@@ -12,6 +13,10 @@ import type {
 } from "../../../types";
 
 
+import type {
+  DataTreeGridController
+}
+from "../../../contracts";
 
 interface DefaultTreeRowProps<
   T extends TreeNodeBase
@@ -21,8 +26,8 @@ interface DefaultTreeRowProps<
     TreeRow<T>;
 
 
-  selected:
-    boolean;
+  tree:
+    DataTreeGridController<T>;
 
 
   onClick:
@@ -61,12 +66,19 @@ export default function DefaultTreeRow<
         props.className
         ??
         (
-          props.selected
+          props.tree.rowState
+          .get(props.row.id)
+          .selected
+
           ?
+
           "bg-blue-100"
+
           :
+
           undefined
-        )
+
+          )
 
       }
 

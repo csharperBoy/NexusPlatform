@@ -76,10 +76,6 @@ export default function PostManagementPage() {
 
     });
 
- console.log(
-  "Selected:",
-  tree.selection.selectedId
- );
 
 
 
@@ -146,25 +142,6 @@ const selectedNode =
       null;
 
 
-console.log(
-  "SELECTED NODE",
-  selectedNode
-);
-
- console.log(
-   "INDEX CHECK",
-   {
-     
-     exists:
-       tree.index.nodeMap.has(
-         tree.selection.selectedId ?? ""
-       ),
-     node:
-      tree.index.nodeMap.get(
-         tree.selection.selectedId ?? ""
-       )
-   }
- );
 
 
 

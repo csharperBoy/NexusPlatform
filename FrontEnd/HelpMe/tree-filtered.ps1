@@ -26,5 +26,5 @@ Get-Tree $path
 
 # نحوه اجرا
 # در powerShell با دسترسی ادمین برو به آدرس روت پروژه
-#cd D:\868\Projects\NexusPlatform\FrontEnd\HelpMe
+#cd D:\Project\NexusPlatform\FrontEnd\HelpMe
 # .\tree-filtered.ps1

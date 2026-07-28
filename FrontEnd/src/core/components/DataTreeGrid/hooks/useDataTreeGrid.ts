@@ -11,6 +11,10 @@ import {
   buildTree
 } from "../engine/treeBuilder";
 
+import {
+  useRowState
+}
+from "./useRowState";
 
 import {
   flattenTree,
@@ -104,7 +108,8 @@ export function useDataTreeGrid<
 ] = useState<string | null>(null);
 
 
-
+const rowState =
+  useRowState();
 
   const isExpanded =
     useCallback(
@@ -168,34 +173,54 @@ export function useDataTreeGrid<
 
 
 
+const toggle =
+  useCallback(
+    (id:string)=>{
 
-  const toggle =
-    useCallback(
-      (id:string)=>{
-
-        setExpandedIds(
-          previous=>{
-
-            const next =
-              new Set(previous);
+      console.time(
+        "TREE TOGGLE TOTAL"
+      );
 
 
-            if(next.has(id)){
-              next.delete(id);
-            }
-            else{
-              next.add(id);
-            }
+      setExpandedIds(
+        previous=>{
 
 
-            return next;
+          console.time(
+            "CREATE NEW EXPANDED IDS"
+          );
 
+
+          const next =
+            new Set(previous);
+
+
+          if(next.has(id)){
+            next.delete(id);
           }
-        );
+          else{
+            next.add(id);
+          }
 
-      },
-      []
-    );
+
+          console.timeEnd(
+            "CREATE NEW EXPANDED IDS"
+          );
+
+
+          return next;
+
+        }
+      );
+
+
+      console.timeEnd(
+        "TREE TOGGLE TOTAL"
+      );
+
+    },
+    []
+  );
 
 
 
@@ -253,7 +278,10 @@ export function useDataTreeGrid<
 
 
 
-const selection = {
+const selection =
+useMemo(
+
+()=>({
 
   selectedId,
 
@@ -270,10 +298,7 @@ const selection = {
   select(
     id:string
   ){
-       console.log(
-   "SELECT In Hook =",
-   id
- );
+
     setSelectedId(id);
 
   },
@@ -285,11 +310,20 @@ const selection = {
 
   }
 
-};
+
+}),
+
+[
+ selectedId
+]
+
+);
   // -----------------------------
   // Controller
   // -----------------------------
-
+console.log(
+  "TREE CONTROLLER RENDER"
+);
 
   return {
 
@@ -300,6 +334,7 @@ const selection = {
     index,
 
 
+    rowState,
 
     expansion:{
 

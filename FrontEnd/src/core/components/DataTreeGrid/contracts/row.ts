@@ -1,3 +1,4 @@
+//src/core/components/DataTreeGrid/contracts/row.ts
 import type {
   ReactNode
 } from "react";
@@ -29,9 +30,6 @@ export interface DataTreeGridRowContext<
     DataTreeGridController<T>;
 
 
-
-  selected:
-    boolean;
 
 
 

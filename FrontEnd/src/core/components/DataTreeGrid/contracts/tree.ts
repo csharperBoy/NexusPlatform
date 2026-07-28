@@ -3,7 +3,10 @@
 import {   TreeIndex,TreeRow } from "../types";
 import { TreeSelectionController } from "./selection";
 
-
+import type {
+  RowStateController
+}
+from "./rowStateController";
 // =====================================================
 // Base Node
 // =====================================================
@@ -324,5 +327,9 @@ export interface DataTreeGridController<
 
     selection:
   TreeSelectionController;
+
+
+ rowState:
+  RowStateController;
 
 }
