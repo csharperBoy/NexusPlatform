@@ -1,10 +1,7 @@
-//src/core/components/DataTreeGrid/contracts/render.ts
-
 import type {
   TreeRow
 }
 from "../types";
-
 
 
 import type {
@@ -13,6 +10,11 @@ import type {
 from "./tree";
 
 
+import type {
+  DataTreeGridColumn
+}
+from "./column";
+
 
 
 export interface DataTreeGridCellContext<
@@ -20,17 +22,33 @@ export interface DataTreeGridCellContext<
 >{
 
 
+  /**
+   * Row کامل Tree
+   */
   row:
     TreeRow<T>;
 
 
 
+  /**
+   * مقدار خام Cell
+   */
   value:
     unknown;
 
 
 
-  columnId:
-    string;
+  /**
+   * تعریف Column
+   *
+   * شامل:
+   * treeColumn
+   * formatter
+   * editable
+   * editor
+   * ...
+   */
+  column:
+    DataTreeGridColumn<T>;
 
 }

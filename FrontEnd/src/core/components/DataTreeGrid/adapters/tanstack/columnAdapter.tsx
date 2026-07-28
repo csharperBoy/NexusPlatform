@@ -1,12 +1,15 @@
-//SRC/core/components/DataTreeGrid/adapters/tanstack/columnAdapter.tsx
-import type {
-  ReactNode
-} from "react";
+//src/core/components/DataTreeGrid/adapters/tanstack/columnAdapter.tsx
 
 import type {
   ColumnDef
 }
 from "@tanstack/react-table";
+
+
+import type {
+  ReactNode
+}
+from "react";
 
 
 import type {
@@ -28,9 +31,12 @@ from "../../types";
 
 
 import {
- renderTreeCell
+  createTanStackTreeCellRenderer,
+  createDefaultCellRenderer,
+  resolveCellRenderer
 }
-from "../../renderers/tanstack";
+from "../../renderers";
+
 
 
 
@@ -41,11 +47,28 @@ export function toTanStackColumn<
   column:
     DataTreeGridColumn<T>,
 
+
   tree:any
 
 ):
 ColumnDef<TreeRow<T>>
 {
+
+
+  const renderers =
+
+  [
+
+    createTanStackTreeCellRenderer<T>(
+      tree
+    ),
+
+
+    createDefaultCellRenderer<T>()
+
+  ];
+
+
 
 
   return {
@@ -75,42 +98,110 @@ ColumnDef<TreeRow<T>>
 
 
 
-        const value =
+        const rawValue =
+
           column.accessorKey
+
             ?
+
             treeRow.item[
               column.accessorKey
             ]
+
             :
+
             null;
 
 
 
+        let value:
+          ReactNode =
+            rawValue as ReactNode;
 
-        if(column.treeColumn){
 
-          return renderTreeCell(
+
+        if(column.formatter){
+
+
+          value =
+
+            column.formatter({
+
+              value:
+                rawValue,
+
+
+              row:
+                treeRow.item
+
+            });
+
+        }
+
+
+
+
+        const context = {
+
+
+          row:
             treeRow,
-            value as ReactNode,
-            tree
+
+
+          rawValue,
+
+
+          value,
+
+
+          column
+
+
+        };
+
+
+
+
+        /**
+         * اگر cell اختصاصی تعریف شده باشد
+         * اولویت اول دارد
+         */
+        if(column.cell){
+
+
+          return column.cell(
+            context
           );
 
-          }
+        }
 
 
 
 
-        return (
+        const renderer =
 
-          <>
+          resolveCellRenderer(
 
-            {
-              value as ReactNode
-            }
+            renderers,
 
-          </>
+            context
 
-        );
+          );
+
+
+
+
+        return renderer
+
+          ?
+
+          renderer.render(
+            context
+          )
+
+          :
+
+          null;
 
 
       }

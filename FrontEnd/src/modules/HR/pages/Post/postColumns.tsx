@@ -1,3 +1,4 @@
+//src/modules/HR/pages/Post/postColumns.tsx
 import type {
   DataTreeGridColumn
 }
@@ -31,7 +32,7 @@ DataTreeGridColumn<PostInfoView>[] =
 
 
   {
-    id: "employee",
+    id: "employeeFirstName",
 
     header: "متصدی",
 
@@ -39,7 +40,14 @@ DataTreeGridColumn<PostInfoView>[] =
 
   },
 
+{
+    id: "employeeLastName",
 
+    header: "متصدی",
+
+    accessorKey: "lastName"
+
+  },
 
   {
     id: "phone",
@@ -48,7 +56,52 @@ DataTreeGridColumn<PostInfoView>[] =
 
     accessorKey: "officePhone"
 
+  },
+  {
+  id:"gender1",
+
+  header:"جنسیت1",
+
+  accessorKey:"gender",
+
+  cell:({value})=>{
+
+    return (
+      <span>
+        {
+          value === 1
+          ? "♂ مرد"
+          : "♀ زن"
+        }
+      </span>
+    );
+
   }
 
+},
+{
+  id: "gender",
 
+  header: "جنسیت",
+
+  accessorKey: "gender",
+
+  formatter: ({ value }) => {
+
+    switch (value) {
+
+      case 1:
+        return "مرد";
+
+      case 2:
+        return "زن";
+
+      default:
+        return "نامشخص";
+
+    }
+
+  }
+
+}
 ];

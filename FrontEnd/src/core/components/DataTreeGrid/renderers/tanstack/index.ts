@@ -1,12 +1,10 @@
 //src/core/components/DataTreeGrid/renderers/index.ts
 export {
-  renderTreeCell
+  renderTreeCell,
 }
-from "../treeCellRenderer";
-export {
-  DefaultTreeCell
-}
-from "./cell";
+from "./cell/treeCellRenderer";
+
+export * from "./cell";
 
 
 export {
