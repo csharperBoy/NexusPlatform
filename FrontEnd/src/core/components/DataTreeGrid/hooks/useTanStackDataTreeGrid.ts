@@ -47,20 +47,36 @@ export function useTanStackDataTreeGrid<
 
 
   const tanStackColumns =
-    useMemo(
+useMemo(
 
-      () =>
+()=>{
 
-        columns.map(
+ console.time(
+   "CREATE TANSTACK COLUMNS"
+ );
 
-          column =>
 
-            toTanStackColumn(
-              column,
-              tree
-            )
+ const result =
+ columns.map(
 
-        ),
+   column =>
+     toTanStackColumn(
+       column,
+       tree
+     )
+
+ );
+
+
+ console.timeEnd(
+   "CREATE TANSTACK COLUMNS"
+ );
+
+
+ return result;
+
+
+},
 
 
       [
@@ -72,7 +88,9 @@ export function useTanStackDataTreeGrid<
 
 
 
-
+console.time(
+ "CREATE TANSTACK TABLE"
+);
   const table =
     useReactTable({
 
@@ -89,7 +107,9 @@ export function useTanStackDataTreeGrid<
 
     });
 
-
+console.timeEnd(
+ "CREATE TANSTACK TABLE"
+);
 
   return table;
 

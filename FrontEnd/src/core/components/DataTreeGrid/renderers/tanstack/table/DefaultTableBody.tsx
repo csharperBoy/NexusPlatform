@@ -61,7 +61,27 @@ export default function DefaultTableBody<
   props:
     DefaultTableBodyProps<T>
 ){
+  const renderStart =
+ performance.now();
+console.time(
+ "TABLE BODY RENDER"
+);
 
+
+console.log(
+ "ROWS COUNT",
+ props.table.getRowModel().rows.length
+);
+
+
+console.timeEnd(
+ "TABLE BODY RENDER"
+);
+console.log(
+ "TABLE BODY COMPLETE",
+ performance.now() - renderStart,
+ "ms"
+);
   return (
 
     <tbody>
@@ -94,25 +114,25 @@ export default function DefaultTableBody<
 
                 onClick={()=>{
 
-
-                  console.log(
-                    "ROW CLICK",
-                    {
-                      rowId:
-                        row.original.id,
-
-                      original:
-                        row.original
-                    }
-                  );
+                    console.time(
+                      "ROW CLICK TO UI"
+                    );
 
 
-                  props.tree.selection.select(
-                    row.original.id
-                  );
+                    props.tree.expansion.toggle(
+                      row.original.id
+                    );
 
 
-                }}
+                    requestAnimationFrame(()=>{
+
+                      console.timeEnd(
+                        "ROW CLICK TO UI"
+                      );
+
+                    });
+
+                  }}
 
 
                 className={

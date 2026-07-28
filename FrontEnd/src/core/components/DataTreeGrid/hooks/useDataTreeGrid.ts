@@ -178,7 +178,7 @@ const toggle =
     (id:string)=>{
 
       console.time(
-        "TREE TOGGLE TOTAL"
+        "TREE TOGGLE TOTAL "
       );
 
 
@@ -187,7 +187,7 @@ const toggle =
 
 
           console.time(
-            "CREATE NEW EXPANDED IDS"
+            "CREATE NEW EXPANDED IDS "
           );
 
 
@@ -204,7 +204,7 @@ const toggle =
 
 
           console.timeEnd(
-            "CREATE NEW EXPANDED IDS"
+            "CREATE NEW EXPANDED IDS "
           );
 
 
@@ -215,7 +215,7 @@ const toggle =
 
 
       console.timeEnd(
-        "TREE TOGGLE TOTAL"
+        "TREE TOGGLE TOTAL "
       );
 
     },
@@ -264,11 +264,30 @@ const toggle =
 
 
   const rows =
-    useMemo(
-      ()=>flattenTree(
-        index,
-        expandedIds
-      ),
+  useMemo(
+
+    ()=>{
+
+      console.time(
+        "FLATTEN TREE"
+      );
+
+
+      const result =
+        flattenTree(
+          index,
+          expandedIds
+        );
+
+
+      console.timeEnd(
+        "FLATTEN TREE"
+      );
+
+
+      return result;
+
+    },
       [
         index,
         expandedIds
