@@ -55,18 +55,24 @@ ColumnDef<TreeRow<T>>
 {
 
 
-  const renderers =
+  const renderers = [
 
-  [
+        createDefaultCellRenderer<T>()
 
-    createTanStackTreeCellRenderer<T>(
-      tree
-    ),
+      ];
 
 
-    createDefaultCellRenderer<T>()
+      if(column.treeColumn){
 
-  ];
+        renderers.unshift(
+
+          createTanStackTreeCellRenderer<T>(
+            tree
+          )
+
+        );
+
+      }
 
 
 

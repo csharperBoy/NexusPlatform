@@ -31,7 +31,27 @@ export interface DataTreeGridCellContext<
 
 
   /**
-   * مقدار خام Cell
+   * مقدار اصلی قبل از Formatter
+   *
+   * مثال:
+   *
+   * gender = 1
+   *
+   */
+  rawValue:
+    unknown;
+
+
+
+  /**
+   * مقدار نهایی قابل نمایش
+   *
+   * بعد از Formatter
+   *
+   * مثال:
+   *
+   * "مرد"
+   *
    */
   value:
     unknown;

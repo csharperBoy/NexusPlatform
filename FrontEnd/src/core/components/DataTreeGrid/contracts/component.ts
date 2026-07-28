@@ -11,7 +11,9 @@ import type {
   DataTreeGridColumn
 }
 from "./column";
-import { TreeRow } from "../types";
+import type {
+  TreeRow
+} from "../types";
 
 
 

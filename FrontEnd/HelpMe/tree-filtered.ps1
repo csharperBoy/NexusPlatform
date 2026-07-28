@@ -1,4 +1,4 @@
-$path = "D:\868\Projects\NexusPlatform\FrontEnd"
+$path = "D:\Project\NexusPlatform\FrontEnd"
 $outputFile = "D:\output.txt"
 
 function Get-Tree($dir, $indent = "") {
