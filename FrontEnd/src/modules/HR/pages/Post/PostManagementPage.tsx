@@ -5,6 +5,15 @@ import {
   useState
 } from "react";
 
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable
+} from "@dnd-kit/core";
 
 import {
   postApi
@@ -24,10 +33,151 @@ import {
 import {
   postTreeAdapter
 } from "../../adapters/postTreeAdapter";
+import { UpdatePostCommand } from "../../models/postCommand";
+
+function DroppableRow({
+  id,
+  children,
+  className,
+  onClick
+}:{
+  id:string;
+  children:React.ReactNode;
+  className?:string;
+  onClick?:()=>void;
+}){
+
+
+  const {
+    setNodeRef,
+    isOver
+  } =
+    useDroppable({
+      id
+    });
 
 
 
+  return (
 
+    <tr
+
+      ref={setNodeRef}
+
+      onClick={onClick}
+
+      className={
+
+        isOver
+
+        ?
+
+        "bg-green-100"
+
+        :
+
+        className
+
+      }
+
+    >
+
+      {children}
+
+    </tr>
+
+  );
+
+}
+function DragHandle({
+  id
+}:{
+  id:string;
+}){
+
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform
+  } =
+  useDraggable({
+    id
+  });
+
+
+
+  const style = transform
+    ? {
+        transform:
+          `translate3d(${transform.x}px, ${transform.y}px, 0)`
+      }
+    :
+      undefined;
+
+
+
+  return (
+
+    <button
+
+      ref={setNodeRef}
+
+      style={style}
+
+      {...listeners}
+
+      {...attributes}
+
+      className="cursor-grab"
+
+    >
+
+      ☰
+
+    </button>
+
+  );
+
+}
+
+
+function TreeRowDropTarget({
+
+ id,
+
+ children
+
+}:{
+
+ id:string;
+
+ children:React.ReactNode;
+
+}){
+
+
+ const {
+  setNodeRef
+ } =
+ useDroppable({
+  id
+ });
+
+
+
+ return (
+
+  <tr ref={setNodeRef}>
+
+    {children}
+
+  </tr>
+
+ );
+
+}
 
 export default function PostManagementPage(){
 
@@ -38,6 +188,27 @@ export default function PostManagementPage(){
   ] = useState<PostInfoView[]>([]);
 
 
+const [
+  originalPosts,
+  setOriginalPosts
+] = useState<PostInfoView[]>([]);
+
+
+const [
+  hasChanges,
+  setHasChanges
+] = useState(false);
+
+
+const [
+  pendingChanges,
+  setPendingChanges
+] = useState<
+  Map<string, Partial<UpdatePostCommand>>
+>(
+  () => new Map()
+);
+
 
   const [
     selectedId,
@@ -45,19 +216,24 @@ export default function PostManagementPage(){
   ] = useState<string|null>(null);
 
 
-
+const [
+  draggingId,
+  setDraggingId
+] = useState<string | null>(null);
 
 
   useEffect(()=>{
 
 
-    postApi
-      .GetList()
-      .then(result=>{
+   postApi
+  .GetList()
+  .then(result=>{
 
-        setPosts(result);
+    setPosts(result);
 
-      });
+    setOriginalPosts(result);
+
+  });
 
 
   },[]);
@@ -99,10 +275,177 @@ export default function PostManagementPage(){
 
 
 
+const sensors =
+  useSensors(
+
+    useSensor(
+      PointerSensor,
+      {
+        activationConstraint:{
+          distance:5
+        }
+      }
+
+    )
+
+  );
+
+
+  function handleDragEnd(
+  event:DragEndEvent
+){
+  console.log(
+    "DRAG END",
+    {
+      active:event.active.id,
+      over:event.over?.id
+    }
+  );
+  const {
+    active,
+    over
+  } = event;
+
+
+  setDraggingId(null);
+
+
+  if(!over){
+    return;
+  }
+
+
+  const sourceId =
+    String(active.id);
 
 
 
+  const targetId =
+    String(over.id);
 
+
+
+  if(sourceId === targetId){
+    return;
+  }
+
+
+
+  const validation =
+    tree.validation.canMove(
+      sourceId,
+      targetId
+    );
+
+
+
+  if(!validation.allowed){
+
+    alert(
+      validation.reason ??
+      "انتقال مجاز نیست"
+    );
+
+    return;
+
+  }
+
+
+
+  setPosts(previous=>{
+
+    return previous.map(item=>{
+
+
+      if(item.id === sourceId){
+
+        return {
+
+          ...item,
+
+          fkParentId:
+            targetId
+
+        };
+
+      }
+
+
+      return item;
+
+    });
+
+  });
+
+
+
+  registerChange(
+
+    sourceId,
+
+    {
+      id:sourceId,
+
+      reportsToPostId:
+        targetId
+
+    }
+
+  );
+
+}
+
+
+ function handleDragStart(event:any){
+
+  console.log(
+    "DRAG START",
+    event.active.id
+  );
+
+
+  setDraggingId(
+    String(event.active.id)
+  );
+
+}
+
+
+
+function registerChange(
+
+  id:string,
+
+  change:Partial<UpdatePostCommand>
+
+){
+
+  setPendingChanges(previous=>{
+
+    const next = new Map(previous);
+
+    const current =
+      next.get(id)
+      ?? {};
+
+    next.set(
+
+      id,
+
+      {
+        ...current,
+        ...change
+      }
+
+    );
+
+    return next;
+
+  });
+
+  setHasChanges(true);
+
+}
 
   return (
 
@@ -154,7 +497,52 @@ export default function PostManagementPage(){
 
         </button>
 
+<button
 
+  className="btn btn-success"
+
+  disabled={!hasChanges}
+
+  onClick={()=>{
+
+    console.log(
+
+      Array.from(
+        pendingChanges.values()
+      )
+
+    );
+
+  }}
+
+>
+
+ذخیره تغییرات
+
+</button>
+<button
+
+  className="btn"
+
+  disabled={!hasChanges}
+
+  onClick={()=>{
+
+    setPosts(originalPosts);
+
+    setPendingChanges(
+      new Map()
+    );
+
+    setHasChanges(false);
+
+  }}
+
+>
+
+لغو تغییرات
+
+</button>
 
       </div>
 
@@ -165,8 +553,18 @@ export default function PostManagementPage(){
 
 
 
+<DndContext
 
-      <div className="border rounded">
+ sensors={sensors}
+
+ onDragStart={handleDragStart}
+
+ onDragEnd={handleDragEnd}
+
+>
+
+<div className="border rounded">
+
 
 
         <table className="w-full">
@@ -229,34 +627,25 @@ export default function PostManagementPage(){
 
               return (
 
-                <tr
+                <DroppableRow
 
                   key={row.id}
 
+                  id={row.id}
 
                   className={
-
                     selectedId === row.id
-
                     ?
-
                     "bg-blue-100"
-
                     :
-
                     ""
-
                   }
-
 
                   onClick={()=>{
 
-                    setSelectedId(
-                      row.id
-                    );
+                    setSelectedId(row.id);
 
                   }}
-
 
                 >
 
@@ -279,20 +668,9 @@ export default function PostManagementPage(){
 
     {/* Drag */}
 
-    <button
-      className="cursor-grab"
-      onClick={(e)=>{
-        e.stopPropagation();
-
-        console.log(
-          "DRAG",
-          row.id
-        );
-
-      }}
-    >
-      ☰
-    </button>
+  <DragHandle
+  id={row.id}
+/>
 
 
 
@@ -368,8 +746,7 @@ export default function PostManagementPage(){
                   </td>
 
 
-
-                </tr>
+</DroppableRow>
 
               );
 
@@ -386,7 +763,7 @@ export default function PostManagementPage(){
 
       </div>
 
-
+</DndContext>
 
 
 
