@@ -12,10 +12,4 @@
     <ProjectReference Include="..\PhoneBook.Domain\PhoneBook.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Configurations\" />
-    <Folder Include="Data\" />
-    <Folder Include="Services\" />
-  </ItemGroup>
-
 </Project>

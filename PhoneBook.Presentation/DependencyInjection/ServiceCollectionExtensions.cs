@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PhoneBook.Presentation.Controllers;
 
 namespace PhoneBook.Presentation.DependencyInjection
 {
@@ -8,14 +9,14 @@ namespace PhoneBook.Presentation.DependencyInjection
         public static IServiceCollection PhoneBook_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 رجیستر کنترلرهای API
-        /*    services.AddControllers()
+           services.AddControllers()
                 .AddApplicationPart(typeof(PhoneBookController).Assembly) // اسمبلی کنترلرهای PhoneBook
                 .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
 
             // 📌 رجیستر MediatR برای مدیریت Command/Queryها
             services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssembly(typeof(PhoneBookController).Assembly));
-        */
+        
             return services;
         }
     }

@@ -1,0 +1,52 @@
+﻿using Core.Domain.Common;
+using Core.Infrastructure.Data;
+using Core.Infrastructure.Database.Configurations;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PhoneBook.Domain.Entities;
+using PhoneBook.Infrastructure.Configurations;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace PhoneBook.Infrastructure.Data
+{
+
+
+    public class PhoneBookDbContext : Base_DbContext
+    {
+        public PhoneBookDbContext(
+            DbContextOptions<PhoneBookDbContext> options,
+            IServiceProvider serviceProvider)
+            : base(options, serviceProvider)
+        {
+        }
+        public PhoneBookDbContext(DbContextOptions<PhoneBookDbContext> options)
+      : base(options, new ServiceCollection().BuildServiceProvider()) 
+        {
+        }
+      
+        public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
+       
+        public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            //EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
+        }
+        public override void EnsureViews(CancellationToken cancellationToken = default)
+        {
+            EnsureView("PhoneBook.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "phonebook");
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            
+            modelBuilder.HasDefaultSchema("phonebook");
+
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("phonebook"));
+            modelBuilder.ApplyConfiguration(new PhoneBookInfoViewConfiguration());
+
+        }
+    }
+
+}

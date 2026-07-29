@@ -1,0 +1,14 @@
+{
+  "name": "@mahar/HR",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@mui/x-data-grid": "^9.10.0"
+  }
+}

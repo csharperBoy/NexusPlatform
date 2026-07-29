@@ -1,0 +1,41 @@
+﻿using PhoneBook.Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PhoneBook.Application.DTOs
+{
+    
+    public class ContactDetailDto
+    {
+        public string Title { get; set; } = null!;
+        public string Value { get; set; } = null!;
+        public PhoneBookContactTypeEnum Type { get; set; }
+        public PhoneBookContactSourceEnum Source { get; set; }
+    }
+
+    public class PhoneBookEmployeeDto
+    {
+        public string EmployeeCode { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
+        public string FullName => $"{FirstName} {LastName}".Trim();
+
+        // اطلاعات سازمانی و شغلی
+        public string? OrganizationUnitsName { get; set; }
+        public string? JobTitleName { get; set; }
+        public string? JobLevelTitle { get; set; }
+        public string? LocationTitle { get; set; }
+
+        // لیست کامل راه‌های ارتباطی
+        public List<ContactDetailDto> Contacts { get; set; } = new();
+
+        // ۱. رشته ترکیب‌شده شماره‌ها برای سطر اصلی (با -)
+        public string ContactSummary => string.Join(" - ", Contacts.Where(t=>t.Type == PhoneBookContactTypeEnum.Phone || t.Type == PhoneBookContactTypeEnum.Mobile).Select(c => c.Value));
+
+        // ۲. فلاگ کنترل‌کننده آکاردئون در فرانت‌اند
+        public bool HasMultipleContacts => Contacts.Count > 1;
+    }
+}

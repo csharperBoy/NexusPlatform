@@ -15,9 +15,9 @@ FROM            hr.Location INNER JOIN
                          hr.Assignments ON hr.[ Employment].Id = hr.Assignments.FkEmploymentId AND hr.Assignments.IsCurrent = 1 INNER JOIN
                          hr.Post ON hr.Assignments.FkPostId = hr.Post.Id ON hr.[ EmploymentLocations].FkEmployeeId = hr.[ Employment].Id AND hr.[ EmploymentLocations].IsCurrent = 1 LEFT OUTER JOIN
                          hr.PostContacts AS PostContact_Phone ON hr.Post.Id = PostContact_Phone.FkPostId AND PostContact_Phone.ContactType = 0 LEFT OUTER JOIN
-                         hr.PostContacts AS PostContact_Mobile ON hr.Post.Id = PostContact_Phone.FkPostId AND PostContact_Mobile.ContactType = 1 LEFT OUTER JOIN
-                         hr.PostContacts AS PostContact_Fax ON hr.Post.Id = PostContact_Phone.FkPostId AND PostContact_Fax.ContactType = 2 LEFT OUTER JOIN
-                         hr.PostContacts AS PostContact_Email ON hr.Post.Id = PostContact_Phone.FkPostId AND PostContact_Email.ContactType = 3 LEFT OUTER JOIN
+                         hr.PostContacts AS PostContact_Mobile ON hr.Post.Id = PostContact_Mobile.FkPostId AND PostContact_Mobile.ContactType = 1 LEFT OUTER JOIN
+                         hr.PostContacts AS PostContact_Fax ON hr.Post.Id = PostContact_Fax.FkPostId AND PostContact_Fax.ContactType = 2 LEFT OUTER JOIN
+                         hr.PostContacts AS PostContact_Email ON hr.Post.Id = PostContact_Email.FkPostId AND PostContact_Email.ContactType = 3 LEFT OUTER JOIN
                          hr.OrganizationUnits ON hr.Post.FkOrganizationUnitId = hr.OrganizationUnits.Id LEFT OUTER JOIN
                          hr.JobTitle ON hr.Post.FkJobTitleId = hr.JobTitle.Id LEFT OUTER JOIN
                          hr.JobLevel ON hr.Post.FkJobLevelId = hr.JobLevel.Id LEFT OUTER JOIN
