@@ -1,9 +1,9 @@
-//src/modules/HR/widgets/EmploymentStatsWidget.tsx
+//src/modules/PhoneBook/widgets/PhoneBookStatsWidget.tsx
 
 import React from 'react';
 import Card from '@/core/components/Card';
 
-const EmploymentStatsWidget: React.FC = () => {
+const PhoneBookStatsWidget: React.FC = () => {
   // می‌توانید داده‌ها را از API دریافت کنید (با useQuery)
   return (
     <Card className="p-4">
@@ -14,4 +14,4 @@ const EmploymentStatsWidget: React.FC = () => {
   );
 };
 
-export default EmploymentStatsWidget;
+export default PhoneBookStatsWidget;

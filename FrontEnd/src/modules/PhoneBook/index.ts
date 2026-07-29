@@ -1,6 +1,6 @@
-// src/modules/HR/index.ts
-export * from "./api/PostApi";
-export { hrPanelRoutes } from "./routes";
+// src/modules/phonebook/index.ts
+export * from "./api/PhoneBookApi";
+export { phonebookPanelRoutes } from "./routes";
 
 
 // ResourceManagementPage

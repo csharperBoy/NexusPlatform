@@ -9,6 +9,7 @@ import LoginPage from "./Pages/LoginPage";
 import { useActiveModules } from "@/core/context/ModuleContext";
 import HomePage from "./Pages/Home";
 import { hrPanelRoutes } from "@/modules/HR";
+import { phonebookPanelRoutes } from "@/modules/PhoneBook";
 
 export default function App() {
   
@@ -51,6 +52,10 @@ export default function App() {
         
         /* مسیرهای خصوصی hr */
         ...(activeModules.has("HR") ? hrPanelRoutes : []),
+
+        
+        /* مسیرهای خصوصی phoneBook */
+        ...(activeModules.has("PhoneBook") ? phonebookPanelRoutes : []),
         
       ],
     },

@@ -187,6 +187,10 @@ export default function PostManagementPage() {
     setPosts
   ] = useState<PostInfoView[]>([]);
 
+const [
+  changedPosts,
+  setChangedPosts
+] = useState<Record<string, Partial<PostInfoView>>>({});
 
   const [
     originalPosts,
@@ -260,7 +264,46 @@ export default function PostManagementPage() {
 
 
 
+const movePost = (
+  postId:string,
+  newParentId:string|null
+)=>{
 
+
+  setPosts(previous =>
+
+    previous.map(post=>{
+
+      if(post.id !== postId)
+        return post;
+
+
+      return {
+        ...post,
+        fkParentId:newParentId
+      };
+
+    })
+
+  );
+
+
+
+  setChangedPosts(previous=>({
+
+    ...previous,
+
+    [postId]:{
+
+      ...(previous[postId] ?? {}),
+
+      fkParentId:newParentId
+
+    }
+
+  }));
+
+};
 
 
 
@@ -354,28 +397,30 @@ export default function PostManagementPage() {
 
     setPosts(previous => {
 
-      return previous.map(item => {
+  const next =
+    previous.map(item => {
+
+      if(item.id === sourceId){
+
+        return {
+
+          ...item,
+
+          fkParentId: targetId
+
+        };
+
+      }
 
 
-        if (item.id === sourceId) {
-
-          return {
-
-            ...item,
-
-            fkParentId:
-              targetId
-
-          };
-
-        }
-
-
-        return item;
-
-      });
+      return item;
 
     });
+
+
+  return next;
+
+});
 
 
 

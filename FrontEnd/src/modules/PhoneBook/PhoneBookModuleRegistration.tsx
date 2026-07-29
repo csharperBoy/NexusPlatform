@@ -1,9 +1,9 @@
-// src/modules/Authorization/AuthorizationModuleRegistration.tsx
+// src/modules/PhoneBook/PhoneBookModuleRegistration.tsx
 import { useEffect } from 'react';
 import { useMenu, usePlugin } from '@/modules/DashboardCore';
 import { lazy } from 'react';
 
-const EmploymentStatsWidget = lazy(() => import('./widgets/EmploymentStatsWidget'));
+const PhoneBookStatsWidget = lazy(() => import('./widgets/PhoneBookStatsWidget'));
 
 const HrIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -11,7 +11,7 @@ const HrIcon = () => (
   </svg>
 );
 
-export const AuthorizationModuleRegistration = () => {
+export const PhoneBookModuleRegistration = () => {
   const { registerMenuItem } = useMenu();
   const { registerWidget } = usePlugin();
 
@@ -19,10 +19,10 @@ export const AuthorizationModuleRegistration = () => {
     
     // ثبت ویجت
     registerWidget({
-      id: 'hr-employment-stats',
+      id: 'hr-PhoneBook-stats',
       area: 'widgets',
       priority: 30,
-      component: EmploymentStatsWidget,
+      component: PhoneBookStatsWidget,
       title: 'آمار کارمندان',
     });
   }, []);

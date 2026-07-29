@@ -1,27 +1,43 @@
-// models/postInfoView.ts
+// models/PhoneBookEmployeeDto.ts
 
-export interface PostInfoView {
-  id: string;
+export interface PhoneBookEmployeeDto {
+  EmployeeCode: string;
   postCode: string;
-  // parentId?: string | null;
-  fkParentId?: string | null;
-  fkJobTitleId?: string | null;
-  fkOrganizationUnitId?: string | null;
-  fkJobLevelId?: string | null;
-  fkGradeId?: string | null;
-  fkCostCenterId?: string | null;
-  costCenterName?: string | null;
-  gradeTitle?: string | null;
-  jobLevelTitle?: string | null;
-  jobTitleName?: string | null;
-  officePhone?: string | null;
-  orgMobile?: string | null;
-  orgEmail?: string | null;
-  employeeCode?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  nationalCode?: string | null;
-  gender?: number | null;
-  assignmentsAssigneeType?: number | null;
-  organizationUnitsName: string;
+  FirstName?: string | null;
+  LastName?: string | null;
+  FullName?: string | null;
+  OrganizationUnitsName?: string | null;
+  JobTitleName?: string | null;
+  JobLevelTitle?: string | null;
+  LocationTitle?: string | null;
+  
+  ContactSummary?: string | null;
+  HasMultipleContacts?: boolean | false;
+
+  Contacts?: ContactDetailDto[] | null;
+}
+export interface ContactDetailDto {
+  Title: string;
+  Value: string;
+  Type?: PhoneBookContactTypeEnum | null;
+  Source?: PhoneBookContactSourceEnum | null;
+ 
+
+}
+
+export enum PhoneBookContactTypeEnum {
+  Mobile,
+    Phone,
+    Email,
+    Fax,
+    Address
+ 
+
+}
+
+export enum PhoneBookContactSourceEnum {
+ Personal,   
+      Organizational 
+ 
+
 }

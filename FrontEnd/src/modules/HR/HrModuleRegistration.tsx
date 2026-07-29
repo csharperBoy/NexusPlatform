@@ -1,4 +1,4 @@
-// src/modules/Authorization/AuthorizationModuleRegistration.tsx
+// src/modules/HR/HRModuleRegistration.tsx
 import { useEffect } from 'react';
 import { useMenu, usePlugin } from '@/modules/DashboardCore';
 import { lazy } from 'react';
@@ -11,7 +11,7 @@ const HrIcon = () => (
   </svg>
 );
 
-export const AuthorizationModuleRegistration = () => {
+export const HRModuleRegistration = () => {
   const { registerMenuItem } = useMenu();
   const { registerWidget } = usePlugin();
 

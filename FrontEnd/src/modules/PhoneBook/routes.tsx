@@ -1,11 +1,11 @@
-// src/modules/Authorization/routes.tsx
+// src/modules/PhoneBook/routes.tsx
 import type { RouteObject } from "react-router-dom";
-import PostManagementPage from "./pages/Post/PostManagementPage";
+import PhoneBookPage from "./pages/PhoneBook/PhoneBookPage";
 
-export const hrPublicRoutes: RouteObject[] = [
+export const phonebookPublicRoutes: RouteObject[] = [
   
 ];
 
-export const hrPanelRoutes: RouteObject[] = [
-  { path: "hr/post", element: <PostManagementPage /> },   
+export const phonebookPanelRoutes: RouteObject[] = [
+  { path: "phonebook", element: <PhoneBookPage /> },   
 ];

@@ -9,8 +9,10 @@ import { UIProvider } from "@/core/context/UIProvider";
 import { DashboardProvider } from "@/modules/DashboardCore";
 import { IdentityModuleRegistration } from "@/modules/Identity/IdentityModuleRegistration";
 import { AuthorizationModuleRegistration } from "@/modules/Authorization/AuthorizationModuleRegistration";
+import { HRModuleRegistration } from "@/modules/HR/HrModuleRegistration";
 import { ModuleProvider } from "@/core/context/ModuleContext";
 import { RequireModuleActive } from "@/core/components/RequireModuleActive";
+import { PhoneBookModuleRegistration } from "@/modules/PhoneBook/PhoneBookModuleRegistration";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -27,7 +29,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 <AuthorizationModuleRegistration />
               </RequireModuleActive>
                <RequireModuleActive moduleName="HR">
-                <AuthorizationModuleRegistration />
+                <HRModuleRegistration />
+              </RequireModuleActive>
+               <RequireModuleActive moduleName="PhoneBook">
+                <PhoneBookModuleRegistration />
               </RequireModuleActive>
               {/* ... سایر ماژول‌های خود را اینجا اضافه کنید */}
 
