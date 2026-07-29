@@ -1,26 +1,35 @@
-//src/modules/HR/pages/Post/PostManagementPage.tsx
-import { useEffect, useState } from "react";
-
-import { postApi } from "../../api/PostApi";
-import { PostInfoView } from "../../models/postInfoView";
+// src/modules/HR/pages/Post/PostManagementPage.tsx
 
 import {
-  useDataTreeGrid,
+  useEffect,
+  useState
+} from "react";
+
+
+import {
+  postApi
+} from "../../api/PostApi";
+
+
+import {
+  PostInfoView
+} from "../../models/postInfoView";
+
+
+import {
+  useDataTreeGrid
 } from "@/core/components/DataTreeGrid";
 
+
 import {
-  postTreeAdapter,
+  postTreeAdapter
 } from "../../adapters/postTreeAdapter";
-import {
-  DataTreeGrid
-}
-from "@/core/components/DataTreeGrid";
-import { postColumns } from "./postColumns";
 
 
 
 
-export default function PostManagementPage() {
+
+export default function PostManagementPage(){
 
 
   const [
@@ -30,35 +39,29 @@ export default function PostManagementPage() {
 
 
 
-
-
-
-
-  /**
-   * Parent جدیدی که قرار است Node زیر آن منتقل شود
-   */
   const [
-    newParentId,
-    setNewParentId
-  ] = useState<string | null>(null);
+    selectedId,
+    setSelectedId
+  ] = useState<string|null>(null);
 
 
 
 
 
-  useEffect(() => {
+  useEffect(()=>{
 
 
     postApi
       .GetList()
-      .then(result => {
+      .then(result=>{
 
         setPosts(result);
 
       });
 
 
-  }, []);
+  },[]);
+
 
 
 
@@ -68,11 +71,12 @@ export default function PostManagementPage() {
   const tree =
     useDataTreeGrid({
 
-      data: posts,
+      data:posts,
 
-      adapter: postTreeAdapter,
+      adapter:
+        postTreeAdapter,
 
-      defaultExpandAll: false,
+      defaultExpandAll:false
 
     });
 
@@ -82,64 +86,19 @@ export default function PostManagementPage() {
 
 
 
-  /**
-   * انتقال Node انتخاب شده
-   */
-  const moveSelectedNode = () => {
 
 
-    if (!tree.selection.selectedId) {
-      return;
-    }
-
-
-
-    const validation =
-      tree.validation.canMove(
-        tree.selection.selectedId,
-        newParentId
-      );
-
-
-
-    if (!validation.allowed) {
-
-      alert(
-        validation.reason ??
-        "انتقال غیرمجاز است"
-      );
-
-      return;
-
-    }
-
-
-
-
-
-    const newData =
-      tree.manipulation.moveNode(
-        tree.selection.selectedId,
-        newParentId
-      );
-
-
-
-    setPosts(newData);
-
-
-  };
-
-
-
-
-
-const selectedNode =
-    tree.selection.selectedId
+  const selectedNode =
+    selectedId
       ?
-      tree.navigation.findNode(tree.selection.selectedId)
+      tree.navigation.findNode(selectedId)
       :
       null;
+
+
+
+
+
 
 
 
@@ -151,118 +110,47 @@ const selectedNode =
 
 
       <h1 className="text-xl font-bold mb-5">
+
         مدیریت چارت سازمانی
+
       </h1>
 
-<div className="bg-red-500 text-white p-5 rounded">
-  تست Tailwind
-</div>
 
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-3 items-center mb-5">
+
+
+      <div className="flex gap-3 mb-5">
 
 
         <button
+
           className="btn btn-primary"
+
           onClick={
             tree.expansion.expandAll
           }
+
         >
+
           باز کردن همه
+
         </button>
 
 
 
 
+
         <button
+
           className="btn btn-secondary"
+
           onClick={
             tree.expansion.collapseAll
           }
+
         >
+
           بستن همه
-        </button>
-
-
-
-
-
-
-        <select
-
-          className="select select-bordered"
-
-          value={
-            newParentId ?? ""
-          }
-
-          onChange={(e)=>{
-
-            setNewParentId(
-              e.target.value || null
-            );
-
-          }}
-
-        >
-
-          <option value="">
-            Root
-          </option>
-
-
-          {
-            tree.rows.map(row => (
-
-              <option
-                key={row.id}
-                value={row.id}
-              >
-
-                {
-                  row.item.jobTitleName
-                }
-
-                {" - "}
-
-                {
-                  row.item.firstName
-                }
-
-                {" "}
-
-                {
-                  row.item.lastName
-                }
-
-              </option>
-
-            ))
-          }
-
-
-        </select>
-
-
-
-
-
-        <button
-
-          className="btn btn-warning"
-
-          disabled={
-            !tree.selection.selectedId
-          }
-
-          onClick={
-            moveSelectedNode
-          }
-
-        >
-
-          تغییر Parent
 
         </button>
 
@@ -277,46 +165,235 @@ const selectedNode =
 
 
 
-      {/* Selected Info */}
-      <div className="mb-5 p-3 border rounded">
+
+      <div className="border rounded">
 
 
-        <div>
+        <table className="w-full">
 
-          <b>
-            Node انتخاب شده:
-          </b>
+
+          <thead>
+
+
+            <tr>
+
+
+
+              <th className="border p-2">
+                عنوان پست
+              </th>
+
+
+              <th className="border p-2">
+                نام
+              </th>
+
+
+              <th className="border p-2">
+                نام خانوادگی
+              </th>
+
+
+              <th className="border p-2">
+                تلفن
+              </th>
+
+
+            </tr>
+
+
+          </thead>
+
+
+
+
+
+
+          <tbody>
 
 
           {
-            selectedNode
-              ?
-              (
-                <>
-                  {" "}
-                  {
-                    selectedNode.jobTitleName
+            tree.rows.map(row=>{
+
+
+              const expanded =
+                tree.expansion.isExpanded(
+                  row.id
+                );
+
+
+
+              const hasChildren =
+                !tree.validation.isLeaf(
+                  row.id
+                );
+
+
+
+
+              return (
+
+                <tr
+
+                  key={row.id}
+
+
+                  className={
+
+                    selectedId === row.id
+
+                    ?
+
+                    "bg-blue-100"
+
+                    :
+
+                    ""
+
                   }
 
-                  {" - "}
 
-                  {
-                    selectedNode.firstName
-                  }
+                  onClick={()=>{
 
-                  {" "}
+                    setSelectedId(
+                      row.id
+                    );
 
-                  {
-                    selectedNode.lastName
-                  }
-                </>
-              )
-              :
-              " هیچ موردی انتخاب نشده"
+                  }}
+
+
+                >
+
+
+
+                  {/* Drag Handle */}
+
+                  <td className="border p-2">
+
+  <div
+
+    className="flex items-center gap-2"
+
+    style={{
+      paddingRight:
+        row.depth * 24
+    }}
+
+  >
+
+    {/* Drag */}
+
+    <button
+      className="cursor-grab"
+      onClick={(e)=>{
+        e.stopPropagation();
+
+        console.log(
+          "DRAG",
+          row.id
+        );
+
+      }}
+    >
+      ☰
+    </button>
+
+
+
+    {/* Expand */}
+
+    {
+      hasChildren
+      &&
+      <button
+        onClick={(e)=>{
+
+          e.stopPropagation();
+
+          tree.expansion.toggle(
+            row.id
+          );
+
+        }}
+      >
+
+        {
+          expanded
+          ?
+          "▼"
+          :
+          "▶"
+        }
+
+      </button>
+    }
+
+
+
+    <span>
+
+      {
+        row.item.jobTitleName
+      }
+
+    </span>
+
+
+  </div>
+
+
+</td>
+
+
+
+
+                  <td className="border p-2">
+
+                    {
+                      row.item.firstName
+                    }
+
+                  </td>
+
+
+
+
+
+                  <td className="border p-2">
+
+                    {
+                      row.item.lastName
+                    }
+
+                  </td>
+
+
+
+
+
+                  <td className="border p-2">
+
+                    {
+                      row.item.officePhone
+                    }
+
+                  </td>
+
+
+
+                </tr>
+
+              );
+
+
+            })
           }
 
 
-        </div>
+          </tbody>
+
+
+        </table>
 
 
       </div>
@@ -326,91 +403,69 @@ const selectedNode =
 
 
 
-<div className="border rounded p-4">
-
-<DataTreeGrid
-
-    data={posts}
-
-    adapter={postTreeAdapter}
-
-    columns={postColumns}
-
-    tree={tree}
-
-    defaultExpandAll={false}
-    //  rowClassName={(row)=>
-      
-    //   tree.selection.isSelected(row.id)
-    //     ?
-    //     "bg-blue-100"
-    //     :
-    //     ""
-
-    // }
-
-/>
-
-
-</div>
 
 
 
+      <div className="mt-5 border p-3 rounded">
 
 
+        <b>
+          Node انتخاب شده:
+        </b>
 
 
+        {
+          selectedNode
 
+          ?
 
-      {/* Debug */}
-      <div className="mt-8">
+          <>
+            {" "}
+            {selectedNode.jobTitleName}
+            {" - "}
+            {selectedNode.firstName}
+            {" "}
+            {selectedNode.lastName}
+          </>
 
+          :
 
-        <h2 className="font-bold mb-3">
-          Debug Information
-        </h2>
+          " هیچ موردی انتخاب نشده"
 
-
-
-        <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">
-
-          {
-            JSON.stringify(
-
-              {
-
-                totalRows:
-                  tree.rows.length,
-
-
-                rootCount:
-                  tree.index.rootIds.length,
-
-
-                selectedId: tree.selection.selectedId,
-
-
-                selectedNode,
-
-
-                newParentId,
-
-
-              },
-
-              null,
-
-              2
-
-            )
-          }
-
-
-        </pre>
+        }
 
 
       </div>
 
+
+
+
+
+
+      <pre className="mt-5 bg-gray-100 p-3 text-xs">
+
+
+        {
+          JSON.stringify(
+
+            {
+
+              total:
+                tree.rows.length,
+
+              selectedId
+
+            },
+
+            null,
+
+            2
+
+          )
+        }
+
+
+      </pre>
 
 
 
