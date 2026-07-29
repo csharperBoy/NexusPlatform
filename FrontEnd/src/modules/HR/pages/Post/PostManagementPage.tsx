@@ -185,13 +185,9 @@ export default function PostManagementPage(){
 
 
               <th className="border p-2">
-                نام
+                متصدی
               </th>
 
-
-              <th className="border p-2">
-                نام خانوادگی
-              </th>
 
 
               <th className="border p-2">
@@ -350,7 +346,7 @@ export default function PostManagementPage(){
                   <td className="border p-2">
 
                     {
-                      row.item.firstName
+                      row.item.firstName + " " + row.item.lastName
                     }
 
                   </td>
@@ -358,14 +354,6 @@ export default function PostManagementPage(){
 
 
 
-
-                  <td className="border p-2">
-
-                    {
-                      row.item.lastName
-                    }
-
-                  </td>
 
 
 
