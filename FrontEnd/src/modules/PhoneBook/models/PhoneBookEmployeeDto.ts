@@ -1,26 +1,26 @@
 // models/PhoneBookEmployeeDto.ts
 
 export interface PhoneBookEmployeeDto {
-  EmployeeCode: string;
+  employeeCode: string;
   postCode: string;
-  FirstName?: string | null;
-  LastName?: string | null;
-  FullName?: string | null;
-  OrganizationUnitsName?: string | null;
-  JobTitleName?: string | null;
-  JobLevelTitle?: string | null;
-  LocationTitle?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  fullName?: string | null;
+  organizationUnitsName?: string | null;
+  jobTitleName?: string | null;
+  jobLevelTitle?: string | null;
+  locationTitle?: string | null;
   
-  ContactSummary?: string | null;
-  HasMultipleContacts?: boolean | false;
+  contactSummary?: string | null;
+  hasMultipleContacts?: boolean | false;
 
-  Contacts?: ContactDetailDto[] | null;
+  contacts?: ContactDetailDto[] | null;
 }
 export interface ContactDetailDto {
-  Title: string;
-  Value: string;
-  Type?: PhoneBookContactTypeEnum | null;
-  Source?: PhoneBookContactSourceEnum | null;
+  title: string;
+  value: string;
+  type?: PhoneBookContactTypeEnum | null;
+  source?: PhoneBookContactSourceEnum | null;
  
 
 }

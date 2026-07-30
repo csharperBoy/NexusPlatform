@@ -8,13 +8,16 @@ const API_MODULE = "phonebook";
 export const phonebookApi = {
 
  // دریافت (GET)
-  GetList: async (): Promise<PhoneBookEmployeeDto[]> => {
+  GetList: async (organUnitId?: string): Promise<PhoneBookEmployeeDto[]> => {
     
     const api = getAPI(API_MODULE);
     
     const response = await api.get<PhoneBookEmployeeDto[]>(
-      "/api/phonebook/OrgChart/GetList",
-      {  withCredentials: true }
+      "/api/People/PhoneBook/GetList",
+      { 
+        params: { organUnitId },
+        withCredentials: true 
+      }
     );
     console.log(response)
     return response.data;
