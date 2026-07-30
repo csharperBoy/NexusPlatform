@@ -37,11 +37,19 @@ namespace PhoneBook.Application.Mapping
                         //AddContact(employee.Contacts, "ایمیل شخصی", row.PartyEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Personal);
                         //AddContact(employee.Contacts, "آدرس منزل", row.PartyAddress, PhoneBookContactTypeEnum.Address, PhoneBookContactSourceEnum.Personal);
 
-                        // ۲. افزودن تماس‌های سازمانی
-                        AddContact(employee.Contacts, "داخلی", row.PostContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.Organizational);
-                        AddContact(employee.Contacts, "موبایل سازمانی", row.PostContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.Organizational);
+                        // ۲. افزودن تماس‌های پست سازمانی
+                        AddContact(employee.Contacts, "داخلی", row.PostContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.post);
+                        AddContact(employee.Contacts, "موبایل سازمانی", row.PostContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.post);
                         //AddContact(employee.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
                         //AddContact(employee.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
+
+                        // 3. افزودن تماس‌های سازمانی کارمند
+                        AddContact(employee.Contacts, "داخلی", row.EmploymentContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.employment);
+                        AddContact(employee.Contacts, "موبایل سازمانی", row.EmploymentContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.employment);
+                        //AddContact(employee.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
+                        //AddContact(employee.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
+
+
                     }
 
                     return employee;

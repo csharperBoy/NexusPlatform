@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="SqlScript\CreatePhoneBookInfoViewScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="SqlScript\CreatePhoneBookInfoViewScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
     <ProjectReference Include="..\PhoneBook.Application\PhoneBook.Application.csproj" />
     <ProjectReference Include="..\PhoneBook.Domain\PhoneBook.Domain.csproj" />

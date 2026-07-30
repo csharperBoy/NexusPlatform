@@ -44,6 +44,11 @@ namespace PhoneBook.Domain.Entities
         public string? PostContactEmail { get; set; }
         public string? PostContactFax { get; set; }
 
+        public string? EmploymentContactPhone { get; set; }
+        public string? EmploymentContactMobile { get; set; }
+        public string? EmploymentContactEmail { get; set; }
+        public string? EmploymentContactFax { get; set; }
+
 
     }
 }

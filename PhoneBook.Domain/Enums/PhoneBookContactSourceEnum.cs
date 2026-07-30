@@ -9,6 +9,7 @@ namespace PhoneBook.Domain.Enums
     public enum PhoneBookContactSourceEnum
     {
         Personal,      // شخصی
-        Organizational // سازمانی
+        employment,
+        post // سازمانی
     }
 }

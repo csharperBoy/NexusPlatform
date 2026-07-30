@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PhoneBook.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using PhoneBook.Infrastructure.Data;
 namespace PhoneBook.Infrastructure.Migrations
 {
     [DbContext(typeof(PhoneBookDbContext))]
-    partial class PhoneBookDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260730064204_Edit_1_PhoneBook")]
+    partial class Edit_1_PhoneBook
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
