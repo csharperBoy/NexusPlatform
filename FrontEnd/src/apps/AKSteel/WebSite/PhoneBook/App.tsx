@@ -1,10 +1,7 @@
 // src/apps/AKSteel/Website/PhoneBook/App.tsx
 import { useRoutes, Navigate, Outlet } from "react-router-dom";
-import { ProtectedRoute } from "@/modules/Identity";
-import { identityPublicRoutes, identityPanelRoutes } from "@/modules/Identity";
-import { authorizationPanelRoutes } from "@/modules/Authorization";
 import { useActiveModules } from "@/core/context/ModuleContext";
-import HomePage from "./Pages/Home";
+import PhoneBookPage from "@/modules/PhoneBook/pages/PhoneBook/PhoneBookPage";
 
 export default function App() {
   
@@ -19,11 +16,11 @@ export default function App() {
 
   const routes = useRoutes([
 
-        { path: "/home", element: <HomePage /> },
+        { path: "/", element: <PhoneBookPage /> },
 
 
     /* مسیر پیش‌فرض */
-    { path: "*", element: <Navigate to="/home" replace /> },
+    { path: "*", element: <Navigate to="/" replace /> },
   ]);
 
   return routes;
