@@ -7,7 +7,6 @@ import { MainLayout } from "@/modules/DashboardCore";
 import DashboardPage from "./Pages/DashboardPage";
 import LoginPage from "./Pages/LoginPage";
 import { useActiveModules } from "@/core/context/ModuleContext";
-import HomePage from "./Pages/Home";
 import { hrPanelRoutes } from "@/modules/HR";
 
 export default function App() {

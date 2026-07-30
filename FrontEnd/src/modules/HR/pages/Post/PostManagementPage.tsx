@@ -1,886 +1,546 @@
 // src/modules/HR/pages/Post/PostManagementPage.tsx
 
-import {
-  useEffect,
-  useState
-} from "react";
-
-import {
-  DndContext,
-  DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  useDraggable,
-  useDroppable
-} from "@dnd-kit/core";
-
-import {
-  postApi
-} from "../../api/PostApi";
-
-
-import {
-  PostInfoView
-} from "../../models/postInfoView";
-
-
-import {
-  useDataTreeGrid
-} from "@/core/components/DataTreeGrid";
-
-
-import {
-  postTreeAdapter
-} from "../../adapters/postTreeAdapter";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { postApi } from "../../api/PostApi";
+import { PostInfoView } from "../../models/postInfoView";
 import { UpdatePostCommand } from "../../models/postCommand";
 
-function DroppableRow({
-  id,
-  children,
-  className,
-  onClick
-}: {
-  id: string;
-  children: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-}) {
-
-
-  const {
-    setNodeRef,
-    isOver
-  } =
-    useDroppable({
-      id
-    });
-
-
-
-  return (
-
-    <tr
-
-      ref={setNodeRef}
-
-      onClick={onClick}
-
-      className={
-
-        isOver
-
-          ?
-
-          "bg-green-100"
-
-          :
-
-          className
-
-      }
-
-    >
-
-      {children}
-
-    </tr>
-
-  );
-
-}
-function DragHandle({
-  id
-}: {
-  id: string;
-}) {
-
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform
-  } =
-    useDraggable({
-      id
-    });
-
-
-
-  const style = transform
-    ? {
-      transform:
-        `translate3d(${transform.x}px, ${transform.y}px, 0)`
-    }
-    :
-    undefined;
-
-
-
-  return (
-
-    <button
-
-      ref={setNodeRef}
-
-      style={style}
-
-      {...listeners}
-
-      {...attributes}
-
-      className="cursor-grab"
-
-    >
-
-      ☰
-
-    </button>
-
-  );
-
+// تایپ پیشنهادی برای ردیف‌های تخت شده‌ی درخت
+interface FlattenedNode {
+  node: PostInfoView;
+  depth: number;
+  hasChildren: boolean;
+  isExpanded: boolean;
+  isModified: boolean;
 }
 
+export const PostManagementPage: React.FC = () => {
+  // --- States ---
+  const [posts, setPosts] = useState<PostInfoView[]>([]);
+  const [initialPosts, setInitialPosts] = useState<PostInfoView[]>([]); // برای بازنشانی تغییرات
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-function TreeRowDropTarget({
+  // جستجو و باز/بسته بودن گره‌ها
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  id,
+  // شناسه پست‌های تغییر یافته
+  const [modifiedIds, setModifiedIds] = useState<Set<string>>(new Set());
 
-  children
+  // استیت‌های درگ اند دراپ
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [isOverRootZone, setIsOverRootZone] = useState<boolean>(false);
 
-}: {
+  // استفاده از ref برای دسترسی سریع‌تر در drag handlers
+  const draggedIdRef = useRef<string | null>(null);
+  draggedIdRef.current = draggedId;
 
-  id: string;
-
-  children: React.ReactNode;
-
-}) {
-
-
-  const {
-    setNodeRef
-  } =
-    useDroppable({
-      id
-    });
-
-
-
-  return (
-
-    <tr ref={setNodeRef}>
-
-      {children}
-
-    </tr>
-
-  );
-
-}
-
-export default function PostManagementPage() {
-
-
-  const [
-    posts,
-    setPosts
-  ] = useState<PostInfoView[]>([]);
-  
-const [
-  changedPosts,
-  setChangedPosts
-] = useState<Record<string, Partial<PostInfoView>>>({});
-
-  const [
-    originalPosts,
-    setOriginalPosts
-  ] = useState<PostInfoView[]>([]);
-
-
-  const [
-    hasChanges,
-    setHasChanges
-  ] = useState(false);
-
-
-  const [
-    pendingChanges,
-    setPendingChanges
-  ] = useState<
-    Map<string, Partial<UpdatePostCommand>>
-  >(
-    () => new Map()
-  );
-
-
-  const [
-    selectedId,
-    setSelectedId
-  ] = useState<string | null>(null);
-
-
-  const [
-    draggingId,
-    setDraggingId
-  ] = useState<string | null>(null);
-
-
+  // --- 1. دریافت اطلاعات اولیه ---
   useEffect(() => {
-
-
-    postApi
-      .GetList()
-      .then(result => {
-
-        setPosts(result);
-
-        setOriginalPosts(result);
-
-      });
-
-
+    loadData();
   }, []);
 
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await postApi.GetList();
+      const list = data || [];
+      setPosts(list);
+      setInitialPosts(JSON.parse(JSON.stringify(list)));
+      
+      // به‌طور پیش‌فرض همه‌ی پست‌های دارای فرزند را باز نگه می‌داریم
+      const parentIds = new Set<string>();
+      list.forEach((p) => {
+        if (p.fkParentId) parentIds.add(p.fkParentId);
+      });
+      setExpandedIds(parentIds);
+      setModifiedIds(new Set());
+    } catch (err: any) {
+      setError(err?.message || "خطا در دریافت لیست چارت سازمانی");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // --- 2. ساختار درخت و فیلتر ---
+  const { flattenedTree, postsMap } = useMemo(() => {
+    const map = new Map<string, PostInfoView>();
+    const childrenMap = new Map<string | null, PostInfoView[]>();
 
+    // ساخت Map برای دسترسی سریع
+    posts.forEach((p) => map.set(p.id, p));
 
-
-
-
-  const tree =
-    useDataTreeGrid({
-
-      data: posts,
-
-      adapter:
-        postTreeAdapter,
-
-      defaultExpandAll: false
-
+    // دسته‌بندی بر اساس والد
+    posts.forEach((p) => {
+      // اگر والد وجود نداشت یا در لیست نبود، به عنوان ریشه (null) لحاظ می‌شود
+      const parentId = p.fkParentId && map.has(p.fkParentId) ? p.fkParentId : null;
+      if (!childrenMap.has(parentId)) {
+        childrenMap.set(parentId, []);
+      }
+      childrenMap.get(parentId)!.push(p);
     });
 
+    // لیست فیلتر شده بر اساس سرچ (اگر سرچ پر باشد)
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
+    const flattened: FlattenedNode[] = [];
 
+    const traverse = (parentId: string | null, depth: number) => {
+      const children = childrenMap.get(parentId) || [];
 
+      for (const child of children) {
+        const childChildren = childrenMap.get(child.id) || [];
+        const hasChildren = childChildren.length > 0;
+        const isExpanded = expandedIds.has(child.id);
+        const isModified = modifiedIds.has(child.id);
 
-const movePost = (
-  postId:string,
-  newParentId:string|null
-)=>{
+        // بررسی فیلتر سرچ
+        const matchesSearch =
+          !normalizedQuery ||
+          (child.jobTitleName || "").toLowerCase().includes(normalizedQuery) ||
+          (child.postCode || "").toLowerCase().includes(normalizedQuery) ||
+          (child.organizationUnitsName || "").toLowerCase().includes(normalizedQuery) ||
+          `${child.firstName || ""} ${child.lastName || ""}`.toLowerCase().includes(normalizedQuery);
 
-
-  setPosts(previous =>
-
-    previous.map(post=>{
-
-      if(post.id !== postId)
-        return post;
-
-
-      return {
-        ...post,
-        fkParentId:newParentId
-      };
-
-    })
-
-  );
-
-
-
-  setChangedPosts(previous=>({
-
-    ...previous,
-
-    [postId]:{
-
-      ...(previous[postId] ?? {}),
-
-      fkParentId:newParentId
-
-    }
-
-  }));
-
-};
-
-
-
-  const selectedNode =
-    selectedId
-      ?
-      tree.navigation.findNode(selectedId)
-      :
-      null;
-
-
-
-
-
-  const sensors =
-    useSensors(
-
-      useSensor(
-        PointerSensor,
-        {
-          activationConstraint: {
-            distance: 5
-          }
+        if (matchesSearch || normalizedQuery === "") {
+          flattened.push({
+            node: child,
+            depth,
+            hasChildren,
+            isExpanded,
+            isModified,
+          });
         }
 
-      )
-
-    );
-
-
-  function handleDragEnd(
-    event: DragEndEvent
-  ) {
-    console.log(
-      "DRAG END",
-      {
-        active: event.active.id,
-        over: event.over?.id
-      }
-    );
-    const {
-      active,
-      over
-    } = event;
-
-
-    setDraggingId(null);
-
-
-    if (!over) {
-      return;
-    }
-
-
-    const sourceId =
-      String(active.id);
-
-
-
-    const targetId =
-      String(over.id);
-
-
-
-    if (sourceId === targetId) {
-      return;
-    }
-
-
-
-    const validation =
-      tree.validation.canMove(
-        sourceId,
-        targetId
-      );
-
-
-
-    if (!validation.allowed) {
-
-      alert(
-        validation.reason ??
-        "انتقال مجاز نیست"
-      );
-
-      return;
-
-    }
-
-
-
-    setPosts(previous => {
-
-  const next =
-    previous.map(item => {
-
-      if(item.id === sourceId){
-
-        return {
-
-          ...item,
-
-          fkParentId: targetId
-
-        };
-
-      }
-
-
-      return item;
-
-    });
-
-
-  return next;
-
-});
-
-
-
-    registerChange(
-
-      sourceId,
-
-      {
-        id: sourceId,
-
-        reportsToPostId:
-          targetId
-
-      }
-
-    );
-
-  }
-
-
-  function handleDragStart(event: any) {
-
-    console.log(
-      "DRAG START",
-      event.active.id
-    );
-
-
-    setDraggingId(
-      String(event.active.id)
-    );
-
-  }
-
-
-
-  function registerChange(
-
-    id: string,
-
-    change: Partial<UpdatePostCommand>
-
-  ) {
-
-    setPendingChanges(previous => {
-
-      const next = new Map(previous);
-
-      const current =
-        next.get(id)
-        ?? {};
-
-      next.set(
-
-        id,
-
-        {
-          ...current,
-          ...change
+        // اگر گره باز بود (یا در حال سرچ بودیم) فرزندان را پیمایش کن
+        if ((isExpanded || normalizedQuery !== "") && hasChildren) {
+          traverse(child.id, depth + 1);
         }
+      }
+    };
 
-      );
+    traverse(null, 0);
 
+    return { flattenedTree: flattened, postsMap: map };
+  }, [posts, expandedIds, searchQuery, modifiedIds]);
+
+  // --- 3. متدهای مدیریت درخت ---
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
-
     });
+  };
 
-    setHasChanges(true);
+  const expandAll = () => {
+    const allParentIds = new Set<string>();
+    posts.forEach((p) => {
+      if (posts.some((child) => child.fkParentId === p.id)) {
+        allParentIds.add(p.id);
+      }
+    });
+    setExpandedIds(allParentIds);
+  };
 
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+  };
+
+  // --- 4. منطق Drag and Drop و Cycle Detection ---
+
+  // بررسی اینکه آیا targetId یکی از زیرمجموعه‌های ancestorId هست یا خیر (جلوگیری از چرخه)
+  const isDescendant = (targetId: string, ancestorId: string): boolean => {
+    let currentId: string | null | undefined = targetId;
+    while (currentId) {
+      if (currentId === ancestorId) return true;
+      const node = postsMap.get(currentId);
+      currentId = node?.fkParentId;
+    }
+    return false;
+  };
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedId(id);
+  };
+
+  const handleDragOverRow = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault();
+    const currentDragged = draggedIdRef.current;
+    if (!currentDragged || currentDragged === targetId) return;
+
+    // اگر گره مقصد از زیرمجموعه‌های گره درگ‌شده باشد، اجازه دکاپ نمی‌دهیم
+    if (isDescendant(targetId, currentDragged)) {
+      e.dataTransfer.dropEffect = "none";
+      return;
+    }
+
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverId !== targetId) {
+      setDragOverId(targetId);
+    }
+  };
+
+  const handleDropOnRow = (e: React.DragEvent, targetParentId: string) => {
+    e.preventDefault();
+    setDragOverId(null);
+    setIsOverRootZone(false);
+
+    const draggedNodeId = e.dataTransfer.getData("text/plain") || draggedId;
+    if (!draggedNodeId || draggedNodeId === targetParentId) return;
+
+    // چک مجدد عدم وجود چرخه
+    if (isDescendant(targetParentId, draggedNodeId)) {
+      alert("امکان انتقال یک والد به زیرمجموعه‌های خودش وجود ندارد!");
+      setDraggedId(null);
+      return;
+    }
+
+    const draggedNode = postsMap.get(draggedNodeId);
+    if (!draggedNode || draggedNode.fkParentId === targetParentId) {
+      setDraggedId(null);
+      return; // تغییری نکرده است
+    }
+
+    // اعمال تغییر والد
+    updateNodeParent(draggedNodeId, targetParentId);
+    setDraggedId(null);
+  };
+
+  const handleDropOnRoot = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsOverRootZone(false);
+    setDragOverId(null);
+
+    const draggedNodeId = e.dataTransfer.getData("text/plain") || draggedId;
+    if (!draggedNodeId) return;
+
+    const draggedNode = postsMap.get(draggedNodeId);
+    if (!draggedNode || draggedNode.fkParentId === null) {
+      setDraggedId(null);
+      return;
+    }
+
+    // تغییر والد به null (ریشه)
+    updateNodeParent(draggedNodeId, null);
+    setDraggedId(null);
+  };
+
+  const updateNodeParent = (nodeId: string, newParentId: string | null) => {
+    setPosts((prev) =>
+      prev.map((item) => {
+        if (item.id === nodeId) {
+          return { ...item, fkParentId: newParentId };
+        }
+        return item;
+      })
+    );
+
+    // افزودن به لیست تغییر یافته‌ها
+    setModifiedIds((prev) => new Set(prev).add(nodeId));
+
+    // اگر والد جدیدی انتخاب شده، آن را باز می‌کنیم تا کاربر تغییر را ببیند
+    if (newParentId) {
+      setExpandedIds((prev) => new Set(prev).add(newParentId));
+    }
+  };
+
+  // --- 5. بازنشانی تغییرات ---
+  const handleResetChanges = () => {
+    if (window.confirm("آیا از لغو تمام تغییرات اعمال شده اطمینان دارید؟")) {
+      setPosts(JSON.parse(JSON.stringify(initialPosts)));
+      setModifiedIds(new Set());
+    }
+  };
+
+  // --- 6. ارسال گروهی تغییرات به سرور ---
+  const handleSaveChanges = async () => {
+    if (modifiedIds.size === 0) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+
+      // مپ کردن پست‌های تغییر یافته به UpdatePostCommand
+      const commands: UpdatePostCommand[] = Array.from(modifiedIds).map((id) => {
+        const post = postsMap.get(id)!;
+        return {
+          id: post.id,
+          code: post.postCode,
+          organizationUnitId: post.fkOrganizationUnitId,
+          jobTitleId: post.fkJobTitleId,
+          jobLevelId: post.fkJobLevelId,
+          gradeId: post.fkGradeId,
+          costCenterId: post.fkCostCenterId,
+          reportsToPostId: post.fkParentId, // نگاشت fkParentId به reportsToPostId
+          officePhone: post.officePhone,
+          orgEmail: post.orgEmail,
+          orgMobile: post.orgMobile,
+          assignType: post.assignmentsAssigneeType,
+          isActive: true,
+        };
+      });
+
+      await postApi.batchUpdatePosts(commands);
+
+      setSuccessMessage(`تعداد ${commands.length} تغییر با موفقیت ذخیره شد.`);
+      setInitialPosts(JSON.parse(JSON.stringify(posts)));
+      setModifiedIds(new Set());
+
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: any) {
+      setError(err?.message || "خطا در ذخیره تغییرات چارت");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] text-gray-500 font-sans">
+        در حال دریافت اطلاعات چارت سازمانی...
+      </div>
+    );
   }
 
   return (
-
-    <div className="p-6">
-
-
-      <h1 className="text-xl font-bold mb-5">
-
-        مدیریت چارت سازمانی
-
-      </h1>
-
-
-
-
-
-      <div className="flex gap-3 mb-5">
-
-
-        <button
-
-          className="btn btn-primary"
-
-          onClick={
-            tree.expansion.expandAll
-          }
-
-        >
-
-          باز کردن همه
-
-        </button>
-
-
-
-
-
-        <button
-
-          className="btn btn-secondary"
-
-          onClick={
-            tree.expansion.collapseAll
-          }
-
-        >
-
-          بستن همه
-
-        </button>
-
-        <button
-
-          className="btn btn-success"
-
-          disabled={!hasChanges}
-
-          onClick={() => {
-
-            console.log(
-
-              Array.from(
-                pendingChanges.values()
-              )
-
-            );
-
-          }}
-
-        >
-
-          ذخیره تغییرات
-
-        </button>
-        <button
-
-          className="btn"
-
-          disabled={!hasChanges}
-
-          onClick={() => {
-
-            setPosts(originalPosts);
-
-            setPendingChanges(
-              new Map()
-            );
-
-            setHasChanges(false);
-
-          }}
-
-        >
-
-          لغو تغییرات
-
-        </button>
-
-      </div>
-
-
-
-
-
-
-
-
-      <DndContext
-
-        sensors={sensors}
-
-        onDragStart={handleDragStart}
-
-        onDragEnd={handleDragEnd}
-
-      >
-
-        <div className="border rounded">
-
-
-
-          <table className="w-full">
-
-
-            <thead>
-
-
-              <tr>
-
-
-
-                <th className="border p-2">
-                  عنوان پست
-                </th>
-
-
-                <th className="border p-2">
-                  متصدی
-                </th>
-
-
-
-                <th className="border p-2">
-                  تلفن
-                </th>
-
-
-              </tr>
-
-
-            </thead>
-
-
-
-
-
-
-            <tbody>
-
-
-              {
-                tree.rows.map(row => {
-
-
-                  const expanded =
-                    tree.expansion.isExpanded(
-                      row.id
-                    );
-
-
-
-                  const hasChildren =
-                    !tree.validation.isLeaf(
-                      row.id
-                    );
-
-
-
-
-                  return (
-
-                    <DroppableRow
-
-                      key={row.id}
-
-                      id={row.id}
-
-                      className={
-                        selectedId === row.id
-                          ?
-                          "bg-blue-100"
-                          :
-                          ""
-                      }
-
-                      onClick={() => {
-
-                        setSelectedId(row.id);
-
-                      }}
-
-                    >
-
-
-
-                      {/* Drag Handle */}
-
-                      <td className="border p-2">
-
-                        <div
-
-                          className="flex items-center gap-2"
-
-                          style={{
-                            paddingRight:
-                              row.depth * 24
-                          }}
-
-                        >
-
-                          {/* Drag */}
-
-                          <DragHandle
-                            id={row.id}
-                          />
-
-
-
-                          {/* Expand */}
-
-                          {
-                            hasChildren
-                            &&
-                            <button
-                              onClick={(e) => {
-
-                                e.stopPropagation();
-
-                                tree.expansion.toggle(
-                                  row.id
-                                );
-
-                              }}
-                            >
-
-                              {
-                                expanded
-                                  ?
-                                  "▼"
-                                  :
-                                  "▶"
-                              }
-
-                            </button>
-                          }
-
-
-
-                          <span>
-
-                            {
-                              row.item.jobTitleName
-                            }
-
-                          </span>
-
-
-                        </div>
-
-
-                      </td>
-
-
-
-
-                      <td className="border p-2">
-
-                        {
-                          row.item.firstName + " " + row.item.lastName
-                        }
-
-                      </td>
-
-
-
-
-
-
-
-
-
-                      <td className="border p-2">
-
-                        {
-                          row.item.officePhone
-                        }
-
-                      </td>
-
-
-                    </DroppableRow>
-
-                  );
-
-
-                })
-              }
-
-
-            </tbody>
-
-
-          </table>
-
-
+    <div className="p-6 dir-rtl text-right font-sans bg-gray-50/50 min-h-screen">
+      {/* هدر اصلی و کنترل‌ها */}
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت ساختار چارت سازمانی</h1>
+            <p className="text-sm text-gray-500">
+              کل پست‌ها: <span className="font-semibold text-gray-700">{posts.length}</span>
+              {modifiedIds.size > 0 && (
+                <span className="mr-3 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                  {modifiedIds.size} تغییر ذخیره‌نشده
+                </span>
+              )}
+            </p>
+          </div>
+
+          {/* اکشن‌های اصلی */}
+          <div className="flex items-center gap-3">
+            {modifiedIds.size > 0 && (
+              <button
+                onClick={handleResetChanges}
+                disabled={saving}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                انصراف و بازنشانی
+              </button>
+            )}
+
+            <button
+              onClick={handleSaveChanges}
+              disabled={modifiedIds.size === 0 || saving}
+              className={`px-5 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2 ${
+                modifiedIds.size > 0
+                  ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              {saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+            </button>
+          </div>
         </div>
 
-      </DndContext>
+        {/* پیام‌های سیستم */}
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+            {error}
+          </div>
+        )}
+        {successMessage && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg">
+            {successMessage}
+          </div>
+        )}
 
+        {/* نوار ابزار دوم (جستجو و باز/بسته کردن) */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mt-5 pt-4 border-t border-gray-100">
+          <div className="w-72">
+            <input
+              type="text"
+              placeholder="جستجو در عنوان، کد، واحد یا شاغل..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
 
-
-
-
-
-
-      <div className="mt-5 border p-3 rounded">
-
-
-        <b>
-          Node انتخاب شده:
-        </b>
-
-
-        {
-          selectedNode
-
-            ?
-
-            <>
-              {" "}
-              {selectedNode.jobTitleName}
-              {" - "}
-              {selectedNode.firstName}
-              {" "}
-              {selectedNode.lastName}
-            </>
-
-            :
-
-            " هیچ موردی انتخاب نشده"
-
-        }
-
-
+          <div className="flex items-center gap-2">
+            <button
+              onClick={expandAll}
+              className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
+            >
+              گسترش همه
+            </button>
+            <button
+              onClick={collapseAll}
+              className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
+            >
+              جمع‌کردن همه
+            </button>
+          </div>
+        </div>
       </div>
 
+      {/* منطقه رهاسازی به سطح اصلی (Root Dropzone) */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (draggedId) setIsOverRootZone(true);
+        }}
+        onDragLeave={() => setIsOverRootZone(false)}
+        onDrop={handleDropOnRoot}
+        className={`mb-4 p-3 border-2 border-dashed rounded-xl text-center text-xs transition-colors ${
+          isOverRootZone
+            ? "border-blue-500 bg-blue-50 text-blue-700 font-bold"
+            : "border-gray-300 bg-white text-gray-500 hover:border-gray-400"
+        }`}
+      >
+        📌 جهت انتقال پست به بالاترین سطح چارت (بدون والد)، آن را اینجا رها کنید.
+      </div>
 
+      {/* جدول درختی */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full text-right border-collapse">
+          <thead>
+            <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-xs font-semibold">
+              <th className="py-3 px-3 w-10 text-center">جابه‌جایی</th>
+              <th className="py-3 px-4">عنوان پست / شغل</th>
+              <th className="py-3 px-4">کد پست</th>
+              <th className="py-3 px-4">واحد سازمانی</th>
+              <th className="py-3 px-4">شاغل فعلی</th>
+              <th className="py-3 px-4">رده / سطح شغلی</th>
+              <th className="py-3 px-4 text-center">وضعیت</th>
+            </tr>
+          </thead>
 
+          <tbody className="divide-y divide-gray-100 text-sm">
+            {flattenedTree.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-12 text-gray-400">
+                  هیچ پستی یافت نشد.
+                </td>
+              </tr>
+            ) : (
+              flattenedTree.map(({ node, depth, hasChildren, isExpanded, isModified }) => {
+                const isBeingDragged = draggedId === node.id;
+                const isTarget = dragOverId === node.id;
+                const occupantName =
+                  node.firstName || node.lastName
+                    ? `${node.firstName || ""} ${node.lastName || ""}`
+                    : "-";
 
+                return (
+                  <tr
+                    key={node.id}
+                    onDragOver={(e) => handleDragOverRow(e, node.id)}
+                    onDragLeave={() => dragOverId === node.id && setDragOverId(null)}
+                    onDrop={(e) => handleDropOnRow(e, node.id)}
+                    className={`transition-colors ${
+                      isBeingDragged ? "opacity-30 bg-gray-100" : ""
+                    } ${
+                      isTarget ? "bg-blue-50 border-y-2 border-blue-500" : "hover:bg-gray-50/80"
+                    } ${isModified ? "bg-amber-50/40" : ""}`}
+                  >
+                    {/* ستون اختصاصی Handle برای Drag & Drop */}
+                    <td className="py-3 px-2 text-center align-middle">
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, node.id)}
+                        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg leading-none inline-block p-1"
+                        title="جهت تغییر والد، کشیده و رها کنید"
+                      >
+                        ☰
+                      </div>
+                    </td>
 
+                    {/* عنوان پست با رعایت Indentation (تورفتگی درخت) */}
+                    <td className="py-3 px-4 font-medium text-gray-800">
+                      <div
+                        className="flex items-center gap-2"
+                        style={{ paddingRight: `${depth * 24}px` }}
+                      >
+                        {hasChildren ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(node.id)}
+                            className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 text-xs"
+                          >
+                            {isExpanded ? "▼" : "◀"}
+                          </button>
+                        ) : (
+                          <span className="w-5 text-center text-gray-300">•</span>
+                        )}
+                        <span>{node.jobTitleName || "بدون عنوان شغل"}</span>
+                      </div>
+                    </td>
 
-      <pre className="mt-5 bg-gray-100 p-3 text-xs">
+                    {/* کد پست */}
+                    <td className="py-3 px-4 font-mono text-xs text-gray-600">
+                      {node.postCode || "-"}
+                    </td>
 
+                    {/* واحد سازمانی */}
+                    <td className="py-3 px-4 text-gray-600 text-xs">
+                      {node.organizationUnitsName || "-"}
+                    </td>
 
-        {
-          JSON.stringify(
+                    {/* شاغل پست */}
+                    <td className="py-3 px-4 text-gray-700 text-xs">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{occupantName}</span>
+                        {node.employeeCode && (
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            کد: {node.employeeCode}
+                          </span>
+                        )}
+                      </div>
+                    </td>
 
-            {
+                    {/* سطح / رده شغلی */}
+                    <td className="py-3 px-4 text-gray-500 text-xs">
+                      {node.jobLevelTitle || node.gradeTitle ? (
+                        <span>
+                          {node.jobLevelTitle || ""} {node.gradeTitle ? `(${node.gradeTitle})` : ""}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
 
-              total:
-                tree.rows.length,
-
-              selectedId
-
-            },
-
-            null,
-
-            2
-
-          )
-        }
-
-
-      </pre>
-
-
-
+                    {/* وضعیت تغییر */}
+                    <td className="py-3 px-4 text-center">
+                      {isModified ? (
+                        <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-medium">
+                          تغییر یافته
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-
   );
+};
 
-}
+export default PostManagementPage;
