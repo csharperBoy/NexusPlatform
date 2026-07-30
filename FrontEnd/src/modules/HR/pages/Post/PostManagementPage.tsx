@@ -186,7 +186,7 @@ export default function PostManagementPage() {
     posts,
     setPosts
   ] = useState<PostInfoView[]>([]);
-
+  
 const [
   changedPosts,
   setChangedPosts

@@ -21,15 +21,16 @@ const getContactTypeBadge = (type?: PhoneBookContactTypeEnum | null) => {
   }
 };
 
-// تابع کمکی برای خواندن فیلدها با پشتیبانی از هر دو حالت PascalCase و camelCase (رفع باگ "تعریف نشده")
-const getVal = (obj: any, key: string): string => {
-  if (!obj) return "";
-  const val = obj[key] ?? obj[key.charAt(0).toLowerCase() + key.slice(1)];
-  return (val || "").toString();
+// تابع بیرون کشیده شده برای آیکون سورت (جلوگیری از re-render)
+const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConfig }) => {
+  if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
+  if (sortConfig.direction === "asc") return <span className="text-blue-600 mr-1 text-[10px]">▲</span>;
+  if (sortConfig.direction === "desc") return <span className="text-blue-600 mr-1 text-[10px]">▼</span>;
+  return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
 };
 
 // --- Types ---
-type GroupByOption = "none" | "OrganizationUnitsName" | "JobTitleName" | "LocationTitle";
+type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" | "locationTitle";
 type SortDirection = "asc" | "desc" | null;
 interface SortConfig {
   column: string;
@@ -45,7 +46,7 @@ export const PhoneBookPage: React.FC = () => {
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
-  const [groupBy, setGroupBy] = useState<GroupByOption>("OrganizationUnitsName");
+  const [groupBy, setGroupBy] = useState<GroupByOption>("organizationUnitsName");
   
   // Setهایی برای مدیریت باز و بسته بودن کرکره‌ها
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -109,13 +110,14 @@ export const PhoneBookPage: React.FC = () => {
       if (term.trim()) {
         result = result.filter((emp) => {
           const q = term.toLowerCase();
-          if (key === "FullName") {
-            const fName = getVal(emp, "FirstName");
-            const lName = getVal(emp, "LastName");
-            const full = getVal(emp, "FullName") || `${fName} ${lName}`;
+          const empKey = key as keyof PhoneBookEmployeeDto;
+          
+          if (key === "fullName") {
+            const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
             return full.toLowerCase().includes(q);
           }
-          return getVal(emp, key).toLowerCase().includes(q);
+          const val = (emp[empKey] || "").toString().toLowerCase();
+          return val.includes(q);
         });
       }
     });
@@ -124,28 +126,30 @@ export const PhoneBookPage: React.FC = () => {
     if (globalSearch.trim()) {
       const q = globalSearch.toLowerCase();
       result = result.filter((emp) => 
-        getVal(emp, "FirstName").toLowerCase().includes(q) ||
-        getVal(emp, "LastName").toLowerCase().includes(q) ||
-        getVal(emp, "EmployeeCode").toLowerCase().includes(q) ||
-        getVal(emp, "OrganizationUnitsName").toLowerCase().includes(q) ||
-        getVal(emp, "ContactSummary").toLowerCase().includes(q)
+        (emp.firstName || "").toLowerCase().includes(q) ||
+        (emp.lastName || "").toLowerCase().includes(q) ||
+        (emp.employeeCode || "").toLowerCase().includes(q) ||
+        (emp.organizationUnitsName || "").toLowerCase().includes(q) ||
+        (emp.contactSummary || "").toLowerCase().includes(q)
       );
     }
 
-    // ۳. سورت
+    // ۳. سورت (با قابلیت سورت عددی برای رشته‌ها)
     if (sortConfig.direction && sortConfig.column) {
       result.sort((a, b) => {
-        let aVal = getVal(a, sortConfig.column);
-        let bVal = getVal(b, sortConfig.column);
+        const col = sortConfig.column as keyof PhoneBookEmployeeDto;
+        let aVal = (a[col] || "").toString();
+        let bVal = (b[col] || "").toString();
         
-        if (sortConfig.column === "FullName") {
-          aVal = aVal || `${getVal(a, "FirstName")} ${getVal(a, "LastName")}`;
-          bVal = bVal || `${getVal(b, "FirstName")} ${getVal(b, "LastName")}`;
+        if (sortConfig.column === "fullName") {
+          aVal = a.fullName || `${a.firstName || ""} ${a.lastName || ""}`;
+          bVal = b.fullName || `${b.firstName || ""} ${b.lastName || ""}`;
         }
 
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
+        // جادوی سورت عددی روی فیلدهای متنی مثل کد پرسنلی 
+        const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+        
+        return sortConfig.direction === "asc" ? compareResult : -compareResult;
       });
     }
 
@@ -153,32 +157,13 @@ export const PhoneBookPage: React.FC = () => {
     if (groupBy === "none") return { "همه اعضا": result };
 
     return result.reduce((groups, emp) => {
-      const groupKey = getVal(emp, groupBy) || "تعریف نشده";
+      const groupKey = (emp[groupBy as keyof PhoneBookEmployeeDto] || "تعریف نشده") as string;
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(emp);
       return groups;
     }, {} as Record<string, PhoneBookEmployeeDto[]>);
 
   }, [data, globalSearch, columnSearch, sortConfig, groupBy]);
-
-
-  // --- Render Helpers ---
-  const SortIcon = ({ column }: { column: string }) => {
-    if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
-    if (sortConfig.direction === "asc") return <span className="text-blue-600 mr-1 text-[10px]">▲</span>;
-    if (sortConfig.direction === "desc") return <span className="text-blue-600 mr-1 text-[10px]">▼</span>;
-    return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
-  };
-
-  const ColumnSearchInput = ({ column, placeholder }: { column: string, placeholder: string }) => (
-    <input
-      type="text"
-      placeholder={placeholder}
-      value={columnSearch[column] || ""}
-      onChange={(e) => handleColumnSearch(column, e.target.value)}
-      className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-    />
-  );
 
 
   if (loading) return <div className="p-8 text-center text-gray-500">در حال دریافت...</div>;
@@ -206,15 +191,15 @@ export const PhoneBookPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col">
-            <label className="text-xs text-gray-500 mb-1">گروه‌بندی</label>
+            <label className="text-xs text-gray-500 mb-1">گروه‌بندی بر اساس</label>
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <option value="OrganizationUnitsName">واحد سازمانی</option>
-              <option value="JobTitleName">عنوان شغلی</option>
-              <option value="LocationTitle">محل خدمت</option>
+              <option value="organizationUnitsName">واحد سازمانی</option>
+              <option value="jobTitleName">عنوان شغلی</option>
+              <option value="locationTitle">محل خدمت</option>
               <option value="none">بدون گروه‌بندی</option>
             </select>
           </div>
@@ -228,30 +213,70 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
               <th className="py-3 px-4 w-12"></th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("EmployeeCode")}>
-                کد پرسنلی <SortIcon column="EmployeeCode" />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("employeeCode")}>
+                کد پرسنلی <SortIcon column="employeeCode" sortConfig={sortConfig} />
               </th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("FullName")}>
-                نام و نام خانوادگی <SortIcon column="FullName" />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
+                نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("OrganizationUnitsName")}>
-                واحد سازمانی <SortIcon column="OrganizationUnitsName" />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("organizationUnitsName")}>
+                واحد سازمانی <SortIcon column="organizationUnitsName" sortConfig={sortConfig} />
               </th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("JobTitleName")}>
-                عنوان شغلی <SortIcon column="JobTitleName" />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("jobTitleName")}>
+                عنوان شغلی <SortIcon column="jobTitleName" sortConfig={sortConfig} />
               </th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("ContactSummary")}>
-                اطلاعات تماس <SortIcon column="ContactSummary" />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("contactSummary")}>
+                اطلاعات تماس <SortIcon column="contactSummary" sortConfig={sortConfig} />
               </th>
             </tr>
             {/* ردیف دوم: باکس‌های سرچ زیر هر ستون */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="py-2 px-2"></th>
-              <th className="py-2 px-2 align-top"><ColumnSearchInput column="EmployeeCode" placeholder="سرچ کد..." /></th>
-              <th className="py-2 px-2 align-top"><ColumnSearchInput column="FullName" placeholder="سرچ نام..." /></th>
-              <th className="py-2 px-2 align-top"><ColumnSearchInput column="OrganizationUnitsName" placeholder="سرچ واحد..." /></th>
-              <th className="py-2 px-2 align-top"><ColumnSearchInput column="JobTitleName" placeholder="سرچ سمت..." /></th>
-              <th className="py-2 px-2 align-top"><ColumnSearchInput column="ContactSummary" placeholder="سرچ تماس..." /></th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ کد..."
+                  value={columnSearch["employeeCode"] || ""}
+                  onChange={(e) => handleColumnSearch("employeeCode", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ نام..."
+                  value={columnSearch["fullName"] || ""}
+                  onChange={(e) => handleColumnSearch("fullName", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ واحد..."
+                  value={columnSearch["organizationUnitsName"] || ""}
+                  onChange={(e) => handleColumnSearch("organizationUnitsName", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ سمت..."
+                  value={columnSearch["jobTitleName"] || ""}
+                  onChange={(e) => handleColumnSearch("jobTitleName", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ تماس..."
+                  value={columnSearch["contactSummary"] || ""}
+                  onChange={(e) => handleColumnSearch("contactSummary", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
             </tr>
           </thead>
 
@@ -275,7 +300,7 @@ export const PhoneBookPage: React.FC = () => {
                         <td colSpan={6} className="py-3 px-4">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-3">
-                              <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-180" : "rotate-0"}`}>
+                              <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-90" : "rotate-0"}`}>
                                 ▼
                               </span>
                               <span className="font-bold text-gray-800">{groupName}</span>
@@ -290,9 +315,8 @@ export const PhoneBookPage: React.FC = () => {
 
                     {/* ردیف‌های کارمندان داخل این گروه */}
                     {!isGroupCollapsed && employees.map((emp) => {
-                      const empCode = getVal(emp, "EmployeeCode");
+                      const empCode = emp.employeeCode;
                       const isExpanded = expandedRows.has(empCode);
-                      // بررسی می‌کنیم که آیا شماره‌های متعددی دارد یا خیر
                       const hasMultiple = emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
 
                       return (
@@ -304,19 +328,21 @@ export const PhoneBookPage: React.FC = () => {
                           >
                             <td className="py-3 px-4 text-center">
                               {hasMultiple ? (
-                                <span className="text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200">
-                                  {isExpanded ? "▼" : "◀"}
+                                // <span className="text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200">
+                                  <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>
+                               ◀
+                                  {/* {isExpanded ? "▼" : "◀"} */}
                                 </span>
                               ) : null}
                             </td>
                             <td className="py-3 px-4 font-mono text-gray-600">{empCode}</td>
                             <td className="py-3 px-4 font-medium text-gray-800">
-                              {getVal(emp, "FullName") || `${getVal(emp, "FirstName")} ${getVal(emp, "LastName")}`}
+                              {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
                             </td>
-                            <td className="py-3 px-4 text-gray-600">{getVal(emp, "OrganizationUnitsName") || "-"}</td>
-                            <td className="py-3 px-4 text-gray-600">{getVal(emp, "JobTitleName") || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{emp.organizationUnitsName || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{emp.jobTitleName || "-"}</td>
                             <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-                              {getVal(emp, "ContactSummary") || "-"}
+                              {emp.contactSummary || "-"}
                             </td>
                           </tr>
 
