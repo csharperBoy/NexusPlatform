@@ -5,7 +5,7 @@ import { postApi } from "../../api/PostApi";
 import { PostInfoView } from "../../models/postInfoView";
 import { UpdatePostCommand } from "../../models/postCommand";
 
-// تایپ پیشنهادی برای ردیف‌های تخت شده‌ی درخت
+// تایپ ردیف‌های تخت شده‌ی درخت
 interface FlattenedNode {
   node: PostInfoView;
   depth: number;
@@ -17,17 +17,18 @@ interface FlattenedNode {
 export const PostManagementPage: React.FC = () => {
   // --- States ---
   const [posts, setPosts] = useState<PostInfoView[]>([]);
-  const [initialPosts, setInitialPosts] = useState<PostInfoView[]>([]); // برای بازنشانی تغییرات
+  const [initialPosts, setInitialPosts] = useState<PostInfoView[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // جستجو و باز/بسته بودن گره‌ها
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // استیت‌های سرچ
+  const [globalSearch, setGlobalSearch] = useState<string>("");
+  const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
 
-  // شناسه پست‌های تغییر یافته
+  // مدیریت باز/بسته بودن و تغییرات
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [modifiedIds, setModifiedIds] = useState<Set<string>>(new Set());
 
   // استیت‌های درگ اند دراپ
@@ -35,7 +36,6 @@ export const PostManagementPage: React.FC = () => {
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [isOverRootZone, setIsOverRootZone] = useState<boolean>(false);
 
-  // استفاده از ref برای دسترسی سریع‌تر در drag handlers
   const draggedIdRef = useRef<string | null>(null);
   draggedIdRef.current = draggedId;
 
@@ -52,8 +52,8 @@ export const PostManagementPage: React.FC = () => {
       const list = data || [];
       setPosts(list);
       setInitialPosts(JSON.parse(JSON.stringify(list)));
-      
-      // به‌طور پیش‌فرض همه‌ی پست‌های دارای فرزند را باز نگه می‌داریم
+
+      // باز نگه‌داشتن گره‌های دارای فرزند
       const parentIds = new Set<string>();
       list.forEach((p) => {
         if (p.fkParentId) parentIds.add(p.fkParentId);
@@ -67,17 +67,32 @@ export const PostManagementPage: React.FC = () => {
     }
   };
 
-  // --- 2. ساختار درخت و فیلتر ---
+  // --- 2. مدیریت ویرایش مقادیر داخل جدول (تلفن و موبایل) ---
+  const handleFieldChange = (id: string, field: "officePhone" | "orgMobile", value: string) => {
+    setPosts((prev) =>
+      prev.map((item) => {
+        if (item.id === id) {
+          return { ...item, [field]: value };
+        }
+        return item;
+      })
+    );
+    // علامت‌گذاری به عنوان تغییر یافته
+    setModifiedIds((prev) => new Set(prev).add(id));
+  };
+
+  const handleColumnSearch = (column: string, value: string) => {
+    setColumnSearch((prev) => ({ ...prev, [column]: value }));
+  };
+
+  // --- 3. ساختار درخت و فیلترها ---
   const { flattenedTree, postsMap } = useMemo(() => {
     const map = new Map<string, PostInfoView>();
     const childrenMap = new Map<string | null, PostInfoView[]>();
 
-    // ساخت Map برای دسترسی سریع
     posts.forEach((p) => map.set(p.id, p));
 
-    // دسته‌بندی بر اساس والد
     posts.forEach((p) => {
-      // اگر والد وجود نداشت یا در لیست نبود، به عنوان ریشه (null) لحاظ می‌شود
       const parentId = p.fkParentId && map.has(p.fkParentId) ? p.fkParentId : null;
       if (!childrenMap.has(parentId)) {
         childrenMap.set(parentId, []);
@@ -85,8 +100,7 @@ export const PostManagementPage: React.FC = () => {
       childrenMap.get(parentId)!.push(p);
     });
 
-    // لیست فیلتر شده بر اساس سرچ (اگر سرچ پر باشد)
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedGlobal = globalSearch.trim().toLowerCase();
 
     const flattened: FlattenedNode[] = [];
 
@@ -99,15 +113,37 @@ export const PostManagementPage: React.FC = () => {
         const isExpanded = expandedIds.has(child.id);
         const isModified = modifiedIds.has(child.id);
 
-        // بررسی فیلتر سرچ
-        const matchesSearch =
-          !normalizedQuery ||
-          (child.jobTitleName || "").toLowerCase().includes(normalizedQuery) ||
-          (child.postCode || "").toLowerCase().includes(normalizedQuery) ||
-          (child.organizationUnitsName || "").toLowerCase().includes(normalizedQuery) ||
-          `${child.firstName || ""} ${child.lastName || ""}`.toLowerCase().includes(normalizedQuery);
+        // ترکیب عنوان و کد پست برای سرچ
+        const fullJobTitle = `${child.jobTitleName || ""} ${child.postCode ? `(${child.postCode})` : ""}`;
+        const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employeeCode || ""}`;
+        const levelGrade = `${child.jobLevelTitle || ""} ${child.gradeTitle || ""}`;
 
-        if (matchesSearch || normalizedQuery === "") {
+        // ۱. بررسی سرچ کلی
+        const matchesGlobal =
+          !normalizedGlobal ||
+          fullJobTitle.toLowerCase().includes(normalizedGlobal) ||
+          (child.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
+          occupantName.toLowerCase().includes(normalizedGlobal) ||
+          (child.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
+          (child.orgMobile || "").toLowerCase().includes(normalizedGlobal);
+
+        // ۲. بررسی سرچ‌های ستونی
+        let matchesColumns = true;
+        for (const [col, term] of Object.entries(columnSearch)) {
+          if (!term.trim()) continue;
+          const q = term.toLowerCase();
+
+          if (col === "jobTitle" && !fullJobTitle.toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "unit" && !(child.organizationUnitsName || "").toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "occupant" && !occupantName.toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "officePhone" && !(child.officePhone || "").toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "orgMobile" && !(child.orgMobile || "").toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "levelGrade" && !levelGrade.toLowerCase().includes(q)) matchesColumns = false;
+        }
+
+        const isSearching = normalizedGlobal !== "" || Object.values(columnSearch).some((v) => v.trim() !== "");
+
+        if (matchesGlobal && matchesColumns) {
           flattened.push({
             node: child,
             depth,
@@ -117,8 +153,8 @@ export const PostManagementPage: React.FC = () => {
           });
         }
 
-        // اگر گره باز بود (یا در حال سرچ بودیم) فرزندان را پیمایش کن
-        if ((isExpanded || normalizedQuery !== "") && hasChildren) {
+        // اگر در حال سرچ بودیم یا گره باز بود، پیمایش ادامه یابد
+        if ((isExpanded || isSearching) && hasChildren) {
           traverse(child.id, depth + 1);
         }
       }
@@ -127,9 +163,9 @@ export const PostManagementPage: React.FC = () => {
     traverse(null, 0);
 
     return { flattenedTree: flattened, postsMap: map };
-  }, [posts, expandedIds, searchQuery, modifiedIds]);
+  }, [posts, expandedIds, globalSearch, columnSearch, modifiedIds]);
 
-  // --- 3. متدهای مدیریت درخت ---
+  // --- 4. متدهای مدیریت درخت ---
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -153,9 +189,7 @@ export const PostManagementPage: React.FC = () => {
     setExpandedIds(new Set());
   };
 
-  // --- 4. منطق Drag and Drop و Cycle Detection ---
-
-  // بررسی اینکه آیا targetId یکی از زیرمجموعه‌های ancestorId هست یا خیر (جلوگیری از چرخه)
+  // --- 5. منطق Drag and Drop و Cycle Detection ---
   const isDescendant = (targetId: string, ancestorId: string): boolean => {
     let currentId: string | null | undefined = targetId;
     while (currentId) {
@@ -177,7 +211,6 @@ export const PostManagementPage: React.FC = () => {
     const currentDragged = draggedIdRef.current;
     if (!currentDragged || currentDragged === targetId) return;
 
-    // اگر گره مقصد از زیرمجموعه‌های گره درگ‌شده باشد، اجازه دکاپ نمی‌دهیم
     if (isDescendant(targetId, currentDragged)) {
       e.dataTransfer.dropEffect = "none";
       return;
@@ -197,7 +230,6 @@ export const PostManagementPage: React.FC = () => {
     const draggedNodeId = e.dataTransfer.getData("text/plain") || draggedId;
     if (!draggedNodeId || draggedNodeId === targetParentId) return;
 
-    // چک مجدد عدم وجود چرخه
     if (isDescendant(targetParentId, draggedNodeId)) {
       alert("امکان انتقال یک والد به زیرمجموعه‌های خودش وجود ندارد!");
       setDraggedId(null);
@@ -207,10 +239,9 @@ export const PostManagementPage: React.FC = () => {
     const draggedNode = postsMap.get(draggedNodeId);
     if (!draggedNode || draggedNode.fkParentId === targetParentId) {
       setDraggedId(null);
-      return; // تغییری نکرده است
+      return;
     }
 
-    // اعمال تغییر والد
     updateNodeParent(draggedNodeId, targetParentId);
     setDraggedId(null);
   };
@@ -229,7 +260,6 @@ export const PostManagementPage: React.FC = () => {
       return;
     }
 
-    // تغییر والد به null (ریشه)
     updateNodeParent(draggedNodeId, null);
     setDraggedId(null);
   };
@@ -244,16 +274,14 @@ export const PostManagementPage: React.FC = () => {
       })
     );
 
-    // افزودن به لیست تغییر یافته‌ها
     setModifiedIds((prev) => new Set(prev).add(nodeId));
 
-    // اگر والد جدیدی انتخاب شده، آن را باز می‌کنیم تا کاربر تغییر را ببیند
     if (newParentId) {
       setExpandedIds((prev) => new Set(prev).add(newParentId));
     }
   };
 
-  // --- 5. بازنشانی تغییرات ---
+  // --- 6. بازنشانی و ذخیره تغییرات ---
   const handleResetChanges = () => {
     if (window.confirm("آیا از لغو تمام تغییرات اعمال شده اطمینان دارید؟")) {
       setPosts(JSON.parse(JSON.stringify(initialPosts)));
@@ -261,7 +289,6 @@ export const PostManagementPage: React.FC = () => {
     }
   };
 
-  // --- 6. ارسال گروهی تغییرات به سرور ---
   const handleSaveChanges = async () => {
     if (modifiedIds.size === 0) return;
 
@@ -270,7 +297,6 @@ export const PostManagementPage: React.FC = () => {
       setError(null);
       setSuccessMessage(null);
 
-      // مپ کردن پست‌های تغییر یافته به UpdatePostCommand
       const commands: UpdatePostCommand[] = Array.from(modifiedIds).map((id) => {
         const post = postsMap.get(id)!;
         return {
@@ -281,7 +307,7 @@ export const PostManagementPage: React.FC = () => {
           jobLevelId: post.fkJobLevelId,
           gradeId: post.fkGradeId,
           costCenterId: post.fkCostCenterId,
-          reportsToPostId: post.fkParentId, // نگاشت fkParentId به reportsToPostId
+          reportsToPostId: post.fkParentId,
           officePhone: post.officePhone,
           orgEmail: post.orgEmail,
           orgMobile: post.orgMobile,
@@ -314,7 +340,7 @@ export const PostManagementPage: React.FC = () => {
 
   return (
     <div className="p-6 dir-rtl text-right font-sans bg-gray-50/50 min-h-screen">
-      {/* هدر اصلی و کنترل‌ها */}
+      {/* هدر اصلی */}
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -322,14 +348,13 @@ export const PostManagementPage: React.FC = () => {
             <p className="text-sm text-gray-500">
               کل پست‌ها: <span className="font-semibold text-gray-700">{posts.length}</span>
               {modifiedIds.size > 0 && (
-                <span className="mr-3 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
+                <span className="mr-3 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs font-medium">
                   {modifiedIds.size} تغییر ذخیره‌نشده
                 </span>
               )}
             </p>
           </div>
 
-          {/* اکشن‌های اصلی */}
           <div className="flex items-center gap-3">
             {modifiedIds.size > 0 && (
               <button
@@ -355,7 +380,6 @@ export const PostManagementPage: React.FC = () => {
           </div>
         </div>
 
-        {/* پیام‌های سیستم */}
         {error && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
             {error}
@@ -367,14 +391,14 @@ export const PostManagementPage: React.FC = () => {
           </div>
         )}
 
-        {/* نوار ابزار دوم (جستجو و باز/بسته کردن) */}
+        {/* کنترل‌های جستجوی اصلی و باز/بسته کردن */}
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 pt-4 border-t border-gray-100">
           <div className="w-72">
             <input
               type="text"
-              placeholder="جستجو در عنوان، کد، واحد یا شاغل..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="جستجوی کلی در تمام فیلدها..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
               className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
@@ -396,7 +420,7 @@ export const PostManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی به سطح اصلی (Root Dropzone) */}
+      {/* منطقه رهاسازی ریشه (Root Dropzone) */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -417,21 +441,83 @@ export const PostManagementPage: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
         <table className="w-full text-right border-collapse">
           <thead>
+            {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-xs font-semibold">
               <th className="py-3 px-3 w-10 text-center">جابه‌جایی</th>
-              <th className="py-3 px-4">عنوان پست / شغل</th>
-              <th className="py-3 px-4">کد پست</th>
+              <th className="py-3 px-4">عنوان شغل (کد پست)</th>
               <th className="py-3 px-4">واحد سازمانی</th>
               <th className="py-3 px-4">شاغل فعلی</th>
+              <th className="py-3 px-4 w-36">تلفن داخلی</th>
+              <th className="py-3 px-4 w-40">موبایل سازمانی</th>
               <th className="py-3 px-4">رده / سطح شغلی</th>
-              <th className="py-3 px-4 text-center">وضعیت</th>
+              <th className="py-3 px-4 text-center w-24">وضعیت</th>
+            </tr>
+
+            {/* ردیف دوم: اینپوت‌های سرچ اختصاصی ستون‌ها */}
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="py-2 px-2"></th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ شغل / کد..."
+                  value={columnSearch["jobTitle"] || ""}
+                  onChange={(e) => handleColumnSearch("jobTitle", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ واحد..."
+                  value={columnSearch["unit"] || ""}
+                  onChange={(e) => handleColumnSearch("unit", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ شاغل..."
+                  value={columnSearch["occupant"] || ""}
+                  onChange={(e) => handleColumnSearch("occupant", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ داخلی..."
+                  value={columnSearch["officePhone"] || ""}
+                  onChange={(e) => handleColumnSearch("officePhone", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ موبایل..."
+                  value={columnSearch["orgMobile"] || ""}
+                  onChange={(e) => handleColumnSearch("orgMobile", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ رده..."
+                  value={columnSearch["levelGrade"] || ""}
+                  onChange={(e) => handleColumnSearch("levelGrade", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2"></th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-gray-100 text-sm">
             {flattenedTree.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">
+                <td colSpan={8} className="text-center py-12 text-gray-400">
                   هیچ پستی یافت نشد.
                 </td>
               </tr>
@@ -468,7 +554,7 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* عنوان پست با رعایت Indentation (تورفتگی درخت) */}
+                    {/* عنوان پست همراه با کد پست درون پرانتز + Indentation درخت */}
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div
                         className="flex items-center gap-2"
@@ -485,13 +571,15 @@ export const PostManagementPage: React.FC = () => {
                         ) : (
                           <span className="w-5 text-center text-gray-300">•</span>
                         )}
-                        <span>{node.jobTitleName || "بدون عنوان شغل"}</span>
+                        <span>
+                          {node.jobTitleName || "بدون عنوان شغل"}{" "}
+                          {node.postCode && (
+                            <span className="text-gray-500 text-xs font-mono font-normal">
+                              ({node.postCode})
+                            </span>
+                          )}
+                        </span>
                       </div>
-                    </td>
-
-                    {/* کد پست */}
-                    <td className="py-3 px-4 font-mono text-xs text-gray-600">
-                      {node.postCode || "-"}
                     </td>
 
                     {/* واحد سازمانی */}
@@ -509,6 +597,28 @@ export const PostManagementPage: React.FC = () => {
                           </span>
                         )}
                       </div>
+                    </td>
+
+                    {/* تلفن داخلی (قابل ویرایش) */}
+                    <td className="py-2 px-3">
+                      <input
+                        type="text"
+                        value={node.officePhone || ""}
+                        onChange={(e) => handleFieldChange(node.id, "officePhone", e.target.value)}
+                        placeholder="داخلی..."
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
+                      />
+                    </td>
+
+                    {/* موبایل سازمانی (قابل ویرایش) */}
+                    <td className="py-2 px-3">
+                      <input
+                        type="text"
+                        value={node.orgMobile || ""}
+                        onChange={(e) => handleFieldChange(node.id, "orgMobile", e.target.value)}
+                        placeholder="موبایل..."
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
+                      />
                     </td>
 
                     {/* سطح / رده شغلی */}
@@ -544,3 +654,4 @@ export const PostManagementPage: React.FC = () => {
 };
 
 export default PostManagementPage;
+
