@@ -31,11 +31,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                <RequireModuleActive moduleName="HR">
                 <HRModuleRegistration />
               </RequireModuleActive>
-               <RequireModuleActive moduleName="PhoneBook">
-                <PhoneBookModuleRegistration />
-              </RequireModuleActive>
-              {/* ... سایر ماژول‌های خود را اینجا اضافه کنید */}
-
               <App />
             </ModuleProvider>
           </DashboardProvider>
