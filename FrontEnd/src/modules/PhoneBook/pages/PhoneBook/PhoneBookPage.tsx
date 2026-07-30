@@ -9,36 +9,46 @@ import {
   ContactDetailDto,
 } from "../../models/PhoneBookEmployeeDto";
 
-// نگاشت Enumهای نوع تماس به عنوان فارسی و رنگ Badge
+// --- Helper Functions ---
 const getContactTypeBadge = (type?: PhoneBookContactTypeEnum | null) => {
   switch (type) {
-    case PhoneBookContactTypeEnum.Mobile:
-      return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
-    case PhoneBookContactTypeEnum.Phone:
-      return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
-    case PhoneBookContactTypeEnum.Email:
-      return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
-    case PhoneBookContactTypeEnum.Fax:
-      return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
-    case PhoneBookContactTypeEnum.Address:
-      return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
-    default:
-      return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
+    case PhoneBookContactTypeEnum.Mobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    case PhoneBookContactTypeEnum.Phone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
+    case PhoneBookContactTypeEnum.Email: return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
+    case PhoneBookContactTypeEnum.Fax: return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
+    case PhoneBookContactTypeEnum.Address: return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
+    default: return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
   }
 };
 
-type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" | "locationTitle";
+// تابع کمکی برای خواندن فیلدها با پشتیبانی از هر دو حالت PascalCase و camelCase (رفع باگ "تعریف نشده")
+const getVal = (obj: any, key: string): string => {
+  if (!obj) return "";
+  const val = obj[key] ?? obj[key.charAt(0).toLowerCase() + key.slice(1)];
+  return (val || "").toString();
+};
+
+// --- Types ---
+type GroupByOption = "none" | "OrganizationUnitsName" | "JobTitleName" | "LocationTitle";
+type SortDirection = "asc" | "desc" | null;
+interface SortConfig {
+  column: string;
+  direction: SortDirection;
+}
 
 export const PhoneBookPage: React.FC = () => {
   const [data, setData] = useState<PhoneBookEmployeeDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // استیت‌های فیلتر و گروه‌بندی
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [groupBy, setGroupBy] = useState<GroupByOption>("organizationUnitsName");
-
-  // استیت سطرهای بازشده (Expand شده)
+  // --- States ---
+  const [globalSearch, setGlobalSearch] = useState<string>("");
+  const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
+  const [groupBy, setGroupBy] = useState<GroupByOption>("OrganizationUnitsName");
+  
+  // Setهایی برای مدیریت باز و بسته بودن کرکره‌ها
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -48,7 +58,6 @@ export const PhoneBookPage: React.FC = () => {
   const fetchPhoneBook = async () => {
     try {
       setLoading(true);
-      setError(null);
       const result = await phonebookApi.GetList();
       setData(result || []);
     } catch (err: any) {
@@ -58,101 +67,150 @@ export const PhoneBookPage: React.FC = () => {
     }
   };
 
-  // مدیریت باز و بسته‌شدن سطرها
-  const toggleRowExpand = (employeeCode: string, hasMultiple: boolean) => {
-    if (!hasMultiple) return; // اگر فقط یک شماره دارد، باز نشود
-    setExpandedRows((prev) => {
+  // --- Handlers ---
+  const toggleGroup = (groupName: string) => {
+    setCollapsedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(employeeCode)) {
-        next.delete(employeeCode);
-      } else {
-        next.add(employeeCode);
-      }
+      if (next.has(groupName)) next.delete(groupName);
+      else next.add(groupName);
       return next;
     });
   };
 
-  // فیلتر و گروه‌بندی داده‌ها در Memory برای کارایی بالا
-  const groupedData = useMemo(() => {
-    // ۱. فیلتر سرچ
-    const filtered = data.filter((emp) => {
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        emp.firstName?.toLowerCase().includes(q) ||
-        emp.lastName?.toLowerCase().includes(q) ||
-        emp.fullName?.toLowerCase().includes(q) ||
-        emp.employeeCode?.includes(q) ||
-        emp.organizationUnitsName?.toLowerCase().includes(q) ||
-        emp.jobTitleName?.toLowerCase().includes(q) ||
-        emp.contactSummary?.includes(q)
-      );
+  const toggleRowExpand = (employeeCode: string, hasMultiple: boolean) => {
+    if (!hasMultiple) return;
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(employeeCode)) next.delete(employeeCode);
+      else next.add(employeeCode);
+      return next;
+    });
+  };
+
+  const handleSort = (column: string) => {
+    let direction: SortDirection = "asc";
+    if (sortConfig.column === column) {
+      if (sortConfig.direction === "asc") direction = "desc";
+      else if (sortConfig.direction === "desc") direction = null;
+    }
+    setSortConfig({ column, direction });
+  };
+
+  const handleColumnSearch = (column: string, value: string) => {
+    setColumnSearch((prev) => ({ ...prev, [column]: value }));
+  };
+
+  // --- Data Pipeline (Filter -> Sort -> Group) ---
+  const processedData = useMemo(() => {
+    let result = [...data];
+
+    // ۱. فیلتر ستون‌ها
+    Object.entries(columnSearch).forEach(([key, term]) => {
+      if (term.trim()) {
+        result = result.filter((emp) => {
+          const q = term.toLowerCase();
+          if (key === "FullName") {
+            const fName = getVal(emp, "FirstName");
+            const lName = getVal(emp, "LastName");
+            const full = getVal(emp, "FullName") || `${fName} ${lName}`;
+            return full.toLowerCase().includes(q);
+          }
+          return getVal(emp, key).toLowerCase().includes(q);
+        });
+      }
     });
 
-    // ۲. گروه‌بندی
-    if (groupBy === "none") {
-      return { "همه اعضا": filtered };
+    // ۲. فیلتر گلوبال
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
+      result = result.filter((emp) => 
+        getVal(emp, "FirstName").toLowerCase().includes(q) ||
+        getVal(emp, "LastName").toLowerCase().includes(q) ||
+        getVal(emp, "EmployeeCode").toLowerCase().includes(q) ||
+        getVal(emp, "OrganizationUnitsName").toLowerCase().includes(q) ||
+        getVal(emp, "ContactSummary").toLowerCase().includes(q)
+      );
     }
 
-    return filtered.reduce((groups, emp) => {
-      const key = (emp[groupBy] as string) || "تعریف نشده";
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(emp);
+    // ۳. سورت
+    if (sortConfig.direction && sortConfig.column) {
+      result.sort((a, b) => {
+        let aVal = getVal(a, sortConfig.column);
+        let bVal = getVal(b, sortConfig.column);
+        
+        if (sortConfig.column === "FullName") {
+          aVal = aVal || `${getVal(a, "FirstName")} ${getVal(a, "LastName")}`;
+          bVal = bVal || `${getVal(b, "FirstName")} ${getVal(b, "LastName")}`;
+        }
+
+        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // ۴. گروه‌بندی
+    if (groupBy === "none") return { "همه اعضا": result };
+
+    return result.reduce((groups, emp) => {
+      const groupKey = getVal(emp, groupBy) || "تعریف نشده";
+      if (!groups[groupKey]) groups[groupKey] = [];
+      groups[groupKey].push(emp);
       return groups;
     }, {} as Record<string, PhoneBookEmployeeDto[]>);
-  }, [data, searchQuery, groupBy]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500 font-medium">در حال دریافت دفترچه تلفن...</div>
-      </div>
-    );
-  }
+  }, [data, globalSearch, columnSearch, sortConfig, groupBy]);
 
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-        <span>{error}</span>
-        <button
-          onClick={fetchPhoneBook}
-          className="mr-4 underline text-sm hover:text-red-900"
-        >
-          تلاش مجدد
-        </button>
-      </div>
-    );
-  }
+
+  // --- Render Helpers ---
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
+    if (sortConfig.direction === "asc") return <span className="text-blue-600 mr-1 text-[10px]">▲</span>;
+    if (sortConfig.direction === "desc") return <span className="text-blue-600 mr-1 text-[10px]">▼</span>;
+    return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
+  };
+
+  const ColumnSearchInput = ({ column, placeholder }: { column: string, placeholder: string }) => (
+    <input
+      type="text"
+      placeholder={placeholder}
+      value={columnSearch[column] || ""}
+      onChange={(e) => handleColumnSearch(column, e.target.value)}
+      className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+    />
+  );
+
+
+  if (loading) return <div className="p-8 text-center text-gray-500">در حال دریافت...</div>;
+  if (error) return <div className="p-4 bg-red-50 text-red-700 rounded m-6">{error}</div>;
 
   return (
     <div className="p-6 dir-rtl text-right font-sans">
-      {/* هدر و اکشن‌ها */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      {/* هدر و کنترل‌های اصلی */}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">دفترچه تلفن سازمانی</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            مجموع پرسنل: {data.length} نفر
-          </p>
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">دفترچه تلفن</h1>
+          <p className="text-sm text-gray-500">مجموع: {data.length} نفر</p>
         </div>
 
-        {/* فیلترها و گروه‌بندی */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* باکس سرچ */}
-          <input
-            type="text"
-            placeholder="جستجوی نام، کد پرسنلی، شماره..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">جستجوی کلی</label>
+            <input
+              type="text"
+              placeholder="جستجو در تمام فیلدها..."
+              value={globalSearch}
+              onChange={(e) => setGlobalSearch(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
 
-          {/* انتخاب گروه‌بندی */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 whitespace-nowrap">گروه‌بندی بر اساس:</label>
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 mb-1">گروه‌بندی</label>
             <select
               value={groupBy}
               onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="OrganizationUnitsName">واحد سازمانی</option>
               <option value="JobTitleName">عنوان شغلی</option>
@@ -163,81 +221,112 @@ export const PhoneBookPage: React.FC = () => {
         </div>
       </div>
 
-      {/* نمایش لیست گروه‌بندی شده */}
-      <div className="space-y-6">
-        {Object.keys(groupedData).length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-lg border border-gray-200 text-gray-500">
-            هیچ رکوردی یافت نشد.
-          </div>
-        ) : (
-          Object.entries(groupedData).map(([groupTitle, employees]) => (
-            <div key={groupTitle} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              {/* هدر هر گروه */}
-              <div className="bg-gray-50 px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-                <span className="font-semibold text-gray-700 text-base">
-                  {groupTitle}
-                </span>
-                <span className="text-xs font-medium bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
-                  {employees.length} نفر
-                </span>
-              </div>
+      {/* جدول یکپارچه */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full text-right border-collapse">
+          <thead>
+            {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
+            <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
+              <th className="py-3 px-4 w-12"></th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("EmployeeCode")}>
+                کد پرسنلی <SortIcon column="EmployeeCode" />
+              </th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("FullName")}>
+                نام و نام خانوادگی <SortIcon column="FullName" />
+              </th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("OrganizationUnitsName")}>
+                واحد سازمانی <SortIcon column="OrganizationUnitsName" />
+              </th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("JobTitleName")}>
+                عنوان شغلی <SortIcon column="JobTitleName" />
+              </th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("ContactSummary")}>
+                اطلاعات تماس <SortIcon column="ContactSummary" />
+              </th>
+            </tr>
+            {/* ردیف دوم: باکس‌های سرچ زیر هر ستون */}
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="py-2 px-2"></th>
+              <th className="py-2 px-2 align-top"><ColumnSearchInput column="EmployeeCode" placeholder="سرچ کد..." /></th>
+              <th className="py-2 px-2 align-top"><ColumnSearchInput column="FullName" placeholder="سرچ نام..." /></th>
+              <th className="py-2 px-2 align-top"><ColumnSearchInput column="OrganizationUnitsName" placeholder="سرچ واحد..." /></th>
+              <th className="py-2 px-2 align-top"><ColumnSearchInput column="JobTitleName" placeholder="سرچ سمت..." /></th>
+              <th className="py-2 px-2 align-top"><ColumnSearchInput column="ContactSummary" placeholder="سرچ تماس..." /></th>
+            </tr>
+          </thead>
 
-              {/* جدول پرسنل این گروه */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-right border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50/50 text-gray-500 text-xs">
-                      <th className="py-3 px-4 w-10"></th>
-                      <th className="py-3 px-4 font-medium">کد پرسنلی</th>
-                      <th className="py-3 px-4 font-medium">نام و نام خانوادگی</th>
-                      <th className="py-3 px-4 font-medium">سمت شغلی</th>
-                      <th className="py-3 px-4 font-medium">اطلاعات تماس</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {employees.map((emp) => {
-                      const isExpanded = expandedRows.has(emp.employeeCode);
+          <tbody className="divide-y divide-gray-100">
+            {Object.keys(processedData).length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-12 text-gray-500">رکوردی یافت نشد.</td>
+              </tr>
+            ) : (
+              Object.entries(processedData).map(([groupName, employees]) => {
+                const isGroupCollapsed = collapsedGroups.has(groupName);
+
+                return (
+                  <React.Fragment key={groupName}>
+                    {/* ردیف هدر گروه (فقط اگر گروه‌بندی فعال باشد) */}
+                    {groupBy !== "none" && (
+                      <tr 
+                        className="bg-blue-50/50 hover:bg-blue-50 cursor-pointer border-t-2 border-t-blue-100"
+                        onClick={() => toggleGroup(groupName)}
+                      >
+                        <td colSpan={6} className="py-3 px-4">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-3">
+                              <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-180" : "rotate-0"}`}>
+                                ▼
+                              </span>
+                              <span className="font-bold text-gray-800">{groupName}</span>
+                            </div>
+                            <span className="text-xs bg-white text-blue-800 border border-blue-200 px-3 py-1 rounded-full shadow-sm">
+                              {employees.length} نفر
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* ردیف‌های کارمندان داخل این گروه */}
+                    {!isGroupCollapsed && employees.map((emp) => {
+                      const empCode = getVal(emp, "EmployeeCode");
+                      const isExpanded = expandedRows.has(empCode);
+                      // بررسی می‌کنیم که آیا شماره‌های متعددی دارد یا خیر
                       const hasMultiple = emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
 
                       return (
-                        <React.Fragment key={emp.employeeCode}>
-                          {/* سطر اصلی کارمند */}
+                        <React.Fragment key={empCode}>
+                          {/* سطر اصلی */}
                           <tr
-                            onClick={() => toggleRowExpand(emp.employeeCode, !!hasMultiple)}
-                            className={`transition-colors ${
-                              hasMultiple ? "cursor-pointer hover:bg-blue-50/40" : "hover:bg-gray-50"
-                            } ${isExpanded ? "bg-blue-50/30" : ""}`}
+                            onClick={() => toggleRowExpand(empCode, !!hasMultiple)}
+                            className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}
                           >
-                            {/* آیکون آکاردئون */}
                             <td className="py-3 px-4 text-center">
                               {hasMultiple ? (
-                                <span className="text-gray-400 font-bold text-xs inline-block transition-transform duration-200">
+                                <span className="text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200">
                                   {isExpanded ? "▼" : "◀"}
                                 </span>
                               ) : null}
                             </td>
-
-                            <td className="py-3 px-4 font-mono text-gray-600">
-                              {emp.employeeCode}
-                            </td>
+                            <td className="py-3 px-4 font-mono text-gray-600">{empCode}</td>
                             <td className="py-3 px-4 font-medium text-gray-800">
-                              {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
+                              {getVal(emp, "FullName") || `${getVal(emp, "FirstName")} ${getVal(emp, "LastName")}`}
                             </td>
-                            <td className="py-3 px-4 text-gray-600">
-                              {emp.jobTitleName || "-"}
-                            </td>
+                            <td className="py-3 px-4 text-gray-600">{getVal(emp, "OrganizationUnitsName") || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{getVal(emp, "JobTitleName") || "-"}</td>
                             <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-                              {emp.contactSummary || "-"}
+                              {getVal(emp, "ContactSummary") || "-"}
                             </td>
                           </tr>
 
-                          {/* سطر زیرمجموعه (Sub-Grid) در صورت چند شماره‌ای بودن و باز شدن سطر */}
+                          {/* زیر‌جدول راه‌های ارتباطی */}
                           {hasMultiple && isExpanded && (
-                            <tr className="bg-gray-50/80">
-                              <td colSpan={5} className="p-4 pr-12">
-                                <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-inner">
-                                  <h4 className="text-xs font-bold text-gray-500 mb-2">
-                                    جزییات راه‌های ارتباطی:
+                            <tr className="bg-gray-50">
+                              <td colSpan={6} className="p-4 px-12 border-b border-gray-200">
+                                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-inner">
+                                  <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2">
+                                    جزییات تماس
                                   </h4>
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
@@ -245,34 +334,18 @@ export const PhoneBookPage: React.FC = () => {
                                       const isOrg = contact.source === PhoneBookContactSourceEnum.Organizational;
 
                                       return (
-                                        <div
-                                          key={index}
-                                          className="flex items-center justify-between p-2.5 bg-gray-50 rounded-md border border-gray-100"
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <span
-                                              className={`text-xs px-2 py-0.5 rounded border ${badge.color}`}
-                                            >
+                                        <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
+                                          <div className="flex justify-between items-center mb-1">
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${badge.color}`}>
                                               {badge.label}
                                             </span>
-                                            <span className="text-xs text-gray-500 font-medium">
-                                              {contact.title}
-                                            </span>
-                                          </div>
-
-                                          <div className="flex items-center gap-2">
-                                            <span className="font-mono text-sm font-semibold text-gray-800 dir-ltr">
-                                              {contact.value}
-                                            </span>
-                                            <span
-                                              className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                                isOrg
-                                                  ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                                  : "bg-gray-100 text-gray-600"
-                                              }`}
-                                            >
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isOrg ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-gray-200 text-gray-600"}`}>
                                               {isOrg ? "سازمانی" : "شخصی"}
                                             </span>
+                                          </div>
+                                          <div className="flex justify-between items-center mt-1">
+                                            <span className="text-xs text-gray-500">{contact.title}</span>
+                                            <span className="font-mono text-sm font-semibold text-gray-800 dir-ltr">{contact.value}</span>
                                           </div>
                                         </div>
                                       );
@@ -285,12 +358,12 @@ export const PhoneBookPage: React.FC = () => {
                         </React.Fragment>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))
-        )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );
