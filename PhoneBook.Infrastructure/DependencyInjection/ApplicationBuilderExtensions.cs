@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using PhoneBook.Infrastructure.Data;
 using Serilog;
 namespace PhoneBook.Infrastructure.DependencyInjection
 {
@@ -13,10 +14,10 @@ namespace PhoneBook.Infrastructure.DependencyInjection
         // 📌 متد اصلی برای استفاده در Startup
         public static async Task<IApplicationBuilder> PhoneBook_UseInfrastructure(this IApplicationBuilder app)
         {
-         //   await app.RunSmartMigrations();
+           await app.RunSmartMigrations();
             return app;
         }
-        /*
+        
         // 📌 اجرای Migrationها به صورت هوشمند
         private static async Task<IApplicationBuilder> RunSmartMigrations(this IApplicationBuilder app)
         {
@@ -25,7 +26,7 @@ namespace PhoneBook.Infrastructure.DependencyInjection
             var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
             var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-            var dbContextType = typeof(SampleDbContext);
+            var dbContextType = typeof(PhoneBookDbContext);
             var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
 
@@ -37,7 +38,7 @@ namespace PhoneBook.Infrastructure.DependencyInjection
                 {
                     logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
 
-                    // 📌 اجرای متد Generic MigrateAsync برای SampleDbContext
+                    // 📌 اجرای متد Generic MigrateAsync برای PhoneBookDbContext
                     var method = typeof(IMigrationManager).GetMethod(nameof(IMigrationManager.MigrateAsync));
                     var genericMethod = method!.MakeGenericMethod(dbContextType);
                     await (Task)genericMethod.Invoke(migrationManager, new object[] { CancellationToken.None })!;
@@ -74,6 +75,6 @@ namespace PhoneBook.Infrastructure.DependencyInjection
 
             return app;
         }
-   */
+   
     }
 }

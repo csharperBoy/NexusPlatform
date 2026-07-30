@@ -12,7 +12,7 @@ using PhoneBook.Infrastructure.Data;
 namespace PhoneBook.Infrastructure.Migrations
 {
     [DbContext(typeof(PhoneBookDbContext))]
-    [Migration("20260729093951_Initial_PhoneBook")]
+    [Migration("20260730061506_Initial_PhoneBook")]
     partial class Initial_PhoneBook
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace PhoneBook.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("hr")
+                .HasDefaultSchema("phonebook")
                 .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
