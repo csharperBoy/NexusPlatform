@@ -11,7 +11,7 @@ namespace HR.Domain.Specifications
 {
     public class GetPostContactSpec : BaseSpecification<PostContact?>
     {
-        public GetPostContactSpec( PostContactType contactType , Guid postId, string? value = null)
+        public GetPostContactSpec( HrContactType contactType , Guid postId, string? value = null)
             : base(p =>
                           p.ContactType == contactType && p.FkPostId == postId 
             && ( value == null || p.Value == value )

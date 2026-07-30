@@ -42,6 +42,10 @@ namespace HR.Application.Commands.Employee
      DateOnly? EndDate,
 
      List<Guid> locationsId,
+
+     string? OfficePhone,
+            string? OrgEmail,
+            string? OrgMobile,
     #endregion
 
     #region post assign
@@ -109,9 +113,19 @@ namespace HR.Application.Commands.Employee
 
                 #region ایجاد کارمند
 
+                PhoneNumber? orgPhone = null;
+                Email? orgEmail = null;
+                PhoneNumber? orgMobile = null;
+                try { orgPhone = request.OfficePhone != null ? PhoneNumber.Create(request.OfficePhone) : null; } catch { }
+                try { orgEmail = request.OrgEmail != null ? Email.Create(request.OrgEmail) : null; } catch { }
+                try { orgMobile = request.OrgMobile != null ? PhoneNumber.Create(request.OrgMobile) : null; } catch { }
+
+
+
                 Guid employeeId = await _employeeService.CreateEmployeeAsync(
                     request.EmployeeCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
                 #endregion
+                
 
                 #region انتصاب مکان ها به شخص
                 if (request.locationsId != null && request.locationsId.Count() > 0)

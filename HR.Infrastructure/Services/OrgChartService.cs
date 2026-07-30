@@ -123,19 +123,19 @@ namespace HR.Infrastructure.Services
             await _postRepository.AddAsync(post);
             if (OrgMobile != null)
             {
-                await CreatePostContact(PostContactType.OrgMobile, OrgMobile, post.Id);
+                await CreatePostContact(HrContactType.OrgMobile, OrgMobile, post.Id);
             }
             if (OrgEmail != null)
             {
-                await CreatePostContact(PostContactType.OrgEmail, OrgEmail, post.Id);
+                await CreatePostContact(HrContactType.OrgEmail, OrgEmail, post.Id);
             }
             if (OfficePhone != null)
             {
-                await CreatePostContact(PostContactType.OfficePhone, OfficePhone, post.Id);
+                await CreatePostContact(HrContactType.OfficePhone, OfficePhone, post.Id);
             }
             return post.Id;
         }
-        private async Task CreatePostContact(PostContactType type, string? value, Guid postId)
+        private async Task CreatePostContact(HrContactType type, string? value, Guid postId)
         {
             if (value != null)
             {
@@ -265,15 +265,15 @@ namespace HR.Infrastructure.Services
             }
             if (officePhone != null)
             {
-                await CreatePostContact(PostContactType.OfficePhone, officePhone, post.Id);
+                await CreatePostContact(HrContactType.OfficePhone, officePhone, post.Id);
             }
             if (orgEmail != null)
             {
-                await CreatePostContact(PostContactType.OrgEmail, orgEmail, post.Id);
+                await CreatePostContact(HrContactType.OrgEmail, orgEmail, post.Id);
             }
             if (orgMobile != null)
             {
-                await CreatePostContact(PostContactType.OrgMobile, orgMobile, post.Id);
+                await CreatePostContact(HrContactType.OrgMobile, orgMobile, post.Id);
             }
             return post.Id;
         }

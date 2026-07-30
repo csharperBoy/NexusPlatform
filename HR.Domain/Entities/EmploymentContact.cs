@@ -1,6 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace HR.Domain.Entities
 {
-    public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity,IHasEffectivePeriod
+    
+    public class EmploymentContact : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -79,26 +79,27 @@ namespace HR.Domain.Entities
 
         public HrContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
-        public Guid FkPostId { get; private set; }
+        public Guid FkEmploymentId { get; private set; }
 
-        public virtual Post Post { get; private set; } = null!;
+        public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
-        protected PostContact() { }
-        public PostContact
+        protected EmploymentContact() { }
+        public EmploymentContact
             (HrContactType _ContactType,
             string _Value,
-            Guid _PostId,
+            Guid _EmploymentId,
             DateTime? _EffectiveFrom = null,
-            DateTime? _EffectiveTo =null,
+            DateTime? _EffectiveTo = null,
             bool _isCurrent = true
             )
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPostId = _PostId;
+            FkEmploymentId = _EmploymentId;
             EffectiveFrom = _EffectiveFrom;
             EffectiveTo = _EffectiveTo;
             IsCurrent = _isCurrent;
         }
     }
+
 }

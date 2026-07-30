@@ -34,14 +34,14 @@ namespace PhoneBook.Application.Mapping
                         // ۱. افزودن تماس‌های شخصی
                         AddContact(employee.Contacts, "موبایل شخصی", row.PartyMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.Personal);
                         AddContact(employee.Contacts, "تلفن ثابت شخصی", row.PartyPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.Personal);
-                        AddContact(employee.Contacts, "ایمیل شخصی", row.PartyEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Personal);
-                        AddContact(employee.Contacts, "آدرس منزل", row.PartyAddress, PhoneBookContactTypeEnum.Address, PhoneBookContactSourceEnum.Personal);
+                        //AddContact(employee.Contacts, "ایمیل شخصی", row.PartyEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Personal);
+                        //AddContact(employee.Contacts, "آدرس منزل", row.PartyAddress, PhoneBookContactTypeEnum.Address, PhoneBookContactSourceEnum.Personal);
 
                         // ۲. افزودن تماس‌های سازمانی
                         AddContact(employee.Contacts, "داخلی", row.PostContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.Organizational);
                         AddContact(employee.Contacts, "موبایل سازمانی", row.PostContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.Organizational);
-                        AddContact(employee.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
-                        AddContact(employee.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
+                        //AddContact(employee.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
+                        //AddContact(employee.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
                     }
 
                     return employee;

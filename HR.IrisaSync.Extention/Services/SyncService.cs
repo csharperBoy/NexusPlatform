@@ -167,10 +167,13 @@ namespace HR.IrisaSync.Extention.Services
                         {
                             // ➕ کارمند جدید → ایجاد از طریق MediatR
                             var createCommand = new CreateEmployeeCommand(
-                                Phone : item.NumTelEmply.ToString(),
+                                Phone: item.NumTelEmply.ToString(),
                                 Address: item.DesAdrEmply,
                                 Email: null, // یا item.DesEmailAddresEmply
                                 Mobile: item.NumMobilEmply.ToString(),
+                                OfficePhone: null,
+                                OrgEmail: null,
+                                OrgMobile: null,
                                 NationalCode: item.CodNatEmply,
                                 FirstlName: item.NamFirstEmply,
                                 LastName: item.NamLastEmply,
@@ -183,7 +186,7 @@ namespace HR.IrisaSync.Extention.Services
                                 PostId: postId,
                                 AssigneeType: PostAssignmentType.Delegation,
                                 EffectiveFrom: Convert.ToDateTime(item.DatEmpltEmplyEn),
-                                EffectiveTo: null,EmploymentStatusId: null , EmploymentTypeId: null,EndDate: null,locationsId:null
+                                EffectiveTo: null, EmploymentStatusId: null, EmploymentTypeId: null, EndDate: null, locationsId: null
                             );
 
                             var createResult = await _mediator.Send(createCommand);

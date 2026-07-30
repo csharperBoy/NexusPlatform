@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Shared.Enums.HR
 {
-    public enum PostContactType : byte
+    public enum HrContactType : byte
     {
         OfficePhone = 0,
         OrgMobile = 1,

@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,11 @@ namespace HR.Application.Interfaces
         Guid? _EmploymentTypeId,
         Guid? _EmploymentStatusId,
         DateOnly? _StartDate = null,
-        DateOnly? _EndDate = null
+        DateOnly? _EndDate = null,
+
+        PhoneNumber? _orgPhone = null,
+        Email? _orgEmail = null,
+        PhoneNumber? _orgMobile = null
            );
     }
 }

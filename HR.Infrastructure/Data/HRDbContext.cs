@@ -31,6 +31,7 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<Assignment> Assignments { get; set; }
         public virtual DbSet<CostCenter> CostCenters { get; set; }
         public virtual DbSet<Employment> Employments { get; set; }
+        public virtual DbSet<EmploymentContact> EmploymentContacts { get; set; }
         public virtual DbSet<EmploymentStatus> EmploymentStatuses { get; set; }
         public virtual DbSet<EmploymentType> EmploymentTypes { get; set; }
         public virtual DbSet<Grade> Grades { get; set; }
@@ -63,6 +64,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new AssignmentConfiguration());
             modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentContactConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentStatusConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentTypeConfiguration());
             modelBuilder.ApplyConfiguration(new GradeConfiguration());

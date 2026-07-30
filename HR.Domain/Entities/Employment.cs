@@ -27,6 +27,7 @@ namespace HR.Domain.Entities
         public virtual EmploymentType? EmploymentType { get; set; }
 
 
+        public virtual ICollection<EmploymentContact> EmploymentContacts { get; set; } = new List<EmploymentContact>();
         protected Employment()
         {
 
