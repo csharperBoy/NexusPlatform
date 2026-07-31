@@ -39,6 +39,13 @@ export const PostManagementPage: React.FC = () => {
   const draggedIdRef = useRef<string | null>(null);
   draggedIdRef.current = draggedId;
 
+  // مپ مقادیر اولیه برای جلوگیری از محو شدن سطر در حال ویرایش هنگام سرچ
+  const initialPostsMap = useMemo(() => {
+    const map = new Map<string, PostInfoView>();
+    initialPosts.forEach((p) => map.set(p.id, p));
+    return map;
+  }, [initialPosts]);
+
   // --- 1. دریافت اطلاعات اولیه ---
   useEffect(() => {
     loadData();
@@ -67,7 +74,7 @@ export const PostManagementPage: React.FC = () => {
     }
   };
 
-  // --- 2. مدیریت ویرایش مقادیر داخل جدول (تلفن و موبایل) ---
+  // --- 2. مدیریت ویرایش درجا (تلفن و موبایل) ---
   const handleFieldChange = (id: string, field: "officePhone" | "orgMobile", value: string) => {
     setPosts((prev) =>
       prev.map((item) => {
@@ -85,7 +92,7 @@ export const PostManagementPage: React.FC = () => {
     setColumnSearch((prev) => ({ ...prev, [column]: value }));
   };
 
-  // --- 3. ساختار درخت و فیلترها ---
+  // --- 3. ساختار درخت و فیلتر هوشمند ---
   const { flattenedTree, postsMap } = useMemo(() => {
     const map = new Map<string, PostInfoView>();
     const childrenMap = new Map<string | null, PostInfoView[]>();
@@ -101,7 +108,6 @@ export const PostManagementPage: React.FC = () => {
     });
 
     const normalizedGlobal = globalSearch.trim().toLowerCase();
-
     const flattened: FlattenedNode[] = [];
 
     const traverse = (parentId: string | null, depth: number) => {
@@ -113,35 +119,81 @@ export const PostManagementPage: React.FC = () => {
         const isExpanded = expandedIds.has(child.id);
         const isModified = modifiedIds.has(child.id);
 
-        // ترکیب عنوان و کد پست برای سرچ
+        // دریافت مقادیر اولیه همین گره برای مقایسه در سرچ
+        const initChild = initialPostsMap.get(child.id);
+
+        // مقادیر فعلی
         const fullJobTitle = `${child.jobTitleName || ""} ${child.postCode ? `(${child.postCode})` : ""}`;
         const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employeeCode || ""}`;
         const levelGrade = `${child.jobLevelTitle || ""} ${child.gradeTitle || ""}`;
 
-        // ۱. بررسی سرچ کلی
+        // مقادیر اولیه (برای جلوگیری از محو شدن هنگام تایپ)
+        const initFullJobTitle = initChild
+          ? `${initChild.jobTitleName || ""} ${initChild.postCode ? `(${initChild.postCode})` : ""}`
+          : fullJobTitle;
+        const initOccupantName = initChild
+          ? `${initChild.firstName || ""} ${initChild.lastName || ""} ${initChild.employeeCode || ""}`
+          : occupantName;
+        const initLevelGrade = initChild
+          ? `${initChild.jobLevelTitle || ""} ${initChild.gradeTitle || ""}`
+          : levelGrade;
+
+        // ۱. بررسی سرچ کلی (بررسی همزمان مقدار فعلی OR مقدار اولیه)
         const matchesGlobal =
           !normalizedGlobal ||
           fullJobTitle.toLowerCase().includes(normalizedGlobal) ||
           (child.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
           occupantName.toLowerCase().includes(normalizedGlobal) ||
           (child.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
-          (child.orgMobile || "").toLowerCase().includes(normalizedGlobal);
+          (child.orgMobile || "").toLowerCase().includes(normalizedGlobal) ||
+          // چک مقادیر اولیه
+          (initChild &&
+            (initFullJobTitle.toLowerCase().includes(normalizedGlobal) ||
+              (initChild.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
+              initOccupantName.toLowerCase().includes(normalizedGlobal) ||
+              (initChild.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
+              (initChild.orgMobile || "").toLowerCase().includes(normalizedGlobal)));
 
-        // ۲. بررسی سرچ‌های ستونی
+        // ۲. بررسی سرچ‌های ستونی (مقدار فعلی OR مقدار اولیه)
         let matchesColumns = true;
         for (const [col, term] of Object.entries(columnSearch)) {
           if (!term.trim()) continue;
           const q = term.toLowerCase();
 
-          if (col === "jobTitle" && !fullJobTitle.toLowerCase().includes(q)) matchesColumns = false;
-          if (col === "unit" && !(child.organizationUnitsName || "").toLowerCase().includes(q)) matchesColumns = false;
-          if (col === "occupant" && !occupantName.toLowerCase().includes(q)) matchesColumns = false;
-          if (col === "officePhone" && !(child.officePhone || "").toLowerCase().includes(q)) matchesColumns = false;
-          if (col === "orgMobile" && !(child.orgMobile || "").toLowerCase().includes(q)) matchesColumns = false;
-          if (col === "levelGrade" && !levelGrade.toLowerCase().includes(q)) matchesColumns = false;
+          if (col === "jobTitle") {
+            const matchCur = fullJobTitle.toLowerCase().includes(q);
+            const matchInit = initFullJobTitle.toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
+          if (col === "unit") {
+            const matchCur = (child.organizationUnitsName || "").toLowerCase().includes(q);
+            const matchInit = (initChild?.organizationUnitsName || "").toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
+          if (col === "occupant") {
+            const matchCur = occupantName.toLowerCase().includes(q);
+            const matchInit = initOccupantName.toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
+          if (col === "officePhone") {
+            const matchCur = (child.officePhone || "").toLowerCase().includes(q);
+            const matchInit = (initChild?.officePhone || "").toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
+          if (col === "orgMobile") {
+            const matchCur = (child.orgMobile || "").toLowerCase().includes(q);
+            const matchInit = (initChild?.orgMobile || "").toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
+          if (col === "levelGrade") {
+            const matchCur = levelGrade.toLowerCase().includes(q);
+            const matchInit = initLevelGrade.toLowerCase().includes(q);
+            if (!matchCur && !matchInit) matchesColumns = false;
+          }
         }
 
-        const isSearching = normalizedGlobal !== "" || Object.values(columnSearch).some((v) => v.trim() !== "");
+        const isSearching =
+          normalizedGlobal !== "" || Object.values(columnSearch).some((v) => v.trim() !== "");
 
         if (matchesGlobal && matchesColumns) {
           flattened.push({
@@ -153,7 +205,6 @@ export const PostManagementPage: React.FC = () => {
           });
         }
 
-        // اگر در حال سرچ بودیم یا گره باز بود، پیمایش ادامه یابد
         if ((isExpanded || isSearching) && hasChildren) {
           traverse(child.id, depth + 1);
         }
@@ -163,7 +214,7 @@ export const PostManagementPage: React.FC = () => {
     traverse(null, 0);
 
     return { flattenedTree: flattened, postsMap: map };
-  }, [posts, expandedIds, globalSearch, columnSearch, modifiedIds]);
+  }, [posts, expandedIds, globalSearch, columnSearch, modifiedIds, initialPostsMap]);
 
   // --- 4. متدهای مدیریت درخت ---
   const toggleExpand = (id: string) => {
@@ -189,7 +240,7 @@ export const PostManagementPage: React.FC = () => {
     setExpandedIds(new Set());
   };
 
-  // --- 5. منطق Drag and Drop و Cycle Detection ---
+  // --- 5. منطق Drag and Drop ---
   const isDescendant = (targetId: string, ancestorId: string): boolean => {
     let currentId: string | null | undefined = targetId;
     while (currentId) {
@@ -391,7 +442,7 @@ export const PostManagementPage: React.FC = () => {
           </div>
         )}
 
-        {/* کنترل‌های جستجوی اصلی و باز/بسته کردن */}
+        {/* سرچ اصلی و کنترل‌های درخت */}
         <div className="flex flex-wrap items-center justify-between gap-4 mt-5 pt-4 border-t border-gray-100">
           <div className="w-72">
             <input
@@ -420,7 +471,7 @@ export const PostManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی ریشه (Root Dropzone) */}
+      {/* منطقه رهاسازی ریشه */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -542,7 +593,7 @@ export const PostManagementPage: React.FC = () => {
                       isTarget ? "bg-blue-50 border-y-2 border-blue-500" : "hover:bg-gray-50/80"
                     } ${isModified ? "bg-amber-50/40" : ""}`}
                   >
-                    {/* ستون اختصاصی Handle برای Drag & Drop */}
+                    {/* Handle برای Drag & Drop */}
                     <td className="py-3 px-2 text-center align-middle">
                       <div
                         draggable
@@ -554,7 +605,7 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* عنوان پست همراه با کد پست درون پرانتز + Indentation درخت */}
+                    {/* عنوان شغل + کد پست داخل پرانتز */}
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div
                         className="flex items-center gap-2"
@@ -599,7 +650,7 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* تلفن داخلی (قابل ویرایش) */}
+                    {/* تلفن داخلی (قابل ویرایش درجا) */}
                     <td className="py-2 px-3">
                       <input
                         type="text"
@@ -610,7 +661,7 @@ export const PostManagementPage: React.FC = () => {
                       />
                     </td>
 
-                    {/* موبایل سازمانی (قابل ویرایش) */}
+                    {/* موبایل سازمانی (قابل ویرایش درجا) */}
                     <td className="py-2 px-3">
                       <input
                         type="text"
@@ -621,7 +672,7 @@ export const PostManagementPage: React.FC = () => {
                       />
                     </td>
 
-                    {/* سطح / رده شغلی */}
+                    {/* رده / سطح شغلی */}
                     <td className="py-3 px-4 text-gray-500 text-xs">
                       {node.jobLevelTitle || node.gradeTitle ? (
                         <span>
@@ -654,4 +705,3 @@ export const PostManagementPage: React.FC = () => {
 };
 
 export default PostManagementPage;
-

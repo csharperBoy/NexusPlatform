@@ -141,15 +141,17 @@ namespace HR.Infrastructure.Services
             {
                 GetPostContactSpec spec = new GetPostContactSpec(type, postId, value);
                 PostContact? existContact = await _postContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact != null)
+                if (existContact?.Value.Trim() != value.Trim())
                 {
-                    existContact.DoExpire();
-                    await _postContactRepository.UpdateAsync(existContact);
+                    if (existContact != null)
+                    {
+                        existContact.DoExpire();
+                        await _postContactRepository.UpdateAsync(existContact);
 
+                    }
+                    PostContact contact = new PostContact(type, value, postId, DateTime.UtcNow);
+                    await _postContactRepository.AddAsync(contact);
                 }
-                PostContact contact = new PostContact(type, value, postId, DateTime.UtcNow);
-                await _postContactRepository.AddAsync(contact);
-
 
             }
         }
