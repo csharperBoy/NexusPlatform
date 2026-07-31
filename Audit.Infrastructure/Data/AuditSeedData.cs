@@ -121,7 +121,7 @@ namespace Audit.Infrastructure.Data
         }
         #endregion
 
-        #region ForBase
+        #region For Navigation
 
         // تعریف ساختار درختی منابع ماژول Audit
         private static List<MenuDto> GetAuditMenuDefinitions()
@@ -156,12 +156,12 @@ namespace Audit.Infrastructure.Data
 
        
         // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
-        public static async Task SeedAuditsForBaseAsync(
+        public static async Task SeedAuditsForNavigationAsync(
             IMenuPublicService menuPublicService,           
             ILogger logger,
             CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("🚀 Starting Audit module Fot Base seeding...");
+            logger.LogInformation("🚀 Starting Audit module Fot Navigation seeding...");
 
             try
             {

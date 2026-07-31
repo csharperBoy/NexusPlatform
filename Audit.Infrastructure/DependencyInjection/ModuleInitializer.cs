@@ -45,7 +45,7 @@ namespace Audit.Infrastructure.DependencyInjection
                 await AuditSeedData.SeedAuditsForAuthorizationAsync(resourcePublicService,
                     permissionPublicService,  roleService,
                     _logger);
-                await AuditSeedData.SeedAuditsForBaseAsync(menuService, _logger);
+                await AuditSeedData.SeedAuditsForNavigationAsync(menuService, _logger);
                 _logger.LogInformation("Successfull Audit module initialization.");
 
 

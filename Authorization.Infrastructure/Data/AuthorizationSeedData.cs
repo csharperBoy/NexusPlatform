@@ -146,6 +146,18 @@ namespace Authorization.Infrastructure.Data
                         Icon = "users",
                         Path = "/authorization/permissionRule"
 
+                    },
+                     new()
+                    {
+                        Key = "authorization.scope",
+                        Name = "permission scope Management",
+                        Type =ResourceType.Data,
+                        Category =ResourceCategory.System,
+                        Description = "Manage permission scope",
+                        DisplayOrder = 1004,
+                        Icon = "users",
+                        Path = "/authorization/scope"
+
                     }
 
                 }
@@ -441,6 +453,20 @@ namespace Authorization.Infrastructure.Data
                 },
                 Effect =PermissionEffect.allow,
                 Description = "Full access to all authorization permission Rule"
+            },
+            new()
+            {
+                ResourceKey = "authorization.scope", // فرض می‌کنیم این کلید وجود دارد
+                Action =PermissionAction.Full,
+                Scopes = new List<ScopeDto>()
+                {
+                    new()
+                    {
+                        scope = ScopeType.All,
+                    }
+                },
+                Effect =PermissionEffect.allow,
+                Description = "Full access to all authorization permission scope"
             }
             //,
             //new()

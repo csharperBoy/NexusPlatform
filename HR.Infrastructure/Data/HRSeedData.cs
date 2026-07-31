@@ -1,11 +1,14 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Application.Helper;
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
+using Core.Shared.DTOs.Navigation;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Navigation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -132,37 +135,97 @@ namespace HR.Infrastructure.Data
                 throw;
             }
         }
-       /* public static async Task SeedHrAsync(
-            IUnitOfWork<HRDbContext> unitOfWork,
-            IConfiguration config,
-            ILogger logger)
+
+        #region For Navigation
+
+        // تعریف ساختار درختی منابع ماژول Hr
+        private static List<MenuDto> GetHrMenuDefinitions()
         {
-            // 📌 بررسی وجود داده‌ی اولیه
-            var exists = await repository.ExistsAsync(e => e.property1 == "SeededValue1");
-
-            if (!exists)
+            return new List<MenuDto>
             {
-                // 📌 ایجاد داده‌های اولیه
-                var samples = new List<SampleEntity>
+                new()
                 {
-                    new SampleEntity { property1 = "SeededValue1" },
-                    new SampleEntity { property1 = "SeededValue2" }
-                };
+                    Title = "مدیریت منابع انسانی",
+                    Description = "مدیریت منابع انسانی",
+                    Icon = Icon.Folder.GetIconString(),
+                    Order = 100,
+                    Key = "Hr",
+                    ParentKey = null,
+                    Path = "/hr",
+                    Children = new List<MenuDto>
+                    {
+                        new()
+                        {
+                            Title = "مدیریت پست های سازمانی",
+                            Description = "مدیریت پست های سازمانی",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 101,
+                            Key = "hr.post",
+                            ParentKey = "hr",
+                            Path = "/hr/post"
+                        }
+                    }
+                }
+            };
+        }
 
-                // 📌 درج داده‌ها با Repository
-                await repository.AddRangeAsync(samples);
 
-                // 📌 ذخیره تغییرات با UnitOfWork
-                await unitOfWork.SaveChangesAsync();
+        // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
+        public static async Task SeedHrsForNavigationAsync(
+            IMenuPublicService menuPublicService,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting Hr module Fot Navigation seeding...");
 
-                // 📌 ثبت لاگ موفقیت
-                logger.LogInformation("✅ Sample seed data inserted successfully via Repository + UnitOfWork.");
-            }
-            else
+            try
             {
-                // 📌 اگر داده وجود داشت، صرف‌نظر از درج مجدد
-                logger.LogInformation("ℹ️ Sample seed data already exists, skipping.");
+
+                // 1. ثبت منو (Menus)
+                var menus = GetHrMenuDefinitions();
+                await menuPublicService.SyncModuleMenusAsync(menus, cancellationToken);
+                logger.LogInformation("✅ Hr Menu synced successfully.");
+
             }
-        }*/
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ Error during Hr module seeding");
+                throw;
+            }
+        }
+        #endregion
+
+        /* public static async Task SeedHrAsync(
+             IUnitOfWork<HRDbContext> unitOfWork,
+             IConfiguration config,
+             ILogger logger)
+         {
+             // 📌 بررسی وجود داده‌ی اولیه
+             var exists = await repository.ExistsAsync(e => e.property1 == "SeededValue1");
+
+             if (!exists)
+             {
+                 // 📌 ایجاد داده‌های اولیه
+                 var samples = new List<SampleEntity>
+                 {
+                     new SampleEntity { property1 = "SeededValue1" },
+                     new SampleEntity { property1 = "SeededValue2" }
+                 };
+
+                 // 📌 درج داده‌ها با Repository
+                 await repository.AddRangeAsync(samples);
+
+                 // 📌 ذخیره تغییرات با UnitOfWork
+                 await unitOfWork.SaveChangesAsync();
+
+                 // 📌 ثبت لاگ موفقیت
+                 logger.LogInformation("✅ Sample seed data inserted successfully via Repository + UnitOfWork.");
+             }
+             else
+             {
+                 // 📌 اگر داده وجود داشت، صرف‌نظر از درج مجدد
+                 logger.LogInformation("ℹ️ Sample seed data already exists, skipping.");
+             }
+         }*/
     }
 }
