@@ -471,7 +471,7 @@ export const PostManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی ریشه (Sticky هنگام اسکرول) */}
+      {/* منطقه رهاسازی ریشه - فیکس روی مرورگر (top-0) */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -479,51 +479,51 @@ export const PostManagementPage: React.FC = () => {
         }}
         onDragLeave={() => setIsOverRootZone(false)}
         onDrop={handleDropOnRoot}
-        className={`sticky top-2 z-30 mb-4 p-3 border-2 border-dashed rounded-xl text-center text-xs transition-all shadow-sm backdrop-blur-md ${
+        className={`sticky top-0 z-30 mb-4 py-2.5 px-3 border-2 border-dashed rounded-xl text-center text-xs transition-all shadow-md backdrop-blur-md ${
           isOverRootZone
-            ? "border-blue-500 bg-blue-100/90 text-blue-800 font-bold scale-[1.01]"
+            ? "border-blue-500 bg-blue-100/95 text-blue-800 font-bold scale-[1.01]"
             : "border-gray-300 bg-white/95 text-gray-600 hover:border-gray-400"
         }`}
       >
         📌 جهت انتقال پست به بالاترین سطح چارت (بدون والد)، آن را اینجا رها کنید.
       </div>
 
-      {/* جدول درختی با هدرهای فیکس (Sticky) */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto">
+      {/* جدول چارت با اسکرول کامل صفحه */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها */}
+            {/* ردیف اول: عناوین ستون‌ها (فیکس شده زیر باکس ریشه در top-[48px]) */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-3 w-10 text-center border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
                 جابه‌جایی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
                 عنوان شغل (کد پست)
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
                 واحد سازمانی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
                 شاغل فعلی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 w-36 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 w-36 border-b border-gray-200 shadow-sm">
                 تلفن داخلی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 w-40 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 w-40 border-b border-gray-200 shadow-sm">
                 موبایل سازمانی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
                 رده / سطح شغلی
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-3 px-4 text-center w-24 border-b border-gray-200">
+              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ اختصاصی ستون‌ها (فیکس دقیقا زیر ردیف اول) */}
+            {/* ردیف دوم: اینپوت‌های سرچ (فیکس شده زیر ردیف اول در top-[89px]) */}
             <tr className="border-b border-gray-200">
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200"></th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200 shadow-sm"></th>
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شغل / کد..."
@@ -532,7 +532,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ واحد..."
@@ -541,7 +541,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شاغل..."
@@ -550,7 +550,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ داخلی..."
@@ -559,7 +559,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ موبایل..."
@@ -568,7 +568,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200">
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ رده..."
@@ -577,7 +577,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[41px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200"></th>
+              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
 
