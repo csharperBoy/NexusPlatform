@@ -40,4 +40,7 @@ volumes:
   
       # cd D:\Project\NexusPlatform
       # docker compose -f docker-compose.aksteel.yml up --build
-      # docker compose -f docker-compose.aksteel.yml down
+      
+      #on develope server # docker save -o aksteel-webapi.tar aksteel-webapi:latest
+                            
+      #on product Server # docker load -i aksteel-webapi.tar
