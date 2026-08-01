@@ -1,12 +1,11 @@
 // src/modules/HR/pages/Post/PostManagementPage.tsx
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import * as XLSX from "xlsx"; // اضافه شده جهت خواندن فایل اکسل
+import * as XLSX from "xlsx";
 import { postApi } from "../../api/PostApi";
 import { PostInfoView } from "../../models/postInfoView";
 import { UpdatePostCommand } from "../../models/postCommand";
 
-// تایپ ردیف‌های تخت شده‌ی درخت
 interface FlattenedNode {
   node: PostInfoView;
   depth: number;
@@ -43,7 +42,6 @@ export const PostManagementPage: React.FC = () => {
   const draggedIdRef = useRef<string | null>(null);
   draggedIdRef.current = draggedId;
 
-  // مپ مقادیر اولیه برای جلوگیری از محو شدن سطر در حال ویرایش هنگام سرچ
   const initialPostsMap = useMemo(() => {
     const map = new Map<string, PostInfoView>();
     initialPosts.forEach((p) => map.set(p.id, p));
@@ -64,7 +62,6 @@ export const PostManagementPage: React.FC = () => {
       setPosts(list);
       setInitialPosts(JSON.parse(JSON.stringify(list)));
 
-      // باز نگه‌داشتن گره‌های دارای فرزند
       const parentIds = new Set<string>();
       list.forEach((p) => {
         if (p.fkParentId) parentIds.add(p.fkParentId);
@@ -78,7 +75,7 @@ export const PostManagementPage: React.FC = () => {
     }
   };
 
-  // --- 2. مدیریت ویرایش درجا (تلفن و موبایل) ---
+  // --- 2. مدیریت ویرایش درجا ---
   const handleFieldChange = (id: string, field: "officePhone" | "orgMobile", value: string) => {
     setPosts((prev) =>
       prev.map((item) => {
@@ -88,7 +85,6 @@ export const PostManagementPage: React.FC = () => {
         return item;
       })
     );
-    // علامت‌گذاری به عنوان تغییر یافته
     setModifiedIds((prev) => new Set(prev).add(id));
   };
 
@@ -110,7 +106,6 @@ export const PostManagementPage: React.FC = () => {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
 
-        // تبدیل شیت به JSON
         const excelRows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
 
         if (!excelRows || excelRows.length === 0) {
@@ -122,7 +117,6 @@ export const PostManagementPage: React.FC = () => {
         const newModifiedIds = new Set(modifiedIds);
 
         setPosts((prevPosts) => {
-          // ایجاد یک مپ بر اساس کد پرسنلی جهت جستجوی سریع
           const postByEmpCodeMap = new Map<string, PostInfoView>();
           prevPosts.forEach((p) => {
             if (p.employeeCode) {
@@ -133,7 +127,6 @@ export const PostManagementPage: React.FC = () => {
           const nextPosts = prevPosts.map((p) => ({ ...p }));
 
           excelRows.forEach((row) => {
-            // پیدا کردن کلیدهای ستون‌ها فارغ از کوچک/بزرگ بودن حروف یا فاصله‌ها
             const empCodeKey = Object.keys(row).find((k) =>
               ["کد پرسنلی", "کدپرسنلی", "employeecode", "empcode", "کد"].includes(
                 k.trim().toLowerCase()
@@ -163,7 +156,6 @@ export const PostManagementPage: React.FC = () => {
 
               let isRowChanged = false;
 
-              // بررسی تغییر تلفن داخلی
               if (officePhoneKey && row[officePhoneKey] !== undefined) {
                 const newPhone = String(row[officePhoneKey] ?? "").trim();
                 if (nextPosts[targetIndex].officePhone !== newPhone) {
@@ -172,7 +164,6 @@ export const PostManagementPage: React.FC = () => {
                 }
               }
 
-              // بررسی تغییر موبایل سازمانی
               if (orgMobileKey && row[orgMobileKey] !== undefined) {
                 const newMobile = String(row[orgMobileKey] ?? "").trim();
                 if (nextPosts[targetIndex].orgMobile !== newMobile) {
@@ -202,7 +193,6 @@ export const PostManagementPage: React.FC = () => {
       } catch (err: any) {
         setError("خطا در پردازش فایل اکسل: " + (err?.message || "فرمت فایل نامعتبر است"));
       } finally {
-        // ریست کردن ورودی فایل جهت امکان آپلود مجدد همان فایل
         e.target.value = "";
       }
     };
@@ -504,7 +494,7 @@ export const PostManagementPage: React.FC = () => {
   return (
     <div className="p-6 dir-rtl text-right font-sans bg-gray-50/50 min-h-screen">
       {/* هدر اصلی */}
-      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-6">
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت ساختار چارت سازمانی</h1>
@@ -519,7 +509,6 @@ export const PostManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* اینپوت مخفی فایل اکسل */}
             <input
               type="file"
               ref={fileInputRef}
@@ -528,7 +517,6 @@ export const PostManagementPage: React.FC = () => {
               className="hidden"
             />
 
-            {/* دکمه بارگذاری اکسل */}
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -603,7 +591,7 @@ export const PostManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی ریشه - فیکس روی مرورگر (top-0) */}
+      {/* منطقه رهاسازی ریشه - چسبیده به بالاترین بخش (top-0، ارتفاع دقیق 34px) */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -611,51 +599,51 @@ export const PostManagementPage: React.FC = () => {
         }}
         onDragLeave={() => setIsOverRootZone(false)}
         onDrop={handleDropOnRoot}
-        className={`sticky top-0 z-30 mb-4 py-2.5 px-3 border-2 border-dashed rounded-xl text-center text-xs transition-all shadow-md backdrop-blur-md ${
+        className={`sticky top-0 z-30 mb-2 h-[34px] px-3 border border-dashed rounded-lg text-center text-xs transition-all shadow-sm backdrop-blur-md flex items-center justify-center ${
           isOverRootZone
-            ? "border-blue-500 bg-blue-100/95 text-blue-800 font-bold scale-[1.01]"
+            ? "border-blue-500 bg-blue-100/95 text-blue-800 font-bold scale-[1.005]"
             : "border-gray-300 bg-white/95 text-gray-600 hover:border-gray-400"
         }`}
       >
         📌 جهت انتقال پست به بالاترین سطح چارت (بدون والد)، آن را اینجا رها کنید.
       </div>
 
-      {/* جدول چارت با اسکرول کامل صفحه */}
+      {/* جدول چارت با هدرهای چسبان دقیقاً زیر منطقه رهاسازی */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها */}
+            {/* ردیف اول: عناوین ستون‌ها (دقیقاً چسبیده به زیر باکس دراپ با top-[34px]) */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
                 جابه‌جایی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 عنوان شغل (کد پست)
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 واحد سازمانی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 شاغل فعلی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 w-36 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-36 border-b border-gray-200 shadow-sm">
                 تلفن داخلی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 w-40 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-40 border-b border-gray-200 shadow-sm">
                 موبایل سازمانی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 رده / سطح شغلی
               </th>
-              <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ */}
+            {/* ردیف دوم: اینپوت‌های سرچ (دقیقاً چسبیده زیر ردیف اول با top-[70px]) */}
             <tr className="border-b border-gray-200">
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200 shadow-sm"></th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شغل / کد..."
@@ -664,7 +652,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ واحد..."
@@ -673,7 +661,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شاغل..."
@@ -682,7 +670,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ داخلی..."
@@ -691,7 +679,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ موبایل..."
@@ -700,7 +688,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ رده..."
@@ -709,7 +697,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200 shadow-sm"></th>
+              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
 
@@ -741,7 +729,6 @@ export const PostManagementPage: React.FC = () => {
                       isTarget ? "bg-blue-50 border-y-2 border-blue-500" : "hover:bg-gray-50/80"
                     } ${isModified ? "bg-amber-50/40" : ""}`}
                   >
-                    {/* Handle برای Drag & Drop */}
                     <td className="py-3 px-2 text-center align-middle">
                       <div
                         draggable
@@ -753,7 +740,6 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* عنوان شغل + کد پست */}
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div
                         className="flex items-center gap-2"
@@ -781,12 +767,10 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* واحد سازمانی */}
                     <td className="py-3 px-4 text-gray-600 text-xs">
                       {node.organizationUnitsName || "-"}
                     </td>
 
-                    {/* شاغل پست */}
                     <td className="py-3 px-4 text-gray-700 text-xs">
                       <div className="flex flex-col">
                         <span className="font-medium">{occupantName}</span>
@@ -798,7 +782,6 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* تلفن داخلی (قابل ویرایش درجا) */}
                     <td className="py-2 px-3">
                       <input
                         type="text"
@@ -809,7 +792,6 @@ export const PostManagementPage: React.FC = () => {
                       />
                     </td>
 
-                    {/* موبایل سازمانی (قابل ویرایش درجا) */}
                     <td className="py-2 px-3">
                       <input
                         type="text"
@@ -820,7 +802,6 @@ export const PostManagementPage: React.FC = () => {
                       />
                     </td>
 
-                    {/* رده / سطح شغلی */}
                     <td className="py-3 px-4 text-gray-500 text-xs">
                       {node.jobLevelTitle || node.gradeTitle ? (
                         <span>
@@ -831,7 +812,6 @@ export const PostManagementPage: React.FC = () => {
                       )}
                     </td>
 
-                    {/* وضعیت تغییر */}
                     <td className="py-3 px-4 text-center">
                       {isModified ? (
                         <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-medium">
