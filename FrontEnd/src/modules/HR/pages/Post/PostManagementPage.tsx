@@ -1,6 +1,7 @@
 // src/modules/HR/pages/Post/PostManagementPage.tsx
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import * as XLSX from "xlsx"; // اضافه شده جهت خواندن فایل اکسل
 import { postApi } from "../../api/PostApi";
 import { PostInfoView } from "../../models/postInfoView";
 import { UpdatePostCommand } from "../../models/postCommand";
@@ -35,6 +36,9 @@ export const PostManagementPage: React.FC = () => {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [isOverRootZone, setIsOverRootZone] = useState<boolean>(false);
+
+  // ریف مربوط به آپلود فایل اکسل
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const draggedIdRef = useRef<string | null>(null);
   draggedIdRef.current = draggedId;
@@ -92,6 +96,120 @@ export const PostManagementPage: React.FC = () => {
     setColumnSearch((prev) => ({ ...prev, [column]: value }));
   };
 
+  // --- مدیریت بارگذاری فایل اکسل ---
+  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        setError(null);
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // تبدیل شیت به JSON
+        const excelRows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
+
+        if (!excelRows || excelRows.length === 0) {
+          alert("فایل اکسل انتخاب شده خالی است یا فرمت معتبری ندارد.");
+          return;
+        }
+
+        let updatedCount = 0;
+        const newModifiedIds = new Set(modifiedIds);
+
+        setPosts((prevPosts) => {
+          // ایجاد یک مپ بر اساس کد پرسنلی جهت جستجوی سریع
+          const postByEmpCodeMap = new Map<string, PostInfoView>();
+          prevPosts.forEach((p) => {
+            if (p.employeeCode) {
+              postByEmpCodeMap.set(String(p.employeeCode).trim(), p);
+            }
+          });
+
+          const nextPosts = prevPosts.map((p) => ({ ...p }));
+
+          excelRows.forEach((row) => {
+            // پیدا کردن کلیدهای ستون‌ها فارغ از کوچک/بزرگ بودن حروف یا فاصله‌ها
+            const empCodeKey = Object.keys(row).find((k) =>
+              ["کد پرسنلی", "کدپرسنلی", "employeecode", "empcode", "کد"].includes(
+                k.trim().toLowerCase()
+              )
+            );
+            const officePhoneKey = Object.keys(row).find((k) =>
+              ["تلفن داخلی", "داخلی", "officephone", "phone"].includes(
+                k.trim().toLowerCase()
+              )
+            );
+            const orgMobileKey = Object.keys(row).find((k) =>
+              ["موبایل سازمانی", "موبایل", "orgmobile", "mobile"].includes(
+                k.trim().toLowerCase()
+              )
+            );
+
+            if (!empCodeKey) return;
+
+            const rawEmpCode = row[empCodeKey];
+            if (rawEmpCode === undefined || rawEmpCode === null) return;
+            const empCodeStr = String(rawEmpCode).trim();
+
+            const matchedPost = postByEmpCodeMap.get(empCodeStr);
+            if (matchedPost) {
+              const targetIndex = nextPosts.findIndex((p) => p.id === matchedPost.id);
+              if (targetIndex === -1) return;
+
+              let isRowChanged = false;
+
+              // بررسی تغییر تلفن داخلی
+              if (officePhoneKey && row[officePhoneKey] !== undefined) {
+                const newPhone = String(row[officePhoneKey] ?? "").trim();
+                if (nextPosts[targetIndex].officePhone !== newPhone) {
+                  nextPosts[targetIndex].officePhone = newPhone;
+                  isRowChanged = true;
+                }
+              }
+
+              // بررسی تغییر موبایل سازمانی
+              if (orgMobileKey && row[orgMobileKey] !== undefined) {
+                const newMobile = String(row[orgMobileKey] ?? "").trim();
+                if (nextPosts[targetIndex].orgMobile !== newMobile) {
+                  nextPosts[targetIndex].orgMobile = newMobile;
+                  isRowChanged = true;
+                }
+              }
+
+              if (isRowChanged) {
+                updatedCount++;
+                newModifiedIds.add(matchedPost.id);
+              }
+            }
+          });
+
+          setModifiedIds(newModifiedIds);
+
+          if (updatedCount > 0) {
+            setSuccessMessage(`اطلاعات ${updatedCount} پست با موفقیت از فایل اکسل اعمال شد.`);
+            setTimeout(() => setSuccessMessage(null), 4000);
+          } else {
+            alert("هیچ رکوردی تغییر نکرد یا کد پرسنلی منطبقی پیدا نشد.");
+          }
+
+          return nextPosts;
+        });
+      } catch (err: any) {
+        setError("خطا در پردازش فایل اکسل: " + (err?.message || "فرمت فایل نامعتبر است"));
+      } finally {
+        // ریست کردن ورودی فایل جهت امکان آپلود مجدد همان فایل
+        e.target.value = "";
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
   // --- 3. ساختار درخت و فیلتر هوشمند ---
   const { flattenedTree, postsMap } = useMemo(() => {
     const map = new Map<string, PostInfoView>();
@@ -119,15 +237,12 @@ export const PostManagementPage: React.FC = () => {
         const isExpanded = expandedIds.has(child.id);
         const isModified = modifiedIds.has(child.id);
 
-        // دریافت مقادیر اولیه همین گره برای مقایسه در سرچ
         const initChild = initialPostsMap.get(child.id);
 
-        // مقادیر فعلی
         const fullJobTitle = `${child.jobTitleName || ""} ${child.postCode ? `(${child.postCode})` : ""}`;
         const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employeeCode || ""}`;
         const levelGrade = `${child.jobLevelTitle || ""} ${child.gradeTitle || ""}`;
 
-        // مقادیر اولیه (برای جلوگیری از محو شدن هنگام تایپ)
         const initFullJobTitle = initChild
           ? `${initChild.jobTitleName || ""} ${initChild.postCode ? `(${initChild.postCode})` : ""}`
           : fullJobTitle;
@@ -138,7 +253,6 @@ export const PostManagementPage: React.FC = () => {
           ? `${initChild.jobLevelTitle || ""} ${initChild.gradeTitle || ""}`
           : levelGrade;
 
-        // ۱. بررسی سرچ کلی (بررسی همزمان مقدار فعلی OR مقدار اولیه)
         const matchesGlobal =
           !normalizedGlobal ||
           fullJobTitle.toLowerCase().includes(normalizedGlobal) ||
@@ -146,7 +260,6 @@ export const PostManagementPage: React.FC = () => {
           occupantName.toLowerCase().includes(normalizedGlobal) ||
           (child.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
           (child.orgMobile || "").toLowerCase().includes(normalizedGlobal) ||
-          // چک مقادیر اولیه
           (initChild &&
             (initFullJobTitle.toLowerCase().includes(normalizedGlobal) ||
               (initChild.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
@@ -154,7 +267,6 @@ export const PostManagementPage: React.FC = () => {
               (initChild.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
               (initChild.orgMobile || "").toLowerCase().includes(normalizedGlobal)));
 
-        // ۲. بررسی سرچ‌های ستونی (مقدار فعلی OR مقدار اولیه)
         let matchesColumns = true;
         for (const [col, term] of Object.entries(columnSearch)) {
           if (!term.trim()) continue;
@@ -407,6 +519,26 @@ export const PostManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* اینپوت مخفی فایل اکسل */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleExcelImport}
+              accept=".xlsx, .xls"
+              className="hidden"
+            />
+
+            {/* دکمه بارگذاری اکسل */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={saving}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-sm"
+              title="بارگذاری اکسل جهت به‌روزرسانی تلفن داخلی و موبایل سازمانی"
+            >
+              📊 بارگذاری از اکسل
+            </button>
+
             {modifiedIds.size > 0 && (
               <button
                 onClick={handleResetChanges}
@@ -492,7 +624,7 @@ export const PostManagementPage: React.FC = () => {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها (فیکس شده زیر باکس ریشه در top-[48px]) */}
+            {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
               <th className="sticky top-[48px] z-20 bg-gray-100 py-3 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
                 جابه‌جایی
@@ -520,7 +652,7 @@ export const PostManagementPage: React.FC = () => {
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ (فیکس شده زیر ردیف اول در top-[89px]) */}
+            {/* ردیف دوم: اینپوت‌های سرچ */}
             <tr className="border-b border-gray-200">
               <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 border-b border-gray-200 shadow-sm"></th>
               <th className="sticky top-[89px] z-20 bg-gray-50 py-2 px-2 align-top border-b border-gray-200 shadow-sm">
@@ -621,7 +753,7 @@ export const PostManagementPage: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* عنوان شغل + کد پست داخل پرانتز */}
+                    {/* عنوان شغل + کد پست */}
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div
                         className="flex items-center gap-2"
