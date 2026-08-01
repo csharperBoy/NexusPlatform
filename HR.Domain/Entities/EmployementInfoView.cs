@@ -60,6 +60,10 @@ public partial class EmployementInfoView
 
     public string? PostContactFax { get; set; }
 
+    public string? EmploymentContactPhone { get; set; }
+    public string? EmploymentContactMobile { get; set; }
+    public string? EmploymentContactEmail { get; set; }
+    public string? EmploymentContactFax { get; set; }
     public DateOnly? EmploymentLocationsEffectiveFrom { get; set; }
 
     public DateOnly? EmploymentLocationsEffectiveTo { get; set; }

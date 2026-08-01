@@ -52,6 +52,13 @@ namespace HR.Infrastructure.Configurations
             builder.Property(e => e.PostContactFax).HasColumnName("PostContact_Fax");
             builder.Property(e => e.PostContactMobile).HasColumnName("PostContact_Mobile");
             builder.Property(e => e.PostContactPhone).HasColumnName("PostContact_Phone");
+
+
+
+            builder.Property(e => e.EmploymentContactMobile).HasColumnName("EmploymentContact_Mobile");
+            builder.Property(e => e.EmploymentContactPhone).HasColumnName("EmploymentContact_Phone");
+            builder.Property(e => e.EmploymentContactEmail).HasColumnName("EmploymentContact_Email");
+            builder.Property(e => e.EmploymentContactFax).HasColumnName("EmploymentContact_Fax");
         }
     }
 }

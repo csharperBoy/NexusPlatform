@@ -32,8 +32,8 @@ namespace PhoneBook.Application.Mapping
                     foreach (var row in group)
                     {
                         // ۱. افزودن تماس‌های شخصی
-                        AddContact(employee.Contacts, "موبایل شخصی", row.PartyMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.Personal);
-                        AddContact(employee.Contacts, "تلفن ثابت شخصی", row.PartyPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.Personal);
+                        //AddContact(employee.Contacts, "موبایل شخصی", row.PartyMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.Personal);
+                        //AddContact(employee.Contacts, "تلفن ثابت شخصی", row.PartyPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.Personal);
                         //AddContact(employee.Contacts, "ایمیل شخصی", row.PartyEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Personal);
                         //AddContact(employee.Contacts, "آدرس منزل", row.PartyAddress, PhoneBookContactTypeEnum.Address, PhoneBookContactSourceEnum.Personal);
 
