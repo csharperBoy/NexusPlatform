@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. SQL Server مخصوص پروژه AkSteel
+  aksteel-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: aksteel_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Fajr@123
+    ports:
+      - "1433:1433"
+    volumes:
+      - aksteel_sqldata:/var/opt/mssql/data
+
+  # 2. Redis مخصوص پروژه AkSteel
+  aksteel-redis:
+    image: redis:alpine
+    container_name: aksteel_redis
+    ports:
+      - "6379:6379"
+
+  # 3. سرویس WebAPI پروژه AkSteel
+  aksteel-webapi:
+    image: aksteel-webapi:latest
+    container_name: aksteel_webapi
+    build:
+      context: . # دسترسی به کل ریشه سلوشن برای خواندن سایر پروژه ها
+      dockerfile: AkSteel.WebApi/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=aksteel-sqlserver;Database=AksteelDb;User Id=sa;Password=Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__Redis=aksteel-redis:6379,abortConnect=false
+    depends_on:
+      - aksteel-sqlserver
+      - aksteel-redis
+
+volumes:
+  aksteel_sqldata:
+  
+      # cd D:\Project\NexusPlatform
+      # docker compose -f docker-compose.aksteel.yml up --build
+      # docker compose -f docker-compose.aksteel.yml down
