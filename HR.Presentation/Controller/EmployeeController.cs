@@ -2,6 +2,8 @@
 using Core.Presentation.Filters;
 using HR.Application.Commands.Employee;
 using HR.Application.Commands.OrgChart;
+using HR.Application.Queries.Employment;
+using HR.Application.Queries.Post;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -20,6 +22,31 @@ namespace HR.Presentation.Controller
         public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeCommand command)
         {
             var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        [HttpPut("{id:guid}")]
+        [AuthorizeResource("hr.employee", "Edit")]
+        public async Task<IActionResult> UpdateEmployment(Guid id, [FromBody] UpdateEmploymentCommand command)
+        {
+            // اطمینان از تطابق ID در route با command
+            var updatedCommand = command with { Id = id };
+            var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+        [HttpPut("batch")]
+        [AuthorizeResource("hr.employee", "Edit")]
+        public async Task<IActionResult> BatchUpdateemployments([FromBody] BatchUpdateEmploymentsCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        [HttpGet("GetList")]
+        [AuthorizeResource("hr.employee", "View")]
+        public async Task<IActionResult> GetList([FromQuery] GetEmploymentListQuery request)
+        {
+
+
+            var result = await Mediator.Send(request);
             return HandleResult(result);
         }
         /*

@@ -30,16 +30,16 @@ namespace People.Infrastructure.Services
         private readonly IRepository<PeopleDbContext, NaturalPersonProfile, Guid> _naturalPersonProfileRepository;
         private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
         private readonly IRepository<PeopleDbContext, PartyContact, Guid> _personContactRepository;
-        private readonly ISpecificationRepository< NaturalPerson, Guid> _personSpecRepository;
+        private readonly ISpecificationRepository<NaturalPerson, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
         private readonly IUnitOfWork<PeopleDbContext> _uow;
 
         public PersonService(IRepository<PeopleDbContext, NaturalPerson, Guid> naturalPersonRepository,
-            IRepository<PeopleDbContext, NaturalPersonProfile, Guid> naturalPersonProfileRepository ,
+            IRepository<PeopleDbContext, NaturalPersonProfile, Guid> naturalPersonProfileRepository,
             //IUserDataContextProvider userProvider,
             IPermissionPublicService permissionService,
-            ILogger<PersonService> logger, 
-            ISpecificationRepository< NaturalPerson, Guid> personSpecRepository,
+            ILogger<PersonService> logger,
+            ISpecificationRepository<NaturalPerson, Guid> personSpecRepository,
             IRepository<PeopleDbContext, Party, Guid> partyRepository,
             IRepository<PeopleDbContext, PartyContact, Guid> personContactRepository,
             IUnitOfWork<PeopleDbContext> uow)
@@ -68,8 +68,8 @@ namespace People.Infrastructure.Services
             )
         {
             //var user =await _userProvider.GetAsync(new CancellationToken());
-           NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace,fatherName,gender, createBy);            
-            naturalPerson.setParty(await CreatePartyAsync(Phone,Address,Email,Mobile));
+            NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace, fatherName, gender, createBy);
+            naturalPerson.setParty(await CreatePartyAsync(Phone, Address, Email, Mobile));
             await _naturalPersonRepository.AddAsync(naturalPerson);
             await _naturalPersonProfileRepository.AddAsync(new NaturalPersonProfile(naturalPerson.Id));
             return naturalPerson.Id;
@@ -91,7 +91,7 @@ namespace People.Infrastructure.Services
             return party.Id;
         }
 
-        private async Task CreatePartyContact(PartyContactType type,  string? value , Guid partyId)
+        private async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
         {
             if (value != null)
             {
@@ -107,7 +107,7 @@ namespace People.Infrastructure.Services
 
         public async Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId)
         {
-            var person = await _naturalPersonRepository.GetByIdAsync(personId ?? Guid.Empty, a=>a.Party);
+            var person = await _naturalPersonRepository.GetByIdAsync(personId ?? Guid.Empty, a => a.Party);
             return person?.Party.FkPermissionAssigneeId;
         }
         public async Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId)
@@ -122,6 +122,32 @@ namespace People.Infrastructure.Services
             var person = await _personSpecRepository.GetBySpecAsync(spec);
             return person?.Id;
 
+        }
+
+        public async Task UpdatePersonAsync(Guid id,  string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName)
+        {
+            NaturalPerson? person = await _naturalPersonRepository.GetByIdAsync(id, a => a.Party);
+            if (person == null)
+            {
+                throw new Exception("Person not found");
+            }
+
+            bool hasChange = await person.ApplyChange(
+                null,
+                firstlName,
+                lastName,
+                birthDate, 
+                birthPlace, 
+                fatherName,
+                null, 
+                phone != null ? PhoneNumber.Create(phone) : null,
+                mobile != null ? PhoneNumber.Create(mobile) : null,
+                address, 
+                email != null ? Email.Create(email) : null);
+
+            if (hasChange) {
+                await _naturalPersonRepository.UpdateAsync(person);
+            }
         }
     }
 }

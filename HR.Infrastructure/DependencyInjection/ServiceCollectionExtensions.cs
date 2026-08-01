@@ -10,7 +10,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using PhoneBook.Domain.Entities;
 
 namespace HR.Infrastructure.DependencyInjection
 {

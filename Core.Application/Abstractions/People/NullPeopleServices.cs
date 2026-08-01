@@ -55,6 +55,14 @@ namespace Core.Application.Abstractions.People
         {
             await Task.CompletedTask;
         }
+
+        public async Task UpdatePersonAsync(Guid id, string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName)
+        {
+
+            await Task.CompletedTask;
+        }
+
+       
     }
 
 }

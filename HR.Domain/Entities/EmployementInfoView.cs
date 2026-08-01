@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace PhoneBook.Domain.Entities;
+namespace HR.Domain.Entities;
 
 [Keyless]
 public partial class EmployementInfoView

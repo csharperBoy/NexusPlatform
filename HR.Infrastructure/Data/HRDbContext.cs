@@ -6,7 +6,6 @@ using HR.Infrastructure.Configurations;
 using HR.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -5,7 +5,6 @@ using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
-using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

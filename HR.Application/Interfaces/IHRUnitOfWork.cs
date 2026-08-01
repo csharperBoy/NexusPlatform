@@ -1,7 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

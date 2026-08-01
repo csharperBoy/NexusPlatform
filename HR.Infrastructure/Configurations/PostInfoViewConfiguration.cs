@@ -2,7 +2,6 @@
 using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PhoneBook.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

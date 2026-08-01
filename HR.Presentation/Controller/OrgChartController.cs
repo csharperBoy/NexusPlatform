@@ -44,11 +44,7 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
 
-        private readonly IOrgChartInternalService _orgChartInternalService;
-        public OrgChartController(IOrgChartInternalService orgChartInternalService)
-        {
-            _orgChartInternalService = orgChartInternalService;
-        }
+       
         [HttpGet("GetList")]
         [AuthorizeResource("hr.post", "View")]
         public async Task<IActionResult> GetList([FromQuery] GetPostListQuery request )

@@ -110,7 +110,22 @@ namespace HR.Infrastructure.Services
             await _assignmentRepository.AddAsync(assign);
             return assign.Id;
         }
+        public async Task<Guid> AssignToPostAsync(Guid postId, Guid employeeId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null)
+        {
+            Assignment assign = new Assignment(postId, employeeId, assigneType, EffectiveFrom, EffectiveTo);
+            var assignments = await GetEmployeeAssignmentAsync(employeeId);
+            if (assignments.Count > 0)
+            {
+                foreach (var item in assignments)
+                {
+                    item.DoExpire();
+                    await _assignmentRepository.UpdateAsync(item);
 
+                }
+            }
+            await _assignmentRepository.AddAsync(assign);
+            return assign.Id;
+        }
 
 
         public async Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPostId = null, bool isActive = true
@@ -188,40 +203,27 @@ namespace HR.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<List<Employment>?> GetPostEmployeeAsync(Guid postId)
+        public async Task<List<Assignment>?> GetEmployeeAssignmentAsync(Guid employmentId)
         {
             try
             {
-                _logger.LogDebug("Getting employee for post {postId}", postId);
+                _logger.LogDebug("Getting employee for employmentId {employmentId}", employmentId);
 
                 // استفاده از Specification شیک
-                var assignmentSpec = new ActiveAssignmentsByPostSpec(postId);
+                var assignmentSpec = new ActiveAssignmentsByEmployeeSpec(employmentId);
                 var assignments = await _assignmentSpecRepository.ListBySpecAsync(assignmentSpec);
 
-                var assignment = assignments.ToList();
-                if (assignment == null)
-                {
-                    _logger.LogWarning("No active assignment found for postId {postId}", postId);
-                    return null;
-                }
-
-                var employee = assignment.Select(a => a.Employment);
-                if (employee == null)
-                {
-                    _logger.LogError("employee not found for assignment ");
-                    return null;
-                }
-
-                return employee.ToList();
+             return assignments.ToList();
+                
 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting post for employee {postId}", postId);
+                _logger.LogError(ex, "Error getting post for employee {employmentId}", employmentId);
                 throw;
             }
         }
-        public async Task<List<Assignment>?> GetPostAssignmentAsync(Guid postId)
+        public async Task<List<Assignment>?> GetPostAssignmentAsync(Guid postId )
         {
             try
             {
