@@ -12,6 +12,8 @@ namespace Identity.Application.DTOs
     {
 
         public Guid Id { get;  set; }
+
+        public Guid FkPermissionAssigneeId { get; set; }
         public string? UserName { get;  set; }
         public string? phoneNumber { get;  set; }
         public string? NickName { get; set; }

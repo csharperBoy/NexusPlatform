@@ -39,6 +39,7 @@ const PermissionsManagementPage: React.FC = () => {
       accessor: (row) => row.assigneeType,
       editable: true,
     },
+      
     {
       id: 'effect',
       header: 'مجاز یا غیرمجاز',
@@ -53,8 +54,6 @@ const PermissionsManagementPage: React.FC = () => {
   const handleSaveBatch = useCallback((changes: BatchChanges<PermissionDto>) => {
   console.log("تمام تغییرات اعمال شده جهت ارسال به API:", changes);
   
-  // بسته به طراحی گریدتان، احتمالاً داخل changes به این صورت به داده‌ها دسترسی دارید:
-  // const { added, updated, deleted } = changes;
 }, []);
 
   // متد اعتبارسنجی سطرها
@@ -97,12 +96,6 @@ const PermissionsManagementPage: React.FC = () => {
             keyExtractor={(row) => row.id || `${row.resourceKey}_${row.assigneeType}_${row.action}`}
             pageSize={20}
             
-            // تنظیمات درختی شیک و مجتمع
-            // treeConfig={{
-            //   enabled: true,
-            //   parentKey: 'parentId'
-            // }}
-
             // تنظیمات ادیت و اکشن‌ها یکجا
             actionConfig={{
               allowAdd: true,

@@ -21,7 +21,7 @@ namespace Identity.Application.Handlers.Queries.User
         public async Task<Result<IList<SelectionListDto>>> Handle(GetUsersSelectionListQuery request, CancellationToken ct)
         {
             var users = await _userService.GetUsers(request.UserName, request.rolesId, request.NickName, request.phoneNumber);
-            var result = users.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.UserName} ({x.NickName})"));
+            var result = users.Select(x => new SelectionListDto(x.FkPermissionAssigneeId.ToString(), $"{x.UserName} ({x.NickName})"));
             return Result<IList<SelectionListDto>>.Ok(result.ToList());
         }
     }

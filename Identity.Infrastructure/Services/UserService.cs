@@ -118,7 +118,8 @@ namespace Identity.Infrastructure.Services
                 Email = user.Email,
                 Id = user.Id,
                 phoneNumber = user.PhoneNumber,
-                UserName = user.UserName
+                UserName = user.UserName,
+                FkPermissionAssigneeId = user.FkPermissionAssigneeId
             };
             result.roles = await _userManager.GetRolesAsync(user);
             return result;
@@ -238,6 +239,7 @@ namespace Identity.Infrastructure.Services
                 {
                     Id = g.Key.Id,
                     UserName = g.Key.UserName,
+                    FkPermissionAssigneeId = g.Key.FkPermissionAssigneeId,
                     Email = g.Key.Email,
                     phoneNumber = g.Key.PhoneNumber,
                     NickName = g.Key.NickName,
