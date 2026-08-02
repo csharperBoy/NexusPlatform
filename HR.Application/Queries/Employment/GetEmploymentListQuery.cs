@@ -17,11 +17,11 @@ namespace HR.Application.Queries.Employment
     public class GetEmploymentListQueryHandler
         : IRequestHandler<GetEmploymentListQuery, Result<IReadOnlyList<EmployementInfoView>>>
     {
-        private readonly IEmployeeInternalService _employmentInternalService;
+        private readonly IEmploymentInternalService _employmentInternalService;
         private readonly ILogger<GetEmploymentListQueryHandler> _logger;
 
         public GetEmploymentListQueryHandler(
-            IEmployeeInternalService employmentInternalService,
+            IEmploymentInternalService employmentInternalService,
         ILogger<GetEmploymentListQueryHandler> logger)
         {
             _employmentInternalService = employmentInternalService;

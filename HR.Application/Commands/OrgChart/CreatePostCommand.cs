@@ -24,7 +24,7 @@ namespace HR.Application.Commands.OrgChart
     Guid? ReportsToPostId,
     bool IsActive,
 
-    Guid? EmployeeId,
+    Guid? EmploymentId,
     PostAssignmentType? AssignType,
 
      string? OfficePhone ,
@@ -65,9 +65,9 @@ namespace HR.Application.Commands.OrgChart
                        request.ReportsToPostId,
                        request.IsActive , request.OfficePhone,request.OrgEmail , request.OrgMobile
                     );
-                if (request.EmployeeId != Guid.Empty && request.EmployeeId != null)
+                if (request.EmploymentId != Guid.Empty && request.EmploymentId != null)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmployeeAsync(postId, (Guid)request.EmployeeId, request.AssignType);
+                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(postId, (Guid)request.EmploymentId, request.AssignType);
                 }
 
                 await _orgChartService.SaveAsync();

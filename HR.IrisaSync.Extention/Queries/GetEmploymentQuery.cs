@@ -10,23 +10,23 @@ using System.Threading.Tasks;
 
 namespace HR.IrisaSync.Extention.Queries
 {
-    public record GetEmployeeQuery( int Page = 1, int PageSize = 10)
+    public record GetEmploymentQuery( int Page = 1, int PageSize = 10)
         : IRequest<Result<IReadOnlyList<PdsIdeaInformationViw>>>;
 
-    public class GetEmployeeQueryHandler
-      : IRequestHandler<GetEmployeeQuery, Result<IReadOnlyList<PdsIdeaInformationViw>>>
+    public class GetEmploymentQueryHandler
+      : IRequestHandler<GetEmploymentQuery, Result<IReadOnlyList<PdsIdeaInformationViw>>>
     {
         private readonly ISyncService _service;
 
-        public GetEmployeeQueryHandler(ISyncService service)
+        public GetEmploymentQueryHandler(ISyncService service)
         {
             _service = service;
         }
 
-        public async Task<Result<IReadOnlyList<PdsIdeaInformationViw>>> Handle(GetEmployeeQuery request, CancellationToken ct)
+        public async Task<Result<IReadOnlyList<PdsIdeaInformationViw>>> Handle(GetEmploymentQuery request, CancellationToken ct)
         {
              await _service.SyncEmployements();
-            var lst = await _service.GetEmployee();
+            var lst = await _service.GetEmployment();
             return Result<IReadOnlyList<PdsIdeaInformationViw>>.Ok(lst);
         }
     }

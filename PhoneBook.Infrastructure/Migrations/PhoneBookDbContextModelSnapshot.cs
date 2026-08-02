@@ -85,7 +85,7 @@ namespace PhoneBook.Infrastructure.Migrations
 
             modelBuilder.Entity("PhoneBook.Domain.Entities.PhoneBookInfoView", b =>
                 {
-                    b.Property<string>("EmployeeCode")
+                    b.Property<string>("EmploymentCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

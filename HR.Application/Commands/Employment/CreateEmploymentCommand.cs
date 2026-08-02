@@ -14,9 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.Commands.Employee
+namespace HR.Application.Commands.Employment
 {
-    public record CreateEmployeeCommand(
+    public record CreateEmploymentCommand(
     #region party
         string? Phone,
         string? Address,
@@ -33,9 +33,9 @@ namespace HR.Application.Commands.Employee
      string? FatherName,
      Gender? Gender,
     #endregion
-    #region employee
+    #region employment
 
-     string EmployeeCode,
+     string EmploymentCode,
      Guid? EmploymentTypeId,
      Guid? EmploymentStatusId,
      DateOnly? StartDate,
@@ -59,34 +59,34 @@ namespace HR.Application.Commands.Employee
 ) : IRequest<Result<Guid>>;
 
 
-    public class CreateEmployeeCommandHandler : IRequestHandler<CreateEmployeeCommand, Result<Guid>>
+    public class CreateEmploymentCommandHandler : IRequestHandler<CreateEmploymentCommand, Result<Guid>>
     {
         private readonly IOrgChartInternalService _orgChartService;
         private readonly IPersonPublicService _personService;
-        private readonly IEmployeeInternalService _employeeService;
-        private readonly ILogger<CreateEmployeeCommandHandler> _logger;
+        private readonly IEmploymentInternalService _employmentService;
+        private readonly ILogger<CreateEmploymentCommandHandler> _logger;
         private readonly IUserDataContextProvider _userProvider;
-        public CreateEmployeeCommandHandler(
+        public CreateEmploymentCommandHandler(
             IOrgChartInternalService orgChartService,
             IPersonPublicService personService,
-            IEmployeeInternalService employeeService,
+            IEmploymentInternalService employmentService,
            IUserDataContextProvider userProvider,
-        ILogger<CreateEmployeeCommandHandler> logger)
+        ILogger<CreateEmploymentCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;
             _personService = personService;
-            _employeeService = employeeService;
+            _employmentService = employmentService;
             _userProvider = userProvider;
         }
 
-        public async Task<Result<Guid>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreateEmploymentCommand request, CancellationToken cancellationToken)
         {
             try
             {
                 _logger.LogInformation(
-                    "Creating employeeCode: {EmployeeCode}",
-                    request.EmployeeCode);
+                    "Creating employmentCode: {EmploymentCode}",
+                    request.EmploymentCode);
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
                 #region ساخت شخصیت حقیقی
 
@@ -122,41 +122,41 @@ namespace HR.Application.Commands.Employee
 
 
 
-                Guid employeeId = await _employeeService.CreateEmployeeAsync(
-                    request.EmployeeCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
+                Guid employmentId = await _employmentService.CreateEmploymentAsync(
+                    request.EmploymentCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
                 #endregion
                 
 
                 #region انتصاب مکان ها به شخص
                 if (request.locationsId != null && request.locationsId.Count() > 0)
                 {
-                    await _employeeService.AssignLocationsToEmployee(employeeId, request.locationsId);
+                    await _employmentService.AssignLocationsToEmployment(employmentId, request.locationsId);
                 }
                 #endregion
 
                 #region انتصاب شخص به پست سازمانی
 
-                Guid AssignId = await _orgChartService.AssignToEmployeeAsync(request.PostId, employeeId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                Guid AssignId = await _orgChartService.AssignToEmploymentAsync(request.PostId, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
 
                 #endregion
 
                 #region ذخیره تغییرات
                 await _personService.SaveAsync();
-                await _employeeService.SaveAsync();
+                await _employmentService.SaveAsync();
                 await _orgChartService.SaveAsync();
                 #endregion
                 _logger.LogInformation(
-                    "Employee created successfully: {employeeId} ({EmployeeCode})",
-                    employeeId, request.EmployeeCode);
+                    "Employment created successfully: {employmentId} ({EmploymentCode})",
+                    employmentId, request.EmploymentCode);
 
-                return Result<Guid>.Ok(employeeId);
+                return Result<Guid>.Ok(employmentId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(
                     ex,
-                    "Failed to create Post: {EmployeeCode}",
-                     request.EmployeeCode);
+                    "Failed to create Post: {EmploymentCode}",
+                     request.EmploymentCode);
 
                 return Result<Guid>.Fail(ex.Message);
             }

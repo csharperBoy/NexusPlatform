@@ -1,6 +1,6 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
-using HR.Application.Commands.Employee;
+using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Queries.Employment;
 using HR.Application.Queries.Post;
@@ -15,17 +15,17 @@ namespace HR.Presentation.Controller
 {
     [ApiController]
     [Route("api/HR/[controller]")]
-    public class EmployeeController : BaseController
+    public class EmploymentController : BaseController
     {
         [HttpPost("Create")]
-        //[AuthorizeResource("hr.employee", "Create")]
-        public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeCommand command)
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> CreateEmployment([FromBody] CreateEmploymentCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
         [HttpPut("{id:guid}")]
-        [AuthorizeResource("hr.employee", "Edit")]
+        [AuthorizeResource("hr.employment", "Edit")]
         public async Task<IActionResult> UpdateEmployment(Guid id, [FromBody] UpdateEmploymentCommand command)
         {
             // اطمینان از تطابق ID در route با command
@@ -34,14 +34,14 @@ namespace HR.Presentation.Controller
             return HandleResult(result);
         }
         [HttpPut("batch")]
-        [AuthorizeResource("hr.employee", "Edit")]
+        [AuthorizeResource("hr.employment", "Edit")]
         public async Task<IActionResult> BatchUpdateemployments([FromBody] BatchUpdateEmploymentsCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
         [HttpGet("GetList")]
-        [AuthorizeResource("hr.employee", "View")]
+        [AuthorizeResource("hr.employment", "View")]
         public async Task<IActionResult> GetList([FromQuery] GetEmploymentListQuery request)
         {
 

@@ -13,7 +13,7 @@ namespace HR.Domain.Specifications
     {
         public GetEmploymentLocationsSpec( Guid employmentId)
             : base(p =>
-                          p.FkEmployeeId == employmentId && p.IsCurrent == true
+                          p.FkEmploymentId == employmentId && p.IsCurrent == true
             // && ( value == null || p.Value == value )
             )
         {

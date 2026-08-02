@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Core.Shared.DTOs.HR
 {
-    public class EmployeeDto
+    public class EmploymentDto
     {
         #region party
         public string? Phone { get; set; }
@@ -24,8 +24,8 @@ namespace Core.Shared.DTOs.HR
         public string? FatherName { get; set; }
         public Gender? Gender { get; set; }
         #endregion
-        #region employee
-        public string EmployeeCode { get; set; }
+        #region employment
+        public string EmploymentCode { get; set; }
         public string EmploymentTypeTitle { get; set; }
         public Guid EmploymentStatusTitle { get; set; }
         

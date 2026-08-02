@@ -195,25 +195,25 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("CostCenter_Name");
 
-                    b.Property<string>("EmployeeCode")
+                    b.Property<string>("EmploymentCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateOnly>("EmployeeEffectiveFrom")
+                    b.Property<DateOnly>("EmploymentEffectiveFrom")
                         .HasColumnType("date")
-                        .HasColumnName("Employee_EffectiveFrom");
+                        .HasColumnName("Employment_EffectiveFrom");
 
-                    b.Property<DateOnly?>("EmployeeEffectiveTo")
+                    b.Property<DateOnly?>("EmploymentEffectiveTo")
                         .HasColumnType("date")
-                        .HasColumnName("Employee_EffectiveTo");
+                        .HasColumnName("Employment_EffectiveTo");
 
-                    b.Property<string>("EmployeeStatusName")
+                    b.Property<string>("EmploymentStatusName")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Employee_Status_Name");
+                        .HasColumnName("Employment_Status_Name");
 
-                    b.Property<string>("EmployeeTypeName")
+                    b.Property<string>("EmploymentTypeName")
                         .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Employee_Type_Name");
+                        .HasColumnName("Employment_Type_Name");
 
                     b.Property<string>("EmploymentContactEmail")
                         .HasColumnType("nvarchar(max)")
@@ -344,7 +344,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<DateOnly?>("EffectiveTo")
                         .HasColumnType("date");
 
-                    b.Property<string>("EmployeeCode")
+                    b.Property<string>("EmploymentCode")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -493,7 +493,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<DateTime?>("EffectiveTo")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("FkEmployeeId")
+                    b.Property<Guid>("FkEmploymentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkLocationId")
@@ -527,7 +527,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_EmploymentLocation_ModifiedBy");
 
-                    b.HasIndex(new[] { "FkEmployeeId" }, "IX_ EmploymentLocations_fkEmployeeId");
+                    b.HasIndex(new[] { "FkEmploymentId" }, "IX_ EmploymentLocations_fkEmploymentId");
 
                     b.HasIndex(new[] { "FkLocationId" }, "IX_ EmploymentLocations_fkLocationId");
 
@@ -994,7 +994,7 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("CostCenter_Name");
 
-                    b.Property<string>("EmployeeCode")
+                    b.Property<string>("EmploymentCode")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
@@ -1125,9 +1125,9 @@ namespace HR.Infrastructure.Migrations
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentLocation", b =>
                 {
-                    b.HasOne("HR.Domain.Entities.Employment", "Employee")
+                    b.HasOne("HR.Domain.Entities.Employment", "Employment")
                         .WithMany("EmploymentLocations")
-                        .HasForeignKey("FkEmployeeId")
+                        .HasForeignKey("FkEmploymentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_ EmploymentLocations_ Employment");
@@ -1139,7 +1139,7 @@ namespace HR.Infrastructure.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_ EmploymentLocations_Location");
 
-                    b.Navigation("Employee");
+                    b.Navigation("Employment");
 
                     b.Navigation("Location");
                 });

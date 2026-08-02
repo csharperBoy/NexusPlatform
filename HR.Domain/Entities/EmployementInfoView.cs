@@ -14,11 +14,11 @@ public partial class EmployementInfoView
 
     public string LastName { get; set; } = null!;
 
-    public string EmployeeCode { get; set; } = null!;
+    public string EmploymentCode { get; set; } = null!;
 
-    public DateOnly EmployeeEffectiveFrom { get; set; }
+    public DateOnly EmploymentEffectiveFrom { get; set; }
 
-    public DateOnly? EmployeeEffectiveTo { get; set; }
+    public DateOnly? EmploymentEffectiveTo { get; set; }
 
     public Guid PartyId { get; set; }
 
@@ -30,9 +30,9 @@ public partial class EmployementInfoView
 
     public string? PartyEmail { get; set; }
 
-    public string? EmployeeStatusName { get; set; }
+    public string? EmploymentStatusName { get; set; }
 
-    public string? EmployeeTypeName { get; set; }
+    public string? EmploymentTypeName { get; set; }
 
     public int AssignmentsAssigneeType { get; set; }
 

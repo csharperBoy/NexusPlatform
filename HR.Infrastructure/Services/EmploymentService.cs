@@ -23,38 +23,38 @@ using System.Threading.Tasks;
 
 namespace HR.Infrastructure.Services
 {
-    public class EmployeeService : IEmployeeInternalService, IEmployeePublicService
+    public class EmploymentService : IEmploymentInternalService, IEmploymentPublicService
     {
 
         private readonly IPersonPublicService _personService;
-        private readonly IRepository<HRDbContext, Employment, Guid> _employeeRepository;
+        private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
         private readonly IRepository<HRDbContext, EmployementInfoView, Guid> _employmentInfoRepository;
         private readonly IRepository<HRDbContext, EmploymentContact, Guid> _employmentContactRepository;
-        private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employeeLocationsRepository;
-        private readonly ISpecificationRepository<Employment, Guid> _employeeSpecRepository;
+        private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
+        private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
         private readonly ISpecificationRepository<EmploymentContact, Guid> _employmentContactSpecRepository;
-        private readonly ILogger<EmployeeService> _logger;
+        private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
-        public EmployeeService(IPersonPublicService personService,IRepository<HRDbContext, Employment, Guid> employeeRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmployeeService> logger,
-            ISpecificationRepository<Employment, Guid> employeeSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employeeLocationsRepository,
+        public EmploymentService(IPersonPublicService personService,IRepository<HRDbContext, Employment, Guid> employmentRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmploymentService> logger,
+            ISpecificationRepository<Employment, Guid> employmentSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
             IUnitOfWork<HRDbContext> uow, ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository, IRepository<HRDbContext, EmployementInfoView, Guid> employmentInfoRepository)
         {
              _employmentInfoRepository= employmentInfoRepository;
             _personService = personService;
-            _employeeRepository = employeeRepository;
+            _employmentRepository = employmentRepository;
             _employmentContactRepository = employmentContactRepository;
-            _employeeLocationsRepository = employeeLocationsRepository;
-            _employeeSpecRepository = employeeSpecRepository;
+            _employmentLocationsRepository = employmentLocationsRepository;
+            _employmentSpecRepository = employmentSpecRepository;
             _logger = logger;
             _uow = uow;
             _employmentContactSpecRepository = employmentContactSpecRepository;
             _employmentLocationSpecRepository = employmentLocationSpecRepository;
         }
 
-        public async Task<Guid> CreateEmployeeAsync(
-             string _EmployeeCode,
+        public async Task<Guid> CreateEmploymentAsync(
+             string _EmploymentCode,
          Guid _PersonId,
         Guid? _EmploymentTypeId,
         Guid? _EmploymentStatusId,
@@ -66,8 +66,8 @@ namespace HR.Infrastructure.Services
         PhoneNumber? _orgMobile = null
             )
         {
-            Employment emp = new Employment(_EmployeeCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
-            await _employeeRepository.AddAsync(emp);
+            Employment emp = new Employment(_EmploymentCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
+            await _employmentRepository.AddAsync(emp);
 
             await CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
             await CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
@@ -86,21 +86,21 @@ namespace HR.Infrastructure.Services
         {
             await _uow.SaveChangesAsync();
         }
-        public async Task<Guid?> GetEmployeeId(Guid? personId)
+        public async Task<Guid?> GetEmploymentId(Guid? personId)
         {
-            GetEmployeeByPersonIdSpec spec = new GetEmployeeByPersonIdSpec(personId);
-            Employment? employee = await _employeeSpecRepository.GetBySpecAsync(spec);
-            if (employee == null) 
-                throw new InvalidOperationException("employee not found!!!");
+            GetEmploymentByPersonIdSpec spec = new GetEmploymentByPersonIdSpec(personId);
+            Employment? employment = await _employmentSpecRepository.GetBySpecAsync(spec);
+            if (employment == null) 
+                throw new InvalidOperationException("employment not found!!!");
 
-            return employee.Id;
+            return employment.Id;
 
         }
 
-        public async Task AssignLocationsToEmployee(Guid employeeId, List<Guid> locationsId)
+        public async Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId)
         {
             // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
-            var spec = new GetEmploymentLocationsSpec(employeeId);
+            var spec = new GetEmploymentLocationsSpec(employmentId);
             var existingActive = await _employmentLocationSpecRepository.ListBySpecAsync(spec);
 
             // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
@@ -117,28 +117,28 @@ namespace HR.Infrastructure.Services
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
             var toAdd = newIds
                 .Where(id => !existingIds.Contains(id))
-                .Select(id => new EmploymentLocation(id, employeeId))
+                .Select(id => new EmploymentLocation(id, employmentId))
                 .ToList();
 
             if (toAdd.Any())
             {
-                await _employeeLocationsRepository.AddRangeAsync(toAdd);
+                await _employmentLocationsRepository.AddRangeAsync(toAdd);
             }
 
         }
 
 
 
-        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string employeeCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid> locationsId, string? officePhone, string? orgEmail, string? orgMobile)
+        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile)
         {
-            Employment? emp = await _employeeRepository.GetByIdAsync(id);
+            Employment? emp = await _employmentRepository.GetByIdAsync(id);
             if (emp == null)
                 throw new Exception("can not found employment!!!");
 
-            bool hasChange = emp.ApplyChange(   employeeCode,  employmentTypeId,  employmentStatusId,  startDate,  endDate);
+            bool hasChange = emp.ApplyChange(   employmentCode,  employmentTypeId,  employmentStatusId,  startDate,  endDate);
             if (hasChange)
             {
-                await _employeeRepository.UpdateAsync(emp);
+                await _employmentRepository.UpdateAsync(emp);
             }
 
             await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstlName, lastName, birthDate, birthPlace, fatherName);

@@ -70,6 +70,15 @@ namespace HR.Infrastructure.Data
                             Description = "Post management",
                             DisplayOrder = 3001,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "hr.employment",
+                            Name = "HR employments",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "employment management",
+                            DisplayOrder = 3002,
+                            Icon = "list",
                         }
                     }
                 }
@@ -97,6 +106,23 @@ namespace HR.Infrastructure.Data
                    AssigneeId = roleId,
 
                    Description = "Full access to hr post"
+               },
+               new()
+               {
+                   ResourceKey = "hr.employment",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to hr employment"
                }
             };
         }
@@ -163,6 +189,16 @@ namespace HR.Infrastructure.Data
                             Key = "hr.post",
                             ParentKey = "hr",
                             Path = "/hr/post"
+                        },
+                        new()
+                        {
+                            Title = "مدیریت کارمندان",
+                            Description = "مدیریت کارمندان",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 102,
+                            Key = "hr.employment",
+                            ParentKey = "hr",
+                            Path = "/hr/employment"
                         }
                     }
                 }

@@ -1,8 +1,8 @@
 ﻿CREATE VIEW [dbo].[Employment_Info_View]
 AS
-SELECT        people.naturalPersons.NationalCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, hr.[ Employment].EmployeeCode, hr.[ Employment].EffectiveFrom AS Employee_EffectiveFrom, 
-                         hr.[ Employment].EffectiveTo AS Employee_EffectiveTo, people.Parties.Id AS Party_Id, PartyContacts_Mobile.Value AS Party_Mobile, PartyContacts_Address.Value AS Party_Address, PartyContacts_Phone.Value AS Party_Phone,
-                          PartyContacts_Email.Value AS Party_Email, hr.[ EmploymentStatus].Name AS Employee_Status_Name, hr.[ EmploymentType].Name AS Employee_Type_Name, hr.Assignments.AssigneeType AS Assignments_AssigneeType, 
+SELECT        people.naturalPersons.NationalCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, hr.[ Employment].EmploymentCode, hr.[ Employment].EffectiveFrom AS Employment_EffectiveFrom, 
+                         hr.[ Employment].EffectiveTo AS Employment_EffectiveTo, people.Parties.Id AS Party_Id, PartyContacts_Mobile.Value AS Party_Mobile, PartyContacts_Address.Value AS Party_Address, PartyContacts_Phone.Value AS Party_Phone,
+                          PartyContacts_Email.Value AS Party_Email, hr.[ EmploymentStatus].Name AS Employment_Status_Name, hr.[ EmploymentType].Name AS Employment_Type_Name, hr.Assignments.AssigneeType AS Assignments_AssigneeType, 
                          hr.Assignments.EffectiveFrom AS Assignments_EffectiveFrom, hr.Assignments.EffectiveTo AS Assignments_EffectiveTo, hr.Post.Code AS Post_Code, hr.[ Grade].Title AS Grade_Title, hr.[ CostCenter].Name AS CostCenter_Name, 
                          hr.JobLevel.Title AS JobLevel_Title, hr.JobTitle.Name AS JobTitle_Name, hr.OrganizationUnits.Name AS OrganizationUnits_Name, PostContact_Phone.Value AS PostContact_Phone, 
                          PostContact_Mobile.Value AS PostContact_Mobile, PostContact_Email.Value AS PostContact_Email, PostContact_Fax.Value AS PostContact_Fax, EmploymentContact_Phone.Value AS EmploymentContact_Phone, 
@@ -14,7 +14,7 @@ FROM            hr.Location INNER JOIN
                          people.naturalPersons ON hr.[ Employment].FkNaturalPersonId = people.naturalPersons.Id INNER JOIN
                          people.Parties ON people.naturalPersons.FkPartyId = people.Parties.Id INNER JOIN
                          hr.Assignments ON hr.[ Employment].Id = hr.Assignments.FkEmploymentId AND hr.Assignments.IsCurrent = 1 INNER JOIN
-                         hr.Post ON hr.Assignments.FkPostId = hr.Post.Id ON hr.[ EmploymentLocations].FkEmployeeId = hr.[ Employment].Id AND hr.[ EmploymentLocations].IsCurrent = 1 LEFT OUTER JOIN
+                         hr.Post ON hr.Assignments.FkPostId = hr.Post.Id ON hr.[ EmploymentLocations].FkEmploymentId = hr.[ Employment].Id AND hr.[ EmploymentLocations].IsCurrent = 1 LEFT OUTER JOIN
                          hr.PostContacts AS PostContact_Phone ON hr.Post.Id = PostContact_Phone.FkPostId AND PostContact_Phone.ContactType = 0 AND PostContact_Phone.IsCurrent = 1 LEFT OUTER JOIN
                          hr.PostContacts AS PostContact_Mobile ON hr.Post.Id = PostContact_Mobile.FkPostId AND PostContact_Mobile.ContactType = 1 AND PostContact_Mobile.IsCurrent = 1 LEFT OUTER JOIN
                          hr.PostContacts AS PostContact_Fax ON hr.Post.Id = PostContact_Fax.FkPostId AND PostContact_Fax.ContactType = 2 AND PostContact_Fax.IsCurrent = 1 LEFT OUTER JOIN

@@ -1,0 +1,57 @@
+// modules/hr/api/employmentApi.ts
+import getAPI from "@/core/api/axiosClient";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
+import { EmploymentInfoView } from "../models/EmploymentInfoView";
+import {  UpdateEmploymentCommand } from "../models/EmploymentCommand";
+const API_MODULE = "hr";
+
+export const employmentApi = {
+
+ // دریافت پست ها (GET)
+  GetList: async (): Promise<EmploymentInfoView[]> => {
+    
+    const api = getAPI(API_MODULE);
+    
+    const response = await api.get<EmploymentInfoView[]>(
+      "/api/HR/Employee/GetList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+   
+  // به‌روزرسانی گروهی
+  batchUpdateemployments: async (commands: UpdateEmploymentCommand[]): Promise<string[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.put<string[]>(
+      `/api/hr/Employee/batch`,
+      { employments: commands },
+      { withCredentials: true }
+    );
+    return response.data; // آرایه‌ای از GUIDهای به‌روز شده
+  },
+  
+  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/hr/Employee/GetSelectionList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+  
+// ویرایش منبع (PUT)
+  updateemployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.put<boolean>(
+      `/api/hr/Employee/${data.id}`, data,
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+  
+
+
+};

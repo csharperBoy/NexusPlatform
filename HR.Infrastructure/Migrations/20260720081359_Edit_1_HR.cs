@@ -82,16 +82,16 @@ namespace HR.Infrastructure.Migrations
                     NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmployeeEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    EmployeeEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmploymentEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
+                    EmploymentEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
                     PartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     PartyMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PartyAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PartyPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PartyEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmployeeStatusName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmployeeTypeName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmploymentStatusName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmploymentTypeName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
                     AssignmentsEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
                     AssignmentsEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
@@ -232,7 +232,7 @@ namespace HR.Infrastructure.Migrations
                     NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
                     PostCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     GradeTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -254,7 +254,7 @@ namespace HR.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EmployeeCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FkNaturalPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkEmploymentTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkEmploymentStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -356,14 +356,14 @@ namespace HR.Infrastructure.Migrations
                     EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsCurrent = table.Column<bool>(type: "bit", nullable: false),
                     FkLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FkEmployeeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FkEmploymentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EmploymentLocation", x => x.Id);
                     table.ForeignKey(
                         name: "FK_ EmploymentLocations_ Employment",
-                        column: x => x.FkEmployeeId,
+                        column: x => x.FkEmploymentId,
                         principalSchema: "hr",
                         principalTable: " Employment",
                         principalColumn: "Id",
@@ -471,10 +471,10 @@ namespace HR.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentLocations_fkEmployeeId",
+                name: "IX_ EmploymentLocations_fkEmploymentId",
                 schema: "hr",
                 table: " EmploymentLocations",
-                column: "FkEmployeeId");
+                column: "FkEmploymentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ EmploymentLocations_fkLocationId",

@@ -16,9 +16,9 @@ namespace PhoneBook.Application.DTOs
         public PhoneBookContactSourceEnum Source { get; set; }
     }
 
-    public class PhoneBookEmployeeDto
+    public class PhoneBookEmploymentDto
     {
-        public string EmployeeCode { get; set; } = null!;
+        public string EmploymentCode { get; set; } = null!;
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
         public string FullName => $"{FirstName} {LastName}".Trim();

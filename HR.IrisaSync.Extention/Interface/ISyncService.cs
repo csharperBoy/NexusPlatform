@@ -11,8 +11,8 @@ namespace HR.IrisaSync.Extention.Interface
     public interface ISyncService
     {
         Task SyncEmployements();
-        Task<SyncResult> SyncEmployeesAsync();
-        Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployee();
+        Task<SyncResult> SyncEmploymentsAsync();
+        Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment();
 
         Task SyncJobTitle();
 

@@ -13,7 +13,7 @@ namespace PhoneBook.Domain.Specifications
         public GetPhoneBookSpec(/*Guid? orgUnitId = null*/)
             : base()
         {
-            ApplyOrderBy(u => u.EmployeeCode);
+            ApplyOrderBy(u => u.EmploymentCode);
         }
     }
 }

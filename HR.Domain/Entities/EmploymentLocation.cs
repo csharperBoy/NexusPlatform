@@ -43,21 +43,21 @@ namespace HR.Domain.Entities
         }
         #endregion
         public Guid FkLocationId { get; private set; }
-        public Guid FkEmployeeId { get; private set; }
+        public Guid FkEmploymentId { get; private set; }
 
 
-        public virtual Employment Employee { get; set; } = null!;
+        public virtual Employment Employment { get; set; } = null!;
 
         public virtual Location Location { get; set; } = null!;
         
         protected EmploymentLocation() { }
         public EmploymentLocation(
              Guid _fkLocationId,
-             Guid _fkEmployeeId
+             Guid _fkEmploymentId
             )
         {
             FkLocationId = _fkLocationId;
-            FkEmployeeId = _fkEmployeeId;
+            FkEmploymentId = _fkEmploymentId;
 
         }
 

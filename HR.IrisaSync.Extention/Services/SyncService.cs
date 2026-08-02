@@ -4,7 +4,7 @@ using Core.Application.Abstractions.People;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
 using Core.Shared.Enums.HR;
-using HR.Application.Commands.Employee;
+using HR.Application.Commands.Employment;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
@@ -39,13 +39,13 @@ namespace HR.IrisaSync.Extention.Services
         private readonly IRepository<IrisaOracleDbContext, PdsIdeaInformationViw, string> _irisaRepo;
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
         private readonly IIrisaSyncUnitOfWork<IrisaExtentionDbContext> _uow;
-        private readonly IEmployeeInternalService _employeeService;
+        private readonly IEmploymentInternalService _employmentService;
         private readonly IMapService _mapService;
         private readonly IPersonPublicService _personService;
         private readonly IMediator _mediator;
         public SyncService(ISpecificationRepository<PdsIdeaInformationViw, string> repoSpec,
             IHRUnitOfWork<HRDbContext> hrUow, IIrisaSyncUnitOfWork<IrisaExtentionDbContext> uow,
-            IEmployeeInternalService employeeService,
+            IEmploymentInternalService employmentService,
             IPersonPublicService personService,
             IMapService mapService,
             IMediator mediator,
@@ -53,7 +53,7 @@ namespace HR.IrisaSync.Extention.Services
         {
             _mapService = mapService;
             _mediator = mediator;
-            _employeeService = employeeService;
+            _employmentService = employmentService;
             _irisaRepo = irisaRepo;
             _repoSpec = repoSpec;
             _uow = uow;
@@ -63,16 +63,16 @@ namespace HR.IrisaSync.Extention.Services
 
         public async Task SyncEmployements()
         {
-            //var hrEmployees = await _hrUow.EmploymentRepository.GetAllAsync();
-            var irisaEmployees = (await _irisaRepo.GetAllAsync()).Where(a => a.CodEmtyp == true && a.NumPrsnEmply == 310);
+            //var hrEmployments = await _hrUow.EmploymentRepository.GetAllAsync();
+            var irisaEmployments = (await _irisaRepo.GetAllAsync()).Where(a => a.CodEmtyp == true && a.NumPrsnEmply == 310);
             
-            foreach (var item in irisaEmployees)
+            foreach (var item in irisaEmployments)
             {
-                //await syncEmployee(item);
+                //await syncEmployment(item);
             }
 
         }
-        public async Task<SyncResult> SyncEmployeesAsync()
+        public async Task<SyncResult> SyncEmploymentsAsync()
         {
             var result = new SyncResult();
 
@@ -81,7 +81,7 @@ namespace HR.IrisaSync.Extention.Services
             try
             {
                 // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
-                var irisaEmployees = (await _irisaRepo.GetAllAsync())
+                var irisaEmployments = (await _irisaRepo.GetAllAsync())
                     .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
                     .ToList();
 
@@ -99,32 +99,32 @@ namespace HR.IrisaSync.Extention.Services
                     );
 
                 // 4. دریافت تمام کارمندان موجود در دیتابیس (برای تشخیص جدید/موجود)
-                var existingEmployees = await _hrUow.EmploymentRepository.GetAllAsync();
-                var employeeDict = existingEmployees
-                    .ToDictionary(e => e.EmployeeCode, e => e); // PersonalCode = NumPrsnEmply
+                var existingEmployments = await _hrUow.EmploymentRepository.GetAllAsync();
+                var employmentDict = existingEmployments
+                    .ToDictionary(e => e.EmploymentCode, e => e); // PersonalCode = NumPrsnEmply
 
                 // 5. لیست عملیات (برای رهگیری)
-                var employeesToUpdate = new List<Employment>();
-                var employeesToDelete = new List<Employment>();
+                var employmentsToUpdate = new List<Employment>();
+                var employmentsToDelete = new List<Employment>();
 
                 // 6. گروه‌بندی کارمندان ویو بر اساس CodJobpo
-                var employeeGroups = irisaEmployees.Where(a=>a.CodJobpo != null)
+                var employmentGroups = irisaEmployments.Where(a=>a.CodJobpo != null)
                     .GroupBy(e => e.CodJobpo)
                     .ToList();
 
-                foreach (var group in employeeGroups)
+                foreach (var group in employmentGroups)
                 {
                     // یافتن FkJobTitleId معتبر
                     if (!jobTitleMap.TryGetValue(group.Key, out var jobTitleId))
                         continue; // اگر عنوان شغلی مپ نشده، گروه را نادیده بگیر
 
                     // مرتب‌سازی کارمندان گروه بر اساس یک ترتیب مشخص (مثلاً NumPrsnEmply)
-                    var sortedEmployees = group
+                    var sortedEmployments = group
                         .OrderBy(e => e.NumPrsnEmply) // یا هر فیلد دیگری مانند تاریخ استخدام
                         .ToList();
 
                     int counter = 0;
-                    foreach (var item in sortedEmployees)
+                    foreach (var item in sortedEmployments)
                     {
                         counter++;
                         string code = counter.ToString();
@@ -142,12 +142,12 @@ namespace HR.IrisaSync.Extention.Services
                         var postId = post.Id;
 
                         // 7. بررسی وجود کارمند در دیتابیس
-                        if (employeeDict.TryGetValue(personalCode, out var existingEmployee))
+                        if (employmentDict.TryGetValue(personalCode, out var existingEmployment))
                         {
                             // ➡️ کارمند موجود است → به‌روزرسانی از طریق MediatR
-                           /* var updateCommand = new UpdateEmployeeCommand(
+                           /* var updateCommand = new UpdateEmploymentCommand(
                                 // پارامترهای مورد نیاز برای به‌روزرسانی
-                                // (همان فیلدهای CreateEmployeeCommand به اضافه Id یا PersonalCode)
+                                // (همان فیلدهای CreateEmploymentCommand به اضافه Id یا PersonalCode)
                                 PersonalCode: personalCode,
                                 FirstName: item.NamFirstEmply,
                                 LastName: item.NamLastEmply,
@@ -161,12 +161,12 @@ namespace HR.IrisaSync.Extention.Services
                             result.UpdatedCount++;
 
                             // حذف از دیکشنری تا بعداً متوجه شویم کدام کارمندها حذف می‌شوند
-                            employeeDict.Remove(personalCode);
+                            employmentDict.Remove(personalCode);
                         }
                         else
                         {
                             // ➕ کارمند جدید → ایجاد از طریق MediatR
-                            var createCommand = new CreateEmployeeCommand(
+                            var createCommand = new CreateEmploymentCommand(
                                 Phone: item.NumTelEmply.ToString(),
                                 Address: item.DesAdrEmply,
                                 Email: null, // یا item.DesEmailAddresEmply
@@ -181,7 +181,7 @@ namespace HR.IrisaSync.Extention.Services
                                 BirthPlace: item.BirthPlace,
                                 FatherName: item.NamFathrEmply,
                                 Gender: item.DesSexEmply.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                                EmployeeCode: personalCode,
+                                EmploymentCode: personalCode,
                                 StartDate: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
                                 PostId: postId,
                                 AssigneeType: PostAssignmentType.Delegation,
@@ -196,12 +196,12 @@ namespace HR.IrisaSync.Extention.Services
                 }
 
                 // 8. کارمندانی که در دیکشنری باقی مانده‌اند = در ویو نیستند → باید حذف یا غیرفعال شوند
-                employeesToDelete = employeeDict.Values.ToList();
+                employmentsToDelete = employmentDict.Values.ToList();
 
-                foreach (var emp in employeesToDelete)
+                foreach (var emp in employmentsToDelete)
                 {
                     // فرض کنید یک Command برای حذف یا غیرفعال‌سازی دارید
-                  /*  var deleteCommand = new DeactivateEmployeeCommand(emp.Id);
+                  /*  var deleteCommand = new DeactivateEmploymentCommand(emp.Id);
                     await _mediator.Send(deleteCommand);*/
                     result.DeletedCount++;
                 }
@@ -217,7 +217,7 @@ namespace HR.IrisaSync.Extention.Services
             }
         }
         /*
-        private async Task syncEmployee(PdsIdeaInformationViw item)
+        private async Task syncEmployment(PdsIdeaInformationViw item)
         {
             #region تعیین اینکه آیا کارمند جدید است یا از قبل وجود داشته است؟
             //var existEmp = await _uow.EmploymentRepository.GetByIdAsync();
@@ -225,7 +225,7 @@ namespace HR.IrisaSync.Extention.Services
             #region افزودن کارمند جدید
            
             Guid postId = 
-            var command = new CreateEmployeeCommand(
+            var command = new CreateEmploymentCommand(
                  item.NumTelEmply.ToString(),
                 item.DesAdrEmply,
                 //item.DesEmailAddresEmply,
@@ -258,10 +258,10 @@ namespace HR.IrisaSync.Extention.Services
             #endregion
         }
         */
-        public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployee()
+        public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment()
         {
             var a = await _irisaRepo.GetByIdAsync("1250382831");
-            var spec = new GetEmployeeSpec();
+            var spec = new GetEmploymentSpec();
             var lst = await _repoSpec.ListBySpecAsync(spec);
             return lst.ToList();
         }

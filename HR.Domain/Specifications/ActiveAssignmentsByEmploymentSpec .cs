@@ -11,10 +11,10 @@ namespace HR.Domain.Specifications
     /// <summary>
     /// Specification برای گرفتن Assignmentهای فعال یک شخص
     /// </summary>
-    public class ActiveAssignmentsByEmployeeSpec : BaseSpecification<Assignment>
+    public class ActiveAssignmentsByEmploymentSpec : BaseSpecification<Assignment>
     {
-        public ActiveAssignmentsByEmployeeSpec(Guid employeeId)
-            : base(a => a.FkEmploymentId == employeeId &&
+        public ActiveAssignmentsByEmploymentSpec(Guid employmentId)
+            : base(a => a.FkEmploymentId == employmentId &&
                        a.IsCurrent &&
                        (!a.EffectiveTo.HasValue || a.EffectiveTo >  DateTime.UtcNow))
         {

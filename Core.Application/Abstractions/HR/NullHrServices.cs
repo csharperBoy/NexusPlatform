@@ -15,7 +15,7 @@ namespace Core.Application.Abstractions.HR
         public static IServiceCollection HR_NullServiceInject(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IOrgChartPublicService, NullOrgChartService>();
-            services.AddScoped<IEmployeePublicService, NullEmployeeService>();
+            services.AddScoped<IEmploymentPublicService, NullEmploymentService>();
             return services;
         }
     }
@@ -23,25 +23,25 @@ namespace Core.Application.Abstractions.HR
     public class NullOrgChartService : IOrgChartPublicService
     {
 
-        public Task<List<Guid?>?> GetEmployeeOrganizeId(Guid? employeeId)
+        public Task<List<Guid?>?> GetEmploymentOrganizeId(Guid? employmentId)
         {
             return Task.FromResult<List<Guid?>?>(null);
         }
 
 
-        public Task<List<Guid>?> GetEmployeePostsId(Guid? employeeId)
+        public Task<List<Guid>?> GetEmploymentPostsId(Guid? employmentId)
         {
             return Task.FromResult<List<Guid>?>(null);
         }
 
-        public Task<List<Guid>?> GetEmployeePostsPermissionAssigneeId(Guid? employeeId)
+        public Task<List<Guid>?> GetEmploymentPostsPermissionAssigneeId(Guid? employmentId)
         {
             return null;
         }
     }
-    public class NullEmployeeService : IEmployeePublicService
+    public class NullEmploymentService : IEmploymentPublicService
     {
-        public Task<Guid?> GetEmployeeId(Guid? personId)
+        public Task<Guid?> GetEmploymentId(Guid? personId)
         {
             return Task.FromResult<Guid?>(null);
         }

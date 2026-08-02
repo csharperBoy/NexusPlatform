@@ -48,9 +48,9 @@ namespace HR.Application.Commands.OrgChart
                     );
 
                     // ۲. تخصیص به کارمند (در صورت وجود)
-                    if (command.EmployeeId.HasValue && command.EmployeeId.Value != Guid.Empty)
+                    if (command.EmploymentId.HasValue && command.EmploymentId.Value != Guid.Empty)
                     {
-                        await _orgChartService.AssignToEmployeeAsync(postId, command.EmployeeId.Value, command.AssignType);
+                        await _orgChartService.AssignToEmploymentAsync(postId, command.EmploymentId.Value, command.AssignType);
                     }
 
                     results.Add(postId);

@@ -11,6 +11,6 @@ namespace PhoneBook.Application.Interfaces
 {
     public interface IPhoneBookInternalService : IPhoneBookPublicService
     {
-        Task<IReadOnlyList<PhoneBookEmployeeDto>> GetPhoneBookListAsync(Guid? organUnitId);
+        Task<IReadOnlyList<PhoneBookEmploymentDto>> GetPhoneBookListAsync(Guid? organUnitId);
     }
 }

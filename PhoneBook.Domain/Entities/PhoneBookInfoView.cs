@@ -16,7 +16,7 @@ namespace PhoneBook.Domain.Entities
 
         public string LastName { get; set; } = null!;
 
-        public string EmployeeCode { get; set; } = null!;
+        public string EmploymentCode { get; set; } = null!;
 
 
 

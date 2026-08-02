@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 namespace HR.Domain.Specifications
 {
     
-    public class GetEmployeeByPersonIdSpec : BaseSpecification<Employment>
+    public class GetEmploymentByPersonIdSpec : BaseSpecification<Employment>
     {
-        public GetEmployeeByPersonIdSpec(Guid? personId = null)
+        public GetEmploymentByPersonIdSpec(Guid? personId = null)
             : base(p =>
                         personId == null || p.FkNaturalPersonId == personId)
         {

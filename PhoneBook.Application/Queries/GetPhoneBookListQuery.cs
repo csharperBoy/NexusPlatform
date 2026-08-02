@@ -13,10 +13,10 @@ namespace PhoneBook.Application.Queries
 {
     
     public record GetPhoneBookListQuery(Guid? organUnitId = null)
-     : IRequest<Result<IReadOnlyList<PhoneBookEmployeeDto>>>;
+     : IRequest<Result<IReadOnlyList<PhoneBookEmploymentDto>>>;
 
     public class GetPhoneBookListQueryHandler
-        : IRequestHandler<GetPhoneBookListQuery, Result<IReadOnlyList<PhoneBookEmployeeDto>>>
+        : IRequestHandler<GetPhoneBookListQuery, Result<IReadOnlyList<PhoneBookEmploymentDto>>>
     {
         private readonly IPhoneBookInternalService _phoneBookInternalService;
         private readonly ILogger<GetPhoneBookListQueryHandler> _logger;
@@ -29,7 +29,7 @@ namespace PhoneBook.Application.Queries
             _logger = logger;
         }
 
-        public async Task<Result<IReadOnlyList<PhoneBookEmployeeDto>>> Handle(
+        public async Task<Result<IReadOnlyList<PhoneBookEmploymentDto>>> Handle(
             GetPhoneBookListQuery request,
             CancellationToken cancellationToken)
         {
@@ -38,12 +38,12 @@ namespace PhoneBook.Application.Queries
                 _logger.LogDebug("Getting PhoneBook Info List:");
 
                 var list = await _phoneBookInternalService.GetPhoneBookListAsync(request.organUnitId);
-                return Result<IReadOnlyList<PhoneBookEmployeeDto>>.Ok(list);
+                return Result<IReadOnlyList<PhoneBookEmploymentDto>>.Ok(list);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to get PhoneBook Info List");
-                return Result<IReadOnlyList<PhoneBookEmployeeDto>>.Fail(ex.Message);
+                return Result<IReadOnlyList<PhoneBookEmploymentDto>>.Fail(ex.Message);
             }
         }
     }

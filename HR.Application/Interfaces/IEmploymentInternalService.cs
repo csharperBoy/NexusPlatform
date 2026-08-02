@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Interfaces
 {
-    public interface IEmployeeInternalService : IEmployeePublicService
+    public interface IEmploymentInternalService : IEmploymentPublicService
     {
-        Task AssignLocationsToEmployee(Guid employeeId, List<Guid> locationsId);
-        Task<Guid> CreateEmployeeAsync(
-            string _EmployeeCode,
+        Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId);
+        Task<Guid> CreateEmploymentAsync(
+            string _EmploymentCode,
         Guid _PersonId,
         Guid? _EmploymentTypeId,
         Guid? _EmploymentStatusId,
@@ -26,6 +26,6 @@ namespace HR.Application.Interfaces
         PhoneNumber? _orgMobile = null
            );
         Task<IReadOnlyList<EmployementInfoView>> GetEmploymentListAsync();
-        Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string employeeCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid> locationsId, string? officePhone, string? orgEmail, string? orgMobile);
+        Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile);
     }
 }

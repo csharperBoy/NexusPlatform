@@ -25,10 +25,10 @@ namespace HR.Infrastructure.Configurations
             builder.Property(e => e.AssignmentsEffectiveFrom).HasColumnName("Assignments_EffectiveFrom");
             builder.Property(e => e.AssignmentsEffectiveTo).HasColumnName("Assignments_EffectiveTo");
             builder.Property(e => e.CostCenterName).HasColumnName("CostCenter_Name");
-            builder.Property(e => e.EmployeeEffectiveFrom).HasColumnName("Employee_EffectiveFrom");
-            builder.Property(e => e.EmployeeEffectiveTo).HasColumnName("Employee_EffectiveTo");
-            builder.Property(e => e.EmployeeStatusName).HasColumnName("Employee_Status_Name");
-            builder.Property(e => e.EmployeeTypeName).HasColumnName("Employee_Type_Name");
+            builder.Property(e => e.EmploymentEffectiveFrom).HasColumnName("Employment_EffectiveFrom");
+            builder.Property(e => e.EmploymentEffectiveTo).HasColumnName("Employment_EffectiveTo");
+            builder.Property(e => e.EmploymentStatusName).HasColumnName("Employment_Status_Name");
+            builder.Property(e => e.EmploymentTypeName).HasColumnName("Employment_Type_Name");
             builder.Property(e => e.EmploymentLocationsEffectiveFrom).HasColumnName("EmploymentLocations_EffectiveFrom");
             builder.Property(e => e.EmploymentLocationsEffectiveTo).HasColumnName("EmploymentLocations_EffectiveTo");
             builder.Property(e => e.FirstName).HasMaxLength(100);

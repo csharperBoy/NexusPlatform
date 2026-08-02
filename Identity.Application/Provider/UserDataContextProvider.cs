@@ -24,7 +24,7 @@ namespace Identity.Application.Provider
         private readonly IRolePublicService _roleService;
         private readonly IPersonPublicService _personService;
         private readonly UserDataContext _userDataContext;
-        private readonly IEmployeePublicService _employeeService;
+        private readonly IEmploymentPublicService _employmentService;
 
         public UserDataContextProvider(
             IPermissionPublicService permissionService,
@@ -34,7 +34,7 @@ namespace Identity.Application.Provider
        IPersonPublicService personService,
         IOrgChartPublicService positionService,
             IRolePublicService roleService,
-             IEmployeePublicService employeeService
+             IEmploymentPublicService employmentService
             )
         {
             _permissionService = permissionService;
@@ -43,7 +43,7 @@ namespace Identity.Application.Provider
             _positionService = positionService;
             _roleService = roleService;
             _userDataContext = userDataContext;
-            _employeeService = employeeService;
+            _employmentService = employmentService;
             _personService = personService;
         }
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
@@ -62,15 +62,15 @@ namespace Identity.Application.Provider
             Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
             Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
 
-            Guid? EmployeeId = await _employeeService.GetEmployeeId(personId);
+            Guid? EmploymentId = await _employmentService.GetEmploymentId(personId);
 
-            List<Guid>? PostId = await _positionService.GetEmployeePostsId(EmployeeId);
-            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmployeePostsPermissionAssigneeId(EmployeeId);
+            List<Guid>? PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
+            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
 
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
 
-            List<Guid?>? OrgIds = await _positionService.GetEmployeeOrganizeId(EmployeeId);
+            List<Guid?>? OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
 

@@ -16,7 +16,7 @@ scaffold-dbcontext "Server = 192.168.6.65; Database = PMIS; User Id = devlogin; 
   "birthPlace": "kashan",
   "fatherName": "mohammad",
   "gender": 1,
-  "employeeCode": "868",
+  "employmentCode": "868",
   "employmentTypeId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "employmentStatusId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
   "startDate": "2026-07-01",

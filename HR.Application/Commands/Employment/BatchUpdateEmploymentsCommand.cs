@@ -9,18 +9,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.Commands.Employee
+namespace HR.Application.Commands.Employment
 {
     public record BatchUpdateEmploymentsCommand(List<UpdateEmploymentCommand> Employments) : IRequest<Result<List<Guid>>>;
 
 
     public class BatchUpdateEmploymentsCommandHandler : IRequestHandler<BatchUpdateEmploymentsCommand, Result<List<Guid>>>
     {
-        private readonly IEmployeeInternalService _employmentService;
+        private readonly IEmploymentInternalService _employmentService;
         private readonly IOrgChartInternalService _orgChartService;
         private readonly ILogger<BatchUpdateEmploymentsCommandHandler> _logger;
 
-        public BatchUpdateEmploymentsCommandHandler(IOrgChartInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmployeeInternalService employmentService)
+        public BatchUpdateEmploymentsCommandHandler(IOrgChartInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmploymentInternalService employmentService)
         {
             _orgChartService = orgChartService;
             _logger = logger;
@@ -46,7 +46,7 @@ namespace HR.Application.Commands.Employee
                    command.BirthDate,
                    command.BirthPlace,
                    command.FatherName,
-                   command.EmployeeCode,
+                   command.EmploymentCode,
                    command.EmploymentTypeId,
                    command.EmploymentStatusId,
                    command.StartDate,
@@ -58,11 +58,11 @@ namespace HR.Application.Commands.Employee
                    );
                     if (command.PostId != Guid.Empty && command.PostId != null)
                     {
-                        Guid assignId = await _orgChartService.AssignToEmployeeAsync((Guid)command.PostId, EmploymentId, command.AssigneeType, command.EffectiveFrom, command.EffectiveTo);
+                        Guid assignId = await _orgChartService.AssignToEmploymentAsync((Guid)command.PostId, EmploymentId, command.AssigneeType, command.EffectiveFrom, command.EffectiveTo);
                     }
                     if (command.locationsId != null)
                     {
-                        await _employmentService.AssignLocationsToEmployee(EmploymentId, command.locationsId);
+                        await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId);
                     }
 
                     results.Add(EmploymentId);

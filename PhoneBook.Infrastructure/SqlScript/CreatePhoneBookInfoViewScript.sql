@@ -1,6 +1,6 @@
 CREATE VIEW phonebook.PhoneBook_Info_View
 AS
-SELECT        np.NationalCode, np.FirstName, np.LastName, emp.EmployeeCode, ou.Name AS OrganizationUnitsName, jt.Name AS JobTitleName, jl.Title AS JobLevelTitle, loc.Title AS LocationTitle, pc_mobile.Value AS Party_Mobile, 
+SELECT        np.NationalCode, np.FirstName, np.LastName, emp.EmploymentCode, ou.Name AS OrganizationUnitsName, jt.Name AS JobTitleName, jl.Title AS JobLevelTitle, loc.Title AS LocationTitle, pc_mobile.Value AS Party_Mobile, 
                          pc_phone.Value AS Party_Phone, pc_email.Value AS Party_Email, pc_address.Value AS Party_Address, post_phone.Value AS PostContact_Phone, post_mobile.Value AS PostContact_Mobile, 
                          post_email.Value AS PostContact_Email, post_fax.Value AS PostContact_Fax, employment_phone.Value AS EmploymentContact_Phone, employment_mobile.Value AS EmploymentContact_Mobile, 
                          employment_email.Value AS EmploymentContact_Email, employment_fax.Value AS EmploymentContact_Fax
@@ -12,7 +12,7 @@ FROM            hr.[ Employment] AS emp INNER JOIN
                          hr.OrganizationUnits AS ou ON post.FkOrganizationUnitId = ou.Id LEFT OUTER JOIN
                          hr.JobTitle AS jt ON post.FkJobTitleId = jt.Id LEFT OUTER JOIN
                          hr.JobLevel AS jl ON post.FkJobLevelId = jl.Id LEFT OUTER JOIN
-                         hr.[ EmploymentLocations] AS el ON emp.Id = el.FkEmployeeId AND el.IsCurrent = 1 LEFT OUTER JOIN
+                         hr.[ EmploymentLocations] AS el ON emp.Id = el.FkEmploymentId AND el.IsCurrent = 1 LEFT OUTER JOIN
                          hr.Location AS loc ON el.FkLocationId = loc.Id LEFT OUTER JOIN
                          people.PartyContacts AS pc_mobile ON p.Id = pc_mobile.FkPartyId AND pc_mobile.ContactType = 1 AND pc_mobile.IsCurrent = 1 LEFT OUTER JOIN
                          people.PartyContacts AS pc_phone ON p.Id = pc_phone.FkPartyId AND pc_phone.ContactType = 0 AND pc_phone.IsCurrent = 1 LEFT OUTER JOIN

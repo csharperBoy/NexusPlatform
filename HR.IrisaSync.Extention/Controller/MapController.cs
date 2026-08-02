@@ -21,7 +21,7 @@ namespace HR.IrisaSync.Extention.Controller
             _mapService = mapService;
         }
         [HttpPost("FillJobTitleMap")]
-        //[AuthorizeResource("hr.employee", "Create")]
+        //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> FillJobTitleMap()
         {
             await _mapService.FillJobTitleMap();
@@ -29,7 +29,7 @@ namespace HR.IrisaSync.Extention.Controller
             return HandleResult(Result<bool>.Ok(true));
         }
         [HttpPost("FillJobLevelMap")]
-        //[AuthorizeResource("hr.employee", "Create")]
+        //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> FillJobLevelMap()
         {
             await _mapService.FillJobLevelMap();
@@ -37,7 +37,7 @@ namespace HR.IrisaSync.Extention.Controller
             return HandleResult(Result<bool>.Ok(true));
         }
         [HttpPost("FillOrganizationUnitMap")]
-        //[AuthorizeResource("hr.employee", "Create")]
+        //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> FillOrganizationUnitMap()
         {
             await _mapService.FillOrganizationUnitMap();

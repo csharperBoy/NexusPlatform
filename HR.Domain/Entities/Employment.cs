@@ -21,7 +21,7 @@ namespace HR.Domain.Entities
         #endregion
 
 
-        public string EmployeeCode { get; private set; }
+        public string EmploymentCode { get; private set; }
         public Guid FkNaturalPersonId { get; private set; }
         public Guid? FkEmploymentTypeId { get; private set; }
         public Guid? FkEmploymentStatusId { get; private set; }
@@ -44,7 +44,7 @@ namespace HR.Domain.Entities
 
         }
         public Employment(
-              string _EmployeeCode,
+              string _EmploymentCode,
          Guid _PersonId,
          Guid? _EmploymentTypeId,
          Guid? _EmploymentStatusId,
@@ -52,7 +52,7 @@ namespace HR.Domain.Entities
          DateOnly? _EffectiveTo = null
             )
         {
-            EmployeeCode = _EmployeeCode;
+            EmploymentCode = _EmploymentCode;
             FkNaturalPersonId = _PersonId;
             FkEmploymentTypeId = _EmploymentTypeId;
             FkEmploymentStatusId = _EmploymentStatusId;
@@ -64,7 +64,7 @@ namespace HR.Domain.Entities
         }
 
         public bool ApplyChange(
-            string? _employeeCode = null,
+            string? _employmentCode = null,
             Guid? _employmentTypeId = null,
             Guid? _employmentStatusId = null,
             DateOnly? _startDate = null,
@@ -73,9 +73,9 @@ namespace HR.Domain.Entities
          
             bool hasChange = false;
 
-            if (_employeeCode != null && _employeeCode?.Trim() != EmployeeCode.Trim())
+            if (_employmentCode != null && _employmentCode?.Trim() != EmploymentCode.Trim())
             {
-                EmployeeCode = _employeeCode;
+                EmploymentCode = _employmentCode;
                 hasChange = true;
             }
 

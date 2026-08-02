@@ -15,7 +15,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.Commands.Employee
+namespace HR.Application.Commands.Employment
 {
 
     public record UpdateEmploymentCommand(
@@ -28,15 +28,15 @@ namespace HR.Application.Commands.Employee
     #endregion
     #region Person
 
-     string FirstlName,
-     string LastName,
+     string? FirstlName,
+     string? LastName,
      DateTime? BirthDate,
      string? BirthPlace,
      string? FatherName,
     #endregion
-    #region employee
+    #region employment
 
-     string EmployeeCode,
+     string? EmploymentCode,
      Guid? EmploymentTypeId,
      Guid? EmploymentStatusId,
      DateOnly? StartDate,
@@ -63,12 +63,12 @@ namespace HR.Application.Commands.Employee
 
     public class UpdateEmploymentCommandHandler : IRequestHandler<UpdateEmploymentCommand, Result<Guid>>
     {
-        private readonly IEmployeeInternalService _employmentService;
+        private readonly IEmploymentInternalService _employmentService;
         private readonly IOrgChartInternalService _orgChartService;
         private readonly ILogger<UpdateEmploymentCommandHandler> _logger;
 
         public UpdateEmploymentCommandHandler(
-            IEmployeeInternalService employmentService,
+            IEmploymentInternalService employmentService,
             ILogger<UpdateEmploymentCommandHandler> logger,
             IOrgChartInternalService orgChartService)
         {
@@ -83,7 +83,7 @@ namespace HR.Application.Commands.Employee
             {
                 _logger.LogInformation(
                     "Creating resource: {EmploymentCode}",
-                    request.EmployeeCode);
+                    request.EmploymentCode);
 
                 Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
                     request.Id,
@@ -96,7 +96,7 @@ namespace HR.Application.Commands.Employee
                     request.BirthDate,
                      request.BirthPlace,
                      request.FatherName,
-                     request.EmployeeCode,
+                     request.EmploymentCode,
                     request.EmploymentTypeId,
                     request.EmploymentStatusId,
                     request.StartDate,
@@ -108,16 +108,16 @@ namespace HR.Application.Commands.Employee
                     );
                 if (request.PostId != Guid.Empty && request.PostId != null)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmployeeAsync((Guid)request.PostId, EmploymentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                    Guid assignId = await _orgChartService.AssignToEmploymentAsync((Guid)request.PostId, EmploymentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
                 }
                 if (request.locationsId != null)
                 {
-                    await _employmentService.AssignLocationsToEmployee(EmploymentId, request.locationsId);
+                    await _employmentService.AssignLocationsToEmployment(EmploymentId, request.locationsId);
                 }
                 await _employmentService.SaveAsync();
                 _logger.LogInformation(
                     "Employment created successfully: {EmploymentId} ({Code})",
-                    EmploymentId, request.EmployeeCode);
+                    EmploymentId, request.EmploymentCode);
 
                 return Result<Guid>.Ok(EmploymentId);
             }
@@ -126,7 +126,7 @@ namespace HR.Application.Commands.Employee
                 _logger.LogError(
                     ex,
                     "Failed to create Employment: {Code}",
-                     request.EmployeeCode);
+                     request.EmploymentCode);
 
                 return Result<Guid>.Fail(ex.Message);
             }

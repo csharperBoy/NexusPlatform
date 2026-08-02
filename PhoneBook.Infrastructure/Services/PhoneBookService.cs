@@ -27,11 +27,11 @@ namespace PhoneBook.Infrastructure.Services
         }
 
        
-        public async Task<IReadOnlyList<PhoneBookEmployeeDto>> GetPhoneBookListAsync(Guid? organUnitId)
+        public async Task<IReadOnlyList<PhoneBookEmploymentDto>> GetPhoneBookListAsync(Guid? organUnitId)
         {
             GetPhoneBookSpec spec = new GetPhoneBookSpec();
             var list = await _PhoneBookSpecRepository.ListBySpecAsync(spec);
-            IReadOnlyList<PhoneBookEmployeeDto> result = list.ToPhoneBookDtos();
+            IReadOnlyList<PhoneBookEmploymentDto> result = list.ToPhoneBookDtos();
             return result;
         }
     }

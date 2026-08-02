@@ -64,7 +64,7 @@ namespace HR.Infrastructure.DependencyInjection
             });
 
             services.AddScoped<OrgChartService>();
-            services.AddScoped<EmployeeService>();
+            services.AddScoped<EmploymentService>();
             services.AddScoped<IUnitOfWork<HRDbContext>, EfUnitOfWork<HRDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
@@ -72,8 +72,8 @@ namespace HR.Infrastructure.DependencyInjection
             services.AddScoped<IOrgChartPublicService>(sp => sp.GetRequiredService<OrgChartService>());
             services.AddScoped<IOrgChartInternalService>(sp => sp.GetRequiredService<OrgChartService>());
 
-            services.AddScoped<IEmployeePublicService>(sp => sp.GetRequiredService<EmployeeService>());
-            services.AddScoped<IEmployeeInternalService>(sp => sp.GetRequiredService<EmployeeService>());
+            services.AddScoped<IEmploymentPublicService>(sp => sp.GetRequiredService<EmploymentService>());
+            services.AddScoped<IEmploymentInternalService>(sp => sp.GetRequiredService<EmploymentService>());
 
             services.AddScoped<IRepository<HRDbContext, Employment, Guid>, EfRepository<HRDbContext, Employment, Guid>>();
             services.AddScoped<ISpecificationRepository<Employment, Guid>, EfSpecificationRepository<HRDbContext, Employment, Guid>>();
@@ -127,7 +127,7 @@ namespace HR.Infrastructure.DependencyInjection
             services.AddHostedService<ModuleInitializer>();
 
             services.AddScoped<IOrgChartInternalService, OrgChartService>();
-            services.AddScoped<IEmployeeInternalService, EmployeeService>();
+            services.AddScoped<IEmploymentInternalService, EmploymentService>();
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
