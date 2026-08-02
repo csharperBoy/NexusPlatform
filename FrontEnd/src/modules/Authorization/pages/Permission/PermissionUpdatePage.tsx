@@ -1,12 +1,15 @@
-// src/pages/PermissionUpdatePage.tsx
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { usePermissionCreateUpdateForm } from '../../hooks/Forms/Permission/usePermissionCreateUpdateForm';
-import { PermissionCreateUpdateForm } from './PermissionCreateUpdateForm';
+import { PermissionCreateUpdate } from './PermissionCreateUpdate';
 
 export default function PermissionUpdatePage() {
-  const { id } = useParams<{ id: string }>(); // دریافت ID از URL
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const formProps = usePermissionCreateUpdateForm(id, () => navigate('/permissions')); // بازگشت به لیست کاربران پس از موفقیت
 
-  return <PermissionCreateUpdateForm {...formProps} />;
+  return (
+    <PermissionCreateUpdate
+      permissionId={id}
+      onSuccess={() => navigate('/authorization/permissions')}
+    />
+  );
 }
