@@ -219,55 +219,72 @@ export const usePermissionCreateUpdate = (
   }, [formData.resourceId, fetchMetadata]);
 
   // ۴. دریافت اطلاعات مجوز جهت ویرایش
-  useEffect(() => {
-    if (!permissionId) return;
+useEffect(() => {
+  if (!permissionId) return;
 
-    const fetchPermission = async () => {
-      try {
-        setLoading(true);
-        const permission = await permissionApi.getById(permissionId);
+  const fetchPermission = async () => {
+    try {
+      setLoading(true);
+      const permission: any = await permissionApi.getById(permissionId);
 
-        const mappedRules: CreatePermissionRuleCommand[] = (permission.rules ?? []).map((r: any) => ({
-          fieldName: r.fieldName,
-          operator: typeof r.operator === 'string'
-            ? (comparisonOperatorFromText[r.operator] ?? ComparisonOperator.Equal)
-            : (r.operator ?? ComparisonOperator.Equal),
-          value: r.value,
-          logicalOperator: typeof r.logicalOperator === 'string'
-            ? (logicalOperatorFromText[r.logicalOperator] ?? LogicalOperator.And)
-            : (r.logicalOperator ?? LogicalOperator.And),
-          groupOrder: r.groupOrder ?? 0,
-          joinLocalKey: r.joinDetail?.joinLocalKey ?? '',
-          joinForeignKey: r.joinDetail?.joinForeignKey ?? '',
-          joinEntity: r.joinDetail?.joinEntity ?? '',
-        }));
+      // ۱. استخراج آی‌دی با پشتیبانی از PascalCase و fallback به آی‌دی روت
+      const pId = permission.id ?? permission.Id ?? permissionId;
+      const pResourceId = permission.resourceId ?? permission.ResourceId ?? '';
+      const pAssigneeId = permission.assigneeId ?? permission.AssigneeId ?? '';
 
-        const permissionData: UpdatePermissionCommand = {
-          id: permission.id,
-          resourceId: permission.resourceId,
-          assigneeId: permission.assigneeId,
-          assigneeType: permission.assigneeType,
-          action: permission.action,
-          effect: permission.effect,
-          description: permission.description,
-          scopes: permission.scopes,
-          effectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
-          expiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
-          isActive: permission.isActive,
-          rules: mappedRules,
-        };
-
-        setFormData(permissionData);
-      } catch (err) {
-        console.error('Failed to fetch permission details:', err);
-        setError('خطا در بارگذاری اطلاعات مجوز.');
-      } finally {
-        setLoading(false);
+      // ۲. استخراج و تبدیل مطمئن AssigneeType (به عدد)
+      let rawAssigneeType = permission.assigneeType ?? permission.AssigneeType;
+      if (rawAssigneeType !== undefined && rawAssigneeType !== null) {
+        rawAssigneeType = Number(rawAssigneeType);
       }
-    };
 
-    fetchPermission();
-  }, [permissionId]);
+      // ۳. مپ کردن قوانین
+      const rawRules = permission.rules ?? permission.Rules ?? [];
+      const mappedRules: CreatePermissionRuleCommand[] = rawRules.map((r: any) => ({
+        fieldName: r.fieldName ?? r.FieldName ?? '',
+        operator: typeof (r.operator ?? r.Operator) === 'string'
+          ? (comparisonOperatorFromText[r.operator ?? r.Operator] ?? ComparisonOperator.Equal)
+          : (r.operator ?? r.Operator ?? ComparisonOperator.Equal),
+        value: r.value ?? r.Value ?? '',
+        logicalOperator: typeof (r.logicalOperator ?? r.LogicalOperator) === 'string'
+          ? (logicalOperatorFromText[r.logicalOperator ?? r.LogicalOperator] ?? LogicalOperator.And)
+          : (r.logicalOperator ?? r.LogicalOperator ?? LogicalOperator.And),
+        groupOrder: r.groupOrder ?? r.GroupOrder ?? 0,
+        joinLocalKey: r.joinDetail?.joinLocalKey ?? r.joinDetail?.JoinLocalKey ?? r.JoinDetail?.JoinLocalKey ?? '',
+        joinForeignKey: r.joinDetail?.joinForeignKey ?? r.joinDetail?.JoinForeignKey ?? r.JoinDetail?.JoinForeignKey ?? '',
+        joinEntity: r.joinDetail?.joinEntity ?? r.joinDetail?.JoinEntity ?? r.JoinDetail?.JoinEntity ?? '',
+      }));
+
+      const permissionData: UpdatePermissionCommand = {
+        id: pId,
+        resourceId: pResourceId,
+        assigneeId: pAssigneeId,
+        assigneeType: rawAssigneeType,
+        action: permission.action ?? permission.Action,
+        effect: permission.effect ?? permission.Effect,
+        description: permission.description ?? permission.Description ?? '',
+        scopes: permission.scopes ?? permission.Scopes ?? [],
+        effectiveFrom: (permission.effectiveFrom ?? permission.EffectiveFrom)
+          ? new Date(permission.effectiveFrom ?? permission.EffectiveFrom)
+          : null,
+        expiresAt: (permission.expiresAt ?? permission.ExpiresAt)
+          ? new Date(permission.expiresAt ?? permission.ExpiresAt)
+          : null,
+        isActive: permission.isActive ?? permission.IsActive ?? true,
+        rules: mappedRules,
+      };
+
+      setFormData(permissionData);
+    } catch (err) {
+      console.error('Failed to fetch permission details:', err);
+      setError('خطا در بارگذاری اطلاعات مجوز.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPermission();
+}, [permissionId]);
 
   // ۵. مقداردهی اولیه حالت قوانین (Navigated vs Local) پس از بارگذاری داده‌ها
   useEffect(() => {

@@ -485,7 +485,7 @@ namespace Authorization.Infrastructure.Services
         {
             try
             {
-                var permission = await _permissionRepository.GetByIdAsync(permissionId, p => p.Scopes , p=>p.Rules);
+                var permission = await _permissionRepository.GetByIdAsync(permissionId, p => p.Scopes , p=>p.Rules ,p=>p.PermissionAssignee);
 
                 if (permission == null)
                 {

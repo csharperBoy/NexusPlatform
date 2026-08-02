@@ -49,7 +49,7 @@ createPermission: async (data: CreatePermissionCommand): Promise<string> => {
     const api = getAPI(API_MODULE);
      console.info(data);
     const response = await api.put<boolean>(
-      `/api/authorization/admin/permissions/${data.Id}`, data,
+      `/api/authorization/admin/permissions/${data.id}`, data,
       {  withCredentials: true }
     );
     console.log(response)
