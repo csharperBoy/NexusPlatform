@@ -57,12 +57,12 @@ namespace HR.Domain.Entities
         public DateTime? EffectiveTo { get; private set; }
         public bool IsCurrent { get; private set; }
 
-        public void SetEffectiveFrom(DateTime? value)
+        public async Task SetEffectiveFrom(DateTime? value)
         {
             EffectiveFrom = value;
             Touch();
+            await Task.CompletedTask;
         }
-
         public async Task SetEffectiveTo(DateTime? value)
         {
             EffectiveTo = value;
