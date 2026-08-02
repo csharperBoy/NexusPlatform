@@ -91,7 +91,8 @@ namespace HR.Infrastructure.Services
             GetEmploymentByPersonIdSpec spec = new GetEmploymentByPersonIdSpec(personId);
             Employment? employment = await _employmentSpecRepository.GetBySpecAsync(spec);
             if (employment == null)
-                throw new InvalidOperationException("employment not found!!!");
+                //throw new InvalidOperationException("employment not found!!!");
+                return null;
 
             return employment.Id;
 

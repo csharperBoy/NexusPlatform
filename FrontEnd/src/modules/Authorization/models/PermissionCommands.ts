@@ -5,30 +5,30 @@ import { Action, AssignType, Effect, Scope } from "./PermissionEnum";
 import { CreatePermissionRuleCommand, PermissionRuleFormCommand, UpdatePermissionRuleCommand } from "./PermissionRuleCommands";
 
 export interface CreatePermissionCommand {
-  ResourceId: string;
-  AssigneeId: string;
-  AssigneeType: AssignType;       
-  Action: Action;  
+  resourceId: string;
+  assigneeId: string;
+  assigneeType: AssignType;       
+  action: Action;  
   effect: Effect;
-  EffectiveFrom?: Date | null;
-  ExpiresAt?: Date | null;
-  IsActive?: boolean;
-  Description?: string;
+  effectiveFrom?: Date | null;
+  expiresAt?: Date | null;
+  isActive?: boolean;
+  description?: string;
   scopes?: Scope[] | null;
   rules? : CreatePermissionRuleCommand[] | null;
 }
 
 export type UpdatePermissionCommand = {
-  Id: string;
-  ResourceId?: string | null;
-  AssigneeId?: string | null;
-  AssigneeType?: AssignType | null;
-  Action?: Action | null;
+  id: string;
+  resourceId?: string | null;
+  assigneeId?: string | null;
+  assigneeType?: AssignType | null;
+  action?: Action | null;
   effect?: Effect | null;
-  EffectiveFrom?: Date | null;
-  ExpiresAt?: Date | null;
-  IsActive?: boolean | null;
-  Description?: string | null;
+  effectiveFrom?: Date | null;
+  expiresAt?: Date | null;
+  isActive?: boolean | null;
+  description?: string | null;
   scopes?: Scope[] | null;
   rules?: CreatePermissionRuleCommand[]; 
 } & Partial<CreatePermissionCommand>;

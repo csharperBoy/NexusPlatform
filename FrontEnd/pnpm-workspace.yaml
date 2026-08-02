@@ -3,3 +3,4 @@ packages:
   - "src/apps/**"
   - "src/core"
   - "src/modules/HR"
+  - "src/modules/Authorization"

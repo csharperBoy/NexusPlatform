@@ -25,17 +25,17 @@ export const usePermissionCreateUpdateForm = (
   const { resourceId } = useParams<{ resourceId: string }>();
 // حالت اضافه کردن (permissionId وجود ندارد)
 const initialFormState: PermissionFormCommand = {
-  Id:permissionId ?? '',
-  AssigneeType: undefined,   // تغییر از 0 به undefined
-  AssigneeId: '',
-  Action: undefined,         // تغییر از 1 به undefined
-  ResourceId: '',
+  id:permissionId ?? '',
+  assigneeType: undefined,   // تغییر از 0 به undefined
+  assigneeId: '',
+  action: undefined,         // تغییر از 1 به undefined
+  resourceId: '',
   scopes: [],
-  Description: '',
+  description: '',
   effect: undefined,         // تغییر از 1 به undefined
-  IsActive: true,
-  ExpiresAt: null,
-  EffectiveFrom: null,
+  isActive: true,
+  expiresAt: null,
+  effectiveFrom: null,
   rules: [],
 };
 
@@ -126,7 +126,7 @@ useEffect(() => {
       try {
         setLoading(true);
         let data: SelectionListDto[] = [];
-        switch (formData.AssigneeType) {
+        switch (formData.assigneeType) {
           case 0:
             data = await personApi.GetSelectionList();
             break;
@@ -151,7 +151,7 @@ useEffect(() => {
       }
     };
     fetchAssignees();
-  }, [formData.AssigneeType]);
+  }, [formData.assigneeType]);
 
   useEffect(() => {
     const fetchScopes = async () => {
@@ -207,17 +207,17 @@ useEffect(() => {
         console.info(`permission = ${permission}`);
          console.info(permission);
         const permissionData: UpdatePermissionCommand = {
-            Id: permission.id,
-            ResourceId: permission.resourceId,
-            AssigneeId: permission.assigneeId,
-            AssigneeType: permission.assigneeType,
-            Action: permission.action,
+            id: permission.id,
+            resourceId: permission.resourceId,
+            assigneeId: permission.assigneeId,
+            assigneeType: permission.assigneeType,
+            action: permission.action,
             effect: permission.effect,
-            Description: permission.description,
+            description: permission.description,
             scopes: permission.scopes,
-            EffectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
-            ExpiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
-            IsActive: permission.isActive,
+            effectiveFrom: permission.effectiveFrom ? new Date(permission.effectiveFrom) : null,
+            expiresAt: permission.expiresAt ? new Date(permission.expiresAt) : null,
+            isActive: permission.isActive,
             rules: rules,  // ✅ استفاده از آرایه تبدیل شده
         };
 
@@ -234,14 +234,14 @@ useEffect(() => {
 
 // useEffect برای نظارت بر تغییر ResourceId
 useEffect(() => {
-  if (formData.ResourceId) {
-    fetchMetadata(formData.ResourceId);
+  if (formData.resourceId) {
+    fetchMetadata(formData.resourceId);
   } else {
     setMetadata(null);
     setFieldOptions([]);
     setJoinOptions([]);
   }
-}, [formData.ResourceId]);
+}, [formData.resourceId]);
 
   // تابع دریافت متادیتا بر اساس ResourceId
 const fetchMetadata = async (resourceId: string) => {
@@ -364,15 +364,15 @@ const fetchMetadata = async (resourceId: string) => {
     e.preventDefault();
 
     // Basic validation
-    if (!formData.ResourceId) {
+    if (!formData.resourceId) {
       setError('منبع ضروری است.');
       return;
     }
-    if (formData.AssigneeType === undefined) {
+    if (formData.assigneeType === undefined) {
       setError('لطفاً نوع گیرنده مجوز را انتخاب کنید.');
       return;
     }
-    if (formData.Action === undefined) {
+    if (formData.action === undefined) {
       setError('لطفاً عملیات را انتخاب کنید.');
       return;
     }

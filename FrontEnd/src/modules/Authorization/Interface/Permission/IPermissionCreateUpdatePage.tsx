@@ -9,13 +9,6 @@ import { SelectionListDto } from '@/core/models/SelectionListDto';
 import { PermissionRuleFormCommand } from '../../models/PermissionRuleCommands';
 import { joinDto } from '../../models/ResourceMetadataDto';
 
-// --- تعریف اینترفیس‌ها ---
-
-// اینترفیس Props مربوط به رندر کردن خود فرم
-// دقت کنید که formData می‌تواند CreatePermissionCommand یا UpdatePermissionCommand باشد،
-// اما هوک یکپارچه ما PermissionFormCommand را برمی‌گرداند که Union Type است.
-// برای انعطاف‌پذیری بیشتر، اجازه می‌دهیم formData از نوع Union باشد.
-// در کامپوننت فرم فرزند، بر اساس isEdit می‌توان نوع دقیق را مشخص کرد.
 export interface PermissionCreateUpdateFormProps {
   formData: PermissionFormCommand; // هوک ما این نوع را برمی‌گرداند
   scopesList: { value: number; display: string }[];
@@ -78,8 +71,6 @@ export const IPermissionCreateUpdatePage: React.FC<IPermissionCreateUpdatePagePr
   const isLoadingPage = isAuthLoading || (formMode === 'update' && formProps.loading);
 
   useEffect(() => {
-    // بررسی وضعیت احراز هویت. اگر کاربر لاگین نیست، شاید بخواهید او را به صفحه لاگین هدایت کنید.
-    // در این مثال، فرض می‌کنیم صفحه فقط برای کاربران لاگین شده قابل دسترسی است.
     if (!isAuthLoading && !isAuthenticated) {
        // navigate('/login'); // هدایت به صفحه لاگین
        console.warn("Permission is not authenticated. Redirecting to login might be needed.");
@@ -102,9 +93,5 @@ export const IPermissionCreateUpdatePage: React.FC<IPermissionCreateUpdatePagePr
       return <div className="text-red-500 p-4">شناسه کاربر نامعتبر است.</div>;
   }
 
-  // رندر کردن فرم با استفاده از تابع renderForm که از props دریافت شده
-  // توجه: formData از هوک ما PermissionFormCommand است.
-  // اگر renderForm انتظار نوع دقیق‌تری داشت، باید مدیریت می‌کردیم،
-  // اما چون هوک ما هر دو حالت را پوشش می‌دهد، این Union Type مناسب است.
   return <>{renderForm({ ...formProps, isEdit: formMode === 'update' })}</>;
 };

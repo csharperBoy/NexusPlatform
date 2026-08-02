@@ -180,8 +180,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         {/* منبع */}
         <SingleSelect
           options={resourceList}
-          value={formData.ResourceId}
-          onChange={(val) => handleChange('ResourceId', val as string)}
+          value={formData.resourceId}
+          onChange={(val) => handleChange('resourceId', val as string)}
           label="منبع"
           disabled={loading}
           required={true}
@@ -190,8 +190,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         {/* عملیات */}
         <SingleSelect
           options={ActionOptions}
-          value={formData.Action}
-          onChange={(val) => handleChange('Action', val as number)}
+          value={formData.action}
+          onChange={(val) => handleChange('action', val as number)}
           label="عملیات"
           disabled={loading}
         />
@@ -208,7 +208,7 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         {/* نوع گیرنده */}
         <SingleSelect
           options={AssignTypeOptions}
-          value={formData.AssigneeType}
+          value={formData.assigneeType}
           onChange={(val) => handleAssignTypeChange(val as number ?? 0)}
           label="نوع"
           disabled={loading}
@@ -217,8 +217,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
         {/* گیرنده مجوز */}
         <SingleSelect
           options={assignList}
-          value={formData.AssigneeId}
-          onChange={(val) => handleChange('AssigneeId', val as string)}
+          value={formData.assigneeId}
+          onChange={(val) => handleChange('assigneeId', val as string)}
           label="گیرنده مجوز"
           disabled={loading}
         />
@@ -229,8 +229,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           <Input
             id="Description"
             type="text"
-            value={formData.Description || ""}
-            onChange={(e) => handleChange("Description", e.target.value)}
+            value={formData.description || ""}
+            onChange={(e) => handleChange("description", e.target.value)}
             className="input input-bordered w-full"
           />
         </div>
@@ -241,8 +241,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           <Input
             id="IsActive"
             type="checkbox"
-            checked={formData.IsActive ?? false}
-            onChange={(e) => handleChange("IsActive", e.target.checked)}
+            checked={formData.isActive ?? false}
+            onChange={(e) => handleChange("isActive", e.target.checked)}
             className="input input-bordered w-full"
           />
         </div>
@@ -253,8 +253,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           <Input
             id="EffectiveFrom"
             type="datetime-local"
-            value={toInputDateTime(formData.EffectiveFrom)}
-            onChange={(e) => handleChange("EffectiveFrom", e.target.value ? new Date(e.target.value) : null)}
+            value={toInputDateTime(formData.effectiveFrom)}
+            onChange={(e) => handleChange("effectiveFrom", e.target.value ? new Date(e.target.value) : null)}
             className="input input-bordered w-full"
           />
         </div>
@@ -265,8 +265,8 @@ export const PermissionCreateUpdateForm: React.FC<PermissionCreateUpdateFormProp
           <Input
             id="ExpiresAt"
             type="datetime-local"
-            value={toInputDateTime(formData.ExpiresAt)}
-            onChange={(e) => handleChange("ExpiresAt", e.target.value ? new Date(e.target.value) : null)}
+            value={toInputDateTime(formData.expiresAt)}
+            onChange={(e) => handleChange("expiresAt", e.target.value ? new Date(e.target.value) : null)}
             className="input input-bordered w-full"
           />
         </div>

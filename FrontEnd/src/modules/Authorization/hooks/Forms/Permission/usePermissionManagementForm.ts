@@ -9,10 +9,10 @@ import { GetPermissionsQuery } from "@/modules/Authorization/models/PermissionQu
 export const usePermissionManagement = () => {
   const [FormData, setFormData] = useState<PermissionDto[]>([]);
   const [filters, setFilters] = useState<GetPermissionsQuery | null>({
-        AssigneeId: '',
+        assigneeId: '',
         description: '',
-        AssigneeType: null,
-        ResourceId: null
+        assigneeType: null,
+        resourceId: null
       });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
