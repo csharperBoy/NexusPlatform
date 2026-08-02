@@ -23,6 +23,7 @@ namespace Authorization.Domain.Specifications
                         (description == null || p.Description.Contains(description)))
         {
             AddInclude(p => p.Resource);            
+            AddInclude(p => p.PermissionAssignee);            
             ApplyOrderByDescending(p => p.CreatedAt);
             //ApplyThenOrderBy(p => p.ResourceId);
             //ApplyThenOrderBy(p => p.Action);
