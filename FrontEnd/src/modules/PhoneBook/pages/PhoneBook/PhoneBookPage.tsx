@@ -30,7 +30,7 @@ const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConf
 };
 
 // --- Types ---
-type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" | "locationTitle";
+type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" ;//| "locationTitle";
 type SortDirection = "asc" | "desc" | null;
 interface SortConfig {
   column: string;
@@ -199,7 +199,7 @@ export const PhoneBookPage: React.FC = () => {
             >
               <option value="organizationUnitsName">واحد سازمانی</option>
               <option value="jobTitleName">عنوان شغلی</option>
-              <option value="locationTitle">محل خدمت</option>
+              {/* <option value="locationTitle">محل خدمت</option> */}
               <option value="none">بدون گروه‌بندی</option>
             </select>
           </div>
