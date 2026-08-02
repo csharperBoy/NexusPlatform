@@ -3,11 +3,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
-  PhoneBookEmployeeDto,
+  PhoneBookEmploymentDto,
   PhoneBookContactTypeEnum,
   PhoneBookContactSourceEnum,
   ContactDetailDto,
-} from "../../models/PhoneBookEmployeeDto";
+} from "../../models/PhoneBookEmploymentDto";
 
 // --- Helper Functions ---
 const getContactTypeBadge = (type?: PhoneBookContactTypeEnum | null) => {
@@ -38,7 +38,7 @@ interface SortConfig {
 }
 
 export const PhoneBookPage: React.FC = () => {
-  const [data, setData] = useState<PhoneBookEmployeeDto[]>([]);
+  const [data, setData] = useState<PhoneBookEmploymentDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,12 +78,12 @@ export const PhoneBookPage: React.FC = () => {
     });
   };
 
-  const toggleRowExpand = (employeeCode: string, hasMultiple: boolean) => {
+  const toggleRowExpand = (employmentCode: string, hasMultiple: boolean) => {
     if (!hasMultiple) return;
     setExpandedRows((prev) => {
       const next = new Set(prev);
-      if (next.has(employeeCode)) next.delete(employeeCode);
-      else next.add(employeeCode);
+      if (next.has(employmentCode)) next.delete(employmentCode);
+      else next.add(employmentCode);
       return next;
     });
   };
@@ -110,7 +110,7 @@ export const PhoneBookPage: React.FC = () => {
       if (term.trim()) {
         result = result.filter((emp) => {
           const q = term.toLowerCase();
-          const empKey = key as keyof PhoneBookEmployeeDto;
+          const empKey = key as keyof PhoneBookEmploymentDto;
           
           if (key === "fullName") {
             const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
@@ -128,7 +128,7 @@ export const PhoneBookPage: React.FC = () => {
       result = result.filter((emp) => 
         (emp.firstName || "").toLowerCase().includes(q) ||
         (emp.lastName || "").toLowerCase().includes(q) ||
-        (emp.employeeCode || "").toLowerCase().includes(q) ||
+        (emp.employmentCode || "").toLowerCase().includes(q) ||
         (emp.organizationUnitsName || "").toLowerCase().includes(q) ||
         (emp.contactSummary || "").toLowerCase().includes(q)
       );
@@ -137,7 +137,7 @@ export const PhoneBookPage: React.FC = () => {
     // ۳. سورت (با قابلیت سورت عددی برای رشته‌ها)
     if (sortConfig.direction && sortConfig.column) {
       result.sort((a, b) => {
-        const col = sortConfig.column as keyof PhoneBookEmployeeDto;
+        const col = sortConfig.column as keyof PhoneBookEmploymentDto;
         let aVal = (a[col] || "").toString();
         let bVal = (b[col] || "").toString();
         
@@ -157,11 +157,11 @@ export const PhoneBookPage: React.FC = () => {
     if (groupBy === "none") return { "همه اعضا": result };
 
     return result.reduce((groups, emp) => {
-      const groupKey = (emp[groupBy as keyof PhoneBookEmployeeDto] || "تعریف نشده") as string;
+      const groupKey = (emp[groupBy as keyof PhoneBookEmploymentDto] || "تعریف نشده") as string;
       if (!groups[groupKey]) groups[groupKey] = [];
       groups[groupKey].push(emp);
       return groups;
-    }, {} as Record<string, PhoneBookEmployeeDto[]>);
+    }, {} as Record<string, PhoneBookEmploymentDto[]>);
 
   }, [data, globalSearch, columnSearch, sortConfig, groupBy]);
 
@@ -213,8 +213,8 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
               <th className="py-3 px-4 w-12"></th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("employeeCode")}>
-                کد پرسنلی <SortIcon column="employeeCode" sortConfig={sortConfig} />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("employmentCode")}>
+                کد پرسنلی <SortIcon column="employmentCode" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
@@ -236,8 +236,8 @@ export const PhoneBookPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="سرچ کد..."
-                  value={columnSearch["employeeCode"] || ""}
-                  onChange={(e) => handleColumnSearch("employeeCode", e.target.value)}
+                  value={columnSearch["employmentCode"] || ""}
+                  onChange={(e) => handleColumnSearch("employmentCode", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
@@ -286,7 +286,7 @@ export const PhoneBookPage: React.FC = () => {
                 <td colSpan={6} className="text-center py-12 text-gray-500">رکوردی یافت نشد.</td>
               </tr>
             ) : (
-              Object.entries(processedData).map(([groupName, employees]) => {
+              Object.entries(processedData).map(([groupName, employments]) => {
                 const isGroupCollapsed = collapsedGroups.has(groupName);
 
                 return (
@@ -306,7 +306,7 @@ export const PhoneBookPage: React.FC = () => {
                               <span className="font-bold text-gray-800">{groupName}</span>
                             </div>
                             <span className="text-xs bg-white text-blue-800 border border-blue-200 px-3 py-1 rounded-full shadow-sm">
-                              {employees.length} نفر
+                              {employments.length} نفر
                             </span>
                           </div>
                         </td>
@@ -314,8 +314,8 @@ export const PhoneBookPage: React.FC = () => {
                     )}
 
                     {/* ردیف‌های کارمندان داخل این گروه */}
-                    {!isGroupCollapsed && employees.map((emp) => {
-                      const empCode = emp.employeeCode;
+                    {!isGroupCollapsed && employments.map((emp) => {
+                      const empCode = emp.employmentCode;
                       const isExpanded = expandedRows.has(empCode);
                       const hasMultiple = emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
 

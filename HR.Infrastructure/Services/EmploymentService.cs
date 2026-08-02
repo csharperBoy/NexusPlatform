@@ -37,11 +37,11 @@ namespace HR.Infrastructure.Services
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
-        public EmploymentService(IPersonPublicService personService,IRepository<HRDbContext, Employment, Guid> employmentRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmploymentService> logger,
+        public EmploymentService(IPersonPublicService personService, IRepository<HRDbContext, Employment, Guid> employmentRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmploymentService> logger,
             ISpecificationRepository<Employment, Guid> employmentSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
             IUnitOfWork<HRDbContext> uow, ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository, IRepository<HRDbContext, EmployementInfoView, Guid> employmentInfoRepository)
         {
-             _employmentInfoRepository= employmentInfoRepository;
+            _employmentInfoRepository = employmentInfoRepository;
             _personService = personService;
             _employmentRepository = employmentRepository;
             _employmentContactRepository = employmentContactRepository;
@@ -90,7 +90,7 @@ namespace HR.Infrastructure.Services
         {
             GetEmploymentByPersonIdSpec spec = new GetEmploymentByPersonIdSpec(personId);
             Employment? employment = await _employmentSpecRepository.GetBySpecAsync(spec);
-            if (employment == null) 
+            if (employment == null)
                 throw new InvalidOperationException("employment not found!!!");
 
             return employment.Id;
@@ -135,7 +135,7 @@ namespace HR.Infrastructure.Services
             if (emp == null)
                 throw new Exception("can not found employment!!!");
 
-            bool hasChange = emp.ApplyChange(   employmentCode,  employmentTypeId,  employmentStatusId,  startDate,  endDate);
+            bool hasChange = emp.ApplyChange(employmentCode, employmentTypeId, employmentStatusId, startDate, endDate);
             if (hasChange)
             {
                 await _employmentRepository.UpdateAsync(emp);
@@ -166,7 +166,7 @@ namespace HR.Infrastructure.Services
                 {
                     if (existContact != null)
                     {
-                        existContact.DoExpire();
+                        await existContact.DoExpire();
                         await _employmentContactRepository.UpdateAsync(existContact);
 
                     }

@@ -17,7 +17,7 @@ export interface PostInfoView {
   officePhone?: string | null;
   orgMobile?: string | null;
   orgEmail?: string | null;
-  employeeCode?: string | null;
+  employmentCode?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   nationalCode?: string | null;

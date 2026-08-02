@@ -53,7 +53,7 @@ export const EmploymentManagementPage: React.FC = () => {
   };
 
   // --- 2. مدیریت ویرایش درجا ---
-  const handleFieldChange = (id: string, field: "officePhone" | "orgMobile", value: string) => {
+  const handleFieldChange = (id: string, field: "employmentContactPhone" | "employmentContactMobile", value: string) => {
     setEmployments((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -96,8 +96,8 @@ export const EmploymentManagementPage: React.FC = () => {
         setEmployments((prevEmployments) => {
           const empByCodeMap = new Map<string, EmploymentInfoView>();
           prevEmployments.forEach((emp) => {
-            if (emp.EmployeeCode) {
-              empByCodeMap.set(String(emp.EmployeeCode).trim(), emp);
+            if (emp.employmentCode) {
+              empByCodeMap.set(String(emp.employmentCode).trim(), emp);
             }
           });
 
@@ -105,17 +105,17 @@ export const EmploymentManagementPage: React.FC = () => {
 
           excelRows.forEach((row) => {
             const empCodeKey = Object.keys(row).find((k) =>
-              ["کد پرسنلی", "کدپرسنلی", "employeecode", "empcode", "کد"].includes(
+              ["کد پرسنلی", "کدپرسنلی", "employmentcode", "empcode", "کد"].includes(
                 k.trim().toLowerCase()
               )
             );
-            const officePhoneKey = Object.keys(row).find((k) =>
-              ["تلفن داخلی", "داخلی", "officephone", "phone"].includes(
+            const employmentContactPhoneKey = Object.keys(row).find((k) =>
+              ["تلفن داخلی", "داخلی", "employmentContactPhone", "phone"].includes(
                 k.trim().toLowerCase()
               )
             );
-            const orgMobileKey = Object.keys(row).find((k) =>
-              ["موبایل سازمانی", "موبایل", "orgmobile", "mobile"].includes(
+            const employmentContactMobileKey = Object.keys(row).find((k) =>
+              ["موبایل سازمانی", "موبایل", "employmentContactMobile", "mobile"].includes(
                 k.trim().toLowerCase()
               )
             );
@@ -133,18 +133,18 @@ export const EmploymentManagementPage: React.FC = () => {
 
               let isRowChanged = false;
 
-              if (officePhoneKey && row[officePhoneKey] !== undefined) {
-                const newPhone = String(row[officePhoneKey] ?? "").trim();
-                if (nextEmployments[targetIndex].officePhone !== newPhone) {
-                  nextEmployments[targetIndex].officePhone = newPhone;
+              if (employmentContactPhoneKey && row[employmentContactPhoneKey] !== undefined) {
+                const newPhone = String(row[employmentContactPhoneKey] ?? "").trim();
+                if (nextEmployments[targetIndex].employmentContactPhone !== newPhone) {
+                  nextEmployments[targetIndex].employmentContactPhone = newPhone;
                   isRowChanged = true;
                 }
               }
 
-              if (orgMobileKey && row[orgMobileKey] !== undefined) {
-                const newMobile = String(row[orgMobileKey] ?? "").trim();
-                if (nextEmployments[targetIndex].orgMobile !== newMobile) {
-                  nextEmployments[targetIndex].orgMobile = newMobile;
+              if (employmentContactMobileKey && row[employmentContactMobileKey] !== undefined) {
+                const newMobile = String(row[employmentContactMobileKey] ?? "").trim();
+                if (nextEmployments[targetIndex].employmentContactMobile !== newMobile) {
+                  nextEmployments[targetIndex].employmentContactMobile = newMobile;
                   isRowChanged = true;
                 }
               }
@@ -184,31 +184,31 @@ export const EmploymentManagementPage: React.FC = () => {
     return employments.filter((emp) => {
       const initEmp = initialEmploymentsMap.get(emp.id);
 
-      const fullName = `${emp.FirstName || ""} ${emp.LastName || ""}`;
-      const initFullName = initEmp ? `${initEmp.FirstName || ""} ${initEmp.LastName || ""}` : fullName;
+      const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`;
+      const initFullName = initEmp ? `${initEmp.firstName || ""} ${initEmp.lastName || ""}` : fullName;
 
       const matchesGlobal =
         !normalizedGlobal ||
-        (emp.EmployeeCode || "").toLowerCase().includes(normalizedGlobal) ||
+        (emp.employmentCode || "").toLowerCase().includes(normalizedGlobal) ||
         fullName.toLowerCase().includes(normalizedGlobal) ||
-        (emp.NationalCode || "").toLowerCase().includes(normalizedGlobal) ||
-        (emp.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
-        (emp.orgMobile || "").toLowerCase().includes(normalizedGlobal) ||
+        (emp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
+        (emp.employmentContactPhone || "").toLowerCase().includes(normalizedGlobal) ||
+        (emp.employmentContactMobile || "").toLowerCase().includes(normalizedGlobal) ||
         (initEmp &&
-          ((initEmp.EmployeeCode || "").toLowerCase().includes(normalizedGlobal) ||
+          ((initEmp.employmentCode || "").toLowerCase().includes(normalizedGlobal) ||
             initFullName.toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.NationalCode || "").toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.orgMobile || "").toLowerCase().includes(normalizedGlobal)));
+            (initEmp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
+            (initEmp.employmentContactPhone || "").toLowerCase().includes(normalizedGlobal) ||
+            (initEmp.employmentContactMobile || "").toLowerCase().includes(normalizedGlobal)));
 
       let matchesColumns = true;
       for (const [col, term] of Object.entries(columnSearch)) {
         if (!term.trim()) continue;
         const q = term.toLowerCase();
 
-        if (col === "employeeCode") {
-          const matchCur = (emp.EmployeeCode || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.EmployeeCode || "").toLowerCase().includes(q);
+        if (col === "employmentCode") {
+          const matchCur = (emp.employmentCode || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.employmentCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
         if (col === "fullName") {
@@ -217,18 +217,18 @@ export const EmploymentManagementPage: React.FC = () => {
           if (!matchCur && !matchInit) matchesColumns = false;
         }
         if (col === "nationalCode") {
-          const matchCur = (emp.NationalCode || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.NationalCode || "").toLowerCase().includes(q);
+          const matchCur = (emp.nationalCode || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.nationalCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
-        if (col === "officePhone") {
-          const matchCur = (emp.officePhone || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.officePhone || "").toLowerCase().includes(q);
+        if (col === "employmentContactPhone") {
+          const matchCur = (emp.employmentContactPhone || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.employmentContactPhone || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
-        if (col === "orgMobile") {
-          const matchCur = (emp.orgMobile || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.orgMobile || "").toLowerCase().includes(q);
+        if (col === "employmentContactMobile") {
+          const matchCur = (emp.employmentContactMobile || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.employmentContactMobile || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
       }
@@ -260,8 +260,8 @@ export const EmploymentManagementPage: React.FC = () => {
         const emp = employmentsMap.get(id)!;
         return {
           id: emp.id,
-          officePhone: emp.officePhone || null,
-          orgMobile: emp.orgMobile || null,
+          officePhone: emp.employmentContactPhone || null,
+          orgMobile: emp.employmentContactMobile || null,
         };
       });
 
@@ -408,8 +408,8 @@ export const EmploymentManagementPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="سرچ کد پرسنلی..."
-                  value={columnSearch["employeeCode"] || ""}
-                  onChange={(e) => handleColumnSearch("employeeCode", e.target.value)}
+                  value={columnSearch["employmentCode"] || ""}
+                  onChange={(e) => handleColumnSearch("employmentCode", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
                 />
               </th>
@@ -435,8 +435,8 @@ export const EmploymentManagementPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="سرچ داخلی..."
-                  value={columnSearch["officePhone"] || ""}
-                  onChange={(e) => handleColumnSearch("officePhone", e.target.value)}
+                  value={columnSearch["employmentContactPhone"] || ""}
+                  onChange={(e) => handleColumnSearch("employmentContactPhone", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
                 />
               </th>
@@ -444,8 +444,8 @@ export const EmploymentManagementPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="سرچ موبایل..."
-                  value={columnSearch["orgMobile"] || ""}
-                  onChange={(e) => handleColumnSearch("orgMobile", e.target.value)}
+                  value={columnSearch["employmentContactMobile"] || ""}
+                  onChange={(e) => handleColumnSearch("employmentContactMobile", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
                 />
               </th>
@@ -463,7 +463,7 @@ export const EmploymentManagementPage: React.FC = () => {
             ) : (
               filteredEmployments.map((emp, index) => {
                 const isModified = modifiedIds.has(emp.id);
-                const fullName = `${emp.FirstName || ""} ${emp.LastName || ""}`.trim() || "-";
+                const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "-";
 
                 return (
                   <tr
@@ -477,7 +477,7 @@ export const EmploymentManagementPage: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 font-mono text-xs font-medium text-gray-700">
-                      {emp.EmployeeCode || "-"}
+                      {emp.employmentCode || "-"}
                     </td>
 
                     <td className="py-3 px-4 font-medium text-gray-800">
@@ -485,14 +485,14 @@ export const EmploymentManagementPage: React.FC = () => {
                     </td>
 
                     <td className="py-3 px-4 text-gray-600 text-xs font-mono">
-                      {emp.NationalCode || "-"}
+                      {emp.nationalCode || "-"}
                     </td>
 
                     <td className="py-2 px-3">
                       <input
                         type="text"
-                        value={emp.officePhone || ""}
-                        onChange={(e) => handleFieldChange(emp.id, "officePhone", e.target.value)}
+                        value={emp.employmentContactPhone || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "employmentContactPhone", e.target.value)}
                         placeholder="داخلی..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />
@@ -501,8 +501,8 @@ export const EmploymentManagementPage: React.FC = () => {
                     <td className="py-2 px-3">
                       <input
                         type="text"
-                        value={emp.orgMobile || ""}
-                        onChange={(e) => handleFieldChange(emp.id, "orgMobile", e.target.value)}
+                        value={emp.employmentContactMobile || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "employmentContactMobile", e.target.value)}
                         placeholder="موبایل..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />

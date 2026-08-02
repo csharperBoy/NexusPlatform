@@ -13,8 +13,8 @@ namespace HR.Domain.Specifications
     {
         public GetPostContactSpec( HrContactType contactType , Guid postId, string? value = null)
             : base(p =>
-                          p.ContactType == contactType && p.FkPostId == postId 
-           // && ( value == null || p.Value == value )
+                          p.ContactType == contactType && p.FkPostId == postId && p.IsCurrent
+            // && ( value == null || p.Value == value )
             )
         {
         }

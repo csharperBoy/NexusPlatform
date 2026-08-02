@@ -14,7 +14,7 @@ namespace HR.Domain.Specifications
     {
         public GetEmploymentContactSpec(HrContactType contactType, Guid employmentId, string? value = null)
             : base(p =>
-                          p.ContactType == contactType && p.FkEmploymentId == employmentId
+                          p.ContactType == contactType && p.FkEmploymentId == employmentId && p.IsCurrent
             // && ( value == null || p.Value == value )
             )
         {

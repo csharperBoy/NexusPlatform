@@ -119,8 +119,8 @@ export const PostManagementPage: React.FC = () => {
         setPosts((prevPosts) => {
           const postByEmpCodeMap = new Map<string, PostInfoView>();
           prevPosts.forEach((p) => {
-            if (p.employeeCode) {
-              postByEmpCodeMap.set(String(p.employeeCode).trim(), p);
+            if (p.employmentCode) {
+              postByEmpCodeMap.set(String(p.employmentCode).trim(), p);
             }
           });
 
@@ -128,7 +128,7 @@ export const PostManagementPage: React.FC = () => {
 
           excelRows.forEach((row) => {
             const empCodeKey = Object.keys(row).find((k) =>
-              ["کد پرسنلی", "کدپرسنلی", "employeecode", "empcode", "کد"].includes(
+              ["کد پرسنلی", "کدپرسنلی", "employmentcode", "empcode", "کد"].includes(
                 k.trim().toLowerCase()
               )
             );
@@ -230,14 +230,14 @@ export const PostManagementPage: React.FC = () => {
         const initChild = initialPostsMap.get(child.id);
 
         const fullJobTitle = `${child.jobTitleName || ""} ${child.postCode ? `(${child.postCode})` : ""}`;
-        const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employeeCode || ""}`;
+        const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employmentCode || ""}`;
         const levelGrade = `${child.jobLevelTitle || ""} ${child.gradeTitle || ""}`;
 
         const initFullJobTitle = initChild
           ? `${initChild.jobTitleName || ""} ${initChild.postCode ? `(${initChild.postCode})` : ""}`
           : fullJobTitle;
         const initOccupantName = initChild
-          ? `${initChild.firstName || ""} ${initChild.lastName || ""} ${initChild.employeeCode || ""}`
+          ? `${initChild.firstName || ""} ${initChild.lastName || ""} ${initChild.employmentCode || ""}`
           : occupantName;
         const initLevelGrade = initChild
           ? `${initChild.jobLevelTitle || ""} ${initChild.gradeTitle || ""}`
@@ -774,9 +774,9 @@ export const PostManagementPage: React.FC = () => {
                     <td className="py-3 px-4 text-gray-700 text-xs">
                       <div className="flex flex-col">
                         <span className="font-medium">{occupantName}</span>
-                        {node.employeeCode && (
+                        {node.employmentCode && (
                           <span className="text-[10px] text-gray-400 font-mono">
-                            کد: {node.employeeCode}
+                            کد: {node.employmentCode}
                           </span>
                         )}
                       </div>

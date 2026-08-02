@@ -2,17 +2,17 @@
 import getAPI from "@/core/api/axiosClient";
 
 
-import { PhoneBookEmployeeDto } from "../models/PhoneBookEmployeeDto";
+import { PhoneBookEmploymentDto } from "../models/PhoneBookEmploymentDto";
 const API_MODULE = "phonebook";
 
 export const phonebookApi = {
 
  // دریافت (GET)
-  GetList: async (organUnitId?: string): Promise<PhoneBookEmployeeDto[]> => {
+  GetList: async (organUnitId?: string): Promise<PhoneBookEmploymentDto[]> => {
     
     const api = getAPI(API_MODULE);
     
-    const response = await api.get<PhoneBookEmployeeDto[]>(
+    const response = await api.get<PhoneBookEmploymentDto[]>(
       "/api/People/PhoneBook/GetList",
       { 
         params: { organUnitId },
@@ -45,8 +45,8 @@ export const phonebookApi = {
  }
 که دیتاش از این میاد:
 public record GetPhoneBookListQuery(Guid? organUnitId = null)
- : IRequest<Result<IReadOnlyList<PhoneBookEmployeeDto>>>;public class GetPhoneBookListQueryHandler
-    : IRequestHandler<GetPhoneBookListQuery, Result<IReadOnlyList<PhoneBookEmployeeDto>>>
+ : IRequest<Result<IReadOnlyList<PhoneBookEmploymentDto>>>;public class GetPhoneBookListQueryHandler
+    : IRequestHandler<GetPhoneBookListQuery, Result<IReadOnlyList<PhoneBookEmploymentDto>>>
 {
     private readonly IPhoneBookInternalService _phoneBookInternalService;
     private readonly ILogger<GetPhoneBookListQueryHandler> _logger;
@@ -59,7 +59,7 @@ public record GetPhoneBookListQuery(Guid? organUnitId = null)
         _logger = logger;
     }
 
-    public async Task<Result<IReadOnlyList<PhoneBookEmployeeDto>>> Handle(
+    public async Task<Result<IReadOnlyList<PhoneBookEmploymentDto>>> Handle(
         GetPhoneBookListQuery request,
         CancellationToken cancellationToken)
     {
@@ -68,20 +68,20 @@ public record GetPhoneBookListQuery(Guid? organUnitId = null)
             _logger.LogDebug("Getting PhoneBook Info List:");
 
             var list = await _phoneBookInternalService.GetPhoneBookListAsync(request.organUnitId);
-            return Result<IReadOnlyList<PhoneBookEmployeeDto>>.Ok(list);
+            return Result<IReadOnlyList<PhoneBookEmploymentDto>>.Ok(list);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get PhoneBook Info List");
-            return Result<IReadOnlyList<PhoneBookEmployeeDto>>.Fail(ex.Message);
+            return Result<IReadOnlyList<PhoneBookEmploymentDto>>.Fail(ex.Message);
         }
     }
 }
 اینم مدلمون تو فرانت:
-// models/PhoneBookEmployeeDto.ts
+// models/PhoneBookEmploymentDto.ts
 
-export interface PhoneBookEmployeeDto {
-  EmployeeCode: string;
+export interface PhoneBookEmploymentDto {
+  EmploymentCode: string;
   postCode: string;
   FirstName?: string | null;
   LastName?: string | null;
@@ -128,17 +128,17 @@ export enum PhoneBookContactSourceEnum {
 import getAPI from "@/core/api/axiosClient";
 
 
-import { PhoneBookEmployeeDto } from "../models/PhoneBookEmployeeDto";
+import { PhoneBookEmploymentDto } from "../models/PhoneBookEmploymentDto";
 const API_MODULE = "phonebook";
 
 export const phonebookApi = {
 
  // دریافت (GET)
-  GetList: async (): Promise<PhoneBookEmployeeDto[]> => {
+  GetList: async (): Promise<PhoneBookEmploymentDto[]> => {
     
     const api = getAPI(API_MODULE);
     
-    const response = await api.get<PhoneBookEmployeeDto[]>(
+    const response = await api.get<PhoneBookEmploymentDto[]>(
       "/api/phonebook/OrgChart/GetList",
       {  withCredentials: true }
     );

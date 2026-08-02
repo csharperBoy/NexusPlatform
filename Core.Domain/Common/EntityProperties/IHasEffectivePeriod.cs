@@ -11,9 +11,9 @@ namespace Core.Domain.Common.EntityProperties
         public DateTime? EffectiveFrom { get; }
         public DateTime? EffectiveTo { get; }
         public bool IsCurrent { get; }
-        public void SetEffectiveFrom(DateTime? value);
-        public void SetEffectiveTo(DateTime? value);
-        public void SetIsCurrent(bool value);
+        public Task SetEffectiveFrom(DateTime? value);
+        public Task SetEffectiveTo(DateTime? value);
+        public Task SetIsCurrent(bool value);
         /*
          #region Impelement IHasEffectivePeriod
         public DateTime? EffectiveFrom { get; private set; }
@@ -49,19 +49,20 @@ namespace Core.Domain.Common.EntityProperties
         {
             return entity.IsActiveOn(DateTime.Today);
         }
-        public static void DoExpire(this IHasEffectivePeriod entity)
+        public static async Task DoExpire(this IHasEffectivePeriod entity)
         {
-            entity.SetEffectiveTo(DateTime.UtcNow.AddMinutes(-1));
-            entity.SetIsCurrent(false);
+           await entity.SetEffectiveTo(DateTime.UtcNow.AddMinutes(-1));
+           await entity.SetIsCurrent(false);
+            await Task.CompletedTask;
 
         }
-        public static void SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt)
+        public static async Task SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt)
         {
             if (effectiveFrom.HasValue && expiresAt.HasValue && effectiveFrom >= expiresAt)
                 throw new ArgumentException("Effective from date must be before expiration date.");
 
-            entity.SetEffectiveFrom(effectiveFrom);
-            entity.SetEffectiveTo(expiresAt);
+           await entity.SetEffectiveFrom(effectiveFrom);
+          await  entity.SetEffectiveTo(expiresAt);
             
         }
     }

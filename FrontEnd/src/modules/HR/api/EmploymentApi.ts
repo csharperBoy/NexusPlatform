@@ -13,7 +13,7 @@ export const employmentApi = {
     const api = getAPI(API_MODULE);
     
     const response = await api.get<EmploymentInfoView[]>(
-      "/api/HR/Employee/GetList",
+      "/api/HR/Employment/GetList",
       {  withCredentials: true }
     );
     console.log(response)
@@ -24,7 +24,7 @@ export const employmentApi = {
   batchUpdateemployments: async (commands: UpdateEmploymentCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
-      `/api/hr/Employee/batch`,
+      `/api/hr/Employment/batch`,
       { employments: commands },
       { withCredentials: true }
     );
@@ -34,7 +34,7 @@ export const employmentApi = {
   GetSelectionList: async (): Promise<SelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<SelectionListDto[]>(
-      "/api/hr/Employee/GetSelectionList",
+      "/api/hr/Employment/GetSelectionList",
       {  withCredentials: true }
     );
     console.log(response)
@@ -45,7 +45,7 @@ export const employmentApi = {
   updateemployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
-      `/api/hr/Employee/${data.id}`, data,
+      `/api/hr/Employment/${data.id}`, data,
       {  withCredentials: true }
     );
     console.log(response)

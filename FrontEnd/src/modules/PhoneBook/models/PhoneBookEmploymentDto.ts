@@ -1,7 +1,7 @@
-// models/PhoneBookEmployeeDto.ts
+// models/PhoneBookEmploymentDto.ts
 
-export interface PhoneBookEmployeeDto {
-  employeeCode: string;
+export interface PhoneBookEmploymentDto {
+  employmentCode: string;
   postCode: string;
   firstName?: string | null;
   lastName?: string | null;

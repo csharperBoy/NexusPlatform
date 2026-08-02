@@ -18,7 +18,7 @@ export interface UpdatePostCommand {
   costCenterId?: string | null;
   reportsToPostId?: string | null; // همان ParentId
   isActive?: boolean | null;
-  employeeId?: string | null;
+  employmentId?: string | null;
   assignType?: PostAssignmentType | null;
   officePhone?: string | null;
   orgEmail?: string | null;
@@ -34,7 +34,7 @@ export interface CreatePostCommand {
   costCenterId?: string | null;
   reportsToPostId?: string | null; // همان ParentId
   isActive?: boolean | null;
-  employeeId?: string | null;
+  employmentId?: string | null;
   assignType?: PostAssignmentType | null;
   officePhone?: string | null;
   orgEmail?: string | null;

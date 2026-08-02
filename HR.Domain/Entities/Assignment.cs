@@ -33,15 +33,17 @@ namespace HR.Domain.Entities
             Touch();
         }
 
-        public void SetEffectiveTo(DateTime? value)
+        public async Task SetEffectiveTo(DateTime? value)
         {
             EffectiveTo = value;
             Touch();
+            await Task.CompletedTask;
         }
-        public void SetIsCurrent(bool value)
+        public async Task SetIsCurrent(bool value)
         {
             IsCurrent = value;
             Touch();
+            await Task.CompletedTask;
         }
         #endregion
         public Guid FkPostId { get; private set; }
