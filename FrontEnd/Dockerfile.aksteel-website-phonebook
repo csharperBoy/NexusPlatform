@@ -1,0 +1,25 @@
+# -------------------- مرحله اول: build --------------------
+FROM node:22-alpine AS builder
+
+RUN corepack enable && corepack prepare pnpm@8.9.0 --activate
+
+WORKDIR /app
+
+COPY pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml ./
+
+COPY . .
+
+RUN pnpm install --frozen-lockfile
+
+# اسکریپت مخصوص این اپ
+RUN pnpm build:aksteel.website.phonebook
+
+# -------------------- مرحله دوم: اجرا (nginx) --------------------
+FROM nginx:alpine
+
+COPY --from=builder /app/dist/AKSteelWebSitePhoneBook /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

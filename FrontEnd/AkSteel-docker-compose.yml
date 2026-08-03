@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  aksteel-admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.aksteel-admin
+    ports:
+      - "3000:80"
+    container_name: aksteel-admin
+
+  aksteel-website-phonebook:
+    build:
+      context: .
+      dockerfile: Dockerfile.aksteel-website-phonebook
+    ports:
+      - "3001:80"
+    container_name: aksteel-website-phonebook
+
+
+    # for create
+    # cd D:\Project\NexusPlatform\FrontEnd
+    # docker compose -f AkSteel-docker-compose.yml build

@@ -1,0 +1,33 @@
+# -------------------- مرحله اول: build --------------------
+FROM node:22-alpine AS builder
+
+# نصب pnpm با نسخه مشخص
+RUN corepack enable && corepack prepare pnpm@8.9.0 --activate
+
+# ایجاد دایرکتوری کار
+WORKDIR /app
+
+# کپی فایل‌های قفل و manifest اصلی
+COPY pnpm-lock.yaml package.json ./
+COPY pnpm-workspace.yaml ./
+
+# کپی کل پروژه (برای دسترسی به workspaceها)
+COPY . .
+
+# نصب وابستگی‌ها (با استفاده از cache برای سرعت بخشیدن)
+RUN pnpm install --frozen-lockfile
+
+# ساخت اپلیکیشن مورد نظر با استفاده از اسکریپت تعریف شده در package.json ریشه
+RUN pnpm build:aksteel.admin
+
+# -------------------- مرحله دوم: اجرا (nginx) --------------------
+FROM nginx:alpine
+
+# کپی فایل‌های ساخته شده از مرحله قبل به پوشه nginx
+COPY --from=builder /app/dist/AKSteelAdmin /usr/share/nginx/html
+
+# (اختیاری) تنظیم پورت پیش‌فرض nginx (۸۰)
+EXPOSE 80
+
+# اجرای nginx در حالت foreground
+CMD ["nginx", "-g", "daemon off;"]
