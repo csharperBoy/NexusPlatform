@@ -24,6 +24,7 @@ using Serilog;
 using System.ComponentModel.Design;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Serilog;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -138,6 +139,7 @@ namespace Core.Infrastructure.DependencyInjection
         {
             var corsSettings = configuration.GetSection("Cors").Get<CorsSettings>();
             var allowedOrigins = corsSettings?.AllowedOrigins ?? new[] { "http://localhost:3000" };
+            Log.Information("****************** allowedOrigins: {@Origins}", allowedOrigins);
 
             services.AddCors(options =>
             {

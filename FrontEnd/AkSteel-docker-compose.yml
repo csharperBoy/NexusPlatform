@@ -20,4 +20,4 @@ services:
 
     # for create
     # cd D:\Project\NexusPlatform\FrontEnd
-    # docker compose -f AkSteel-docker-compose.yml build
+    # docker compose -f AkSteel-docker-compose.yml  up --build
