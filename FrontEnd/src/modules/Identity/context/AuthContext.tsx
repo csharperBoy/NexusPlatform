@@ -108,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const silentRefresh = async () => {
       try {
         const res = await identityApi.refresh();
+        // console.info(res);
         setAccessToken(res.accessToken);
         setUser({ id: res.userId, userName: res.userName });
       } catch {
