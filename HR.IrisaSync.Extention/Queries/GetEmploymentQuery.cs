@@ -25,7 +25,7 @@ namespace HR.IrisaSync.Extention.Queries
 
         public async Task<Result<IReadOnlyList<PdsIdeaInformationViw>>> Handle(GetEmploymentQuery request, CancellationToken ct)
         {
-             await _service.SyncEmployements();
+             //await _service.SyncEmployements();
             var lst = await _service.GetEmployment();
             return Result<IReadOnlyList<PdsIdeaInformationViw>>.Ok(lst);
         }
