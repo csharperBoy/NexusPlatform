@@ -33,11 +33,11 @@ export const Header: React.FC<HeaderProps> = ({ className = '', render }) => {
         <LogoutButton className="px-4 py-2 bg-red-500 text-red rounded hover:bg-red-600" />
       </div>
 
-       <div className="flex items-center gap-4">
+       {/* <div className="flex items-center gap-4">
         ماژول های فعال:
          {authEnabled && <div> auth </div>}
           {identityEnabled && <div> identity </div>}
-      </div>
+      </div> */}
     </header>
   );
 };
