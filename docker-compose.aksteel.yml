@@ -1,7 +1,8 @@
 services:
   # 1. SQL Server مخصوص پروژه AkSteel
   aksteel-sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    # image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: aksteel_sqlserver
     environment:
       - ACCEPT_EULA=Y
