@@ -59,4 +59,6 @@
     <ProjectReference Include="..\PhoneBook.Presentation\PhoneBook.Presentation.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="https://acp-protocol.dev/schemas/v1/sync.schema.json" /></VisualStudio></ProjectExtensions>
+
 </Project>

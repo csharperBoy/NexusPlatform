@@ -82,8 +82,8 @@ namespace Core.Infrastructure.Database
                 _logger.LogInformation("🚧 Database for {DbContext} not found. It will be created now...", typeof(TContext).Name);
             }
 
-            // متد MigrateAsync خودش کار Create دیتابیس و اجرای Pending ها را با هم انجام می‌دهد.
-            await context.Database.MigrateAsync(cancellationToken);
+                // متد MigrateAsync خودش کار Create دیتابیس و اجرای Pending ها را با هم انجام می‌دهد.
+                await context.Database.MigrateAsync(cancellationToken);
 
             // اجرای ویوها و تریگرها (فقط یک‌بار نوشته می‌شود)
             context.EnsureTriggers(cancellationToken);

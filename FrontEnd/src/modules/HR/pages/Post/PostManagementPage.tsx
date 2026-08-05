@@ -31,16 +31,20 @@ export const PostManagementPage: React.FC = () => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [modifiedIds, setModifiedIds] = useState<Set<string>>(new Set());
 
-  // استیت‌های درگ اند دراپ
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  // --- استیت‌های جدید: مدیریت انتخاب چندگانه (Ctrl / Shift) ---
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+
+  // --- استیت‌های درگ اند دراپ گروهی ---
+  const [draggedIds, setDraggedIds] = useState<string[]>([]);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [isOverRootZone, setIsOverRootZone] = useState<boolean>(false);
 
   // ریف مربوط به آپلود فایل اکسل
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const draggedIdRef = useRef<string | null>(null);
-  draggedIdRef.current = draggedId;
+  const draggedIdsRef = useRef<string[]>([]);
+  draggedIdsRef.current = draggedIds;
 
   const initialPostsMap = useMemo(() => {
     const map = new Map<string, PostInfoView>();
@@ -68,6 +72,8 @@ export const PostManagementPage: React.FC = () => {
       });
       setExpandedIds(parentIds);
       setModifiedIds(new Set());
+      setSelectedIds(new Set());
+      setLastSelectedId(null);
     } catch (err: any) {
       setError(err?.message || "خطا در دریافت لیست چارت سازمانی");
     } finally {
@@ -318,7 +324,46 @@ export const PostManagementPage: React.FC = () => {
     return { flattenedTree: flattened, postsMap: map };
   }, [posts, expandedIds, globalSearch, columnSearch, modifiedIds, initialPostsMap]);
 
-  // --- 4. متدهای مدیریت درخت ---
+  // --- 4. مدیریت انتخاب چندگانه (Ctrl / Shift) ---
+  const handleRowClick = (e: React.MouseEvent, id: string) => {
+    // جلوگیری از تغییر انتخاب هنگام فوکوس یا تایپ در اینپوت‌ها و دکمه‌ها
+    const targetTag = (e.target as HTMLElement).tagName;
+    if (targetTag === "INPUT" || targetTag === "BUTTON") return;
+
+    if (e.ctrlKey || e.metaKey) {
+      // 1. کلیک با کنترل (Toggle)
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+      setLastSelectedId(id);
+    } else if (e.shiftKey && lastSelectedId) {
+      // 2. کلیک با شیفت (Range Selection)
+      const flatIds = flattenedTree.map((item) => item.node.id);
+      const lastIndex = flatIds.indexOf(lastSelectedId);
+      const currentIndex = flatIds.indexOf(id);
+
+      if (lastIndex !== -1 && currentIndex !== -1) {
+        const start = Math.min(lastIndex, currentIndex);
+        const end = Math.max(lastIndex, currentIndex);
+        const rangeIds = flatIds.slice(start, end + 1);
+
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          rangeIds.forEach((rId) => next.add(rId));
+          return next;
+        });
+      }
+    } else {
+      // 3. کلیک معمولی (تک انتخابی)
+      setSelectedIds(new Set([id]));
+      setLastSelectedId(id);
+    }
+  };
+
+  // --- 5. متدهای مدیریت درخت ---
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev);
@@ -342,7 +387,7 @@ export const PostManagementPage: React.FC = () => {
     setExpandedIds(new Set());
   };
 
-  // --- 5. منطق Drag and Drop ---
+  // --- 6. منطق Drag and Drop گروهی ---
   const isDescendant = (targetId: string, ancestorId: string): boolean => {
     let currentId: string | null | undefined = targetId;
     while (currentId) {
@@ -354,17 +399,31 @@ export const PostManagementPage: React.FC = () => {
   };
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
-    e.dataTransfer.setData("text/plain", id);
+    let idsToMove: string[];
+
+    // اگر آیتمی که درگ می‌شود خودش جزو گزینه‌های انتخاب‌شده باشد، همه انتخاب‌شده‌ها منتقل می‌شوند
+    if (selectedIds.has(id)) {
+      idsToMove = Array.from(selectedIds);
+    } else {
+      // اگر روی آیتم غیرانتخابی درگ شروع شد، انتخاب‌ها به همان تک آیتم تغییر می‌یابد
+      idsToMove = [id];
+      setSelectedIds(new Set([id]));
+      setLastSelectedId(id);
+    }
+
+    e.dataTransfer.setData("text/plain", JSON.stringify(idsToMove));
     e.dataTransfer.effectAllowed = "move";
-    setDraggedId(id);
+    setDraggedIds(idsToMove);
   };
 
   const handleDragOverRow = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    const currentDragged = draggedIdRef.current;
-    if (!currentDragged || currentDragged === targetId) return;
+    const currentDragged = draggedIdsRef.current;
+    if (!currentDragged.length || currentDragged.includes(targetId)) return;
 
-    if (isDescendant(targetId, currentDragged)) {
+    // اگر مقصد یکی از فرزندان هرکدام از ردیف‌های درگ‌شده باشد، درگ غیرمجاز است
+    const isInvalid = currentDragged.some((dId) => isDescendant(targetId, dId));
+    if (isInvalid) {
       e.dataTransfer.dropEffect = "none";
       return;
     }
@@ -380,23 +439,38 @@ export const PostManagementPage: React.FC = () => {
     setDragOverId(null);
     setIsOverRootZone(false);
 
-    const draggedNodeId = e.dataTransfer.getData("text/plain") || draggedId;
-    if (!draggedNodeId || draggedNodeId === targetParentId) return;
-
-    if (isDescendant(targetParentId, draggedNodeId)) {
-      alert("امکان انتقال یک والد به زیرمجموعه‌های خودش وجود ندارد!");
-      setDraggedId(null);
-      return;
+    let idsToMove: string[] = [];
+    try {
+      const rawData = e.dataTransfer.getData("text/plain");
+      idsToMove = JSON.parse(rawData);
+    } catch {
+      idsToMove = draggedIds;
     }
 
-    const draggedNode = postsMap.get(draggedNodeId);
-    if (!draggedNode || draggedNode.fkParentId === targetParentId) {
-      setDraggedId(null);
-      return;
+    if (!idsToMove.length) return;
+
+    // فیلتر ردیف‌های نامعتبر (انتقال والد به زیرمجموعه یا انتقال به والد فعلی)
+    let hasCyclicError = false;
+    const validIdsToMove = idsToMove.filter((id) => {
+      if (id === targetParentId) return false;
+      if (isDescendant(targetParentId, id)) {
+        hasCyclicError = true;
+        return false;
+      }
+      const node = postsMap.get(id);
+      if (!node || node.fkParentId === targetParentId) return false;
+      return true;
+    });
+
+    if (hasCyclicError) {
+      alert("امکان انتقال والد به زیرمجموعه‌های خودش وجود ندارد!");
     }
 
-    updateNodeParent(draggedNodeId, targetParentId);
-    setDraggedId(null);
+    if (validIdsToMove.length > 0) {
+      updateNodesParent(validIdsToMove, targetParentId);
+    }
+
+    setDraggedIds([]);
   };
 
   const handleDropOnRoot = (e: React.DragEvent) => {
@@ -404,41 +478,57 @@ export const PostManagementPage: React.FC = () => {
     setIsOverRootZone(false);
     setDragOverId(null);
 
-    const draggedNodeId = e.dataTransfer.getData("text/plain") || draggedId;
-    if (!draggedNodeId) return;
-
-    const draggedNode = postsMap.get(draggedNodeId);
-    if (!draggedNode || draggedNode.fkParentId === null) {
-      setDraggedId(null);
-      return;
+    let idsToMove: string[] = [];
+    try {
+      const rawData = e.dataTransfer.getData("text/plain");
+      idsToMove = JSON.parse(rawData);
+    } catch {
+      idsToMove = draggedIds;
     }
 
-    updateNodeParent(draggedNodeId, null);
-    setDraggedId(null);
+    if (!idsToMove.length) return;
+
+    const validIdsToMove = idsToMove.filter((id) => {
+      const node = postsMap.get(id);
+      return node && node.fkParentId !== null;
+    });
+
+    if (validIdsToMove.length > 0) {
+      updateNodesParent(validIdsToMove, null);
+    }
+
+    setDraggedIds([]);
   };
 
-  const updateNodeParent = (nodeId: string, newParentId: string | null) => {
+  const updateNodesParent = (nodeIds: string[], newParentId: string | null) => {
+    const idSet = new Set(nodeIds);
+
     setPosts((prev) =>
       prev.map((item) => {
-        if (item.id === nodeId) {
+        if (idSet.has(item.id)) {
           return { ...item, fkParentId: newParentId };
         }
         return item;
       })
     );
 
-    setModifiedIds((prev) => new Set(prev).add(nodeId));
+    setModifiedIds((prev) => {
+      const next = new Set(prev);
+      nodeIds.forEach((id) => next.add(id));
+      return next;
+    });
 
     if (newParentId) {
       setExpandedIds((prev) => new Set(prev).add(newParentId));
     }
   };
 
-  // --- 6. بازنشانی و ذخیره تغییرات ---
+  // --- 7. بازنشانی و ذخیره تغییرات ---
   const handleResetChanges = () => {
     if (window.confirm("آیا از لغو تمام تغییرات اعمال شده اطمینان دارید؟")) {
       setPosts(JSON.parse(JSON.stringify(initialPosts)));
       setModifiedIds(new Set());
+      setSelectedIds(new Set());
     }
   };
 
@@ -492,14 +582,19 @@ export const PostManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="p-6 dir-rtl text-right font-sans bg-gray-50/50 min-h-screen">
+    <div className="p-6 dir-rtl text-right font-sans bg-gray-50/50 min-h-screen select-none">
       {/* هدر اصلی */}
-      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-5">
+      <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-5 select-text">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت ساختار چارت سازمانی</h1>
             <p className="text-sm text-gray-500">
               کل پست‌ها: <span className="font-semibold text-gray-700">{posts.length}</span>
+              {selectedIds.size > 0 && (
+                <span className="mr-3 text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-xs font-medium">
+                  {selectedIds.size} رکورد انتخاب شده
+                </span>
+              )}
               {modifiedIds.size > 0 && (
                 <span className="mr-3 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs font-medium">
                   {modifiedIds.size} تغییر ذخیره‌نشده
@@ -574,10 +669,11 @@ export const PostManagementPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span>💡 **راهنما:** برای انتخاب چندگانه از کلیدهای **Ctrl** و **Shift** استفاده کنید.</span>
             <button
               onClick={expandAll}
-              className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300"
+              className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 mr-2"
             >
               گسترش همه
             </button>
@@ -591,11 +687,11 @@ export const PostManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی ریشه - چسبیده به بالاترین بخش (top-0، ارتفاع دقیق 34px) */}
+      {/* منطقه رهاسازی ریشه */}
       <div
         onDragOver={(e) => {
           e.preventDefault();
-          if (draggedId) setIsOverRootZone(true);
+          if (draggedIds.length > 0) setIsOverRootZone(true);
         }}
         onDragLeave={() => setIsOverRootZone(false)}
         onDrop={handleDropOnRoot}
@@ -605,14 +701,14 @@ export const PostManagementPage: React.FC = () => {
             : "border-gray-300 bg-white/95 text-gray-600 hover:border-gray-400"
         }`}
       >
-        📌 جهت انتقال پست به بالاترین سطح چارت (بدون والد)، آن را اینجا رها کنید.
+        📌 جهت انتقال موارد انتخاب‌شده به بالاترین سطح چارت (بدون والد)، آن‌ها را اینجا رها کنید.
       </div>
 
-      {/* جدول چارت با هدرهای چسبان دقیقاً زیر منطقه رهاسازی */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      {/* جدول چارت */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها (دقیقاً چسبیده به زیر باکس دراپ با top-[34px]) */}
+            {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
                 جابه‌جایی
@@ -640,7 +736,7 @@ export const PostManagementPage: React.FC = () => {
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ (دقیقاً چسبیده زیر ردیف اول با top-[70px]) */}
+            {/* ردیف دوم: اینپوت‌های سرچ */}
             <tr className="border-b border-gray-200">
               <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
               <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
@@ -710,7 +806,8 @@ export const PostManagementPage: React.FC = () => {
               </tr>
             ) : (
               flattenedTree.map(({ node, depth, hasChildren, isExpanded, isModified }) => {
-                const isBeingDragged = draggedId === node.id;
+                const isSelected = selectedIds.has(node.id);
+                const isBeingDragged = draggedIds.includes(node.id);
                 const isTarget = dragOverId === node.id;
                 const occupantName =
                   node.firstName || node.lastName
@@ -720,21 +817,22 @@ export const PostManagementPage: React.FC = () => {
                 return (
                   <tr
                     key={node.id}
+                    onClick={(e) => handleRowClick(e, node.id)}
                     onDragOver={(e) => handleDragOverRow(e, node.id)}
                     onDragLeave={() => dragOverId === node.id && setDragOverId(null)}
                     onDrop={(e) => handleDropOnRow(e, node.id)}
-                    className={`transition-colors ${
-                      isBeingDragged ? "opacity-30 bg-gray-100" : ""
-                    } ${
-                      isTarget ? "bg-blue-50 border-y-2 border-blue-500" : "hover:bg-gray-50/80"
-                    } ${isModified ? "bg-amber-50/40" : ""}`}
+                    className={`transition-colors cursor-pointer ${
+                      isSelected ? "bg-blue-100/70 border-blue-300 font-medium" : ""
+                    } ${isBeingDragged ? "opacity-30 bg-gray-200" : ""} ${
+                      isTarget ? "bg-blue-200 border-y-2 border-blue-600" : "hover:bg-gray-50/80"
+                    } ${isModified && !isSelected ? "bg-amber-50/40" : ""}`}
                   >
                     <td className="py-3 px-2 text-center align-middle">
                       <div
                         draggable
                         onDragStart={(e) => handleDragStart(e, node.id)}
                         className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg leading-none inline-block p-1"
-                        title="جهت تغییر والد، کشیده و رها کنید"
+                        title="جهت تغییر والد، کشیده و رها کنید (امکان انتخاب گروهی)"
                       >
                         ☰
                       </div>
@@ -748,7 +846,10 @@ export const PostManagementPage: React.FC = () => {
                         {hasChildren ? (
                           <button
                             type="button"
-                            onClick={() => toggleExpand(node.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(node.id);
+                            }}
                             className="w-5 h-5 flex items-center justify-center rounded text-gray-500 hover:bg-gray-200 text-xs"
                           >
                             {isExpanded ? "▼" : "◀"}
