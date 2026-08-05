@@ -705,7 +705,7 @@ export const PostManagementPage: React.FC = () => {
       </div>
 
       {/* جدول چارت */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <table className="w-full text-right border-collapse">
           <thead>
             {/* ردیف اول: عناوین ستون‌ها */}
