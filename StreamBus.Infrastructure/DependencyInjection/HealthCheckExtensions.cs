@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StreamBus.Infrastructure.Data;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
