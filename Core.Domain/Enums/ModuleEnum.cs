@@ -17,9 +17,10 @@ namespace Core.Domain.Enums
         Identity = 6,
         Notification = 7,
         HR = 8,
-        User = 9,
+        People = 9,
         WebScrapper = 10,
         Navigation = 11,
-
+        PhoneBook = 12,
+        StreamBus=13
     }
 }
