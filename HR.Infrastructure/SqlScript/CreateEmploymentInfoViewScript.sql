@@ -1,6 +1,6 @@
 ﻿CREATE VIEW [dbo].[Employment_Info_View]
 AS
-SELECT        people.naturalPersons.NationalCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, hr.[ Employment].EmploymentCode, hr.[ Employment].EffectiveFrom AS Employment_EffectiveFrom, 
+SELECT      hr.[ Employment].Id,  people.naturalPersons.NationalCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, hr.[ Employment].EmploymentCode, hr.[ Employment].EffectiveFrom AS Employment_EffectiveFrom, 
                          hr.[ Employment].EffectiveTo AS Employment_EffectiveTo, people.Parties.Id AS Party_Id, PartyContacts_Mobile.Value AS Party_Mobile, PartyContacts_Address.Value AS Party_Address, PartyContacts_Phone.Value AS Party_Phone,
                           PartyContacts_Email.Value AS Party_Email, hr.[ EmploymentStatus].Name AS Employment_Status_Name, hr.[ EmploymentType].Name AS Employment_Type_Name, hr.Assignments.AssigneeType AS Assignments_AssigneeType, 
                          hr.Assignments.EffectiveFrom AS Assignments_EffectiveFrom, hr.Assignments.EffectiveTo AS Assignments_EffectiveTo, hr.Post.Code AS Post_Code, hr.[ Grade].Title AS Grade_Title, hr.[ CostCenter].Name AS CostCenter_Name, 

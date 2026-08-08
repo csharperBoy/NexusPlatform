@@ -36,9 +36,9 @@ public partial class EmploymentInfoView
 
     public int AssignmentsAssigneeType { get; set; }
 
-    public DateOnly AssignmentsEffectiveFrom { get; set; }
+    public DateTime AssignmentsEffectiveFrom { get; set; }
 
-    public DateOnly? AssignmentsEffectiveTo { get; set; }
+    public DateTime? AssignmentsEffectiveTo { get; set; }
 
     public string PostCode { get; set; } = null!;
 
@@ -64,9 +64,9 @@ public partial class EmploymentInfoView
     public string? EmploymentContactMobile { get; set; }
     public string? EmploymentContactEmail { get; set; }
     public string? EmploymentContactFax { get; set; }
-    public DateOnly? EmploymentLocationsEffectiveFrom { get; set; }
+    public DateTime? EmploymentLocationsEffectiveFrom { get; set; }
 
-    public DateOnly? EmploymentLocationsEffectiveTo { get; set; }
+    public DateTime? EmploymentLocationsEffectiveTo { get; set; }
 
     public string? LocationTitle { get; set; }
 }

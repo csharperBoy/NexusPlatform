@@ -670,7 +670,7 @@ export const PostManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>💡 **راهنما:** برای انتخاب چندگانه از کلیدهای **Ctrl** و **Shift** استفاده کنید.</span>
+            <span>💡 راهنما: برای انتخاب چندگانه از کلیدهای Ctrl و Shift استفاده کنید.</span>
             <button
               onClick={expandAll}
               className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 mr-2"
