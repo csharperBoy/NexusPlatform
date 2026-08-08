@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace HR.Infrastructure.Configurations
 {
-    public class EmployementInfoViewConfiguration : BaseConfiguration<EmployementInfoView>
+    public class EmploymentInfoViewConfiguration : BaseConfiguration<EmploymentInfoView>
     {
-        public override void Configure(EntityTypeBuilder<EmployementInfoView> builder)
+        public override void Configure(EntityTypeBuilder<EmploymentInfoView> builder)
         {
             //base.Configure(builder);
 
 
             builder
                .HasNoKey()
-               .ToView("Employement_Info_View", "hr");
+               .ToView("Employment_Info_View", "hr");
 
             builder.Property(e => e.AssignmentsAssigneeType).HasColumnName("Assignments_AssigneeType");
             builder.Property(e => e.AssignmentsEffectiveFrom).HasColumnName("Assignments_EffectiveFrom");

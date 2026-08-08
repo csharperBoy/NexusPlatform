@@ -25,7 +25,7 @@ namespace HR.Application.Interfaces
          IRepository<TContext, Location, Guid> LocationRepository { get; }
          IRepository<TContext, OrganizationUnit, Guid> OrganizationUnitRepository { get; }
          IRepository<TContext, PostContact, Guid> PostContactRepository { get; }
-         IRepository<TContext, EmployementInfoView, Guid> EmployementInfoViewRepository { get; }
+         IRepository<TContext, EmploymentInfoView, Guid> EmployementInfoViewRepository { get; }
          IRepository<TContext, PostInfoView, Guid> PostInfoViewRepository { get; }
         
     }

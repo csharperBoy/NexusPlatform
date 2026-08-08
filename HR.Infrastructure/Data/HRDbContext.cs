@@ -42,7 +42,7 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
 
-        public virtual DbSet<EmployementInfoView> EmployementInfoViews { get; set; }
+        public virtual DbSet<EmploymentInfoView> EmployementInfoViews { get; set; }
         public virtual DbSet<PostInfoView> PostInfoViews { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -74,7 +74,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PostContactConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
-            modelBuilder.ApplyConfiguration(new EmployementInfoViewConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentInfoViewConfiguration());
             modelBuilder.ApplyConfiguration(new PostInfoViewConfiguration());
 
         }

@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 namespace HR.Application.Queries.Employment
 {
     public record GetEmploymentListQuery(string? employmentCode = null)
-     : IRequest<Result<IReadOnlyList<EmployementInfoView>>>;
+     : IRequest<Result<IReadOnlyList<EmploymentInfoView>>>;
 
     public class GetEmploymentListQueryHandler
-        : IRequestHandler<GetEmploymentListQuery, Result<IReadOnlyList<EmployementInfoView>>>
+        : IRequestHandler<GetEmploymentListQuery, Result<IReadOnlyList<EmploymentInfoView>>>
     {
         private readonly IEmploymentInternalService _employmentInternalService;
         private readonly ILogger<GetEmploymentListQueryHandler> _logger;
@@ -28,7 +28,7 @@ namespace HR.Application.Queries.Employment
             _logger = logger;
         }
 
-        public async Task<Result<IReadOnlyList<EmployementInfoView>>> Handle(
+        public async Task<Result<IReadOnlyList<EmploymentInfoView>>> Handle(
             GetEmploymentListQuery request,
             CancellationToken cancellationToken)
         {
@@ -36,13 +36,13 @@ namespace HR.Application.Queries.Employment
             {
                 _logger.LogDebug("Getting Employment List:");
 
-                var posts = await _employmentInternalService.GetEmploymentListAsync();
-                return Result<IReadOnlyList<EmployementInfoView>>.Ok(posts);
+                var employments = await _employmentInternalService.GetEmploymentListAsync();
+                return Result<IReadOnlyList<EmploymentInfoView>>.Ok(employments);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to get Employment List");
-                return Result<IReadOnlyList<EmployementInfoView>>.Fail(ex.Message);
+                return Result<IReadOnlyList<EmploymentInfoView>>.Fail(ex.Message);
             }
         }
     }

@@ -28,7 +28,7 @@ namespace HR.Infrastructure.Services
 
         private readonly IPersonPublicService _personService;
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
-        private readonly IRepository<HRDbContext, EmployementInfoView, Guid> _employmentInfoRepository;
+        private readonly IRepository<HRDbContext, EmploymentInfoView, Guid> _employmentInfoRepository;
         private readonly IRepository<HRDbContext, EmploymentContact, Guid> _employmentContactRepository;
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
@@ -39,7 +39,7 @@ namespace HR.Infrastructure.Services
 
         public EmploymentService(IPersonPublicService personService, IRepository<HRDbContext, Employment, Guid> employmentRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmploymentService> logger,
             ISpecificationRepository<Employment, Guid> employmentSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
-            IUnitOfWork<HRDbContext> uow, ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository, IRepository<HRDbContext, EmployementInfoView, Guid> employmentInfoRepository)
+            IUnitOfWork<HRDbContext> uow, ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository, IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository)
         {
             _employmentInfoRepository = employmentInfoRepository;
             _personService = personService;
@@ -178,7 +178,7 @@ namespace HR.Infrastructure.Services
             }
         }
 
-        public async Task<IReadOnlyList<EmployementInfoView>> GetEmploymentListAsync()
+        public async Task<IReadOnlyList<EmploymentInfoView>> GetEmploymentListAsync()
         {
             var list = await _employmentInfoRepository.GetAllAsync();
             return list.ToList();

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace HR.Domain.Entities;
 
 [Keyless]
-public partial class EmployementInfoView
+public partial class EmploymentInfoView
 {
     public Guid Id { get; set; }
     public string NationalCode { get; set; } = null!;
