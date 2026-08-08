@@ -171,7 +171,7 @@ namespace Identity.Infrastructure.Services
 
         public async Task<Guid?> GetPartyId(Guid userId)
         {
-            if (!ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.User))
+            if (!ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.Identity))
                 return null;
 
             var user = await _userManager.FindByIdAsync(userId.ToString());
