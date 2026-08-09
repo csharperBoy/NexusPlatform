@@ -29,8 +29,7 @@ services:
     build:
       context: .
       dockerfile: AkSteel.WebApi/Dockerfile
-    ports:
-      - "8080:8080"
+    # پورت مستقیم برداشته شد تا فقط از طریق Reverse Proxy دسترسی وجود داشته باشد
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=aksteel-sqlserver;Database=AksteelDb;User Id=sa;Password=Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true
@@ -40,6 +39,19 @@ services:
         condition: service_healthy
       aksteel-redis:
         condition: service_started
+
+  aksteel-proxy:
+    image: aksteel-proxy:latest
+    container_name: aksteel_proxy
+    build:
+      context: .
+      dockerfile: AkSteel.ReverseProxy/Dockerfile # مسیر دقیق Dockerfile پروکسی
+    ports:
+      - "80:8080" # پورت 80 سیستم اصلی به 8080 کانتینر پروکسی متصل می‌شود
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    depends_on:
+      - aksteel-webapi
   
       # cd D:\Project\NexusPlatform
       # docker compose -f docker-compose.aksteel.yml up --build
