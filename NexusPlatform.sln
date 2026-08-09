@@ -237,6 +237,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamBus.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamBus.Presentation", "StreamBus.Presentation\StreamBus.Presentation.csproj", "{B79BFA63-BFA6-448F-A564-D9C12BADDEAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AkSteel.Gateway", "AkSteel.Gateway\AkSteel.Gateway.csproj", "{3B97C35E-9496-41CD-909B-B6B97CD9CB3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -571,6 +573,10 @@ Global
 		{B79BFA63-BFA6-448F-A564-D9C12BADDEAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B79BFA63-BFA6-448F-A564-D9C12BADDEAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B79BFA63-BFA6-448F-A564-D9C12BADDEAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B97C35E-9496-41CD-909B-B6B97CD9CB3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B97C35E-9496-41CD-909B-B6B97CD9CB3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B97C35E-9496-41CD-909B-B6B97CD9CB3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B97C35E-9496-41CD-909B-B6B97CD9CB3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -685,6 +691,7 @@ Global
 		{AB5EA77F-8B45-49FF-ADF5-30A7D03E0A1F} = {24C90B41-09E6-4A65-BE30-BF56B9095B89}
 		{D29B8D12-01AE-4212-9A5B-96E823FA6F24} = {24C90B41-09E6-4A65-BE30-BF56B9095B89}
 		{B79BFA63-BFA6-448F-A564-D9C12BADDEAA} = {24C90B41-09E6-4A65-BE30-BF56B9095B89}
+		{3B97C35E-9496-41CD-909B-B6B97CD9CB3C} = {2FA57E9A-2A4D-4850-BBF4-4EEBF552A725}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}
