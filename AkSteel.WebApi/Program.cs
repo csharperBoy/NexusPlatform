@@ -10,27 +10,6 @@ using Serilog;
 
 try
 {
-   #region test
-
-    //using (var context = new IrisaOracleDbContext())
-    //{
-    //    var a = context.PdsIdeaInformationViws.Where(a => a.NumPrsnEmply == 868 || a.NumPrsnEmply == 310).ToList();
-    //}
-    //var a = new HRDbContextFactory();
-    //using (var context = a.CreateDbContext(null))
-    //{
-    //    var b = context.PostInfoViews.ToList();
-    //    var c = context.EmployementInfoViews.ToList();
-    //}
-
-    //using (var context = new HR2DbContext())
-    //{
-    //    var b = context.PostInfoViews.ToList();
-    //    var c = context.EmployementInfoViews.ToList();
-    //}
-   
-  #endregion
-
     Console.OutputEncoding = System.Text.Encoding.UTF8;
     Log.Information("🚀 Starting AkSteel Management application...");
 
@@ -48,10 +27,10 @@ try
     var app = builder.Build();
     await app.UseEnableModulesApplicationBuilderExtensions(configuration);
     await app.UseSwaggerApplicationBuilderExtensions(configuration);
-
-    app.UseHttpsRedirection();
+    app.UseForwardedHeaders();
+    //app.UseHttpsRedirection();
     app.UseRouting();
-    app.UseCors();
+    //app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

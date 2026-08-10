@@ -13,6 +13,7 @@ using Core.Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors; // اضافه کردن این using
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,10 +22,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog;
 using System.ComponentModel.Design;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Serilog;
 namespace Core.Infrastructure.DependencyInjection
 {
     /*
@@ -107,6 +108,13 @@ namespace Core.Infrastructure.DependencyInjection
 
             // 📌 ثبت سرویس‌های زیرساختی
 
+            // 📌 ثبت تنظیمات Forwarded Headers (جایگزین CORS)
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
             services.Configure<CorsSettings>(configuration.GetSection("Cors"));
             services.Configure<HealthCheckSettings>(configuration.GetSection("HealthCheck"));
 
@@ -118,7 +126,7 @@ namespace Core.Infrastructure.DependencyInjection
             //services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));
 
             services.AddLoggingServices(configuration);
-            ConfigureCors(services, configuration);
+            //ConfigureCors(services, configuration);
             ConfigureSwagger(services, configuration);
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
