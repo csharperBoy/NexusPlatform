@@ -9,19 +9,24 @@ services:
     ports:
       - "1434:1433"
     volumes:
-      - ./sqlserverdata:/var/opt/mssql2025/data
+      - mssql_2025_data:/var/opt/mssql/data            # ولوم اصلی دیتابیس‌ها
+      - ./sqlserver-data:/var/opt/mssql/import          # پوشه اشتراکی برای انتقال فایل
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Fajr@123 -Q 'SELECT 1' -C || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
+    networks:
+      - aksteel-network
 
   aksteel-redis:
     image: redis:alpine
     container_name: aksteel_redis
     ports:
       - "6379:6379"
+    networks:
+      - aksteel-network
 
   aksteel-webapi:
     image: aksteel-webapi:latest
@@ -41,6 +46,11 @@ services:
     networks:
       - aksteel-network
 
+networks:
+  aksteel-network:
+    external: true
+volumes:
+  mssql_2025_data:
  # aksteel-gateway:
  #  image: aksteel-gateway:latest
  #  container_name: aksteel_gateway
@@ -55,6 +65,7 @@ services:
  #  networks:
  #    - aksteel-network**/
   
+      # docker network create aksteel-network
       # cd D:\Project\NexusPlatform
       # docker compose -f docker-compose.aksteel.yml up --build
       # docker compose -f docker-compose.aksteel.yml build --no-cache

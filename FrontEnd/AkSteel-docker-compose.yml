@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   aksteel-admin:
     build:
@@ -8,8 +6,6 @@ services:
     ports:
       - "3000:80"
     container_name: aksteel-admin
-    depends_on:
-      - aksteel-gateway
     networks:
       - aksteel-network
 
@@ -20,11 +16,14 @@ services:
     ports:
       - "3001:80"
     container_name: aksteel-website-phonebook
-    depends_on:
-      - aksteel-gateway
     networks:
       - aksteel-network
 
+networks:
+  aksteel-network:
+    external: true
+
+
     # for create
     # cd D:\Project\NexusPlatform\FrontEnd
-    # docker compose -f AkSteel-docker-compose.yml  up --build
+    # docker compose -f AkSteel-docker-compose.yml  up --build --no-cache
