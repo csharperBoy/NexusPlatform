@@ -62,7 +62,7 @@ namespace HR.Domain.Entities
             return hasChange;
         }
 
-    }
+    
         public void Touch() => ModifiedAt = DateTime.UtcNow;
 
         //navigate

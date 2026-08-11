@@ -53,10 +53,6 @@ namespace Core.Application.Abstractions.HR
     }
     public class NullLocationService : ILocationPublicService
     {
-        public Task<Guid?> GetLocationId(Guid? personId)
-        {
-            return Task.FromResult<Guid?>(null);
-        }
 
         public async Task SaveAsync()
         {

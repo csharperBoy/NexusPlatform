@@ -63,7 +63,7 @@ namespace HR.Infrastructure.Services
           string _title,
 
         string? _orgPhone = null,
-        Email? _orgEmail = null,
+        string? _orgEmail = null,
         string? _orgMobile = null
             )
         {
@@ -73,7 +73,7 @@ namespace HR.Infrastructure.Services
 
             await CreateLocationContact(HrContactType.OrgMobile, _orgMobile, loc.Id);
             await CreateLocationContact(HrContactType.OfficePhone, _orgPhone, loc.Id);
-            await CreateLocationContact(HrContactType.OrgEmail, _orgEmail?.Value, loc.Id);
+            await CreateLocationContact(HrContactType.OrgEmail, _orgEmail, loc.Id);
             return loc.Id;
         }
         public async Task SaveAsync()

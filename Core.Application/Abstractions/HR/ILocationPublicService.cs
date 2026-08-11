@@ -9,7 +9,6 @@ namespace Core.Application.Abstractions.HR
     public interface ILocationPublicService
     {
 
-        Task<Guid?> GetLocationId(Guid? personId);
         Task SaveAsync();
     }
 }

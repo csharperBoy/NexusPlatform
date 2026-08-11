@@ -1,6 +1,10 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
+using Core.Shared.Enums.HR;
+using HR.Application.DTOs;
 using HR.Domain.Entities;
+using HR.Domain.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,10 +20,12 @@ namespace HR.Application.Interfaces
            string _title,
 
          string? _orgPhone = null,
-         Email? _orgEmail = null,
+         string? _orgEmail = null,
          string? _orgMobile = null
              );
-        Task<IReadOnlyList<LocationInfoView>> GetLocationListAsync();
-        Task<Guid> UpdateLocationAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? LocationCode, Guid? LocationTypeId, Guid? LocationStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile);
+        Task<Guid> UpdateLocationAsync(Guid id, string? title, string? officePhone, string? orgEmail, string? orgMobile);
+      
+        Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync();
+
     }
 }

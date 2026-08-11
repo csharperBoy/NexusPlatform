@@ -79,6 +79,15 @@ namespace HR.Infrastructure.Data
                             Description = "employment management",
                             DisplayOrder = 3002,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "hr.location",
+                            Name = "HR locations",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "location management",
+                            DisplayOrder = 3003,
+                            Icon = "list",
                         }
                     }
                 }
@@ -123,6 +132,23 @@ namespace HR.Infrastructure.Data
                    AssigneeId = roleId,
 
                    Description = "Full access to hr employment"
+               },
+               new()
+               {
+                   ResourceKey = "hr.location",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to hr location"
                }
             };
         }
@@ -199,6 +225,16 @@ namespace HR.Infrastructure.Data
                             Key = "hr.employment",
                             ParentKey = "hr",
                             Path = "/hr/employment"
+                        },
+                        new()
+                        {
+                            Title = "مدیریت مکان ها",
+                            Description = "مدیریت مکان ها",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 103,
+                            Key = "hr.location",
+                            ParentKey = "hr",
+                            Path = "/hr/location"
                         }
                     }
                 }
