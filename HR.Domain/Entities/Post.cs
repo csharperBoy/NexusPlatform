@@ -68,6 +68,7 @@ namespace HR.Domain.Entities
 
 
         public virtual ICollection<PostContact> PostContacts { get; set; } = new List<PostContact>();
+        public virtual ICollection<PostLocation> PostLocations { get; set; } = new List<PostLocation>();
 
         public void UpdateDetails(
     Guid? organizationUnitId,

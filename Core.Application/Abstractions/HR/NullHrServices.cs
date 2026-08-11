@@ -51,4 +51,16 @@ namespace Core.Application.Abstractions.HR
             await Task.CompletedTask;
         }
     }
+    public class NullLocationService : ILocationPublicService
+    {
+        public Task<Guid?> GetLocationId(Guid? personId)
+        {
+            return Task.FromResult<Guid?>(null);
+        }
+
+        public async Task SaveAsync()
+        {
+            await Task.CompletedTask;
+        }
+    }
 }

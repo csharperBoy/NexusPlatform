@@ -114,9 +114,15 @@ namespace HR.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<HRDbContext, EmploymentContact, Guid>, EfRepository<HRDbContext, EmploymentContact, Guid>>();
             services.AddScoped<ISpecificationRepository<EmploymentContact, Guid>, EfSpecificationRepository<HRDbContext, EmploymentContact, Guid>>();
 
+            services.AddScoped<IRepository<HRDbContext, LocationContact, Guid>, EfRepository<HRDbContext, LocationContact, Guid>>();
+            services.AddScoped<ISpecificationRepository<LocationContact, Guid>, EfSpecificationRepository<HRDbContext, LocationContact, Guid>>();
+
 
             services.AddScoped<IRepository<HRDbContext, EmploymentLocation, Guid>, EfRepository<HRDbContext, EmploymentLocation, Guid>>();
             services.AddScoped<ISpecificationRepository<EmploymentLocation, Guid>, EfSpecificationRepository<HRDbContext, EmploymentLocation, Guid>>();
+
+            services.AddScoped<IRepository<HRDbContext, PostLocation, Guid>, EfRepository<HRDbContext, PostLocation, Guid>>();
+            services.AddScoped<ISpecificationRepository<PostLocation, Guid>, EfSpecificationRepository<HRDbContext, PostLocation, Guid>>();
 
             services.AddScoped<IRepository<HRDbContext, EmploymentInfoView, Guid>, EfRepository<HRDbContext, EmploymentInfoView, Guid>>();
             services.AddScoped<ISpecificationRepository<EmploymentInfoView, Guid>, EfSpecificationRepository<HRDbContext, EmploymentInfoView, Guid>>();

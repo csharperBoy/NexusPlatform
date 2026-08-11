@@ -60,7 +60,31 @@ namespace Core.Application.Abstractions
     {
         //Task<TEntity?> GetByIdAsync(TKey id);
         Task<TEntity?> GetByIdAsync(TKey id, params Expression<Func<TEntity, object>>[] includes);
+        /// <summary>
+        /// دریافت همه
+        /// </summary>
+        /// <returns></returns>
         Task<IEnumerable<TEntity>> GetAllAsync();
+        /// <summary>
+        /// await GetAllAsync(i => i.Post, i => i.Employment)
+        /// </summary>
+        /// <param name="includeProperties"></param>
+        /// <returns></returns>
+        Task<IEnumerable<TEntity>> GetAllAsync(params Expression<Func<TEntity, object>>[] includeProperties);
+        /// <summary>
+        /// var result = await GetAllAsync(q => q.OrderByDescending(x => x.CreatedDate)
+        ///.ThenBy(x => x.Name));
+        ///OR
+        /// var result = await GetAllAsync(
+        ///orderBy: q => q.OrderBy(x => x.Employment.Title),
+        //includeProperties: i => i.Post, i => i.Employment
+        //);
+        /// </summary>
+        /// <param name="orderBy"></param>
+        /// <param name="includeProperties"></param>
+        /// <returns></returns>
+        Task<IEnumerable<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, params Expression<Func<TEntity, object>>[] includeProperties);
+
         Task AddAsync(TEntity entity);
         Task AddRangeAsync(IEnumerable<TEntity> entities);
         Task UpdateAsync(TEntity entity);

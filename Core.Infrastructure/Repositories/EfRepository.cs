@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Authorization.Processor;
 using Core.Domain.Attributes;
 using Core.Domain.Common;
 using Core.Domain.Enums;
+using Core.Domain.Interfaces;
 using Core.Infrastructure.Hosted;
 using Core.Infrastructure.Security;
 using Core.Shared.Enums.Authorization;
@@ -108,12 +109,75 @@ namespace Core.Infrastructure.Repositories
                 .FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
         }
 
+        #region GetAllAsync
+
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
             var result = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
             return await result.ToListAsync();
         }
+        /// <summary>
+        /// await GetAllAsync(i => i.Post, i => i.Employment)
+        /// </summary>
+        /// <param name="includeProperties"></param>
+        /// <returns></returns>
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(params Expression<Func<TEntity, object>>[] includeProperties)
+        {
+            IQueryable<TEntity> query = _dbSet.AsQueryable();
 
+            // اعمال Includeهای دریافتی (در صورت وجود)
+            if (includeProperties?.Length > 0)
+            {
+                foreach (var include in includeProperties)
+                {
+                    query = query.Include(include);
+                }
+            }
+
+            // اعمال فیلتر مجوزها (بعد از Include)
+            query = await _authorizationProcessor.ApplyFilter(query);
+
+            return await query.ToListAsync();
+        }
+
+        /// <summary>
+        /// var result = await GetAllAsync(q => q.OrderByDescending(x => x.CreatedDate)
+        ///.ThenBy(x => x.Name));
+        ///OR
+        /// var result = await GetAllAsync(
+        ///orderBy: q => q.OrderBy(x => x.Employment.Title),
+        //includeProperties: i => i.Post, i => i.Employment
+        //);
+        /// </summary>
+        /// <param name="orderBy"></param>
+        /// <param name="includeProperties"></param>
+        /// <returns></returns>
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null, params Expression<Func<TEntity, object>>[] includeProperties)
+        {
+            IQueryable<TEntity> query = _dbSet.AsQueryable();
+
+            // 1. اعمال Includeها
+            if (includeProperties?.Length > 0)
+            {
+                foreach (var include in includeProperties)
+                {
+                    query = query.Include(include);
+                }
+            }
+
+            // 2. اعمال مرتب‌سازی (Sort)
+            if (orderBy != null)
+            {
+                query = orderBy(query);
+            }
+
+            // 3. اعمال فیلتر مجوزها (Authorization)
+            query = await _authorizationProcessor.ApplyFilter(query);
+
+            return await query.ToListAsync();
+        }
+        
+        #endregion
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
         {
             var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
@@ -133,9 +197,9 @@ namespace Core.Infrastructure.Repositories
         {
             await _authorizationProcessor.SetOwnerDefaults(entity);
             // فقط زمانی که میزبانی روشن است، مجوز چک می‌شود
-           
-                await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
-            
+
+            await _authorizationProcessor.CheckPermissionAsync(entity, PermissionAction.Create);
+
             await _dbSet.AddAsync(entity);
         }
 
@@ -188,7 +252,7 @@ namespace Core.Infrastructure.Repositories
             }
             _dbSet.UpdateRange(entities);
         }
-        
+
 
         public virtual async Task<IQueryable<TEntity>> AsQueryable()
         {

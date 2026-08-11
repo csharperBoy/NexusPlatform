@@ -39,6 +39,8 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<OrganizationUnit> OrganizationUnits { get; set; }
         public virtual DbSet<Post> Posts { get; set; }
         public virtual DbSet<PostContact> PostContacts { get; set; }
+        public virtual DbSet<PostLocation> PostLocations { get; set; }
+        public virtual DbSet<LocationContact> LocationContacts { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
 
@@ -76,6 +78,8 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentInfoViewConfiguration());
             modelBuilder.ApplyConfiguration(new PostInfoViewConfiguration());
+            modelBuilder.ApplyConfiguration(new LocationContactConfiguration());
+            modelBuilder.ApplyConfiguration(new PostLocationsConfiguration());
 
         }
     }

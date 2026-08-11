@@ -34,12 +34,41 @@ namespace HR.Domain.Entities
             //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
         }
         #endregion
-        public string Title { get; set; }
+        public string Title { get;private set; }
+        public Location(string _Title)
+        {
+         Title = _Title;   
+        }
+        protected Location()
+        {
+            
+        }
+        public bool ApplyChange(
+           string? _title = null)
+        {
 
-       public void Touch() => ModifiedAt = DateTime.UtcNow;
+            bool hasChange = false;
 
-//navigate
+            if (_title != null && _title?.Trim() != Title.Trim())
+            {
+                Title = _title;
+                hasChange = true;
+            }
+
+            if (hasChange)
+            {
+                Touch();
+            }
+            return hasChange;
+        }
+
+    }
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
+
+        //navigate
         public virtual ICollection<EmploymentLocation> EmploymentLocations { get; set; } = new List<EmploymentLocation>();
+        public virtual ICollection<PostLocation> PostLocations { get; set; } = new List<PostLocation>();
+        public virtual ICollection<LocationContact> LocationContacts { get; set; } = new List<LocationContact>();
 
 
 
