@@ -54,9 +54,6 @@
     <ProjectReference Include="..\People.Application\People.Application.csproj" />
     <ProjectReference Include="..\People.Infrastructure\People.Infrastructure.csproj" />
     <ProjectReference Include="..\People.Presentation\People.Presentation.csproj" />
-    <ProjectReference Include="..\PhoneBook.Application\PhoneBook.Application.csproj" />
-    <ProjectReference Include="..\PhoneBook.Infrastructure\PhoneBook.Infrastructure.csproj" />
-    <ProjectReference Include="..\PhoneBook.Presentation\PhoneBook.Presentation.csproj" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="https://acp-protocol.dev/schemas/v1/sync.schema.json" /></VisualStudio></ProjectExtensions>

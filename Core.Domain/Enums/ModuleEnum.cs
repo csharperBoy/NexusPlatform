@@ -20,7 +20,7 @@ namespace Core.Domain.Enums
         People = 9,
         WebScrapper = 10,
         Navigation = 11,
-        PhoneBook = 12,
+        Contact = 12,
         StreamBus=13
     }
 }
