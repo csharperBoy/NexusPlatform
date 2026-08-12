@@ -1,10 +1,11 @@
-﻿using Core.Domain.Common;
+﻿using Contact.Domain.Entities;
+using Contact.Infrastructure.Configurations;
+using Core.Domain.Common;
 using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Contact.Domain.Entities;
-using Contact.Infrastructure.Configurations;
+using People.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,8 @@ namespace Contact.Infrastructure.Data
       : base(options, new ServiceCollection().BuildServiceProvider()) 
         {
         }
-      
+
+        public DbSet<PartyContact> PartyContacts { get; set; } = null!;
         public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
        
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
@@ -35,16 +37,18 @@ namespace Contact.Infrastructure.Data
         }
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {
-            EnsureView("PhoneBook.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "phonebook");
+            EnsureView("Contact.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "contact");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
             
-            modelBuilder.HasDefaultSchema("phonebook");
+            modelBuilder.HasDefaultSchema("contact");
 
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("phonebook"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("contact"));
             modelBuilder.ApplyConfiguration(new PhoneBookInfoViewConfiguration());
+
+            modelBuilder.ApplyConfiguration(new PartyContactConfiguration());
 
         }
     }

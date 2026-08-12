@@ -2,7 +2,6 @@
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Events;
 using Core.Application.Abstractions.HR;
-using Core.Application.Abstractions.PhoneBook;
 using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Contact.Application.Interfaces;
 using Contact.Domain.Entities;
 using Contact.Infrastructure.Services;
+using Core.Application.Abstractions.Contact;
 
 namespace Contact.Infrastructure.DependencyInjection
 {
@@ -31,7 +31,7 @@ namespace Contact.Infrastructure.DependencyInjection
                     b.MigrationsAssembly(migrationsAssembly);
 
                     // تعیین جدول تاریخچه Migrationها در اسکیمای "sample"
-                    b.MigrationsHistoryTable("__phonebookMigrationsHistory", "phonebook");
+                    b.MigrationsHistoryTable("__contactMigrationsHistory", "contact");
                 });
             });
             services.AddScoped<PhoneBookService>();

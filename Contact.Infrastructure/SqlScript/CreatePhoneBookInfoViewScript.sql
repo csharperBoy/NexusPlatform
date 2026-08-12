@@ -1,4 +1,4 @@
-CREATE VIEW phonebook.PhoneBook_Info_View
+CREATE VIEW contact.PhoneBook_Info_View
 AS
 SELECT        np.NationalCode, np.FirstName, np.LastName, emp.EmploymentCode, ou.Name AS OrganizationUnitsName, jt.Name AS JobTitleName, jl.Title AS JobLevelTitle, loc.Title AS LocationTitle, pc_mobile.Value AS Party_Mobile, 
                          pc_phone.Value AS Party_Phone, pc_email.Value AS Party_Email, pc_address.Value AS Party_Address, post_phone.Value AS PostContact_Phone, post_mobile.Value AS PostContact_Mobile, 

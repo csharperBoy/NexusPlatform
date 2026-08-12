@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.People;
 using Core.Application.Provider;
 using Core.Domain.ValueObjects;
@@ -29,7 +30,7 @@ namespace People.Infrastructure.Services
         private readonly IRepository<PeopleDbContext, NaturalPerson, Guid> _naturalPersonRepository;
         private readonly IRepository<PeopleDbContext, NaturalPersonProfile, Guid> _naturalPersonProfileRepository;
         private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
-        private readonly IRepository<PeopleDbContext, PartyContact, Guid> _personContactRepository;
+        private readonly IPeopleContactPublicService _contactService;
         private readonly ISpecificationRepository<NaturalPerson, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
         private readonly IUnitOfWork<PeopleDbContext> _uow;
@@ -41,14 +42,14 @@ namespace People.Infrastructure.Services
             ILogger<PersonService> logger,
             ISpecificationRepository<NaturalPerson, Guid> personSpecRepository,
             IRepository<PeopleDbContext, Party, Guid> partyRepository,
-            IRepository<PeopleDbContext, PartyContact, Guid> personContactRepository,
+            IPeopleContactPublicService contactService,
             IUnitOfWork<PeopleDbContext> uow)
         {
             _naturalPersonRepository = naturalPersonRepository;
             _naturalPersonProfileRepository = naturalPersonProfileRepository;
             _personSpecRepository = personSpecRepository;
             _partyRepository = partyRepository;
-            _personContactRepository = personContactRepository;
+            _contactService = contactService;
             //_userProvider = userProvider;
             _permissionService = permissionService;
             _logger = logger;
@@ -84,21 +85,14 @@ namespace People.Infrastructure.Services
             Party party = new Party(perAssigneeId);
             await _partyRepository.AddAsync(party);
 
-            await CreatePartyContact(PartyContactType.Mobile, Mobile?.Value, party.Id);
-            await CreatePartyContact(PartyContactType.Phone, Phone?.Value, party.Id);
-            await CreatePartyContact(PartyContactType.Address, Address, party.Id);
-            await CreatePartyContact(PartyContactType.Email, Email?.Value, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Mobile, Mobile?.Value, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Phone, Phone?.Value, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Address, Address, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Email, Email?.Value, party.Id);
             return party.Id;
         }
 
-        private async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
-        {
-            if (value != null)
-            {
-                PartyContact contact = new PartyContact(type, value, partyId);
-                await _personContactRepository.AddAsync(contact);
-            }
-        }
+        
 
         public async Task SaveAsync()
         {

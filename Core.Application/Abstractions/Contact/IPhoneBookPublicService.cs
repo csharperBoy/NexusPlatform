@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.PhoneBook
+namespace Core.Application.Abstractions.Contact
 {
     public interface IPhoneBookPublicService
     {

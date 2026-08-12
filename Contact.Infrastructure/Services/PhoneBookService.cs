@@ -1,5 +1,4 @@
 ﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.PhoneBook;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Contact.Application.DTOs;
@@ -11,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Core.Application.Abstractions.Contact;
 
 namespace Contact.Infrastructure.Services
 {

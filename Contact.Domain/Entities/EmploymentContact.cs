@@ -1,42 +1,16 @@
 ﻿using Core.Domain.Common.EntityProperties;
-using Core.Domain.ValueObjects;
-using Core.Shared.Enums.People;
-using People.Domain.Enums;
+using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace People.Domain.Entities
+namespace HR.Domain.Entities
 {
-    public class PartyContact : BaseEntity , IAuditableEntity , IOwnerableEntity , IHasEffectivePeriod
+    
+    public class EmploymentContact : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
     {
-        #region Impelement IHasEffectivePeriod
-        public DateTime? EffectiveFrom { get; private set; }
-        public DateTime? EffectiveTo { get; private set; }
-        public bool IsCurrent { get; private set; }
-
-        public async Task SetEffectiveFrom(DateTime? value)
-        {
-            EffectiveFrom = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-
-        public async Task SetEffectiveTo(DateTime? value)
-        {
-            EffectiveTo = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        public async Task SetIsCurrent(bool value)
-        {
-            IsCurrent = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        #endregion
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -75,28 +49,59 @@ namespace People.Domain.Entities
             OwnerOrganizationUnitId = orgUnitId;
         }
 
+
+        #endregion
+
+        #region Impelement IHasEffectivePeriod
+        public DateTime? EffectiveFrom { get; private set; }
+        public DateTime? EffectiveTo { get; private set; }
+        public bool IsCurrent { get; private set; }
+
+        public async Task SetEffectiveFrom(DateTime? value)
+        {
+            EffectiveFrom = value;
+            Touch();
+            await Task.CompletedTask;
+        }
+        public async Task SetEffectiveTo(DateTime? value)
+        {
+            EffectiveTo = value;
+            Touch();
+            await Task.CompletedTask;
+        }
+        public async Task SetIsCurrent(bool value)
+        {
+            IsCurrent = value;
+            Touch();
+            await Task.CompletedTask;
+        }
         #endregion
 
 
 
-
-
-        public PartyContactType ContactType { get; protected set; }
+        public HrContactType ContactType { get; protected set; }
         public string Value { get; protected set; }
-        public Guid FkPartyId { get; private set; }
+        public Guid FkEmploymentId { get; private set; }
 
-        public virtual Party Party { get; private set; } = null!;
+        public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
-        protected PartyContact() { }
-        public PartyContact
-            (PartyContactType _ContactType,
+        protected EmploymentContact() { }
+        public EmploymentContact
+            (HrContactType _ContactType,
             string _Value,
-            Guid _PartyId)
+            Guid _EmploymentId,
+            DateTime? _EffectiveFrom = null,
+            DateTime? _EffectiveTo = null,
+            bool _isCurrent = true
+            )
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPartyId = _PartyId;
+            FkEmploymentId = _EmploymentId;
+            EffectiveFrom = _EffectiveFrom;
+            EffectiveTo = _EffectiveTo;
+            IsCurrent = _isCurrent;
         }
-
     }
+
 }

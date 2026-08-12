@@ -1,8 +1,8 @@
-﻿using Core.Domain.Interfaces;
+﻿using Contact.Domain.Entities;
+using Core.Domain.Interfaces;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using People.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +24,9 @@ namespace People.Infrastructure.Configurations
             builder.HasIndex(e => e.OwnerPersonId, "IX_PersonContact_OwnerPerson");
             builder.HasIndex(e => new { e.OwnerOrganizationUnitId, e.OwnerPersonId }, "IX_PersonContact_ScopedLookup");
             builder.HasIndex(e => e.FkPartyId, "IX_PersonContacts_FkPartyId");
-            builder.HasOne(d => d.Party).WithMany(p => p.PartyContacts)
-                .HasForeignKey(d => d.FkPartyId)
-                .HasConstraintName("FK_PartyContacts_Parties");
+            //builder.HasOne(d => d.Party).WithMany(p => p.PartyContacts)
+            //    .HasForeignKey(d => d.FkPartyId)
+            //    .HasConstraintName("FK_PartyContacts_Parties");
 
 
         }

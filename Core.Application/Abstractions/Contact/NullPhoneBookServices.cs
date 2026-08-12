@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions.People;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.Application.Abstractions.PhoneBook
+namespace Core.Application.Abstractions.Contact
 {
     public static class ServiceCollectionExtensions
     {
@@ -23,5 +24,16 @@ namespace Core.Application.Abstractions.PhoneBook
     public class NullPhoneBookServices : IPhoneBookPublicService
     {
        
+    }
+    public class NullHrContactPublicServices : IHrContactPublicService
+    {
+
+    }
+    public class NullPeopleContactPublicServices : IPeopleContactPublicService
+    {
+        public async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
+        {
+            await Task.CompletedTask;
+        }
     }
 }

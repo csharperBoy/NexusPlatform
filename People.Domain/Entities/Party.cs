@@ -22,7 +22,7 @@ namespace People.Domain.Entities
 
         public virtual ICollection<PartiesRelation> PartiesRelationFkSourceParties { get; set; } = new List<PartiesRelation>();
 
-        public virtual ICollection<PartyContact> PartyContacts { get; set; } = new List<PartyContact>();
+        //public virtual ICollection<PartyContact> PartyContacts { get; set; } = new List<PartyContact>();
         
         // Constructor for EF
         public Party() { }

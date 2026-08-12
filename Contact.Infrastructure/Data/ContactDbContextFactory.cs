@@ -63,7 +63,7 @@ namespace Contact.Infrastructure.Data
                 b.MigrationsAssembly(typeof(ContactDbContext).Assembly.GetName().Name);
 
                 // 📌 تعیین جدول تاریخچه Migrationها در اسکیمای "HR"
-                b.MigrationsHistoryTable("__phonebookMigrationsHistory", "phonebook");
+                b.MigrationsHistoryTable("__contactMigrationsHistory", "contact");
             });
 
             // 📌 ساخت نمونه DbContext با تنظیمات مشخص‌شده

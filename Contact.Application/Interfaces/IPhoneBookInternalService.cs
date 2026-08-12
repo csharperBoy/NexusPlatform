@@ -1,6 +1,6 @@
 ﻿using Contact.Application.DTOs;
+using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
-using Core.Application.Abstractions.PhoneBook;
 using System;
 using System.Collections.Generic;
 using System.Linq;

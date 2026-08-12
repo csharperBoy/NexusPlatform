@@ -38,7 +38,6 @@ namespace People.Infrastructure.Data
         public DbSet<NaturalPerson> naturalPerson { get; set; } = null!;
         public DbSet<LegalPerson> legalPersons { get; set; } = null!;
         public DbSet<NaturalPersonProfile> NaturalPersonProfiles { get; set; } = null!;
-        public DbSet<PartyContact> PartyContacts { get; set; } = null!;
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasDefaultSchema("people");
@@ -49,7 +48,6 @@ namespace People.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new PartyConfiguration());
             modelBuilder.ApplyConfiguration(new PartiesRelationConfiguration());
             modelBuilder.ApplyConfiguration(new NaturalPersonProfileConfiguration());
-            modelBuilder.ApplyConfiguration(new PartyContactConfiguration());
             
         }
 
