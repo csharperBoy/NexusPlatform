@@ -65,6 +65,7 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<OrgChartService>();
             services.AddScoped<EmploymentService>();
+            services.AddScoped<LocationService>();
             services.AddScoped<IUnitOfWork<HRDbContext>, EfUnitOfWork<HRDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
@@ -74,6 +75,9 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<IEmploymentPublicService>(sp => sp.GetRequiredService<EmploymentService>());
             services.AddScoped<IEmploymentInternalService>(sp => sp.GetRequiredService<EmploymentService>());
+
+            services.AddScoped<ILocationPublicService>(sp => sp.GetRequiredService<LocationService>());
+            services.AddScoped<ILocationInternalService>(sp => sp.GetRequiredService<LocationService>());
 
             services.AddScoped<IRepository<HRDbContext, Employment, Guid>, EfRepository<HRDbContext, Employment, Guid>>();
             services.AddScoped<ISpecificationRepository<Employment, Guid>, EfSpecificationRepository<HRDbContext, Employment, Guid>>();
@@ -116,6 +120,9 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<IRepository<HRDbContext, LocationContact, Guid>, EfRepository<HRDbContext, LocationContact, Guid>>();
             services.AddScoped<ISpecificationRepository<LocationContact, Guid>, EfSpecificationRepository<HRDbContext, LocationContact, Guid>>();
+            
+            services.AddScoped<IRepository<HRDbContext, Location, Guid>, EfRepository<HRDbContext, Location, Guid>>();
+            services.AddScoped<ISpecificationRepository<Location, Guid>, EfSpecificationRepository<HRDbContext, Location, Guid>>();
 
 
             services.AddScoped<IRepository<HRDbContext, EmploymentLocation, Guid>, EfRepository<HRDbContext, EmploymentLocation, Guid>>();

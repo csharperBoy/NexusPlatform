@@ -13,7 +13,7 @@ export const phonebookApi = {
     const api = getAPI(API_MODULE);
     
     const response = await api.get<PhoneBookEmploymentDto[]>(
-      "/api/People/PhoneBook/GetList",
+      "/api/PhoneBook/PhoneBook/GetList",
       { 
         params: { organUnitId },
         withCredentials: true 
