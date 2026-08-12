@@ -7,9 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="SqlScript\CreatePhoneBookInfoViewScript.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Contact.Application\Contact.Application.csproj" />
     <ProjectReference Include="..\Contact.Domain\Contact.Domain.csproj" />
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>
