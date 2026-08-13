@@ -145,11 +145,17 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
 ============================================================ */
 
 export function getAPI(moduleName: string): AxiosInstance {
-  const client = axiosClients[moduleName];
+  const normalized = moduleName.toLowerCase();   // ← همیشه کوچک
+
+  const client = axiosClients[normalized];
 
   if (!client) {
+    
+  console.log("axiosClients keys =", Object.keys(axiosClients));
+  console.log("requested =", moduleName, "normalized =", normalized);
+
     throw new Error(
-      `Axios client for module "${moduleName}" not found.`
+      `Axios client for module "${normalized}" not found.`
     );
   }
 

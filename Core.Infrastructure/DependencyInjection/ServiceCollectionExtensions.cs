@@ -126,7 +126,7 @@ namespace Core.Infrastructure.DependencyInjection
             //services.AddScoped(typeof(ISpecificationRepository<,>), typeof(EfSpecificationRepository<,,>));
 
             services.AddLoggingServices(configuration);
-            //ConfigureCors(services, configuration);
+            ConfigureCors(services, configuration);
             ConfigureSwagger(services, configuration);
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

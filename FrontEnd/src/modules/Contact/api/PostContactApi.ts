@@ -3,7 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { PostContactInfoView } from "../models/postContactInfoView";
 import {  UpdatePostContactCommand } from "../models/postContactCommand";
-const API_MODULE = "Contact";
+const API_MODULE = "contact";
 
 export const postContactApi = {
 

@@ -293,7 +293,7 @@ export const EmploymentContactManagementPage: React.FC = () => {
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت اطلاعات ارتباطی کارمندان</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت اطلاعات تماس کارمندان</h1>
             <p className="text-sm text-gray-500">
               کل کارمندان: <span className="font-semibold text-gray-700">{employmentContacts.length}</span>
               {modifiedIds.size > 0 && (
