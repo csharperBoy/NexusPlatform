@@ -12,7 +12,7 @@ import { AuthorizationModuleRegistration } from "@/modules/Authorization/Authori
 import { HRModuleRegistration } from "@/modules/HR/HrModuleRegistration";
 import { ModuleProvider } from "@/core/context/ModuleContext";
 import { RequireModuleActive } from "@/core/components/RequireModuleActive";
-import { PhoneBookModuleRegistration } from "@/modules/Contact/ContactModuleRegistration";
+import { ContactModuleRegistration } from "@/modules/Contact/ContactModuleRegistration";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

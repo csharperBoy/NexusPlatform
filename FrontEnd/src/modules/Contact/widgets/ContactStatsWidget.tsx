@@ -1,9 +1,9 @@
-//src/modules/PhoneBook/widgets/PhoneBookStatsWidget.tsx
+//src/modules/Contact/widgets/ContactStatsWidget.tsx
 
 import React from 'react';
 import Card from '@/core/components/Card';
 
-const PhoneBookStatsWidget: React.FC = () => {
+const ContactStatsWidget: React.FC = () => {
   // می‌توانید داده‌ها را از API دریافت کنید (با useQuery)
   return (
     <Card className="p-4">
@@ -14,4 +14,4 @@ const PhoneBookStatsWidget: React.FC = () => {
   );
 };
 
-export default PhoneBookStatsWidget;
+export default ContactStatsWidget;

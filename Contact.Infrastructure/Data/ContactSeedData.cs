@@ -197,8 +197,8 @@ namespace Contact.Infrastructure.Data
             {
                 new()
                 {
-                    Title = "مدیریت منابع انسانی",
-                    Description = "مدیریت منابع انسانی",
+                    Title = "مدیریت اطلاعات تماس",
+                    Description = "مدیریت اطلاعات تماس",
                     Icon = Icon.Folder.GetIconString(),
                     Order = 100,
                     Key = "Contact",
@@ -208,8 +208,8 @@ namespace Contact.Infrastructure.Data
                     {
                         new()
                         {
-                            Title = "مدیریت پست های سازمانی",
-                            Description = "مدیریت پست های سازمانی",
+                            Title = "پست های سازمانی",
+                            Description = "مدیریت اطلاعات تماس پست های سازمانی",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 101,
                             Key = "contact.post",
@@ -218,8 +218,8 @@ namespace Contact.Infrastructure.Data
                         },
                         new()
                         {
-                            Title = "مدیریت کارمندان",
-                            Description = "مدیریت کارمندان",
+                            Title = "کارمندان",
+                            Description = "مدیریت اطلاعات تماس کارمندان",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 102,
                             Key = "contact.employment",
@@ -228,8 +228,8 @@ namespace Contact.Infrastructure.Data
                         },
                         new()
                         {
-                            Title = "مدیریت مکان ها",
-                            Description = "مدیریت مکان ها",
+                            Title = "مکان ها",
+                            Description = "مدیریت اطلاعات تماس مکان ها",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 103,
                             Key = "contact.location",
