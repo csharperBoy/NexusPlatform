@@ -1,4 +1,8 @@
-﻿using Core.Application.Abstractions;
+﻿using Contact.Infrastructure.Data;
+using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,16 +35,19 @@ namespace Contact.Infrastructure.DependencyInjection
                 _logger.LogInformation("Starting sample module initialization...");
 
                 // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                //var repo = scope.ServiceProvider.GetRequiredService<IRepository<PhoneBookDbContext, PhoneBookEntity, Guid>>();
-                //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<PhoneBookDbContext>>();
-                //await PhoneBookSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+                var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
+                await ContactSeedData.SeedContactForAuthorizationAsync(resourceService, permissionService, roleService, _logger);
+                await ContactSeedData.SeedContactsForNavigationAsync(menuService, _logger);
 
-                _logger.LogInformation("PhoneBook module initialization completed successfully.");
+                _logger.LogInformation("Contact module initialization completed successfully.");
             }
             catch (Exception ex)
             {
                 // 📌 ثبت خطا در صورت شکست عملیات
-                _logger.LogError(ex, "An error occurred while initializing the PhoneBook module");
+                _logger.LogError(ex, "An error occurred while initializing the Contact module");
                 throw;
             }
         }
