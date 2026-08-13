@@ -3,14 +3,14 @@
 
 2- for create magration execute this command in developer PowerShell:
 
-dotnet ef migrations add Initial_PhoneBook -p PhoneBook.Infrastructure -s "AkSteel Welfare Platform"
+dotnet ef migrations add Initial_Contact -p Contact.Infrastructure -s "AkSteel Welfare Platform"
 or
-Add-Migration Initial_PhoneBook -Project PhoneBook.Infrastructure -Context PhoneBookDbContext -Start "AkSteel.WebApi"
+Add-Migration Initial_Contact -Project Contact.Infrastructure -Context ContactDbContext -Start "AkSteel.WebApi"
 
 3- for update database execute this command in developer powershell or package manager console 
-dotnet ef database update -p PhoneBook.Infrastructure -s  "AkSteel Welfare Platform"
+dotnet ef database update -p Contact.Infrastructure -s  "AkSteel Welfare Platform"
 or
-update-database -Project PhoneBook.Infrastructure -Context PhoneBookDbContext -Start "AkSteel Welfare Platform"
+update-database -Project Contact.Infrastructure -Context ContactDbContext -Start "AkSteel Welfare Platform"
 
 3- for update database execute this command in developer PowerShell:
-dotnet ef database update --project PhoneBook.Infrastructure/PhoneBook.Infrastructure.csproj --startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj --context PhoneBookDbContext
+dotnet ef database update --project Contact.Infrastructure/Contact.Infrastructure.csproj --startup-project MaharRayanesh.WebApi/MaharRayanesh.WebApi.csproj --context ContactDbContext

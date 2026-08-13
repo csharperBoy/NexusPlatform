@@ -6,7 +6,7 @@ namespace Contact.Domain.DependencyInjection
    
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection PhoneBook_AddDomain(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Contact_AddDomain(this IServiceCollection services, IConfiguration configuration)
         {
            return services;
         }

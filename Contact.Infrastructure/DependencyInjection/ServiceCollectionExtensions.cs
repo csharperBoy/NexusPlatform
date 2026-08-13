@@ -17,7 +17,7 @@ namespace Contact.Infrastructure.DependencyInjection
   
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection PhoneBook_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Contact_AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // 📌 گرفتن Connection String از تنظیمات
             var conn = configuration.GetConnectionString("DefaultConnection");

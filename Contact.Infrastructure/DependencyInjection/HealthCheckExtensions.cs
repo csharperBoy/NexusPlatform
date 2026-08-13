@@ -11,7 +11,7 @@ namespace Contact.Infrastructure.DependencyInjection
 
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection PhoneBook_AddHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection Contact_AddHealthChecks(this IServiceCollection services, IConfiguration config)
         {
             // 📌 گرفتن Connection String (در صورت نیاز برای Health Checkهای سفارشی)
             var conn = config.GetConnectionString("DefaultConnection");

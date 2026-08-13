@@ -9,7 +9,7 @@ namespace Contact.Application.DependencyInjection
     public static class ServiceCollectionExtensions
     {
      
-        public static IServiceCollection PhoneBook_AddApplication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Contact_AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             // رجیستر MediatR و همه Handlerهای موجود در اسمبلی Application
             services.AddMediatR(cfg =>

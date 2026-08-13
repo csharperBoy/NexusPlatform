@@ -35,6 +35,9 @@
     <ProjectReference Include="..\Cach.Application\Cach.Application.csproj" />
     <ProjectReference Include="..\Cach.Infrastructure\Cach.Infrastructure.csproj" />
     <ProjectReference Include="..\Cach.Presentation\Cach.Presentation.csproj" />
+    <ProjectReference Include="..\Contact.Application\Contact.Application.csproj" />
+    <ProjectReference Include="..\Contact.Infrastructure\Contact.Infrastructure.csproj" />
+    <ProjectReference Include="..\Contact.Presentation\Contact.Presentation.csproj" />
     <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
     <ProjectReference Include="..\Core.Presentation\Core.Presentation.csproj" />

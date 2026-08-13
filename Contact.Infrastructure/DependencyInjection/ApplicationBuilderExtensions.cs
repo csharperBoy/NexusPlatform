@@ -12,7 +12,7 @@ namespace Contact.Infrastructure.DependencyInjection
     public static class ApplicationBuilderExtensions
     {
         // 📌 متد اصلی برای استفاده در Startup
-        public static async Task<IApplicationBuilder> PhoneBook_UseInfrastructure(this IApplicationBuilder app)
+        public static async Task<IApplicationBuilder> Contact_UseInfrastructure(this IApplicationBuilder app)
         {
            await app.RunSmartMigrations();
             return app;
