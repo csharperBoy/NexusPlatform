@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums.Authorization;
@@ -24,13 +25,15 @@ namespace HR.Infrastructure.Services
         IOrgChartInternalService,
         IOrgChartPublicService
     {
-        private readonly ISpecificationRepository<PostContact, Guid> _postContactSpecRepository;
+        //private readonly ISpecificationRepository<PostContact, Guid> _postContactSpecRepository;
         private readonly ISpecificationRepository<PostInfoView, Guid> _postInfoViewSpecRepository;
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
         private readonly IRepository<HRDbContext, Post, Guid> _postRepository;
-        private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
+        //private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly ISpecificationRepository<Assignment, Guid> _assignmentSpecRepository;
+
+        private readonly IHrContactPublicService _contactService;
         private readonly ILogger<OrgChartService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
@@ -41,11 +44,12 @@ namespace HR.Infrastructure.Services
             //HRDbContext contex,
             ISpecificationRepository<PostInfoView, Guid> postInfoViewSpecRepository,
             ISpecificationRepository<Post, Guid> postSpecRepository,
-            ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
+            //ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
-        IRepository<HRDbContext, PostContact, Guid> postContactRepository,
+        //IRepository<HRDbContext, PostContact, Guid> postContactRepository,
         ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
         IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
+        IHrContactPublicService contactService,
         IUnitOfWork<HRDbContext> uow, IHRUnitOfWork<HRDbContext> hrUow,
         ILogger<OrgChartService> logger)
         {
@@ -53,12 +57,13 @@ namespace HR.Infrastructure.Services
             _postInfoViewSpecRepository = postInfoViewSpecRepository;
             _hrUow = hrUow; 
             _postRepository = postRepository;
-            _postContactRepository = postContactRepository;
+            //_postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
-            _postContactSpecRepository = postContactSpecRepository;
+            //_postContactSpecRepository = postContactSpecRepository;
             _logger = logger;
             _assignmentSpecRepository = assignmentSpecRepository;
             _assignmentRepository = assignmentRepository;
+             _contactService= contactService;
             _uow = uow;
         }
 
@@ -138,38 +143,19 @@ namespace HR.Infrastructure.Services
             await _postRepository.AddAsync(post);
             if (OrgMobile != null)
             {
-                await CreatePostContact(HrContactType.OrgMobile, OrgMobile, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OrgMobile, OrgMobile, post.Id);
             }
             if (OrgEmail != null)
             {
-                await CreatePostContact(HrContactType.OrgEmail, OrgEmail, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OrgEmail, OrgEmail, post.Id);
             }
             if (OfficePhone != null)
             {
-                await CreatePostContact(HrContactType.OfficePhone, OfficePhone, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OfficePhone, OfficePhone, post.Id);
             }
             return post.Id;
         }
-        private async Task CreatePostContact(HrContactType type, string? value, Guid postId)
-        {
-            if (value != null)
-            {
-                GetPostContactSpec spec = new GetPostContactSpec(type, postId, value);
-                PostContact? existContact = await _postContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact?.Value.Trim() != value.Trim())
-                {
-                    if (existContact != null)
-                    {
-                        existContact.DoExpire();
-                        await _postContactRepository.UpdateAsync(existContact);
-
-                    }
-                    PostContact contact = new PostContact(type, value, postId, DateTime.UtcNow);
-                    await _postContactRepository.AddAsync(contact);
-                }
-
-            }
-        }
+        
         public async Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId)
         {
             try
@@ -269,15 +255,15 @@ namespace HR.Infrastructure.Services
             }
             if (officePhone != null)
             {
-                await CreatePostContact(HrContactType.OfficePhone, officePhone, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OfficePhone, officePhone, post.Id);
             }
             if (orgEmail != null)
             {
-                await CreatePostContact(HrContactType.OrgEmail, orgEmail, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OrgEmail, orgEmail, post.Id);
             }
             if (orgMobile != null)
             {
-                await CreatePostContact(HrContactType.OrgMobile, orgMobile, post.Id);
+                await _contactService.CreatePostContact(HrContactType.OrgMobile, orgMobile, post.Id);
             }
             return post.Id;
         }

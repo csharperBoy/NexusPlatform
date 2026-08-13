@@ -30,7 +30,6 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<Assignment> Assignments { get; set; }
         public virtual DbSet<CostCenter> CostCenters { get; set; }
         public virtual DbSet<Employment> Employments { get; set; }
-        public virtual DbSet<EmploymentContact> EmploymentContacts { get; set; }
         public virtual DbSet<EmploymentStatus> EmploymentStatuses { get; set; }
         public virtual DbSet<EmploymentType> EmploymentTypes { get; set; }
         public virtual DbSet<Grade> Grades { get; set; }
@@ -38,12 +37,9 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<JobTitle> JobTitles { get; set; }
         public virtual DbSet<OrganizationUnit> OrganizationUnits { get; set; }
         public virtual DbSet<Post> Posts { get; set; }
-        public virtual DbSet<PostContact> PostContacts { get; set; }
         public virtual DbSet<PostLocation> PostLocations { get; set; }
-        public virtual DbSet<LocationContact> LocationContacts { get; set; }
         public virtual DbSet<Location> Locations { get; set; }
         public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
-
         public virtual DbSet<EmploymentInfoView> EmployementInfoViews { get; set; }
         public virtual DbSet<PostInfoView> PostInfoViews { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
@@ -65,7 +61,6 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new AssignmentConfiguration());
             modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentConfiguration());
-            modelBuilder.ApplyConfiguration(new EmploymentContactConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentStatusConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentTypeConfiguration());
             modelBuilder.ApplyConfiguration(new GradeConfiguration());
@@ -73,13 +68,9 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new JobTitleConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
-            modelBuilder.ApplyConfiguration(new PostContactConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
-            modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentInfoViewConfiguration());
             modelBuilder.ApplyConfiguration(new PostInfoViewConfiguration());
-            modelBuilder.ApplyConfiguration(new LocationContactConfiguration());
-            modelBuilder.ApplyConfiguration(new PostLocationsConfiguration());
 
         }
     }

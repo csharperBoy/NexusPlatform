@@ -1,4 +1,5 @@
-﻿using Core.Infrastructure.Database.Configurations;
+﻿using Contact.Domain.Entities;
+using Core.Infrastructure.Database.Configurations;
 using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Infrastructure.Configurations
+namespace Contact.Infrastructure.Configurations
 {
     public class PostContactConfiguration : BaseConfiguration<PostContact>
     {
@@ -20,9 +21,9 @@ namespace HR.Infrastructure.Configurations
 
             builder.ToTable("PostContacts", "hr");
             builder.HasIndex(e => e.FkPostId, "IX_PersonContacts_FkPostId");
-            builder.HasOne(d => d.Post).WithMany(p => p.PostContacts)
-                .HasForeignKey(d => d.FkPostId)
-                .HasConstraintName("FK_PostContacts_Posts");
+            //builder.HasOne(d => d.Post).WithMany(p => p.PostContacts)
+            //    .HasForeignKey(d => d.FkPostId)
+            //    .HasConstraintName("FK_PostContacts_Posts");
 
 
         }

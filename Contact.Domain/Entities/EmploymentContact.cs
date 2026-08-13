@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Domain.Entities
+namespace Contact.Domain.Entities
 {
     
     public class EmploymentContact : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
@@ -83,7 +83,7 @@ namespace HR.Domain.Entities
         public string Value { get; protected set; }
         public Guid FkEmploymentId { get; private set; }
 
-        public virtual Employment Employment { get; private set; } = null!;
+        //public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
         protected EmploymentContact() { }
         public EmploymentContact

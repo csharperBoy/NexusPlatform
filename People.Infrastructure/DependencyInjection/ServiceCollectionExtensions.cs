@@ -45,9 +45,7 @@ namespace People.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<PeopleDbContext, Party, Guid>, EfRepository<PeopleDbContext, Party, Guid>>();
             services.AddScoped<ISpecificationRepository<Party, Guid>, EfSpecificationRepository<PeopleDbContext, Party, Guid>>();
 
-            services.AddScoped<IRepository<PeopleDbContext, PartyContact, Guid>, EfRepository<PeopleDbContext, PartyContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<PartyContact, Guid>, EfSpecificationRepository<PeopleDbContext, PartyContact, Guid>>();
-
+          
             services.AddScoped<IRepository<PeopleDbContext, NaturalPersonProfile, Guid>, EfRepository<PeopleDbContext, NaturalPersonProfile, Guid>>();
             services.AddScoped<ISpecificationRepository<NaturalPersonProfile, Guid>, EfSpecificationRepository<PeopleDbContext, NaturalPersonProfile, Guid>>();
 

@@ -28,9 +28,9 @@ namespace HR.Infrastructure.Services
             IRepository<HRDbContext, JobTitle, Guid> jobTitleRepository,
             IRepository<HRDbContext, Location, Guid> locationRepository,
             IRepository<HRDbContext, OrganizationUnit, Guid> organizationUnitRepository,
-            IRepository<HRDbContext, PostContact, Guid> postContactRepository,
+            //IRepository<HRDbContext, PostContact, Guid> postContactRepository,
             IRepository<HRDbContext, PostLocation, Guid> postLocationRepository,
-            IRepository<HRDbContext, LocationContact, Guid> locationContactRepository,
+            //IRepository<HRDbContext, LocationContact, Guid> locationContactRepository,
             IRepository<HRDbContext, EmploymentInfoView, Guid> employementInfoViewRepository,
             IRepository<HRDbContext, PostInfoView, Guid> postInfoViewRepository,
             HRDbContext dbContext,
@@ -46,14 +46,14 @@ namespace HR.Infrastructure.Services
             EmploymentTypeRepository = employmentTypeRepository;
             PostRepository = postRepository;
             PostLocationRepository = postLocationRepository;
-            LocationContactRepository = locationContactRepository;
+            //LocationContactRepository = locationContactRepository;
             CostCenterRepository = costCenterRepository;
             GradeRepository = gradeRepository;
             JobLevelRepository = jobLevelRepository;
             JobTitleRepository = jobTitleRepository;
             LocationRepository = locationRepository;
             OrganizationUnitRepository = organizationUnitRepository;
-            PostContactRepository = postContactRepository;
+            //PostContactRepository = postContactRepository;
         }
        
         public IRepository<HRDbContext, Assignment, Guid> AssignmentRepository { get; }
@@ -68,9 +68,9 @@ namespace HR.Infrastructure.Services
         public IRepository<HRDbContext, JobLevel, Guid> JobLevelRepository { get; }
         public IRepository<HRDbContext, JobTitle, Guid> JobTitleRepository { get; }
         public IRepository<HRDbContext, Location, Guid> LocationRepository { get; }
-        public IRepository<HRDbContext, LocationContact, Guid> LocationContactRepository { get; }
+        //public IRepository<HRDbContext, LocationContact, Guid> LocationContactRepository { get; }
         public IRepository<HRDbContext, OrganizationUnit, Guid> OrganizationUnitRepository { get; }
-        public IRepository<HRDbContext, PostContact, Guid> PostContactRepository { get; }
+        //public IRepository<HRDbContext, PostContact, Guid> PostContactRepository { get; }
         public IRepository<HRDbContext, EmploymentInfoView, Guid> EmployementInfoViewRepository { get; }
         public IRepository<HRDbContext, PostInfoView, Guid> PostInfoViewRepository { get; }
     }

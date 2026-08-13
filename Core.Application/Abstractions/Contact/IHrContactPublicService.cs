@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.HR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +10,10 @@ namespace Core.Application.Abstractions.Contact
 {
     public interface IHrContactPublicService
     {
+        Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId);
+        Task CreateLocationContact(HrContactType type, string? value, Guid LocationId);
+        Task<List<EntityContactDto<HrContactType>>> GetLocationContactsByLocationIdsAsync(List<Guid> locationIds);
+        Task CreatePostContact(HrContactType type, string? value, Guid postId);
+       
     }
 }

@@ -9,10 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Contact.Domain\Contact.Domain.csproj" />
     <ProjectReference Include="..\Core.Application\Core.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Commands\" />
+    <ProjectReference Include="..\HR.Application\HR.Application.csproj" />
   </ItemGroup>
 
 </Project>

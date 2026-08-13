@@ -3,6 +3,7 @@ using Contact.Infrastructure.Configurations;
 using Core.Domain.Common;
 using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
+using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using People.Infrastructure.Configurations;
@@ -28,7 +29,13 @@ namespace Contact.Infrastructure.Data
         {
         }
 
-        public DbSet<PartyContact> PartyContacts { get; set; } = null!;
+        public virtual DbSet<PartyContact> PartyContacts { get; set; } = null!;
+        public virtual DbSet<EmploymentContact> EmploymentContacts { get; set; }
+        public virtual DbSet<PostContact> PostContacts { get; set; }
+        public virtual DbSet<PostLocation> PostLocations { get; set; }
+        public virtual DbSet<LocationContact> LocationContacts { get; set; }
+        public virtual DbSet<EmploymentLocation> EmploymentLocations { get; set; }
+
         public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
        
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
@@ -47,6 +54,9 @@ namespace Contact.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("contact"));
             modelBuilder.ApplyConfiguration(new PhoneBookInfoViewConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentContactConfiguration());
+            modelBuilder.ApplyConfiguration(new PostContactConfiguration());
+            modelBuilder.ApplyConfiguration(new LocationContactConfiguration());
 
             modelBuilder.ApplyConfiguration(new PartyContactConfiguration());
 

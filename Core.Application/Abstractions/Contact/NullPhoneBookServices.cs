@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions.People;
 using Core.Domain.ValueObjects;
+using Core.Shared.DTOs.Contact;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +28,25 @@ namespace Core.Application.Abstractions.Contact
     }
     public class NullHrContactPublicServices : IHrContactPublicService
     {
+        public async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
+        {
+            await Task.CompletedTask;
+        }
 
+        public async Task CreateLocationContact(HrContactType type, string? value, Guid LocationId)
+        {
+            await Task.CompletedTask;
+        }
+
+        public async Task CreatePostContact(HrContactType type, string? value, Guid postId)
+        {
+            await Task.CompletedTask;
+        }
+
+        public  Task<List<EntityContactDto<HrContactType>>> GetLocationContactsByLocationIdsAsync(List<Guid> locationIds)
+        {
+            return null;
+        }
     }
     public class NullPeopleContactPublicServices : IPeopleContactPublicService
     {

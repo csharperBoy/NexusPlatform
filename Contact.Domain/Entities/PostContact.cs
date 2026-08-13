@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Domain.Entities
+namespace Contact.Domain.Entities
 {
     public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity,IHasEffectivePeriod
     {
@@ -83,7 +83,7 @@ namespace HR.Domain.Entities
         public string Value { get; protected set; }
         public Guid FkPostId { get; private set; }
 
-        public virtual Post Post { get; private set; } = null!;
+        //public virtual Post Post { get; private set; } = null!;
         // Constructor for EF
         protected PostContact() { }
         public PostContact

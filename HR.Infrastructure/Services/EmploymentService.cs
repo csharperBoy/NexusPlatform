@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Domain.Common.EntityProperties;
@@ -29,27 +30,30 @@ namespace HR.Infrastructure.Services
         private readonly IPersonPublicService _personService;
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
         private readonly IRepository<HRDbContext, EmploymentInfoView, Guid> _employmentInfoRepository;
-        private readonly IRepository<HRDbContext, EmploymentContact, Guid> _employmentContactRepository;
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
-        private readonly ISpecificationRepository<EmploymentContact, Guid> _employmentContactSpecRepository;
+        private readonly IHrContactPublicService _contactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
-        public EmploymentService(IPersonPublicService personService, IRepository<HRDbContext, Employment, Guid> employmentRepository, IRepository<HRDbContext, EmploymentContact, Guid> employmentContactRepository, ILogger<EmploymentService> logger,
-            ISpecificationRepository<Employment, Guid> employmentSpecRepository, IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
-            IUnitOfWork<HRDbContext> uow, ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository, IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository)
+        public EmploymentService(IPersonPublicService personService,
+             IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
+            IRepository<HRDbContext, Employment, Guid> employmentRepository,
+            ILogger<EmploymentService> logger,
+            ISpecificationRepository<Employment, Guid> employmentSpecRepository, IHrContactPublicService contactService,
+            IUnitOfWork<HRDbContext> uow,
+            IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
+            )
         {
             _employmentInfoRepository = employmentInfoRepository;
+            _contactService = contactService;
             _personService = personService;
             _employmentRepository = employmentRepository;
-            _employmentContactRepository = employmentContactRepository;
             _employmentLocationsRepository = employmentLocationsRepository;
             _employmentSpecRepository = employmentSpecRepository;
             _logger = logger;
             _uow = uow;
-            _employmentContactSpecRepository = employmentContactSpecRepository;
             _employmentLocationSpecRepository = employmentLocationSpecRepository;
         }
 
@@ -69,9 +73,9 @@ namespace HR.Infrastructure.Services
             Employment emp = new Employment(_EmploymentCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
             await _employmentRepository.AddAsync(emp);
 
-            await CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
-            await CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
-            await CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Value, emp.Id);
+            await _contactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
+            await _contactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
+            await _contactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Value, emp.Id);
             return emp.Id;
         }
         //private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
@@ -145,38 +149,19 @@ namespace HR.Infrastructure.Services
             await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstlName, lastName, birthDate, birthPlace, fatherName);
             if (officePhone != null)
             {
-                await CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
+                await _contactService.CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
             }
             if (orgEmail != null)
             {
-                await CreateEmploymentContact(HrContactType.OrgEmail, orgEmail, emp.Id);
+                await _contactService.CreateEmploymentContact(HrContactType.OrgEmail, orgEmail, emp.Id);
             }
             if (orgMobile != null)
             {
-                await CreateEmploymentContact(HrContactType.OrgMobile, orgMobile, emp.Id);
+                await _contactService.CreateEmploymentContact(HrContactType.OrgMobile, orgMobile, emp.Id);
             }
             return emp.Id;
         }
-        private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
-        {
-            if (value != null)
-            {
-                GetEmploymentContactSpec spec = new GetEmploymentContactSpec(type, employmentId, value);
-                EmploymentContact? existContact = await _employmentContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact?.Value.Trim() != value.Trim())
-                {
-                    if (existContact != null)
-                    {
-                        await existContact.DoExpire();
-                        await _employmentContactRepository.UpdateAsync(existContact);
-
-                    }
-                    EmploymentContact contact = new EmploymentContact(type, value, employmentId, DateTime.UtcNow);
-                    await _employmentContactRepository.AddAsync(contact);
-                }
-
-            }
-        }
+        
 
         public async Task<IReadOnlyList<EmploymentInfoView>> GetEmploymentListAsync()
         {

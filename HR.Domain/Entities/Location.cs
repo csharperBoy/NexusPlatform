@@ -68,7 +68,7 @@ namespace HR.Domain.Entities
         //navigate
         public virtual ICollection<EmploymentLocation> EmploymentLocations { get; set; } = new List<EmploymentLocation>();
         public virtual ICollection<PostLocation> PostLocations { get; set; } = new List<PostLocation>();
-        public virtual ICollection<LocationContact> LocationContacts { get; set; } = new List<LocationContact>();
+        //public virtual ICollection<LocationContact> LocationContacts { get; set; } = new List<LocationContact>();
 
 
 

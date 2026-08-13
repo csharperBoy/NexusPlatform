@@ -1,13 +1,13 @@
-﻿using Core.Domain.Specifications;
+﻿using Contact.Domain.Entities;
+using Core.Domain.Specifications;
 using Core.Shared.Enums.HR;
-using HR.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Domain.Specifications
+namespace Contact.Domain.Specifications
 {
     
     public class GetEmploymentContactSpec : BaseSpecification<EmploymentContact?>
