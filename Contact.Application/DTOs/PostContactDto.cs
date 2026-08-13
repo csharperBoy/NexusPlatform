@@ -12,6 +12,10 @@ namespace Contact.Application.DTOs
 
         public Guid? FkParentId { get; set; }
 
+        public string? CostCenterName { get; set; }
+
+        public string? GradeTitle { get; set; }
+
         public string? JobLevelTitle { get; set; }
 
         public string? JobTitleName { get; set; }

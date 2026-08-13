@@ -43,6 +43,9 @@ namespace Contact.Application.Queries
                 {
                     Id = post.Id,
                     FkParentId = post.FkParentId,
+                    CostCenterName = post.CostCenterName,
+                    GradeTitle = post.GradeTitle,
+                    OrganizationUnitsName = post.OrganizationUnitsName,
                     JobLevelTitle = post.JobLevelTitle,
                     JobTitleName = post.JobTitleName,
                     OfficePhone = post.OfficePhone,
