@@ -3,7 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { EmploymentContactInfoView } from "../models/EmploymentContactInfoView";
 import {  UpdateEmploymentContactCommand } from "../models/EmploymentContactCommand";
-const API_MODULE = "Contact";
+const API_MODULE = "contact";
 
 export const employmentContactApi = {
 

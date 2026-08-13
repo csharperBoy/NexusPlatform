@@ -19,7 +19,7 @@ namespace Contact.Infrastructure.Configurations
 
             builder
                .HasNoKey()
-               .ToView("PhoneBook_Info_View", "phonebook");
+               .ToView("PhoneBook_Info_View", "contact");
 
         builder.Property(e => e.PartyMobile).HasColumnName("Party_Mobile");
             builder.Property(e => e.PartyPhone).HasColumnName("Party_Phone");

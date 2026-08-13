@@ -3,7 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 
 
 import { PhoneBookEmploymentDto } from "../models/PhoneBookEmploymentDto";
-const API_MODULE = "Contact";
+const API_MODULE = "contact";
 
 export const phonebookApi = {
 
