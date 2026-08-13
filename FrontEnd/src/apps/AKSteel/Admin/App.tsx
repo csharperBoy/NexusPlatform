@@ -8,6 +8,7 @@ import DashboardPage from "./Pages/DashboardPage";
 import LoginPage from "./Pages/LoginPage";
 import { useActiveModules } from "@/core/context/ModuleContext";
 import { hrPanelRoutes } from "@/modules/HR";
+import { ContactPanelRoutes } from "@/modules/Contact";
 
 export default function App() {
   
@@ -51,6 +52,8 @@ export default function App() {
         /* مسیرهای خصوصی hr */
         ...(activeModules.has("HR") ? hrPanelRoutes : []),
 
+        /* مسیرهای خصوصی hr */
+        ...(activeModules.has("Contact") ? ContactPanelRoutes : []),
         
      
       ],

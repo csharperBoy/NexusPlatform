@@ -1,7 +1,8 @@
 // src/apps/AKSteel/Website/PhoneBook/App.tsx
 import { useRoutes, Navigate, Outlet } from "react-router-dom";
 import { useActiveModules } from "@/core/context/ModuleContext";
-import PhoneBookPage from "@/modules/PhoneBook/pages/PhoneBook/PhoneBookPage";
+import PhoneBookPage from "@/modules/Contact/pages/PhoneBook/PhoneBookPage";
+import { ContactPublicRoutes  } from "@/modules/Contact";
 
 export default function App() {
   
@@ -16,8 +17,9 @@ export default function App() {
 
   const routes = useRoutes([
 
-        { path: "/", element: <PhoneBookPage /> },
-
+        // { path: "/", element: <PhoneBookPage /> },
+   
+  ...ContactPublicRoutes, 
 
     /* مسیر پیش‌فرض */
     { path: "*", element: <Navigate to="/" replace /> },

@@ -1,5 +1,5 @@
 {
-  "name": "@mahar/PhoneBook",
+  "name": "@mahar/Contact",
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
