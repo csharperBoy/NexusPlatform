@@ -19,7 +19,7 @@ namespace Contact.Infrastructure.Configurations
 
             builder.Property(p => p.ContactType).HasConversion<byte>();
 
-            builder.ToTable("LocationContacts", "hr");
+            builder.ToTable("LocationContacts", "contact");
             builder.HasIndex(e => e.FkLocationId, "IX_LocationContacts_FkLocationId");
             //builder.HasOne(d => d.Location).WithMany(p => p.LocationContacts)
             //    .HasForeignKey(d => d.FkLocationId)

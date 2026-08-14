@@ -30,7 +30,7 @@ try
     app.UseForwardedHeaders();
     //app.UseHttpsRedirection();
     app.UseRouting();
-    //app.UseCors();
+    app.UseCors();
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

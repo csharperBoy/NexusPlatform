@@ -19,7 +19,7 @@ namespace People.Infrastructure.Configurations
 
             builder.Property(p => p.ContactType).HasConversion<byte>();
 
-            builder.ToTable("PartyContacts", "people");
+            builder.ToTable("PartyContacts", "contact");
             builder.HasIndex(e => e.OwnerOrganizationUnitId, "IX_PersonContact_OwnerOrgUnit");
             builder.HasIndex(e => e.OwnerPersonId, "IX_PersonContact_OwnerPerson");
             builder.HasIndex(e => new { e.OwnerOrganizationUnitId, e.OwnerPersonId }, "IX_PersonContact_ScopedLookup");

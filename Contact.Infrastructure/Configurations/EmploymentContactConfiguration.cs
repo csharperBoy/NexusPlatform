@@ -18,7 +18,7 @@ namespace Contact.Infrastructure.Configurations
 
             builder.Property(p => p.ContactType).HasConversion<byte>();
 
-            builder.ToTable("EmploymentContacts", "hr");
+            builder.ToTable("EmploymentContacts", "contact");
             builder.HasIndex(e => e.FkEmploymentId, "IX_PersonContacts_FkEmploymentId");
             //builder.HasOne(d => d.Employment).WithMany(p => p.EmploymentContacts)
             //    .HasForeignKey(d => d.FkEmploymentId)
