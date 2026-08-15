@@ -1,5 +1,103 @@
- 
- /* src/index.css */
- @import "tailwindcss"; 
- @source ".";  /*این خط رو با وجود اینکه ارور بده نباید حذف کنی وگرنه تایلویند از کار میافته*/
- 
+/* src/index.css */
+@import "tailwindcss";
+
+@source ".";
+
+/* ==========================================
+   ۱. تعریف فونت‌های وزیرمتن (با ضخامت‌های مختلف)
+   ========================================== */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==========================================
+   ۲. تعریف فونت تیتر
+   ========================================== */
+@font-face {
+  font-family: 'Titr';
+  src: url('./assets/fonts/titr.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==========================================
+   ۳. تنظیم کلاس‌های تایلوند نسخه ۴
+   ========================================== */
+@theme {
+  --font-sans: 'Vazirmatn', sans-serif;
+  --font-titr: 'Titr', sans-serif;
+}
+
+/* تنظیم وزیرمتن به عنوان فونت پیش‌فرض کل برنامه */
+body {
+  font-family: var(--font-sans);
+}

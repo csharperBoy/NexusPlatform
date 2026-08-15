@@ -180,21 +180,24 @@ export const PhoneBookPage: React.FC = () => {
           <p className="text-sm text-gray-500">مجموع: {data.length} نفر</p>
         </div> */}
 <div className="flex items-center gap-4 mb-3">
-  {/* لوگو با اندازه بزرگ‌تر، سایه ملایم و افکت هوور */}
+  {/* لوگو */}
   <img 
     src={logo} 
     alt="لوگو سازمان" 
     className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
   />
 
-  {/* خط جداکننده عمودی بین لوگو و متن */}
+  {/* خط جداکننده عمودی */}
   <div className="h-10 md:h-12 w-[1.5px] bg-gray-200 rounded-full"></div>
 
-  {/* عنوان و زیرعنوان هدر */}
+  {/* عنوان و زیرعنوان */}
   <div className="flex flex-col">
-    <h1 className="text-xl md:text-2xl font-black text-gray-800 tracking-tight">
+    {/* عنوان اصلی با فونت تیتر (با اضافه کردن font-titr) */}
+    <h1 className="font-black text-xl md:text-2xl text-gray-800 tracking-wide">
       سامانه جامع اطلاعات تماس همکاران
     </h1>
+    
+    {/* زیرعنوان با فونت وزیرمتن معمولی/متوسط */}
     <span className="text-xs text-gray-500 font-medium mt-0.5">
       دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان
     </span>
