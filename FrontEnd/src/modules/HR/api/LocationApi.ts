@@ -6,7 +6,17 @@ import {  UpdateLocationCommand } from "../models/LocationCommand";
 const API_MODULE = "hr";
 
 export const locationApi = {
-
+    
+GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/hr/Location/GetSelectionList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
+  
  // دریافت پست ها (GET)
   GetList: async (): Promise<LocationInfoView[]> => {
     
@@ -31,15 +41,6 @@ export const locationApi = {
     return response.data; // آرایه‌ای از GUIDهای به‌روز شده
   },
   
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
-    const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
-      "/api/hr/Location/GetSelectionList",
-      {  withCredentials: true }
-    );
-    console.log(response)
-    return response.data;
-  },
   
 // ویرایش منبع (PUT)
   updatelocation: async (data: UpdateLocationCommand): Promise<boolean> => {
