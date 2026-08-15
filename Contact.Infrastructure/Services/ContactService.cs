@@ -109,6 +109,7 @@ namespace Contact.Infrastructure.Services
 
             }
         }
+        
         public async Task CreatePostContact(HrContactType type, string? value, Guid postId)
         {
             if (value != null)

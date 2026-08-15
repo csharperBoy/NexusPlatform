@@ -25,7 +25,7 @@ export const employmentContactApi = {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/contact/EmploymentContact/batch`,
-      { employments: commands },
+      { employmentsContact: commands },
       { withCredentials: true }
     );
     return response.data; // آرایه‌ای از GUIDهای به‌روز شده

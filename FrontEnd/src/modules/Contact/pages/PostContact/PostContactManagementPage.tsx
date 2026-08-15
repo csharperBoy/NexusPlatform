@@ -324,44 +324,6 @@ export const PostContactManagementPage: React.FC = () => {
     return { flattenedTree: flattened, postContactsMap: map };
   }, [postContacts, expandedIds, globalSearch, columnSearch, modifiedIds, initialPostContactsMap]);
 
-  // --- 4. مدیریت انتخاب چندگانه (Ctrl / Shift) ---
-  const handleRowClick = (e: React.MouseEvent, id: string) => {
-    // جلوگیری از تغییر انتخاب هنگام فوکوس یا تایپ در اینپوت‌ها و دکمه‌ها
-    const targetTag = (e.target as HTMLElement).tagName;
-    if (targetTag === "INPUT" || targetTag === "BUTTON") return;
-
-    if (e.ctrlKey || e.metaKey) {
-      // 1. کلیک با کنترل (Toggle)
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-      setLastSelectedId(id);
-    } else if (e.shiftKey && lastSelectedId) {
-      // 2. کلیک با شیفت (Range Selection)
-      const flatIds = flattenedTree.map((item) => item.node.id);
-      const lastIndex = flatIds.indexOf(lastSelectedId);
-      const currentIndex = flatIds.indexOf(id);
-
-      if (lastIndex !== -1 && currentIndex !== -1) {
-        const start = Math.min(lastIndex, currentIndex);
-        const end = Math.max(lastIndex, currentIndex);
-        const rangeIds = flatIds.slice(start, end + 1);
-
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          rangeIds.forEach((rId) => next.add(rId));
-          return next;
-        });
-      }
-    } else {
-      // 3. کلیک معمولی (تک انتخابی)
-      setSelectedIds(new Set([id]));
-      setLastSelectedId(id);
-    }
-  };
 
   // --- 5. متدهای مدیریت درخت ---
   const toggleExpand = (id: string) => {
@@ -387,141 +349,6 @@ export const PostContactManagementPage: React.FC = () => {
     setExpandedIds(new Set());
   };
 
-  // --- 6. منطق Drag and Drop گروهی ---
-  const isDescendant = (targetId: string, ancestorId: string): boolean => {
-    let currentId: string | null | undefined = targetId;
-    while (currentId) {
-      if (currentId === ancestorId) return true;
-      const node = postContactsMap.get(currentId);
-      currentId = node?.fkParentId;
-    }
-    return false;
-  };
-
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    let idsToMove: string[];
-
-    // اگر آیتمی که درگ می‌شود خودش جزو گزینه‌های انتخاب‌شده باشد، همه انتخاب‌شده‌ها منتقل می‌شوند
-    if (selectedIds.has(id)) {
-      idsToMove = Array.from(selectedIds);
-    } else {
-      // اگر روی آیتم غیرانتخابی درگ شروع شد، انتخاب‌ها به همان تک آیتم تغییر می‌یابد
-      idsToMove = [id];
-      setSelectedIds(new Set([id]));
-      setLastSelectedId(id);
-    }
-
-    e.dataTransfer.setData("text/plain", JSON.stringify(idsToMove));
-    e.dataTransfer.effectAllowed = "move";
-    setDraggedIds(idsToMove);
-  };
-
-  const handleDragOverRow = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    const currentDragged = draggedIdsRef.current;
-    if (!currentDragged.length || currentDragged.includes(targetId)) return;
-
-    // اگر مقصد یکی از فرزندان هرکدام از ردیف‌های درگ‌شده باشد، درگ غیرمجاز است
-    const isInvalid = currentDragged.some((dId) => isDescendant(targetId, dId));
-    if (isInvalid) {
-      e.dataTransfer.dropEffect = "none";
-      return;
-    }
-
-    e.dataTransfer.dropEffect = "move";
-    if (dragOverId !== targetId) {
-      setDragOverId(targetId);
-    }
-  };
-
-  const handleDropOnRow = (e: React.DragEvent, targetParentId: string) => {
-    e.preventDefault();
-    setDragOverId(null);
-    setIsOverRootZone(false);
-
-    let idsToMove: string[] = [];
-    try {
-      const rawData = e.dataTransfer.getData("text/plain");
-      idsToMove = JSON.parse(rawData);
-    } catch {
-      idsToMove = draggedIds;
-    }
-
-    if (!idsToMove.length) return;
-
-    // فیلتر ردیف‌های نامعتبر (انتقال والد به زیرمجموعه یا انتقال به والد فعلی)
-    let hasCyclicError = false;
-    const validIdsToMove = idsToMove.filter((id) => {
-      if (id === targetParentId) return false;
-      if (isDescendant(targetParentId, id)) {
-        hasCyclicError = true;
-        return false;
-      }
-      const node = postContactsMap.get(id);
-      if (!node || node.fkParentId === targetParentId) return false;
-      return true;
-    });
-
-    if (hasCyclicError) {
-      alert("امکان انتقال والد به زیرمجموعه‌های خودش وجود ندارد!");
-    }
-
-    if (validIdsToMove.length > 0) {
-      updateNodesParent(validIdsToMove, targetParentId);
-    }
-
-    setDraggedIds([]);
-  };
-
-  const handleDropOnRoot = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsOverRootZone(false);
-    setDragOverId(null);
-
-    let idsToMove: string[] = [];
-    try {
-      const rawData = e.dataTransfer.getData("text/plain");
-      idsToMove = JSON.parse(rawData);
-    } catch {
-      idsToMove = draggedIds;
-    }
-
-    if (!idsToMove.length) return;
-
-    const validIdsToMove = idsToMove.filter((id) => {
-      const node = postContactsMap.get(id);
-      return node && node.fkParentId !== null;
-    });
-
-    if (validIdsToMove.length > 0) {
-      updateNodesParent(validIdsToMove, null);
-    }
-
-    setDraggedIds([]);
-  };
-
-  const updateNodesParent = (nodeIds: string[], newParentId: string | null) => {
-    const idSet = new Set(nodeIds);
-
-    setPostContacts((prev) =>
-      prev.map((item) => {
-        if (idSet.has(item.id)) {
-          return { ...item, fkParentId: newParentId };
-        }
-        return item;
-      })
-    );
-
-    setModifiedIds((prev) => {
-      const next = new Set(prev);
-      nodeIds.forEach((id) => next.add(id));
-      return next;
-    });
-
-    if (newParentId) {
-      setExpandedIds((prev) => new Set(prev).add(newParentId));
-    }
-  };
 
   // --- 7. بازنشانی و ذخیره تغییرات ---
   const handleResetChanges = () => {
@@ -665,7 +492,7 @@ export const PostContactManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>💡 راهنما: برای انتخاب چندگانه از کلیدهای Ctrl و Shift استفاده کنید.</span>
+            
             <button
               onClick={expandAll}
               className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 mr-2"
@@ -682,22 +509,7 @@ export const PostContactManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* منطقه رهاسازی ریشه */}
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (draggedIds.length > 0) setIsOverRootZone(true);
-        }}
-        onDragLeave={() => setIsOverRootZone(false)}
-        onDrop={handleDropOnRoot}
-        className={`sticky top-0 z-30 mb-2 h-[34px] px-3 border border-dashed rounded-lg text-center text-xs transition-all shadow-sm backdrop-blur-md flex items-center justify-center ${
-          isOverRootZone
-            ? "border-blue-500 bg-blue-100/95 text-blue-800 font-bold scale-[1.005]"
-            : "border-gray-300 bg-white/95 text-gray-600 hover:border-gray-400"
-        }`}
-      >
-        📌 جهت انتقال موارد انتخاب‌شده به بالاترین سطح چارت (بدون والد)، آن‌ها را اینجا رها کنید.
-      </div>
+     
 
       {/* جدول چارت */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -705,9 +517,7 @@ export const PostContactManagementPage: React.FC = () => {
           <thead>
             {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
-                جابه‌جایی
-              </th>
+            
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 عنوان شغل (کد پست)
               </th>
@@ -733,7 +543,6 @@ export const PostContactManagementPage: React.FC = () => {
 
             {/* ردیف دوم: اینپوت‌های سرچ */}
             <tr className="border-b border-gray-200">
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
               <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
@@ -812,26 +621,14 @@ export const PostContactManagementPage: React.FC = () => {
                 return (
                   <tr
                     key={node.id}
-                    onClick={(e) => handleRowClick(e, node.id)}
-                    onDragOver={(e) => handleDragOverRow(e, node.id)}
-                    onDragLeave={() => dragOverId === node.id && setDragOverId(null)}
-                    onDrop={(e) => handleDropOnRow(e, node.id)}
+                   
                     className={`transition-colors cursor-pointer ${
                       isSelected ? "bg-blue-100/70 border-blue-300 font-medium" : ""
                     } ${isBeingDragged ? "opacity-30 bg-gray-200" : ""} ${
                       isTarget ? "bg-blue-200 border-y-2 border-blue-600" : "hover:bg-gray-50/80"
                     } ${isModified && !isSelected ? "bg-amber-50/40" : ""}`}
                   >
-                    <td className="py-3 px-2 text-center align-middle">
-                      <div
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, node.id)}
-                        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg leading-none inline-block p-1"
-                        title="جهت تغییر والد، کشیده و رها کنید (امکان انتخاب گروهی)"
-                      >
-                        ☰
-                      </div>
-                    </td>
+                   
 
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div

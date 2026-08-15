@@ -324,11 +324,11 @@ export const LocationContactManagementPage: React.FC = () => {
 
                    
 
-                    {/* <td className="py-3 px-4 font-medium text-gray-800">
+                     <td className="py-3 px-4 font-medium text-gray-800">
                       {title}
-                    </td> */}
+                    </td> 
 
-                   <td className="py-2 px-3">
+                   {/* <td className="py-2 px-3">
                       <input
                         type="text"
                         value={loc.title || ""}
@@ -336,7 +336,7 @@ export const LocationContactManagementPage: React.FC = () => {
                         placeholder="عنوان..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />
-                    </td>
+                    </td> */}
 
                     <td className="py-2 px-3">
                       <input

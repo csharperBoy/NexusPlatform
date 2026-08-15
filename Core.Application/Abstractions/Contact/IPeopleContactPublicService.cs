@@ -10,6 +10,7 @@ namespace Core.Application.Abstractions.Contact
     public interface IPeopleContactPublicService
     {
         Task CreatePartyContact(PartyContactType type, string? value, Guid partyId);
+        Task SaveAsync();
         
     }
 }

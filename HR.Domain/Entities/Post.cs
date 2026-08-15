@@ -120,7 +120,7 @@ namespace HR.Domain.Entities
         {
             bool hasChange = false;
 
-            if (_Code.Trim() != null && _Code.Trim() != this.Code.Trim())
+            if (_Code != null && _Code.Trim() != this.Code.Trim())
             {
                 this.Code = _Code;
                 hasChange = true;

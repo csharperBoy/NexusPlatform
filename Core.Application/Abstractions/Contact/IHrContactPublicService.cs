@@ -14,6 +14,7 @@ namespace Core.Application.Abstractions.Contact
         Task CreateLocationContact(HrContactType type, string? value, Guid LocationId);
         Task<List<EntityContactDto<HrContactType>>> GetLocationContactsByLocationIdsAsync(List<Guid> locationIds);
         Task CreatePostContact(HrContactType type, string? value, Guid postId);
+        Task SaveAsync();
        
     }
 }

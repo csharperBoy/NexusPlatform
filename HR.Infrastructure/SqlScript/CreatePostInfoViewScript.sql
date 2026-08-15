@@ -13,6 +13,6 @@ FROM            hr.[ Grade] RIGHT OUTER JOIN
                          people.naturalPersons ON hr.[ Employment].FkNaturalPersonId = people.naturalPersons.Id ON hr.Post.Id = hr.Assignments.FkPostId LEFT OUTER JOIN
                          hr.JobLevel ON hr.Post.FkJobLevelId = hr.JobLevel.Id LEFT OUTER JOIN
                          hr.JobTitle ON hr.Post.FkJobTitleId = hr.JobTitle.Id LEFT OUTER JOIN
-                         hr.PostContacts AS OfficePhone ON hr.Post.Id = OfficePhone.FkPostId AND OfficePhone.ContactType = 0 AND OfficePhone.IsCurrent = 1 LEFT OUTER JOIN
-                         hr.PostContacts AS OrgMobile ON hr.Post.Id = OrgMobile.FkPostId AND OrgMobile.ContactType = 1 AND OrgMobile.IsCurrent = 1 LEFT OUTER JOIN
-                         hr.PostContacts AS OrgEmail ON hr.Post.Id = OrgEmail.FkPostId AND OrgEmail.ContactType = 3 AND OrgEmail.IsCurrent = 1
+                         contact.PostContacts AS OfficePhone ON hr.Post.Id = OfficePhone.FkPostId AND OfficePhone.ContactType = 0 AND OfficePhone.IsCurrent = 1 LEFT OUTER JOIN
+                         contact.PostContacts AS OrgMobile ON hr.Post.Id = OrgMobile.FkPostId AND OrgMobile.ContactType = 1 AND OrgMobile.IsCurrent = 1 LEFT OUTER JOIN
+                         contact.PostContacts AS OrgEmail ON hr.Post.Id = OrgEmail.FkPostId AND OrgEmail.ContactType = 3 AND OrgEmail.IsCurrent = 1

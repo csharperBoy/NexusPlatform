@@ -97,6 +97,7 @@ namespace People.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
+            await _contactService.SaveAsync();
         }
 
         public async Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId)

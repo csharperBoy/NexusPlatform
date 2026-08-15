@@ -47,10 +47,20 @@ namespace Core.Application.Abstractions.Contact
         {
             return null;
         }
+
+        public async Task SaveAsync()
+        {
+            await Task.CompletedTask;
+        }
     }
     public class NullPeopleContactPublicServices : IPeopleContactPublicService
     {
         public async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
+        {
+            await Task.CompletedTask;
+        }
+
+        public async Task SaveAsync()
         {
             await Task.CompletedTask;
         }

@@ -231,6 +231,7 @@ namespace HR.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
+            await _contactService.SaveAsync();
         }
 
         public async Task<List<Guid>?> GetEmploymentPostsPermissionAssigneeId(Guid? employmentId)
