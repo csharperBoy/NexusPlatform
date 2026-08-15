@@ -357,7 +357,7 @@ export const PhoneBookPage: React.FC = () => {
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
                                       const badge = getContactTypeBadge(contact.type);
-                                      const isOrg = contact.source === PhoneBookContactSourceEnum.Organizational;
+                                      const isOrg = contact.source === PhoneBookContactSourceEnum.post;
 
                                       return (
                                         <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">

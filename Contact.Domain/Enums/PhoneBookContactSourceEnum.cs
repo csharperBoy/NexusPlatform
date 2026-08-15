@@ -8,8 +8,8 @@ namespace Contact.Domain.Enums
 {
     public enum PhoneBookContactSourceEnum
     {
-        Personal,      // شخصی
-        employment,
-        post // سازمانی
+        Personal = 0,      // شخصی
+        employment = 1,
+        post  = 2// سازمانی
     }
 }

@@ -49,6 +49,18 @@ namespace Contact.Application.Mapping
                         //AddContact(employment.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
                         //AddContact(employment.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
 
+                        // 4. افزودن تماس‌های مکان کارمند
+                        AddContact(employment.Contacts, "داخلی", row.EmpLocationContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.employment);
+                        AddContact(employment.Contacts, "موبایل سازمانی", row.EmpLocationContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.employment);
+                        //AddContact(employment.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
+                        //AddContact(employment.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
+
+                        // 5. افزودن تماس‌های مکان پست سازمانی
+                        AddContact(employment.Contacts, "داخلی", row.PostLocationContactPhone, PhoneBookContactTypeEnum.Phone, PhoneBookContactSourceEnum.post);
+                        AddContact(employment.Contacts, "موبایل سازمانی", row.PostLocationContactMobile, PhoneBookContactTypeEnum.Mobile, PhoneBookContactSourceEnum.post);
+                        //AddContact(employment.Contacts, "ایمیل سازمانی", row.PostContactEmail, PhoneBookContactTypeEnum.Email, PhoneBookContactSourceEnum.Organizational);
+                        //AddContact(employment.Contacts, "فکس", row.PostContactFax, PhoneBookContactTypeEnum.Fax, PhoneBookContactSourceEnum.Organizational);
+
 
                     }
 
