@@ -129,7 +129,7 @@ export const PhoneBookPage: React.FC = () => {
       result = result.filter((emp) => 
         (emp.firstName || "").toLowerCase().includes(q) ||
         (emp.lastName || "").toLowerCase().includes(q) ||
-        (emp.employmentCode || "").toLowerCase().includes(q) ||
+        // (emp.employmentCode || "").toLowerCase().includes(q) ||
         (emp.organizationUnitsName || "").toLowerCase().includes(q) ||
         (emp.jobTitleName || "").toLowerCase().includes(q) ||
         (emp.locationTitle || "").toLowerCase().includes(q) ||
@@ -255,14 +255,14 @@ export const PhoneBookPage: React.FC = () => {
                 اطلاعات تماس <SortIcon column="contactSummary" sortConfig={sortConfig} />
               </th>
             </tr>
-            {/* ردیف دوم: باکس‌های سرچ زیر هر ستون */}
+            {/* ردیف دوم: باکس‌های جستجو زیر هر ستون */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="py-2 px-2"></th>
               
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
-                  placeholder="سرچ نام..."
+                  placeholder="جستجو نام..."
                   value={columnSearch["fullName"] || ""}
                   onChange={(e) => handleColumnSearch("fullName", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -271,7 +271,7 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
-                  placeholder="سرچ واحد..."
+                  placeholder="جستجو واحد..."
                   value={columnSearch["organizationUnitsName"] || ""}
                   onChange={(e) => handleColumnSearch("organizationUnitsName", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -280,7 +280,7 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
-                  placeholder="سرچ سمت..."
+                  placeholder="جستجو سمت..."
                   value={columnSearch["jobTitleName"] || ""}
                   onChange={(e) => handleColumnSearch("jobTitleName", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -289,7 +289,7 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
-                  placeholder="سرچ محل..."
+                  placeholder="جستجو محل..."
                   value={columnSearch["locationTitle"] || ""}
                   onChange={(e) => handleColumnSearch("locationTitle", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
@@ -298,7 +298,7 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
-                  placeholder="سرچ تماس..."
+                  placeholder="جستجو تماس..."
                   value={columnSearch["contactSummary"] || ""}
                   onChange={(e) => handleColumnSearch("contactSummary", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
