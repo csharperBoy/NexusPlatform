@@ -33,6 +33,7 @@ namespace HR.Application.Commands.Employment
      DateTime? BirthDate,
      string? BirthPlace,
      string? FatherName,
+     string? nationalCode,
     #endregion
     #region employment
 
@@ -96,6 +97,7 @@ namespace HR.Application.Commands.Employment
                     request.BirthDate,
                      request.BirthPlace,
                      request.FatherName,
+                     request.nationalCode,
                      request.EmploymentCode,
                     request.EmploymentTypeId,
                     request.EmploymentStatusId,

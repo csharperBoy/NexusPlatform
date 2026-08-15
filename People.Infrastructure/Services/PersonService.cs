@@ -119,7 +119,7 @@ namespace People.Infrastructure.Services
 
         }
 
-        public async Task UpdatePersonAsync(Guid id,  string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName)
+        public async Task UpdatePersonAsync(Guid id,  string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode)
         {
             NaturalPerson? person = await _naturalPersonRepository.GetByIdAsync(id, a => a.Party);
             if (person == null)
@@ -128,7 +128,7 @@ namespace People.Infrastructure.Services
             }
 
             bool hasChange = await person.ApplyChange(
-                null,
+                nationalCode,
                 firstlName,
                 lastName,
                 birthDate, 

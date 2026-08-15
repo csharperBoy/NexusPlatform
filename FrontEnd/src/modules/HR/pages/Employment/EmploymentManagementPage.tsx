@@ -6,6 +6,8 @@ import { employmentApi } from "../../api/EmploymentApi";
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
 
+type EditableField = "employmentCode" | "firstName" | "lastName" | "nationalCode";
+
 export const EmploymentManagementPage: React.FC = () => {
   // --- States ---
   const [employments, setEmployments] = useState<EmploymentInfoView[]>([]);
@@ -53,7 +55,7 @@ export const EmploymentManagementPage: React.FC = () => {
   };
 
   // --- 2. مدیریت ویرایش درجا ---
-  const handleFieldChange = (id: string, field: "employmentContactPhone" | "employmentContactMobile", value: string) => {
+  const handleFieldChange = (id: string, field: EditableField, value: string) => {
     setEmployments((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -109,13 +111,16 @@ export const EmploymentManagementPage: React.FC = () => {
                 k.trim().toLowerCase()
               )
             );
-            const employmentContactPhoneKey = Object.keys(row).find((k) =>
-              ["تلفن داخلی", "داخلی", "employmentContactPhone", "phone"].includes(
+            const firstNameKey = Object.keys(row).find((k) =>
+              ["نام", "firstname", "first_name"].includes(k.trim().toLowerCase())
+            );
+            const lastNameKey = Object.keys(row).find((k) =>
+              ["نام خانوادگی", "نام_خانوادگی", "lastname", "last_name"].includes(
                 k.trim().toLowerCase()
               )
             );
-            const employmentContactMobileKey = Object.keys(row).find((k) =>
-              ["موبایل سازمانی", "موبایل", "employmentContactMobile", "mobile"].includes(
+            const nationalCodeKey = Object.keys(row).find((k) =>
+              ["کد ملی", "کدملی", "nationalcode", "national_code"].includes(
                 k.trim().toLowerCase()
               )
             );
@@ -133,18 +138,26 @@ export const EmploymentManagementPage: React.FC = () => {
 
               let isRowChanged = false;
 
-              if (employmentContactPhoneKey && row[employmentContactPhoneKey] !== undefined) {
-                const newPhone = String(row[employmentContactPhoneKey] ?? "").trim();
-                if (nextEmployments[targetIndex].employmentContactPhone !== newPhone) {
-                  nextEmployments[targetIndex].employmentContactPhone = newPhone;
+              if (firstNameKey && row[firstNameKey] !== undefined) {
+                const newVal = String(row[firstNameKey] ?? "").trim();
+                if (nextEmployments[targetIndex].firstName !== newVal) {
+                  nextEmployments[targetIndex].firstName = newVal;
                   isRowChanged = true;
                 }
               }
 
-              if (employmentContactMobileKey && row[employmentContactMobileKey] !== undefined) {
-                const newMobile = String(row[employmentContactMobileKey] ?? "").trim();
-                if (nextEmployments[targetIndex].employmentContactMobile !== newMobile) {
-                  nextEmployments[targetIndex].employmentContactMobile = newMobile;
+              if (lastNameKey && row[lastNameKey] !== undefined) {
+                const newVal = String(row[lastNameKey] ?? "").trim();
+                if (nextEmployments[targetIndex].lastName !== newVal) {
+                  nextEmployments[targetIndex].lastName = newVal;
+                  isRowChanged = true;
+                }
+              }
+
+              if (nationalCodeKey && row[nationalCodeKey] !== undefined) {
+                const newVal = String(row[nationalCodeKey] ?? "").trim();
+                if (nextEmployments[targetIndex].nationalCode !== newVal) {
+                  nextEmployments[targetIndex].nationalCode = newVal;
                   isRowChanged = true;
                 }
               }
@@ -184,22 +197,17 @@ export const EmploymentManagementPage: React.FC = () => {
     return employments.filter((emp) => {
       const initEmp = initialEmploymentsMap.get(emp.id);
 
-      const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`;
-      const initFullName = initEmp ? `${initEmp.firstName || ""} ${initEmp.lastName || ""}` : fullName;
-
       const matchesGlobal =
         !normalizedGlobal ||
         (emp.employmentCode || "").toLowerCase().includes(normalizedGlobal) ||
-        fullName.toLowerCase().includes(normalizedGlobal) ||
+        (emp.firstName || "").toLowerCase().includes(normalizedGlobal) ||
+        (emp.lastName || "").toLowerCase().includes(normalizedGlobal) ||
         (emp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
-        (emp.employmentContactPhone || "").toLowerCase().includes(normalizedGlobal) ||
-        (emp.employmentContactMobile || "").toLowerCase().includes(normalizedGlobal) ||
         (initEmp &&
           ((initEmp.employmentCode || "").toLowerCase().includes(normalizedGlobal) ||
-            initFullName.toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.employmentContactPhone || "").toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.employmentContactMobile || "").toLowerCase().includes(normalizedGlobal)));
+            (initEmp.firstName || "").toLowerCase().includes(normalizedGlobal) ||
+            (initEmp.lastName || "").toLowerCase().includes(normalizedGlobal) ||
+            (initEmp.nationalCode || "").toLowerCase().includes(normalizedGlobal)));
 
       let matchesColumns = true;
       for (const [col, term] of Object.entries(columnSearch)) {
@@ -211,24 +219,19 @@ export const EmploymentManagementPage: React.FC = () => {
           const matchInit = (initEmp?.employmentCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
-        if (col === "fullName") {
-          const matchCur = fullName.toLowerCase().includes(q);
-          const matchInit = initFullName.toLowerCase().includes(q);
+        if (col === "firstName") {
+          const matchCur = (emp.firstName || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.firstName || "").toLowerCase().includes(q);
+          if (!matchCur && !matchInit) matchesColumns = false;
+        }
+        if (col === "lastName") {
+          const matchCur = (emp.lastName || "").toLowerCase().includes(q);
+          const matchInit = (initEmp?.lastName || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
         if (col === "nationalCode") {
           const matchCur = (emp.nationalCode || "").toLowerCase().includes(q);
           const matchInit = (initEmp?.nationalCode || "").toLowerCase().includes(q);
-          if (!matchCur && !matchInit) matchesColumns = false;
-        }
-        if (col === "employmentContactPhone") {
-          const matchCur = (emp.employmentContactPhone || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.employmentContactPhone || "").toLowerCase().includes(q);
-          if (!matchCur && !matchInit) matchesColumns = false;
-        }
-        if (col === "employmentContactMobile") {
-          const matchCur = (emp.employmentContactMobile || "").toLowerCase().includes(q);
-          const matchInit = (initEmp?.employmentContactMobile || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
       }
@@ -260,9 +263,11 @@ export const EmploymentManagementPage: React.FC = () => {
         const emp = employmentsMap.get(id)!;
         return {
           id: emp.id,
-          officePhone: emp.employmentContactPhone || null,
-          orgMobile: emp.employmentContactMobile || null,
-        };
+          employmentCode: emp.employmentCode || null,
+          firstName: emp.firstName || null,
+          lastName: emp.lastName || null,
+          nationalCode: emp.nationalCode || null,
+        } as any;
       });
 
       await employmentApi.batchUpdateemployments(commands);
@@ -293,7 +298,7 @@ export const EmploymentManagementPage: React.FC = () => {
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm mb-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت اطلاعات ارتباطی کارمندان</h1>
+            <h1 className="text-2xl font-bold text-gray-800 mb-1">مدیریت و ویرایش اطلاعات کارمندان</h1>
             <p className="text-sm text-gray-500">
               کل کارمندان: <span className="font-semibold text-gray-700">{employments.length}</span>
               {modifiedIds.size > 0 && (
@@ -318,7 +323,7 @@ export const EmploymentManagementPage: React.FC = () => {
               onClick={() => fileInputRef.current?.click()}
               disabled={saving}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-sm"
-              title="بارگذاری اکسل جهت به‌روزرسانی تلفن داخلی و موبایل سازمانی"
+              title="بارگذاری اکسل جهت به‌روزرسانی اطلاعات کارمندان"
             >
               📊 بارگذاری از اکسل
             </button>
@@ -372,36 +377,33 @@ export const EmploymentManagementPage: React.FC = () => {
         </div>
       </div>
 
-      {/* جدول کارمندان با هدرهای چسبان */}
+      {/* جدول کارمندان */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها (موقعیت چسبان top-0 با ارتفاع 38px) */}
+            {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-3 w-12 text-center h-[38px] border-b border-gray-200 shadow-sm">
                 ردیف
               </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 h-[38px] border-b border-gray-200 shadow-sm">
+              <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 w-36 h-[38px] border-b border-gray-200 shadow-sm">
                 کد پرسنلی
               </th>
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 h-[38px] border-b border-gray-200 shadow-sm">
-                نام و نام خانوادگی
+                نام
               </th>
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 h-[38px] border-b border-gray-200 shadow-sm">
-                کد ملی
+                نام خانوادگی
               </th>
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 w-44 h-[38px] border-b border-gray-200 shadow-sm">
-                تلفن داخلی
-              </th>
-              <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 w-48 h-[38px] border-b border-gray-200 shadow-sm">
-                موبایل سازمانی
+                کد ملی
               </th>
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 text-center w-28 h-[38px] border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ ستونی (موقعیت چسبان top-[38px]) */}
+            {/* ردیف دوم: اینپوت‌های سرچ ستونی */}
             <tr className="border-b border-gray-200">
               <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
               <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
@@ -416,9 +418,18 @@ export const EmploymentManagementPage: React.FC = () => {
               <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
-                  placeholder="سرچ نام و نام خانوادگی..."
-                  value={columnSearch["fullName"] || ""}
-                  onChange={(e) => handleColumnSearch("fullName", e.target.value)}
+                  placeholder="سرچ نام..."
+                  value={columnSearch["firstName"] || ""}
+                  onChange={(e) => handleColumnSearch("firstName", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+                <input
+                  type="text"
+                  placeholder="سرچ نام خانوادگی..."
+                  value={columnSearch["lastName"] || ""}
+                  onChange={(e) => handleColumnSearch("lastName", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
@@ -431,24 +442,6 @@ export const EmploymentManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
                 />
               </th>
-              <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
-                <input
-                  type="text"
-                  placeholder="سرچ داخلی..."
-                  value={columnSearch["employmentContactPhone"] || ""}
-                  onChange={(e) => handleColumnSearch("employmentContactPhone", e.target.value)}
-                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
-                />
-              </th>
-              <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
-                <input
-                  type="text"
-                  placeholder="سرچ موبایل..."
-                  value={columnSearch["employmentContactMobile"] || ""}
-                  onChange={(e) => handleColumnSearch("employmentContactMobile", e.target.value)}
-                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
-                />
-              </th>
               <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
@@ -456,14 +449,13 @@ export const EmploymentManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-100 text-sm">
             {filteredEmployments.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">
+                <td colSpan={6} className="text-center py-12 text-gray-400">
                   هیچ کارمندی یافت نشد.
                 </td>
               </tr>
             ) : (
               filteredEmployments.map((emp, index) => {
                 const isModified = modifiedIds.has(emp.id);
-                const fullName = `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || "-";
 
                 return (
                   <tr
@@ -476,24 +468,12 @@ export const EmploymentManagementPage: React.FC = () => {
                       {index + 1}
                     </td>
 
-                    <td className="py-3 px-4 font-mono text-xs font-medium text-gray-700">
-                      {emp.employmentCode || "-"}
-                    </td>
-
-                    <td className="py-3 px-4 font-medium text-gray-800">
-                      {fullName}
-                    </td>
-
-                    <td className="py-3 px-4 text-gray-600 text-xs font-mono">
-                      {emp.nationalCode || "-"}
-                    </td>
-
                     <td className="py-2 px-3">
                       <input
                         type="text"
-                        value={emp.employmentContactPhone || ""}
-                        onChange={(e) => handleFieldChange(emp.id, "employmentContactPhone", e.target.value)}
-                        placeholder="داخلی..."
+                        value={emp.employmentCode || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "employmentCode", e.target.value)}
+                        placeholder="کد پرسنلی..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />
                     </td>
@@ -501,9 +481,29 @@ export const EmploymentManagementPage: React.FC = () => {
                     <td className="py-2 px-3">
                       <input
                         type="text"
-                        value={emp.employmentContactMobile || ""}
-                        onChange={(e) => handleFieldChange(emp.id, "employmentContactMobile", e.target.value)}
-                        placeholder="موبایل..."
+                        value={emp.firstName || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "firstName", e.target.value)}
+                        placeholder="نام..."
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-right outline-none bg-white hover:border-gray-400 transition-colors"
+                      />
+                    </td>
+
+                    <td className="py-2 px-3">
+                      <input
+                        type="text"
+                        value={emp.lastName || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "lastName", e.target.value)}
+                        placeholder="نام خانوادگی..."
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-right outline-none bg-white hover:border-gray-400 transition-colors"
+                      />
+                    </td>
+
+                    <td className="py-2 px-3">
+                      <input
+                        type="text"
+                        value={emp.nationalCode || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "nationalCode", e.target.value)}
+                        placeholder="کد ملی..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />
                     </td>

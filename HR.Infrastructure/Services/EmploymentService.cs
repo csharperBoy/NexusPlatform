@@ -90,6 +90,7 @@ namespace HR.Infrastructure.Services
         {
             await _uow.SaveChangesAsync();
             await _contactService.SaveAsync();
+            await _personService.SaveAsync();
         }
         public async Task<Guid?> GetEmploymentId(Guid? personId)
         {
@@ -135,7 +136,7 @@ namespace HR.Infrastructure.Services
 
 
 
-        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile)
+        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile)
         {
             Employment? emp = await _employmentRepository.GetByIdAsync(id);
             if (emp == null)
@@ -147,7 +148,7 @@ namespace HR.Infrastructure.Services
                 await _employmentRepository.UpdateAsync(emp);
             }
 
-            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstlName, lastName, birthDate, birthPlace, fatherName);
+            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstName, lastName, birthDate, birthPlace, fatherName,nationalCode);
             if (officePhone != null)
             {
                 await _contactService.CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
