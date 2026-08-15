@@ -1,6 +1,7 @@
 // src/modules/PhoneBook/pages/Post/PhoneBookPage.tsx
 
 import React, { useEffect, useState, useMemo } from "react";
+import logo from "../../../../assets/LOGO2.png";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
   PhoneBookEmploymentDto,
@@ -30,7 +31,7 @@ const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConf
 };
 
 // --- Types ---
-type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" ;//| "locationTitle";
+type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" | "locationTitle";
 type SortDirection = "asc" | "desc" | null;
 interface SortConfig {
   column: string;
@@ -47,7 +48,7 @@ export const PhoneBookPage: React.FC = () => {
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
   const [groupBy, setGroupBy] = useState<GroupByOption>("organizationUnitsName");
-  
+
   // Setهایی برای مدیریت باز و بسته بودن کرکره‌ها
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -111,7 +112,7 @@ export const PhoneBookPage: React.FC = () => {
         result = result.filter((emp) => {
           const q = term.toLowerCase();
           const empKey = key as keyof PhoneBookEmploymentDto;
-          
+
           if (key === "fullName") {
             const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
             return full.toLowerCase().includes(q);
@@ -130,25 +131,26 @@ export const PhoneBookPage: React.FC = () => {
         (emp.lastName || "").toLowerCase().includes(q) ||
         (emp.employmentCode || "").toLowerCase().includes(q) ||
         (emp.organizationUnitsName || "").toLowerCase().includes(q) ||
+        (emp.jobTitleName || "").toLowerCase().includes(q) ||
+        (emp.locationTitle || "").toLowerCase().includes(q) ||
         (emp.contactSummary || "").toLowerCase().includes(q)
       );
     }
 
-    // ۳. سورت (با قابلیت سورت عددی برای رشته‌ها)
+    // ۳. سورت
     if (sortConfig.direction && sortConfig.column) {
       result.sort((a, b) => {
         const col = sortConfig.column as keyof PhoneBookEmploymentDto;
         let aVal = (a[col] || "").toString();
         let bVal = (b[col] || "").toString();
-        
+
         if (sortConfig.column === "fullName") {
           aVal = a.fullName || `${a.firstName || ""} ${a.lastName || ""}`;
           bVal = b.fullName || `${b.firstName || ""} ${b.lastName || ""}`;
         }
 
-        // جادوی سورت عددی روی فیلدهای متنی مثل کد پرسنلی 
         const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
-        
+
         return sortConfig.direction === "asc" ? compareResult : -compareResult;
       });
     }
@@ -173,11 +175,31 @@ export const PhoneBookPage: React.FC = () => {
     <div className="p-6 dir-rtl text-right font-sans">
       {/* هدر و کنترل‌های اصلی */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <div>
+        {/* <div>
           <h1 className="text-2xl font-bold text-gray-800 mb-1">دفترچه تلفن</h1>
           <p className="text-sm text-gray-500">مجموع: {data.length} نفر</p>
-        </div>
+        </div> */}
+<div className="flex items-center gap-4 mb-3">
+  {/* لوگو با اندازه بزرگ‌تر، سایه ملایم و افکت هوور */}
+  <img 
+    src={logo} 
+    alt="لوگو سازمان" 
+    className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
+  />
 
+  {/* خط جداکننده عمودی بین لوگو و متن */}
+  <div className="h-10 md:h-12 w-[1.5px] bg-gray-200 rounded-full"></div>
+
+  {/* عنوان و زیرعنوان هدر */}
+  <div className="flex flex-col">
+    <h1 className="text-xl md:text-2xl font-black text-gray-800 tracking-tight">
+      سامانه جامع اطلاعات تماس همکاران
+    </h1>
+    <span className="text-xs text-gray-500 font-medium mt-0.5">
+      دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان
+    </span>
+  </div>
+</div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col">
             <label className="text-xs text-gray-500 mb-1">جستجوی کلی</label>
@@ -199,7 +221,7 @@ export const PhoneBookPage: React.FC = () => {
             >
               <option value="organizationUnitsName">واحد سازمانی</option>
               <option value="jobTitleName">عنوان شغلی</option>
-              {/* <option value="locationTitle">محل خدمت</option> */}
+              <option value="locationTitle">محل استقرار</option>
               <option value="none">بدون گروه‌بندی</option>
             </select>
           </div>
@@ -213,9 +235,7 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
               <th className="py-3 px-4 w-12"></th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("employmentCode")}>
-                کد پرسنلی <SortIcon column="employmentCode" sortConfig={sortConfig} />
-              </th>
+              
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
@@ -225,6 +245,9 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("jobTitleName")}>
                 عنوان شغلی <SortIcon column="jobTitleName" sortConfig={sortConfig} />
               </th>
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("locationTitle")}>
+                محل استقرار <SortIcon column="locationTitle" sortConfig={sortConfig} />
+              </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("contactSummary")}>
                 اطلاعات تماس <SortIcon column="contactSummary" sortConfig={sortConfig} />
               </th>
@@ -232,15 +255,7 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف دوم: باکس‌های سرچ زیر هر ستون */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="py-2 px-2"></th>
-              <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="سرچ کد..."
-                  value={columnSearch["employmentCode"] || ""}
-                  onChange={(e) => handleColumnSearch("employmentCode", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
-              </th>
+              
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
@@ -265,6 +280,15 @@ export const PhoneBookPage: React.FC = () => {
                   placeholder="سرچ سمت..."
                   value={columnSearch["jobTitleName"] || ""}
                   onChange={(e) => handleColumnSearch("jobTitleName", e.target.value)}
+                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="py-2 px-2 align-top">
+                <input
+                  type="text"
+                  placeholder="سرچ محل..."
+                  value={columnSearch["locationTitle"] || ""}
+                  onChange={(e) => handleColumnSearch("locationTitle", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
@@ -328,19 +352,17 @@ export const PhoneBookPage: React.FC = () => {
                           >
                             <td className="py-3 px-4 text-center">
                               {hasMultiple ? (
-                                // <span className="text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200">
-                                  <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>
-                               ◀
-                                  {/* {isExpanded ? "▼" : "◀"} */}
+                                <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>
+                                  ◀
                                 </span>
                               ) : null}
                             </td>
-                            <td className="py-3 px-4 font-mono text-gray-600">{empCode}</td>
                             <td className="py-3 px-4 font-medium text-gray-800">
                               {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
                             </td>
                             <td className="py-3 px-4 text-gray-600">{emp.organizationUnitsName || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.jobTitleName || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{emp.locationTitle || "-"}</td>
                             <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
                               {emp.contactSummary || "-"}
                             </td>

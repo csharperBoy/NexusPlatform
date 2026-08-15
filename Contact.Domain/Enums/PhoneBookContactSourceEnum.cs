@@ -10,6 +10,7 @@ namespace Contact.Domain.Enums
     {
         Personal = 0,      // شخصی
         employment = 1,
-        post  = 2// سازمانی
+        post  = 2 ,// سازمانی
+        location = 3
     }
 }

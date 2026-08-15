@@ -38,7 +38,8 @@ export enum PhoneBookContactTypeEnum {
 export enum PhoneBookContactSourceEnum {
  Personal,   
       employment ,
-      post
+      post,
+      location 
  
 
 }
