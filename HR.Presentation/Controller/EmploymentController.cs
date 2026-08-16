@@ -4,6 +4,7 @@ using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Queries.Employment;
 using HR.Application.Queries.Post;
+using HR.Domain.Specifications;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -49,6 +50,15 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
+        
+
+        [HttpGet("GetSelectionList")]
+        [AuthorizeResource("hr.employment", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetEmploymentsSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
         /*
         [HttpGet("{id:guid}")]
         [AuthorizeResource("hr.orgchart", "View")]
@@ -58,15 +68,6 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(query);
             return HandleResult(result);
         }
-
-        [HttpGet("GetSelectionList")]
-        [AuthorizeResource("hr.orgchart", "View")]
-        public async Task<IActionResult> GetSelectionList([FromQuery] GetOrgChartsSelectionListQuery? request = null)
-        {
-            var result = await Mediator.Send(request);
-            return HandleResult(result);
-        }
-
         [HttpPut("{id:guid}")]
         [AuthorizeResource("hr.orgchart", "Edit")]
         public async Task<IActionResult> UpdateOrgChart(Guid id, [FromBody] UpdateOrgChartCommand command)

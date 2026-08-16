@@ -17,7 +17,7 @@ namespace HR.Infrastructure.Configurations
         {
             base.Configure(builder);
 
-            builder.ToTable(" EmploymentStatus", "hr");
+            builder.ToTable("EmploymentStatus", "hr");
 
         }
     }

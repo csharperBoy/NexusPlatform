@@ -2,6 +2,7 @@
 using Core.Presentation.Filters;
 using HR.Application.Commands.Location;
 using HR.Application.Queries.Location;
+using HR.Domain.Specifications;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -47,6 +48,13 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
-       
+        [HttpGet("GetSelectionList")]
+        [AuthorizeResource("hr.location", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetLocationsSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+
     }
 }

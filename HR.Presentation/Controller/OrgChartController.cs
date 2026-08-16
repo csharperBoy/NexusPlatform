@@ -5,6 +5,7 @@ using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Application.Queries.Post;
 using HR.Domain.Entities;
+using HR.Domain.Specifications;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +56,13 @@ namespace HR.Presentation.Controller
             //var result = Result<IReadOnlyList<PostInfoView>>.Ok(posts);
          
 
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetPostsSelectionListQuery? request = null)
+        {
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }

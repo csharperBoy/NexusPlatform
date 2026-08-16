@@ -61,6 +61,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new AssignmentConfiguration());
             modelBuilder.ApplyConfiguration(new CostCenterConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentConfiguration());
+            modelBuilder.ApplyConfiguration(new EmploymentLocationsConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentStatusConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentTypeConfiguration());
             modelBuilder.ApplyConfiguration(new GradeConfiguration());
@@ -68,6 +69,7 @@ namespace HR.Infrastructure.Data
             modelBuilder.ApplyConfiguration(new JobTitleConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationUnitConfiguration());
             modelBuilder.ApplyConfiguration(new PostConfiguration());
+            modelBuilder.ApplyConfiguration(new PostLocationsConfiguration());
             modelBuilder.ApplyConfiguration(new LocationConfiguration());
             modelBuilder.ApplyConfiguration(new EmploymentInfoViewConfiguration());
             modelBuilder.ApplyConfiguration(new PostInfoViewConfiguration());

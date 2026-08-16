@@ -35,7 +35,7 @@ SELECT
     post_loc_fax.Value AS PostLocationContact_Fax,
     post_loc_email.Value AS PostLocationContact_Email
 
-FROM hr.[ Employment] AS emp 
+FROM hr.[Employment] AS emp 
 INNER JOIN people.naturalPersons AS np ON emp.FkNaturalPersonId = np.Id 
 INNER JOIN people.Parties AS p ON np.FkPartyId = p.Id 
 INNER JOIN hr.Assignments AS ass ON emp.Id = ass.FkEmploymentId AND ass.IsCurrent = 1 

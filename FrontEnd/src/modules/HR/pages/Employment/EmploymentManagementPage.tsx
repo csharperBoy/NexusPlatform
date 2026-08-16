@@ -3,15 +3,23 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 import { employmentApi } from "../../api/EmploymentApi";
+import { locationApi } from "../../api/LocationApi"; // وارد کردن API مکان‌ها
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
+import { SelectionListDto } from "@/core/models/SelectionListDto"; // وارد کردن مدل SelectionListDto
 
-type EditableField = "employmentCode" | "firstName" | "lastName" | "nationalCode";
+type EditableField =
+  | "employmentCode"
+  | "firstName"
+  | "lastName"
+  | "nationalCode"
+  | "locationId"; // افزودن فیلد locationId
 
 export const EmploymentManagementPage: React.FC = () => {
   // --- States ---
   const [employments, setEmployments] = useState<EmploymentInfoView[]>([]);
   const [initialEmployments, setInitialEmployments] = useState<EmploymentInfoView[]>([]);
+  const [locations, setLocations] = useState<SelectionListDto[]>([]); // استیت گزینه‌های مکان
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +41,13 @@ export const EmploymentManagementPage: React.FC = () => {
     return map;
   }, [initialEmployments]);
 
+  // مپ برای دسترسی سریع به عنوان مکان‌ها بر اساس Value/ID
+  const locationMap = useMemo(() => {
+    const map = new Map<string, string>();
+    locations.forEach((loc) => map.set(loc.value, loc.display || loc.label));
+    return map;
+  }, [locations]);
+
   // --- 1. دریافت اطلاعات اولیه ---
   useEffect(() => {
     loadData();
@@ -42,13 +57,27 @@ export const EmploymentManagementPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await employmentApi.GetList();
-      const list = data || [];
-      setEmployments(list);
-      setInitialEmployments(JSON.parse(JSON.stringify(list)));
+
+      // دریافت هم‌زمان کارمندان و لیست مکان‌ها
+      const [empData, locationList] = await Promise.all([
+        employmentApi.GetList(),
+        locationApi.GetSelectionList(),
+      ]);
+
+      const list = empData || [];
+      
+      // مپ کردن اولیه locationsId به locationId برای کار ساده‌تر با Dropdown
+      const normalizedList = list.map((emp: any) => ({
+        ...emp,
+        locationId: emp.locationId || (Array.isArray(emp.locationsId) && emp.locationsId.length > 0 ? emp.locationsId[0] : ""),
+      }));
+
+      setEmployments(normalizedList);
+      setInitialEmployments(JSON.parse(JSON.stringify(normalizedList)));
+      setLocations(locationList || []);
       setModifiedIds(new Set());
     } catch (err: any) {
-      setError(err?.message || "خطا در دریافت لیست کارمندان");
+      setError(err?.message || "خطا در دریافت اطلاعات اولیه");
     } finally {
       setLoading(false);
     }
@@ -124,6 +153,11 @@ export const EmploymentManagementPage: React.FC = () => {
                 k.trim().toLowerCase()
               )
             );
+            const locationKey = Object.keys(row).find((k) =>
+              ["محل استقرار", "مکان", "محل_استقرار", "location", "locationid"].includes(
+                k.trim().toLowerCase()
+              )
+            );
 
             if (!empCodeKey) return;
 
@@ -162,6 +196,23 @@ export const EmploymentManagementPage: React.FC = () => {
                 }
               }
 
+              // پشتیبانی از مپ کردن محل استقرار بر اساس عنوان یا ID
+              if (locationKey && row[locationKey] !== undefined) {
+                const rawLoc = String(row[locationKey] ?? "").trim();
+                const matchedLocation = locations.find(
+                  (l) =>
+                    l.value.toLowerCase() === rawLoc.toLowerCase() ||
+                    l.display.toLowerCase() === rawLoc.toLowerCase() ||
+                    l.label.toLowerCase() === rawLoc.toLowerCase()
+                );
+
+                const newLocId = matchedLocation ? matchedLocation.value : rawLoc;
+                if ((nextEmployments[targetIndex] as any).locationId !== newLocId) {
+                  (nextEmployments[targetIndex] as any).locationId = newLocId;
+                  isRowChanged = true;
+                }
+              }
+
               if (isRowChanged) {
                 updatedCount++;
                 newModifiedIds.add(matchedEmp.id);
@@ -194,8 +245,11 @@ export const EmploymentManagementPage: React.FC = () => {
   const filteredEmployments = useMemo(() => {
     const normalizedGlobal = globalSearch.trim().toLowerCase();
 
-    return employments.filter((emp) => {
-      const initEmp = initialEmploymentsMap.get(emp.id);
+    return employments.filter((emp: any) => {
+      const initEmp: any = initialEmploymentsMap.get(emp.id);
+
+      const empLocationName = (locationMap.get(emp.locationId || "") || "").toLowerCase();
+      const initLocationName = (locationMap.get(initEmp?.locationId || "") || "").toLowerCase();
 
       const matchesGlobal =
         !normalizedGlobal ||
@@ -203,11 +257,13 @@ export const EmploymentManagementPage: React.FC = () => {
         (emp.firstName || "").toLowerCase().includes(normalizedGlobal) ||
         (emp.lastName || "").toLowerCase().includes(normalizedGlobal) ||
         (emp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
+        empLocationName.includes(normalizedGlobal) ||
         (initEmp &&
           ((initEmp.employmentCode || "").toLowerCase().includes(normalizedGlobal) ||
             (initEmp.firstName || "").toLowerCase().includes(normalizedGlobal) ||
             (initEmp.lastName || "").toLowerCase().includes(normalizedGlobal) ||
-            (initEmp.nationalCode || "").toLowerCase().includes(normalizedGlobal)));
+            (initEmp.nationalCode || "").toLowerCase().includes(normalizedGlobal) ||
+            initLocationName.includes(normalizedGlobal)));
 
       let matchesColumns = true;
       for (const [col, term] of Object.entries(columnSearch)) {
@@ -234,11 +290,16 @@ export const EmploymentManagementPage: React.FC = () => {
           const matchInit = (initEmp?.nationalCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
+        if (col === "locationId") {
+          const matchCur = empLocationName.includes(q);
+          const matchInit = initLocationName.includes(q);
+          if (!matchCur && !matchInit) matchesColumns = false;
+        }
       }
 
       return matchesGlobal && matchesColumns;
     });
-  }, [employments, globalSearch, columnSearch, initialEmploymentsMap]);
+  }, [employments, globalSearch, columnSearch, initialEmploymentsMap, locationMap]);
 
   // --- 5. لغو و ذخیره تغییرات ---
   const handleResetChanges = () => {
@@ -260,13 +321,19 @@ export const EmploymentManagementPage: React.FC = () => {
       employments.forEach((emp) => employmentsMap.set(emp.id, emp));
 
       const commands: UpdateEmploymentCommand[] = Array.from(modifiedIds).map((id) => {
-        const emp = employmentsMap.get(id)!;
+        const emp: any = employmentsMap.get(id)!;
+        
+        // مپ کردن آی‌دی مکان به لیست locationsId جهت ارسال به بک‌اند C# (List<Guid>)
+        const selectedLocationId = emp.locationId || null;
+        const locationsIdList = selectedLocationId ? [selectedLocationId] : [];
+
         return {
           id: emp.id,
           employmentCode: emp.employmentCode || null,
           firstName: emp.firstName || null,
           lastName: emp.lastName || null,
           nationalCode: emp.nationalCode || null,
+          locationsId: locationsIdList, // ساختار مورد نیاز DTO بک‌اند
         } as any;
       });
 
@@ -287,7 +354,7 @@ export const EmploymentManagementPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px] text-gray-500 font-sans">
-        در حال دریافت اطلاعات لیست کارمندان...
+        در حال دریافت اطلاعات لیست کارمندان و مکان‌ها...
       </div>
     );
   }
@@ -398,6 +465,9 @@ export const EmploymentManagementPage: React.FC = () => {
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 w-44 h-[38px] border-b border-gray-200 shadow-sm">
                 کد ملی
               </th>
+              <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 w-52 h-[38px] border-b border-gray-200 shadow-sm">
+                محل استقرار
+              </th>
               <th className="sticky top-0 z-20 bg-gray-100 py-2 px-4 text-center w-28 h-[38px] border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
@@ -442,6 +512,15 @@ export const EmploymentManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-mono"
                 />
               </th>
+              <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+                <input
+                  type="text"
+                  placeholder="سرچ محل استقرار..."
+                  value={columnSearch["locationId"] || ""}
+                  onChange={(e) => handleColumnSearch("locationId", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
               <th className="sticky top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
@@ -449,12 +528,12 @@ export const EmploymentManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-100 text-sm">
             {filteredEmployments.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-400">
+                <td colSpan={7} className="text-center py-12 text-gray-400">
                   هیچ کارمندی یافت نشد.
                 </td>
               </tr>
             ) : (
-              filteredEmployments.map((emp, index) => {
+              filteredEmployments.map((emp: any, index) => {
                 const isModified = modifiedIds.has(emp.id);
 
                 return (
@@ -506,6 +585,22 @@ export const EmploymentManagementPage: React.FC = () => {
                         placeholder="کد ملی..."
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
                       />
+                    </td>
+
+                    {/* ستون انتخاب محل استقرار */}
+                    <td className="py-2 px-3">
+                      <select
+                        value={emp.locationId || ""}
+                        onChange={(e) => handleFieldChange(emp.id, "locationId", e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-right outline-none bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                      >
+                        <option value="">-- انتخاب محل استقرار --</option>
+                        {locations.map((loc) => (
+                          <option key={loc.value} value={loc.value}>
+                            {loc.display || loc.label}
+                          </option>
+                        ))}
+                      </select>
                     </td>
 
                     <td className="py-3 px-4 text-center">

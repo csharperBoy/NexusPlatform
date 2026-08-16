@@ -16,7 +16,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<CostCenter> builder)
         {
             base.Configure(builder);
-            builder.ToTable(" CostCenter", "hr");
+            builder.ToTable("CostCenter", "hr");
 
 
         }

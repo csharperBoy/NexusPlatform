@@ -16,7 +16,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<Employment> builder)
         {
             base.Configure(builder);
-            builder.ToTable(" Employment", "hr");
+            builder.ToTable("Employment", "hr");
 
 
             builder.HasOne(d => d.EmploymentStatus).WithMany(p => p.Employments)

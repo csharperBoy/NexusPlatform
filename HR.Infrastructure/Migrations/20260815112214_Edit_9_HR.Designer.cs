@@ -4,6 +4,7 @@ using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Infrastructure.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    partial class HRDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260815112214_Edit_9_HR")]
+    partial class Edit_9_HR
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,7 +177,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("CostCenter", "hr");
+                    b.ToTable(" CostCenter", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.Employment", b =>
@@ -239,7 +242,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_Employment_ModifiedBy");
 
-                    b.ToTable("Employment", "hr");
+                    b.ToTable(" Employment", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentInfoView", b =>
@@ -447,7 +450,7 @@ namespace HR.Infrastructure.Migrations
 
                     b.HasIndex(new[] { "FkLocationId" }, "IX_ EmploymentLocations_fkLocationId");
 
-                    b.ToTable("EmploymentLocations", "hr");
+                    b.ToTable(" EmploymentLocations", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentStatus", b =>
@@ -472,7 +475,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("EmploymentStatus", "hr");
+                    b.ToTable(" EmploymentStatus", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentType", b =>
@@ -497,7 +500,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("EmploymentType", "hr");
+                    b.ToTable(" EmploymentType", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.Grade", b =>
@@ -522,7 +525,7 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("Grade", "hr");
+                    b.ToTable(" Grade", "hr");
                 });
 
             modelBuilder.Entity("HR.Domain.Entities.JobLevel", b =>

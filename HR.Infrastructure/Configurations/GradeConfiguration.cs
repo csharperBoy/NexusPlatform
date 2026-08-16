@@ -16,7 +16,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<Grade> builder)
         {
             base.Configure(builder);
-            builder.ToTable(" Grade", "hr");
+            builder.ToTable("Grade", "hr");
 
         }
     }

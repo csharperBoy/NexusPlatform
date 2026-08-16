@@ -16,7 +16,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<EmploymentType> builder)
         {
             base.Configure(builder);
-            builder.ToTable(" EmploymentType", "hr");
+            builder.ToTable("EmploymentType", "hr");
 
         }
     }

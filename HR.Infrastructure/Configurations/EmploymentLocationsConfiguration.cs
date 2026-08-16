@@ -16,7 +16,7 @@ namespace HR.Infrastructure.Configurations
         public override void Configure(EntityTypeBuilder<EmploymentLocation> builder)
         {
             base.Configure(builder);
-            builder.ToTable(" EmploymentLocations", "hr");
+            builder.ToTable("EmploymentLocations", "hr");
             builder.HasIndex(e => e.FkEmploymentId, "IX_ EmploymentLocations_fkEmploymentId");
             builder.HasIndex(e => e.FkLocationId, "IX_ EmploymentLocations_fkLocationId");
             
