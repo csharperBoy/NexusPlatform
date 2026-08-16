@@ -7,6 +7,7 @@ import { locationApi } from "../../api/LocationApi"; // وارد کردن API م
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
 import { SelectionListDto } from "@/core/models/SelectionListDto"; // وارد کردن مدل SelectionListDto
+import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
 
 type EditableField =
   | "employmentCode"
@@ -589,7 +590,7 @@ export const EmploymentManagementPage: React.FC = () => {
 
                     {/* ستون انتخاب محل استقرار */}
                     <td className="py-2 px-3">
-                      <select
+                      {/* <select
                         value={emp.locationId || ""}
                         onChange={(e) => handleFieldChange(emp.id, "locationId", e.target.value)}
                         className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 text-right outline-none bg-white hover:border-gray-400 transition-colors cursor-pointer"
@@ -600,7 +601,15 @@ export const EmploymentManagementPage: React.FC = () => {
                             {loc.display || loc.label}
                           </option>
                         ))}
-                      </select>
+                      </select> */}
+
+
+                      <SearchableSelect
+                        options={locations}
+                        value={emp.locationId || ""}
+                        onChange={(selected) => handleFieldChange(emp.id, "locationId", selected?.value || "")}
+                        placeholder="انتخاب محل استقرار..."
+                      />
                     </td>
 
                     <td className="py-3 px-4 text-center">
