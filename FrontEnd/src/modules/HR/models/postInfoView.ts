@@ -17,6 +17,7 @@ export interface PostInfoView {
   officePhone?: string | null;
   orgMobile?: string | null;
   orgEmail?: string | null;
+  employmentId?: string | null;
   employmentCode?: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -24,4 +25,11 @@ export interface PostInfoView {
   gender?: number | null;
   assignmentsAssigneeType?: number | null;
   organizationUnitsName: string;
+
+  locationsEffectiveFrom?: Date | null;
+
+ locationsEffectiveTo?:Date| null;
+
+locationTitle?: string| null;
+ locationId?:string| null;
 }

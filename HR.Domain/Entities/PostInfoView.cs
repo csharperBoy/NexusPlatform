@@ -37,6 +37,7 @@ public partial class PostInfoView
 
     public string? OrgEmail { get; set; }
 
+    public Guid? EmploymentId { get; set; }
     public string? EmploymentCode { get; set; }
 
     public string? FirstName { get; set; }

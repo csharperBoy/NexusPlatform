@@ -2,7 +2,7 @@ CREATE VIEW [dbo].[Post_Info_View]
 AS
 SELECT        hr.Post.Id, hr.Post.Code AS Post_Code, hr.Post.ParentId, hr.Post.FkParentId, hr.Post.FkJobTitleId, hr.Post.FkOrganizationUnitId, hr.Post.FkJobLevelId, hr.Post.FkGradeId, hr.Post.FkCostCenterId, 
                          hr.CostCenter.Name AS CostCenter_Name, hr.Grade.Title AS Grade_Title, hr.JobLevel.Title AS JobLevel_Title, hr.JobTitle.Name AS JobTitle_Name, OfficePhone.Value AS OfficePhone, OrgMobile.Value AS OrgMobile, 
-                         OrgEmail.Value AS OrgEmail, hr.Employment.EmploymentCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, people.naturalPersons.NationalCode, people.naturalPersons.Gender, 
+                         OrgEmail.Value AS OrgEmail, hr.Employment.Id AS EmploymentId, hr.Employment.EmploymentCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, people.naturalPersons.NationalCode, people.naturalPersons.Gender, 
                          hr.Assignments.AssigneeType AS Assignments_AssigneeType, hr.OrganizationUnits.Name AS OrganizationUnits_Name, hr.PostLocations.EffectiveFrom AS Locations_EffectiveFrom, 
                          hr.PostLocations.EffectiveTo AS Locations_EffectiveTo, hr.Location.Title AS Location_Title, hr.Location.Id AS Location_Id
 FROM            hr.Post LEFT OUTER JOIN

@@ -7,6 +7,15 @@ const API_MODULE = "hr";
 
 export const employmentApi = {
 
+  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/hr/Employment/GetSelectionList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
  // دریافت پست ها (GET)
   GetList: async (): Promise<EmploymentInfoView[]> => {
     
@@ -31,15 +40,6 @@ export const employmentApi = {
     return response.data; // آرایه‌ای از GUIDهای به‌روز شده
   },
   
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
-    const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
-      "/api/hr/Employment/GetSelectionList",
-      {  withCredentials: true }
-    );
-    console.log(response)
-    return response.data;
-  },
   
 // ویرایش منبع (PUT)
   updateemployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
