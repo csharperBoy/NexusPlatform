@@ -61,13 +61,13 @@ namespace HR.Application.Commands.Employment
 
     public class CreateEmploymentCommandHandler : IRequestHandler<CreateEmploymentCommand, Result<Guid>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly IPersonPublicService _personService;
         private readonly IEmploymentInternalService _employmentService;
         private readonly ILogger<CreateEmploymentCommandHandler> _logger;
         private readonly IUserDataContextProvider _userProvider;
         public CreateEmploymentCommandHandler(
-            IOrgChartInternalService orgChartService,
+            IPostInternalService orgChartService,
             IPersonPublicService personService,
             IEmploymentInternalService employmentService,
            IUserDataContextProvider userProvider,

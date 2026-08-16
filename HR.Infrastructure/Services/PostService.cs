@@ -21,9 +21,9 @@ using System.Threading.Tasks;
 
 namespace HR.Infrastructure.Services
 {
-    public class OrgChartService :
-        IOrgChartInternalService,
-        IOrgChartPublicService
+    public class PostService :
+        IPostInternalService,
+        IPostPublicService
     {
         //private readonly ISpecificationRepository<PostContact, Guid> _postContactSpecRepository;
         private readonly ISpecificationRepository<PostInfoView, Guid> _postInfoViewSpecRepository;
@@ -33,15 +33,20 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly ISpecificationRepository<Assignment, Guid> _assignmentSpecRepository;
 
+        private readonly IRepository<HRDbContext, PostLocation, Guid> _postLocationsRepository;
+        private readonly ISpecificationRepository<PostLocation, Guid> _postLocationSpecRepository;
+
         private readonly IHrContactPublicService _contactService;
-        private readonly ILogger<OrgChartService> _logger;
+        private readonly ILogger<PostService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
 
 
         //private readonly HRDbContext _contex;
-        public OrgChartService(
-            //HRDbContext contex,
+        public PostService(
+             //HRDbContext contex,
+             IRepository<HRDbContext, PostLocation, Guid> postLocationsRepository,
+             ISpecificationRepository<PostLocation, Guid> postLocationSpecRepository,
             ISpecificationRepository<PostInfoView, Guid> postInfoViewSpecRepository,
             ISpecificationRepository<Post, Guid> postSpecRepository,
             //ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
@@ -51,7 +56,7 @@ namespace HR.Infrastructure.Services
         IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
         IHrContactPublicService contactService,
         IUnitOfWork<HRDbContext> uow, IHRUnitOfWork<HRDbContext> hrUow,
-        ILogger<OrgChartService> logger)
+        ILogger<PostService> logger)
         {
             //_contex= contex;
             _postInfoViewSpecRepository = postInfoViewSpecRepository;
@@ -65,8 +70,38 @@ namespace HR.Infrastructure.Services
             _assignmentRepository = assignmentRepository;
              _contactService= contactService;
             _uow = uow;
+            _postLocationSpecRepository = postLocationSpecRepository;
+            _postLocationsRepository = postLocationsRepository;
         }
+        public async Task AssignLocationsToPost(Guid postId, List<Guid> locationsId)
+        {
+            // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
+            var spec = new GetPostLocationsSpec(postId);
+            var existingActive = await _postLocationSpecRepository.ListBySpecAsync(spec);
 
+            // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+            var existingIds = existingActive.Select(e => e.FkLocationId).ToHashSet();
+            var newIds = locationsId.Distinct().ToHashSet();
+
+            // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+            var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
+            foreach (var item in toExpire)
+            {
+                await item.DoExpire();
+            }
+
+            // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+            var toAdd = newIds
+                .Where(id => !existingIds.Contains(id))
+                .Select(id => new PostLocation(id, postId))
+                .ToList();
+
+            if (toAdd.Any())
+            {
+                await _postLocationsRepository.AddRangeAsync(toAdd);
+            }
+
+        }
         public async Task<List<Guid>?> GetEmploymentPostsId(Guid? employmentId)
         {
             try
@@ -103,11 +138,11 @@ namespace HR.Infrastructure.Services
         {
             Assignment assign = new Assignment(postId, employmentId, assigneType, EffectiveFrom, EffectiveTo);
             var assignments = await GetPostAssignmentAsync(postId);
-            if (assignments.Count > 0)
+            if (assignments?.Count > 0)
             {
                 foreach (var item in assignments)
                 {
-                    item.DoExpire();
+                   await item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }
@@ -119,11 +154,11 @@ namespace HR.Infrastructure.Services
         {
             Assignment assign = new Assignment(postId, employmentId, assigneType, EffectiveFrom, EffectiveTo);
             var assignments = await GetEmploymentAssignmentAsync(employmentId);
-            if (assignments.Count > 0)
+            if (assignments?.Count > 0)
             {
                 foreach (var item in assignments)
                 {
-                    item.DoExpire();
+                  await  item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }

@@ -65,13 +65,13 @@ namespace HR.Application.Commands.Employment
     public class UpdateEmploymentCommandHandler : IRequestHandler<UpdateEmploymentCommand, Result<Guid>>
     {
         private readonly IEmploymentInternalService _employmentService;
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<UpdateEmploymentCommandHandler> _logger;
 
         public UpdateEmploymentCommandHandler(
             IEmploymentInternalService employmentService,
             ILogger<UpdateEmploymentCommandHandler> logger,
-            IOrgChartInternalService orgChartService)
+            IPostInternalService orgChartService)
         {
             _employmentService = employmentService;
             _logger = logger;

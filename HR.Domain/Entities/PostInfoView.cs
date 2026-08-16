@@ -50,4 +50,10 @@ public partial class PostInfoView
     public int? AssignmentsAssigneeType { get; set; }
 
     public string OrganizationUnitsName { get; set; } = null!;
+    public DateTime? LocationsEffectiveFrom { get; set; }
+
+    public DateTime? LocationsEffectiveTo { get; set; }
+
+    public string? LocationTitle { get; set; }
+    public Guid? LocationId { get; set; }
 }

@@ -18,7 +18,7 @@ namespace Authorization.Application.Provider
         private readonly IRolePublicService _roleService;
         private readonly IEmploymentPublicService _employmentService;
 
-        private readonly IOrgChartPublicService _positionService;
+        private readonly IPostPublicService _positionService;
        private readonly IPermissionInternalService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly UserDataContext _userDataContext;
@@ -32,7 +32,7 @@ namespace Authorization.Application.Provider
             IRolePublicService roleService,
             IEmploymentPublicService employmentService,
 
-            IOrgChartPublicService positionService,
+            IPostPublicService positionService,
             IPermissionInternalService permissionService
             )
         {

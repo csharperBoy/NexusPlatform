@@ -22,11 +22,11 @@ namespace Contact.Application.Commands.Post
 
     public class UpdatePostContactCommandHandler : IRequestHandler<UpdatePostContactCommand, Result<Guid>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<UpdatePostContactCommandHandler> _logger;
 
         public UpdatePostContactCommandHandler(
-            IOrgChartInternalService orgChartService,
+            IPostInternalService orgChartService,
             ILogger<UpdatePostContactCommandHandler> logger)
         {
             _orgChartService = orgChartService;

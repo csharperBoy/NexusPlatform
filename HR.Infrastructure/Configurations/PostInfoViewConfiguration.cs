@@ -34,7 +34,11 @@ namespace HR.Infrastructure.Configurations
                     .HasMaxLength(200)
                     .HasColumnName("OrganizationUnits_Name");
             builder.Property(e => e.PostCode).HasColumnName("Post_Code");
-           
+            builder.Property(e => e.LocationsEffectiveFrom).HasColumnName("Locations_EffectiveFrom");
+            builder.Property(e => e.LocationsEffectiveTo).HasColumnName("Locations_EffectiveTo");
+            builder.Property(e => e.LocationTitle).HasColumnName("Location_Title");
+            builder.Property(e => e.LocationId).HasColumnName("Location_Id");
+
             /*
             builder
                  .HasNoKey()

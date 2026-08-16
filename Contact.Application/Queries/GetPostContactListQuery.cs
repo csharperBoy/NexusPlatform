@@ -19,11 +19,11 @@ namespace Contact.Application.Queries
     public class GetPostContactListQueryHandler
         : IRequestHandler<GetPostContactListQuery, Result<IReadOnlyList<PostContactDto>>>
     {
-        private readonly IOrgChartInternalService _orgChartInternalService;
+        private readonly IPostInternalService _orgChartInternalService;
         private readonly ILogger<GetPostContactListQueryHandler> _logger;
 
         public GetPostContactListQueryHandler(
-            IOrgChartInternalService orgChartInternalService,
+            IPostInternalService orgChartInternalService,
         ILogger<GetPostContactListQueryHandler> logger)
         {
             _orgChartInternalService = orgChartInternalService;

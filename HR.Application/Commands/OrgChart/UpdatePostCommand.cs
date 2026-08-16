@@ -34,11 +34,11 @@ namespace HR.Application.Commands.OrgChart
 
     public class UpdatePostCommandHandler : IRequestHandler<UpdatePostCommand, Result<Guid>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<UpdatePostCommandHandler> _logger;
 
         public UpdatePostCommandHandler(
-            IOrgChartInternalService orgChartService,
+            IPostInternalService orgChartService,
             ILogger<UpdatePostCommandHandler> logger)
         {
             _orgChartService = orgChartService;

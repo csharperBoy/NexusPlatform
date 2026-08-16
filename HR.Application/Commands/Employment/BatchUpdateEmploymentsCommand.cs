@@ -17,10 +17,10 @@ namespace HR.Application.Commands.Employment
     public class BatchUpdateEmploymentsCommandHandler : IRequestHandler<BatchUpdateEmploymentsCommand, Result<List<Guid>>>
     {
         private readonly IEmploymentInternalService _employmentService;
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdateEmploymentsCommandHandler> _logger;
 
-        public BatchUpdateEmploymentsCommandHandler(IOrgChartInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmploymentInternalService employmentService)
+        public BatchUpdateEmploymentsCommandHandler(IPostInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmploymentInternalService employmentService)
         {
             _orgChartService = orgChartService;
             _logger = logger;

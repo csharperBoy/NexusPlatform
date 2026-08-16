@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Core.Application.Abstractions.HR
 {
-    public interface IOrgChartPublicService
+    public interface IPostPublicService
     {
         Task<List<Guid?>?> GetEmploymentOrganizeId(Guid? employmentId);
         Task<List<Guid>?> GetEmploymentPostsId(Guid? employmentId);

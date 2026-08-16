@@ -29,14 +29,15 @@ namespace HR.Infrastructure.Configurations
             builder.Property(e => e.EmploymentEffectiveTo).HasColumnName("Employment_EffectiveTo");
             builder.Property(e => e.EmploymentStatusName).HasColumnName("Employment_Status_Name");
             builder.Property(e => e.EmploymentTypeName).HasColumnName("Employment_Type_Name");
-            builder.Property(e => e.EmploymentLocationsEffectiveFrom).HasColumnName("EmploymentLocations_EffectiveFrom");
-            builder.Property(e => e.EmploymentLocationsEffectiveTo).HasColumnName("EmploymentLocations_EffectiveTo");
             builder.Property(e => e.FirstName).HasMaxLength(100);
             builder.Property(e => e.GradeTitle).HasColumnName("Grade_Title");
             builder.Property(e => e.JobLevelTitle).HasColumnName("JobLevel_Title");
             builder.Property(e => e.JobTitleName).HasColumnName("JobTitle_Name");
             builder.Property(e => e.LastName).HasMaxLength(100);
+            builder.Property(e => e.EmploymentLocationsEffectiveFrom).HasColumnName("EmploymentLocations_EffectiveFrom");
+            builder.Property(e => e.EmploymentLocationsEffectiveTo).HasColumnName("EmploymentLocations_EffectiveTo");
             builder.Property(e => e.LocationTitle).HasColumnName("Location_Title");
+            builder.Property(e => e.LocationId).HasColumnName("Location_Id");
             builder.Property(e => e.NationalCode).HasMaxLength(10);
             builder.Property(e => e.OrganizationUnitsName)
                     .HasMaxLength(200)

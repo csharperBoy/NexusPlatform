@@ -18,11 +18,11 @@ namespace HR.Application.Queries.Post
     public class GetPostListQueryHandler
         : IRequestHandler<GetPostListQuery, Result<IReadOnlyList<PostInfoView>>>
     {
-        private readonly IOrgChartInternalService _orgChartInternalService;
+        private readonly IPostInternalService _orgChartInternalService;
         private readonly ILogger<GetPostListQueryHandler> _logger;
 
         public GetPostListQueryHandler(
-            IOrgChartInternalService orgChartInternalService,
+            IPostInternalService orgChartInternalService,
         ILogger<GetPostListQueryHandler> logger)
         {
             _orgChartInternalService = orgChartInternalService;

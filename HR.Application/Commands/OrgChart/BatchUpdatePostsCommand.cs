@@ -15,10 +15,10 @@ namespace HR.Application.Commands.OrgChart
     
     public class BatchUpdatePostsCommandHandler : IRequestHandler<BatchUpdatePostsCommand, Result<List<Guid>>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdatePostsCommandHandler> _logger;
 
-        public BatchUpdatePostsCommandHandler(IOrgChartInternalService orgChartService, ILogger<BatchUpdatePostsCommandHandler> logger)
+        public BatchUpdatePostsCommandHandler(IPostInternalService orgChartService, ILogger<BatchUpdatePostsCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;

@@ -20,7 +20,7 @@ namespace Identity.Application.Provider
         private readonly IPermissionPublicService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
-        private readonly IOrgChartPublicService _positionService;
+        private readonly IPostPublicService _positionService;
         private readonly IRolePublicService _roleService;
         private readonly IPersonPublicService _personService;
         private readonly UserDataContext _userDataContext;
@@ -32,7 +32,7 @@ namespace Identity.Application.Provider
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
        IPersonPublicService personService,
-        IOrgChartPublicService positionService,
+        IPostPublicService positionService,
             IRolePublicService roleService,
              IEmploymentPublicService employmentService
             )

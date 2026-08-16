@@ -120,7 +120,7 @@ namespace Contact.Infrastructure.Services
                 {
                     if (existContact != null)
                     {
-                        existContact.DoExpire();
+                       await existContact.DoExpire();
                         await _postContactRepository.UpdateAsync(existContact);
 
                     }

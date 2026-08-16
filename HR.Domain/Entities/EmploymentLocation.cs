@@ -60,7 +60,8 @@ namespace HR.Domain.Entities
         {
             FkLocationId = _fkLocationId;
             FkEmploymentId = _fkEmploymentId;
-
+            IsCurrent = true;
+            EffectiveFrom = DateTime.UtcNow;
         }
 
     }

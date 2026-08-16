@@ -14,8 +14,8 @@ namespace HR.Application.Queries.Post
 
     public class GetPostsSelectionListQueryHandler : IRequestHandler<GetPostsSelectionListQuery, Result<IList<SelectionListDto>>>
     {
-        private readonly IOrgChartInternalService _service;
-        public GetPostsSelectionListQueryHandler(IOrgChartInternalService service)
+        private readonly IPostInternalService _service;
+        public GetPostsSelectionListQueryHandler(IPostInternalService service)
         {
             _service = service;
         }

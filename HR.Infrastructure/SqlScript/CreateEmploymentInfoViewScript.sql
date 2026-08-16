@@ -7,7 +7,7 @@ SELECT      hr.[Employment].Id,  people.naturalPersons.NationalCode, people.natu
                          hr.JobLevel.Title AS JobLevel_Title, hr.JobTitle.Name AS JobTitle_Name, hr.OrganizationUnits.Name AS OrganizationUnits_Name, PostContact_Phone.Value AS PostContact_Phone, 
                          PostContact_Mobile.Value AS PostContact_Mobile, PostContact_Email.Value AS PostContact_Email, PostContact_Fax.Value AS PostContact_Fax, EmploymentContact_Phone.Value AS EmploymentContact_Phone, 
                          EmploymentContact_Mobile.Value AS EmploymentContact_Mobile, EmploymentContact_Email.Value AS EmploymentContact_Email, EmploymentContact_Fax.Value AS EmploymentContact_Fax, 
-                         hr.[EmploymentLocations].EffectiveFrom AS EmploymentLocations_EffectiveFrom, hr.[EmploymentLocations].EffectiveTo AS EmploymentLocations_EffectiveTo, hr.Location.Title AS Location_Title
+                         hr.[EmploymentLocations].EffectiveFrom AS EmploymentLocations_EffectiveFrom, hr.[EmploymentLocations].EffectiveTo AS EmploymentLocations_EffectiveTo, hr.Location.Title AS Location_Title, hr.Location.Id AS Location_Id
 FROM            hr.Location INNER JOIN
                          hr.[EmploymentLocations] ON hr.Location.Id = hr.[EmploymentLocations].FkLocationId AND hr.[EmploymentLocations].IsCurrent = 1 RIGHT OUTER JOIN
                          hr.[Employment] INNER JOIN

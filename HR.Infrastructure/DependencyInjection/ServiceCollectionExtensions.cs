@@ -63,15 +63,15 @@ namespace HR.Infrastructure.DependencyInjection
                 });
             });
 
-            services.AddScoped<OrgChartService>();
+            services.AddScoped<PostService>();
             services.AddScoped<EmploymentService>();
             services.AddScoped<LocationService>();
             services.AddScoped<IUnitOfWork<HRDbContext>, EfUnitOfWork<HRDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
             
-            services.AddScoped<IOrgChartPublicService>(sp => sp.GetRequiredService<OrgChartService>());
-            services.AddScoped<IOrgChartInternalService>(sp => sp.GetRequiredService<OrgChartService>());
+            services.AddScoped<IPostPublicService>(sp => sp.GetRequiredService<PostService>());
+            services.AddScoped<IPostInternalService>(sp => sp.GetRequiredService<PostService>());
 
             services.AddScoped<IEmploymentPublicService>(sp => sp.GetRequiredService<EmploymentService>());
             services.AddScoped<IEmploymentInternalService>(sp => sp.GetRequiredService<EmploymentService>());
@@ -131,7 +131,7 @@ namespace HR.Infrastructure.DependencyInjection
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();
 
-            services.AddScoped<IOrgChartInternalService, OrgChartService>();
+            services.AddScoped<IPostInternalService, PostService>();
             services.AddScoped<IEmploymentInternalService, EmploymentService>();
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()

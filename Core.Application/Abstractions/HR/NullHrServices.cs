@@ -14,13 +14,13 @@ namespace Core.Application.Abstractions.HR
     {
         public static IServiceCollection HR_NullServiceInject(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IOrgChartPublicService, NullOrgChartService>();
+            services.AddScoped<IPostPublicService, NullOrgChartService>();
             services.AddScoped<IEmploymentPublicService, NullEmploymentService>();
             return services;
         }
     }
     
-    public class NullOrgChartService : IOrgChartPublicService
+    public class NullOrgChartService : IPostPublicService
     {
 
         public Task<List<Guid?>?> GetEmploymentOrganizeId(Guid? employmentId)

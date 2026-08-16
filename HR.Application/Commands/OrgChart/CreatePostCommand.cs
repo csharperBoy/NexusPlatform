@@ -36,11 +36,11 @@ namespace HR.Application.Commands.OrgChart
 
     public class CreatePostCommandHandler : IRequestHandler<CreatePostCommand, Result<Guid>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<CreatePostCommandHandler> _logger;
 
         public CreatePostCommandHandler(
-            IOrgChartInternalService orgChartService,
+            IPostInternalService orgChartService,
             ILogger<CreatePostCommandHandler> logger)
         {
             _orgChartService = orgChartService;

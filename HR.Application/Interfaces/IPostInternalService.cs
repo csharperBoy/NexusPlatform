@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Interfaces
 {
-    public interface IOrgChartInternalService
+    public interface IPostInternalService
     {
         Task<Guid> AssignToEmploymentAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
         Task<Guid> AssignToPostAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);

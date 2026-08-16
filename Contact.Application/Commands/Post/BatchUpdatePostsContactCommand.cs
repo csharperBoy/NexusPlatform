@@ -15,10 +15,10 @@ namespace Contact.Application.Commands.Post
     
     public class BatchUpdatePostsContactCommandHandler : IRequestHandler<BatchUpdatePostsContactCommand, Result<List<Guid>>>
     {
-        private readonly IOrgChartInternalService _orgChartService;
+        private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdatePostsContactCommandHandler> _logger;
 
-        public BatchUpdatePostsContactCommandHandler(IOrgChartInternalService orgChartService, ILogger<BatchUpdatePostsContactCommandHandler> logger)
+        public BatchUpdatePostsContactCommandHandler(IPostInternalService orgChartService, ILogger<BatchUpdatePostsContactCommandHandler> logger)
         {
             _orgChartService = orgChartService;
             _logger = logger;

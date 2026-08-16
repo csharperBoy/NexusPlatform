@@ -69,4 +69,5 @@ public partial class EmploymentInfoView
     public DateTime? EmploymentLocationsEffectiveTo { get; set; }
 
     public string? LocationTitle { get; set; }
+    public Guid? LocationId { get; set; }
 }

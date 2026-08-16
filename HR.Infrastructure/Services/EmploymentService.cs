@@ -31,14 +31,15 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
         private readonly IRepository<HRDbContext, EmploymentInfoView, Guid> _employmentInfoRepository;
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
-        private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
+        private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
         private readonly IHrContactPublicService _contactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
         public EmploymentService(IPersonPublicService personService,
-             IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository, ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
+             IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository, 
+             ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
             IRepository<HRDbContext, Employment, Guid> employmentRepository,
             ILogger<EmploymentService> logger,
             ISpecificationRepository<Employment, Guid> employmentSpecRepository, IHrContactPublicService contactService,
@@ -118,7 +119,7 @@ namespace HR.Infrastructure.Services
             var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
             foreach (var item in toExpire)
             {
-                item.DoExpire();
+               await item.DoExpire();
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
