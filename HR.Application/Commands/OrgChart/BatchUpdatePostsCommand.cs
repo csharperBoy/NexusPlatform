@@ -1,5 +1,6 @@
 ﻿using Core.Shared.Results;
 using HR.Application.Interfaces;
+using HR.Domain.Entities;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -52,7 +53,10 @@ namespace HR.Application.Commands.OrgChart
                     {
                         await _orgChartService.AssignToEmploymentAsync(postId, command.EmploymentId.Value, command.AssignType);
                     }
-
+                    if (command.locationsId != null)
+                    {
+                        await _orgChartService.AssignLocationsToPost(postId, command.locationsId);
+                    }
                     results.Add(postId);
                 }
 

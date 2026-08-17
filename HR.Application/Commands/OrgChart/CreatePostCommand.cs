@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace HR.Application.Commands.OrgChart
 {
@@ -27,6 +28,7 @@ namespace HR.Application.Commands.OrgChart
     Guid? EmploymentId,
     PostAssignmentType? AssignType,
 
+     List<Guid>? locationsId,
      string? OfficePhone ,
             string? OrgEmail ,
             string? OrgMobile 
@@ -69,7 +71,10 @@ namespace HR.Application.Commands.OrgChart
                 {
                     Guid assignId = await _orgChartService.AssignToEmploymentAsync(postId, (Guid)request.EmploymentId, request.AssignType);
                 }
-
+                if (request.locationsId != null)
+                {
+                    await _orgChartService.AssignLocationsToPost(postId, request.locationsId);
+                }
                 await _orgChartService.SaveAsync();
                 _logger.LogInformation(
                     "Post created successfully: {postId} ({Code})",

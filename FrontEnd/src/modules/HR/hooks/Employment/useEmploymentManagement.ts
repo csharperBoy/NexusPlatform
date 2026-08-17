@@ -7,7 +7,7 @@ import { locationApi } from "../../api/LocationApi"; // وارد کردن API م
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
 import { SelectionListDto } from "@/core/models/SelectionListDto"; // وارد کردن مدل SelectionListDto
-import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
+
 
 type EditableField =
   | "employmentCode"

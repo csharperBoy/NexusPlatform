@@ -25,6 +25,7 @@ namespace HR.Application.Commands.OrgChart
   Guid? EmploymentId,
   PostAssignmentType? AssignType,
 
+     List<Guid>? locationsId,
   string? OfficePhone,
   string? OrgEmail,
   string? OrgMobile

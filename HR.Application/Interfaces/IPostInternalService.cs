@@ -1,5 +1,6 @@
 ﻿using HR.Domain.Entities;
 using HR.Domain.Enums;
+using HR.Domain.Specifications;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,9 @@ namespace HR.Application.Interfaces
 {
     public interface IPostInternalService
     {
+        Task AssignLocationsToPost(Guid postId, List<Guid> locationsId);
+
+       
         Task<Guid> AssignToEmploymentAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
         Task<Guid> AssignToPostAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
         Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true
