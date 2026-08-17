@@ -43,9 +43,19 @@ namespace Core.Application.Abstractions.Contact
             await Task.CompletedTask;
         }
 
+        public Task<List<EntityContactDto<HrContactType>>> GetEmploymentContactsByEmploymentIdsAsync(List<Guid> employmentIds)
+        {
+            throw new NotImplementedException();
+        }
+
         public  Task<List<EntityContactDto<HrContactType>>> GetLocationContactsByLocationIdsAsync(List<Guid> locationIds)
         {
             return null;
+        }
+
+        public Task<List<EntityContactDto<HrContactType>>> GetPostContactsByPostIdsAsync(List<Guid> postIds)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task SaveAsync()

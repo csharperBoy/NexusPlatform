@@ -5,6 +5,7 @@ using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
+using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
@@ -18,7 +19,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-
+using Core.Shared.Enums;
 namespace HR.Infrastructure.Services
 {
     public class PostService :
@@ -303,13 +304,76 @@ namespace HR.Infrastructure.Services
             }
             return post.Id;
         }
-
-        public async Task<IReadOnlyList<PostInfoView>> GetPostListAsync()
+        public async Task<IReadOnlyList<PostInfoDto>> GetPostListAsync()
         {
             //var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
-            var list = await  _postInfoViewSpecRepository.ListBySpecAsync(new GetAllPostInfoViewSpec());
-            var result = list.ToList();
+            var postList = await  _postInfoViewSpecRepository.ListBySpecAsync(new GetAllPostInfoViewSpec());
+            var postIds = postList.Select(p => p.Id).ToList();
+
+            var locList = await _postLocationsRepository.GetAllAsync(q =>
+                q.Where(a => postIds.Contains(a.FkPostId) && a.IsCurrent)
+                 .Include(a => a.Location)
+            );
+
+            var contactList = await _contactService.GetPostContactsByPostIdsAsync(postIds);
+            
+            var result = postList.Select(s=> new PostInfoDto
+            {                                   
+                EmploymentCode = s.EmploymentCode,
+                EmploymentId = s.EmploymentId,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                FkCostCenterId = s.FkCostCenterId,
+                CostCenterName = s.CostCenterName,
+                Id = s.Id,
+                FkGradeId = s.FkGradeId,
+                GradeTitle = s.GradeTitle,
+                FkJobLevelId = s.FkJobLevelId,
+                JobLevelTitle = s.JobLevelTitle,
+                FkJobTitleId = s.FkJobTitleId,
+                JobTitleName = s.JobTitleName,
+                AssigneeType =  s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
+                FkOrganizationUnitId = s.FkOrganizationUnitId,
+                OrganizationUnitsName = s.OrganizationUnitsName,
+                FkParentId = s.FkParentId,
+                Gender = s.Gender,
+                PostCode = s.PostCode,
+                hrContacts = contactList,
+                locations = locList.Where(l=>l.FkPostId == s.Id).Select(s=> new LocationInfoDto {Id = s.Location.Id , Title = s.Location.Title }).ToList(),
+
+                
+            }).ToList();
             return result;
+        }
+
+        public async Task<IEnumerable<CostCenter>> GetCostCenterListAsync()
+        {
+            var list = await _hrUow.CostCenterRepository.GetAllAsync();
+            return list;
+        }
+
+        public async Task<IEnumerable<Grade>> GetGradeListAsync()
+        {
+            var list = await _hrUow.GradeRepository.GetAllAsync();
+            return list;
+        }
+
+        public async Task<IEnumerable<JobLevel>> GetJobLevelListAsync()
+        {
+            var list = await _hrUow.JobLevelRepository.GetAllAsync();
+            return list;
+        }
+
+        public async Task<IEnumerable<JobTitle>> GetJobTitleListAsync()
+        {
+            var list = await _hrUow.JobTitleRepository.GetAllAsync();
+            return list;
+        }
+
+        public async Task<IEnumerable<OrganizationUnit>> GetOrganizationUnitListAsync()
+        {
+            var list = await _hrUow.OrganizationUnitRepository.GetAllAsync();
+            return list;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Contact.Application.DTOs;
 using Core.Shared.DTOs.Authorization;
+using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
@@ -48,14 +49,14 @@ namespace Contact.Application.Queries
                     OrganizationUnitsName = post.OrganizationUnitsName,
                     JobLevelTitle = post.JobLevelTitle,
                     JobTitleName = post.JobTitleName,
-                    OfficePhone = post.OfficePhone,
-                    OrgMobile = post.OrgMobile,
-                    OrgEmail = post.OrgEmail,
+                    OfficePhone = post.hrContacts.FirstOrDefault(a=> a.EntityId == post.Id && a.ContactType == HrContactType.OfficePhone)?.Value,
+                    OrgMobile = post.hrContacts.FirstOrDefault(a => a.EntityId == post.Id && a.ContactType == HrContactType.OrgMobile)?.Value,
+                    OrgEmail = post.hrContacts.FirstOrDefault(a => a.EntityId == post.Id && a.ContactType == HrContactType.OrgEmail)?.Value,
                     EmploymentCode = post.EmploymentCode,
                     FirstName = post.FirstName,
                     LastName = post.LastName,
                     Gender = post.Gender,
-                    AssignmentsAssigneeType = post.AssignmentsAssigneeType
+                    AssignmentsAssigneeType = post.AssigneeType
                 }).ToList();
                 return Result<IReadOnlyList<PostContactDto>>.Ok(result);
             }

@@ -1,5 +1,5 @@
 ﻿using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
+ 
 using Authorization.Domain.Specifications;
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions.Authorization;

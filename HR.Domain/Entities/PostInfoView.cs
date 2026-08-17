@@ -9,7 +9,6 @@ public partial class PostInfoView
 
     public string PostCode { get; set; } = null!;
 
-    public Guid? ParentId { get; set; }
 
     public Guid? FkParentId { get; set; }
 
@@ -31,11 +30,6 @@ public partial class PostInfoView
 
     public string? JobTitleName { get; set; }
 
-    public string? OfficePhone { get; set; }
-
-    public string? OrgMobile { get; set; }
-
-    public string? OrgEmail { get; set; }
 
     public Guid? EmploymentId { get; set; }
     public string? EmploymentCode { get; set; }
@@ -51,10 +45,5 @@ public partial class PostInfoView
     public int? AssignmentsAssigneeType { get; set; }
 
     public string OrganizationUnitsName { get; set; } = null!;
-    public DateTime? LocationsEffectiveFrom { get; set; }
-
-    public DateTime? LocationsEffectiveTo { get; set; }
-
-    public string? LocationTitle { get; set; }
-    public Guid? LocationId { get; set; }
+    
 }

@@ -1,6 +1,7 @@
 ﻿using Core.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,6 +72,22 @@ namespace Core.Application.Abstractions
         /// <param name="includeProperties"></param>
         /// <returns></returns>
         Task<IEnumerable<TEntity>> GetAllAsync(params Expression<Func<TEntity, object>>[] includeProperties);
+
+        /// <summary>
+        /// var items = await repo.GetAllAsync(q =>
+        /// q.Where(x => x.IsActive)
+        ///     .OrderByDescending(x => x.CreatedAt)
+        ///     .Include(x => x.Parent)
+        ///     .ThenInclude(x => x.Children)
+        ///     .Skip(10)
+        ///     .Take(20)
+        ///     );
+        /// </summary>
+        /// <param name="queryOptions"></param>
+        /// <returns></returns>
+        Task<IEnumerable<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryOptions = null);
+       
+
         /// <summary>
         /// var result = await GetAllAsync(q => q.OrderByDescending(x => x.CreatedDate)
         ///.ThenBy(x => x.Name));

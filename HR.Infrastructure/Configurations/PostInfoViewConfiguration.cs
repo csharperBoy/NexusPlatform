@@ -34,32 +34,7 @@ namespace HR.Infrastructure.Configurations
                     .HasMaxLength(200)
                     .HasColumnName("OrganizationUnits_Name");
             builder.Property(e => e.PostCode).HasColumnName("Post_Code");
-            builder.Property(e => e.LocationsEffectiveFrom).HasColumnName("Locations_EffectiveFrom");
-            builder.Property(e => e.LocationsEffectiveTo).HasColumnName("Locations_EffectiveTo");
-            builder.Property(e => e.LocationTitle).HasColumnName("Location_Title");
-            builder.Property(e => e.LocationId).HasColumnName("Location_Id");
 
-            /*
-            builder
-                 .HasNoKey()
-               .ToView("Post_Info_View", "hr")
-              ;
-
-            builder.Property(e => e.AssignmentsAssigneeType).HasColumnName("Assignments_AssigneeType");
-            builder.Property(e => e.CostCenterName).HasColumnName("CostCenter_Name");
-            builder.Property(e => e.FirstName).HasMaxLength(100);
-            builder.Property(e => e.GradeTitle).HasColumnName("Grade_Title");
-            builder.Property(e => e.JobLevelTitle).HasColumnName("JobLevel_Title");
-            builder.Property(e => e.JobTitleName).HasColumnName("JobTitle_Name");
-            builder.Property(e => e.LastName).HasMaxLength(100);
-            builder.Property(e => e.NationalCode).HasMaxLength(10);
-            builder.Property(e => e.OrganizationUnitsName)
-                    .HasMaxLength(200)
-                    .HasColumnName("OrganizationUnits_Name");
-            builder.Property(e => e.PostCode).HasColumnName("Post_Code");
-            builder.Property(e => e.OrgEmail).HasColumnName("OrgEmail");
-            builder.Property(e => e.OrgMobile).HasColumnName("OrgMobile");
-            builder.Property(e => e.OfficePhone).HasColumnName("OfficePhone");*/
         }
     }
 

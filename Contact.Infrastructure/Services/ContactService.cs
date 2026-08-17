@@ -142,5 +142,31 @@ namespace Contact.Infrastructure.Services
                 IsCurrent = c.IsCurrent
             }).ToList();
         }
+        public async Task<List<EntityContactDto<HrContactType>>> GetPostContactsByPostIdsAsync(List<Guid> postIds)
+        {
+            GetPostContactsByPostIdsSpec spec = new GetPostContactsByPostIdsSpec(postIds);
+            var list = await _postContactSpecRepository.ListBySpecAsync(spec);
+            return list.Select(c => new EntityContactDto<HrContactType>
+            {
+                ContactType = c.ContactType,
+                Value = c.Value,
+                EntityId = c.FkPostId,
+                IsCurrent = c.IsCurrent
+            }).ToList();
+        }
+        public async Task<List<EntityContactDto<HrContactType>>> GetEmploymentContactsByEmploymentIdsAsync(List<Guid> employmentIds)
+        {
+            GetEmploymentContactsByEmploymentIdsSpec spec = new GetEmploymentContactsByEmploymentIdsSpec(employmentIds);
+            var list = await _employmentContactSpecRepository.ListBySpecAsync(spec);
+            return list.Select(c => new EntityContactDto<HrContactType>
+            {
+                ContactType = c.ContactType,
+                Value = c.Value,
+                EntityId = c.FkEmploymentId,
+                IsCurrent = c.IsCurrent
+            }).ToList();
+        }
+
+       
     }
 }

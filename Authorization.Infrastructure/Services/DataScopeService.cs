@@ -2,7 +2,7 @@
 using Authorization.Application.DTOs.DataScopes;
 using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
+ 
 using Authorization.Domain.Events;
 using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;

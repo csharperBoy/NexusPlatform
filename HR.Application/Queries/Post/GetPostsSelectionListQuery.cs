@@ -23,7 +23,7 @@ namespace HR.Application.Queries.Post
         public async Task<Result<IList<SelectionListDto>>> Handle(GetPostsSelectionListQuery request, CancellationToken ct)
         {
             var resources = await _service.GetPostListAsync();
-            var result = resources.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.JobTitleName}"));
+            var result = resources.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.FkJobTitleId}"));
             return Result<IList<SelectionListDto>>.Ok(result.ToList());
         }
     }

@@ -1,5 +1,5 @@
 ﻿using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
+ 
 using Core.Domain.Specifications;
 using System;
 using System.Collections.Generic;

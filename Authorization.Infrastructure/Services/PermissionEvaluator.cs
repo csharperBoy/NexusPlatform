@@ -1,7 +1,7 @@
 ﻿using Authorization.Application.DTOs.Permissions;
 using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
+ 
 using Authorization.Domain.Specifications;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;

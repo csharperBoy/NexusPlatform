@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Authorization.Domain.Enums
-{
+{/*
     public static class EnumExtensions
     {
         public static ResourceType ToResourceType(this string typeStr)
@@ -27,6 +27,6 @@ namespace Authorization.Domain.Enums
             return Enum.TryParse<TEnum>(value, true, out var result) ? result : defaultValue;
         }
 
-    }
+    }*/
 
 }

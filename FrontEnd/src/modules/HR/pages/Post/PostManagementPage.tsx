@@ -1,32 +1,64 @@
 // src/modules/HR/pages/Post/PostManagementPage.tsx
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import * as XLSX from "xlsx";
-import { postApi } from "../../api/PostApi";
-import { PostInfoView } from "../../models/postInfoView";
-import { UpdatePostCommand } from "../../models/postCommand";
+import React from "react";
 import { usePostManagement } from "../../hooks/Post/usePostManagement";
 import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
-
+import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMultiSelect";
 
 export const PostManagementPage: React.FC = () => {
   const {
     columnSearch,
     collapseAll,
-    dragOverId,draggedIds,draggedIdsRef,
-    employmentMap,employments,error,
-    expandAll,expandedIds,fileInputRef,
-    flattenedTree,globalSearch,handleColumnSearch,handleDragOverRow,
-    handleDragStart,handleDragOverId,handleIsOverRootZone,
-    handleDropOnRoot,handleDropOnRow,handleExcelImport,
-    handleFieldChange,handleGlobalSearch,handleResetChanges,
-    handleRowClick,handleSaveChanges,initialPosts,
-    initialPostsMap,isDescendant,isOverRootZone,
-    lastSelectedId,loadData,loading,
-    locationMap,locations,
-    modifiedIds,posts,postsMap,saving,selectedIds,successMessage,toggleExpand,updateNodesParent,
+    dragOverId,
+    draggedIds,
+    draggedIdsRef,
+    employmentMap,
+    employments,
+    error,
+    expandAll,
+    expandedIds,
+    fileInputRef,
+    flattenedTree,
+    globalSearch,
+    handleColumnSearch,
+    handleDragOverRow,
+    handleDragStart,
+    handleDragOverId,
+    handleIsOverRootZone,
+    handleDropOnRoot,
+    handleDropOnRow,
+    handleExcelImport,
+    handleFieldChange,
+    handleGlobalSearch,
+    handleResetChanges,
+    handleRowClick,
+    handleSaveChanges,
+    initialPosts,
+    initialPostsMap,
+    isDescendant,
+    isOverRootZone,
+    lastSelectedId,
+    loadData,
+    loading,
+    locations,
+    jobTitles,
+    orgUnits,
+    jobLevels,
+    grades,
+    modifiedIds,
+    posts,
+    postsMap,
+    saving,
+    selectedIds,
+    successMessage,
+    toggleExpand,
+    updateNodesParent,
+    jobTitleMap,
+    orgUnitMap,
+    jobLevelMap,
+    gradeMap,
+    locationMap,
   } = usePostManagement();
-
 
   if (loading) {
     return (
@@ -66,17 +98,14 @@ export const PostManagementPage: React.FC = () => {
               accept=".xlsx, .xls"
               className="hidden"
             />
-
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={saving}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2 cursor-pointer shadow-sm"
-              title="بارگذاری اکسل جهت به‌روزرسانی تلفن داخلی و موبایل سازمانی"
             >
               📊 بارگذاری از اکسل
             </button>
-
             {modifiedIds.size > 0 && (
               <button
                 onClick={handleResetChanges}
@@ -86,7 +115,6 @@ export const PostManagementPage: React.FC = () => {
                 انصراف و بازنشانی
               </button>
             )}
-
             <button
               onClick={handleSaveChanges}
               disabled={modifiedIds.size === 0 || saving}
@@ -123,7 +151,6 @@ export const PostManagementPage: React.FC = () => {
               className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
-
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>💡 راهنما: برای انتخاب چندگانه از کلیدهای Ctrl و Shift استفاده کنید.</span>
             <button
@@ -160,48 +187,51 @@ export const PostManagementPage: React.FC = () => {
       </div>
 
       {/* جدول چارت */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      {/* <div className="bg-white rounded-xl border border-gray-200 shadow-sm"> */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-visible">
         <table className="w-full text-right border-collapse">
+        
           <thead>
-            {/* ردیف اول: عناوین ستون‌ها */}
+            {/* ردیف عناوین */}
+            
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 text-center border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 h-[38px] text-center border-b border-gray-200 shadow-sm">              
                 جابه‌جایی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
-                عنوان شغل (کد پست)
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 shadow-sm min-w-[150px]">
+                عنوان شغل
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 shadow-sm min-w-[140px]">
                 واحد سازمانی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 shadow-sm min-w-[140px]">
                 شاغل فعلی
               </th>
-             
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
-                رده / سطح شغلی
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 shadow-sm min-w-[130px]">
+                سطح شغلی
               </th>
-               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 shadow-sm min-w-[180px]">
                 محل استقرار
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
             </tr>
 
-            {/* ردیف دوم: اینپوت‌های سرچ */}
+            {/* ردیف سرچ ستونی */}
             <tr className="border-b border-gray-200">
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
-                  placeholder="سرچ شغل / کد..."
+                  placeholder="سرچ شغل..."
                   value={columnSearch["jobTitle"] || ""}
                   onChange={(e) => handleColumnSearch("jobTitle", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ واحد..."
@@ -210,7 +240,7 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شاغل..."
@@ -219,26 +249,26 @@ export const PostManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
-                  placeholder="سرچ رده..."
+                  placeholder="سرچ سطح..."
                   value={columnSearch["levelGrade"] || ""}
                   onChange={(e) => handleColumnSearch("levelGrade", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ محل استقرار..."
-                  value={columnSearch["locationId"] || ""}
-                  onChange={(e) => handleColumnSearch("locationId", e.target.value)}
+                  value={columnSearch["location"] || ""}
+                  onChange={(e) => handleColumnSearch("location", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
+              <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
 
@@ -254,10 +284,7 @@ export const PostManagementPage: React.FC = () => {
                 const isSelected = selectedIds.has(node.id);
                 const isBeingDragged = draggedIds.includes(node.id);
                 const isTarget = dragOverId === node.id;
-                const occupantName =
-                  node.firstName || node.lastName
-                    ? `${node.firstName || ""} ${node.lastName || ""}`
-                    : "-";
+                const occupantDisplay = employmentMap.get(node.employmentId || "") || "";
 
                 return (
                   <tr
@@ -272,22 +299,20 @@ export const PostManagementPage: React.FC = () => {
                       isTarget ? "bg-blue-200 border-y-2 border-blue-600" : "hover:bg-gray-50/80"
                     } ${isModified && !isSelected ? "bg-amber-50/40" : ""}`}
                   >
+                    {/* ستون درگ */}
                     <td className="py-3 px-2 text-center align-middle">
                       <div
                         draggable
                         onDragStart={(e) => handleDragStart(e, node.id)}
                         className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg leading-none inline-block p-1"
-                        title="جهت تغییر والد، کشیده و رها کنید (امکان انتخاب گروهی)"
                       >
                         ☰
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 font-medium text-gray-800">
-                      <div
-                        className="flex items-center gap-2"
-                        style={{ paddingRight: `${depth * 24}px` }}
-                      >
+                    {/* عنوان شغل */}
+                    <td className="py-3 px-4 align-middle">
+                      <div className="flex items-center gap-2" style={{ paddingRight: `${depth * 24}px` }}>
                         {hasChildren ? (
                           <button
                             type="button"
@@ -302,61 +327,69 @@ export const PostManagementPage: React.FC = () => {
                         ) : (
                           <span className="w-5 text-center text-gray-300">•</span>
                         )}
-                        <span>
-                          {node.jobTitleName || "بدون عنوان شغل"}{" "}
-                          {node.postCode && (
-                            <span className="text-gray-500 text-xs font-mono font-normal">
-                              ({node.postCode})
-                            </span>
-                          )}
-                        </span>
+                        <SearchableSelect
+                          options={jobTitles}
+                          value={node.fkJobTitleId || ""}
+                          onChange={(selected) =>
+                            handleFieldChange(node.id, "fkJobTitleId", selected?.value || "")
+                          }
+                          placeholder="انتخاب عنوان شغل..."
+                          className="min-w-[100px]"
+                        />
                       </div>
                     </td>
 
-                    <td className="py-3 px-4 text-gray-600 text-xs">
-                      {node.organizationUnitsName || "-"}
+                    {/* واحد سازمانی */}
+                    <td className="py-3 px-4 align-middle">
+                      <SearchableSelect
+                        options={orgUnits}
+                        value={node.fkOrganizationUnitId || ""}
+                        onChange={(selected) =>
+                          handleFieldChange(node.id, "fkOrganizationUnitId", selected?.value || "")
+                        }
+                        placeholder="انتخاب واحد..."
+                      />
                     </td>
 
-                    {/* <td className="py-3 px-4 text-gray-700 text-xs">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{occupantName}</span>
-                        {node.employmentCode && (
-                          <span className="text-[10px] text-gray-400 font-mono">
-                            کد: {node.employmentCode}
-                          </span>
-                        )}
-                      </div>
-                    </td> */}
-                     <td className="py-3 px-4 text-gray-500 text-xs">
+                    {/* شاغل */}
+                    <td className="py-3 px-4 align-middle">
                       <SearchableSelect
                         options={employments}
                         value={node.employmentId || ""}
-                        onChange={(selected) => handleFieldChange(node.id, "employmentId", selected?.value || "")}
+                        onChange={(selected) =>
+                          handleFieldChange(node.id, "employmentId", selected?.value || "")
+                        }
                         placeholder="انتخاب شاغل..."
                       />
-                    </td>      
-                    
-
-                    <td className="py-3 px-4 text-gray-500 text-xs">
-                      {node.jobLevelTitle || node.gradeTitle ? (
-                        <span>
-                          {node.jobLevelTitle || ""} {node.gradeTitle ? `(${node.gradeTitle})` : ""}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
                     </td>
 
- 
-                    <td className="py-3 px-4 text-gray-500 text-xs">
+                    {/* سطح شغلی */}
+                    <td className="py-3 px-4 align-middle">
                       <SearchableSelect
-                        options={locations}
-                        value={node.locationId || ""}
-                        onChange={(selected) => handleFieldChange(node.id, "locationId", selected?.value || "")}
-                        placeholder="انتخاب محل استقرار..."
+                        options={jobLevels}
+                        value={node.fkJobLevelId || ""}
+                        onChange={(selected) =>
+                          handleFieldChange(node.id, "fkJobLevelId", selected?.value || "")
+                        }
+                        placeholder="سطح..."
                       />
                     </td>
 
+                    
+
+                    {/* محل استقرار (چند انتخابی) */}
+                    <td className="py-3 px-4 align-middle">
+                      <SearchableMultiSelect
+                        options={locations}
+                        value={node.locations?.map(loc => loc.id) || []}
+                        onChange={(selectedIds) =>
+                          handleFieldChange(node.id, "locations", selectedIds)
+                        }
+                        placeholder="انتخاب محل‌های استقرار..."
+                      />
+                    </td>
+
+                    {/* وضعیت تغییر */}
                     <td className="py-3 px-4 text-center">
                       {isModified ? (
                         <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-medium">

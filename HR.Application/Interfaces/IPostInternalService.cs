@@ -1,4 +1,5 @@
-﻿using HR.Domain.Entities;
+﻿using HR.Application.DTOs;
+using HR.Domain.Entities;
 using HR.Domain.Enums;
 using HR.Domain.Specifications;
 using System;
@@ -23,8 +24,13 @@ namespace HR.Application.Interfaces
             string? OrgEmail = null,
             string? OrgMobile = null
             );
+        Task<IEnumerable<CostCenter>> GetCostCenterListAsync();
         Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId);
-        Task<IReadOnlyList<PostInfoView>> GetPostListAsync();
+        Task<IEnumerable<Grade>> GetGradeListAsync();
+        Task<IEnumerable<JobLevel>> GetJobLevelListAsync();
+        Task<IEnumerable<JobTitle>> GetJobTitleListAsync();
+        Task<IEnumerable<OrganizationUnit>> GetOrganizationUnitListAsync();
+        Task<IReadOnlyList<PostInfoDto>> GetPostListAsync();
         Task SaveAsync();
         Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, string? officePhone, string? orgEmail, string? orgMobile);
     }

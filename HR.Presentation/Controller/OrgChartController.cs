@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using Core.Shared.Results;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
+using HR.Application.Queries.CostCenter;
 using HR.Application.Queries.Post;
 using HR.Domain.Entities;
 using HR.Domain.Specifications;
@@ -21,6 +22,46 @@ namespace HR.Presentation.Controller
     [Route("api/HR/[controller]")]
     public class OrgChartController : BaseController
     {
+
+        #region metadata
+        [HttpGet("JobTitle/GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetJobTitleSelectionList([FromQuery] GetJobTitlesSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("OrganizationUnit/GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetOrganizationUnitSelectionList([FromQuery] GetOrganizationUnitsSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("JobLevel/GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetJobLevelSelectionList([FromQuery] GetJobLevelsSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("Grade/GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetGradeSelectionList([FromQuery] GetGradesSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("CostCenter/GetSelectionList")]
+        [AuthorizeResource("hr.post", "View")]
+        public async Task<IActionResult> GetCostCenterSelectionList([FromQuery] GetCostCentersSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+       
+        #endregion
+
         [HttpPost("Create")]
         //[AuthorizeResource("hr.post", "Create")]
         public async Task<IActionResult> CreatePost([FromBody] CreatePostCommand command)

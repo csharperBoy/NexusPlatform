@@ -1,5 +1,6 @@
 ﻿using Core.Shared.DTOs.Authorization;
 using Core.Shared.Results;
+using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using MediatR;
@@ -13,10 +14,10 @@ using System.Threading.Tasks;
 namespace HR.Application.Queries.Post
 {
     public record GetPostListQuery(Guid? rootId = null)
-        : IRequest<Result<IReadOnlyList<PostInfoView>>>;
+        : IRequest<Result<IReadOnlyList<PostInfoDto>>>;
 
     public class GetPostListQueryHandler
-        : IRequestHandler<GetPostListQuery, Result<IReadOnlyList<PostInfoView>>>
+        : IRequestHandler<GetPostListQuery, Result<IReadOnlyList<PostInfoDto>>>
     {
         private readonly IPostInternalService _orgChartInternalService;
         private readonly ILogger<GetPostListQueryHandler> _logger;
@@ -29,7 +30,7 @@ namespace HR.Application.Queries.Post
             _logger = logger;
         }
 
-        public async Task<Result<IReadOnlyList<PostInfoView>>> Handle(
+        public async Task<Result<IReadOnlyList<PostInfoDto>>> Handle(
             GetPostListQuery request,
             CancellationToken cancellationToken)
         {
@@ -38,12 +39,12 @@ namespace HR.Application.Queries.Post
                 _logger.LogDebug("Getting Post List:");
 
                 var posts = await _orgChartInternalService.GetPostListAsync();
-                return Result<IReadOnlyList<PostInfoView>>.Ok(posts);
+                return Result<IReadOnlyList<PostInfoDto>>.Ok(posts);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to get Post List");
-                return Result<IReadOnlyList<PostInfoView>>.Fail(ex.Message);
+                return Result<IReadOnlyList<PostInfoDto>>.Fail(ex.Message);
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿using Authorization.Domain.Enums;
+﻿ 
 using Authorization.Domain.Events;
 using Core.Domain.Attributes;
 using Core.Domain.Common;

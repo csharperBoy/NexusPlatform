@@ -1,6 +1,6 @@
 ﻿using Authorization.Application.Interfaces;
 using Authorization.Domain.Entities;
-using Authorization.Domain.Enums;
+ 
 using Authorization.Infrastructure.Data;
 using Core.Application.Abstractions;
 using Core.Application.Abstractions.Authorization;

@@ -1,5 +1,5 @@
 ﻿using Authorization.Application.DTOs.Permissions;
-using Authorization.Domain.Enums;
+ 
 using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums;

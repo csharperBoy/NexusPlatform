@@ -141,6 +141,34 @@ namespace Core.Infrastructure.Repositories
         }
 
         /// <summary>
+        /// var items = await repo.GetAllAsync(q =>
+        /// q.Where(x => x.IsActive)
+        ///     .OrderByDescending(x => x.CreatedAt)
+        ///     .Include(x => x.Parent)
+        ///     .ThenInclude(x => x.Children)
+        ///     .Skip(10)
+        ///     .Take(20)
+        ///     );
+        /// </summary>
+        /// <param name="queryOptions"></param>
+        /// <returns></returns>
+        public virtual async Task<IEnumerable<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryOptions = null)
+        {
+            IQueryable<TEntity> query = _dbSet.AsQueryable();
+
+            // اعمال Includeهای دریافتی یا هر تغییر دیگر روی کوئری
+            if (queryOptions != null)
+            {
+                query = queryOptions(query);
+            }
+
+            // اعمال فیلتر مجوزها (بعد از Include)
+            query = await _authorizationProcessor.ApplyFilter(query);
+
+            return await query.ToListAsync();
+        }
+
+        /// <summary>
         /// var result = await GetAllAsync(q => q.OrderByDescending(x => x.CreatedDate)
         ///.ThenBy(x => x.Name));
         ///OR
@@ -176,7 +204,7 @@ namespace Core.Infrastructure.Repositories
 
             return await query.ToListAsync();
         }
-        
+
         #endregion
         public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
         {

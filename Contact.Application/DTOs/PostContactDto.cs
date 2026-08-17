@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HR.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,7 +35,7 @@ namespace Contact.Application.DTOs
 
         public int? Gender { get; set; }
 
-        public int? AssignmentsAssigneeType { get; set; }
+        public PostAssignmentType? AssignmentsAssigneeType { get; set; }
 
         public string OrganizationUnitsName { get; set; } = null!;
     }

@@ -519,13 +519,16 @@ export const PostContactManagementPage: React.FC = () => {
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
             
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
-                عنوان شغل (کد پست)
+                عنوان شغل 
               </th>
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 واحد سازمانی
               </th>
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
                 شاغل فعلی
+              </th> 
+              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+                سطح شغلی
               </th>
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-36 border-b border-gray-200 shadow-sm">
                 تلفن داخلی
@@ -533,9 +536,7 @@ export const PostContactManagementPage: React.FC = () => {
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-40 border-b border-gray-200 shadow-sm">
                 موبایل سازمانی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
-                رده / سطح شغلی
-              </th>
+             
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
@@ -543,16 +544,16 @@ export const PostContactManagementPage: React.FC = () => {
 
             {/* ردیف دوم: اینپوت‌های سرچ */}
             <tr className="border-b border-gray-200">
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
-                  placeholder="سرچ شغل / کد..."
+                  placeholder="سرچ شغل ..."
                   value={columnSearch["jobTitle"] || ""}
                   onChange={(e) => handleColumnSearch("jobTitle", e.target.value)}
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ واحد..."
@@ -561,7 +562,7 @@ export const PostContactManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ شاغل..."
@@ -570,7 +571,16 @@ export const PostContactManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+                <input
+                  type="text"
+                  placeholder="سرچ سطح شغلی..."
+                  value={columnSearch["levelGrade"] || ""}
+                  onChange={(e) => handleColumnSearch("levelGrade", e.target.value)}
+                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
+                />
+              </th>
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ داخلی..."
@@ -579,7 +589,7 @@ export const PostContactManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
                 <input
                   type="text"
                   placeholder="سرچ موبایل..."
@@ -588,16 +598,8 @@ export const PostContactManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 align-top border-b border-gray-200 shadow-sm">
-                <input
-                  type="text"
-                  placeholder="سرچ رده..."
-                  value={columnSearch["levelGrade"] || ""}
-                  onChange={(e) => handleColumnSearch("levelGrade", e.target.value)}
-                  className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
-              </th>
-              <th className="sticky top-[70px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
+              
+              <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
 
@@ -675,6 +677,16 @@ export const PostContactManagementPage: React.FC = () => {
                       </div>
                     </td>
 
+                    <td className="py-3 px-4 text-gray-500 text-xs">
+                      {node.jobLevelTitle || node.gradeTitle ? (
+                        <span>
+                          {node.jobLevelTitle || ""} {node.gradeTitle ? `(${node.gradeTitle})` : ""}
+                        </span>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+                    
                     <td className="py-2 px-3">
                       <input
                         type="text"
@@ -695,15 +707,6 @@ export const PostContactManagementPage: React.FC = () => {
                       />
                     </td>
 
-                    <td className="py-3 px-4 text-gray-500 text-xs">
-                      {node.jobLevelTitle || node.gradeTitle ? (
-                        <span>
-                          {node.jobLevelTitle || ""} {node.gradeTitle ? `(${node.gradeTitle})` : ""}
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
 
                     <td className="py-3 px-4 text-center">
                       {isModified ? (
