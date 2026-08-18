@@ -50,7 +50,6 @@ namespace HR.Application.DTOs
 
         public PostAssignmentType? AssigneeType { get; set; }
 
-        public List<EntityContactDto<HrContactType>> Contacts { get; set; } = null;
         public List<LocationInfoDto> locations { get;set; } = null;
     }
 }

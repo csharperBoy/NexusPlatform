@@ -80,51 +80,51 @@ namespace HR.Infrastructure.Services
             await _uow.SaveChangesAsync();
             await _contactService.SaveAsync();
         }
-      /*  public async Task<Guid?> GetLocationId(Guid? personId)
-        {
-            GetLocationByPersonIdSpec spec = new GetLocationByPersonIdSpec(personId);
-            Location? Location = await _LocationSpecRepository.GetBySpecAsync(spec);
-            if (Location == null)
-                //throw new InvalidOperationException("Location not found!!!");
-                return null;
+        /*  public async Task<Guid?> GetLocationId(Guid? personId)
+          {
+              GetLocationByPersonIdSpec spec = new GetLocationByPersonIdSpec(personId);
+              Location? Location = await _LocationSpecRepository.GetBySpecAsync(spec);
+              if (Location == null)
+                  //throw new InvalidOperationException("Location not found!!!");
+                  return null;
 
-            return Location.Id;
+              return Location.Id;
 
-        }*/
+          }*/
 
-      /*  public async Task AssignLocationsToLocation(Guid LocationId, List<Guid> locationsId)
-        {
-            // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
-            var spec = new GetLocationLocationsSpec(LocationId);
-            var existingActive = await _LocationLocationSpecRepository.ListBySpecAsync(spec);
+        /*  public async Task AssignLocationsToLocation(Guid LocationId, List<Guid> locationsId)
+          {
+              // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
+              var spec = new GetLocationLocationsSpec(LocationId);
+              var existingActive = await _LocationLocationSpecRepository.ListBySpecAsync(spec);
 
-            // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
-            var existingIds = existingActive.Select(e => e.FkLocationId).ToHashSet();
-            var newIds = locationsId.Distinct().ToHashSet();
+              // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+              var existingIds = existingActive.Select(e => e.FkLocationId).ToHashSet();
+              var newIds = locationsId.Distinct().ToHashSet();
 
-            // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
-            var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
-            foreach (var item in toExpire)
-            {
-                item.DoExpire();
-            }
+              // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+              var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
+              foreach (var item in toExpire)
+              {
+                  item.DoExpire();
+              }
 
-            // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
-            var toAdd = newIds
-                .Where(id => !existingIds.Contains(id))
-                .Select(id => new LocationLocation(id, LocationId))
-                .ToList();
+              // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+              var toAdd = newIds
+                  .Where(id => !existingIds.Contains(id))
+                  .Select(id => new LocationLocation(id, LocationId))
+                  .ToList();
 
-            if (toAdd.Any())
-            {
-                await _LocationLocationsRepository.AddRangeAsync(toAdd);
-            }
+              if (toAdd.Any())
+              {
+                  await _LocationLocationsRepository.AddRangeAsync(toAdd);
+              }
 
-        }*/
+          }*/
 
 
 
-       public async Task<Guid> UpdateLocationAsync(Guid id, string? title, string? officePhone, string? orgEmail, string? orgMobile)
+        public async Task<Guid> UpdateLocationAsync(Guid id, string? title, string? officePhone, string? orgEmail, string? orgMobile)
         {
             Location? loc = await _LocationRepository.GetByIdAsync(id);
             if (loc == null)
@@ -150,7 +150,7 @@ namespace HR.Infrastructure.Services
             }
             return loc.Id;
         }
-        
+
 
         //public async Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync()
         //{
@@ -171,30 +171,14 @@ namespace HR.Infrastructure.Services
             if (!locations.Any())
                 return Array.Empty<LocationInfoDto>();
 
-            // ۲. استخراج لیست شناسه مکان‌ها
-            var locationIds = locations.Select(l => l.Id).ToList();
-
-            // ۳. فراخوانی یکباره (Bulk) اطلاعات تماس از ماژول Contact
-            List<EntityContactDto<HrContactType>> contacts = await _contactService.GetLocationContactsByLocationIdsAsync( locationIds);
-
-            // ۴. گروه‌بندی و ساخت Dictionary برای جستجوی بسیار سریع با زمان اجرا (1)O
-            var contactsLookup = contacts
-                .Where(c => c.IsCurrent)
-                .ToLookup(c => c.EntityId);
-
             // ۵. مپ کردن داده‌ها در حافظه
             return locations.Select(s =>
-            {
-                var locContacts = contactsLookup[s.Id];
+             new LocationInfoDto
+             {
+                 Id = s.Id,
+                 Title = s.Title
 
-                return new LocationInfoDto
-                {
-                    Id = s.Id,
-                    Title = s.Title,
-                    orgMobile = locContacts.FirstOrDefault(c => c.ContactType == HrContactType.OrgMobile)?.Value,
-                    orgPhone = locContacts.FirstOrDefault(c => c.ContactType == HrContactType.OfficePhone)?.Value
-                };
-            }).ToList();
+             }).ToList();
         }
     }
 }

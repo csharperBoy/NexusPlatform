@@ -1,4 +1,5 @@
 ﻿using Contact.Application.DTOs;
+using Core.Application.Abstractions.Contact;
 using Core.Shared.DTOs.Authorization;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
@@ -23,11 +24,13 @@ namespace Contact.Application.Queries
         private readonly IPostInternalService _orgChartInternalService;
         private readonly ILogger<GetPostContactListQueryHandler> _logger;
 
+        private readonly IHrContactPublicService _hrContactService;
         public GetPostContactListQueryHandler(
-            IPostInternalService orgChartInternalService,
+            IPostInternalService orgChartInternalService, IHrContactPublicService hrContactService,
         ILogger<GetPostContactListQueryHandler> logger)
         {
             _orgChartInternalService = orgChartInternalService;
+            _hrContactService = hrContactService;
             _logger = logger;
         }
 
@@ -40,6 +43,10 @@ namespace Contact.Application.Queries
                 _logger.LogDebug("Getting PostContact List:");
 
                 var posts = await _orgChartInternalService.GetPostListAsync();
+                var postIds = posts.Select(p => p.Id).ToList();
+
+                var hrContactList = await _hrContactService.GetLocationContactsByLocationIdsAsync(postIds);
+
                 IReadOnlyList<PostContactDto> result = posts.Select(post => new PostContactDto
                 {
                     Id = post.Id,
@@ -49,9 +56,9 @@ namespace Contact.Application.Queries
                     OrganizationUnitsName = post.OrganizationUnitsName,
                     JobLevelTitle = post.JobLevelTitle,
                     JobTitleName = post.JobTitleName,
-                    OfficePhone = post.Contacts.FirstOrDefault(a=>  a.ContactType == HrContactType.OfficePhone)?.Value,
-                    OrgMobile = post.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgMobile)?.Value,
-                    OrgEmail = post.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgEmail)?.Value,
+                    OfficePhone = hrContactList.Where(a => a.EntityId == post.Id && a.ContactType == HrContactType.OfficePhone)?.Select(a => a.Value).ToList(),
+                    OrgMobile = hrContactList.Where(a => a.EntityId == post.Id && a.ContactType == HrContactType.OrgMobile)?.Select(a => a.Value).ToList(),
+                    OrgEmail = hrContactList.Where(a => a.EntityId == post.Id && a.ContactType == HrContactType.OrgEmail)?.Select(a => a.Value).ToList(),
                     EmploymentCode = post.EmploymentCode,
                     FirstName = post.FirstName,
                     LastName = post.LastName,

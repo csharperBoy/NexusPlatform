@@ -1,4 +1,6 @@
-﻿using HR.Domain.Enums;
+﻿using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.HR;
+using HR.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,12 +23,13 @@ namespace Contact.Application.DTOs
 
         public string? JobTitleName { get; set; }
 
-        public string? OfficePhone { get; set; }
+        public List<string>? OfficePhone { get; set; }
 
-        public string? OrgMobile { get; set; }
+        public List<string>? OrgMobile { get; set; }
 
-        public string? OrgEmail { get; set; }
+        public List<string>? OrgEmail { get; set; }
 
+        //public List<EntityContactDto<HrContactType>> Contacts { get; set; } = null;
         public string? EmploymentCode { get; set; }
 
         public string? FirstName { get; set; }

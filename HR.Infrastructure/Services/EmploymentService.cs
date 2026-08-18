@@ -182,8 +182,6 @@ namespace HR.Infrastructure.Services
                  .Include(a => a.Location)
             );
 
-            var hrContactList = await _hrContactService.GetEmploymentContactsByEmploymentIdsAsync(emptIds);
-            var peopleContactList = await _peopleContactService.GetPartyContactsByPartyIdsAsync(emptIds);
             var result = empList.Select(s => new EmploymentInfoDto
             {
                 EmploymentCode = s.EmploymentCode,
@@ -196,7 +194,7 @@ namespace HR.Infrastructure.Services
                 JobTitleName = s.JobTitleName,
                 OrganizationUnitsName = s.OrganizationUnitsName,
                 PostCode = s.PostCode,
-                Contacts = hrContactList.Where(l=>l.IsCurrent && l.EntityId == s.Id ).ToList(),
+                //Contacts = hrContactList.Where(l=>l.IsCurrent && l.EntityId == s.Id ).ToList(),
                 locations = locList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title }).ToList(),
                 AssignmentsAssigneeType = s.AssignmentsAssigneeType,
                 AssignmentsEffectiveFrom = s.AssignmentsEffectiveFrom,
@@ -207,7 +205,7 @@ namespace HR.Infrastructure.Services
                 EmploymentTypeName = s.EmploymentTypeName,
                 NationalCode = s.NationalCode,
                 PartyId = s.PartyId,
-                partyContacts = peopleContactList.Where(l => l.IsCurrent && l.EntityId == s.PartyId).ToList(),
+                //partyContacts = peopleContactList.Where(l => l.IsCurrent && l.EntityId == s.PartyId).ToList(),
 
             }).ToList();
             return result;

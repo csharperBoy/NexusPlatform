@@ -1,4 +1,5 @@
 ﻿using Contact.Application.DTOs;
+using Core.Application.Abstractions.Contact;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
 using Core.Shared.Results;
@@ -14,21 +15,29 @@ using System.Threading.Tasks;
 
 namespace Contact.Application.Queries
 {
-    
+
     public record GetEmploymentContactListQuery(string? employmentCode = null)
    : IRequest<Result<IReadOnlyList<EmploymentContactDto>>>;
+
 
     public class GetEmploymentContactListQueryHandler
         : IRequestHandler<GetEmploymentContactListQuery, Result<IReadOnlyList<EmploymentContactDto>>>
     {
         private readonly IEmploymentInternalService _employmentInternalService;
         private readonly ILogger<GetEmploymentContactListQueryHandler> _logger;
-
+        private readonly IHrContactPublicService _hrContactService;
+        private readonly IPeopleContactPublicService _peopleContactService;
         public GetEmploymentContactListQueryHandler(
             IEmploymentInternalService employmentInternalService,
+            IHrContactPublicService hrContactService,
+        IPeopleContactPublicService peopleContactService,
+
+
         ILogger<GetEmploymentContactListQueryHandler> logger)
         {
             _employmentInternalService = employmentInternalService;
+            _hrContactService = hrContactService;
+            _peopleContactService = peopleContactService;
             _logger = logger;
         }
 
@@ -41,6 +50,11 @@ namespace Contact.Application.Queries
                 _logger.LogDebug("Getting EmploymentContact List:");
 
                 var employments = await _employmentInternalService.GetEmploymentListAsync();
+                var emptIds = employments.Select(p => p.Id).ToList();
+
+                var hrContactList = await _hrContactService.GetEmploymentContactsByEmploymentIdsAsync(emptIds);
+                var peopleContactList = await _peopleContactService.GetPartyContactsByPartyIdsAsync(emptIds);
+
                 IReadOnlyList<EmploymentContactDto> result = employments
                     .Where(e => string.IsNullOrEmpty(request.employmentCode) || e.EmploymentCode == request.employmentCode)
                     .Select(e => new EmploymentContactDto
@@ -50,16 +64,13 @@ namespace Contact.Application.Queries
                         FirstName = e.FirstName,
                         LastName = e.LastName,
                         EmploymentCode = e.EmploymentCode,
-                        PartyMobile = e.partyContacts.FirstOrDefault(a => a.ContactType == PartyContactType.Mobile)?.Value
-                        ,
-                        PartyAddress = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Address)?.Value,
-                        PartyPhone = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Phone)?.Value,
-                        PartyEmail = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Email)?.Value,
-                     
-                        EmploymentContactPhone = e.Contacts.FirstOrDefault(a =>  a.ContactType == HrContactType.OfficePhone)?.Value,
-                        EmploymentContactMobile = e.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgMobile)?.Value,
-                        EmploymentContactEmail = e.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgEmail)?.Value,
-                        EmploymentContactFax = e.Contacts.FirstOrDefault(a =>  a.ContactType == HrContactType.Fax)?.Value,
+                        PartyMobile = peopleContactList.Where(a => a.EntityId == e.PartyId && a.ContactType == PartyContactType.Mobile)?.Select(a=>a.Value).ToList(),
+                        PartyAddress = peopleContactList.Where(a => a.EntityId == e.PartyId && a.ContactType == PartyContactType.Address)?.Select(a => a.Value).ToList(),
+                        PartyPhone = peopleContactList.Where(a => a.EntityId == e.PartyId && a.ContactType == PartyContactType.Phone)?.Select(a => a.Value).ToList(),
+                        PartyEmail = peopleContactList.Where(a => a.EntityId == e.PartyId && a.ContactType == PartyContactType.Email)?.Select(a => a.Value).ToList(),
+
+                        EmploymentContactPhone = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OfficePhone)?.Select(a => a.Value).ToList(),
+                        EmploymentContactMobile = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OrgMobile)?.Select(a => a.Value).ToList(),
                     })
                     .ToList();
                 return Result<IReadOnlyList<EmploymentContactDto>>.Ok(result);

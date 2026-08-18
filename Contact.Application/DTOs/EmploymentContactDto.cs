@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,28 +22,20 @@ namespace Contact.Application.DTOs
 
        
 
-        public string? PartyMobile { get; set; }
+        public List<string>? PartyMobile { get; set; }
 
-        public string? PartyAddress { get; set; }
+        public List<string>? PartyAddress { get; set; }
 
-        public string? PartyPhone { get; set; }
+        public List<string>? PartyPhone { get; set; }
 
-        public string? PartyEmail { get; set; }
+        public List<string>? PartyEmail { get; set; }
 
-      
 
-        public string? PostContactPhone { get; set; }
+        public List<string>? EmploymentContactPhone { get; set; }
+        public List<string>? EmploymentContactMobile { get; set; }
 
-        public string? PostContactMobile { get; set; }
+        //public List<EntityContactDto<HrContactType>> Contacts { get; set; } = null;
+        //public List<EntityContactDto<PartyContactType>> partyContacts { get; set; } = null;
 
-        public string? PostContactEmail { get; set; }
-
-        public string? PostContactFax { get; set; }
-
-        public string? EmploymentContactPhone { get; set; }
-        public string? EmploymentContactMobile { get; set; }
-        public string? EmploymentContactEmail { get; set; }
-        public string? EmploymentContactFax { get; set; }
-      
     }
 }

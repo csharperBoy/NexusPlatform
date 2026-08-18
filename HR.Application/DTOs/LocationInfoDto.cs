@@ -10,7 +10,5 @@ namespace HR.Application.DTOs
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
-        public string orgMobile { get; set; }
-        public string orgPhone { get; set; }
     }
 }

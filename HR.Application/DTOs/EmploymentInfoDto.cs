@@ -48,8 +48,6 @@ namespace HR.Application.DTOs
 
         public string? OrganizationUnitsName { get; set; }
 
-        public List<EntityContactDto<HrContactType>> Contacts { get; set; } = null;
-        public List<EntityContactDto<PartyContactType>> partyContacts { get; set; } = null;
         public List<LocationInfoDto> locations { get; set; } = null;
     }
 }
