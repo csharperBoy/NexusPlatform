@@ -20,6 +20,7 @@ namespace Contact.Infrastructure.Services
     public class ContactService : IContactInternalService
     {
         private readonly IRepository<ContactDbContext, PartyContact, Guid> _personContactRepository;
+        private readonly ISpecificationRepository<PartyContact, Guid> _personContactSpecRepository;
 
         private readonly IRepository<ContactDbContext, EmploymentContact, Guid> _employmentContactRepository;
         private readonly ISpecificationRepository<EmploymentContact, Guid> _employmentContactSpecRepository;
@@ -29,12 +30,15 @@ namespace Contact.Infrastructure.Services
 
         private readonly IRepository<ContactDbContext, LocationContact, Guid> _locationContactRepository;
         private readonly ISpecificationRepository<LocationContact, Guid> _locationContactSpecRepository;
+
         private readonly IUnitOfWork<ContactDbContext> _uow;
         private readonly ILogger<ContactService> _logger;
 
 
         
-        public ContactService(ILogger<ContactService> logger , IRepository<ContactDbContext, PartyContact, Guid> personContactRepository,
+        public ContactService(ILogger<ContactService> logger , 
+            IRepository<ContactDbContext, PartyContact, Guid> personContactRepository,
+            ISpecificationRepository<PartyContact, Guid> personContactSpecRepository,
         IRepository<ContactDbContext, EmploymentContact, Guid> employmentContactRepository,
             ISpecificationRepository<EmploymentContact, Guid> employmentContactSpecRepository,
         IRepository<ContactDbContext, LocationContact, Guid> locationContactRepository,
@@ -45,6 +49,7 @@ namespace Contact.Infrastructure.Services
         IUnitOfWork<ContactDbContext> uow)
         {
             _personContactRepository = personContactRepository;
+            _personContactSpecRepository = personContactSpecRepository;
             _employmentContactRepository = employmentContactRepository;
             _employmentContactSpecRepository = employmentContactSpecRepository;
             _locationContactRepository = locationContactRepository;
@@ -167,6 +172,17 @@ namespace Contact.Infrastructure.Services
             }).ToList();
         }
 
-       
+        public async Task<List<EntityContactDto<PartyContactType>>> GetPartyContactsByPartyIdsAsync(List<Guid> partyIds)
+        {
+            GetPartyContactsByPartyIdsSpec spec = new GetPartyContactsByPartyIdsSpec(partyIds);
+            var list = await _personContactSpecRepository.ListBySpecAsync(spec);
+            return list.Select(c => new EntityContactDto<PartyContactType>
+            {
+                ContactType = c.ContactType,
+                Value = c.Value,
+                EntityId = c.FkPartyId,
+                IsCurrent = c.IsCurrent
+            }).ToList();
+        }
     }
 }

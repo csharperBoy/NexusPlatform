@@ -7,13 +7,16 @@ using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
+using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Wordprocessing;
+using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -33,7 +36,8 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
-        private readonly IHrContactPublicService _contactService;
+        private readonly IHrContactPublicService _hrContactService;
+        private readonly IPeopleContactPublicService _peopleContactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
@@ -42,13 +46,16 @@ namespace HR.Infrastructure.Services
              ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
             IRepository<HRDbContext, Employment, Guid> employmentRepository,
             ILogger<EmploymentService> logger,
-            ISpecificationRepository<Employment, Guid> employmentSpecRepository, IHrContactPublicService contactService,
+            ISpecificationRepository<Employment, Guid> employmentSpecRepository, 
+            IHrContactPublicService hrContactService,
+            IPeopleContactPublicService peopleContactService,
             IUnitOfWork<HRDbContext> uow,
             IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
             )
         {
             _employmentInfoRepository = employmentInfoRepository;
-            _contactService = contactService;
+            _hrContactService = hrContactService;
+            _peopleContactService = peopleContactService;
             _personService = personService;
             _employmentRepository = employmentRepository;
             _employmentLocationsRepository = employmentLocationsRepository;
@@ -74,9 +81,9 @@ namespace HR.Infrastructure.Services
             Employment emp = new Employment(_EmploymentCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
             await _employmentRepository.AddAsync(emp);
 
-            await _contactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
-            await _contactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
-            await _contactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Value, emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Value, emp.Id);
             return emp.Id;
         }
         //private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
@@ -90,7 +97,7 @@ namespace HR.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
-            await _contactService.SaveAsync();
+            await _hrContactService.SaveAsync();
             await _personService.SaveAsync();
         }
         public async Task<Guid?> GetEmploymentId(Guid? personId)
@@ -152,24 +159,60 @@ namespace HR.Infrastructure.Services
             await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstName, lastName, birthDate, birthPlace, fatherName,nationalCode);
             if (officePhone != null)
             {
-                await _contactService.CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
+                await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
             }
             if (orgEmail != null)
             {
-                await _contactService.CreateEmploymentContact(HrContactType.OrgEmail, orgEmail, emp.Id);
+                await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, orgEmail, emp.Id);
             }
             if (orgMobile != null)
             {
-                await _contactService.CreateEmploymentContact(HrContactType.OrgMobile, orgMobile, emp.Id);
+                await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, orgMobile, emp.Id);
             }
             return emp.Id;
         }
         
 
-        public async Task<IReadOnlyList<EmploymentInfoView>> GetEmploymentListAsync()
+        public async Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync()
         {
-            var list = await _employmentInfoRepository.GetAllAsync();
-            return list.ToList();
+            var empList = await _employmentInfoRepository.GetAllAsync();
+            var emptIds = empList.Select(p => p.Id).ToList();
+            var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q =>
+                q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
+                 .Include(a => a.Location)
+            );
+
+            var hrContactList = await _hrContactService.GetEmploymentContactsByEmploymentIdsAsync(emptIds);
+            var peopleContactList = await _peopleContactService.GetPartyContactsByPartyIdsAsync(emptIds);
+            var result = empList.Select(s => new EmploymentInfoDto
+            {
+                EmploymentCode = s.EmploymentCode,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                CostCenterName = s.CostCenterName,
+                Id = s.Id,
+                GradeTitle = s.GradeTitle,
+                JobLevelTitle = s.JobLevelTitle,
+                JobTitleName = s.JobTitleName,
+                OrganizationUnitsName = s.OrganizationUnitsName,
+                PostCode = s.PostCode,
+                Contacts = hrContactList.Where(l=>l.IsCurrent && l.EntityId == s.Id ).ToList(),
+                locations = locList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title }).ToList(),
+                AssignmentsAssigneeType = s.AssignmentsAssigneeType,
+                AssignmentsEffectiveFrom = s.AssignmentsEffectiveFrom,
+                AssignmentsEffectiveTo = s.AssignmentsEffectiveTo,
+                EmploymentEffectiveFrom = s.EmploymentEffectiveFrom,
+                EmploymentEffectiveTo = s.EmploymentEffectiveTo,
+                EmploymentStatusName = s.EmploymentStatusName,
+                EmploymentTypeName = s.EmploymentTypeName,
+                NationalCode = s.NationalCode,
+                PartyId = s.PartyId,
+                partyContacts = peopleContactList.Where(l => l.IsCurrent && l.EntityId == s.PartyId).ToList(),
+
+            }).ToList();
+            return result;
         }
+        
+
     }
 }

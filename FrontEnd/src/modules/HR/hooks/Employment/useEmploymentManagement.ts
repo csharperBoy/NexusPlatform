@@ -3,17 +3,25 @@ import * as XLSX from "xlsx";
 import { employmentApi } from "../../api/EmploymentApi";
 import { locationApi } from "../../api/LocationApi";
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
+import { Location } from "../../models/LocationInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 
-// تغییر type برای پشتیبانی از locationsId به عنوان آرایه
 type EditableField =
   | "employmentCode"
   | "firstName"
   | "lastName"
   | "nationalCode"
-  | "locationsId";
+  | "locationsId"; // استفاده از locationsId برای آی‌دی مکان‌های انتخاب شده
 
+export interface EmploymentItem {
+  id: string;
+  employmentCode?: string;
+  firstName?: string;
+  lastName?: string;
+  nationalCode?: string;
+  locationsId?: string[];
+}
 export const useEmploymentManagement = () => {
   // --- States ---
   const [employments, setEmployments] = useState<EmploymentInfoView[]>([]);
@@ -24,6 +32,11 @@ export const useEmploymentManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  
+    // --- استیت‌های مودال حذف ---
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isModified: boolean } | null>(null);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  
   // استیت‌های سرچ
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
@@ -64,18 +77,15 @@ export const useEmploymentManagement = () => {
 
       const list = empData || [];
 
-      // نرمال‌سازی locationsId تا مطمئن شویم همیشه آرایه‌ای از رشته‌هاست
-      const normalizedList = list.map((emp: any) => {
-        let locs: string[] = [];
-        if (Array.isArray(emp.locationsId)) {
-          locs = emp.locationsId;
-        } else if (emp.locationId) {
-          locs = [emp.locationId];
-        }
+      // تبدیل emp.locations (که Location[] است) به locationsId (که string[] است)
+      const normalizedList = list.map((emp: EmploymentInfoView & { locationsId?: string[] }) => {
+        const locIds = Array.isArray(emp.locations)
+          ? emp.locations.map((l: Location) => l.id)
+          : [];
 
         return {
           ...emp,
-          locationsId: locs,
+          locationsId: locIds,
         };
       });
 
@@ -90,7 +100,7 @@ export const useEmploymentManagement = () => {
     }
   };
 
-  // --- 2. مدیریت ویرایش درجا (پشتیبانی از string یا string[]) ---
+  // --- 2. مدیریت ویرایش درجا ---
   const handleFieldChange = (
     id: string,
     field: EditableField,
@@ -169,7 +179,7 @@ export const useEmploymentManagement = () => {
               )
             );
             const locationKey = Object.keys(row).find((k) =>
-              ["محل استقرار", "مکان", "محل_استقرار", "location", "locationid", "locations"].includes(
+              ["محل استقرار", "مکان", "محل_استقرار", "location", "locations", "locationid"].includes(
                 k.trim().toLowerCase()
               )
             );
@@ -211,10 +221,9 @@ export const useEmploymentManagement = () => {
                 }
               }
 
-              // پردازش مکان‌های متعدد (جدا شده با کاما در فایل اکسل)
+              // پردازش مکان‌ها (جدا شده با کاما در فایل اکسل)
               if (locationKey && row[locationKey] !== undefined) {
                 const rawLocStr = String(row[locationKey] ?? "").trim();
-                // جداسازی با کامای انگلیسی، کامای فارسی، یا نقطه ویرگول
                 const locParts = rawLocStr
                   .split(/[,،;]/)
                   .map((s) => s.trim())
@@ -233,14 +242,12 @@ export const useEmploymentManagement = () => {
                   if (matchedLocation) {
                     matchedLocIds.push(matchedLocation.value);
                   } else {
-                    // اگر دقیقاً خود ID وارد شده بود
                     matchedLocIds.push(part);
                   }
                 });
 
                 const currentLocs = (nextEmployments[targetIndex] as any).locationsId || [];
                 
-                // مقایسه دو آرایه برای بررسی تغییر
                 const isLocChanged =
                   JSON.stringify([...currentLocs].sort()) !==
                   JSON.stringify([...matchedLocIds].sort());
@@ -279,14 +286,31 @@ export const useEmploymentManagement = () => {
     reader.readAsArrayBuffer(file);
   };
 
-  // تابع کمکی برای گرفتن عنوان کامل مکان‌ها جهت جستجو
+  // تابع کمکی برای استخراج رشته عناوین مکان‌ها جهت استفاده در جستجو
   const getLocationNames = (emp: any): string => {
-    const locIds: string[] = Array.isArray(emp?.locationsId) ? emp.locationsId : [];
-    return locIds
-      .map((id) => locationMap.get(id) || "")
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+    if (!emp) return "";
+    
+    const locIds: string[] = emp.locationsId || [];
+    
+    // اگر locationsId پر باشد از روی locationMap عناوین را می‌خوانیم
+    if (locIds.length > 0) {
+      return locIds
+        .map((id) => locationMap.get(id) || "")
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+    }
+
+    // اگر به هر دلیلی locationsId هنوز محاسبه نشده بود، از خود emp.locations می‌خوانیم
+    if (Array.isArray(emp.locations)) {
+      return emp.locations
+        .map((l: Location) => l.title || "")
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+    }
+
+    return "";
   };
 
   // --- 4. فیلتر هوشمند مسطح ---
@@ -338,7 +362,7 @@ export const useEmploymentManagement = () => {
           const matchInit = (initEmp?.nationalCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
-        if (col === "locationsId" || col === "locationId") {
+        if (col === "locationsId" || col === "locations" || col === "locationId") {
           const matchCur = empLocationName.includes(q);
           const matchInit = initLocationName.includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
@@ -377,7 +401,7 @@ export const useEmploymentManagement = () => {
           firstName: emp.firstName || null,
           lastName: emp.lastName || null,
           nationalCode: emp.nationalCode || null,
-          locationsId: Array.isArray(emp.locationsId) ? emp.locationsId : [],
+          locationsId: Array.isArray(emp.locationsId) ? emp.locationsId : [], // ارسال لیست Guid ها به DTO
         } as any;
       });
 
@@ -394,15 +418,51 @@ export const useEmploymentManagement = () => {
       setSaving(false);
     }
   };
+  // --- 6. مودال حذف  ---
+    const handleOpenDeleteModal = (loc: EmploymentItem) => {
+      setDeleteTarget({
+        id: loc.id,
+        title: `${loc.firstName?.trim()} ${loc.lastName?.trim()}` || "بدون عنوان",
+        isModified: modifiedIds.has(loc.id),
+      });
+    };
+  
+    const handleCloseDeleteModal = () => {
+      if (isDeleting) return;
+      setDeleteTarget(null);
+    };
+  
+    const handleConfirmDelete = async () => {
+      if (!deleteTarget) return;
+  
+      try {
+        setIsDeleting(true);
+        setError(null);
+  
+        await employmentApi.delete(deleteTarget.id);
+  
+        setSuccessMessage(`مکان "${deleteTarget.title}" با موفقیت حذف شد.`);
+        setDeleteTarget(null);
+  
+        await loadData();
+        setTimeout(() => setSuccessMessage(null), 4000);
+      } catch (err: any) {
+        setError(err?.message || "خطا در حذف مکان");
+        setDeleteTarget(null);
+      } finally {
+        setIsDeleting(false);
+      }
+    };
 
   return {
-    employments,
+    employments,    
     loading,
     initialEmployments,
     locations,
     saving,
     error,
     successMessage,
+    deleteTarget,isDeleting,
     globalSearch,
     handleGlobalSearch,
     columnSearch,
@@ -417,5 +477,6 @@ export const useEmploymentManagement = () => {
     filteredEmployments,
     handleResetChanges,
     handleSaveChanges,
+    handleOpenDeleteModal,handleCloseDeleteModal,handleConfirmDelete
   };
 };

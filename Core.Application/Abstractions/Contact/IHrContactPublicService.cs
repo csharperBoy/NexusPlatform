@@ -15,6 +15,7 @@ namespace Core.Application.Abstractions.Contact
         Task<List<EntityContactDto<HrContactType>>> GetLocationContactsByLocationIdsAsync(List<Guid> locationIds);
         Task<List<EntityContactDto<HrContactType>>> GetPostContactsByPostIdsAsync(List<Guid> postIds);
         Task<List<EntityContactDto<HrContactType>>> GetEmploymentContactsByEmploymentIdsAsync(List<Guid> employmentIds);
+        
         Task CreatePostContact(HrContactType type, string? value, Guid postId);
         Task SaveAsync();
        

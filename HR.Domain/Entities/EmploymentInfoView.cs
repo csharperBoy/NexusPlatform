@@ -22,13 +22,13 @@ public partial class EmploymentInfoView
 
     public Guid PartyId { get; set; }
 
-    public string? PartyMobile { get; set; }
+    //public string? PartyMobile { get; set; }
 
-    public string? PartyAddress { get; set; }
+    //public string? PartyAddress { get; set; }
 
-    public string? PartyPhone { get; set; }
+    //public string? PartyPhone { get; set; }
 
-    public string? PartyEmail { get; set; }
+    //public string? PartyEmail { get; set; }
 
     public string? EmploymentStatusName { get; set; }
 
@@ -52,22 +52,22 @@ public partial class EmploymentInfoView
 
     public string? OrganizationUnitsName { get; set; }
 
-    public string? PostContactPhone { get; set; }
+    //public string? PostContactPhone { get; set; }
 
-    public string? PostContactMobile { get; set; }
+    //public string? PostContactMobile { get; set; }
 
-    public string? PostContactEmail { get; set; }
+    //public string? PostContactEmail { get; set; }
 
-    public string? PostContactFax { get; set; }
+    //public string? PostContactFax { get; set; }
 
-    public string? EmploymentContactPhone { get; set; }
-    public string? EmploymentContactMobile { get; set; }
-    public string? EmploymentContactEmail { get; set; }
-    public string? EmploymentContactFax { get; set; }
-    public DateTime? EmploymentLocationsEffectiveFrom { get; set; }
+    //public string? EmploymentContactPhone { get; set; }
+    //public string? EmploymentContactMobile { get; set; }
+    //public string? EmploymentContactEmail { get; set; }
+    //public string? EmploymentContactFax { get; set; }
+    //public DateTime? EmploymentLocationsEffectiveFrom { get; set; }
 
-    public DateTime? EmploymentLocationsEffectiveTo { get; set; }
+    //public DateTime? EmploymentLocationsEffectiveTo { get; set; }
 
-    public string? LocationTitle { get; set; }
-    public Guid? LocationId { get; set; }
+    //public string? LocationTitle { get; set; }
+    //public Guid? LocationId { get; set; }
 }

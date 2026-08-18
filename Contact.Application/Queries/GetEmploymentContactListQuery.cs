@@ -1,4 +1,6 @@
 ﻿using Contact.Application.DTOs;
+using Core.Shared.Enums.HR;
+using Core.Shared.Enums.People;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
@@ -48,18 +50,16 @@ namespace Contact.Application.Queries
                         FirstName = e.FirstName,
                         LastName = e.LastName,
                         EmploymentCode = e.EmploymentCode,
-                        PartyMobile = e.PartyMobile,
-                        PartyAddress = e.PartyAddress,
-                        PartyPhone = e.PartyPhone,
-                        PartyEmail = e.PartyEmail,
-                        PostContactPhone = e.PostContactPhone,
-                        PostContactMobile = e.PostContactMobile,
-                        PostContactEmail = e.PostContactEmail,
-                        PostContactFax = e.PostContactFax,
-                        EmploymentContactPhone = e.EmploymentContactPhone,
-                        EmploymentContactMobile = e.EmploymentContactMobile,
-                        EmploymentContactEmail = e.EmploymentContactEmail,
-                        EmploymentContactFax = e.EmploymentContactFax
+                        PartyMobile = e.partyContacts.FirstOrDefault(a => a.ContactType == PartyContactType.Mobile)?.Value
+                        ,
+                        PartyAddress = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Address)?.Value,
+                        PartyPhone = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Phone)?.Value,
+                        PartyEmail = e.partyContacts.FirstOrDefault(a =>  a.ContactType == PartyContactType.Email)?.Value,
+                     
+                        EmploymentContactPhone = e.Contacts.FirstOrDefault(a =>  a.ContactType == HrContactType.OfficePhone)?.Value,
+                        EmploymentContactMobile = e.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgMobile)?.Value,
+                        EmploymentContactEmail = e.Contacts.FirstOrDefault(a => a.ContactType == HrContactType.OrgEmail)?.Value,
+                        EmploymentContactFax = e.Contacts.FirstOrDefault(a =>  a.ContactType == HrContactType.Fax)?.Value,
                     })
                     .ToList();
                 return Result<IReadOnlyList<EmploymentContactDto>>.Ok(result);

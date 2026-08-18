@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions.HR;
 using Core.Domain.ValueObjects;
+using HR.Application.DTOs;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
 using System;
@@ -25,7 +26,7 @@ namespace HR.Application.Interfaces
         Email? _orgEmail = null,
         PhoneNumber? _orgMobile = null
            );
-        Task<IReadOnlyList<EmploymentInfoView>> GetEmploymentListAsync();
+        Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync();
         Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile);
     }
 }

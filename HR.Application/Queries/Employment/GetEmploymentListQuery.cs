@@ -1,4 +1,5 @@
 ﻿using Core.Shared.Results;
+using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using MediatR;
@@ -12,10 +13,10 @@ using System.Threading.Tasks;
 namespace HR.Application.Queries.Employment
 {
     public record GetEmploymentListQuery(string? employmentCode = null)
-     : IRequest<Result<IReadOnlyList<EmploymentInfoView>>>;
+     : IRequest<Result<IReadOnlyList<EmploymentInfoDto>>>;
 
     public class GetEmploymentListQueryHandler
-        : IRequestHandler<GetEmploymentListQuery, Result<IReadOnlyList<EmploymentInfoView>>>
+        : IRequestHandler<GetEmploymentListQuery, Result<IReadOnlyList<EmploymentInfoDto>>>
     {
         private readonly IEmploymentInternalService _employmentInternalService;
         private readonly ILogger<GetEmploymentListQueryHandler> _logger;
@@ -28,7 +29,7 @@ namespace HR.Application.Queries.Employment
             _logger = logger;
         }
 
-        public async Task<Result<IReadOnlyList<EmploymentInfoView>>> Handle(
+        public async Task<Result<IReadOnlyList<EmploymentInfoDto>>> Handle(
             GetEmploymentListQuery request,
             CancellationToken cancellationToken)
         {
@@ -37,12 +38,12 @@ namespace HR.Application.Queries.Employment
                 _logger.LogDebug("Getting Employment List:");
 
                 var employments = await _employmentInternalService.GetEmploymentListAsync();
-                return Result<IReadOnlyList<EmploymentInfoView>>.Ok(employments);
+                return Result<IReadOnlyList<EmploymentInfoDto>>.Ok(employments);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to get Employment List");
-                return Result<IReadOnlyList<EmploymentInfoView>>.Fail(ex.Message);
+                return Result<IReadOnlyList<EmploymentInfoDto>>.Fail(ex.Message);
             }
         }
     }

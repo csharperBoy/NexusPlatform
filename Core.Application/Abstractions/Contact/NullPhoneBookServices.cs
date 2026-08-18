@@ -70,6 +70,11 @@ namespace Core.Application.Abstractions.Contact
             await Task.CompletedTask;
         }
 
+        public Task<List<EntityContactDto<PartyContactType>>> GetPartyContactsByPartyIdsAsync(List<Guid> partyIds)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task SaveAsync()
         {
             await Task.CompletedTask;

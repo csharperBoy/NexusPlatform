@@ -2,7 +2,7 @@
 import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { EmploymentInfoView } from "../models/EmploymentInfoView";
-import {  UpdateEmploymentCommand } from "../models/EmploymentCommand";
+import {  CreateEmploymentCommand, UpdateEmploymentCommand } from "../models/EmploymentCommand";
 const API_MODULE = "hr";
 
 export const employmentApi = {
@@ -42,7 +42,7 @@ export const employmentApi = {
   
   
 // ویرایش منبع (PUT)
-  updateemployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
+  updateEmployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/hr/Employment/${data.id}`, data,
@@ -52,6 +52,26 @@ export const employmentApi = {
     return response.data;
   },
   
-
-
+// ایجاد
+    create: async (data: CreateEmploymentCommand): Promise<string> => {
+      const api = getAPI(API_MODULE);
+      console.info("data= " , data);
+      const response = await api.post<string>(
+        "/api/hr/Employment/create",
+        data,
+        { withCredentials: true }
+      );
+      return response.data;
+    },
+   
+// حذف  (Delete)
+  delete: async (Id?: string): Promise<boolean> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.delete<boolean>(
+      `/api/hr/Employment/${Id}`,
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
 };

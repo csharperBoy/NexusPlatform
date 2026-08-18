@@ -338,7 +338,7 @@ namespace HR.Infrastructure.Services
                 FkParentId = s.FkParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
-                hrContacts = contactList,
+                Contacts = contactList.Where(l => l.IsCurrent && l.EntityId == s.Id).ToList(),
                 locations = locList.Where(l=>l.FkPostId == s.Id).Select(s=> new LocationInfoDto {Id = s.Location.Id , Title = s.Location.Title }).ToList(),
 
                 

@@ -34,31 +34,12 @@ namespace HR.Infrastructure.Configurations
             builder.Property(e => e.JobLevelTitle).HasColumnName("JobLevel_Title");
             builder.Property(e => e.JobTitleName).HasColumnName("JobTitle_Name");
             builder.Property(e => e.LastName).HasMaxLength(100);
-            builder.Property(e => e.EmploymentLocationsEffectiveFrom).HasColumnName("EmploymentLocations_EffectiveFrom");
-            builder.Property(e => e.EmploymentLocationsEffectiveTo).HasColumnName("EmploymentLocations_EffectiveTo");
-            builder.Property(e => e.LocationTitle).HasColumnName("Location_Title");
-            builder.Property(e => e.LocationId).HasColumnName("Location_Id");
             builder.Property(e => e.NationalCode).HasMaxLength(10);
             builder.Property(e => e.OrganizationUnitsName)
                     .HasMaxLength(200)
                     .HasColumnName("OrganizationUnits_Name");
-            builder.Property(e => e.PartyAddress).HasColumnName("Party_Address");
-            builder.Property(e => e.PartyEmail).HasColumnName("Party_Email");
             builder.Property(e => e.PartyId).HasColumnName("Party_Id");
-            builder.Property(e => e.PartyMobile).HasColumnName("Party_Mobile");
-            builder.Property(e => e.PartyPhone).HasColumnName("Party_Phone");
             builder.Property(e => e.PostCode).HasColumnName("Post_Code");
-            builder.Property(e => e.PostContactEmail).HasColumnName("PostContact_Email");
-            builder.Property(e => e.PostContactFax).HasColumnName("PostContact_Fax");
-            builder.Property(e => e.PostContactMobile).HasColumnName("PostContact_Mobile");
-            builder.Property(e => e.PostContactPhone).HasColumnName("PostContact_Phone");
-
-
-
-            builder.Property(e => e.EmploymentContactMobile).HasColumnName("EmploymentContact_Mobile");
-            builder.Property(e => e.EmploymentContactPhone).HasColumnName("EmploymentContact_Phone");
-            builder.Property(e => e.EmploymentContactEmail).HasColumnName("EmploymentContact_Email");
-            builder.Property(e => e.EmploymentContactFax).HasColumnName("EmploymentContact_Fax");
         }
     }
 }
