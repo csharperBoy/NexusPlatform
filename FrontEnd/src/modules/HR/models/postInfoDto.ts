@@ -1,10 +1,6 @@
 // src/modules/HR/models/postInfoDto.ts
-export interface Location {
-  id: string;
-  title: string;
-  // سایر فیلدها در صورت نیاز
-}
 
+import { Location } from "./LocationInfoView";
 export interface PostInfoDto {
   id: string;
   postCode: string;

@@ -1,29 +1,24 @@
-
-
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 import { employmentApi } from "../../api/EmploymentApi";
-import { locationApi } from "../../api/LocationApi"; // وارد کردن API مکان‌ها
+import { locationApi } from "../../api/LocationApi";
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
-import { SelectionListDto } from "@/core/models/SelectionListDto"; // وارد کردن مدل SelectionListDto
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 
-
+// تغییر type برای پشتیبانی از locationsId به عنوان آرایه
 type EditableField =
   | "employmentCode"
   | "firstName"
   | "lastName"
   | "nationalCode"
-  | "locationId"; // افزودن فیلد locationId
-
-  
+  | "locationsId";
 
 export const useEmploymentManagement = () => {
-
   // --- States ---
   const [employments, setEmployments] = useState<EmploymentInfoView[]>([]);
   const [initialEmployments, setInitialEmployments] = useState<EmploymentInfoView[]>([]);
-  const [locations, setLocations] = useState<SelectionListDto[]>([]); // استیت گزینه‌های مکان
+  const [locations, setLocations] = useState<SelectionListDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,19 +57,27 @@ export const useEmploymentManagement = () => {
       setLoading(true);
       setError(null);
 
-      // دریافت هم‌زمان کارمندان و لیست مکان‌ها
       const [empData, locationList] = await Promise.all([
         employmentApi.GetList(),
         locationApi.GetSelectionList(),
       ]);
 
       const list = empData || [];
-      
-      // مپ کردن اولیه locationsId به locationId برای کار ساده‌تر با Dropdown
-      const normalizedList = list.map((emp: any) => ({
-        ...emp,
-        locationId: emp.locationId || (Array.isArray(emp.locationsId) && emp.locationsId.length > 0 ? emp.locationsId[0] : ""),
-      }));
+
+      // نرمال‌سازی locationsId تا مطمئن شویم همیشه آرایه‌ای از رشته‌هاست
+      const normalizedList = list.map((emp: any) => {
+        let locs: string[] = [];
+        if (Array.isArray(emp.locationsId)) {
+          locs = emp.locationsId;
+        } else if (emp.locationId) {
+          locs = [emp.locationId];
+        }
+
+        return {
+          ...emp,
+          locationsId: locs,
+        };
+      });
 
       setEmployments(normalizedList);
       setInitialEmployments(JSON.parse(JSON.stringify(normalizedList)));
@@ -87,8 +90,12 @@ export const useEmploymentManagement = () => {
     }
   };
 
-  // --- 2. مدیریت ویرایش درجا ---
-  const handleFieldChange = (id: string, field: EditableField, value: string) => {
+  // --- 2. مدیریت ویرایش درجا (پشتیبانی از string یا string[]) ---
+  const handleFieldChange = (
+    id: string,
+    field: EditableField,
+    value: string | string[]
+  ) => {
     setEmployments((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -103,9 +110,11 @@ export const useEmploymentManagement = () => {
   const handleColumnSearch = (column: string, value: string) => {
     setColumnSearch((prev) => ({ ...prev, [column]: value }));
   };
-const handleGlobalSearch = ( value: string) => {
-    setGlobalSearch( value);
+
+  const handleGlobalSearch = (value: string) => {
+    setGlobalSearch(value);
   };
+
   // --- 3. بارگذاری فایل اکسل ---
   const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -160,7 +169,7 @@ const handleGlobalSearch = ( value: string) => {
               )
             );
             const locationKey = Object.keys(row).find((k) =>
-              ["محل استقرار", "مکان", "محل_استقرار", "location", "locationid"].includes(
+              ["محل استقرار", "مکان", "محل_استقرار", "location", "locationid", "locations"].includes(
                 k.trim().toLowerCase()
               )
             );
@@ -202,19 +211,42 @@ const handleGlobalSearch = ( value: string) => {
                 }
               }
 
-              // پشتیبانی از مپ کردن محل استقرار بر اساس عنوان یا ID
+              // پردازش مکان‌های متعدد (جدا شده با کاما در فایل اکسل)
               if (locationKey && row[locationKey] !== undefined) {
-                const rawLoc = String(row[locationKey] ?? "").trim();
-                const matchedLocation = locations.find(
-                  (l) =>
-                    l.value.toLowerCase() === rawLoc.toLowerCase() ||
-                    l.display.toLowerCase() === rawLoc.toLowerCase() ||
-                    l.label.toLowerCase() === rawLoc.toLowerCase()
-                );
+                const rawLocStr = String(row[locationKey] ?? "").trim();
+                // جداسازی با کامای انگلیسی، کامای فارسی، یا نقطه ویرگول
+                const locParts = rawLocStr
+                  .split(/[,،;]/)
+                  .map((s) => s.trim())
+                  .filter(Boolean);
 
-                const newLocId = matchedLocation ? matchedLocation.value : rawLoc;
-                if ((nextEmployments[targetIndex] as any).locationId !== newLocId) {
-                  (nextEmployments[targetIndex] as any).locationId = newLocId;
+                const matchedLocIds: string[] = [];
+
+                locParts.forEach((part) => {
+                  const matchedLocation = locations.find(
+                    (l) =>
+                      l.value.toLowerCase() === part.toLowerCase() ||
+                      l.display?.toLowerCase() === part.toLowerCase() ||
+                      l.label?.toLowerCase() === part.toLowerCase()
+                  );
+
+                  if (matchedLocation) {
+                    matchedLocIds.push(matchedLocation.value);
+                  } else {
+                    // اگر دقیقاً خود ID وارد شده بود
+                    matchedLocIds.push(part);
+                  }
+                });
+
+                const currentLocs = (nextEmployments[targetIndex] as any).locationsId || [];
+                
+                // مقایسه دو آرایه برای بررسی تغییر
+                const isLocChanged =
+                  JSON.stringify([...currentLocs].sort()) !==
+                  JSON.stringify([...matchedLocIds].sort());
+
+                if (isLocChanged) {
+                  (nextEmployments[targetIndex] as any).locationsId = matchedLocIds;
                   isRowChanged = true;
                 }
               }
@@ -247,6 +279,16 @@ const handleGlobalSearch = ( value: string) => {
     reader.readAsArrayBuffer(file);
   };
 
+  // تابع کمکی برای گرفتن عنوان کامل مکان‌ها جهت جستجو
+  const getLocationNames = (emp: any): string => {
+    const locIds: string[] = Array.isArray(emp?.locationsId) ? emp.locationsId : [];
+    return locIds
+      .map((id) => locationMap.get(id) || "")
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  };
+
   // --- 4. فیلتر هوشمند مسطح ---
   const filteredEmployments = useMemo(() => {
     const normalizedGlobal = globalSearch.trim().toLowerCase();
@@ -254,8 +296,8 @@ const handleGlobalSearch = ( value: string) => {
     return employments.filter((emp: any) => {
       const initEmp: any = initialEmploymentsMap.get(emp.id);
 
-      const empLocationName = (locationMap.get(emp.locationId || "") || "").toLowerCase();
-      const initLocationName = (locationMap.get(initEmp?.locationId || "") || "").toLowerCase();
+      const empLocationName = getLocationNames(emp);
+      const initLocationName = getLocationNames(initEmp);
 
       const matchesGlobal =
         !normalizedGlobal ||
@@ -296,7 +338,7 @@ const handleGlobalSearch = ( value: string) => {
           const matchInit = (initEmp?.nationalCode || "").toLowerCase().includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
         }
-        if (col === "locationId") {
+        if (col === "locationsId" || col === "locationId") {
           const matchCur = empLocationName.includes(q);
           const matchInit = initLocationName.includes(q);
           if (!matchCur && !matchInit) matchesColumns = false;
@@ -328,10 +370,6 @@ const handleGlobalSearch = ( value: string) => {
 
       const commands: UpdateEmploymentCommand[] = Array.from(modifiedIds).map((id) => {
         const emp: any = employmentsMap.get(id)!;
-        
-        // مپ کردن آی‌دی مکان به لیست locationsId جهت ارسال به بک‌اند C# (List<Guid>)
-        const selectedLocationId = emp.locationId || null;
-        const locationsIdList = selectedLocationId ? [selectedLocationId] : [];
 
         return {
           id: emp.id,
@@ -339,7 +377,7 @@ const handleGlobalSearch = ( value: string) => {
           firstName: emp.firstName || null,
           lastName: emp.lastName || null,
           nationalCode: emp.nationalCode || null,
-          locationsId: locationsIdList, // ساختار مورد نیاز DTO بک‌اند
+          locationsId: Array.isArray(emp.locationsId) ? emp.locationsId : [],
         } as any;
       });
 
@@ -355,8 +393,9 @@ const handleGlobalSearch = ( value: string) => {
     } finally {
       setSaving(false);
     }
-  }
-    return {
+  };
+
+  return {
     employments,
     loading,
     initialEmployments,
@@ -380,4 +419,3 @@ const handleGlobalSearch = ( value: string) => {
     handleSaveChanges,
   };
 };
-

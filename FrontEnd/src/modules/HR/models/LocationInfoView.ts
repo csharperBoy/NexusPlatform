@@ -8,3 +8,8 @@
 }
 
 
+export interface Location {
+  id: string;
+  title: string;
+  // سایر فیلدها در صورت نیاز
+}

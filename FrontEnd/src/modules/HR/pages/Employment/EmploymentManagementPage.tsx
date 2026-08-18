@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useEmploymentManagement } from '../../hooks/Employment/useEmploymentManagement';
 import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
+import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMultiSelect";
 
 export const EmploymentManagementPage: React.FC = () => {
   const {
@@ -279,14 +280,14 @@ export const EmploymentManagementPage: React.FC = () => {
                           </option>
                         ))}
                       </select> */}
-
-
-                      <SearchableSelect
-                        options={locations}
-                        value={emp.locationId || ""}
-                        onChange={(selected) => handleFieldChange(emp.id, "locationId", selected?.value || "")}
-                        placeholder="انتخاب محل استقرار..."
+                      <SearchableMultiSelect
+                        options={locations} // لیست مکان‌ها
+                        value={emp.locationsId || []} // آرایه‌ای از آی‌دی‌های انتخاب‌شده
+                        onChange={(selectedValues) =>
+                          handleFieldChange(emp.id, "locationsId", selectedValues)
+                        }
                       />
+
                     </td>
 
                     <td className="py-3 px-4 text-center">
