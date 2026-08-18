@@ -12,9 +12,9 @@ namespace Contact.Domain.Specifications
     
     public class GetEmploymentContactSpec : BaseSpecification<EmploymentContact?>
     {
-        public GetEmploymentContactSpec(HrContactType contactType, Guid employmentId, List<string>? values = null)
+        public GetEmploymentContactSpec(HrContactType contactType, Guid employmentId)
             : base(p =>
-                          p.ContactType == contactType && p.FkEmploymentId == employmentId && p.IsCurrent && values.Contains(p.Value) 
+                          p.ContactType == contactType && p.FkEmploymentId == employmentId && p.IsCurrent  
             // && ( value == null || p.Value == value )
             )
         {

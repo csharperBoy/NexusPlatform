@@ -108,7 +108,7 @@ namespace Contact.Infrastructure.Services
             if (values != null)
             {
                 // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
-                GetEmploymentContactSpec spec = new GetEmploymentContactSpec(type, employmentId, values);
+                GetEmploymentContactSpec spec = new GetEmploymentContactSpec(type, employmentId);
                 IEnumerable<EmploymentContact>? existContact = await _employmentContactSpecRepository.ListBySpecAsync(spec);
 
                 // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
