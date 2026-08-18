@@ -33,14 +33,29 @@ namespace Core.Application.Abstractions.Contact
             await Task.CompletedTask;
         }
 
+        public Task CreateEmploymentContact(HrContactType type, List<string>? value, Guid employmentId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task CreateLocationContact(HrContactType type, string? value, Guid LocationId)
         {
             await Task.CompletedTask;
         }
 
+        public Task CreateLocationContact(HrContactType type, List<string>? value, Guid LocationId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task CreatePostContact(HrContactType type, string? value, Guid postId)
         {
             await Task.CompletedTask;
+        }
+
+        public Task CreatePostContact(HrContactType type, List<string>? value, Guid postId)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<List<EntityContactDto<HrContactType>>> GetEmploymentContactsByEmploymentIdsAsync(List<Guid> employmentIds)
@@ -68,6 +83,11 @@ namespace Core.Application.Abstractions.Contact
         public async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
         {
             await Task.CompletedTask;
+        }
+
+        public Task CreatePartyContact(PartyContactType type, List<string>? value, Guid partyId)
+        {
+            throw new NotImplementedException();
         }
 
         public Task<List<EntityContactDto<PartyContactType>>> GetPartyContactsByPartyIdsAsync(List<Guid> partyIds)

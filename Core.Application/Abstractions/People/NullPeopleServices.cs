@@ -36,6 +36,11 @@ namespace Core.Application.Abstractions.People
             return Task.FromResult<Guid>(Guid.Empty);
         }
 
+        public Task<Guid> CreatePersonAsync(string nationalCode, string firstName, string lastName, DateTime? birthDate = null, string? birthPlace = null, string? fatherName = null, Gender? gender = null, List<PhoneNumber>? Phone = null, List<string>? Address = null, List<Email>? Email = null, List<PhoneNumber>? Mobile = null, string? createBy = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId)
         {
             return null;

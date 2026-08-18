@@ -19,11 +19,11 @@ namespace HR.Application.Interfaces
         Task<Guid> CreateLocationAsync(
            string _title,
 
-         string? _orgPhone = null,
-         string? _orgEmail = null,
-         string? _orgMobile = null
+         List<string>? _orgPhone = null,
+         List<string>? _orgEmail = null,
+         List<string>? _orgMobile = null
              );
-        Task<Guid> UpdateLocationAsync(Guid id, string? title, string? officePhone, string? orgEmail, string? orgMobile);
+        Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
       
         Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync();
 

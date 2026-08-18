@@ -170,9 +170,9 @@ namespace HR.Infrastructure.Services
 
 
         public async Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPostId = null, bool isActive = true
-            , string? OfficePhone = null,
-            string? OrgEmail = null,
-            string? OrgMobile = null
+            , List<string>? OfficePhone = null,
+            List<string>? OrgEmail = null,
+            List<string>? OrgMobile = null
             )
         {
             Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId, costCenterId, reportsToPostId);
@@ -279,7 +279,7 @@ namespace HR.Infrastructure.Services
 
         public async Task<Guid> UpdatePostAsync(
             Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive,
-            string? officePhone, string? orgEmail, string? orgMobile)
+            List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
         {
             Post? post = await _postRepository.GetByIdAsync(id);
             if (post == null)

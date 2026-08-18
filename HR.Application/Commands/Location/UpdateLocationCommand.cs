@@ -15,9 +15,9 @@ namespace HR.Application.Commands.Location
     public record UpdateLocationCommand(
            Guid Id,
    string Title,
-     string? OfficePhone,
-            string? OrgEmail,
-            string? OrgMobile
+     List<string>? OfficePhone,
+            List<string>? OrgEmail,
+            List<string>? OrgMobile
     
 
 

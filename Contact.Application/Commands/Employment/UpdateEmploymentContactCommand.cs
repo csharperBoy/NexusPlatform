@@ -14,9 +14,9 @@ namespace Contact.Application.Commands.Employment
 {
     public record UpdateEmploymentContactCommand(
         Guid Id,
-        string? OfficePhone,
-        string? OrgEmail,
-        string? OrgMobile
+        List<string>? OfficePhones,
+         List<string>? OrgEmail,
+         List<string>? OrgMobiles
 
 ) : IRequest<Result<Guid>>;
 
@@ -56,9 +56,9 @@ namespace Contact.Application.Commands.Employment
                     null,
                     null,
                     null,
-                    request.OfficePhone,
+                    request.OfficePhones,
                     request.OrgEmail,
-                    request.OrgMobile
+                    request.OrgMobiles
                     );
                 
                 await _employmentService.SaveAsync();

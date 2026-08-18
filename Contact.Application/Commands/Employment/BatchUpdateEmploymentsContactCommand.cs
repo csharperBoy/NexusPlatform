@@ -51,9 +51,9 @@ namespace Contact.Application.Commands.Employment
                    null,
                    null,
                    null,
-                   command.OfficePhone,
+                   command.OfficePhones,
                    command.OrgEmail,
-                   command.OrgMobile
+                   command.OrgMobiles
                    );
                     
 

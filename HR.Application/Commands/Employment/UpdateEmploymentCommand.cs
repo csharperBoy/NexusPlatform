@@ -45,9 +45,9 @@ namespace HR.Application.Commands.Employment
 
      List<Guid>? locationsId,
 
-     string? OfficePhone,
-            string? OrgEmail,
-            string? OrgMobile,
+     List<string>? OfficePhone,
+            List<string>? OrgEmail,
+            List<string>? OrgMobile,
     #endregion
 
     #region post assign

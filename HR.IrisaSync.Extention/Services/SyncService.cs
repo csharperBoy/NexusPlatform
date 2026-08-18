@@ -167,10 +167,10 @@ namespace HR.IrisaSync.Extention.Services
                         {
                             // ➕ کارمند جدید → ایجاد از طریق MediatR
                             var createCommand = new CreateEmploymentCommand(
-                                Phone: item.NumTelEmply.ToString(),
-                                Address: item.DesAdrEmply,
+                                Phone: new List<string> { item.NumTelEmply.ToString() },
+                                Address: new List<string> { item.DesAdrEmply },
                                 Email: null, // یا item.DesEmailAddresEmply
-                                Mobile: item.NumMobilEmply.ToString(),
+                                Mobile: new List<string> { item.NumMobilEmply.ToString() },
                                 OfficePhone: null,
                                 OrgEmail: null,
                                 OrgMobile: null,

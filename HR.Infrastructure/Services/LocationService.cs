@@ -61,9 +61,9 @@ namespace HR.Infrastructure.Services
         public async Task<Guid> CreateLocationAsync(
           string _title,
 
-        string? _orgPhone = null,
-        string? _orgEmail = null,
-        string? _orgMobile = null
+        List<string>? _orgPhone = null,
+        List<string>? _orgEmail = null,
+        List<string>? _orgMobile = null
             )
         {
 
@@ -124,7 +124,7 @@ namespace HR.Infrastructure.Services
 
 
 
-        public async Task<Guid> UpdateLocationAsync(Guid id, string? title, string? officePhone, string? orgEmail, string? orgMobile)
+        public async Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
         {
             Location? loc = await _LocationRepository.GetByIdAsync(id);
             if (loc == null)

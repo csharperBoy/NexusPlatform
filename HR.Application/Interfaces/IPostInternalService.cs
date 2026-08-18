@@ -15,14 +15,17 @@ namespace HR.Application.Interfaces
         Task AssignLocationsToPost(Guid postId, List<Guid> locationsId);
 
        
-        Task<Guid> AssignToEmploymentAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
-        Task<Guid> AssignToPostAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
-        Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null, Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true
+        Task<Guid> AssignToEmploymentAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null,
+            DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
+        Task<Guid> AssignToPostAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null,
+            DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
+        Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null,
+            Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true
              
 
-    , string? OfficePhone = null,
-            string? OrgEmail = null,
-            string? OrgMobile = null
+    , List<string>? OfficePhone = null,
+            List<string>? OrgEmail = null,
+            List<string>? OrgMobile = null
             );
         Task<IEnumerable<CostCenter>> GetCostCenterListAsync();
         Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId);
@@ -32,6 +35,6 @@ namespace HR.Application.Interfaces
         Task<IEnumerable<OrganizationUnit>> GetOrganizationUnitListAsync();
         Task<IReadOnlyList<PostInfoDto>> GetPostListAsync();
         Task SaveAsync();
-        Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, string? officePhone, string? orgEmail, string? orgMobile);
+        Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
     }
 }

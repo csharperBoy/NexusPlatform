@@ -7,6 +7,10 @@ using Core.Domain.Common.EntityProperties;
 using Core.Shared.DTOs.Contact;
 using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
+using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.Spreadsheet;
+using HR.Domain.Entities;
+using HR.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -66,71 +70,132 @@ namespace Contact.Infrastructure.Services
             await _uow.SaveChangesAsync();
         }
 
-        public async Task CreatePartyContact(PartyContactType type, string? value, Guid partyId)
+        public async Task CreatePartyContact(PartyContactType type, List<string>? values, Guid partyId)
        {
-           if (value != null)
-           {
-               PartyContact contact = new PartyContact(type, value, partyId);
-               await _personContactRepository.AddAsync(contact);
-           }
-       }
-        public async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
-        {
-            if (value != null)
+            if (values != null)
             {
-                GetEmploymentContactSpec spec = new GetEmploymentContactSpec(type, employmentId, value);
-                EmploymentContact? existContact = await _employmentContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact?.Value.Trim() != value.Trim())
-                {
-                    if (existContact != null)
-                    {
-                        await existContact.DoExpire();
-                        await _employmentContactRepository.UpdateAsync(existContact);
+                // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
+                GetPartyContactSpec spec = new GetPartyContactSpec(type, partyId, values);
+                IEnumerable<PartyContact>? existContact = await _personContactSpecRepository.ListBySpecAsync(spec);
 
-                    }
-                    EmploymentContact contact = new EmploymentContact(type, value, employmentId, DateTime.UtcNow);
-                    await _employmentContactRepository.AddAsync(contact);
+                // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+                var existingValues = existContact.Select(e => e.Value).ToHashSet();
+                var newValues = values.Distinct().ToHashSet();
+
+                // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+                var toExpire = existContact.Where(e => !newValues.Contains(e.Value)).ToList();
+                foreach (var item in toExpire)
+                {
+                    await item.DoExpire();
+                }
+
+                // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+                var toAdd = newValues
+                    .Where(val => !existingValues.Contains(val))
+                    .Select(val => new PartyContact(type, val, partyId, DateTime.UtcNow))
+                    .ToList();
+
+                if (toAdd.Any())
+                {
+                    await _personContactRepository.AddRangeAsync(toAdd);
                 }
 
             }
         }
-        public async Task CreateLocationContact(HrContactType type, string? value, Guid LocationId)
+       
+        public async Task CreateEmploymentContact(HrContactType type, List<string>? values, Guid employmentId)
         {
-            if (value != null)
+            if (values != null)
             {
-                GetLocationContactSpec spec = new GetLocationContactSpec(type, LocationId, value);
-                LocationContact? existContact = await _locationContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact?.Value.Trim() != value.Trim())
-                {
-                    if (existContact != null)
-                    {
-                        await existContact.DoExpire();
-                        await _locationContactRepository.UpdateAsync(existContact);
+                // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
+                GetEmploymentContactSpec spec = new GetEmploymentContactSpec(type, employmentId, values);
+                IEnumerable<EmploymentContact>? existContact = await _employmentContactSpecRepository.ListBySpecAsync(spec);
 
-                    }
-                    LocationContact contact = new LocationContact(type, value, LocationId, DateTime.UtcNow);
-                    await _locationContactRepository.AddAsync(contact);
+                // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+                var existingValues = existContact.Select(e => e.Value).ToHashSet();
+                var newValues = values.Distinct().ToHashSet();
+
+                // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+                var toExpire = existContact.Where(e => !newValues.Contains(e.Value)).ToList();
+                foreach (var item in toExpire)
+                {
+                    await item.DoExpire();
+                }
+
+                // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+                var toAdd = newValues
+                    .Where(val => !existingValues.Contains(val))
+                    .Select(val => new EmploymentContact(type, val, employmentId, DateTime.UtcNow))
+                    .ToList();
+
+                if (toAdd.Any())
+                {
+                    await _employmentContactRepository.AddRangeAsync(toAdd);
+                }
+
+            }
+        }
+        public async Task CreateLocationContact(HrContactType type, List<string>? values, Guid locationId)
+        {
+            if (values != null)
+            {
+                // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
+                GetLocationContactSpec spec = new GetLocationContactSpec(type, locationId, values);
+                IEnumerable<LocationContact>? existContact = await _locationContactSpecRepository.ListBySpecAsync(spec);
+
+                // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+                var existingValues = existContact.Select(e => e.Value).ToHashSet();
+                var newValues = values.Distinct().ToHashSet();
+
+                // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+                var toExpire = existContact.Where(e => !newValues.Contains(e.Value)).ToList();
+                foreach (var item in toExpire)
+                {
+                    await item.DoExpire();
+                }
+
+                // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+                var toAdd = newValues
+                    .Where(val => !existingValues.Contains(val))
+                    .Select(val => new LocationContact(type, val, locationId, DateTime.UtcNow))
+                    .ToList();
+
+                if (toAdd.Any())
+                {
+                    await _locationContactRepository.AddRangeAsync(toAdd);
                 }
 
             }
         }
         
-        public async Task CreatePostContact(HrContactType type, string? value, Guid postId)
+        public async Task CreatePostContact(HrContactType type, List<string>? values, Guid postId)
         {
-            if (value != null)
+            if (values != null)
             {
-                GetPostContactSpec spec = new GetPostContactSpec(type, postId, value);
-                PostContact? existContact = await _postContactSpecRepository.GetBySpecAsync(spec);
-                if (existContact?.Value.Trim() != value.Trim())
-                {
-                    if (existContact != null)
-                    {
-                       await existContact.DoExpire();
-                        await _postContactRepository.UpdateAsync(existContact);
+                // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
+                GetPostContactSpec spec = new GetPostContactSpec(type, postId, values);
+                IEnumerable<PostContact>? existContact = await _postContactSpecRepository.ListBySpecAsync(spec);
 
-                    }
-                    PostContact contact = new PostContact(type, value, postId, DateTime.UtcNow);
-                    await _postContactRepository.AddAsync(contact);
+                // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
+                var existingValues = existContact.Select(e => e.Value).ToHashSet();
+                var newValues = values.Distinct().ToHashSet();
+
+                // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
+                var toExpire = existContact.Where(e => !newValues.Contains(e.Value)).ToList();
+                foreach (var item in toExpire)
+                {
+                    await item.DoExpire();
+                }
+
+                // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
+                var toAdd = newValues
+                    .Where(val => !existingValues.Contains(val))
+                    .Select(val => new PostContact(type, val, postId, DateTime.UtcNow))
+                    .ToList();
+
+                if (toAdd.Any())
+                {
+                    await _postContactRepository.AddRangeAsync(toAdd);
                 }
 
             }

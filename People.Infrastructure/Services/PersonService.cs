@@ -61,10 +61,10 @@ namespace People.Infrastructure.Services
             string? birthPlace = null,
             string? fatherName = null,
             Gender? gender = null,
-             PhoneNumber? Phone = null,
-        string? Address = null,
-        Email? Email = null,
-        PhoneNumber? Mobile = null,
+             List<PhoneNumber>? Phone = null,
+       List<string>? Address = null,
+        List<Email>? Email = null,
+        List<PhoneNumber>? Mobile = null,
         string? createBy = null
             )
         {
@@ -76,19 +76,19 @@ namespace People.Infrastructure.Services
             return naturalPerson.Id;
         }
         private async Task<Guid> CreatePartyAsync(
-             PhoneNumber? Phone,
-        string? Address,
-        Email? Email,
-        PhoneNumber? Mobile)
+             List<PhoneNumber>? Phone,
+        List<string>? Address,
+        List< Email>? Email,
+        List<PhoneNumber>? Mobile)
         {
             Guid perAssigneeId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Party);
             Party party = new Party(perAssigneeId);
             await _partyRepository.AddAsync(party);
 
-            await _contactService.CreatePartyContact(PartyContactType.Mobile, Mobile?.Value, party.Id);
-            await _contactService.CreatePartyContact(PartyContactType.Phone, Phone?.Value, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Phone, Phone?.Select(a => a.Value).ToList(), party.Id);
             await _contactService.CreatePartyContact(PartyContactType.Address, Address, party.Id);
-            await _contactService.CreatePartyContact(PartyContactType.Email, Email?.Value, party.Id);
+            await _contactService.CreatePartyContact(PartyContactType.Email, Email?.Select(a => a.Value).ToList(), party.Id);
             return party.Id;
         }
 

@@ -73,17 +73,17 @@ namespace HR.Infrastructure.Services
         DateOnly? _StartDate = null,
         DateOnly? _EndDate = null,
 
-        PhoneNumber? _orgPhone = null,
-        Email? _orgEmail = null,
-        PhoneNumber? _orgMobile = null
+        List<PhoneNumber>? _orgPhone = null,
+        List<Email>? _orgEmail = null,
+        List<PhoneNumber>? _orgMobile = null
             )
         {
             Employment emp = new Employment(_EmploymentCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
             await _employmentRepository.AddAsync(emp);
 
-            await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Value, emp.Id);
-            await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Value, emp.Id);
-            await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Value, emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Select(t=>t.Value).ToList(), emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Select(t => t.Value).ToList(), emp.Id);
+            await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Select(t => t.Value).ToList(), emp.Id);
             return emp.Id;
         }
         //private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
@@ -144,7 +144,7 @@ namespace HR.Infrastructure.Services
 
 
 
-        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, string? officePhone, string? orgEmail, string? orgMobile)
+        public async Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
         {
             Employment? emp = await _employmentRepository.GetByIdAsync(id);
             if (emp == null)

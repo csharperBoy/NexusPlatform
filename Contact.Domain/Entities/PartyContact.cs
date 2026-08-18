@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
+using Core.Shared.Enums.HR;
 using Core.Shared.Enums.People;
 using System;
 using System.Collections.Generic;
@@ -88,14 +89,22 @@ namespace Contact.Domain.Entities
         // Constructor for EF
         protected PartyContact() { }
         public PartyContact
-            (PartyContactType _ContactType,
+             (PartyContactType _ContactType,
             string _Value,
-            Guid _PartyId)
+            Guid _partyId,
+            DateTime? _EffectiveFrom = null,
+            DateTime? _EffectiveTo = null,
+            bool _isCurrent = true
+            )
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPartyId = _PartyId;
+            FkPartyId = _partyId;
+            EffectiveFrom = _EffectiveFrom;
+            EffectiveTo = _EffectiveTo;
+            IsCurrent = _isCurrent;
         }
+
 
     }
 }

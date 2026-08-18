@@ -14,9 +14,9 @@ namespace Contact.Application.Commands.Location
     
     public record UpdateLocationContactCommand(
            Guid Id,
-     string? OfficePhone,
-            string? OrgEmail,
-            string? OrgMobile
+     List<string>? OfficePhone,
+            List<string>? OrgEmail,
+            List<string>? OrgMobile
     
 
 

@@ -18,10 +18,10 @@ namespace HR.Application.Commands.Employment
 {
     public record CreateEmploymentCommand(
     #region party
-        string? Phone,
-        string? Address,
-        string? Email,
-        string? Mobile,
+        List<string>? Phone,
+        List<string>? Address,
+        List<string>? Email,
+        List<string>? Mobile,
     #endregion
     #region Person
 
@@ -43,9 +43,9 @@ namespace HR.Application.Commands.Employment
 
      List<Guid> locationsId,
 
-     string? OfficePhone,
-            string? OrgEmail,
-            string? OrgMobile,
+     List<string>? OfficePhone,
+            List<string>? OrgEmail,
+            List<string>? OrgMobile,
     #endregion
 
     #region post assign
@@ -90,12 +90,12 @@ namespace HR.Application.Commands.Employment
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
                 #region ساخت شخصیت حقیقی
 
-                PhoneNumber? phone = null;
-                Email? email = null;
-                PhoneNumber? mobile = null;
-                try { phone = request.Phone != null ? PhoneNumber.Create(request.Phone) : null; } catch { }
-                try { email = request.Email != null ? Email.Create(request.Email) : null; } catch { }
-                try { mobile = request.Mobile != null ? PhoneNumber.Create(request.Mobile) : null; } catch { }
+               List< PhoneNumber>? phone = null;
+               List< Email>? email = null;
+               List< PhoneNumber>? mobile = null;
+                try { phone.AddRange( request.Phone != null ? request.Phone.Select(a=> PhoneNumber.Create(a)).ToList() : null); } catch { }
+                try { email.AddRange(  request.Email != null ? request.Email.Select(a => Email.Create(a)).ToList() : null); } catch { }
+                try { mobile.AddRange( request.Mobile != null ? request.Mobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
 
 
                 Guid personId = await _personService.CreatePersonAsync(
@@ -112,14 +112,12 @@ namespace HR.Application.Commands.Employment
                 #endregion
 
                 #region ایجاد کارمند
-
-                PhoneNumber? orgPhone = null;
-                Email? orgEmail = null;
-                PhoneNumber? orgMobile = null;
-                try { orgPhone = request.OfficePhone != null ? PhoneNumber.Create(request.OfficePhone) : null; } catch { }
-                try { orgEmail = request.OrgEmail != null ? Email.Create(request.OrgEmail) : null; } catch { }
-                try { orgMobile = request.OrgMobile != null ? PhoneNumber.Create(request.OrgMobile) : null; } catch { }
-
+                List<PhoneNumber>? orgPhone = null;
+                List<Email>? orgEmail = null;
+                List<PhoneNumber>? orgMobile = null;
+                try { orgPhone.AddRange(request.OfficePhone != null ? request.OfficePhone.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
+                try { orgEmail.AddRange(request.OrgEmail != null ? request.OrgEmail.Select(a => Email.Create(a)).ToList() : null); } catch { }
+                try { orgMobile.AddRange(request.OrgMobile != null ? request.OrgMobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
 
 
                 Guid employmentId = await _employmentService.CreateEmploymentAsync(

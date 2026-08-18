@@ -15,10 +15,10 @@ namespace Core.Application.Abstractions.People
             string? birthPlace = null, 
             string? fatherName = null,
             Gender? gender = null,
-             PhoneNumber? Phone = null,
-        string? Address = null,
-        Email? Email = null,
-        PhoneNumber? Mobile = null , string? createBy = null);
+             List<PhoneNumber>? Phone = null,
+        List<string>? Address = null,
+        List<Email>? Email = null,
+        List<PhoneNumber>? Mobile = null , string? createBy = null);
         Task<Guid?> GetPersonPermissionAssigneeIdAsync(Guid? personId);
         Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId);
         Task SaveAsync();

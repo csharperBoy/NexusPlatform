@@ -29,9 +29,9 @@ namespace HR.Application.Commands.OrgChart
     PostAssignmentType? AssignType,
 
      List<Guid>? locationsId,
-     string? OfficePhone ,
-            string? OrgEmail ,
-            string? OrgMobile 
+     List<string>? OfficePhone ,
+            List<string>? OrgEmail ,
+            List<string>? OrgMobile 
 
 ) : IRequest<Result<Guid>>;
 

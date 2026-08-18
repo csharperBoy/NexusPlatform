@@ -53,8 +53,8 @@ namespace Contact.Application.Queries
                     {
                         Id = e.Id,
                        Title = e.Title,
-                        orgPhone = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OfficePhone)?.Select(a => a.Value).ToList(),
-                        orgMobile = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OrgMobile)?.Select(a => a.Value).ToList(),
+                        orgPhone = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        orgMobile = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OrgMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
 
                     })
                     .ToList();

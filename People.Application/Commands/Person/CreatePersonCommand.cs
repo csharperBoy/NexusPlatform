@@ -16,10 +16,10 @@ namespace People.Application.Commands.Person
 {
     public record CreatePersonCommand(
     #region party
-        PhoneNumber? Phone,
-        string? Address,
-        Email Email,
-        PhoneNumber? Mobile,
+        List<PhoneNumber>? Phone,
+        List<string>? Address,
+        List<Email>? Email,
+        List<PhoneNumber>? Mobile,
     #endregion
         string NationalCode,
      string FirstlName,

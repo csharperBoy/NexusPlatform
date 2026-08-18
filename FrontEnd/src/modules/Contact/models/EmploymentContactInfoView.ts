@@ -5,8 +5,8 @@
   employmentCode: string;
  firstName: string;
  lastName: string;
-  employmentContactPhone?: string | null;
-  employmentContactMobile?: string | null;
+  employmentContactPhone?: string[] | null;
+  employmentContactMobile?: string[] | null;
 }
 
 
