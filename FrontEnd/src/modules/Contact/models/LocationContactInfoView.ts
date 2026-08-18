@@ -3,8 +3,8 @@
   id: string; // Guid
   title: string;
   
-  orgMobile?: string | null;
-  orgPhone?: string | null;
+  orgMobile?: string[] | null;
+  orgPhone?: string[] | null;
 }
 
 
