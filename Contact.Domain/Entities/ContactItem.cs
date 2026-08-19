@@ -91,7 +91,7 @@ namespace Contact.Domain.Entities
         /// <summary>
         /// عنوان اختصاصی آیتم (مثلاً: "موبایل شخصی"، "واتس‌اپ کاری"، "ایمیل پشتیبانی")
         /// </summary>
-        public string Label { get; private set; }
+        public string? Label { get; private set; }
 
         // فیلدهای اولویت و وضعیت
         public bool IsPrimary { get; private set; } // آیا کانال اصلی این نوع است؟
@@ -114,7 +114,7 @@ namespace Contact.Domain.Entities
             string _Value,
             Guid _ContactProfileId,
             DateTime? _EffectiveFrom = null,
-            string? _Label = null, 
+            string? _Label = null , 
             bool _IsPrimary = true, 
             int? _SortOrder = null, 
             Guid? _ParentContactItemId = null, 

@@ -108,6 +108,7 @@ namespace Contact.Infrastructure.Services
             var list = await _contactItemSpecRepository.ListBySpecAsync(spec);
             return list.Select(c => new ContactItemDto
             {
+                ProfileId = c.ContactProfileId,
                 ContactType = c.ContactType,
                 Value = c.Value,
                 Label = c.Label,

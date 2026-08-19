@@ -178,7 +178,8 @@ namespace HR.Infrastructure.Services
              new LocationInfoDto
              {
                  Id = s.Id,
-                 Title = s.Title
+                 Title = s.Title,
+                 ProfileId = s.FkContactProfileId
 
              }).ToList();
         }

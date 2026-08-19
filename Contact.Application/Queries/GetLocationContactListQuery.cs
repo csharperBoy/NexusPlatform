@@ -54,8 +54,8 @@ namespace Contact.Application.Queries
                     {
                         Id = e.Id,
                        Title = e.Title,
-                        orgPhone = contactList.Where(a =>  a.ContactType == ContactTypeEnum.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
-                        orgMobile = contactList.Where(a =>  a.ContactType == ContactTypeEnum.OrganizationMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        orgPhone = contactList.Where(a => a.ProfileId == e.ProfileId && a.ContactType == ContactTypeEnum.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        orgMobile = contactList.Where(a => a.ProfileId == e.ProfileId && a.ContactType == ContactTypeEnum.OrganizationMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
 
                     })
                     .ToList();
