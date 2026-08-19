@@ -5,8 +5,9 @@ using Core.Application.Abstractions.People;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Wordprocessing;
@@ -36,26 +37,23 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
-        private readonly IHrContactPublicService _hrContactService;
-        private readonly IPeopleContactPublicService _peopleContactService;
+        private readonly IContactPublicService _contactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
         public EmploymentService(IPersonPublicService personService,
-             IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository, 
+             IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
              ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
             IRepository<HRDbContext, Employment, Guid> employmentRepository,
             ILogger<EmploymentService> logger,
-            ISpecificationRepository<Employment, Guid> employmentSpecRepository, 
-            IHrContactPublicService hrContactService,
-            IPeopleContactPublicService peopleContactService,
+            ISpecificationRepository<Employment, Guid> employmentSpecRepository,
+           IContactPublicService contactService,
             IUnitOfWork<HRDbContext> uow,
             IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
             )
         {
             _employmentInfoRepository = employmentInfoRepository;
-            _hrContactService = hrContactService;
-            _peopleContactService = peopleContactService;
+            _contactService = contactService;
             _personService = personService;
             _employmentRepository = employmentRepository;
             _employmentLocationsRepository = employmentLocationsRepository;
@@ -78,12 +76,14 @@ namespace HR.Infrastructure.Services
         List<PhoneNumber>? _orgMobile = null
             )
         {
-            Employment emp = new Employment(_EmploymentCode, _PersonId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
+
+            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Employment - {_EmploymentCode}", ContactProfileTypeEnum.Employment);
+            Employment emp = new Employment(_EmploymentCode, _PersonId, contactProfileId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
             await _employmentRepository.AddAsync(emp);
 
-            await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, _orgMobile?.Select(t=>t.Value).ToList(), emp.Id);
-            await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, _orgPhone?.Select(t => t.Value).ToList(), emp.Id);
-            await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, _orgEmail?.Select(t => t.Value).ToList(), emp.Id);
+            await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, _orgMobile?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.OfficePhone, _orgPhone?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Email, _orgEmail?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
             return emp.Id;
         }
         //private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
@@ -97,7 +97,7 @@ namespace HR.Infrastructure.Services
         public async Task SaveAsync()
         {
             await _uow.SaveChangesAsync();
-            await _hrContactService.SaveAsync();
+            await _contactService.SaveAsync();
             await _personService.SaveAsync();
         }
         public async Task<Guid?> GetEmploymentId(Guid? personId)
@@ -126,7 +126,7 @@ namespace HR.Infrastructure.Services
             var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
             foreach (var item in toExpire)
             {
-               await item.DoExpire();
+                await item.DoExpire();
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -156,22 +156,22 @@ namespace HR.Infrastructure.Services
                 await _employmentRepository.UpdateAsync(emp);
             }
 
-            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstName, lastName, birthDate, birthPlace, fatherName,nationalCode);
+            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, phone, address, email, mobile, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode);
             if (officePhone != null)
             {
-                await _hrContactService.CreateEmploymentContact(HrContactType.OfficePhone, officePhone, emp.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OfficePhone, officePhone, emp.FkContactProfileId);
             }
             if (orgEmail != null)
             {
-                await _hrContactService.CreateEmploymentContact(HrContactType.OrgEmail, orgEmail, emp.Id);
+                await _contactService.CreateContact(ContactTypeEnum.Email, orgEmail, emp.FkContactProfileId);
             }
             if (orgMobile != null)
             {
-                await _hrContactService.CreateEmploymentContact(HrContactType.OrgMobile, orgMobile, emp.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, orgMobile, emp.FkContactProfileId);
             }
             return emp.Id;
         }
-        
+
 
         public async Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync()
         {
@@ -204,13 +204,15 @@ namespace HR.Infrastructure.Services
                 EmploymentStatusName = s.EmploymentStatusName,
                 EmploymentTypeName = s.EmploymentTypeName,
                 NationalCode = s.NationalCode,
+                ProfileId = s.FkContactProfileId,
+                PartyProfileId = s.FkPartyContactProfileId,
                 PartyId = s.PartyId,
                 //partyContacts = peopleContactList.Where(l => l.IsCurrent && l.EntityId == s.PartyId).ToList(),
 
             }).ToList();
             return result;
         }
-        
+
 
     }
 }

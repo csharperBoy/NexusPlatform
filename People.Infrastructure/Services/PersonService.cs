@@ -6,8 +6,9 @@ using Core.Application.Provider;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using Microsoft.Extensions.Logging;
 using People.Application.Interfaces;
 using People.Domain.Entities;
@@ -30,7 +31,7 @@ namespace People.Infrastructure.Services
         private readonly IRepository<PeopleDbContext, NaturalPerson, Guid> _naturalPersonRepository;
         private readonly IRepository<PeopleDbContext, NaturalPersonProfile, Guid> _naturalPersonProfileRepository;
         private readonly IRepository<PeopleDbContext, Party, Guid> _partyRepository;
-        private readonly IPeopleContactPublicService _contactService;
+        private readonly IContactPublicService _contactService;
         private readonly ISpecificationRepository<NaturalPerson, Guid> _personSpecRepository;
         private readonly ILogger<PersonService> _logger;
         private readonly IUnitOfWork<PeopleDbContext> _uow;
@@ -42,7 +43,7 @@ namespace People.Infrastructure.Services
             ILogger<PersonService> logger,
             ISpecificationRepository<NaturalPerson, Guid> personSpecRepository,
             IRepository<PeopleDbContext, Party, Guid> partyRepository,
-            IPeopleContactPublicService contactService,
+            IContactPublicService contactService,
             IUnitOfWork<PeopleDbContext> uow)
         {
             _naturalPersonRepository = naturalPersonRepository;
@@ -77,18 +78,19 @@ namespace People.Infrastructure.Services
         }
         private async Task<Guid> CreatePartyAsync(
              List<PhoneNumber>? Phone,
-        List<string>? Address,
-        List< Email>? Email,
-        List<PhoneNumber>? Mobile)
+             List<string>? Address,
+             List< Email>? Email,
+             List<PhoneNumber>? Mobile)
         {
             Guid perAssigneeId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Party);
-            Party party = new Party(perAssigneeId);
+            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Party - {perAssigneeId}", ContactProfileTypeEnum.Party);
+            Party party = new Party(contactProfileId,contactProfileId);
             await _partyRepository.AddAsync(party);
 
-            await _contactService.CreatePartyContact(PartyContactType.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.Id);
-            await _contactService.CreatePartyContact(PartyContactType.Phone, Phone?.Select(a => a.Value).ToList(), party.Id);
-            await _contactService.CreatePartyContact(PartyContactType.Address, Address, party.Id);
-            await _contactService.CreatePartyContact(PartyContactType.Email, Email?.Select(a => a.Value).ToList(), party.Id);
+            await _contactService.CreateContact(ContactTypeEnum.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Address, Address, party.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), party.FkContactProfileId);
             return party.Id;
         }
 

@@ -1,5 +1,7 @@
 ﻿using Contact.Domain.Entities;
 using Core.Domain.Specifications;
+using Core.Shared.Enums.Contact;
+using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +11,11 @@ using System.Threading.Tasks;
 namespace Contact.Domain.Specifications
 {
     
-    public class GetEmploymentContactsByEmploymentIdsSpec : BaseSpecification<EmploymentContact>
+    public class GetContactSpec : BaseSpecification<ContactItem?>
     {
-        public GetEmploymentContactsByEmploymentIdsSpec(List<Guid> employmentIds)
+        public GetContactSpec(ContactTypeEnum contactType, Guid profileId)
             : base(p =>
-                       employmentIds.Any(s => s == p.FkEmploymentId)
+                          p.ContactType == contactType && p.ContactProfileId == profileId && p.IsCurrent  
             // && ( value == null || p.Value == value )
             )
         {

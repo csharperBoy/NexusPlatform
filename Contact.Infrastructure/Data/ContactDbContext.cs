@@ -5,7 +5,6 @@ using Core.Infrastructure.Data;
 using Core.Infrastructure.Database.Configurations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using People.Infrastructure.Configurations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,10 +27,8 @@ namespace Contact.Infrastructure.Data
         {
         }
 
-        public virtual DbSet<PartyContact> PartyContacts { get; set; } = null!;
-        public virtual DbSet<EmploymentContact> EmploymentContacts { get; set; }
-        public virtual DbSet<PostContact> PostContacts { get; set; }
-        public virtual DbSet<LocationContact> LocationContacts { get; set; }
+        public virtual DbSet<ContactProfile> ContactProfiles { get; set; }
+        public virtual DbSet<ContactItem> ContactItems { get; set; }
         
         public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
        
@@ -51,11 +48,8 @@ namespace Contact.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("contact"));
             modelBuilder.ApplyConfiguration(new PhoneBookInfoViewConfiguration());
-            modelBuilder.ApplyConfiguration(new EmploymentContactConfiguration());
-            modelBuilder.ApplyConfiguration(new PostContactConfiguration());
-            modelBuilder.ApplyConfiguration(new LocationContactConfiguration());
-
-            modelBuilder.ApplyConfiguration(new PartyContactConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactItemConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactProfileConfiguration());
 
         }
     }

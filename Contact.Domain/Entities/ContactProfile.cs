@@ -1,4 +1,6 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Contact.Domain.Enums;
+using Core.Domain.Common.EntityProperties;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class LocationContact : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
+    public class ContactProfile : BaseEntity, IAuditableEntity, IOwnerableEntity
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -51,55 +53,20 @@ namespace Contact.Domain.Entities
 
         #endregion
 
-        #region Impelement IHasEffectivePeriod
-        public DateTime? EffectiveFrom { get; private set; }
-        public DateTime? EffectiveTo { get; private set; }
-        public bool IsCurrent { get; private set; }
 
-        public async Task SetEffectiveFrom(DateTime? value)
-        {
-            EffectiveFrom = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        public async Task SetEffectiveTo(DateTime? value)
-        {
-            EffectiveTo = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        public async Task SetIsCurrent(bool value)
-        {
-            IsCurrent = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        #endregion
+        public string Title { get; private set; }
 
+        public bool IsActive { get; private set; }
+        public ContactProfileTypeEnum ProfileType { get; private set; }
+        public ICollection<ContactItem> ContactItems { get; private set; } = new List<ContactItem>();
 
-
-        public HrContactType ContactType { get; protected set; }
-        public string Value { get; protected set; }
-        public Guid FkLocationId { get; private set; }
-
-        //public virtual Location Location { get; private set; } = null!;
         // Constructor for EF
-        protected LocationContact() { }
-        public LocationContact
-            (HrContactType _ContactType,
-            string _Value,
-            Guid _LocationId,
-            DateTime? _EffectiveFrom = null,
-            DateTime? _EffectiveTo = null,
-            bool _isCurrent = true
-            )
+        protected ContactProfile() { }
+        public ContactProfile(string _Title , ContactProfileTypeEnum _ProfileType, bool _IsActive = true)
         {
-            ContactType = _ContactType;
-            Value = _Value;
-            FkLocationId = _LocationId;
-            EffectiveFrom = _EffectiveFrom;
-            EffectiveTo = _EffectiveTo;
-            IsCurrent = _isCurrent;
+            Title = _Title;
+            ProfileType = _ProfileType;
+            IsActive = _IsActive;
         }
     }
 }

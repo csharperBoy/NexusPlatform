@@ -27,7 +27,7 @@ namespace HR.Domain.Entities
         public Guid? FkEmploymentStatusId { get; private set; }
         public DateOnly EffectiveFrom { get; private set; }
         public DateOnly? EffectiveTo { get; private set; }
-
+        public Guid FkContactProfileId { get; private set; }
         //navigate
         public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
 
@@ -46,6 +46,7 @@ namespace HR.Domain.Entities
         public Employment(
               string _EmploymentCode,
          Guid _PersonId,
+         Guid _FkContactProfileId ,
          Guid? _EmploymentTypeId,
          Guid? _EmploymentStatusId,
          DateOnly? _EffectiveFrom = null,
@@ -56,7 +57,7 @@ namespace HR.Domain.Entities
             FkNaturalPersonId = _PersonId;
             FkEmploymentTypeId = _EmploymentTypeId;
             FkEmploymentStatusId = _EmploymentStatusId;
-
+            FkContactProfileId = _FkContactProfileId;
             EffectiveFrom = _EffectiveFrom ?? DateOnly.FromDateTime( DateTime.UtcNow);
 
             EffectiveTo = _EffectiveTo;

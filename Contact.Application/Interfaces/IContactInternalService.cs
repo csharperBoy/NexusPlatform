@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Application.Interfaces
 {
-    public interface IContactInternalService : IHrContactPublicService , IPeopleContactPublicService
+    public interface IContactInternalService : IContactPublicService 
     {
     }
 }

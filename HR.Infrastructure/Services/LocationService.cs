@@ -5,6 +5,7 @@ using Core.Application.Abstractions.People;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
@@ -29,7 +30,7 @@ namespace HR.Infrastructure.Services
         private readonly ISpecificationRepository<Location, Guid> _LocationSpecRepository;
         private readonly ISpecificationRepository<PostLocation, Guid> _PostLocationSpecRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _EmploymentLocationSpecRepository;
-        private readonly IHrContactPublicService _contactService;
+        private readonly IContactPublicService _contactService;
         private readonly ILogger<LocationService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
 
@@ -40,7 +41,7 @@ namespace HR.Infrastructure.Services
         ISpecificationRepository<Location, Guid> LocationSpecRepository,
         ISpecificationRepository<PostLocation, Guid> PostLocationSpecRepository,
         ISpecificationRepository<EmploymentLocation, Guid> EmploymentLocationSpecRepository,
-       IHrContactPublicService contactService,
+       IContactPublicService contactService,
         ILogger<LocationService> logger,
         IUnitOfWork<HRDbContext> uow
 
@@ -67,12 +68,13 @@ namespace HR.Infrastructure.Services
             )
         {
 
-            Location loc = new Location(_title);
+            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Location - {_title}", ContactProfileTypeEnum.Location);
+            Location loc = new Location(_title, contactProfileId);
             await _LocationRepository.AddAsync(loc);
 
-            await _contactService.CreateLocationContact(HrContactType.OrgMobile, _orgMobile, loc.Id);
-            await _contactService.CreateLocationContact(HrContactType.OfficePhone, _orgPhone, loc.Id);
-            await _contactService.CreateLocationContact(HrContactType.OrgEmail, _orgEmail, loc.Id);
+            await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, _orgMobile, loc.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.OfficePhone, _orgPhone, loc.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Email, _orgEmail, loc.FkContactProfileId);
             return loc.Id;
         }
         public async Task SaveAsync()
@@ -138,15 +140,15 @@ namespace HR.Infrastructure.Services
 
             if (officePhone != null)
             {
-                await _contactService.CreateLocationContact(HrContactType.OfficePhone, officePhone, loc.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OfficePhone, officePhone, loc.FkContactProfileId);
             }
             if (orgEmail != null)
             {
-                await _contactService.CreateLocationContact(HrContactType.OrgEmail, orgEmail, loc.Id);
+                await _contactService.CreateContact(ContactTypeEnum.Email, orgEmail, loc.FkContactProfileId);
             }
             if (orgMobile != null)
             {
-                await _contactService.CreateLocationContact(HrContactType.OrgMobile, orgMobile, loc.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, orgMobile, loc.FkContactProfileId);
             }
             return loc.Id;
         }

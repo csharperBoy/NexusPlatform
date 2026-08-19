@@ -8,6 +8,9 @@ namespace HR.Domain.Entities;
 public partial class EmploymentInfoView
 {
     public Guid Id { get; set; }
+
+    public Guid FkContactProfileId { get;  set; }
+    public Guid FkPartyContactProfileId { get;  set; }
     public string NationalCode { get; set; } = null!;
 
     public string FirstName { get; set; } = null!;
@@ -52,22 +55,4 @@ public partial class EmploymentInfoView
 
     public string? OrganizationUnitsName { get; set; }
 
-    //public string? PostContactPhone { get; set; }
-
-    //public string? PostContactMobile { get; set; }
-
-    //public string? PostContactEmail { get; set; }
-
-    //public string? PostContactFax { get; set; }
-
-    //public string? EmploymentContactPhone { get; set; }
-    //public string? EmploymentContactMobile { get; set; }
-    //public string? EmploymentContactEmail { get; set; }
-    //public string? EmploymentContactFax { get; set; }
-    //public DateTime? EmploymentLocationsEffectiveFrom { get; set; }
-
-    //public DateTime? EmploymentLocationsEffectiveTo { get; set; }
-
-    //public string? LocationTitle { get; set; }
-    //public Guid? LocationId { get; set; }
 }

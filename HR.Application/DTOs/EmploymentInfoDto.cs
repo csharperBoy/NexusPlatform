@@ -1,6 +1,6 @@
 ﻿using Core.Shared.DTOs.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +12,9 @@ namespace HR.Application.DTOs
     public class EmploymentInfoDto
     {
         public Guid Id { get; set; }
+        public Guid ProfileId { get; set; }
+        public Guid PartyProfileId { get; set; }
+
         public string NationalCode { get; set; } = null!;
 
         public string FirstName { get; set; } = null!;

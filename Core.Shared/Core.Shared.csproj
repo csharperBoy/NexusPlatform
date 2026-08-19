@@ -9,6 +9,7 @@
   <ItemGroup>
     <Folder Include="DTOs\Base\" />
     <Folder Include="Enums\Base\" />
+    <Folder Include="Enums\People\" />
     <Folder Include="Events\Authentication\" />
   </ItemGroup>
 

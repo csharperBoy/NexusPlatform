@@ -1,14 +1,19 @@
 ﻿using Azure.Core;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Contact;
+using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using HR.Application.Commands.Employment;
+using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
 using HR.Infrastructure.Data;
+using HR.Infrastructure.Services;
 using HR.IrisaSync.Extention.Contexts;
 using HR.IrisaSync.Extention.Data;
 using HR.IrisaSync.Extention.Entities;
@@ -42,11 +47,13 @@ namespace HR.IrisaSync.Extention.Services
         private readonly IEmploymentInternalService _employmentService;
         private readonly IMapService _mapService;
         private readonly IPersonPublicService _personService;
+        private readonly IContactPublicService _contactService;
         private readonly IMediator _mediator;
         public SyncService(ISpecificationRepository<PdsIdeaInformationViw, string> repoSpec,
             IHRUnitOfWork<HRDbContext> hrUow, IIrisaSyncUnitOfWork<IrisaExtentionDbContext> uow,
             IEmploymentInternalService employmentService,
             IPersonPublicService personService,
+            IContactPublicService contactService,
             IMapService mapService,
             IMediator mediator,
             IRepository<IrisaOracleDbContext, PdsIdeaInformationViw, string> irisaRepo)
@@ -54,6 +61,7 @@ namespace HR.IrisaSync.Extention.Services
             _mapService = mapService;
             _mediator = mediator;
             _employmentService = employmentService;
+            _contactService = contactService;
             _irisaRepo = irisaRepo;
             _repoSpec = repoSpec;
             _uow = uow;
@@ -165,6 +173,7 @@ namespace HR.IrisaSync.Extention.Services
                         }
                         else
                         {
+
                             // ➕ کارمند جدید → ایجاد از طریق MediatR
                             var createCommand = new CreateEmploymentCommand(
                                 Phone: new List<string> { item.NumTelEmply.ToString() },
@@ -260,7 +269,6 @@ namespace HR.IrisaSync.Extention.Services
         */
         public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment()
         {
-            var a = await _irisaRepo.GetByIdAsync("1250382831");
             var spec = new GetEmploymentSpec();
             var lst = await _repoSpec.ListBySpecAsync(spec);
             return lst.ToList();
@@ -356,7 +364,7 @@ namespace HR.IrisaSync.Extention.Services
                 var newKeys = new HashSet<(Guid JobTitleId, string Code)>();
 
                 // 6. لیست عملیات
-                var postsToAdd = new List<Post>();
+                //var postsToAdd = new List<Post>();
                 var postsToUpdate = new List<Post>();
 
                 // 7. پردازش هر گروه عنوان شغلی
@@ -407,17 +415,29 @@ namespace HR.IrisaSync.Extention.Services
                         }
                         else
                         {
+
+                            //Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
                             // ➕ پست جدید
-                            var newPost = new Post(
-                                _Code: code,
-                                _JobTitleId: (Guid)jobTitleId,
-                                _OrganizationUnitId: orgUnitId,
-                                _JobLevelId: jobLevelId,
-                                _GradeId: null,
-                                _CostCenterId: null,
-                                _parentId: null
+                            var createCommand = new CreatePostCommand(
+                                code,
+                                 (Guid)orgUnitId,
+                                 (Guid)jobTitleId,
+                                 jobLevelId,
+                                 null,
+                                 null,
+                                 null,
+                                 true,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
+                                 null
                             );
-                            postsToAdd.Add(newPost);
+
+                            var createResult = await _mediator.Send(createCommand);
+                            result.AddedCount++;
+                            //postsToAdd.Add(newPost);
                         }
                     }
                 }
@@ -426,11 +446,11 @@ namespace HR.IrisaSync.Extention.Services
                 var postsToDelete = existingDict.Values.ToList();
 
                 // 9. اعمال تغییرات روی دیتابیس
-                if (postsToAdd.Any())
-                {
-                    await _hrUow.PostRepository.AddRangeAsync(postsToAdd);
-                    result.AddedCount = postsToAdd.Count;
-                }
+                //if (postsToAdd.Any())
+                //{
+                //    await _hrUow.PostRepository.AddRangeAsync(postsToAdd);
+                //    result.AddedCount = postsToAdd.Count;
+                //}
 
                 if (postsToUpdate.Any())
                 {

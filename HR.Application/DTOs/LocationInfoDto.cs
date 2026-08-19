@@ -9,6 +9,8 @@ namespace HR.Application.DTOs
     public class LocationInfoDto
     {
         public Guid Id { get; set; }
+
+        public Guid ProfileId { get; set; }
         public string Title { get; set; }
     }
 }

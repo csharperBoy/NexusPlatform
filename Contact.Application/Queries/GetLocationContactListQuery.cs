@@ -1,7 +1,8 @@
 ﻿using Contact.Application.DTOs;
 using Core.Application.Abstractions.Contact;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using Core.Shared.Results;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
@@ -23,15 +24,15 @@ namespace Contact.Application.Queries
         : IRequestHandler<GetLocationContactListQuery, Result<IReadOnlyList<LocationContactDto>>>
     {
         private readonly ILocationInternalService _locationInternalService;
-        private readonly IHrContactPublicService _hrContactService;
+        private readonly IContactPublicService _contactService;
         private readonly ILogger<GetLocationContactListQueryHandler> _logger;
 
         public GetLocationContactListQueryHandler(
-            ILocationInternalService locationInternalService, IHrContactPublicService hrContactService,
+            ILocationInternalService locationInternalService, IContactPublicService contactService,
         ILogger<GetLocationContactListQueryHandler> logger)
         {
             _locationInternalService = locationInternalService;
-            _hrContactService = hrContactService;
+            _contactService = contactService;
             _logger = logger;
         }
 
@@ -44,17 +45,17 @@ namespace Contact.Application.Queries
                 _logger.LogDebug("Getting LocationContact List:");
 
                 var locations = await _locationInternalService.GetLocationListAsync();
-                var locIds = locations.Select(p => p.Id).ToList();
+                var locProfIds = locations.Select(p => p.ProfileId).ToList();
 
-                var hrContactList = await _hrContactService.GetLocationContactsByLocationIdsAsync(locIds);
+                var contactList = await _contactService.GetContactsByProfilesIdsAsync(locProfIds);
 
                 IReadOnlyList<LocationContactDto> result = locations
                     .Select(e => new LocationContactDto
                     {
                         Id = e.Id,
                        Title = e.Title,
-                        orgPhone = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
-                        orgMobile = hrContactList.Where(a => a.EntityId == e.Id && a.ContactType == HrContactType.OrgMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        orgPhone = contactList.Where(a =>  a.ContactType == ContactTypeEnum.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        orgMobile = contactList.Where(a =>  a.ContactType == ContactTypeEnum.OrganizationMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
 
                     })
                     .ToList();

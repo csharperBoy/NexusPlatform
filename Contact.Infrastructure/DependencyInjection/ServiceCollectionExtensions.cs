@@ -41,8 +41,7 @@ namespace Contact.Infrastructure.DependencyInjection
             services.AddScoped<IPhoneBookInternalService, PhoneBookService>();
             
             services.AddScoped<ContactService>();
-            services.AddScoped<IHrContactPublicService>(sp => sp.GetRequiredService<ContactService>());
-            services.AddScoped<IPeopleContactPublicService>(sp => sp.GetRequiredService<ContactService>());
+            services.AddScoped<IContactPublicService>(sp => sp.GetRequiredService<ContactService>());
             services.AddScoped<IContactInternalService>(sp => sp.GetRequiredService<ContactService>());
             services.AddScoped<IContactInternalService, ContactService>();
             
@@ -50,18 +49,12 @@ namespace Contact.Infrastructure.DependencyInjection
             // 📌 رجیستر Repository مبتنی بر Specification
             services.AddScoped<ISpecificationRepository<PhoneBookInfoView, Guid>, EfSpecificationRepository<ContactDbContext, PhoneBookInfoView, Guid>>();
 
-            services.AddScoped<IRepository<ContactDbContext, PartyContact, Guid>, EfRepository<ContactDbContext, PartyContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<PartyContact, Guid>, EfSpecificationRepository<ContactDbContext, PartyContact, Guid>>();
+            services.AddScoped<IRepository<ContactDbContext, ContactProfile, Guid>, EfRepository<ContactDbContext, ContactProfile, Guid>>();
+            services.AddScoped<ISpecificationRepository<ContactProfile, Guid>, EfSpecificationRepository<ContactDbContext, ContactProfile, Guid>>();
 
 
-            services.AddScoped<IRepository<ContactDbContext, PostContact, Guid>, EfRepository<ContactDbContext, PostContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<PostContact, Guid>, EfSpecificationRepository<ContactDbContext, PostContact, Guid>>();
-
-            services.AddScoped<IRepository<ContactDbContext, EmploymentContact, Guid>, EfRepository<ContactDbContext, EmploymentContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<EmploymentContact, Guid>, EfSpecificationRepository<ContactDbContext, EmploymentContact, Guid>>();
-
-            services.AddScoped<IRepository<ContactDbContext, LocationContact, Guid>, EfRepository<ContactDbContext, LocationContact, Guid>>();
-            services.AddScoped<ISpecificationRepository<LocationContact, Guid>, EfSpecificationRepository<ContactDbContext, LocationContact, Guid>>();
+            services.AddScoped<IRepository<ContactDbContext, ContactItem, Guid>, EfRepository<ContactDbContext, ContactItem, Guid>>();
+            services.AddScoped<ISpecificationRepository<ContactItem, Guid>, EfSpecificationRepository<ContactDbContext, ContactItem, Guid>>();
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

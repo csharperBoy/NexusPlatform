@@ -7,6 +7,7 @@ public partial class PostInfoView
 {
     public Guid Id { get; set; }
 
+    public Guid FkContactProfileId { get; set; }
     public string PostCode { get; set; } = null!;
 
 

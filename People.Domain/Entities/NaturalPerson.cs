@@ -2,7 +2,6 @@
 using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
 using System;
 using System.Collections.Generic;
 using System.Linq;

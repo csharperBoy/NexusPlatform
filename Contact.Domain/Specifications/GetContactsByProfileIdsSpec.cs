@@ -1,6 +1,5 @@
 ﻿using Contact.Domain.Entities;
 using Core.Domain.Specifications;
-using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Specifications
 {
-    public class GetLocationContactSpec : BaseSpecification<LocationContact?>
+  
+    public class GetContactsByProfileIdsSpec : BaseSpecification<ContactItem>
     {
-        public GetLocationContactSpec(HrContactType contactType, Guid LocationId)
+        public GetContactsByProfileIdsSpec(List<Guid> profileIds)
             : base(p =>
-                          p.ContactType == contactType && p.FkLocationId == LocationId && p.IsCurrent 
+                       profileIds.Any(s => s == p.ContactProfileId)
             // && ( value == null || p.Value == value )
             )
         {

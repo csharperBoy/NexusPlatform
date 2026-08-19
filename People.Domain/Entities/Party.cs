@@ -13,6 +13,7 @@ namespace People.Domain.Entities
         #endregion
         public Guid FkPermissionAssigneeId { get; private set; }
 
+        public Guid FkContactProfileId { get; private set; }
         //navigation
         public virtual ICollection<LegalPerson> LegalPeople { get; set; } = new List<LegalPerson>();
 
@@ -23,17 +24,21 @@ namespace People.Domain.Entities
         public virtual ICollection<PartiesRelation> PartiesRelationFkSourceParties { get; set; } = new List<PartiesRelation>();
 
         //public virtual ICollection<PartyContact> PartyContacts { get; set; } = new List<PartyContact>();
-        
+
         // Constructor for EF
         public Party() { }
 
-        public Party(Guid _FkPermissionAssigneeId) { 
-        FkPermissionAssigneeId = _FkPermissionAssigneeId;
+        public Party(Guid _FkPermissionAssigneeId
+            , Guid _FkContactProfileId
+            )
+        {
+            FkPermissionAssigneeId = _FkPermissionAssigneeId;
+            FkContactProfileId = _FkContactProfileId;
         }
 
 
-       public void Touch() => ModifiedAt = DateTime.UtcNow;
-        
+        public void Touch() => ModifiedAt = DateTime.UtcNow;
+
     }
 
 }

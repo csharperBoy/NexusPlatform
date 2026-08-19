@@ -52,6 +52,8 @@ namespace HR.Domain.Entities
 
 
         public Guid FkPermissionAssigneeId { get; set; }
+
+        public Guid FkContactProfileId { get; private set; }
         // Navigation
 
         public virtual ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
@@ -90,6 +92,7 @@ namespace HR.Domain.Entities
         public Post(
             string _Code,
             Guid _JobTitleId,
+            Guid _FkContactProfileId,
             Guid? _OrganizationUnitId,
             Guid? _JobLevelId = null,
             Guid? _GradeId = null,
@@ -104,6 +107,7 @@ namespace HR.Domain.Entities
             FkGradeId = _GradeId;
             FkCostCenterId = _CostCenterId;
             FkParentId = _parentId;
+            FkContactProfileId = _FkContactProfileId;
         }
 
         public bool ApplyChange(

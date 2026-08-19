@@ -1,6 +1,7 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Contact.Domain.Enums;
+using Core.Domain.Common.EntityProperties;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class PostContact : BaseEntity, IAuditableEntity, IOwnerableEntity,IHasEffectivePeriod
+    public class ContactItem : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -79,25 +80,57 @@ namespace Contact.Domain.Entities
 
 
 
-        public HrContactType ContactType { get; protected set; }
-        public string Value { get; protected set; }
-        public Guid FkPostId { get; private set; }
+        public Guid ContactProfileId { get; private set; }
+        public ContactProfile ContactProfile { get; private set; }
 
-        //public virtual Post Post { get; private set; } = null!;
+        public ContactTypeEnum ContactType { get; private set; }
+        /// <summary>
+        /// مقدار راه ارتباطی (شماره تلفن، آدرس ایمیل، آیدی اینستاگرام، لینک و...)
+        /// </summary>
+        public string Value { get; protected set; }
+        /// <summary>
+        /// عنوان اختصاصی آیتم (مثلاً: "موبایل شخصی"، "واتس‌اپ کاری"، "ایمیل پشتیبانی")
+        /// </summary>
+        public string Label { get; private set; }
+
+        // فیلدهای اولویت و وضعیت
+        public bool IsPrimary { get; private set; } // آیا کانال اصلی این نوع است؟
+        public int? SortOrder { get; private set; } // ترتیب نمایش در UI
+
+        /// <summary>
+        /// اشاره به یک ContactItem دیگر (مثلاً متصل بودن این شماره به شماره همگانی/اصلی)
+        /// </summary>
+        public Guid? ParentContactItemId { get; private set; }
+        public ContactItem ParentContactItem { get; private set; }
+
+        public ContactRelationTypeEnum? RelationType { get; private set; }
+
+        public ICollection<ContactItem> ChildContactItems { get; private set; } = new List<ContactItem>();
+        //public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
-        protected PostContact() { }
-        public PostContact
-            (HrContactType _ContactType,
+        protected ContactItem() { }
+        public ContactItem
+            (ContactTypeEnum _ContactType,
             string _Value,
-            Guid _PostId,
+            Guid _ContactProfileId,
             DateTime? _EffectiveFrom = null,
-            DateTime? _EffectiveTo =null,
+            string? _Label = null, 
+            bool _IsPrimary = true, 
+            int? _SortOrder = null, 
+            Guid? _ParentContactItemId = null, 
+            ContactRelationTypeEnum? _RelationType = null,
+            DateTime? _EffectiveTo = null,
             bool _isCurrent = true
             )
         {
             ContactType = _ContactType;
             Value = _Value;
-            FkPostId = _PostId;
+            Label= _Label;
+            ContactProfileId = _ContactProfileId;
+            IsPrimary = _IsPrimary;
+            SortOrder = _SortOrder;
+            ParentContactItemId = _ParentContactItemId;
+            RelationType = _RelationType;
             EffectiveFrom = _EffectiveFrom;
             EffectiveTo = _EffectiveTo;
             IsCurrent = _isCurrent;

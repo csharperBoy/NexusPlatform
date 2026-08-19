@@ -2,9 +2,11 @@
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Domain.Common.EntityProperties;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
@@ -19,7 +21,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Shared.Enums;
 namespace HR.Infrastructure.Services
 {
     public class PostService :
@@ -37,7 +38,7 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, PostLocation, Guid> _postLocationsRepository;
         private readonly ISpecificationRepository<PostLocation, Guid> _postLocationSpecRepository;
 
-        private readonly IHrContactPublicService _contactService;
+        private readonly IContactPublicService _contactService;
         private readonly ILogger<PostService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
@@ -50,18 +51,18 @@ namespace HR.Infrastructure.Services
              ISpecificationRepository<PostLocation, Guid> postLocationSpecRepository,
             ISpecificationRepository<PostInfoView, Guid> postInfoViewSpecRepository,
             ISpecificationRepository<Post, Guid> postSpecRepository,
-            //ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
+        //ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
         //IRepository<HRDbContext, PostContact, Guid> postContactRepository,
         ISpecificationRepository<Assignment, Guid> assignmentSpecRepository,
         IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
-        IHrContactPublicService contactService,
+        IContactPublicService contactService,
         IUnitOfWork<HRDbContext> uow, IHRUnitOfWork<HRDbContext> hrUow,
         ILogger<PostService> logger)
         {
             //_contex= contex;
             _postInfoViewSpecRepository = postInfoViewSpecRepository;
-            _hrUow = hrUow; 
+            _hrUow = hrUow;
             _postRepository = postRepository;
             //_postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
@@ -69,7 +70,7 @@ namespace HR.Infrastructure.Services
             _logger = logger;
             _assignmentSpecRepository = assignmentSpecRepository;
             _assignmentRepository = assignmentRepository;
-             _contactService= contactService;
+            _contactService = contactService;
             _uow = uow;
             _postLocationSpecRepository = postLocationSpecRepository;
             _postLocationsRepository = postLocationsRepository;
@@ -143,7 +144,7 @@ namespace HR.Infrastructure.Services
             {
                 foreach (var item in assignments)
                 {
-                   await item.DoExpire();
+                    await item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }
@@ -159,7 +160,7 @@ namespace HR.Infrastructure.Services
             {
                 foreach (var item in assignments)
                 {
-                  await  item.DoExpire();
+                    await item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }
@@ -175,23 +176,16 @@ namespace HR.Infrastructure.Services
             List<string>? OrgMobile = null
             )
         {
-            Post post = new Post(code, organizationUnitId, jobTitleId, jobLevelId, gradeId, costCenterId, reportsToPostId);
+
+            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
+            Post post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
             await _postRepository.AddAsync(post);
-            if (OrgMobile != null)
-            {
-                await _contactService.CreatePostContact(HrContactType.OrgMobile, OrgMobile, post.Id);
-            }
-            if (OrgEmail != null)
-            {
-                await _contactService.CreatePostContact(HrContactType.OrgEmail, OrgEmail, post.Id);
-            }
-            if (OfficePhone != null)
-            {
-                await _contactService.CreatePostContact(HrContactType.OfficePhone, OfficePhone, post.Id);
-            }
+            await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);
+            await _contactService.CreateContact(ContactTypeEnum.OfficePhone, OfficePhone, post.FkContactProfileId);
             return post.Id;
         }
-        
+
         public async Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId)
         {
             try
@@ -235,8 +229,8 @@ namespace HR.Infrastructure.Services
                 var assignmentSpec = new ActiveAssignmentsByEmploymentSpec(employmentId);
                 var assignments = await _assignmentSpecRepository.ListBySpecAsync(assignmentSpec);
 
-             return assignments.ToList();
-                
+                return assignments.ToList();
+
 
             }
             catch (Exception ex)
@@ -245,7 +239,7 @@ namespace HR.Infrastructure.Services
                 throw;
             }
         }
-        public async Task<List<Assignment>?> GetPostAssignmentAsync(Guid postId )
+        public async Task<List<Assignment>?> GetPostAssignmentAsync(Guid postId)
         {
             try
             {
@@ -292,22 +286,22 @@ namespace HR.Infrastructure.Services
             }
             if (officePhone != null)
             {
-                await _contactService.CreatePostContact(HrContactType.OfficePhone, officePhone, post.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OfficePhone, officePhone, post.FkContactProfileId);
             }
             if (orgEmail != null)
             {
-                await _contactService.CreatePostContact(HrContactType.OrgEmail, orgEmail, post.Id);
+                await _contactService.CreateContact(ContactTypeEnum.Email, orgEmail, post.FkContactProfileId);
             }
             if (orgMobile != null)
             {
-                await _contactService.CreatePostContact(HrContactType.OrgMobile, orgMobile, post.Id);
+                await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, orgMobile, post.FkContactProfileId);
             }
             return post.Id;
         }
         public async Task<IReadOnlyList<PostInfoDto>> GetPostListAsync()
         {
             //var list =await _hrUow.PostInfoViewRepository.GetAllAsync();
-            var postList = await  _postInfoViewSpecRepository.ListBySpecAsync(new GetAllPostInfoViewSpec());
+            var postList = await _postInfoViewSpecRepository.ListBySpecAsync(new GetAllPostInfoViewSpec());
             var postIds = postList.Select(p => p.Id).ToList();
 
             var locList = await _postLocationsRepository.GetAllAsync(q =>
@@ -315,10 +309,9 @@ namespace HR.Infrastructure.Services
                  .Include(a => a.Location)
             );
 
-            var contactList = await _contactService.GetPostContactsByPostIdsAsync(postIds);
-            
-            var result = postList.Select(s=> new PostInfoDto
-            {                                   
+
+            var result = postList.Select(s => new PostInfoDto
+            {
                 EmploymentCode = s.EmploymentCode,
                 EmploymentId = s.EmploymentId,
                 FirstName = s.FirstName,
@@ -332,16 +325,15 @@ namespace HR.Infrastructure.Services
                 JobLevelTitle = s.JobLevelTitle,
                 FkJobTitleId = s.FkJobTitleId,
                 JobTitleName = s.JobTitleName,
-                AssigneeType =  s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
+                AssigneeType = s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
                 FkOrganizationUnitId = s.FkOrganizationUnitId,
                 OrganizationUnitsName = s.OrganizationUnitsName,
                 FkParentId = s.FkParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
-                //Contacts = contactList.Where(l => l.IsCurrent && l.EntityId == s.Id).ToList(),
-                locations = locList.Where(l=>l.FkPostId == s.Id).Select(s=> new LocationInfoDto {Id = s.Location.Id , Title = s.Location.Title }).ToList(),
+                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title }).ToList(),
 
-                
+
             }).ToList();
             return result;
         }

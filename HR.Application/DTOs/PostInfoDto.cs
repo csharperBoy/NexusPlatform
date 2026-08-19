@@ -1,6 +1,6 @@
 ﻿using Core.Shared.DTOs.Contact;
 using Core.Shared.Enums.HR;
-using Core.Shared.Enums.People;
+ 
 using HR.Domain.Entities;
 using HR.Domain.Enums;
 using System;
@@ -15,6 +15,7 @@ namespace HR.Application.DTOs
     {
         public Guid Id { get; set; }
 
+        public Guid ProfileId { get; set; }
         public string PostCode { get; set; } = null!;
 
         public Guid? ParentId { get; set; }

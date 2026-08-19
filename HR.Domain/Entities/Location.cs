@@ -35,9 +35,12 @@ namespace HR.Domain.Entities
         }
         #endregion
         public string Title { get;private set; }
-        public Location(string _Title)
+
+        public Guid FkContactProfileId { get; private set; }
+        public Location(string _Title, Guid _FkContactProfileId)
         {
-         Title = _Title;   
+         Title = _Title;
+         FkContactProfileId = _FkContactProfileId;
         }
         protected Location()
         {
