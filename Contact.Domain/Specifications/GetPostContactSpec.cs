@@ -11,9 +11,9 @@ namespace Contact.Domain.Specifications
 {
     public class GetPostContactSpec : BaseSpecification<PostContact?>
     {
-        public GetPostContactSpec( HrContactType contactType , Guid postId, List<string>? values = null)
+        public GetPostContactSpec( HrContactType contactType , Guid postId)
             : base(p =>
-                          p.ContactType == contactType && p.FkPostId == postId && p.IsCurrent && values.Contains(p.Value)
+                          p.ContactType == contactType && p.FkPostId == postId && p.IsCurrent 
             // && ( value == null || p.Value == value )
             )
         {

@@ -1,399 +1,41 @@
 // src/modules/HR/pages/PostContact/PostContactManagementPage.tsx
-
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import * as XLSX from "xlsx";
-import { postContactApi } from "../../api/PostContactApi";
-import { PostContactInfoView } from "../../models/postContactInfoView";
-import { UpdatePostContactCommand } from "../../models/postContactCommand";
-
-interface FlattenedNode {
-  node: PostContactInfoView;
-  depth: number;
-  hasChildren: boolean;
-  isExpanded: boolean;
-  isModified: boolean;
-}
+import React from "react";
+import { usePostContactManagement } from "../../hooks/PostContact/usePostContactManagement";
+import { TagInput } from "@/core/components/Input/TagInput";
+// تابع کمکی تبدیل رشته متصل با ویرگول به آرایه تگ‌ها
+// const parseTags = (value: string | undefined | null): string[] => {
+//   if (!value) return [];
+//   return value
+//     .split(",")
+//     .map((s) => s.trim())
+//     .filter(Boolean);
+// };
 
 export const PostContactManagementPage: React.FC = () => {
-  // --- States ---
-  const [postContacts, setPostContacts] = useState<PostContactInfoView[]>([]);
-  const [initialPostContacts, setInitialPostContacts] = useState<PostContactInfoView[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // استیت‌های سرچ
-  const [globalSearch, setGlobalSearch] = useState<string>("");
-  const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
-
-  // مدیریت باز/بسته بودن و تغییرات
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [modifiedIds, setModifiedIds] = useState<Set<string>>(new Set());
-
-  // --- استیت‌های جدید: مدیریت انتخاب چندگانه (Ctrl / Shift) ---
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
-
-  // --- استیت‌های درگ اند دراپ گروهی ---
-  const [draggedIds, setDraggedIds] = useState<string[]>([]);
-  const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [isOverRootZone, setIsOverRootZone] = useState<boolean>(false);
-
-  // ریف مربوط به آپلود فایل اکسل
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const draggedIdsRef = useRef<string[]>([]);
-  draggedIdsRef.current = draggedIds;
-
-  const initialPostContactsMap = useMemo(() => {
-    const map = new Map<string, PostContactInfoView>();
-    initialPostContacts.forEach((p) => map.set(p.id, p));
-    return map;
-  }, [initialPostContacts]);
-
-  // --- 1. دریافت اطلاعات اولیه ---
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await postContactApi.GetList();
-      const list = data || [];
-      setPostContacts(list);
-      setInitialPostContacts(JSON.parse(JSON.stringify(list)));
-
-      const parentIds = new Set<string>();
-      list.forEach((p) => {
-        if (p.fkParentId) parentIds.add(p.fkParentId);
-      });
-      setExpandedIds(parentIds);
-      setModifiedIds(new Set());
-      setSelectedIds(new Set());
-      setLastSelectedId(null);
-    } catch (err: any) {
-      setError(err?.message || "خطا در دریافت لیست چارت سازمانی");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // --- 2. مدیریت ویرایش درجا ---
-  const handleFieldChange = (id: string, field: "officePhone" | "orgMobile", value: string) => {
-    setPostContacts((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          return { ...item, [field]: value };
-        }
-        return item;
-      })
-    );
-    setModifiedIds((prev) => new Set(prev).add(id));
-  };
-
-  const handleColumnSearch = (column: string, value: string) => {
-    setColumnSearch((prev) => ({ ...prev, [column]: value }));
-  };
-
-  // --- مدیریت بارگذاری فایل اکسل ---
-  const handleExcelImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        setError(null);
-        const data = evt.target?.result;
-        const workbook = XLSX.read(data, { type: "array" });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-
-        const excelRows = XLSX.utils.sheet_to_json<Record<string, any>>(worksheet);
-
-        if (!excelRows || excelRows.length === 0) {
-          alert("فایل اکسل انتخاب شده خالی است یا فرمت معتبری ندارد.");
-          return;
-        }
-
-        let updatedCount = 0;
-        const newModifiedIds = new Set(modifiedIds);
-
-        setPostContacts((prevPostContacts) => {
-          const postContactByEmpCodeMap = new Map<string, PostContactInfoView>();
-          prevPostContacts.forEach((p) => {
-            if (p.employmentCode) {
-              postContactByEmpCodeMap.set(String(p.employmentCode).trim(), p);
-            }
-          });
-
-          const nextPostContacts = prevPostContacts.map((p) => ({ ...p }));
-
-          excelRows.forEach((row) => {
-            const empCodeKey = Object.keys(row).find((k) =>
-              ["کد پرسنلی", "کدپرسنلی", "employmentcode", "empcode", "کد"].includes(
-                k.trim().toLowerCase()
-              )
-            );
-            const officePhoneKey = Object.keys(row).find((k) =>
-              ["تلفن داخلی", "داخلی", "officephone", "phone"].includes(
-                k.trim().toLowerCase()
-              )
-            );
-            const orgMobileKey = Object.keys(row).find((k) =>
-              ["موبایل سازمانی", "موبایل", "orgmobile", "mobile"].includes(
-                k.trim().toLowerCase()
-              )
-            );
-
-            if (!empCodeKey) return;
-
-            const rawEmpCode = row[empCodeKey];
-            if (rawEmpCode === undefined || rawEmpCode === null) return;
-            const empCodeStr = String(rawEmpCode).trim();
-
-            const matchedPostContact = postContactByEmpCodeMap.get(empCodeStr);
-            if (matchedPostContact) {
-              const targetIndex = nextPostContacts.findIndex((p) => p.id === matchedPostContact.id);
-              if (targetIndex === -1) return;
-
-              let isRowChanged = false;
-
-              if (officePhoneKey && row[officePhoneKey] !== undefined) {
-                const newPhone = String(row[officePhoneKey] ?? "").trim();
-                if (nextPostContacts[targetIndex].officePhone !== newPhone) {
-                  nextPostContacts[targetIndex].officePhone = newPhone;
-                  isRowChanged = true;
-                }
-              }
-
-              if (orgMobileKey && row[orgMobileKey] !== undefined) {
-                const newMobile = String(row[orgMobileKey] ?? "").trim();
-                if (nextPostContacts[targetIndex].orgMobile !== newMobile) {
-                  nextPostContacts[targetIndex].orgMobile = newMobile;
-                  isRowChanged = true;
-                }
-              }
-
-              if (isRowChanged) {
-                updatedCount++;
-                newModifiedIds.add(matchedPostContact.id);
-              }
-            }
-          });
-
-          setModifiedIds(newModifiedIds);
-
-          if (updatedCount > 0) {
-            setSuccessMessage(`اطلاعات ${updatedCount} پست با موفقیت از فایل اکسل اعمال شد.`);
-            setTimeout(() => setSuccessMessage(null), 4000);
-          } else {
-            alert("هیچ رکوردی تغییر نکرد یا کد پرسنلی منطبقی پیدا نشد.");
-          }
-
-          return nextPostContacts;
-        });
-      } catch (err: any) {
-        setError("خطا در پردازش فایل اکسل: " + (err?.message || "فرمت فایل نامعتبر است"));
-      } finally {
-        e.target.value = "";
-      }
-    };
-
-    reader.readAsArrayBuffer(file);
-  };
-
-  // --- 3. ساختار درخت و فیلتر هوشمند ---
-  const { flattenedTree, postContactsMap } = useMemo(() => {
-    const map = new Map<string, PostContactInfoView>();
-    const childrenMap = new Map<string | null, PostContactInfoView[]>();
-
-    postContacts.forEach((p) => map.set(p.id, p));
-
-    postContacts.forEach((p) => {
-      const parentId = p.fkParentId && map.has(p.fkParentId) ? p.fkParentId : null;
-      if (!childrenMap.has(parentId)) {
-        childrenMap.set(parentId, []);
-      }
-      childrenMap.get(parentId)!.push(p);
-    });
-
-    const normalizedGlobal = globalSearch.trim().toLowerCase();
-    const flattened: FlattenedNode[] = [];
-
-    const traverse = (parentId: string | null, depth: number) => {
-      const children = childrenMap.get(parentId) || [];
-
-      for (const child of children) {
-        const childChildren = childrenMap.get(child.id) || [];
-        const hasChildren = childChildren.length > 0;
-        const isExpanded = expandedIds.has(child.id);
-        const isModified = modifiedIds.has(child.id);
-
-        const initChild = initialPostContactsMap.get(child.id);
-
-        const fullJobTitle = `${child.jobTitleName || ""} ${child.postCode ? `(${child.postCode})` : ""}`;
-        const occupantName = `${child.firstName || ""} ${child.lastName || ""} ${child.employmentCode || ""}`;
-        const levelGrade = `${child.jobLevelTitle || ""} ${child.gradeTitle || ""}`;
-
-        const initFullJobTitle = initChild
-          ? `${initChild.jobTitleName || ""} ${initChild.postCode ? `(${initChild.postCode})` : ""}`
-          : fullJobTitle;
-        const initOccupantName = initChild
-          ? `${initChild.firstName || ""} ${initChild.lastName || ""} ${initChild.employmentCode || ""}`
-          : occupantName;
-        const initLevelGrade = initChild
-          ? `${initChild.jobLevelTitle || ""} ${initChild.gradeTitle || ""}`
-          : levelGrade;
-
-        const matchesGlobal =
-          !normalizedGlobal ||
-          fullJobTitle.toLowerCase().includes(normalizedGlobal) ||
-          (child.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
-          occupantName.toLowerCase().includes(normalizedGlobal) ||
-          (child.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
-          (child.orgMobile || "").toLowerCase().includes(normalizedGlobal) ||
-          (initChild &&
-            (initFullJobTitle.toLowerCase().includes(normalizedGlobal) ||
-              (initChild.organizationUnitsName || "").toLowerCase().includes(normalizedGlobal) ||
-              initOccupantName.toLowerCase().includes(normalizedGlobal) ||
-              (initChild.officePhone || "").toLowerCase().includes(normalizedGlobal) ||
-              (initChild.orgMobile || "").toLowerCase().includes(normalizedGlobal)));
-
-        let matchesColumns = true;
-        for (const [col, term] of Object.entries(columnSearch)) {
-          if (!term.trim()) continue;
-          const q = term.toLowerCase();
-
-          if (col === "jobTitle") {
-            const matchCur = fullJobTitle.toLowerCase().includes(q);
-            const matchInit = initFullJobTitle.toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-          if (col === "unit") {
-            const matchCur = (child.organizationUnitsName || "").toLowerCase().includes(q);
-            const matchInit = (initChild?.organizationUnitsName || "").toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-          if (col === "occupant") {
-            const matchCur = occupantName.toLowerCase().includes(q);
-            const matchInit = initOccupantName.toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-          if (col === "officePhone") {
-            const matchCur = (child.officePhone || "").toLowerCase().includes(q);
-            const matchInit = (initChild?.officePhone || "").toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-          if (col === "orgMobile") {
-            const matchCur = (child.orgMobile || "").toLowerCase().includes(q);
-            const matchInit = (initChild?.orgMobile || "").toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-          if (col === "levelGrade") {
-            const matchCur = levelGrade.toLowerCase().includes(q);
-            const matchInit = initLevelGrade.toLowerCase().includes(q);
-            if (!matchCur && !matchInit) matchesColumns = false;
-          }
-        }
-
-        const isSearching =
-          normalizedGlobal !== "" || Object.values(columnSearch).some((v) => v.trim() !== "");
-
-        if (matchesGlobal && matchesColumns) {
-          flattened.push({
-            node: child,
-            depth,
-            hasChildren,
-            isExpanded,
-            isModified,
-          });
-        }
-
-        if ((isExpanded || isSearching) && hasChildren) {
-          traverse(child.id, depth + 1);
-        }
-      }
-    };
-
-    traverse(null, 0);
-
-    return { flattenedTree: flattened, postContactsMap: map };
-  }, [postContacts, expandedIds, globalSearch, columnSearch, modifiedIds, initialPostContactsMap]);
-
-
-  // --- 5. متدهای مدیریت درخت ---
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const expandAll = () => {
-    const allParentIds = new Set<string>();
-    postContacts.forEach((p) => {
-      if (postContacts.some((child) => child.fkParentId === p.id)) {
-        allParentIds.add(p.id);
-      }
-    });
-    setExpandedIds(allParentIds);
-  };
-
-  const collapseAll = () => {
-    setExpandedIds(new Set());
-  };
-
-
-  // --- 7. بازنشانی و ذخیره تغییرات ---
-  const handleResetChanges = () => {
-    if (window.confirm("آیا از لغو تمام تغییرات اعمال شده اطمینان دارید؟")) {
-      setPostContacts(JSON.parse(JSON.stringify(initialPostContacts)));
-      setModifiedIds(new Set());
-      setSelectedIds(new Set());
-    }
-  };
-
-  const handleSaveChanges = async () => {
-    if (modifiedIds.size === 0) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      setSuccessMessage(null);
-
-      const commands: UpdatePostContactCommand[] = Array.from(modifiedIds).map((id) => {
-        const postContact = postContactsMap.get(id)!;
-        return {
-          id: postContact.id,
-          code: postContact.postCode,
-         
-          reportsToPostContactId: postContact.fkParentId,
-          officePhone: postContact.officePhone,
-          orgEmail: postContact.orgEmail,
-          orgMobile: postContact.orgMobile,
-          isActive: true,
-        };
-      });
-
-      await postContactApi.batchUpdatePostsContact(commands);
-
-      setSuccessMessage(`تعداد ${commands.length} تغییر با موفقیت ذخیره شد.`);
-      setInitialPostContacts(JSON.parse(JSON.stringify(postContacts)));
-      setModifiedIds(new Set());
-
-      setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (err: any) {
-      setError(err?.message || "خطا در ذخیره تغییرات چارت");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const {
+    postContacts,
+    flattenedTree,
+    loading,
+    saving,
+    error,
+    successMessage,
+    globalSearch,
+    setGlobalSearch,
+    columnSearch,
+    handleColumnSearch,
+    selectedIds,
+    modifiedIds,
+    draggedIds,
+    dragOverId,
+    fileInputRef,
+    handleExcelImport,
+    handleFieldChange,
+    toggleExpand,
+    expandAll,
+    collapseAll,
+    handleResetChanges,
+    handleSaveChanges,
+  } = usePostContactManagement();
 
   if (loading) {
     return (
@@ -492,7 +134,6 @@ export const PostContactManagementPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            
             <button
               onClick={expandAll}
               className="px-3 py-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 mr-2"
@@ -509,35 +150,31 @@ export const PostContactManagementPage: React.FC = () => {
         </div>
       </div>
 
-     
-
       {/* جدول چارت */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        <table className="w-full text-right border-collapse">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+        <table className="w-full text-right border-collapse min-w-[1000px]">
           <thead>
             {/* ردیف اول: عناوین ستون‌ها */}
             <tr className="border-b border-gray-200 text-gray-700 text-xs font-semibold">
-            
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
-                عنوان شغل 
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 border-b border-gray-200 shadow-sm">
+                عنوان شغل
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 border-b border-gray-200 shadow-sm">
                 واحد سازمانی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 border-b border-gray-200 shadow-sm">
                 شاغل فعلی
-              </th> 
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 border-b border-gray-200 shadow-sm">
+              </th>
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 border-b border-gray-200 shadow-sm">
                 سطح شغلی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-36 border-b border-gray-200 shadow-sm">
-                تلفن داخلی
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 w-60 border-b border-gray-200 shadow-sm">
+                تلفن‌های داخلی
               </th>
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 w-40 border-b border-gray-200 shadow-sm">
-                موبایل سازمانی
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 w-64 border-b border-gray-200 shadow-sm">
+                موبایل‌های سازمانی
               </th>
-             
-              <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
+              <th className="sticky top-0 z-20 bg-gray-100 py-2.5 px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
             </tr>
@@ -598,7 +235,6 @@ export const PostContactManagementPage: React.FC = () => {
                   className="w-full px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
-              
               <th className="sticky top-[34px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
@@ -606,7 +242,7 @@ export const PostContactManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-100 text-sm">
             {flattenedTree.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-gray-400">
+                <td colSpan={7} className="text-center py-12 text-gray-400">
                   هیچ پستی یافت نشد.
                 </td>
               </tr>
@@ -623,15 +259,12 @@ export const PostContactManagementPage: React.FC = () => {
                 return (
                   <tr
                     key={node.id}
-                   
                     className={`transition-colors cursor-pointer ${
                       isSelected ? "bg-blue-100/70 border-blue-300 font-medium" : ""
                     } ${isBeingDragged ? "opacity-30 bg-gray-200" : ""} ${
                       isTarget ? "bg-blue-200 border-y-2 border-blue-600" : "hover:bg-gray-50/80"
                     } ${isModified && !isSelected ? "bg-amber-50/40" : ""}`}
                   >
-                   
-
                     <td className="py-3 px-4 font-medium text-gray-800">
                       <div
                         className="flex items-center gap-2"
@@ -686,27 +319,21 @@ export const PostContactManagementPage: React.FC = () => {
                         "-"
                       )}
                     </td>
-                    
-                    <td className="py-2 px-3">
-                      <input
-                        type="text"
-                        value={node.officePhone || ""}
-                        onChange={(e) => handleFieldChange(node.id, "officePhone", e.target.value)}
-                        placeholder="داخلی..."
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
-                      />
-                    </td>
 
-                    <td className="py-2 px-3">
-                      <input
-                        type="text"
-                        value={node.orgMobile || ""}
-                        onChange={(e) => handleFieldChange(node.id, "orgMobile", e.target.value)}
-                        placeholder="موبایل..."
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 font-mono text-center dir-ltr outline-none bg-white hover:border-gray-400 transition-colors"
-                      />
-                    </td>
-
+                    <td className="py-3 px-4">
+                          <TagInput
+                            value={node.officePhone ?? []} // رفع خطای Type 'null' is not assignable to type 'string[] | undefined'
+                            onChange={(vals) => handleFieldChange(node.id, "officePhone", vals)}
+                            placeholder="افزودن شماره تلفن..."
+                          />
+                        </td>
+                        <td className="py-3 px-4">
+                          <TagInput
+                            value={node.orgMobile ?? []} // رفع خطای Type 'null' is not assignable to type 'string[] | undefined'
+                            onChange={(vals) => handleFieldChange(node.id, "orgMobile", vals)}
+                            placeholder="افزودن همراه..."
+                          />
+                        </td> 
 
                     <td className="py-3 px-4 text-center">
                       {isModified ? (

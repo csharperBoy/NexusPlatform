@@ -11,9 +11,9 @@ namespace Contact.Domain.Specifications
 {
     public class GetLocationContactSpec : BaseSpecification<LocationContact?>
     {
-        public GetLocationContactSpec(HrContactType contactType, Guid LocationId, List<string>? values = null)
+        public GetLocationContactSpec(HrContactType contactType, Guid LocationId)
             : base(p =>
-                          p.ContactType == contactType && p.FkLocationId == LocationId && p.IsCurrent && values.Contains(p.Value)
+                          p.ContactType == contactType && p.FkLocationId == LocationId && p.IsCurrent 
             // && ( value == null || p.Value == value )
             )
         {

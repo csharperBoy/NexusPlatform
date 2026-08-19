@@ -117,7 +117,7 @@ export const LocationContactManagementPage: React.FC = () => {
                     <td className="py-3 px-4 font-medium text-gray-800 dark:text-gray-200">
                       {loc.title}
                     </td>
-                    <td className="py-3 px-4">
+                     <td className="py-3 px-4">
                       <TagInput
                         value={loc.orgPhone ?? []} // رفع خطای Type 'null' is not assignable to type 'string[] | undefined'
                         onChange={(vals) => handleFieldChange(loc.id, "orgPhone", vals)}
@@ -130,7 +130,7 @@ export const LocationContactManagementPage: React.FC = () => {
                         onChange={(vals) => handleFieldChange(loc.id, "orgMobile", vals)}
                         placeholder="افزودن همراه..."
                       />
-                    </td>
+                    </td> 
                   </tr>
                 ))}
               </tbody>

@@ -45,7 +45,7 @@ namespace Contact.Application.Queries
                 var posts = await _orgChartInternalService.GetPostListAsync();
                 var postIds = posts.Select(p => p.Id).ToList();
 
-                var hrContactList = await _hrContactService.GetLocationContactsByLocationIdsAsync(postIds);
+                var hrContactList = await _hrContactService.GetPostContactsByPostIdsAsync(postIds);
 
                 IReadOnlyList<PostContactDto> result = posts.Select(post => new PostContactDto
                 {

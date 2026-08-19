@@ -140,7 +140,7 @@ namespace Contact.Infrastructure.Services
             if (values != null)
             {
                 // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
-                GetLocationContactSpec spec = new GetLocationContactSpec(type, locationId, values);
+                GetLocationContactSpec spec = new GetLocationContactSpec(type, locationId);
                 IEnumerable<LocationContact>? existContact = await _locationContactSpecRepository.ListBySpecAsync(spec);
 
                 // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
@@ -173,7 +173,7 @@ namespace Contact.Infrastructure.Services
             if (values != null)
             {
                 // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
-                GetPostContactSpec spec = new GetPostContactSpec(type, postId, values);
+                GetPostContactSpec spec = new GetPostContactSpec(type, postId);
                 IEnumerable<PostContact>? existContact = await _postContactSpecRepository.ListBySpecAsync(spec);
 
                 // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
