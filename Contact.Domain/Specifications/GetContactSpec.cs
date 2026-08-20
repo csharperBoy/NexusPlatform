@@ -11,14 +11,14 @@ using System.Threading.Tasks;
 namespace Contact.Domain.Specifications
 {
     
-    public class GetContactSpec : BaseSpecification<ContactItem?>
+    public class GetContactSpec : BaseSpecification<ContactResource>
     {
         public GetContactSpec(ContactTypeEnum contactType, Guid profileId)
-            : base(p =>
-                          p.ContactType == contactType && p.ContactProfileId == profileId && p.IsCurrent  
-            // && ( value == null || p.Value == value )
-            )
+            : base(p => p.ContactType == contactType &&
+                        p.Assignments.Any(a => a.ContactProfileId == profileId && a.IsCurrent))
         {
+            AddInclude(p => p.ParentContactResource); // دریافت اطلاعات شماره اصلی/پایه
+            AddInclude(p => p.Assignments.Where(a => a.ContactProfileId == profileId && a.IsCurrent));
         }
     }
 }

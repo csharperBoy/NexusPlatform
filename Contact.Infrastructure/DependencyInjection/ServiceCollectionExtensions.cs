@@ -53,8 +53,8 @@ namespace Contact.Infrastructure.DependencyInjection
             services.AddScoped<ISpecificationRepository<ContactProfile, Guid>, EfSpecificationRepository<ContactDbContext, ContactProfile, Guid>>();
 
 
-            services.AddScoped<IRepository<ContactDbContext, ContactItem, Guid>, EfRepository<ContactDbContext, ContactItem, Guid>>();
-            services.AddScoped<ISpecificationRepository<ContactItem, Guid>, EfSpecificationRepository<ContactDbContext, ContactItem, Guid>>();
+            services.AddScoped<IRepository<ContactDbContext, ContactResource, Guid>, EfRepository<ContactDbContext, ContactResource, Guid>>();
+            services.AddScoped<ISpecificationRepository<ContactResource, Guid>, EfSpecificationRepository<ContactDbContext, ContactResource, Guid>>();
 
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();

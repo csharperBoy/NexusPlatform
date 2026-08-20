@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace Contact.Infrastructure.Configurations
 {
-    public class ContactItemConfiguration : BaseConfiguration<ContactItem>
+    public class ContactItemConfiguration : BaseConfiguration<ContactResource>
     {
-        public override void Configure(EntityTypeBuilder<ContactItem> builder)
+        public override void Configure(EntityTypeBuilder<ContactResource> builder)
         {
             base.Configure(builder);
 

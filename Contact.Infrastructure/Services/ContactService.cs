@@ -24,8 +24,8 @@ namespace Contact.Infrastructure.Services
 {
     public class ContactService : IContactInternalService
     {
-        private readonly IRepository<ContactDbContext, ContactItem, Guid> _contactItemRepository;
-        private readonly ISpecificationRepository<ContactItem, Guid> _contactItemSpecRepository;
+        private readonly IRepository<ContactDbContext, ContactResource, Guid> _contactItemRepository;
+        private readonly ISpecificationRepository<ContactResource, Guid> _contactItemSpecRepository;
 
         private readonly IRepository<ContactDbContext, ContactProfile, Guid> _contactProfileRepository;
         private readonly ISpecificationRepository<ContactProfile, Guid> _contactProfileSpecRepository;
@@ -36,8 +36,8 @@ namespace Contact.Infrastructure.Services
 
 
         public ContactService(ILogger<ContactService> logger,
-             IRepository<ContactDbContext, ContactItem, Guid> contactItemRepository,
-         ISpecificationRepository<ContactItem, Guid> contactItemSpecRepository,
+             IRepository<ContactDbContext, ContactResource, Guid> contactItemRepository,
+         ISpecificationRepository<ContactResource, Guid> contactItemSpecRepository,
  IRepository<ContactDbContext, ContactProfile, Guid> contactProfileRepository,
          ISpecificationRepository<ContactProfile, Guid> contactProfileSpecRepository,
 
@@ -67,7 +67,7 @@ namespace Contact.Infrastructure.Services
             {
                 // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
                 GetContactSpec spec = new GetContactSpec(type, profileId);
-                IEnumerable<ContactItem>? existContact = await _contactItemSpecRepository.ListBySpecAsync(spec);
+                IEnumerable<ContactResource>? existContact = await _contactItemSpecRepository.ListBySpecAsync(spec);
 
                 // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
                 var existingValues = existContact.Select(e => e.Value).ToHashSet();
@@ -83,7 +83,7 @@ namespace Contact.Infrastructure.Services
                 // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
                 var toAdd = newValues
                     .Where(val => !existingValues.Contains(val))
-                    .Select(val => new ContactItem(type, val, profileId, DateTime.UtcNow))
+                    .Select(val => new ContactResource(type, val, profileId, DateTime.UtcNow))
                     .ToList();
 
                 if (toAdd.Any())

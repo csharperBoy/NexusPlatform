@@ -28,7 +28,7 @@ namespace Contact.Infrastructure.Data
         }
 
         public virtual DbSet<ContactProfile> ContactProfiles { get; set; }
-        public virtual DbSet<ContactItem> ContactItems { get; set; }
+        public virtual DbSet<ContactResource> ContactItems { get; set; }
         
         public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
        

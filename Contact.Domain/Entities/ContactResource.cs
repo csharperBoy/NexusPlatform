@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class ContactItem : BaseEntity, IAuditableEntity, IOwnerableEntity, IHasEffectivePeriod
+    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -53,35 +53,6 @@ namespace Contact.Domain.Entities
 
         #endregion
 
-        #region Impelement IHasEffectivePeriod
-        public DateTime? EffectiveFrom { get; private set; }
-        public DateTime? EffectiveTo { get; private set; }
-        public bool IsCurrent { get; private set; }
-
-        public async Task SetEffectiveFrom(DateTime? value)
-        {
-            EffectiveFrom = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        public async Task SetEffectiveTo(DateTime? value)
-        {
-            EffectiveTo = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        public async Task SetIsCurrent(bool value)
-        {
-            IsCurrent = value;
-            Touch();
-            await Task.CompletedTask;
-        }
-        #endregion
-
-
-
-        public Guid ContactProfileId { get; private set; }
-        public ContactProfile ContactProfile { get; private set; }
 
         public ContactTypeEnum ContactType { get; private set; }
         /// <summary>
@@ -91,7 +62,7 @@ namespace Contact.Domain.Entities
         /// <summary>
         /// عنوان اختصاصی آیتم (مثلاً: "موبایل شخصی"، "واتس‌اپ کاری"، "ایمیل پشتیبانی")
         /// </summary>
-        public string Label { get; private set; }
+        public string? Label { get; private set; }
 
         // فیلدهای اولویت و وضعیت
         public bool IsPrimary { get; private set; } // آیا کانال اصلی این نوع است؟
@@ -100,19 +71,18 @@ namespace Contact.Domain.Entities
         /// <summary>
         /// اشاره به یک ContactItem دیگر (مثلاً متصل بودن این شماره به شماره همگانی/اصلی)
         /// </summary>
-        public Guid? ParentContactItemId { get; private set; }
-        public ContactItem ParentContactItem { get; private set; }
+        public Guid? ParentContactResourceId { get; private set; }
+        public ContactResource ParentContactResource { get; private set; }
 
         public ContactRelationTypeEnum? RelationType { get; private set; }
-
-        public ICollection<ContactItem> ChildContactItems { get; private set; } = new List<ContactItem>();
+        public ICollection<ContactProfileAssignment> Assignments { get; private set; } = new List<ContactProfileAssignment>();
+        public ICollection<ContactResource> ChildContactResources { get; private set; } = new List<ContactResource>();
         //public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
-        protected ContactItem() { }
-        public ContactItem
+        protected ContactResource() { }
+        public ContactResource
             (ContactTypeEnum _ContactType,
             string _Value,
-            Guid _ContactProfileId,
             DateTime? _EffectiveFrom = null,
             string? _Label = null, 
             bool _IsPrimary = true, 
@@ -126,14 +96,10 @@ namespace Contact.Domain.Entities
             ContactType = _ContactType;
             Value = _Value;
             Label= _Label;
-            ContactProfileId = _ContactProfileId;
             IsPrimary = _IsPrimary;
             SortOrder = _SortOrder;
             ParentContactItemId = _ParentContactItemId;
             RelationType = _RelationType;
-            EffectiveFrom = _EffectiveFrom;
-            EffectiveTo = _EffectiveTo;
-            IsCurrent = _isCurrent;
         }
     }
 }

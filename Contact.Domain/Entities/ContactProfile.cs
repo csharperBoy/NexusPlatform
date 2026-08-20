@@ -58,8 +58,7 @@ namespace Contact.Domain.Entities
 
         public bool IsActive { get; private set; }
         public ContactProfileTypeEnum ProfileType { get; private set; }
-        public ICollection<ContactItem> ContactItems { get; private set; } = new List<ContactItem>();
-
+        public ICollection<ContactProfileAssignment> Assignments { get; private set; } = new List<ContactProfileAssignment>();
         // Constructor for EF
         protected ContactProfile() { }
         public ContactProfile(string _Title , ContactProfileTypeEnum _ProfileType, bool _IsActive = true)
