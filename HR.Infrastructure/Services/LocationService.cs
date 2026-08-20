@@ -116,7 +116,7 @@ namespace HR.Infrastructure.Services
         public async Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync()
         {
             // ۱. دریافت تمام مکان‌ها از دیتابیس HR
-            var locations = await _LocationRepository.GetAllAsync();
+            var locations = await _LocationRepository.GetAllAsync(queryOptions: query=> query.Where(q=>q.IsRemove != true));
 
             if (!locations.Any())
                 return Array.Empty<LocationInfoDto>();
@@ -149,7 +149,7 @@ namespace HR.Infrastructure.Services
 
         private async Task ExpireLocationPostsAsync(Guid id)
         {
-            var postList = await _PostLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id));
+            var postList = await _PostLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id && a.IsCurrent));
             foreach (var item in postList)
             {
                 await item.DoExpire();
@@ -157,7 +157,7 @@ namespace HR.Infrastructure.Services
         }
         private async Task ExpireLocationEmploymentsAsync(Guid id)
         {
-            var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id));
+            var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id && a.IsCurrent));
             foreach (var item in locList)
             {
                 await item.DoExpire();

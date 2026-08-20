@@ -389,7 +389,7 @@ namespace HR.Infrastructure.Services
 
         private async Task ExpirePostLocationsAsync(Guid id)
         {
-            var locList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id));
+            var locList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
             foreach (var item in locList)
             {
                 await item.DoExpire();
@@ -397,7 +397,7 @@ namespace HR.Infrastructure.Services
         }
         private async Task ExpirePostEmploymentsAsync(Guid id)
         {
-            var empList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id));
+            var empList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
             foreach (var item in empList)
             {
                 await item.DoExpire();
