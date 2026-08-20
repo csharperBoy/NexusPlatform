@@ -51,8 +51,10 @@ namespace Core.Domain.Common.EntityProperties
         }
         public static async Task DoExpire(this IHasEffectivePeriod entity)
         {
-           await entity.SetEffectiveTo(DateTime.UtcNow.AddMinutes(-1));
-           await entity.SetIsCurrent(false);
+
+            await entity.SetEffectiveTo(DateTime.UtcNow.AddMinutes(-1));
+            await entity.SetIsCurrent(false);
+
             await Task.CompletedTask;
 
         }
@@ -61,9 +63,9 @@ namespace Core.Domain.Common.EntityProperties
             if (effectiveFrom.HasValue && expiresAt.HasValue && effectiveFrom >= expiresAt)
                 throw new ArgumentException("Effective from date must be before expiration date.");
 
-           await entity.SetEffectiveFrom(effectiveFrom);
-          await  entity.SetEffectiveTo(expiresAt);
-            
+            await entity.SetEffectiveFrom(effectiveFrom);
+            await entity.SetEffectiveTo(expiresAt);
+
         }
     }
 }

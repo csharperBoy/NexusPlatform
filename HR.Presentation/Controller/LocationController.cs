@@ -1,5 +1,6 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
+using HR.Application.Commands.Employment;
 using HR.Application.Commands.Location;
 using HR.Application.Queries.Location;
 using HR.Domain.Specifications;
@@ -53,6 +54,14 @@ namespace HR.Presentation.Controller
         public async Task<IActionResult> GetSelectionList([FromQuery] GetLocationsSelectionListQuery? request = null)
         {
             var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpDelete("{id:guid}")]
+        [AuthorizeResource("hr.location", "Delete")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var command = new DeleteLocationCommand(id);
+            var result = await Mediator.Send(command);
             return HandleResult(result);
         }
 

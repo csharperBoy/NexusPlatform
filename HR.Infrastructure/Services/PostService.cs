@@ -11,6 +11,8 @@ using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
+using HR.Domain.Events.Employment;
+using HR.Domain.Events.Post;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -313,6 +315,7 @@ namespace HR.Infrastructure.Services
             var result = postList.Select(s => new PostInfoDto
             {
                 EmploymentCode = s.EmploymentCode,
+                ProfileId = s.FkContactProfileId,
                 EmploymentId = s.EmploymentId,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
@@ -366,6 +369,39 @@ namespace HR.Infrastructure.Services
         {
             var list = await _hrUow.OrganizationUnitRepository.GetAllAsync();
             return list;
+        }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            Post? model = await _postRepository.GetByIdAsync(id);
+            if (model == null)
+                throw new Exception("can not found post!!!");
+
+            await model.SoftRemove();
+            model.AddDomainEvent(new RemovePostEvent(model.Id, model.Code,model.IsActive,model.FkPermissionAssigneeId, model.FkContactProfileId));
+
+            await ExpirePostLocationsAsync(id);
+
+
+            await ExpirePostEmploymentsAsync(id);
+
+        }
+
+        private async Task ExpirePostLocationsAsync(Guid id)
+        {
+            var locList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
+            foreach (var item in locList)
+            {
+                await item.DoExpire();
+            }
+        }
+        private async Task ExpirePostEmploymentsAsync(Guid id)
+        {
+            var empList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
+            foreach (var item in empList)
+            {
+                await item.DoExpire();
+            }
         }
     }
 }

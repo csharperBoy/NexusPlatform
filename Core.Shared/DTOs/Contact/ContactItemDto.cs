@@ -9,6 +9,8 @@ namespace Core.Shared.DTOs.Contact
 {
     public class ContactItemDto
     {
+
+        public Guid ProfileId { get;  set; }
         public ContactTypeEnum ContactType { get;  set; }
         /// <summary>
         /// مقدار راه ارتباطی (شماره تلفن، آدرس ایمیل، آیدی اینستاگرام، لینک و...)
@@ -17,7 +19,7 @@ namespace Core.Shared.DTOs.Contact
         /// <summary>
         /// عنوان اختصاصی آیتم (مثلاً: "موبایل شخصی"، "واتس‌اپ کاری"، "ایمیل پشتیبانی")
         /// </summary>
-        public string Label { get;  set; }
+        public string? Label { get;  set; }
         public DateTime? EffectiveFrom { get;  set; }
         public DateTime? EffectiveTo { get;  set; }
         public bool IsCurrent { get;  set; }

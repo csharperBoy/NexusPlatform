@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Contact.Domain.Entities
 {
@@ -48,6 +49,11 @@ namespace Contact.Domain.Entities
         public void SetOrganizationUnitOwner(Guid orgUnitId)
         {
             OwnerOrganizationUnitId = orgUnitId;
+        }
+
+        public void DeActive()
+        {
+            IsActive = false;
         }
 
 

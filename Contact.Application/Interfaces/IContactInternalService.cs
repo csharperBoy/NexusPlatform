@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 
 namespace Contact.Application.Interfaces
 {
-    public interface IContactInternalService : IContactPublicService 
+    public interface IContactInternalService : IContactPublicService
     {
+        Task ExpireAllContactAsync(Guid ProfileId);
+        Task DeActiveContactProfileAsync(Guid ProfileId);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
 using Core.Shared.Results;
+using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Application.Queries.CostCenter;
@@ -107,35 +108,15 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
-
-        /*
-        [HttpGet("{id:guid}")]
-        [AuthorizeResource("hr.orgchart", "View")]
-        public async Task<IActionResult> GetOrgChartById(Guid id)
-        {
-            var query = new GetOrgChartByIdQuery(id);
-            var result = await Mediator.Send(query);
-            return HandleResult(result);
-        }
-
-        [HttpGet("GetSelectionList")]
-        [AuthorizeResource("hr.orgchart", "View")]
-        public async Task<IActionResult> GetSelectionList([FromQuery] GetOrgChartsSelectionListQuery? request = null)
-        {
-            var result = await Mediator.Send(request);
-            return HandleResult(result);
-        }
-
-        
         [HttpDelete("{id:guid}")]
-        [AuthorizeResource("hr.orgchart", "Delete")]
-        public async Task<IActionResult> DeleteOrgChart(Guid id)
+        [AuthorizeResource("hr.post", "Delete")]
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var command = new DeleteOrgChartCommand(id);
+            var command = new DeletePostCommand(id);
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
-        */
+        
     }
 
 }

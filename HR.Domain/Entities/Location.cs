@@ -10,7 +10,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// مکان ها
     /// </summary>
-    public class Location : BaseEntity, IAuditableEntity , IHierarchicalStructureEntity<Location,Guid?>
+    public class Location : BaseEntity, IAuditableEntity,ISoftRemovable , IHierarchicalStructureEntity<Location,Guid?>
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -32,6 +32,16 @@ namespace HR.Domain.Entities
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
             //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+        }
+        #endregion
+        #region ISoftRemovable Impelement
+        public bool IsRemove { get; private set; } = false;
+
+        public async Task SetIsRemove(bool value)
+        {
+            IsRemove = value;
+            Touch();
+            await Task.CompletedTask;
         }
         #endregion
         public string Title { get;private set; }

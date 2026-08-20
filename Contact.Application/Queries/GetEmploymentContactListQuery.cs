@@ -63,13 +63,13 @@ namespace Contact.Application.Queries
                         FirstName = e.FirstName,
                         LastName = e.LastName,
                         EmploymentCode = e.EmploymentCode,
-                        PartyMobile = partyContactList.Where(a =>a.ContactType == ContactTypeEnum.Mobile && a.IsCurrent)?.Select(a=>a.Value).ToList(),
-                        PartyAddress = partyContactList.Where(a => a.ContactType == ContactTypeEnum.Address && a.IsCurrent)?.Select(a => a.Value).ToList(),
-                        PartyPhone = partyContactList.Where(a =>  a.ContactType == ContactTypeEnum.Phone && a.IsCurrent)?.Select(a => a.Value).ToList(),
-                        PartyEmail = partyContactList.Where(a =>  a.ContactType == ContactTypeEnum.Email && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        PartyMobile = partyContactList.Where(a =>a.ProfileId == e.PartyProfileId && a.ContactType == ContactTypeEnum.Mobile && a.IsCurrent)?.Select(a=>a.Value).ToList(),
+                        PartyAddress = partyContactList.Where(a => a.ProfileId == e.PartyProfileId && a.ContactType == ContactTypeEnum.Address && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        PartyPhone = partyContactList.Where(a => a.ProfileId == e.PartyProfileId && a.ContactType == ContactTypeEnum.Phone && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        PartyEmail = partyContactList.Where(a => a.ProfileId == e.PartyProfileId && a.ContactType == ContactTypeEnum.Email && a.IsCurrent)?.Select(a => a.Value).ToList(),
 
-                        EmploymentContactPhone = empContactList.Where(a =>  a.ContactType == ContactTypeEnum.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
-                        EmploymentContactMobile = empContactList.Where(a =>  a.ContactType == ContactTypeEnum.OrganizationMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        EmploymentContactPhone = empContactList.Where(a => a.ProfileId == e.ProfileId && a.ContactType == ContactTypeEnum.OfficePhone && a.IsCurrent)?.Select(a => a.Value).ToList(),
+                        EmploymentContactMobile = empContactList.Where(a => a.ProfileId == e.ProfileId && a.ContactType == ContactTypeEnum.OrganizationMobile && a.IsCurrent)?.Select(a => a.Value).ToList(),
                     })
                     .ToList();
                 return Result<IReadOnlyList<EmploymentContactDto>>.Ok(result);

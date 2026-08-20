@@ -84,7 +84,7 @@ namespace Contact.Domain.Entities
             (ContactTypeEnum _ContactType,
             string _Value,
             DateTime? _EffectiveFrom = null,
-            string? _Label = null, 
+            string? _Label = null , 
             bool _IsPrimary = true, 
             int? _SortOrder = null, 
             Guid? _ParentContactItemId = null, 

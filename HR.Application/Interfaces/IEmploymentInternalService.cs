@@ -26,6 +26,7 @@ namespace HR.Application.Interfaces
         List<Email>? _orgEmail = null,
         List<PhoneNumber>? _orgMobile = null
            );
+        Task DeleteAsync(Guid id);
         Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync();
         Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
     }
