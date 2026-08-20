@@ -27,6 +27,7 @@ namespace HR.Application.Interfaces
             List<string>? OrgEmail = null,
             List<string>? OrgMobile = null
             );
+        Task DeleteAsync(Guid id);
         Task<IEnumerable<CostCenter>> GetCostCenterListAsync();
         Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId);
         Task<IEnumerable<Grade>> GetGradeListAsync();

@@ -115,13 +115,29 @@ namespace Contact.Infrastructure.Services
                 EffectiveFrom = c.EffectiveFrom,
                 EffectiveTo = c.EffectiveTo,
                 IsCurrent = c.IsCurrent,
-                ChildContactItems = c.ChildContactItems.Count(a => a.IsCurrent) > 0 ? c.ChildContactItems.Where(a=>a.IsCurrent).Select(a => new ContactItemDto
+                ChildContactItems = c.ChildContactItems.Count(a => a.IsCurrent) > 0 ? c.ChildContactItems.Where(a => a.IsCurrent).Select(a => new ContactItemDto
                 {
                     Value = a.Value,
                     Label = a.Label,
                     ContactType = a.ContactType
                 }).ToList() : null
             }).ToList();
+        }
+        public async Task DeActiveContactProfileAsync(Guid ProfileId)
+        {
+            ContactProfile? profile = await _contactProfileRepository.GetByIdAsync(ProfileId);
+            if (profile == null)
+                throw new Exception("Can Not Found Profile!!!");
+            profile.DeActive();
+        }
+        public async Task ExpireAllContactAsync(Guid ProfileId)
+        {                       
+            IEnumerable<ContactItem> items = await _contactItemRepository.GetAllAsync(queryOptions: queryOptions => queryOptions.Where(q => q.ContactProfileId == ProfileId && q.IsCurrent));
+            foreach (var item in items)
+            {
+                await item.DoExpire();
+            }
+            
         }
     }
 }

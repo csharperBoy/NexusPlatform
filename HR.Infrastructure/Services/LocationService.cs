@@ -10,6 +10,7 @@ using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
+using HR.Domain.Events.Location;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
@@ -26,7 +27,7 @@ namespace HR.Infrastructure.Services
 
         private readonly IRepository<HRDbContext, Location, Guid> _LocationRepository;
         private readonly IRepository<HRDbContext, PostLocation, Guid> _PostLocationsRepository;
-        private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _EmploymentLocationsRepository;
+        private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<Location, Guid> _LocationSpecRepository;
         private readonly ISpecificationRepository<PostLocation, Guid> _PostLocationSpecRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _EmploymentLocationSpecRepository;
@@ -37,7 +38,7 @@ namespace HR.Infrastructure.Services
         public LocationService(
             IRepository<HRDbContext, Location, Guid> LocationRepository,
         IRepository<HRDbContext, PostLocation, Guid> PostLocationsRepository,
-        IRepository<HRDbContext, EmploymentLocation, Guid> EmploymentLocationsRepository,
+        IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
         ISpecificationRepository<Location, Guid> LocationSpecRepository,
         ISpecificationRepository<PostLocation, Guid> PostLocationSpecRepository,
         ISpecificationRepository<EmploymentLocation, Guid> EmploymentLocationSpecRepository,
@@ -50,7 +51,7 @@ namespace HR.Infrastructure.Services
         {
             _LocationRepository = LocationRepository;
             _PostLocationsRepository = PostLocationsRepository;
-            _EmploymentLocationsRepository = EmploymentLocationsRepository;
+            _employmentLocationsRepository = employmentLocationsRepository;
             _LocationSpecRepository = LocationSpecRepository;
             _PostLocationSpecRepository = PostLocationSpecRepository;
             _EmploymentLocationSpecRepository = EmploymentLocationSpecRepository;
@@ -82,48 +83,7 @@ namespace HR.Infrastructure.Services
             await _uow.SaveChangesAsync();
             await _contactService.SaveAsync();
         }
-        /*  public async Task<Guid?> GetLocationId(Guid? personId)
-          {
-              GetLocationByPersonIdSpec spec = new GetLocationByPersonIdSpec(personId);
-              Location? Location = await _LocationSpecRepository.GetBySpecAsync(spec);
-              if (Location == null)
-                  //throw new InvalidOperationException("Location not found!!!");
-                  return null;
-
-              return Location.Id;
-
-          }*/
-
-        /*  public async Task AssignLocationsToLocation(Guid LocationId, List<Guid> locationsId)
-          {
-              // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
-              var spec = new GetLocationLocationsSpec(LocationId);
-              var existingActive = await _LocationLocationSpecRepository.ListBySpecAsync(spec);
-
-              // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
-              var existingIds = existingActive.Select(e => e.FkLocationId).ToHashSet();
-              var newIds = locationsId.Distinct().ToHashSet();
-
-              // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
-              var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
-              foreach (var item in toExpire)
-              {
-                  item.DoExpire();
-              }
-
-              // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
-              var toAdd = newIds
-                  .Where(id => !existingIds.Contains(id))
-                  .Select(id => new LocationLocation(id, LocationId))
-                  .ToList();
-
-              if (toAdd.Any())
-              {
-                  await _LocationLocationsRepository.AddRangeAsync(toAdd);
-              }
-
-          }*/
-
+        
 
 
         public async Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
@@ -153,18 +113,6 @@ namespace HR.Infrastructure.Services
             return loc.Id;
         }
 
-
-        //public async Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync()
-        //{
-        //    var list = await _LocationRepository.GetAllAsync(i=> i.LocationContacts);
-        //    return list.Select(s=>new LocationInfoDto
-        //    {
-        //        Id = s.Id,
-        //        Title = s.Title,
-        //        orgMobile = s.LocationContacts.FirstOrDefault(c => c.ContactType == HrContactType.OrgMobile && c.IsCurrent)?.Value,
-        //        orgPhone = s.LocationContacts.FirstOrDefault(c => c.ContactType == HrContactType.OfficePhone && c.IsCurrent)?.Value
-        //    }).ToList();
-        //}
         public async Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync()
         {
             // ۱. دریافت تمام مکان‌ها از دیتابیس HR
@@ -183,5 +131,38 @@ namespace HR.Infrastructure.Services
 
              }).ToList();
         }
+
+        public async Task DeleteAsync(Guid id)
+        {
+            Location? model = await _LocationRepository.GetByIdAsync(id);
+            if (model == null)
+                throw new Exception("can not found location!!!");
+
+            await model.SoftRemove();
+            model.AddDomainEvent(new RemoveLocationEvent(model.Id,model.FkContactProfileId,model.Title));
+            
+            await ExpireLocationPostsAsync(id);
+
+            await ExpireLocationEmploymentsAsync(id);
+
+        }
+
+        private async Task ExpireLocationPostsAsync(Guid id)
+        {
+            var postList = await _PostLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id));
+            foreach (var item in postList)
+            {
+                await item.DoExpire();
+            }
+        }
+        private async Task ExpireLocationEmploymentsAsync(Guid id)
+        {
+            var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id));
+            foreach (var item in locList)
+            {
+                await item.DoExpire();
+            }
+        }
+
     }
 }

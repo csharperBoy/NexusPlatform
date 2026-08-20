@@ -61,7 +61,7 @@ namespace Identity.Application.EventHandlers
 
 
         public async Task Handle(UserRegisteredEvent notification, CancellationToken cancellationToken)
-        {
+        {                                                               
             var policy = _policies.Get<IAsyncPolicy>("DefaultRetry");
             await policy.ExecuteAsync(async ct =>
             {

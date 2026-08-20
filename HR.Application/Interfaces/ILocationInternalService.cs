@@ -26,6 +26,7 @@ namespace HR.Application.Interfaces
         Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
       
         Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync();
+        Task DeleteAsync(Guid id);
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using Core.Application.Abstractions;
+﻿using Azure.Core;
+using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
@@ -15,6 +16,7 @@ using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using HR.Domain.Enums;
+using HR.Domain.Events.Employment;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +35,7 @@ namespace HR.Infrastructure.Services
 
         private readonly IPersonPublicService _personService;
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
+        private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly IRepository<HRDbContext, EmploymentInfoView, Guid> _employmentInfoRepository;
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
@@ -42,6 +45,7 @@ namespace HR.Infrastructure.Services
         private readonly IUnitOfWork<HRDbContext> _uow;
 
         public EmploymentService(IPersonPublicService personService,
+            IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
              IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
              ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
             IRepository<HRDbContext, Employment, Guid> employmentRepository,
@@ -53,6 +57,7 @@ namespace HR.Infrastructure.Services
             )
         {
             _employmentInfoRepository = employmentInfoRepository;
+            _assignmentRepository = assignmentRepository;
             _contactService = contactService;
             _personService = personService;
             _employmentRepository = employmentRepository;
@@ -213,6 +218,37 @@ namespace HR.Infrastructure.Services
             return result;
         }
 
+        public async Task DeleteAsync(Guid id)
+        {
+            Employment? model = await _employmentRepository.GetByIdAsync(id);
+            if (model == null)
+                throw new Exception("can not found employment!!!");
 
+            await model.SoftRemove();
+            model.AddDomainEvent(new RemoveEmploymentEvent(model.Id,model.EmploymentCode,model.FkNaturalPersonId,model.FkEmploymentTypeId,model.FkEmploymentStatusId,model.FkContactProfileId));
+            await ExpireEmploymentPostsAsync(id);
+
+
+            await ExpireEmploymentLocationsAsync(id);
+
+        }
+
+        private async Task ExpireEmploymentLocationsAsync(Guid id)
+        {
+            var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkEmploymentId == id));
+            foreach (var item in locList)
+            {
+                await item.DoExpire();
+            }
+        }
+
+        private async Task ExpireEmploymentPostsAsync(Guid id)
+        {
+            var postList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkEmploymentId == id));
+            foreach (var item in postList)
+            {
+                await item.DoExpire();
+            }
+        }
     }
 }

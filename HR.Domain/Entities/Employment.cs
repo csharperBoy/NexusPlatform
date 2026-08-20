@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace HR.Domain.Entities
 {
 
-    public class Employment : BaseEntity , IAuditableEntity
+    public class Employment : BaseEntity , IAuditableEntity, ISoftRemovable
     {
 
         #region IAuditableEntity Impelement
@@ -20,7 +20,16 @@ namespace HR.Domain.Entities
         public void Touch() => ModifiedAt = DateTime.UtcNow;
         #endregion
 
+        #region ISoftRemovable Impelement
+        public bool IsRemove { get; private set; } = false;
 
+        public async Task SetIsRemove(bool value)
+        {
+            IsRemove = value;
+            Touch();
+            await Task.CompletedTask;
+        }
+        #endregion
         public string EmploymentCode { get; private set; }
         public Guid FkNaturalPersonId { get; private set; }
         public Guid? FkEmploymentTypeId { get; private set; }
@@ -37,6 +46,7 @@ namespace HR.Domain.Entities
 
         public virtual EmploymentType? EmploymentType { get; set; }
 
+        
 
         //public virtual ICollection<EmploymentContact> EmploymentContacts { get; set; } = new List<EmploymentContact>();
         protected Employment()

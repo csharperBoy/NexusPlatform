@@ -59,6 +59,14 @@ namespace HR.Presentation.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
+        [HttpDelete("{id:guid}")]
+        [AuthorizeResource("hr.employment", "Delete")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var command = new DeleteEmploymentCommand(id);
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
         /*
         [HttpGet("{id:guid}")]
         [AuthorizeResource("hr.orgchart", "View")]

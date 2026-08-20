@@ -13,7 +13,7 @@ namespace HR.Domain.Entities
     /// <summary>
     /// پست سازمانی (برای ساخت چارت سازمانی)
     /// </summary>
-    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot, IHierarchicalStructureEntity<Post, Guid?>
+    public class Post : BaseEntity, IAuditableEntity, IAggregateRoot,ISoftRemovable, IHierarchicalStructureEntity<Post, Guid?>
     {
         #region IAuditableEntity Impelement
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // 📌 زمان ایجاد
@@ -40,7 +40,16 @@ namespace HR.Domain.Entities
             //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
         }
         #endregion
+        #region ISoftRemovable Impelement
+        public bool IsRemove { get; private set; } = false;
 
+        public async Task SetIsRemove(bool value)
+        {
+            IsRemove = value;
+            Touch();
+            await Task.CompletedTask;
+        }
+        #endregion
 
         public string Code { get; private set; }
         public Guid FkJobTitleId { get; private set; }
