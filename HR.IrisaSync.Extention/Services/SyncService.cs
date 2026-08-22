@@ -572,7 +572,8 @@ namespace HR.IrisaSync.Extention.Services
         {
             var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
-            foreach (var item in list)
+            // roots node
+            foreach (var item in list.Where(i => i.IrisaParentId == null))
             {
                 if (item.IrisaOrganizationUnit != null)
                 {
@@ -595,7 +596,32 @@ namespace HR.IrisaSync.Extention.Services
                     }
                 }
             }
-
+            //Child Node
+            foreach (var item in list.Where(i => i.IrisaParentId != null))
+            {
+                if (item.IrisaOrganizationUnit != null)
+                {
+                    var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
+                    IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
+                    if (existEntity != null)
+                    {
+                        if (existEntity.Name.Trim() != item.OrganizationUnit.Trim() || existEntity.FkParentId != parentMap.FkOrganizationUnitId)
+                        {
+                            existEntity.SetName(item.OrganizationUnit);
+                            existEntity.SetParent(parentMap?.FkOrganizationUnitId);
+                            await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
+                        }
+                    }
+                    else
+                    {
+                        OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), parentMap?.FkOrganizationUnitId);
+                        await _hrUow.OrganizationUnitRepository.AddAsync(model);
+                        item.FkOrganizationUnitId = model.Id;
+                        item.OrganizationUnit = model.Name;
+                        await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
+                    }
+                }
+            }
             await _hrUow.SaveChangesAsync();
             await _uow.SaveChangesAsync();
 

@@ -44,6 +44,9 @@ public partial class IrisaOracleDbContext : DbContext
             entity.Property(e => e.CodBusun)
                 .HasColumnType("NUMBER")
                 .HasColumnName("COD_BUSUN");
+            entity.Property(e => e.CodMoaBusun)
+                .HasColumnType("NUMBER")
+                .HasColumnName("Cod_Moa_Busun");
             entity.Property(e => e.CodCalCalnr)
                 .HasMaxLength(30)
                 .IsUnicode(false)
@@ -113,6 +116,10 @@ public partial class IrisaOracleDbContext : DbContext
                 .HasMaxLength(150)
                 .IsUnicode(false)
                 .HasColumnName("DES_BUSUN");
+            entity.Property(e => e.DESMOABUSUN)
+                .HasMaxLength(150)
+                .IsUnicode(false)
+                .HasColumnName("DES_MOA_BUSUN");
             entity.Property(e => e.DesClassJobpo)
                 .IsUnicode(false)
                 .HasColumnName("DES_CLASS_JOBPO");

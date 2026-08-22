@@ -121,9 +121,21 @@ public partial class PdsIdeaInformationViw
     public decimal? CodBusun { get; set; }
     /// <summary>
     /// واحد
-    /// مثال: فاوا و امنیت
+    /// مثال: خرید
     /// </summary>
     public string? DesBusun { get; set; }
+    /// <summary>
+    /// کد معاونت
+    /// Cod_Moa_Busun
+    /// </summary>
+    public decimal? CodMoaBusun { get; set; }
+    /// <summary>
+    /// توضیح معاونت
+    /// DES_MOA_BUSUN
+    /// مثال: بازرگانی
+    /// </summary>
+    public decimal? DESMOABUSUN { get; set; }
+    
     /// <summary>
     /// کد رده یا شغل
     /// </summary>

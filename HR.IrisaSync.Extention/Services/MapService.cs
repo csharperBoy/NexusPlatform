@@ -107,7 +107,7 @@ namespace HR.IrisaSync.Extention.Services
             var lst = irisaList
                      .Where(e => e.CodEmtyp == true)
                      .GroupBy(a => a.CodBusun)
-                     .Select(group => new IrisaSyncOrganizationUnitMap(group.Key, group.First().DesBusun))
+                     .Select(group => new IrisaSyncOrganizationUnitMap(group.Key, group.First().DesBusun, group.First().CodMoaBusun))
                      .ToList();
             var existlist = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             foreach (var item in lst)
@@ -115,9 +115,10 @@ namespace HR.IrisaSync.Extention.Services
                 var existEntity = existlist.Where(a => a.IrisaOrganizationUnitId == item.IrisaOrganizationUnitId).SingleOrDefault();
                 if (existEntity != null)
                 {
-                    if (existEntity.IrisaOrganizationUnit.Trim() != item.IrisaOrganizationUnit.Trim())
+                    if (existEntity.IrisaOrganizationUnit.Trim() != item.IrisaOrganizationUnit.Trim() || existEntity.IrisaParentId != item.IrisaParentId)
                     {
                         existEntity.IrisaOrganizationUnit = item.IrisaOrganizationUnit;
+                        existEntity.IrisaParentId = item.IrisaParentId;
                         await _uow.OrganizationUnitMapRepository.UpdateAsync(existEntity);
                     }
                 }

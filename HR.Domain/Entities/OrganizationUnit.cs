@@ -76,5 +76,10 @@ namespace HR.Domain.Entities
                    ? $"/{Id}/"
                    : $"{parentPath}{Id}/";
         }
+
+        public void SetParent(Guid? fkOrganizationUnitId)
+        {
+            FkParentId = fkOrganizationUnitId;
+        }
     }
 }

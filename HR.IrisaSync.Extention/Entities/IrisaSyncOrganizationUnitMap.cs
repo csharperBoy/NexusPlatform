@@ -12,6 +12,7 @@ namespace HR.IrisaSync.Extention.Entities
         public string? OrganizationUnit { get; set; }
         public Guid? FkOrganizationUnitId { get; set; }
         public decimal? IrisaOrganizationUnitId { get; set; }
+        public decimal? IrisaParentId { get; set; }
         public string? IrisaOrganizationUnit { get; set; }
 
         //public virtual Post Post { get; private set; } = null!;
@@ -23,23 +24,34 @@ namespace HR.IrisaSync.Extention.Entities
             string? _OrganizationUnit,
             Guid? _FkOrganizationUnitId,
                 decimal? _IrisaOrganizationUnitId,
-                string? _IrisaOrganizationUnit
+                string? _IrisaOrganizationUnit,
+                decimal? _IrisaParentId
             )
         {
             OrganizationUnit = _OrganizationUnit;
             FkOrganizationUnitId = _FkOrganizationUnitId;
             IrisaOrganizationUnitId = _IrisaOrganizationUnitId;
             IrisaOrganizationUnit = _IrisaOrganizationUnit;
+            if (_IrisaParentId == _IrisaOrganizationUnitId)
+            {
+                IrisaParentId = null;
+            }
+            else
+            {
+                IrisaParentId = _IrisaParentId;
+            }
         }
         public IrisaSyncOrganizationUnitMap(
-                 decimal? _IrisaOrganizationUnitId,
-                string? _IrisaOrganizationUnit
+                decimal? _IrisaOrganizationUnitId,
+                string? _IrisaOrganizationUnit,
+                decimal? _IrisaParentId
             )
         {
             OrganizationUnit = null;
             FkOrganizationUnitId = null;
             IrisaOrganizationUnitId = _IrisaOrganizationUnitId;
             IrisaOrganizationUnit = _IrisaOrganizationUnit;
+            IrisaParentId = _IrisaParentId;
         }
     }
 
