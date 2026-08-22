@@ -87,10 +87,10 @@ namespace People.Infrastructure.Services
             Party party = new Party(contactProfileId,contactProfileId);
             await _partyRepository.AddAsync(party);
 
-            await _contactService.CreateContact(ContactTypeEnum.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), party.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.Address, Address, party.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address, party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), party.FkContactProfileId);
             return party.Id;
         }
 

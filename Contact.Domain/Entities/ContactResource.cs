@@ -87,10 +87,8 @@ namespace Contact.Domain.Entities
             string? _Label = null , 
             bool _IsPrimary = true, 
             int? _SortOrder = null, 
-            Guid? _ParentContactItemId = null, 
-            ContactRelationTypeEnum? _RelationType = null,
-            DateTime? _EffectiveTo = null,
-            bool _isCurrent = true
+            Guid? _ParentContactResourceId = null, 
+            ContactRelationTypeEnum? _RelationType = null
             )
         {
             ContactType = _ContactType;
@@ -98,7 +96,7 @@ namespace Contact.Domain.Entities
             Label= _Label;
             IsPrimary = _IsPrimary;
             SortOrder = _SortOrder;
-            ParentContactItemId = _ParentContactItemId;
+            ParentContactResourceId = _ParentContactResourceId;
             RelationType = _RelationType;
         }
     }

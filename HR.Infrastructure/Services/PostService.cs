@@ -91,7 +91,7 @@ namespace HR.Infrastructure.Services
             var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
             foreach (var item in toExpire)
             {
-                await item.DoExpire();
+                item.DoExpire();
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -146,7 +146,7 @@ namespace HR.Infrastructure.Services
             {
                 foreach (var item in assignments)
                 {
-                    await item.DoExpire();
+                    item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }
@@ -162,7 +162,7 @@ namespace HR.Infrastructure.Services
             {
                 foreach (var item in assignments)
                 {
-                    await item.DoExpire();
+                    item.DoExpire();
                     await _assignmentRepository.UpdateAsync(item);
 
                 }
@@ -182,9 +182,9 @@ namespace HR.Infrastructure.Services
             Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
             Post post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
             await _postRepository.AddAsync(post);
-            await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.OfficePhone, OfficePhone, post.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, OfficePhone, post.FkContactProfileId);
             return post.Id;
         }
 
@@ -288,15 +288,15 @@ namespace HR.Infrastructure.Services
             }
             if (officePhone != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.OfficePhone, officePhone, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone, post.FkContactProfileId);
             }
             if (orgEmail != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.Email, orgEmail, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail, post.FkContactProfileId);
             }
             if (orgMobile != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, orgMobile, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, post.FkContactProfileId);
             }
             return post.Id;
         }
@@ -392,7 +392,7 @@ namespace HR.Infrastructure.Services
             var locList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
             foreach (var item in locList)
             {
-                await item.DoExpire();
+                item.DoExpire();
             }
         }
         private async Task ExpirePostEmploymentsAsync(Guid id)
@@ -400,7 +400,7 @@ namespace HR.Infrastructure.Services
             var empList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkPostId == id && a.IsCurrent));
             foreach (var item in empList)
             {
-                await item.DoExpire();
+                item.DoExpire();
             }
         }
     }

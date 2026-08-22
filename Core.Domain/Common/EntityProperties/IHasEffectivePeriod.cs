@@ -39,33 +39,49 @@ namespace Core.Domain.Common.EntityProperties
         #endregion
          */
     }
-    public static class EffectivePeriodExtention
+    public static class EffectivePeriodExtensions
     {
+        /// <summary>
+        /// بررسی فعال بودن رکورد در یک تاریخ مشخص
+        /// </summary>
         public static bool IsActiveOn(this IHasEffectivePeriod entity, DateTime date)
         {
-            return entity.EffectiveFrom >= date && (entity.EffectiveTo.HasValue || entity.EffectiveTo >= date);
+            // ۱. آیا شروع شده است؟ (بدون تاریخ شروع یا شروع در گذشته/امروز)
+            bool hasStarted = !entity.EffectiveFrom.HasValue || entity.EffectiveFrom <= date;
+
+            // ۲. آیا منقضی نشده است؟ (بدون تاریخ پایان یا پایان در آینده/امروز)
+            bool hasNotEnded = !entity.EffectiveTo.HasValue || entity.EffectiveTo >= date;
+
+            return hasStarted && hasNotEnded;
         }
+
+        /// <summary>
+        /// بررسی فعال بودن در لحظه کنونی (بر اساس UTC)
+        /// </summary>
         public static bool IsCurrentlyActive(this IHasEffectivePeriod entity)
         {
-            return entity.IsActiveOn(DateTime.Today);
+            return entity.IsActiveOn(DateTime.UtcNow);
         }
-        public static async Task DoExpire(this IHasEffectivePeriod entity)
+
+        /// <summary>
+        /// منقضی کردن رکورد
+        /// </summary>
+        public static void DoExpire(this IHasEffectivePeriod entity)
         {
-
-            await entity.SetEffectiveTo(DateTime.UtcNow.AddMinutes(-1));
-            await entity.SetIsCurrent(false);
-
-            await Task.CompletedTask;
-
+            entity.SetEffectiveTo(DateTime.UtcNow);
+            entity.SetIsCurrent(false);
         }
-        public static async Task SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt)
+
+        /// <summary>
+        /// تنظیم بازه زمانی با اعتبارسنجی
+        /// </summary>
+        public static void SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt)
         {
             if (effectiveFrom.HasValue && expiresAt.HasValue && effectiveFrom >= expiresAt)
                 throw new ArgumentException("Effective from date must be before expiration date.");
 
-            await entity.SetEffectiveFrom(effectiveFrom);
-            await entity.SetEffectiveTo(expiresAt);
-
+            entity.SetEffectiveFrom(effectiveFrom);
+            entity.SetEffectiveTo(expiresAt);
         }
     }
 }

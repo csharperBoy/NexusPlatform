@@ -28,7 +28,8 @@ namespace Contact.Infrastructure.Data
         }
 
         public virtual DbSet<ContactProfile> ContactProfiles { get; set; }
-        public virtual DbSet<ContactResource> ContactItems { get; set; }
+        public virtual DbSet<ContactResource> ContactResources { get; set; }
+        public virtual DbSet<ContactProfileAssignment> ContactProfileAssignments { get; set; }
         
         public virtual DbSet<PhoneBookInfoView> PhoneBookInfoView { get; set; }
        
@@ -48,8 +49,9 @@ namespace Contact.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("contact"));
             modelBuilder.ApplyConfiguration(new PhoneBookInfoViewConfiguration());
-            modelBuilder.ApplyConfiguration(new ContactItemConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactResourceConfiguration());
             modelBuilder.ApplyConfiguration(new ContactProfileConfiguration());
+            modelBuilder.ApplyConfiguration(new ContactProfileAssignmentConfiguration());
 
         }
     }

@@ -73,9 +73,9 @@ namespace HR.Infrastructure.Services
             Location loc = new Location(_title, contactProfileId);
             await _LocationRepository.AddAsync(loc);
 
-            await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, _orgMobile, loc.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.OfficePhone, _orgPhone, loc.FkContactProfileId);
-            await _contactService.CreateContact(ContactTypeEnum.Email, _orgEmail, loc.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, _orgMobile, loc.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, _orgPhone, loc.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, _orgEmail, loc.FkContactProfileId);
             return loc.Id;
         }
         public async Task SaveAsync()
@@ -100,15 +100,15 @@ namespace HR.Infrastructure.Services
 
             if (officePhone != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.OfficePhone, officePhone, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone, loc.FkContactProfileId);
             }
             if (orgEmail != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.Email, orgEmail, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail, loc.FkContactProfileId);
             }
             if (orgMobile != null)
             {
-                await _contactService.CreateContact(ContactTypeEnum.OrganizationMobile, orgMobile, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, loc.FkContactProfileId);
             }
             return loc.Id;
         }
@@ -152,7 +152,7 @@ namespace HR.Infrastructure.Services
             var postList = await _PostLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id && a.IsCurrent));
             foreach (var item in postList)
             {
-                await item.DoExpire();
+                item.DoExpire();
             }
         }
         private async Task ExpireLocationEmploymentsAsync(Guid id)
@@ -160,7 +160,7 @@ namespace HR.Infrastructure.Services
             var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkLocationId == id && a.IsCurrent));
             foreach (var item in locList)
             {
-                await item.DoExpire();
+                item.DoExpire();
             }
         }
 

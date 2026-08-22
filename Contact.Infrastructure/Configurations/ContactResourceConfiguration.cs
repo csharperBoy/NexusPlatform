@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Infrastructure.Configurations
 {
-    public class ContactItemConfiguration : BaseConfiguration<ContactResource>
+    public class ContactResourceConfiguration : BaseConfiguration<ContactResource>
     {
         public override void Configure(EntityTypeBuilder<ContactResource> builder)
         {
@@ -18,11 +18,12 @@ namespace Contact.Infrastructure.Configurations
 
             builder.Property(p => p.ContactType).HasConversion<byte>();
 
-            builder.ToTable("ContactItems", "contact");
-            builder.HasIndex(e => e.ContactProfileId, "IX_ContactItems_ContactProfileId");
-            builder.HasOne(d => d.ContactProfile).WithMany(p => p.ContactItems)
-                .HasForeignKey(d => d.ContactProfileId)
-                .HasConstraintName("FK_ContactItems_ContactProfiles");
+            builder.ToTable("ContactResources", "contact");
+
+
+            builder.HasMany(d => d.Assignments).WithOne(p => p.ContactResource)
+                .HasForeignKey(d => d.ContactResourceId)
+                .HasConstraintName("FK_ContactResources_ContactProfiles");
 
 
         }

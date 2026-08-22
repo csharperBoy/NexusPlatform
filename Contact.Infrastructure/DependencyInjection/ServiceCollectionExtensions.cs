@@ -52,6 +52,9 @@ namespace Contact.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<ContactDbContext, ContactProfile, Guid>, EfRepository<ContactDbContext, ContactProfile, Guid>>();
             services.AddScoped<ISpecificationRepository<ContactProfile, Guid>, EfSpecificationRepository<ContactDbContext, ContactProfile, Guid>>();
 
+            services.AddScoped<IRepository<ContactDbContext, ContactProfileAssignment, Guid>, EfRepository<ContactDbContext, ContactProfileAssignment, Guid>>();
+            services.AddScoped<ISpecificationRepository<ContactProfileAssignment, Guid>, EfSpecificationRepository<ContactDbContext, ContactProfileAssignment, Guid>>();
+
 
             services.AddScoped<IRepository<ContactDbContext, ContactResource, Guid>, EfRepository<ContactDbContext, ContactResource, Guid>>();
             services.AddScoped<ISpecificationRepository<ContactResource, Guid>, EfSpecificationRepository<ContactDbContext, ContactResource, Guid>>();

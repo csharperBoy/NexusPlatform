@@ -19,7 +19,7 @@ namespace Contact.Infrastructure.Configurations
 
 
             builder.ToTable("ContactProfiles", "contact");
-            builder.HasMany(d => d.ContactItems).WithOne(p => p.ContactProfile)
+            builder.HasMany(d => d.Assignments).WithOne(p => p.ContactProfile)
                 .HasForeignKey(d => d.ContactProfileId)
                 .HasConstraintName("FK_ContactItems_ContactProfiles");
 

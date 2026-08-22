@@ -17,17 +17,17 @@ namespace HR.Infrastructure.Configurations
         {
             base.Configure(builder);
             builder.ToTable("EmploymentLocations", "hr");
-            builder.HasIndex(e => e.FkEmploymentId, "IX_ EmploymentLocations_fkEmploymentId");
-            builder.HasIndex(e => e.FkLocationId, "IX_ EmploymentLocations_fkLocationId");
+            builder.HasIndex(e => e.FkEmploymentId, "IX_EmploymentLocations_fkEmploymentId");
+            builder.HasIndex(e => e.FkLocationId, "IX_EmploymentLocations_fkLocationId");
             
 
             builder.HasOne(d => d.Employment).WithMany(p => p.EmploymentLocations)
                 .HasForeignKey(d => d.FkEmploymentId)
-                .HasConstraintName("FK_ EmploymentLocations_ Employment");
+                .HasConstraintName("FK_EmploymentLocations_Employment");
 
             builder.HasOne(d => d.Location).WithMany(p => p.EmploymentLocations)
                 .HasForeignKey(d => d.FkLocationId)
-                .HasConstraintName("FK_ EmploymentLocations_Location");
+                .HasConstraintName("FK_EmploymentLocations_Location");
         }
 
     }

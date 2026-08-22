@@ -25,11 +25,11 @@ namespace HR.Infrastructure.Configurations
 
             builder.HasOne(d => d.CostCenter).WithMany(p => p.Posts)
                 .HasForeignKey(d => d.FkCostCenterId)
-                .HasConstraintName("FK_Post_ CostCenter");
+                .HasConstraintName("FK_Post_CostCenter");
 
             builder.HasOne(d => d.Grade).WithMany(p => p.Posts)
                 .HasForeignKey(d => d.FkGradeId)
-                .HasConstraintName("FK_Post_ Grade");
+                .HasConstraintName("FK_Post_Grade");
 
             builder.HasOne(d => d.JobLevel).WithMany(p => p.Posts)
                 .HasForeignKey(d => d.FkJobLevelId)

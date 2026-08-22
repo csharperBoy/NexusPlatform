@@ -28,7 +28,7 @@ namespace HR.Infrastructure.Configurations
             builder.HasOne(d => d.Employment).WithMany(p => p.Assignments)
                     .HasForeignKey(d => d.FkEmploymentId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Assignments_ Employment");
+                    .HasConstraintName("FK_Assignments_Employment");
 
             builder.HasOne(d => d.Post).WithMany(p => p.Assignments)
                     .HasForeignKey(d => d.FkPostId)

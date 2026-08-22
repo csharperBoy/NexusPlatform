@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-   
-    public class ContactProfileAssignment : BaseEntity, IAuditableEntity,  IHasEffectivePeriod
+
+    public class ContactProfileAssignment : BaseEntity, IAuditableEntity, IHasEffectivePeriod
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -57,13 +57,14 @@ namespace Contact.Domain.Entities
         protected ContactProfileAssignment() { }
         public ContactProfileAssignment
             (
-            Guid _ContactProfileId,
-            DateTime? _EffectiveFrom = null,            
+            Guid _ContactProfileId, Guid _ContactResourceId,
+            DateTime? _EffectiveFrom = null,
             DateTime? _EffectiveTo = null,
             bool _isCurrent = true
             )
         {
             ContactProfileId = _ContactProfileId;
+            ContactResourceId = _ContactResourceId;
             EffectiveFrom = _EffectiveFrom;
             EffectiveTo = _EffectiveTo;
             IsCurrent = _isCurrent;
