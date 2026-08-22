@@ -89,5 +89,14 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
    );
    return response.data;
  },
-
+// حذف  (Delete)
+  delete: async (Id?: string): Promise<boolean> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.delete<boolean>(
+      `/api/hr/OrgChart/${Id}`,
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
 };

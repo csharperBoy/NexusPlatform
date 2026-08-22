@@ -58,6 +58,9 @@ export const PostManagementPage: React.FC = () => {
     jobLevelMap,
     gradeMap,
     locationMap,
+    
+    deleteTarget,isDeleting,
+    handleOpenDeleteModal,handleCloseDeleteModal,handleConfirmDelete
   } = usePostManagement();
 
   if (loading) {
@@ -399,6 +402,18 @@ export const PostManagementPage: React.FC = () => {
                         <span className="text-gray-300 text-xs">-</span>
                       )}
                     </td>
+                    <td className="py-2 px-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenDeleteModal(node)}
+                        title="حذف پست"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 );
               })
@@ -406,6 +421,57 @@ export const PostManagementPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div 
+            className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 text-center">
+              {/* آیکون اخطار حذف */}
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 mx-auto flex items-center justify-center mb-4">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+
+              <h3 className="font-bold text-gray-800 text-lg mb-2">تأیید حذف مکان</h3>
+              
+              <p className="text-sm text-gray-600 leading-relaxed mb-3">
+                آیا از حذف مکان <span className="font-semibold text-gray-900">«{deleteTarget.title}»</span> اطمینان دارید؟
+              </p>
+
+              {deleteTarget.isModified && (
+                <div className="mb-4 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-xs">
+                  این سطر دارای تغییرات ذخیره‌نشده است. با حذف آن، تغییرات نیز از بین خواهند رفت.
+                </div>
+              )}
+
+              <p className="text-xs text-gray-400">این عملیات قابل بازگشت نیست.</p>
+            </div>
+
+            {/* دکمه‌های مودال حذف */}
+            <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleCloseDeleteModal}
+                disabled={isDeleting}
+                className="w-full py-2 border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-100 transition-colors cursor-pointer"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium shadow-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {isDeleting ? "در حال حذف..." : "حذف شود"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

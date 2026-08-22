@@ -34,7 +34,10 @@ export const usePostManagement = () => {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
+// --- استیت‌های مودال حذف ---
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string; isModified: boolean } | null>(null);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  
   const [locations, setLocations] = useState<SelectionListDto[]>([]);
   const [employments, setEmployments] = useState<SelectionListDto[]>([]);
   const [jobTitles, setJobTitles] = useState<SelectionListDto[]>([]);
@@ -648,6 +651,41 @@ export const usePostManagement = () => {
       setSaving(false);
     }
   };
+// --- 6. مودال حذف  ---
+    const handleOpenDeleteModal = (post: PostInfoDto) => {
+      setDeleteTarget({
+        id: post.id,
+        title: `${jobTitleMap.get(post.fkJobTitleId?.trim())}` || "بدون عنوان",
+        isModified: modifiedIds.has(post.id),
+      });
+    };
+  
+    const handleCloseDeleteModal = () => {
+      if (isDeleting) return;
+      setDeleteTarget(null);
+    };
+  
+    const handleConfirmDelete = async () => {
+      if (!deleteTarget) return;
+  
+      try {
+        setIsDeleting(true);
+        setError(null);
+  
+        await postApi.delete(deleteTarget.id);
+  
+        setSuccessMessage(`مکان "${deleteTarget.title}" با موفقیت حذف شد.`);
+        setDeleteTarget(null);
+  
+        await loadData();
+        setTimeout(() => setSuccessMessage(null), 4000);
+      } catch (err: any) {
+        setError(err?.message || "خطا در حذف مکان");
+        setDeleteTarget(null);
+      } finally {
+        setIsDeleting(false);
+      }
+    };
 
   // --- خروجی ---
   return {
@@ -702,5 +740,8 @@ export const usePostManagement = () => {
     handleGlobalSearch,
     handleIsOverRootZone: setIsOverRootZone,
     handleDragOverId: setDragOverId,
+    
+    deleteTarget,isDeleting,
+    handleOpenDeleteModal,handleCloseDeleteModal,handleConfirmDelete
   };
 };
