@@ -52,7 +52,8 @@ namespace Contact.Infrastructure.Services
         {
             _contactResourceRepository = contactResourceRepository;
             _contactResourceSpecRepository = contactResourceSpecRepository;
-
+            _assignmentRepository = assignmentRepository;
+            _assignmentSpecRepository = assignmentSpecRepository;
             _contactProfileRepository = contactProfileRepository;
             _contactProfileSpecRepository = contactProfileSpecRepository;
 
