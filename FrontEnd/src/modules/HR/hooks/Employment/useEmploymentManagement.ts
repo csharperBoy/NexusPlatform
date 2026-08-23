@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { employmentApi } from "../../api/EmploymentApi";
 import { locationApi } from "../../api/LocationApi";
 import { EmploymentInfoView } from "../../models/EmploymentInfoView";
-import { Location } from "../../models/LocationInfoView";
+import { LocationInfoView as Location } from "../../models/LocationInfoView";
 import { UpdateEmploymentCommand } from "../../models/EmploymentCommand";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 

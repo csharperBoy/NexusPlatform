@@ -21,10 +21,10 @@ namespace HR.Application.Commands.Employment
     public record UpdateEmploymentCommand(
            Guid Id,
     #region party
-        string? Phone,
-        string? Address,
-        string? Email,
-        string? Mobile,
+        List<string>? Phone,
+        List<string>? Address,
+        List<string>? Email,
+        List<string>? Mobile,
     #endregion
     #region Person
 

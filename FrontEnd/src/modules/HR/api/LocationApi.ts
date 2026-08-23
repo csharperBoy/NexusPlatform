@@ -42,7 +42,7 @@ GetSelectionList: async (): Promise<SelectionListDto[]> => {
     },
    
   // به‌روزرسانی گروهی
-  batchUpdatelocations: async (commands: UpdateLocationCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdateLocationCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/hr/Location/batch`,
@@ -54,7 +54,7 @@ GetSelectionList: async (): Promise<SelectionListDto[]> => {
   
   
 // ویرایش  (PUT)
-  updatelocation: async (data: UpdateLocationCommand): Promise<boolean> => {
+  update: async (data: UpdateLocationCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/hr/Location/${data.id}`, data,
