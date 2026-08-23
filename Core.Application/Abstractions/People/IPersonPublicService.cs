@@ -23,6 +23,11 @@ namespace Core.Application.Abstractions.People
         Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId);
         Task SaveAsync();
         Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId);
-        Task UpdatePersonAsync(Guid id,string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode);
+        Task UpdatePersonAsync(Guid id, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode,
+
+             List<PhoneNumber>? Phone = null,
+       List<string>? Address = null,
+        List<Email>? Email = null,
+        List<PhoneNumber>? Mobile = null);
     }
 }

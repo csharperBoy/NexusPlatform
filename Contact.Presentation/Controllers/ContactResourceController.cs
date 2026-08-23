@@ -18,31 +18,31 @@ namespace Contact.Presentation.Controllers
     public class ContactResourceController : BaseController
     {
 
-        [HttpPut("{id:guid}")]
-        [AuthorizeResource("contact.contactresource", "Edit")]
-        public async Task<IActionResult> UpdateEmployment(Guid id, [FromBody] UpdateContactResourceCommand command)
-        {
-            // اطمینان از تطابق ID در route با command
-            var updatedCommand = command with { Id = id };
-            var result = await Mediator.Send(updatedCommand);
-            return HandleResult(result);
-        }
-        [HttpPut("batch")]
-        [AuthorizeResource("contact.contactresource", "Edit")]
-        public async Task<IActionResult> BatchUpdate([FromBody] BatchUpdateContactResourceCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
-        [HttpGet("GetList")]
-        [AuthorizeResource("contact.contactresource", "View")]
-        public async Task<IActionResult> GetList([FromQuery] GetContactResourceListQuery request)
-        {
+        //[HttpPut("{id:guid}")]
+        //[AuthorizeResource("contact.contactresource", "Edit")]
+        //public async Task<IActionResult> UpdateEmployment(Guid id, [FromBody] UpdateContactResourceCommand command)
+        //{
+        //    // اطمینان از تطابق ID در route با command
+        //    var updatedCommand = command with { Id = id };
+        //    var result = await Mediator.Send(updatedCommand);
+        //    return HandleResult(result);
+        //}
+        //[HttpPut("batch")]
+        //[AuthorizeResource("contact.contactresource", "Edit")]
+        //public async Task<IActionResult> BatchUpdate([FromBody] BatchUpdateContactResourceCommand command)
+        //{
+        //    var result = await Mediator.Send(command);
+        //    return HandleResult(result);
+        //}
+        //[HttpGet("GetList")]
+        //[AuthorizeResource("contact.contactresource", "View")]
+        //public async Task<IActionResult> GetList([FromQuery] GetContactResourceListQuery request)
+        //{
 
 
-            var result = await Mediator.Send(request);
-            return HandleResult(result);
-        }
+        //    var result = await Mediator.Send(request);
+        //    return HandleResult(result);
+        //}
 
     }
 }

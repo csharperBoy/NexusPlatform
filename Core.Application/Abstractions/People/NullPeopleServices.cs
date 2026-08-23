@@ -67,7 +67,10 @@ namespace Core.Application.Abstractions.People
             await Task.CompletedTask;
         }
 
-       
+        public Task UpdatePersonAsync(Guid id, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, List<PhoneNumber>? Phone = null, List<string>? Address = null, List<Email>? Email = null, List<PhoneNumber>? Mobile = null)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

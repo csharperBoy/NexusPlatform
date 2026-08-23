@@ -111,12 +111,8 @@ namespace People.Domain.Entities
         DateTime? _BirthDate,
          string? _BirthPlace,
         string? _FatherName,
-         Gender? _Gender,
+         Gender? _Gender
 
-         PhoneNumber? _phone,
-         PhoneNumber? _mobile,
-         string? address,
-         Email? email
           )
         {
             bool hasChange = false;

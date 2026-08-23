@@ -121,7 +121,15 @@ namespace People.Infrastructure.Services
 
         }
 
-        public async Task UpdatePersonAsync(Guid id,  string? phone, string? address, string? email, string? mobile, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode)
+        public async Task UpdatePersonAsync(Guid id,
+            string firstlName, string lastName, DateTime? birthDate,
+            string? birthPlace, string? fatherName, string? nationalCode,
+
+             List<PhoneNumber>? Phone = null,
+       List<string>? Address = null,
+        List<Email>? Email = null,
+        List<PhoneNumber>? Mobile = null
+            )
         {
             NaturalPerson? person = await _naturalPersonRepository.GetByIdAsync(id, a => a.Party);
             if (person == null)
@@ -136,15 +144,18 @@ namespace People.Infrastructure.Services
                 birthDate, 
                 birthPlace, 
                 fatherName,
-                null, 
-                phone != null ? PhoneNumber.Create(phone) : null,
-                mobile != null ? PhoneNumber.Create(mobile) : null,
-                address, 
-                email != null ? Email.Create(email) : null);
+                null
+                );
 
             if (hasChange) {
                 await _naturalPersonRepository.UpdateAsync(person);
             }
+
+
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address, person.Party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
         }
     }
 }

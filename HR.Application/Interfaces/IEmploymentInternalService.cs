@@ -28,6 +28,6 @@ namespace HR.Application.Interfaces
            );
         Task DeleteAsync(Guid id);
         Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync();
-        Task<Guid> UpdateEmploymentAsync(Guid id, string? phone, string? address, string? email, string? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
+        Task<Guid> UpdateEmploymentAsync(Guid id, List<string>? phone, List<string>? address, List<string>? email, List<string>? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
     }
 }
