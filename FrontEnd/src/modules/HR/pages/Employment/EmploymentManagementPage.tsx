@@ -59,7 +59,7 @@ const crudOptions: UseGenericCrudOptions<
   api: employmentApi,
 columns: employeeColumns,
   selectionApis: {
-    locations: locationApi.GetSelectionList,
+    locations: locationApi.getSelectionList,
   },
 
   // کلید تطبیق در فایل اکسل

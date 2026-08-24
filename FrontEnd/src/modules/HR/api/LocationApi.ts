@@ -7,7 +7,7 @@ const API_MODULE = "hr";
 
 export const locationApi = {
     // دریافت لیست جهت نمایش در dropdown ها
-GetSelectionList: async (): Promise<SelectionListDto[]> => {
+getSelectionList: async (): Promise<SelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<SelectionListDto[]>(
       "/api/hr/Location/GetSelectionList",
@@ -18,7 +18,7 @@ GetSelectionList: async (): Promise<SelectionListDto[]> => {
   },
   
  // دریافت لیست (GET)
-  GetList: async (): Promise<LocationInfoView[]> => {
+  getList: async (): Promise<LocationInfoView[]> => {
     
     const api = getAPI(API_MODULE);
     
