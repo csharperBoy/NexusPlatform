@@ -35,7 +35,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
     return response.data;
   },
  // دریافت پست ها (GET)
-  GetList: async (): Promise<PostInfoView[]> => {
+  gtList: async (): Promise<PostInfoView[]> => {
     
     const api = getAPI(API_MODULE);
     
@@ -58,7 +58,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
     return response.data; // آرایه‌ای از GUIDهای به‌روز شده
   },
   
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+  getSelectionList: async (): Promise<SelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<SelectionListDto[]>(
       "/api/hr/OrgChart/GetSelectionList",
