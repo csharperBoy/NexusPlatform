@@ -30,7 +30,7 @@ export const employmentApi = {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdateemployments: async (commands: UpdateEmploymentCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdateEmploymentCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/hr/Employment/batch`,
@@ -42,7 +42,7 @@ export const employmentApi = {
   
   
 // ویرایش منبع (PUT)
-  updateEmployment: async (data: UpdateEmploymentCommand): Promise<boolean> => {
+  update: async (data: UpdateEmploymentCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/hr/Employment/${data.id}`, data,

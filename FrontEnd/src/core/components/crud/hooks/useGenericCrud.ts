@@ -1,3 +1,4 @@
+//src/core/components/crud/hooks/useGenericCrud.ts
 import { useState, useEffect, useMemo, useRef } from "react";
 import { BaseEntity, GenericCrudApi, TableFeatures } from "../types";
 import { SelectionListDto } from "@/core/models/SelectionListDto";

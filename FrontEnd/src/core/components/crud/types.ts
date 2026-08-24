@@ -1,3 +1,4 @@
+//src/core/components/crud/types.ts
 import React from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto"; // مسیر ایمپورت بر اساس ساختار شما
 
