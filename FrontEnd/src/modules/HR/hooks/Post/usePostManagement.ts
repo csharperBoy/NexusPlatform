@@ -94,14 +94,14 @@ export const usePostManagement = () => {
         gradeList,
         data
       ] = await Promise.all([
-        locationApi.GetSelectionList(),
-        employmentApi.GetSelectionList(),
+        locationApi.getSelectionList(),
+        employmentApi.getSelectionList(),
         postApi.GetJobTitleSelectionList(),
         postApi.GetOrganizationUnitSelectionList(),
         postApi.GetJobLevelSelectionList(),
         // اگر API برای Grades ندارید، خالی بگذارید
         Promise.resolve([] as SelectionListDto[]),
-        postApi.GetList() // ← فرض می‌کنیم این متد الان PostInfoDto[] برمی‌گرداند
+        postApi.gtList // ← فرض می‌کنیم این متد الان PostInfoDto[] برمی‌گرداند
       ]);
 
       // ✅ cast امن با as unknown
