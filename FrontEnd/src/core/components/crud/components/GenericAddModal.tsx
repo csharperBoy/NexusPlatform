@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { GenericColumnDef } from "./types";
+import { GenericColumnDef } from "../types";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
-import { SearchableMultiSelect } from "@/core/components/SearchableMultiSelect";
+import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
 
 interface GenericAddModalProps<T> {
   isOpen: boolean;

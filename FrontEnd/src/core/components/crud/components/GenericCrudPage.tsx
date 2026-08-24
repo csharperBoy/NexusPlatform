@@ -1,8 +1,8 @@
 import React from "react";
-import { BaseEntity, GenericColumnDef, UseGenericCrudOptions } from "./types";
-import { useGenericCrud } from "./useGenericCrud";
+import { BaseEntity, GenericColumnDef, UseGenericCrudOptions } from "../types";
+import { useGenericCrud } from "../hooks/useGenericCrud";
 import { GenericAddModal } from "./GenericAddModal";
-import { SearchableMultiSelect } from "@/core/components/SearchableMultiSelect";
+import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
 
 interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
