@@ -1,42 +1,53 @@
-//src/core/components/crud/types.ts
 import React from "react";
-import { SelectionListDto } from "@/core/models/SelectionListDto"; // مسیر ایمپورت بر اساس ساختار شما
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 
-// مدل پایه برای تمام موجودیت‌ها
 export interface BaseEntity {
-  id: string;
-  [key: string]: any;
+  id: string | number;
 }
 
-// ساختار استاندارد API برای تمام سرویس‌ها
-export interface GenericCrudApi<TData, TCreateCmd = any, TUpdateCmd = any> {
-  GetSelectionList: () => Promise<SelectionListDto[]>;
-  GetList: () => Promise<TData[]>;
-  create: (command: TCreateCmd) => Promise<any>;
-  update: (id: string, command: TUpdateCmd) => Promise<any>;
-  batchUpdate: (commands: TUpdateCmd[]) => Promise<any>;
-  delete: (id: string) => Promise<any>;
-}
+export type ColumnType = "text" | "number" | "select" | "multi-select" | "date" | "boolean";
 
-// تنظیمات هر ستون از جدول
 export interface GenericColumnDef<T> {
   key: keyof T | string;
-  title: string;
-  width?: string;
-  searchable?: boolean;
+  label: string;
+  type?: ColumnType;
+  selectionKey?: string;
   editable?: boolean;
-  type?: "text" | "number" | "select" | "multi-select";
-  optionsKey?: string; // کلید مربوط به لیست‌های انتخابی (در صورت type === 'select')
-  render?: (item: T) => React.ReactNode;
-  renderEditCell?: (item: T, onChange: (val: any) => void) => React.ReactNode;
+  required?: boolean;
+  dir?: "ltr" | "rtl";
+  className?: string;
+  render?: (value: any, item: T) => React.ReactNode;
 }
 
-// تنظیمات قابلیت‌های فعال در صفحه
-export interface TableFeatures<T> {
-  enableAdd?: boolean;
-  enableDelete?: boolean;
-  enableBatchSave?: boolean;
+
+// بخشی از types.ts
+export interface GenericCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
+  getList: () => Promise<T[]>;
+  getSelectionList?: () => Promise<SelectionListDto[]>;
+  create: (cmd: TCreateCmd) => Promise<any>;
+  batchUpdate: (cmds: TUpdateCmd[]) => Promise<any>;
+  delete: (id: T["id"]) => Promise<any>; // <--- تغییر از (string | number) به T["id"]
+}
+
+export interface TableFeatures {
   enableExcelImport?: boolean;
-  enableGlobalSearch?: boolean;
-  excelMapper?: (excelRow: Record<string, any>, item: T) => Partial<T> | null;
+  enableExcelExport?: boolean;
+  enableSearch?: boolean;
+  enableColumnFilter?: boolean;
+}
+
+export interface UseGenericCrudOptions<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
+  api: GenericCrudApi<T, TCreateCmd, TUpdateCmd>;
+  columns: GenericColumnDef<T>[];
+  selectionApis?: Record<string, () => Promise<SelectionListDto[]>>;
+  mapToUpdateCommand?: (entity: T) => TUpdateCmd;
+  mapToCreateCommand?: (formData: Record<string, any>) => TCreateCmd;
+  transformApiData?: (data: T[]) => T[];
+  excelMatchKey?: keyof T;
+  features?: TableFeatures;
+}
+
+export interface DeleteTarget<T> {
+  item: T;
+  isModified?: boolean;
 }

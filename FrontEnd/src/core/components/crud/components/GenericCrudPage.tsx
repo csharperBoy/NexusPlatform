@@ -1,8 +1,8 @@
-//src/core/components/crud/components/GenericCrudPage.tsx
 import React from "react";
-import { BaseEntity, GenericColumnDef, TableFeatures } from "../types";
-import { useGenericCrud, UseGenericCrudOptions } from "../hooks/useGenericCrud";
+import { BaseEntity, GenericColumnDef, UseGenericCrudOptions } from "./types";
+import { useGenericCrud } from "./useGenericCrud";
 import { GenericAddModal } from "./GenericAddModal";
+import { SearchableMultiSelect } from "@/core/components/SearchableMultiSelect";
 
 interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
@@ -10,273 +10,228 @@ interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   crudOptions: UseGenericCrudOptions<T, TCreateCmd, TUpdateCmd>;
 }
 
-export const GenericCrudPage = <T extends BaseEntity, TCreateCmd = any, TUpdateCmd = any>({
+export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   title,
   columns,
   crudOptions,
-}: GenericCrudPageProps<T, TCreateCmd, TUpdateCmd>) => {
-  const crud = useGenericCrud(crudOptions);
-  const features: TableFeatures<T> = crudOptions.features || {
-    enableAdd: true,
-    enableDelete: true,
-    enableBatchSave: true,
-    enableGlobalSearch: true,
-  };
+}: GenericCrudPageProps<T, TCreateCmd, TUpdateCmd>) {
+  const crud = useGenericCrud<T, TCreateCmd, TUpdateCmd>({
+    ...crudOptions,
+    columns,
+  });
 
-  if (crud.loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] text-gray-500 dir-rtl">
-        در حال بارگذاری اطلاعات...
-      </div>
-    );
-  }
+  const { features } = crudOptions;
+  const showSearch = features?.enableSearch !== false;
+  const showColumnFilter = features?.enableColumnFilter !== false;
 
   return (
-    <div className="p-6 space-y-4 dir-rtl bg-gray-50/50 min-h-screen">
-      {/* هدر صفحه و دکمه‌های عملیاتی */}
-      <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">{title}</h1>
-          <p className="text-xs text-gray-400 mt-1">مدیریت و ویرایش اطلاعات جدول</p>
-        </div>
+    <div className="space-y-4 p-6">
+      {/* Header & Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {features.enableExcelImport && features.excelMapper && (
-            <>
-              <input
-                type="file"
-                ref={crud.fileInputRef}
-                onChange={(crud as any).handleExcelImport}
-                accept=".xlsx, .xls"
-                className="hidden"
-              />
-              <button
-                onClick={() => crud.fileInputRef.current?.click()}
-                className="px-3.5 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100"
-              >
-                📥 ورود از اکسل
-              </button>
-            </>
+        <div className="flex flex-wrap items-center gap-2">
+          {crud.hasChanges && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+              {crud.modifiedCount} رکورد تغییر یافته
+            </span>
           )}
 
-          {features.enableAdd && (
-            <button
-              onClick={() => crud.setIsAddModalOpen(true)}
-              className="px-3.5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
-            >
-              ➕ رکورد جدید
-            </button>
-          )}
+          <button
+            onClick={crud.handleSaveAll}
+            disabled={!crud.hasChanges || crud.saving}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {crud.saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
+          </button>
 
-          {features.enableBatchSave && crud.modifiedIds.size > 0 && (
-            <>
-              <button
-                onClick={crud.handleResetChanges}
-                className="px-3.5 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-              >
-                لغو تغییرات
-              </button>
-              <button
-                onClick={crud.handleSaveChanges}
-                disabled={crud.saving}
-                className="px-3.5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm disabled:opacity-50"
-              >
-                {crud.saving ? "در حال ذخیره..." : `💾 ذخیره (${crud.modifiedIds.size})`}
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => crud.setIsAddModalOpen(true)}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            افزودن جدید
+          </button>
         </div>
       </div>
 
-      {/* پیام‌های سیستم */}
-      {crud.error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl flex justify-between items-center">
-          <span>{crud.error}</span>
-          <button onClick={() => crud.loadData()} className="underline text-xs font-semibold">
-            تلاش مجدد
-          </button>
-        </div>
-      )}
-      {crud.successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-xl">
-          {crud.successMessage}
-        </div>
-      )}
-
-      {/* نوار جستجوی سراسری */}
-      {features.enableGlobalSearch !== false && (
-        <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
+      {/* Global Search Input */}
+      {showSearch && (
+        <div className="max-w-md">
           <input
             type="text"
-            placeholder="🔍 جستجوی کلی در تمامی ستون‌ها..."
+            placeholder="جستجوی کلی..."
             value={crud.globalSearch}
             onChange={(e) => crud.setGlobalSearch(e.target.value)}
-            className="w-full max-w-md px-3.5 py-2 border rounded-lg text-sm bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           />
         </div>
       )}
 
-      {/* جدول داده‌ها */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-        <table className="w-full text-right border-collapse text-sm">
-          <thead>
-            <tr className="bg-gray-50/80 border-b border-gray-100 text-gray-600">
+      {/* Data Table */}
+      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm dark:border-gray-700">
+        <table className="w-full text-right text-sm text-gray-700 dark:text-gray-300">
+          <thead className="bg-gray-50 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+            <tr>
               {columns.map((col) => (
-                <th key={String(col.key)} style={{ width: col.width }} className="p-3.5 font-semibold">
-                  {col.title}
-                </th>
-              ))}
-              {features.enableDelete && <th className="p-3.5 font-semibold w-20">عملیات</th>}
-            </tr>
-
-            {/* سطر فیلتر ستونی */}
-            <tr className="bg-gray-50/30 border-b border-gray-100">
-              {columns.map((col) => {
-                const key = String(col.key);
-                return (
-                  <td key={key} className="p-2">
-                    {col.searchable !== false && (
+                <th key={String(col.key)} className="p-3">
+                  <div className="flex flex-col gap-2">
+                    <span>{col.label}</span>
+                    {showColumnFilter && (
                       <input
                         type="text"
-                        placeholder={`فیلتر ${col.title}...`}
-                        value={crud.columnSearch[key] || ""}
-                        onChange={(e) => crud.setColumnSearch(key, e.target.value)}
-                        className="w-full px-2.5 py-1 text-xs border rounded-md bg-white focus:ring-1 focus:ring-blue-500 outline-none"
+                        placeholder="فیلتر..."
+                        value={crud.columnFilters[String(col.key)] || ""}
+                        onChange={(e) =>
+                          crud.setColumnFilters((prev) => ({
+                            ...prev,
+                            [String(col.key)]: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border border-gray-300 p-1 text-xs font-normal dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                       />
                     )}
-                  </td>
-                );
-              })}
-              {features.enableDelete && <td />}
+                  </div>
+                </th>
+              ))}
+              <th className="p-3 text-center">عملیات</th>
             </tr>
           </thead>
-
-          <tbody className="divide-y divide-gray-100">
-            {crud.items.length === 0 ? (
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {crud.loading ? (
               <tr>
-                <td
-                  colSpan={columns.length + (features.enableDelete ? 1 : 0)}
-                  className="p-8 text-center text-gray-400"
-                >
-                  هیچ داده‌ای یافت نشد.
+                <td colSpan={columns.length + 1} className="p-4 text-center">
+                  در حال بارگذاری داده‌ها...
+                </td>
+              </tr>
+            ) : crud.items.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length + 1} className="p-4 text-center">
+                  رکوردی یافت نشد.
                 </td>
               </tr>
             ) : (
-              crud.items.map((item) => {
-                const isModified = crud.modifiedIds.has(item.id);
+              crud.items.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  {columns.map((col) => {
+                    const key = col.key as keyof T;
+                    const value = item[key];
+                    const options = col.selectionKey
+                      ? crud.selectionLists[col.selectionKey] || []
+                      : [];
 
-                return (
-                  <tr
-                    key={item.id}
-                    className={`transition-colors ${
-                      isModified ? "bg-amber-50/60 hover:bg-amber-50" : "hover:bg-gray-50/80"
-                    }`}
-                  >
-                    {columns.map((col) => {
-                      const key = String(col.key);
-                      const isEditable = col.editable !== false;
-                      const options = crud.selections[col.optionsKey || key] || [];
-
-                      return (
-                        <td key={key} className="p-3.5">
-                          {col.renderEditCell ? (
-                            col.renderEditCell(item, (val) => crud.handleFieldChange(item.id, key as keyof T, val))
-                          ) : isEditable ? (
-                            col.type === "select" ? (
-                              <select
-                                value={item[key] || ""}
-                                onChange={(e) => crud.handleFieldChange(item.id, key as keyof T, e.target.value)}
-                                className="w-full px-2.5 py-1.5 border rounded-lg text-sm bg-white focus:ring-1 focus:ring-blue-500 outline-none"
-                              >
-                                <option value="">انتخاب کنید...</option>
-                                {options.map((opt) => (
-                                  <option key={opt.value} value={opt.value}>
-                                    {opt.display || opt.label}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              <input
-                                type={col.type === "number" ? "number" : "text"}
-                                value={item[key] ?? ""}
-                                onChange={(e) =>
-                                  crud.handleFieldChange(
-                                    item.id,
-                                    key as keyof T,
-                                    col.type === "number" ? e.target.valueAsNumber || e.target.value : e.target.value
-                                  )
-                                }
-                                className="w-full px-2.5 py-1.5 border rounded-lg text-sm bg-white focus:ring-1 focus:ring-blue-500 outline-none"
-                              />
-                            )
-                          ) : col.render ? (
-                            col.render(item)
-                          ) : col.type === "select" ? (
-                            crud.selectionMaps[col.optionsKey || key]?.get(String(item[key])) || item[key]
+                    return (
+                      <td key={String(key)} className="p-2">
+                        {col.editable !== false ? (
+                          col.type === "select" ? (
+                            <select
+                              value={(value as string) || ""}
+                              onChange={(e) =>
+                                crud.handleFieldChange(item.id, key, e.target.value)
+                              }
+                              className="w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            >
+                              <option value="">انتخاب کنید...</option>
+                              {options.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.display || opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : col.type === "multi-select" ? (
+                            <SearchableMultiSelect
+                              options={options}
+                              value={(value as string[]) || []}
+                              onChange={(selected) =>
+                                crud.handleFieldChange(item.id, key, selected)
+                              }
+                            />
+                          ) : col.type === "boolean" ? (
+                            <input
+                              type="checkbox"
+                              checked={!!value}
+                              onChange={(e) =>
+                                crud.handleFieldChange(item.id, key, e.target.checked)
+                              }
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600"
+                            />
                           ) : (
-                            String(item[key] ?? "")
-                          )}
-                        </td>
-                      );
-                    })}
-
-                    {features.enableDelete && (
-                      <td className="p-3.5 text-center">
-                        <button
-                          onClick={() =>
-                            crud.setDeleteTarget({
-                              id: item.id,
-                              title: item.title || item.name || item.id,
-                            })
-                          }
-                          className="text-rose-500 hover:text-rose-700 p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-                          title="حذف"
-                        >
-                          🗑️
-                        </button>
+                            <input
+                              type={col.type === "number" ? "number" : "text"}
+                              value={(value as string) || ""}
+                              dir={col.dir || "rtl"}
+                              onChange={(e) =>
+                                crud.handleFieldChange(item.id, key, e.target.value)
+                              }
+                              className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+                                col.className || ""
+                              }`}
+                            />
+                          )
+                        ) : col.render ? (
+                          col.render(value, item)
+                        ) : (
+                          <span dir={col.dir || "rtl"} className={col.className}>
+                            {String(value ?? "")}
+                          </span>
+                        )}
                       </td>
-                    )}
-                  </tr>
-                );
-              })
+                    );
+                  })}
+                  <td className="p-2 text-center">
+                    <button
+                      onClick={() => crud.prepareDelete(item)}
+                      className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                    >
+                      حذف
+                    </button>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
 
-      {/* مودال ایجاد */}
-      {features.enableAdd && (
-        <GenericAddModal
-          isOpen={crud.isAddModalOpen}
-          onClose={() => crud.setIsAddModalOpen(false)}
-          onSubmit={crud.handleCreate}
-          columns={columns}
-          selections={crud.selections}
-          saving={crud.saving}
-        />
-      )}
+      {/* Add Modal */}
+      <GenericAddModal
+        isOpen={crud.isAddModalOpen}
+        onClose={() => crud.setIsAddModalOpen(false)}
+        onSubmit={crud.handleCreate}
+        columns={columns}
+        selectionLists={crud.selectionLists}
+        saving={crud.saving}
+      />
 
-      {/* مودال تأیید حذف */}
+      {/* Delete Confirmation Modal */}
       {crud.deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 dir-rtl">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4 border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800">تأیید حذف</h3>
-            <p className="text-sm text-gray-600">
-              آیا از حذف رکورد <strong>«{crud.deleteTarget.title}»</strong> اطمینان دارید؟
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+            <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
+              تایید حذف
+            </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              آیا از حذف این رکورد اطمینان دارید؟
             </p>
-            <div className="flex justify-end gap-3 pt-2">
+
+            {crud.deleteTarget.isModified && (
+              <div className="mb-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                ⚠️ این رکورد دارای تغییرات ذخیره‌نشده است. با حذف آن، تغییرات نیز از دست خواهند رفت.
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
               <button
                 onClick={() => crud.setDeleteTarget(null)}
-                className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300"
               >
                 انصراف
               </button>
               <button
-                onClick={crud.handleConfirmDelete}
-                disabled={crud.isDeleting}
-                className="px-4 py-2 text-sm text-white bg-rose-600 rounded-lg hover:bg-rose-700 disabled:opacity-50"
+                onClick={crud.confirmDelete}
+                disabled={crud.saving}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {crud.isDeleting ? "در حال حذف..." : "حذف رکورد"}
+                {crud.saving ? "در حال حذف..." : "حذف قطعی"}
               </button>
             </div>
           </div>
@@ -284,4 +239,4 @@ export const GenericCrudPage = <T extends BaseEntity, TCreateCmd = any, TUpdateC
       )}
     </div>
   );
-};
+}

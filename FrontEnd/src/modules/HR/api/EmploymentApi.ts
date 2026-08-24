@@ -7,7 +7,7 @@ const API_MODULE = "hr";
 
 export const employmentApi = {
 
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+  getSelectionList: async (): Promise<SelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<SelectionListDto[]>(
       "/api/hr/Employment/GetSelectionList",
@@ -17,7 +17,7 @@ export const employmentApi = {
     return response.data;
   },
  // دریافت پست ها (GET)
-  GetList: async (): Promise<EmploymentInfoView[]> => {
+  getList: async (): Promise<EmploymentInfoView[]> => {
     
     const api = getAPI(API_MODULE);
     

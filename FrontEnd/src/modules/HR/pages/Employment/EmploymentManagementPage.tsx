@@ -1,128 +1,111 @@
 import React from "react";
-import { BaseEntity, GenericCrudApi, GenericColumnDef } from "@/core/components/crud/types";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
-import { SelectionListDto } from "@/core/models/SelectionListDto";
+import { GenericColumnDef, UseGenericCrudOptions  } from "@/core/components/crud/types";
+import { employmentApi } from "../../api/EmploymentApi";
+import { locationApi } from "../../api/LocationApi";
+import { EmploymentInfoView } from "../../models/EmploymentInfoView";
+import {
+  CreateEmploymentCommand,
+  UpdateEmploymentCommand,
+} from "../../models/EmploymentCommand";
 
-// DTOها و Typeها
-export interface EmploymentDto extends BaseEntity {
-  id: string;
-  title: string;
-  code: string;
-  departmentId: string;
-  employmentTypeId: string;
-}
+// تایپ محلی برای پشتیبانی از locationsId در حالت فرانت‌اند
+type EmployeeItem = EmploymentInfoView & { locationsId?: string[] };
 
-export interface CreateEmploymentCmd {
-  title: string;
-  code: string;
-  departmentId: string;
-  employmentTypeId: string;
-}
+// ۱. تعریف ستون‌های جدول
+const employeeColumns: GenericColumnDef<EmployeeItem>[] = [
+  {
+    key: "employmentCode",
+    label: "کد پرسنلی",
+    type: "text",
+    required: true,
+    dir: "ltr",
+    className: "font-mono font-medium",
+  },
+  {
+    key: "nationalCode",
+    label: "کد ملی",
+    type: "text",
+    required: true,
+    dir: "ltr",
+    className: "font-mono",
+  },
+  {
+    key: "firstName",
+    label: "نام",
+    type: "text",
+    required: true,
+  },
+  {
+    key: "lastName",
+    label: "نام خانوادگی",
+    type: "text",
+    required: true,
+  },
+  {
+    key: "locationsId",
+    label: "محل‌های استقرار",
+    type: "multi-select",
+    selectionKey: "locations",
+  },
+];
 
-export interface UpdateEmploymentCmd {
-  id: string;
-  title: string;
-  code: string;
-  departmentId: string;
-  employmentTypeId: string;
-}
+// ۲. تنظیمات هوک CRUD با نگاشت کامل مدل‌ها
+const crudOptions: UseGenericCrudOptions<
+  EmployeeItem,
+  CreateEmploymentCommand,
+  UpdateEmploymentCommand
+> = {
+  api: employmentApi,
+columns: employeeColumns,
+  selectionApis: {
+    locations: locationApi.GetSelectionList,
+  },
 
-// سرویس API با نام‌گذاری‌های جدید
-const employmentApi: GenericCrudApi<EmploymentDto, CreateEmploymentCmd, UpdateEmploymentCmd> = {
-  GetSelectionList: async () => [/* ... */],
-  GetList: async () => [
-    {
-      id: "1",
-      title: "کارشناس ارشد نرم‌افزار",
-      code: "EMP-101",
-      departmentId: "d1",
-      employmentTypeId: "t1",
-    },
-  ],
-  create: async (cmd) => console.log("Create:", cmd),
-  update: async (id, cmd) => console.log("Update:", id, cmd),
-  batchUpdate: async (cmds) => console.log("Batch Update:", cmds),
-  delete: async (id) => console.log("Delete:", id),
+  // کلید تطبیق در فایل اکسل
+  excelMatchKey: "employmentCode",
+
+  // استخراج IDهای محل استقرار از لیست locations برمی‌گردد از بک‌اند
+  transformApiData: (data) =>
+    data.map((emp) => ({
+      ...emp,
+      locationsId: emp.locationsId || emp.locations?.map((loc) => loc.id) || [],
+    })),
+
+  // نگاشت متغیرها به UpdateEmploymentCommand (با رعایت دقیق نام‌گذاری فیلدها)
+  mapToUpdateCommand: (entity) => ({
+    id: entity.id,
+    EmploymentCode: entity.employmentCode,
+    nationalCode: entity.nationalCode,
+    FirstlName: entity.firstName,
+    LastName: entity.lastName,
+    locationsId: entity.locationsId || [],
+  }),
+
+  // نگاشت متغیرها به CreateEmploymentCommand
+  mapToCreateCommand: (formData) => ({
+    id: "",
+    EmploymentCode: formData.employmentCode,
+    NationalCode: formData.nationalCode,
+    FirstlName: formData.firstName,
+    LastName: formData.lastName,
+    locationsId: formData.locationsId || [],
+  }),
+
+  features: {
+    enableExcelImport: true,
+    enableExcelExport: true,
+    enableSearch: true,
+    enableColumnFilter: true,
+  },
 };
 
-// API سرویس‌های جانبی برای Dropdownها
-const departmentApi = {
-  GetSelectionList: async (): Promise<SelectionListDto[]> => [
-    { value: "d1", label: "فناوری اطلاعات", display: "فناوری اطلاعات" },
-    { value: "d2", label: "منابع انسانی", display: "منابع انسانی" },
-  ],
-};
-
-const employmentTypeApi = {
-  GetSelectionList: async (): Promise<SelectionListDto[]> => [
-    { value: "t1", label: "تمام وقت", display: "تمام وقت" },
-    { value: "t2", label: "پاره وقت", display: "پاره وقت" },
-  ],
-};
-
-export const EmploymentPage = () => {
-  // تعریف ستون‌های جدول
-  const columns: GenericColumnDef<EmploymentDto>[] = [
-    {
-      key: "code",
-      title: "کد پرسنلی",
-      width: "150px",
-      type: "text",
-      editable: true,
-    },
-    {
-      key: "title",
-      title: "عنوان شغل",
-      type: "text",
-      editable: true,
-    },
-    {
-      key: "departmentId",
-      title: "دپارتمان",
-      type: "select",
-      optionsKey: "departmentId",
-      editable: true,
-    },
-    {
-      key: "employmentTypeId",
-      title: "نوع همکاری",
-      type: "select",
-      optionsKey: "employmentTypeId",
-      editable: true,
-    },
-  ];
-
+export default function EmploymentManagementPage() {
   return (
-    <GenericCrudPage<EmploymentDto, CreateEmploymentCmd, UpdateEmploymentCmd>
-      title="مدیریت مشاغل و استخدام"
-      columns={columns}
-      crudOptions={{
-        api: employmentApi,
-        selectionApis: {
-          departmentId: departmentApi.GetSelectionList,
-          employmentTypeId: employmentTypeApi.GetSelectionList,
-        },
-        mapToUpdateCommand: (entity) => ({
-          id: entity.id,
-          title: entity.title,
-          code: entity.code,
-          departmentId: entity.departmentId,
-          employmentTypeId: entity.employmentTypeId,
-        }),
-        features: {
-          enableAdd: true,
-          enableDelete: true,
-          enableBatchSave: true,
-          enableGlobalSearch: true,
-          enableExcelImport: true,
-          excelMapper: (row) => ({
-            title: row["عنوان شغل"] || "",
-            code: String(row["کد پرسنلی"] || ""),
-            departmentId: "d1",
-            employmentTypeId: "t1",
-          }),
-        },
-      }}
+    <GenericCrudPage<EmployeeItem, CreateEmploymentCommand, UpdateEmploymentCommand>
+      title="مدیریت کارکنان"
+      columns={employeeColumns}
+      crudOptions={crudOptions}
     />
   );
-};
+}
