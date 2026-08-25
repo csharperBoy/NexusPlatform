@@ -1,263 +1,282 @@
-//src/core/components/crud/hooks/useGenericCrud.ts
-import { useState, useEffect, useMemo, useRef } from "react";
-import { BaseEntity, GenericCrudApi, TableFeatures } from "../types";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
+import {
+  BaseEntity,
+  GenericColumnDef,
+  UseGenericCrudOptions,
+  DeleteTarget,
+} from "../types";
 
-export interface UseGenericCrudOptions<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
-  api: GenericCrudApi<T, TCreateCmd, TUpdateCmd>;
-  // لیستی از توابع GetSelectionList برای فیلدهای Select در جدول
-  selectionApis?: Record<string, () => Promise<SelectionListDto[]>>;
-  mapToUpdateCommand?: (entity: T) => TUpdateCmd;
-  features?: TableFeatures<T>;
-}
-
-export const useGenericCrud = <T extends BaseEntity, TCreateCmd = any, TUpdateCmd = any>({
+export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   api,
-  selectionApis = {},
+  columns,
+  selectionApis,
   mapToUpdateCommand,
-  features,
-}: UseGenericCrudOptions<T, TCreateCmd, TUpdateCmd>) => {
+  mapToCreateCommand,
+  transformApiData,
+  excelMatchKey,
+}: UseGenericCrudOptions<T, TCreateCmd, TUpdateCmd>) {
   const [items, setItems] = useState<T[]>([]);
   const [initialItems, setInitialItems] = useState<T[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [selectionLists, setSelectionLists] = useState<Record<string, SelectionListDto[]>>({});
+  const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // لیست‌های کشویی و مپ‌های سریع آن‌ها برای رندر بهینه
-  const [selections, setSelections] = useState<Record<string, SelectionListDto[]>>({});
-  const selectionMaps = useMemo(() => {
-    const maps: Record<string, Map<string, string>> = {};
-    Object.entries(selections).forEach(([key, list]) => {
-      maps[key] = new Map(list.map((s) => [s.value, s.display || s.label]));
-    });
-    return maps;
-  }, [selections]);
-
-  // مدیریت تغییرات درجا
-  const [modifiedIds, setModifiedIds] = useState<Set<string>>(new Set());
-  
-  // جستجو
   const [globalSearch, setGlobalSearch] = useState<string>("");
-  const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
-  // استیت مودال‌ها
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget<T> | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  // 1. Fetch Initial Data & Selection Lists
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
+      const listPromise = api.getList();
+      const selectionPromises = selectionApis
+        ? Object.entries(selectionApis).map(async ([key, fetcher]) => {
+            const res = await fetcher();
+            return { key, data: res };
+          })
+        : [];
 
-      const selectionKeys = Object.keys(selectionApis);
-      const selectionPromises = selectionKeys.map((k) => selectionApis[k]());
-      
-      const [listData, ...selectionResults] = await Promise.all([
-        api.GetList(),
+      const [listData, ...selections] = await Promise.all([
+        listPromise,
         ...selectionPromises,
       ]);
 
-      const newSelections: Record<string, SelectionListDto[]> = {};
-      selectionKeys.forEach((key, idx) => {
-        newSelections[key] = selectionResults[idx] || [];
-      });
+      const processedList = transformApiData
+        ? transformApiData(listData || [])
+        : listData || [];
 
-      setItems(listData || []);
-      setInitialItems(JSON.parse(JSON.stringify(listData || [])));
-      setSelections(newSelections);
-      setModifiedIds(new Set());
-    } catch (err: any) {
-      setError(err?.message || "خطا در دریافت اطلاعات سیستم");
+      setItems(processedList);
+      setInitialItems(JSON.parse(JSON.stringify(processedList)));
+
+      const selObj: Record<string, SelectionListDto[]> = {};
+      selections.forEach((sel: any) => {
+        selObj[sel.key] = sel.data;
+      });
+      setSelectionLists(selObj);
+    } catch (error) {
+      console.error("Failed to fetch CRUD data:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [api, selectionApis, transformApiData]);
 
-  const handleFieldChange = (id: string, field: keyof T, value: any) => {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // 2. Handle Inline Cell Editing
+  const handleFieldChange = useCallback((id: string | number, field: keyof T, value: any) => {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
-    setModifiedIds((prev) => new Set(prev).add(id));
-  };
+  }, []);
 
-  const handleSaveChanges = async () => {
-    if (modifiedIds.size === 0 || !mapToUpdateCommand) return;
+  // 3. Track Modified Items
+  const modifiedItems = useMemo(() => {
+    return items.filter((item) => {
+      const init = initialItems.find((x) => x.id === item.id);
+      if (!init) return true;
+      return JSON.stringify(item) !== JSON.stringify(init);
+    });
+  }, [items, initialItems]);
+
+  const hasChanges = modifiedItems.length > 0;
+
+  // 4. Save All Modified Items (Bulk Update)
+  const handleSaveAll = useCallback(async () => {
+    if (!hasChanges) return;
+    setSaving(true);
     try {
-      setSaving(true);
-      setError(null);
-      const commands = Array.from(modifiedIds).map((id) => {
-        const item = items.find((x) => x.id === id)!;
-        return mapToUpdateCommand(item);
-      });
-
-      await api.batchUpdate(commands);
-      
-      setSuccessMessage(`تعداد ${commands.length} تغییر با موفقیت ذخیره شد.`);
-      setInitialItems(JSON.parse(JSON.stringify(items)));
-      setModifiedIds(new Set());
-      
-      setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (err: any) {
-      setError(err?.message || "خطا در ذخیره تغییرات");
+      const updateCmds: TUpdateCmd[] = modifiedItems.map((item) =>
+        mapToUpdateCommand ? mapToUpdateCommand(item) : (item as unknown as TUpdateCmd)
+      );
+      await api.batchUpdate(updateCmds);
+      await fetchData();
+    } catch (error) {
+      console.error("Failed to save changes:", error);
     } finally {
       setSaving(false);
     }
-  };
+  }, [hasChanges, modifiedItems, mapToUpdateCommand, api, fetchData]);
 
-  const handleResetChanges = () => {
-    if (window.confirm("آیا از لغو تمام تغییرات اطمینان دارید؟")) {
-      setItems(JSON.parse(JSON.stringify(initialItems)));
-      setModifiedIds(new Set());
-    }
-  };
+  // 5. Create Single Item
+  const handleCreate = useCallback(
+    async (formData: Record<string, any>) => {
+      setSaving(true);
+      try {
+        const createCmd = mapToCreateCommand
+          ? mapToCreateCommand(formData)
+          : (formData as TCreateCmd);
+        await api.create(createCmd);
+        setIsAddModalOpen(false);
+        await fetchData();
+      } catch (error) {
+        console.error("Failed to create record:", error);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [mapToCreateCommand, api, fetchData]
+  );
 
-  const handleConfirmDelete = async () => {
+  // 6. Delete Management
+  const prepareDelete = useCallback(
+    (item: T) => {
+      const initialItem = initialItems.find((x) => x.id === item.id);
+      const isModified = initialItem
+        ? JSON.stringify(item) !== JSON.stringify(initialItem)
+        : true;
+
+      setDeleteTarget({ item, isModified });
+    },
+    [initialItems]
+  );
+
+  const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
+    setSaving(true);
     try {
-      setIsDeleting(true);
-      await api.delete(deleteTarget.id);
-      setSuccessMessage(`رکورد مورد نظر با موفقیت حذف شد.`);
+      await api.delete(deleteTarget.item.id);
       setDeleteTarget(null);
-      await loadData();
-    } catch (err: any) {
-      setError(err?.message || "خطا در حذف اطلاعات");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleCreate = async (command: TCreateCmd) => {
-    try {
-      setSaving(true);
-      await api.create(command);
-      setSuccessMessage("رکورد جدید با موفقیت ایجاد شد.");
-      setIsAddModalOpen(false);
-      await loadData();
-      setTimeout(() => setSuccessMessage(null), 4000);
-    } catch (err: any) {
-      setError(err?.message || "خطا در ثبت رکورد جدید");
+      await fetchData();
+    } catch (error) {
+      console.error("Failed to delete record:", error);
     } finally {
       setSaving(false);
     }
-  };
+  }, [deleteTarget, api, fetchData]);
 
-  // فیلتر کردن هوشمند دیتاها
+  // 7. Excel Import & Merge Logic
+  const handleExcelImport = useCallback(
+    (importedData: Partial<T>[]) => {
+      setItems((prev) => {
+        const next = [...prev];
+        importedData.forEach((row) => {
+          let existingIndex = -1;
+          if (excelMatchKey && row[excelMatchKey]) {
+            existingIndex = next.findIndex(
+              (item) => item[excelMatchKey] === row[excelMatchKey]
+            );
+          }
+
+          if (existingIndex > -1) {
+            next[existingIndex] = { ...next[existingIndex], ...row };
+          } else {
+            next.push({
+              id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              ...row,
+            } as unknown as T);
+          }
+        });
+        return next;
+      });
+    },
+    [excelMatchKey]
+  );
+
+  // 8. Search & Filtering using SelectionListDto (value, label, display)
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      // جستجوی سراسری
-      const gQuery = globalSearch.trim().toLowerCase();
-      if (gQuery) {
-        const hasMatch = Object.entries(item).some(([k, val]) => {
-          // اگر فیلد از نوع لیست انتخابی باشد، عنوان آن را جستجو کن
-          let searchVal = String(val ?? "");
-          if (selectionMaps[k] && selectionMaps[k].has(searchVal)) {
-            searchVal = selectionMaps[k].get(searchVal)!;
+      // Global Search
+      if (globalSearch.trim()) {
+        const query = globalSearch.toLowerCase();
+        const matchesGlobal = columns.some((col) => {
+          const val = item[col.key as keyof T];
+          if (val == null) return false;
+
+          // Multi-Select / Array Search
+          if (Array.isArray(val) && col.selectionKey && selectionLists[col.selectionKey]) {
+            const options = selectionLists[col.selectionKey];
+            return val.some((v) => {
+              const opt = options.find((o) => String(o.value) === String(v));
+              if (!opt) return false;
+              return (
+                opt.label?.toLowerCase().includes(query) ||
+                opt.display?.toLowerCase().includes(query)
+              );
+            });
           }
-          return searchVal.toLowerCase().includes(gQuery);
+
+          // Single Select Search
+          if (col.selectionKey && selectionLists[col.selectionKey]) {
+            const opt = selectionLists[col.selectionKey].find(
+              (o) => String(o.value) === String(val)
+            );
+            if (
+              opt?.label?.toLowerCase().includes(query) ||
+              opt?.display?.toLowerCase().includes(query)
+            ) {
+              return true;
+            }
+          }
+
+          return String(val).toLowerCase().includes(query);
         });
-        if (!hasMatch) return false;
+        if (!matchesGlobal) return false;
       }
 
-      // جستجوی ستونی
-      for (const [colKey, term] of Object.entries(columnSearch)) {
-        if (!term.trim()) continue;
-        let val = String(item[colKey as keyof T] ?? "");
-        
-        if (selectionMaps[colKey] && selectionMaps[colKey].has(val)) {
-          val = selectionMaps[colKey].get(val)!;
+      // Column Filters
+      for (const colKey in columnFilters) {
+        const filterVal = columnFilters[colKey]?.toLowerCase();
+        if (!filterVal) continue;
+
+        const colDef = columns.find((c) => String(c.key) === colKey);
+        const val = item[colKey as keyof T];
+        if (val == null) return false;
+
+        if (Array.isArray(val) && colDef?.selectionKey && selectionLists[colDef.selectionKey]) {
+          const options = selectionLists[colDef.selectionKey];
+          const matchInArray = val.some((v) => {
+            const opt = options.find((o) => String(o.value) === String(v));
+            return (
+              opt?.label?.toLowerCase().includes(filterVal) ||
+              opt?.display?.toLowerCase().includes(filterVal)
+            );
+          });
+          if (!matchInArray) return false;
+        } else if (colDef?.selectionKey && selectionLists[colDef.selectionKey]) {
+          const opt = selectionLists[colDef.selectionKey].find(
+            (o) => String(o.value) === String(val)
+          );
+          const matched =
+            opt?.label?.toLowerCase().includes(filterVal) ||
+            opt?.display?.toLowerCase().includes(filterVal);
+          if (!matched) return false;
+        } else if (!String(val).toLowerCase().includes(filterVal)) {
+          return false;
         }
-
-        if (!val.toLowerCase().includes(term.toLowerCase())) return false;
       }
-      
+
       return true;
     });
-  }, [items, globalSearch, columnSearch, selectionMaps]);
-// افزودن به انتهای هوک useGenericCrud قبل از return:
-
-const handleExcelImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file || !features?.excelMapper) return;
-
-  try {
-    const XLSX = await import("xlsx");
-    const reader = new FileReader();
-
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: "binary" });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        const rawData = XLSX.utils.sheet_to_json<Record<string, any>>(ws);
-
-        const newItems: T[] = [];
-        rawData.forEach((row, idx) => {
-          const mapped = features.excelMapper!(row, {} as T);
-          if (mapped) {
-            const newItem = {
-              id: `imported-${Date.now()}-${idx}`,
-              ...mapped,
-            } as T;
-            newItems.push(newItem);
-          }
-        });
-
-        if (newItems.length > 0) {
-          setItems((prev) => [...prev, ...newItems]);
-          setModifiedIds((prev) => {
-            const next = new Set(prev);
-            newItems.forEach((item) => next.add(item.id));
-            return next;
-          });
-          setSuccessMessage(`تعداد ${newItems.length} رکورد از فایل اکسل بارگذاری شد.`);
-        }
-      } catch (err: any) {
-        setError("خطا در پردازش فایل اکسل: " + err?.message);
-      }
-    };
-
-    reader.readAsBinaryString(file);
-  } catch (err: any) {
-    setError("خطا در بارگذاری کتابخانه اکسل");
-  } finally {
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-};
+  }, [items, globalSearch, columnFilters, columns, selectionLists]);
 
   return {
     items: filteredItems,
-    selections,
-    selectionMaps,
+    rawItems: items,
+    selectionLists,
     loading,
     saving,
-    error,
-    successMessage,
-    modifiedIds,
+    hasChanges,
+    modifiedCount: modifiedItems.length,
     globalSearch,
-    columnSearch,
-    deleteTarget,
-    isDeleting,
-    isAddModalOpen,
-    fileInputRef,
-    handleExcelImport,
     setGlobalSearch,
-    setColumnSearch: (col: string, val: string) => setColumnSearch((prev) => ({ ...prev, [col]: val })),
-    setDeleteTarget,
+    columnFilters,
+    setColumnFilters,
+    isAddModalOpen,
     setIsAddModalOpen,
+    deleteTarget,
+    setDeleteTarget,
     handleFieldChange,
-    handleSaveChanges,
-    handleResetChanges,
-    handleConfirmDelete,
+    handleSaveAll,
     handleCreate,
-    loadData,
+    prepareDelete,
+    confirmDelete,
+    handleExcelImport,
+    refresh: fetchData,
   };
-};
+}
