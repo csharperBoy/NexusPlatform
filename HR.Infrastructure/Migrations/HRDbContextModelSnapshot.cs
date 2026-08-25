@@ -250,11 +250,11 @@ namespace HR.Infrastructure.Migrations
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentInfoView", b =>
                 {
-                    b.Property<int>("AssignmentsAssigneeType")
+                    b.Property<int?>("AssignmentsAssigneeType")
                         .HasColumnType("int")
                         .HasColumnName("Assignments_AssigneeType");
 
-                    b.Property<DateTime>("AssignmentsEffectiveFrom")
+                    b.Property<DateTime?>("AssignmentsEffectiveFrom")
                         .HasColumnType("datetime2")
                         .HasColumnName("Assignments_EffectiveFrom");
 
@@ -291,10 +291,10 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("FkContactProfileId")
+                    b.Property<Guid?>("FkContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FkPartyContactProfileId")
+                    b.Property<Guid?>("FkPartyContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("GradeTitle")
@@ -332,7 +332,6 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnName("Party_Id");
 
                     b.Property<string>("PostCode")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Post_Code");
 

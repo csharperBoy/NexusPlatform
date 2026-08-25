@@ -9,8 +9,8 @@ public partial class EmploymentInfoView
 {
     public Guid Id { get; set; }
 
-    public Guid FkContactProfileId { get;  set; }
-    public Guid FkPartyContactProfileId { get;  set; }
+    public Guid? FkContactProfileId { get;  set; }
+    public Guid? FkPartyContactProfileId { get;  set; }
     public string NationalCode { get; set; } = null!;
 
     public string FirstName { get; set; } = null!;
@@ -37,13 +37,13 @@ public partial class EmploymentInfoView
 
     public string? EmploymentTypeName { get; set; }
 
-    public int AssignmentsAssigneeType { get; set; }
+    public int? AssignmentsAssigneeType { get; set; }
 
-    public DateTime AssignmentsEffectiveFrom { get; set; }
+    public DateTime? AssignmentsEffectiveFrom { get; set; }
 
     public DateTime? AssignmentsEffectiveTo { get; set; }
 
-    public string PostCode { get; set; } = null!;
+    public string? PostCode { get; set; } = null!;
 
     public string? GradeTitle { get; set; }
 

@@ -12,8 +12,8 @@ namespace HR.Application.DTOs
     public class EmploymentInfoDto
     {
         public Guid Id { get; set; }
-        public Guid ProfileId { get; set; }
-        public Guid PartyProfileId { get; set; }
+        public Guid? ProfileId { get; set; }
+        public Guid? PartyProfileId { get; set; }
 
         public string NationalCode { get; set; } = null!;
 
@@ -33,13 +33,13 @@ namespace HR.Application.DTOs
 
         public string? EmploymentTypeName { get; set; }
 
-        public int AssignmentsAssigneeType { get; set; }
+        public int? AssignmentsAssigneeType { get; set; }
 
-        public DateTime AssignmentsEffectiveFrom { get; set; }
+        public DateTime? AssignmentsEffectiveFrom { get; set; }
 
         public DateTime? AssignmentsEffectiveTo { get; set; }
 
-        public string PostCode { get; set; } = null!;
+        public string? PostCode { get; set; } = null!;
 
         public string? GradeTitle { get; set; }
 

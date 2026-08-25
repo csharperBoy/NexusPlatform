@@ -48,7 +48,7 @@ namespace Contact.Application.Queries
                 _logger.LogDebug("Getting EmploymentContact List:");
 
                 var employments = await _employmentInternalService.GetEmploymentListAsync();
-                var emptProfIds = employments.Select(p => p.ProfileId).ToList();
+                var emptProfIds = employments.Where(p=>p.ProfileId!=null).Select(p => (Guid)p.ProfileId).ToList();
                 var partyProfIds = employments.Select(p => p.PartyId).ToList();
 
                 var empContactList = await _ContactService.GetContactsByProfilesIdsAsync(emptProfIds);
