@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Enums
 {
-    public enum PhoneBookContactTypeEnum
-    {
-        Mobile,
-        Phone,
-        Email,
-        Fax,
-        Address
-    }
+    //public enum PhoneBookContactTypeEnum
+    //{
+    //    Mobile,
+    //    Phone,
+    //    Email,
+    //    Fax,
+    //    Address
+    //}
 }

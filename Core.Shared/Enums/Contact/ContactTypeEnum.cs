@@ -11,7 +11,7 @@ namespace Core.Shared.Enums.Contact
         Mobile = 1,         // موبایل
         Phone = 2,       // تلفن ثابت
         OfficePhone = 3,      // شماره داخلی
-        OrganizationMobile = 4,
+        OrganizationMobile = 4, // موبایل سازمانی
         Email = 5,          // ایمیل
         Fax = 6,            // فکس
         Website = 7,        // وب‌سایت

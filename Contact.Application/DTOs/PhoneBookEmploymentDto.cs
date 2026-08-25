@@ -1,4 +1,5 @@
 ﻿using Contact.Domain.Enums;
+using Core.Shared.Enums.Contact;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,8 +13,9 @@ namespace Contact.Application.DTOs
     {
         public string Title { get; set; } = null!;
         public string Value { get; set; } = null!;
-        public PhoneBookContactTypeEnum Type { get; set; }
-        public PhoneBookContactSourceEnum Source { get; set; }
+        public ContactTypeEnum Type { get; set; }
+        public ContactProfileTypeEnum Source { get; set; }
+        
     }
 
     public class PhoneBookEmploymentDto
@@ -25,6 +27,7 @@ namespace Contact.Application.DTOs
 
         // اطلاعات سازمانی و شغلی
         public string? OrganizationUnitsName { get; set; }
+        public string? HeadOfOrganizationUnitsName { get; set; }
         public string? JobTitleName { get; set; }
         public string? JobLevelTitle { get; set; }
         public string? LocationTitle { get; set; }
@@ -33,7 +36,11 @@ namespace Contact.Application.DTOs
         public List<ContactDetailDto> Contacts { get; set; } = new();
 
         // ۱. رشته ترکیب‌شده شماره‌ها برای سطر اصلی (با -)
-        public string ContactSummary => string.Join(" - ", Contacts.Where(t=>t.Type == PhoneBookContactTypeEnum.Phone || t.Type == PhoneBookContactTypeEnum.Mobile).Select(c => c.Value));
+        public string ContactSummary => string.Join(" - ", Contacts.Where(t=>t.Type == ContactTypeEnum.Phone 
+        || t.Type == ContactTypeEnum.Mobile
+        || t.Type == ContactTypeEnum.OrganizationMobile
+        || t.Type == ContactTypeEnum.OfficePhone
+        ).Select(c => c.Value));
 
         // ۲. فلاگ کنترل‌کننده آکاردئون در فرانت‌اند
         public bool HasMultipleContacts => Contacts.Count > 1;
