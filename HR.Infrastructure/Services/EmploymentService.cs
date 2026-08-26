@@ -153,9 +153,6 @@ namespace HR.Infrastructure.Services
 
 
         public async Task<Guid> UpdateEmploymentAsync(Guid id,
-
-
-
             List<string>? phone, List<string>? address, List<string>? email, List<string>? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
         {
             Employment? emp = await _employmentRepository.GetByIdAsync(id);

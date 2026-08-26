@@ -3,6 +3,7 @@ using Contact.Domain.Entities;
 using Contact.Domain.Enums;
 using Core.Shared.DTOs.Contact;
 using Core.Shared.DTOs.HR;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
 using System.Net.Mime;
 
@@ -38,7 +39,9 @@ namespace Contact.Application.Mapping
                     .Select(g => g.First())
                     .Select(c => new ContactDetailDto
                     {
-                        Title = c.Label ?? c.ContactType.ToString(), // عنوان پیش‌فرض
+                        //Title = c.Label ?? c.ContactType.ToString(), // عنوان پیش‌فرض
+                        Title = string.IsNullOrWhiteSpace(c.Label) ? c.ContactType.GetPersianDescription() : c.Label,
+
                         Value = c.Value,
                         Type = c.ContactType,
                         Source = c.Source

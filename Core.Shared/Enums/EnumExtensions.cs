@@ -1,4 +1,5 @@
-﻿using Core.Shared.Enums.Authorization;
+﻿using Core.Shared.Attributes;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.Navigation;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,13 @@ namespace Core.Shared.Enums
             var field = typeof(Icon).GetField(icon.ToString());
             var attr = field?.GetCustomAttribute<DescriptionAttribute>();
             return attr?.Description ?? icon.ToString();
+        }
+
+        public static string GetPersianDescription<TEnum>(this TEnum enumValue) where TEnum : Enum
+        {
+            var field = enumValue.GetType().GetField(enumValue.ToString());
+            var attribute = field?.GetCustomAttribute<PersianDescriptionAttribute>();
+            return attribute?.Description ?? enumValue.ToString();
         }
     }
 }

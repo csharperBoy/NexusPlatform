@@ -10,6 +10,7 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Shared.DTOs.Contact;
 using Core.Shared.DTOs.HR;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
@@ -127,7 +128,9 @@ namespace Contact.Infrastructure.Services
                     .Where(c => c.ProfileId == post.ProfileId)
                     .Select(c => new ContactDetailDto
                     {
-                        Title = c.Label ?? c.ContactType.ToString(),
+                        //Title = c.Label ?? c.ContactType.ToString(),
+                        Title = string.IsNullOrWhiteSpace(c.Label) ? c.ContactType.GetPersianDescription() : c.Label,
+
                         Value = c.Value,
                         Type = c.ContactType,
                         Source = ContactProfileTypeEnum.Post
@@ -169,7 +172,9 @@ namespace Contact.Infrastructure.Services
                     .Where(c => c.ProfileId == location.ProfileId)
                     .Select(c => new ContactDetailDto
                     {
-                        Title = c.Label ?? c.ContactType.ToString(),
+                        //Title = c.Label ?? c.ContactType.ToString(),
+                        Title = string.IsNullOrWhiteSpace(c.Label) ? c.ContactType.GetPersianDescription() : c.Label,
+
                         Value = c.Value,
                         Type = c.ContactType,
                         Source = ContactProfileTypeEnum.Location
