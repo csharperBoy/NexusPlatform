@@ -154,7 +154,7 @@ namespace Contact.Infrastructure.Services
 
 
             // ۲. واکشی مکان‌ها
-            var locations =  await _locationservice.GetByContactProfileIds(postProfileIds);
+            var locations =  await _locationservice.GetByContactProfileIds(locationProfileIds);
        
             var locContactList = await _contactService.GetContactsByProfilesIdsAsync(locationProfileIds);
 

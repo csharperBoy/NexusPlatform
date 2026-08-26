@@ -168,9 +168,9 @@ namespace HR.Infrastructure.Services
                 await _employmentRepository.UpdateAsync(emp);
             }
 
-            List<PhoneNumber>? Phones = null;
-            List<Email>? Emails = null;
-            List<PhoneNumber>? Mobiles = null;
+            List<PhoneNumber>? Phones = new List<PhoneNumber>();
+            List<Email>? Emails = new List<Email>();
+            List<PhoneNumber>? Mobiles = new List<PhoneNumber>();
             try { Phones.AddRange(phone != null ? phone.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
             try { Emails.AddRange(email != null ? email.Select(a => Email.Create(a)).ToList() : null); } catch { }
             try { Mobiles.AddRange(mobile != null ? mobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
