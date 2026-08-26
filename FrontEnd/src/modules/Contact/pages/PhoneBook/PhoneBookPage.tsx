@@ -412,7 +412,7 @@ export const PhoneBookPage: React.FC = () => {
                     {!isGroupCollapsed && employments.map((emp) => {
                       const empCode = emp.employmentCode;
                       const isExpanded = expandedRows.has(empCode);
-                      const hasMultiple = emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
+                       const hasMultiple =true;// emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
 
                       return (
                         <React.Fragment key={empCode}>

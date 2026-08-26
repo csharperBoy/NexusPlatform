@@ -14,7 +14,7 @@ export interface PhoneBookEmploymentDto {
   locationTitle: string[];
   
   contactSummary?: string | null;
-  hasMultipleContacts?: boolean | false;
+  // hasMultipleContacts?: boolean | false;
 
   contacts?: ContactDetailDto[] | null;
 }
