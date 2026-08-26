@@ -59,7 +59,7 @@ namespace Contact.Infrastructure.Services
         {
             IEnumerable<EmploymentFullDto> empList = await _employmentservice.GetFullInfoAsync();
          
-            var profilesId = empList
+            var existingProfileIds = empList
                 .Where(e => e.ProfileId.HasValue)
                 .Select(e => e.ProfileId.Value)
                 .Concat(empList.Where(e => e.PartyProfileId.HasValue).Select(e => e.PartyProfileId.Value))
@@ -69,10 +69,136 @@ namespace Contact.Infrastructure.Services
                 .Distinct()
                 .ToList();
 
-            List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(profilesId);
-            IReadOnlyList<PhoneBookEmploymentDto> result = empList.ToPhoneBookDtos(contactList);
+            List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(existingProfileIds);
+            var employmentDtos = empList.ToPhoneBookDtos(contactList).ToList();
+
+            // ۵. دریافت پست‌های خالی و مکان‌های خالی (با ارسال existingProfileIds برای جلوگیری از تداخل)
+            var standaloneDtos = await GetStandaloneLocationsAndPostsAsync(existingProfileIds);
+           
+            // ۶. ترکیب نهایی
+            var result = employmentDtos
+                .Concat(standaloneDtos)
+                .ToList();
+
             return result;            
         }
+        private async Task<List<PhoneBookEmploymentDto>> GetStandaloneLocationsAndPostsAsync(List<Guid> existingProfileIds)
+        {
+            // ۱. پیدا کردن ProfileIdهای پست‌هایی که در لیست کارمندان نیستند ولی کانتکت دارند
+            var allAssignments = await _contactProfileAssignmentRepository
+                .GetAllAsync(queryOptions:q=>q
+                .Where(a => a.IsCurrent)
+                .Include(a => a.ContactProfile));
+
+            var postProfileIds = allAssignments
+                .Where(a => a.ContactProfile.ProfileType == ContactProfileTypeEnum.Post)
+                .Select(a => a.ContactProfileId)
+                .Except(existingProfileIds)
+                .Distinct()
+                .ToList();
+
+
+            var locationProfileIds = allAssignments
+                .Where(a => a.ContactProfile.ProfileType == ContactProfileTypeEnum.Location)
+                .Select(a => a.ContactProfileId)
+                .Except(existingProfileIds)
+                .Distinct()
+                .ToList();
+
+            if (!locationProfileIds.Any() && !postProfileIds.Any())
+                return new List<PhoneBookEmploymentDto>();
+
+            // ۲. واکشی پست‌ها
+            var posts = await _postservice.GetByContactProfileIds(postProfileIds);
+            //var posts = await _postRepository
+            //    .GetQueryable()
+            //    .Where(p => postProfileIds.Contains(p.FkContactProfileId.Value))
+            //    .Include(p => p.OrganizationUnit)
+            //    .Include(p => p.JobTitle)
+            //    .Include(p => p.JobLevel)
+            //    .Include(p => p.PostLocations.Where(pl => pl.IsCurrent)).ThenInclude(pl => pl.Location)
+            //    .ToListAsync();
+
+            // ۳. دریافت کانتکت‌های این پست‌ها
+            var postContactList = await _contactService.GetContactsByProfilesIdsAsync(postProfileIds);
+
+            // ۴. تبدیل به DTO
+            var stanAlonePost = posts.Select(post =>
+            {
+                // کانتکت‌های مربوط به این پست
+                var postContacts = postContactList
+                    .Where(c => c.ProfileId == post.ProfileId)
+                    .Select(c => new ContactDetailDto
+                    {
+                        Title = c.Label ?? c.ContactType.ToString(),
+                        Value = c.Value,
+                        Type = c.ContactType,
+                        Source = ContactProfileTypeEnum.Post
+                    })
+                    .ToList();
+
+                // مکان پست (در صورت وجود)
+                var currentPostLoc = post.locations;
+                var locationTitle = string.Join("-", currentPostLoc?.Select(s => s.Title));
+
+                return new PhoneBookEmploymentDto
+                {
+                    EmploymentCode = null!,
+                    FirstName = null!,
+                    LastName = null!,
+                    OrganizationUnitsName = post.OrganizationUnitsName ?? "پست بدون سازمان",
+                    HeadOfOrganizationUnitsName = post.HeadOfOrganizationUnitsName,
+                    JobTitleName = post.JobTitleName ?? "بدون عنوان شغلی",
+                    JobLevelTitle = post.JobLevelTitle,
+                    LocationTitle = locationTitle,
+                    Contacts = postContacts
+                };
+            }).ToList();
+
+
+            // ۲. واکشی مکان‌ها
+            var locations =  await _locationservice.GetByContactProfileIds(postProfileIds);
+            //var locations = await _locationRepository
+            //    .GetQueryable()
+            //    .Where(l => locationProfileIds.Contains(l.FkContactProfileId.Value))
+            //    .ToListAsync();
+            var locContactList = await _contactService.GetContactsByProfilesIdsAsync(locationProfileIds);
+
+
+
+
+            // ۴. تبدیل به DTO
+            var stanAloneLocation = locations.Select(location =>
+            {
+                // کانتکت‌های مربوط به این مکان
+                var locContacts = locContactList
+                    .Where(c => c.ProfileId == location.ProfileId)
+                    .Select(c => new ContactDetailDto
+                    {
+                        Title = c.Label ?? c.ContactType.ToString(),
+                        Value = c.Value,
+                        Type = c.ContactType,
+                        Source = ContactProfileTypeEnum.Location
+                    })
+                    .ToList();
+
+                return new PhoneBookEmploymentDto
+                {
+                    EmploymentCode = null!,
+                    FirstName = null!,
+                    LastName = null!,
+                    OrganizationUnitsName = "محل استقرار",
+                    HeadOfOrganizationUnitsName = "محل استقرار",
+                    JobTitleName = "محل استقرار",
+                    JobLevelTitle = null,
+                    LocationTitle = location.Title,
+                    Contacts = locContacts
+                };
+            }).ToList();
+            var result = stanAlonePost.Concat(stanAloneLocation);
+            return result.ToList();
+        }
+        
         /*public async Task<IReadOnlyList<PhoneBookEmploymentDto>> GetPhoneBookListAsync(Guid? organUnitId)
         {
             // ۱. دریافت اطلاعات کامل کارمندان

@@ -23,6 +23,10 @@ namespace Core.Application.Abstractions.HR
     
     public class NullOrgChartService : IPostPublicService
     {
+        public Task<IEnumerable<PostInfoDto>> GetByContactProfileIds(List<Guid> postProfileIds)
+        {
+            throw new NotImplementedException();
+        }
 
         public Task<List<Guid?>?> GetEmploymentOrganizeId(Guid? employmentId)
         {
@@ -59,6 +63,10 @@ namespace Core.Application.Abstractions.HR
     }
     public class NullLocationService : ILocationPublicService
     {
+        public Task<List<LocationInfoDto>> GetByContactProfileIds(List<Guid> postProfileIds)
+        {
+            throw new NotImplementedException();
+        }
 
         public async Task SaveAsync()
         {

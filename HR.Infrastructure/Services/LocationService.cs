@@ -164,5 +164,16 @@ namespace HR.Infrastructure.Services
             }
         }
 
+        public async Task<List<LocationInfoDto>> GetByContactProfileIds(List<Guid> postProfileIds)
+        {
+            var list = await _LocationRepository.GetAllAsync(queryOptions: q=>q.Where(a=> postProfileIds.Contains( a.FkContactProfileId)));
+            var result = list.Select(r => new LocationInfoDto
+            {
+                Id = r.Id,
+                ProfileId = r.FkContactProfileId,
+                Title = r.Title
+            }).ToList();
+            return result;
+        }
     }
 }

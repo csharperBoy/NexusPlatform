@@ -34,6 +34,7 @@ namespace HR.Infrastructure.Services
         private readonly ISpecificationRepository<PostInfoView, Guid> _postInfoViewSpecRepository;
         private readonly ISpecificationRepository<Post, Guid> _postSpecRepository;
         private readonly IRepository<HRDbContext, Post, Guid> _postRepository;
+        private readonly IRepository<HRDbContext, PostInfoView, Guid> _postInfoViewRepository;
         //private readonly IRepository<HRDbContext, PostContact, Guid> _postContactRepository;
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly ISpecificationRepository<Assignment, Guid> _assignmentSpecRepository;
@@ -53,6 +54,7 @@ namespace HR.Infrastructure.Services
              IRepository<HRDbContext, PostLocation, Guid> postLocationsRepository,
              ISpecificationRepository<PostLocation, Guid> postLocationSpecRepository,
             ISpecificationRepository<PostInfoView, Guid> postInfoViewSpecRepository,
+             IRepository<HRDbContext, PostInfoView, Guid> postInfoViewRepository,
             ISpecificationRepository<Post, Guid> postSpecRepository,
         //ISpecificationRepository<PostContact, Guid> postContactSpecRepository,
         IRepository<HRDbContext, Post, Guid> postRepository,
@@ -67,6 +69,8 @@ namespace HR.Infrastructure.Services
             _postInfoViewSpecRepository = postInfoViewSpecRepository;
             _hrUow = hrUow;
             _postRepository = postRepository;
+            _contactService = contactService;
+            _postInfoViewRepository = postInfoViewRepository;
             //_postContactRepository = postContactRepository;
             _postSpecRepository = postSpecRepository;
             //_postContactSpecRepository = postContactSpecRepository;
@@ -335,7 +339,7 @@ namespace HR.Infrastructure.Services
                 FkParentId = s.FkParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
-                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title }).ToList(),
+                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
 
 
             }).ToList();
@@ -403,6 +407,46 @@ namespace HR.Infrastructure.Services
             {
                 item.DoExpire();
             }
+        }
+
+        public async Task<IEnumerable<PostInfoDto>> GetByContactProfileIds(List<Guid> postProfileIds)
+        {
+            var postList = await _postInfoViewRepository.GetAllAsync(queryOptions: q => q.Where(a => postProfileIds.Contains(a.FkContactProfileId)));
+            var postIds = postList.Select(p => p.Id).ToList();
+
+            var locList = await _postLocationsRepository.GetAllAsync(q =>
+                q.Where(a => postIds.Contains(a.FkPostId) && a.IsCurrent)
+                 .Include(a => a.Location)
+            );
+
+
+            var result = postList.Select(s => new PostInfoDto
+            {
+                EmploymentCode = s.EmploymentCode,
+                ProfileId = s.FkContactProfileId,
+                EmploymentId = s.EmploymentId,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                FkCostCenterId = s.FkCostCenterId,
+                CostCenterName = s.CostCenterName,
+                Id = s.Id,
+                FkGradeId = s.FkGradeId,
+                GradeTitle = s.GradeTitle,
+                FkJobLevelId = s.FkJobLevelId,
+                JobLevelTitle = s.JobLevelTitle,
+                FkJobTitleId = s.FkJobTitleId,
+                JobTitleName = s.JobTitleName,
+                AssigneeType = s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
+                FkOrganizationUnitId = s.FkOrganizationUnitId,
+                OrganizationUnitsName = s.OrganizationUnitsName,
+                FkParentId = s.FkParentId,
+                Gender = s.Gender,
+                PostCode = s.PostCode,
+                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title ,ProfileId = s.Location.FkContactProfileId }).ToList(),
+
+
+            }).ToList();
+            return result;
         }
     }
 }
