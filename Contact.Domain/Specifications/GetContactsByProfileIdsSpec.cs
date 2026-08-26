@@ -33,6 +33,7 @@ namespace Contact.Domain.Specifications
         {
             // دریافت اطلاعات خود منبع ارتباطی
             AddInclude(a => a.ContactResource);
+            AddInclude(a => a.ContactProfile);
 
             // دریافت منابع فرعی/فرزند (مثل داخلی‌ها یا کانال‌های وابسته)
             AddInclude(a => a.ContactResource.ChildContactResources);

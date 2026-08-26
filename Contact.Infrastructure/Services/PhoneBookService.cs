@@ -33,6 +33,7 @@ namespace Contact.Infrastructure.Services
         private readonly IPersonPublicService _personservice;
         private readonly ILogger<PhoneBookService> _logger;
 
+        private readonly IContactInternalService _contactService;
         public PhoneBookService(ILogger<PhoneBookService> logger,
             ISpecificationRepository<PhoneBookInfoView, Guid> PhoneBookSpecRepository,
             IRepository<ContactDbContext, ContactProfileAssignment, Guid> contactProfileAssignmentRepository,
@@ -40,7 +41,7 @@ namespace Contact.Infrastructure.Services
             IEmploymentPublicService employmentservice,
             IPostPublicService postservice,
             ILocationPublicService locationservice,
-        IPersonPublicService personservice
+        IPersonPublicService personservice, IContactInternalService contactService
 
             )
         {
@@ -52,8 +53,8 @@ namespace Contact.Infrastructure.Services
             _postservice = postservice;
             _locationservice = locationservice;
             _personservice = personservice;
+            _contactService = contactService;
         }
-        private IContactInternalService _contactService;
 
         public async Task<IReadOnlyList<PhoneBookEmploymentDto>> GetPhoneBookListAsync(Guid? organUnitId)
         {
