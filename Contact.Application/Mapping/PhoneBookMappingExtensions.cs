@@ -28,8 +28,8 @@ namespace Contact.Application.Mapping
                 if (emp.ProfileId.HasValue) relevantProfileIds.Add(emp.ProfileId.Value);
                 if (emp.PartyProfileId.HasValue) relevantProfileIds.Add(emp.PartyProfileId.Value);
                 foreach (var post in emp.posts) relevantProfileIds.Add(post.ProfileId);
-                foreach (var loc in emp.empLocations)  relevantProfileIds.Add(loc.ProfileId);
-                foreach (var loc in emp.postLocations)  relevantProfileIds.Add(loc.ProfileId);
+                foreach (var loc in emp.empLocations) relevantProfileIds.Add(loc.ProfileId);
+                foreach (var loc in emp.postLocations) relevantProfileIds.Add(loc.ProfileId);
 
                 // استخراج کانتکت‌ها از Lookup و حذف تکراری‌ها
                 var contacts = relevantProfileIds
@@ -55,11 +55,15 @@ namespace Contact.Application.Mapping
                     EmploymentCode = emp.EmploymentCode,
                     FirstName = emp.FirstName,
                     LastName = emp.LastName,
-                    OrganizationUnitsName = string.Join(" - ", emp.posts.Select(p => p.OrganizationUnitsName).Distinct()),
-                    HeadOfOrganizationUnitsName = string.Join(" - ", emp.posts.Select(p => p.HeadOfOrganizationUnitsName).Distinct()),
-                    JobTitleName = string.Join(" - ", emp.posts.Select(p => p.JobTitleName).Distinct()),
-                    JobLevelTitle = string.Join(" - ", emp.posts.Select(p => p.JobLevelTitle).Distinct()),
-                    LocationTitle = string.Join(" - ", locationTitles),
+                    OrganizationUnitsName = emp.posts.Select(p => p.OrganizationUnitsName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
+                    HeadOfOrganizationUnitsName = emp.posts.Select(p => p.HeadOfOrganizationUnitsName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
+                    JobTitleName = emp.posts.Select(p => p.JobTitleName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
+                    JobLevelTitle = emp.posts.Select(p => p.JobLevelTitle).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
+                    LocationTitle = emp.empLocations.Select(l => l.Title)
+                                    .Concat(emp.postLocations.Select(l => l.Title))
+                                    .Where(s => !string.IsNullOrEmpty(s))
+                                    .Distinct()
+                                    .ToList(),
                     Contacts = contacts
                 };
             }).ToList();

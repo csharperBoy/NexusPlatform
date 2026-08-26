@@ -26,11 +26,12 @@ namespace Contact.Application.DTOs
         public string FullName => $"{FirstName} {LastName}".Trim();
 
         // اطلاعات سازمانی و شغلی
-        public string? OrganizationUnitsName { get; set; }
-        public string? HeadOfOrganizationUnitsName { get; set; }
-        public string? JobTitleName { get; set; }
-        public string? JobLevelTitle { get; set; }
-        public string? LocationTitle { get; set; }
+        public List<string> OrganizationUnitsName { get; set; } = new();
+        public List<string> HeadOfOrganizationUnitsName { get; set; } = new();
+        public List<string> JobTitleName { get; set; } = new();
+        public List<string> JobLevelTitle { get; set; } = new();
+        public List<string> LocationTitle { get; set; } = new();
+
 
         // لیست کامل راه‌های ارتباطی
         public List<ContactDetailDto> Contacts { get; set; } = new();

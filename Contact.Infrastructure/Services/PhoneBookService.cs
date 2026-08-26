@@ -136,18 +136,18 @@ namespace Contact.Infrastructure.Services
 
                 // مکان پست (در صورت وجود)
                 var currentPostLoc = post.locations;
-                var locationTitle = string.Join("-", currentPostLoc?.Select(s => s.Title));
+                var locationTitles = currentPostLoc != null ?  currentPostLoc.Select(s=>s.Title).ToList(): new List<string>();
 
                 return new PhoneBookEmploymentDto
                 {
                     EmploymentCode = null!,
                     FirstName = null!,
                     LastName = null!,
-                    OrganizationUnitsName = post.OrganizationUnitsName ?? "پست بدون سازمان",
-                    HeadOfOrganizationUnitsName = post.HeadOfOrganizationUnitsName,
-                    JobTitleName = post.JobTitleName ?? "بدون عنوان شغلی",
-                    JobLevelTitle = post.JobLevelTitle,
-                    LocationTitle = locationTitle,
+                    OrganizationUnitsName = string.IsNullOrEmpty(post.OrganizationUnitsName) ? new List<string>() : new List<string> { post.OrganizationUnitsName },
+                    HeadOfOrganizationUnitsName = string.IsNullOrEmpty(post.HeadOfOrganizationUnitsName) ? new List<string>() : new List<string> { post.HeadOfOrganizationUnitsName },
+                    JobTitleName = string.IsNullOrEmpty(post.JobTitleName) ? new List<string>() : new List<string> { post.JobTitleName },
+                    JobLevelTitle = string.IsNullOrEmpty(post.JobLevelTitle) ? new List<string>() : new List<string> { post.JobLevelTitle },
+                    LocationTitle = locationTitles,
                     Contacts = postContacts
                 };
             }).ToList();
@@ -181,11 +181,11 @@ namespace Contact.Infrastructure.Services
                     EmploymentCode = null!,
                     FirstName = null!,
                     LastName = null!,
-                    OrganizationUnitsName = "محل استقرار",
-                    HeadOfOrganizationUnitsName = "محل استقرار",
-                    JobTitleName = "محل استقرار",
-                    JobLevelTitle = null,
-                    LocationTitle = location.Title,
+                    OrganizationUnitsName = new List<string> { "محل استقرار" },
+                    HeadOfOrganizationUnitsName = new List<string> { "محل استقرار" },
+                    JobTitleName = new List<string> { "محل استقرار" },
+                    JobLevelTitle = new List<string>(),
+                    LocationTitle = new List<string> { location.Title },
                     Contacts = locContacts
                 };
             }).ToList();

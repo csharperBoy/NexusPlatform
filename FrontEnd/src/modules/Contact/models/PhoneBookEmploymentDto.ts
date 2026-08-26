@@ -6,10 +6,12 @@ export interface PhoneBookEmploymentDto {
   firstName?: string | null;
   lastName?: string | null;
   fullName?: string | null;
-  organizationUnitsName?: string | null;
-  jobTitleName?: string | null;
-  jobLevelTitle?: string | null;
-  locationTitle?: string | null;
+  
+  organizationUnitsName: string[];
+  headOfOrganizationUnitsName: string[];
+  jobTitleName: string[];
+  jobLevelTitle: string[];
+  locationTitle: string[];
   
   contactSummary?: string | null;
   hasMultipleContacts?: boolean | false;

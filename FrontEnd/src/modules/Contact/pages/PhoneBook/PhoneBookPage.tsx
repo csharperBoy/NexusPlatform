@@ -43,7 +43,7 @@ const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConf
 };
 
 // --- Types ---
-type GroupByOption = "none" | "organizationUnitsName" | "jobTitleName" | "locationTitle";
+type GroupByOption = "none" | "headOfOrganizationUnitsName" | "jobTitleName" | "locationTitle";
 type SortDirection = "asc" | "desc" | null;
 interface SortConfig {
   column: string;
@@ -59,7 +59,7 @@ export const PhoneBookPage: React.FC = () => {
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
-  const [groupBy, setGroupBy] = useState<GroupByOption>("organizationUnitsName");
+  const [groupBy, setGroupBy] = useState<GroupByOption>("headOfOrganizationUnitsName");
 
   // Setهایی برای مدیریت باز و بسته بودن کرکره‌ها
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -116,68 +116,131 @@ export const PhoneBookPage: React.FC = () => {
 
   // --- Data Pipeline (Filter -> Sort -> Group) ---
   const processedData = useMemo(() => {
-    let result = [...data];
+  let result = [...data];
 
-    // ۱. فیلتر ستون‌ها
-    Object.entries(columnSearch).forEach(([key, term]) => {
-      if (term.trim()) {
-        result = result.filter((emp) => {
-          const q = term.toLowerCase();
-          const empKey = key as keyof PhoneBookEmploymentDto;
+  // ۱. فیلتر ستون‌ها
+  Object.entries(columnSearch).forEach(([key, term]) => {
+    if (term.trim()) {
+      result = result.filter((emp) => {
+        const q = term.toLowerCase();
 
-          if (key === "fullName") {
-            const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
-            return full.toLowerCase().includes(q);
-          }
-          const val = (emp[empKey] || "").toString().toLowerCase();
-          return val.includes(q);
-        });
-      }
-    });
-
-    // ۲. فیلتر گلوبال
-    if (globalSearch.trim()) {
-      const q = globalSearch.toLowerCase();
-      result = result.filter((emp) => 
-        (emp.firstName || "").toLowerCase().includes(q) ||
-        (emp.lastName || "").toLowerCase().includes(q) ||
-        // (emp.employmentCode || "").toLowerCase().includes(q) ||
-        (emp.organizationUnitsName || "").toLowerCase().includes(q) ||
-        (emp.jobTitleName || "").toLowerCase().includes(q) ||
-        (emp.locationTitle || "").toLowerCase().includes(q) ||
-        (emp.contactSummary || "").toLowerCase().includes(q)
-      );
-    }
-
-    // ۳. سورت
-    if (sortConfig.direction && sortConfig.column) {
-      result.sort((a, b) => {
-        const col = sortConfig.column as keyof PhoneBookEmploymentDto;
-        let aVal = (a[col] || "").toString();
-        let bVal = (b[col] || "").toString();
-
-        if (sortConfig.column === "fullName") {
-          aVal = a.fullName || `${a.firstName || ""} ${a.lastName || ""}`;
-          bVal = b.fullName || `${b.firstName || ""} ${b.lastName || ""}`;
+        if (key === "fullName") {
+          const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
+          return full.toLowerCase().includes(q);
         }
 
-        const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+        const value = emp[key as keyof PhoneBookEmploymentDto];
+        
+        // اگر undefined یا null باشه
+        if (value == null) return false;
 
-        return sortConfig.direction === "asc" ? compareResult : -compareResult;
+        // اگر آرایه باشه
+        if (Array.isArray(value)) {
+          return value.some(item => {
+            if (typeof item !== 'string') return false;
+            return item.toLowerCase().includes(q);
+          });
+        }
+
+        // اگر رشته باشه
+        if (typeof value === 'string') {
+          return value.toLowerCase().includes(q);
+        }
+
+        return false;
       });
     }
+  });
 
-    // ۴. گروه‌بندی
-    if (groupBy === "none") return { "همه اعضا": result };
+  // ۲. فیلتر گلوبال
+  if (globalSearch.trim()) {
+    const q = globalSearch.toLowerCase();
+    result = result.filter((emp) => {
+      const searchInString = (value?: string | null): boolean => {
+        if (!value) return false;
+        return value.toLowerCase().includes(q);
+      };
 
-    return result.reduce((groups, emp) => {
-      const groupKey = (emp[groupBy as keyof PhoneBookEmploymentDto] || "تعریف نشده") as string;
-      if (!groups[groupKey]) groups[groupKey] = [];
-      groups[groupKey].push(emp);
-      return groups;
-    }, {} as Record<string, PhoneBookEmploymentDto[]>);
+      const searchInArray = (arr?: string[] | null): boolean => {
+        if (!arr || arr.length === 0) return false;
+        return arr.some(item => {
+          if (!item) return false;
+          return item.toLowerCase().includes(q);
+        });
+      };
 
-  }, [data, globalSearch, columnSearch, sortConfig, groupBy]);
+      return (
+        searchInString(emp.firstName) ||
+        searchInString(emp.lastName) ||
+        searchInArray(emp.headOfOrganizationUnitsName) ||
+        searchInArray(emp.jobTitleName) ||
+        searchInArray(emp.locationTitle) ||
+        searchInString(emp.contactSummary)
+      );
+    });
+  }
+
+  // ۳. سورت
+  if (sortConfig.direction && sortConfig.column) {
+    result.sort((a, b) => {
+      const col = sortConfig.column as keyof PhoneBookEmploymentDto;
+      
+      const getStringValue = (obj: PhoneBookEmploymentDto, column: keyof PhoneBookEmploymentDto): string => {
+        if (column === "fullName") {
+          return obj.fullName || `${obj.firstName || ""} ${obj.lastName || ""}`;
+        }
+        
+        const val = obj[column];
+        if (val == null) return "";
+        if (Array.isArray(val)) {
+          return val.filter(v => v != null).join(" - ");
+        }
+        return val.toString();
+      };
+
+      const aVal = getStringValue(a, col);
+      const bVal = getStringValue(b, col);
+      
+      const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+      return sortConfig.direction === "asc" ? compareResult : -compareResult;
+    });
+  }
+
+  // ۴. گروه‌بندی
+  if (groupBy === "none") return { "همه اعضا": result };
+
+  const groups: Record<string, PhoneBookEmploymentDto[]> = {};
+  result.forEach(emp => {
+    let groupValues: string[] = [];
+    switch (groupBy) {
+      case "headOfOrganizationUnitsName":
+        groupValues = emp.headOfOrganizationUnitsName || [];
+        break;
+      case "jobTitleName":
+        groupValues = emp.jobTitleName || [];
+        break;
+      case "locationTitle":
+        groupValues = emp.locationTitle || [];
+        break;
+      default:
+        groupValues = [];
+    }
+
+    // حذف مقادیر null/undefined و خالی
+    const validGroupValues = groupValues.filter(v => v && v.trim().length > 0);
+    
+    if (validGroupValues.length === 0) {
+      validGroupValues.push("تعریف نشده");
+    }
+
+    validGroupValues.forEach(value => {
+      if (!groups[value]) groups[value] = [];
+      groups[value].push(emp);
+    });
+  });
+
+  return groups;
+}, [data, globalSearch, columnSearch, sortConfig, groupBy]);
 
 
   if (loading) return <div className="p-8 text-center text-gray-500">در حال دریافت...</div>;
@@ -234,7 +297,7 @@ export const PhoneBookPage: React.FC = () => {
               onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
             >
-              <option value="organizationUnitsName">واحد سازمانی</option>
+              <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
               <option value="jobTitleName">عنوان شغلی</option>
               <option value="locationTitle">محل استقرار</option>
               <option value="none">بدون گروه‌بندی</option>
@@ -254,8 +317,8 @@ export const PhoneBookPage: React.FC = () => {
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
-              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("organizationUnitsName")}>
-                واحد سازمانی <SortIcon column="organizationUnitsName" sortConfig={sortConfig} />
+              <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("headOfOrganizationUnitsName")}>
+                واحد سازمانی <SortIcon column="headOfOrganizationUnitsName" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("jobTitleName")}>
                 عنوان شغلی <SortIcon column="jobTitleName" sortConfig={sortConfig} />
@@ -284,8 +347,8 @@ export const PhoneBookPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="جستجو واحد..."
-                  value={columnSearch["organizationUnitsName"] || ""}
-                  onChange={(e) => handleColumnSearch("organizationUnitsName", e.target.value)}
+                  value={columnSearch["headOfOrganizationUnitsName"] || ""}
+                  onChange={(e) => handleColumnSearch("headOfOrganizationUnitsName", e.target.value)}
                   className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
                 />
               </th>
@@ -375,9 +438,9 @@ export const PhoneBookPage: React.FC = () => {
                             <td className="py-3 px-4 font-medium text-gray-800">
                               {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
                             </td>
-                            <td className="py-3 px-4 text-gray-600">{emp.organizationUnitsName || "-"}</td>
-                            <td className="py-3 px-4 text-gray-600">{emp.jobTitleName || "-"}</td>
-                            <td className="py-3 px-4 text-gray-600">{emp.locationTitle || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600">{emp.jobTitleName?.join(" - ") || "-"}</td>
+                            <td className="py-3 px-4 text-gray-600"> {emp.locationTitle?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
                               {emp.contactSummary || "-"}
                             </td>
