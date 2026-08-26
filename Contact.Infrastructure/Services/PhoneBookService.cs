@@ -72,6 +72,10 @@ namespace Contact.Infrastructure.Services
 
             List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(existingProfileIds);
             var employmentDtos = empList.ToPhoneBookDtos(contactList).ToList();
+            // ۵. حذف کارمندهایی که هیچ کانتکتی ندارند
+            employmentDtos = employmentDtos
+                .Where(e => e.Contacts.Any()) // ← شرط جدید
+                .ToList();
 
             // ۵. دریافت پست‌های خالی و مکان‌های خالی (با ارسال existingProfileIds برای جلوگیری از تداخل)
             var standaloneDtos = await GetStandaloneLocationsAndPostsAsync(existingProfileIds);
@@ -111,14 +115,6 @@ namespace Contact.Infrastructure.Services
 
             // ۲. واکشی پست‌ها
             var posts = await _postservice.GetByContactProfileIds(postProfileIds);
-            //var posts = await _postRepository
-            //    .GetQueryable()
-            //    .Where(p => postProfileIds.Contains(p.FkContactProfileId.Value))
-            //    .Include(p => p.OrganizationUnit)
-            //    .Include(p => p.JobTitle)
-            //    .Include(p => p.JobLevel)
-            //    .Include(p => p.PostLocations.Where(pl => pl.IsCurrent)).ThenInclude(pl => pl.Location)
-            //    .ToListAsync();
 
             // ۳. دریافت کانتکت‌های این پست‌ها
             var postContactList = await _contactService.GetContactsByProfilesIdsAsync(postProfileIds);
@@ -159,10 +155,7 @@ namespace Contact.Infrastructure.Services
 
             // ۲. واکشی مکان‌ها
             var locations =  await _locationservice.GetByContactProfileIds(postProfileIds);
-            //var locations = await _locationRepository
-            //    .GetQueryable()
-            //    .Where(l => locationProfileIds.Contains(l.FkContactProfileId.Value))
-            //    .ToListAsync();
+       
             var locContactList = await _contactService.GetContactsByProfilesIdsAsync(locationProfileIds);
 
 
