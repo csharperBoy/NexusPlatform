@@ -1,7 +1,7 @@
 // src/modules/PhoneBook/pages/Post/PhoneBookPage.tsx
 
 import React, { useEffect, useState, useMemo } from "react";
-import logo from "../../../../assets/LOGO2.png";
+import logo from "../../../../assets/LOGO3.png";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
   PhoneBookEmploymentDto,
@@ -249,62 +249,55 @@ export const PhoneBookPage: React.FC = () => {
   return (
     <div className="p-6 dir-rtl text-right font-sans">
       {/* هدر و کنترل‌های اصلی */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        {/* <div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-1">دفترچه تلفن</h1>
-          <p className="text-sm text-gray-500">مجموع: {data.length} نفر</p>
-        </div> */}
-<div className="flex items-center gap-4 mb-3">
-  {/* لوگو */}
-  <img 
-    src={logo} 
-    alt="لوگو سازمان" 
-    className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
-  />
+<div className="flex flex-wrap items-end justify-between gap-4 mb-6 p-4 rounded-xl border border-gray-200 shadow-sm"
+     style={{ backgroundColor: 'rgb(0, 48, 111)' }}>
+  
+  {/* بخش لوگو و عنوان */}
+  <div className="flex items-center gap-4 mb-3">
+    <img 
+      src={logo} 
+      alt="لوگو سازمان" 
+      className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
+    />
+    <div className="h-10 md:h-12 w-[1.5px] bg-gray-300 rounded-full"></div>
+    <div className="flex flex-col">
+      <h1 className="font-black text-xl md:text-2xl text-white tracking-wide">
+        سامانه جامع اطلاعات تماس همکاران
+      </h1>
+      <span className="text-xs text-blue-200 font-medium mt-0.5">
+        دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان
+      </span>
+    </div>
+  </div>
 
-  {/* خط جداکننده عمودی */}
-  <div className="h-10 md:h-12 w-[1.5px] bg-gray-200 rounded-full"></div>
+  {/* بخش کنترل‌ها (جستجو و گروه‌بندی) - بدون تغییر */}
+  <div className="flex items-center gap-4">
+    <div className="flex flex-col">
+      <label className="text-xs text-blue-200 mb-1">جستجوی کلی</label>
+      <input
+        type="text"
+        placeholder="جستجو در تمام فیلدها..."
+        value={globalSearch}
+        onChange={(e) => setGlobalSearch(e.target.value)}
+        className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 backdrop-blur-sm"
+      />
+    </div>
 
-  {/* عنوان و زیرعنوان */}
-  <div className="flex flex-col">
-    {/* عنوان اصلی با فونت تیتر (با اضافه کردن font-titr) */}
-    <h1 className="font-black text-xl md:text-2xl text-gray-800 tracking-wide">
-      سامانه جامع اطلاعات تماس همکاران
-    </h1>
-    
-    {/* زیرعنوان با فونت وزیرمتن معمولی/متوسط */}
-    <span className="text-xs text-gray-500 font-medium mt-0.5">
-      دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان
-    </span>
+    <div className="flex flex-col">
+      <label className="text-xs text-blue-200 mb-1">گروه‌بندی بر اساس</label>
+      <select
+        value={groupBy}
+        onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
+        className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white/90 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 outline-none"
+      >
+        <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
+        <option value="jobTitleName">عنوان شغلی</option>
+        <option value="locationTitle">محل استقرار</option>
+        <option value="none">بدون گروه‌بندی</option>
+      </select>
+    </div>
   </div>
 </div>
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col">
-            <label className="text-xs text-gray-500 mb-1">جستجوی کلی</label>
-            <input
-              type="text"
-              placeholder="جستجو در تمام فیلدها..."
-              value={globalSearch}
-              onChange={(e) => setGlobalSearch(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-xs text-gray-500 mb-1">گروه‌بندی بر اساس</label>
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-            >
-              <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
-              <option value="jobTitleName">عنوان شغلی</option>
-              <option value="locationTitle">محل استقرار</option>
-              <option value="none">بدون گروه‌بندی</option>
-            </select>
-          </div>
-        </div>
-      </div>
 
       {/* جدول یکپارچه */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
