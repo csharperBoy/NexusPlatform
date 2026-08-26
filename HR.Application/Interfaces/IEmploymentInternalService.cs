@@ -2,7 +2,6 @@
 using Core.Domain.ValueObjects;
 using HR.Application.DTOs;
 using HR.Domain.Entities;
-using HR.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;

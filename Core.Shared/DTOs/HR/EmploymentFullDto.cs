@@ -1,16 +1,12 @@
-﻿using Core.Shared.DTOs.Contact;
-using Core.Shared.DTOs.HR;
-using Core.Shared.Enums.HR;
- 
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.DTOs
+namespace Core.Shared.DTOs.HR
 {
-    public class EmploymentInfoDto
+    public class EmploymentFullDto
     {
         public Guid Id { get; set; }
         public Guid? ProfileId { get; set; }
@@ -34,24 +30,9 @@ namespace HR.Application.DTOs
 
         public string? EmploymentTypeName { get; set; }
 
-        public int? AssignmentsAssigneeType { get; set; }
+        public List<PostInfoDto> posts { get; set; } = null;
 
-        public DateTime? AssignmentsEffectiveFrom { get; set; }
-
-        public DateTime? AssignmentsEffectiveTo { get; set; }
-
-        public string? PostCode { get; set; } = null!;
-
-        public string? GradeTitle { get; set; }
-
-        public string? CostCenterName { get; set; }
-
-        public string? JobLevelTitle { get; set; }
-
-        public string? JobTitleName { get; set; }
-
-        public string? OrganizationUnitsName { get; set; }
-
-        public List<LocationInfoDto> locations { get; set; } = null;
+        public List<LocationInfoDto> empLocations { get; set; } = null;
+        public List<LocationInfoDto> postLocations { get; set; } = null;
     }
 }

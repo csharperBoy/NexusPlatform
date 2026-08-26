@@ -4,7 +4,7 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
-using Core.Shared.DTOs.Contact;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using HR.Application.DTOs;

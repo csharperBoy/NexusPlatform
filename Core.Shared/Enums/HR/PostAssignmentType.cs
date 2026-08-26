@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Domain.Enums
+namespace Core.Shared.Enums.HR
 {
     public enum PostAssignmentType
     {

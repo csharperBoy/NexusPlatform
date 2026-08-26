@@ -2,15 +2,16 @@
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Domain.Common.EntityProperties;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
- 
+
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using HR.Domain.Enums;
+ 
 using HR.Domain.Events.Employment;
 using HR.Domain.Events.Post;
 using HR.Domain.Specifications;

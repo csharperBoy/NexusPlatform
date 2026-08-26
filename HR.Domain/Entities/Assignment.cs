@@ -2,7 +2,7 @@
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Shared.Enums.Authorization;
-using HR.Domain.Enums;
+using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;

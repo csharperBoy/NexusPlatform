@@ -5,13 +5,12 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
-using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using HR.Domain.Enums;
+ 
 using HR.Infrastructure.Data;
 using HR.Infrastructure.Services;
 using HR.IrisaSync.Extention.Contexts;

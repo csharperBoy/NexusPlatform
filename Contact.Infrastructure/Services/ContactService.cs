@@ -160,6 +160,7 @@ namespace Contact.Infrastructure.Services
             {
                 ProfileId = a.ContactProfileId,
                 ContactType = a.ContactResource.ContactType,
+                Source = a.ContactProfile.ProfileType,
                 Value = a.ContactResource.Value,
                 Label = a.ContactResource.Label,
 
@@ -174,7 +175,8 @@ namespace Contact.Infrastructure.Services
                     {
                         Value = c.Value,
                         Label = c.Label,
-                        ContactType = c.ContactType
+                        ContactType = c.ContactType,
+                        
                     }).ToList()
                     : null
             }).ToList();

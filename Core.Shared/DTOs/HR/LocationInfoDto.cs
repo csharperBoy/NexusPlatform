@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.DTOs
+namespace Core.Shared.DTOs.HR
 {
     public class LocationInfoDto
     {

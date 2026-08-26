@@ -1,15 +1,11 @@
-﻿using Core.Shared.DTOs.Contact;
-using Core.Shared.Enums.HR;
- 
-using HR.Domain.Entities;
-using HR.Domain.Enums;
+﻿using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.DTOs
+namespace Core.Shared.DTOs.HR
 {
     public class PostInfoDto
     {
@@ -28,6 +24,7 @@ namespace HR.Application.DTOs
         public Guid? FkOrganizationUnitId { get; set; }
 
         public string OrganizationUnitsName { get; set; } = null!;
+        public string HeadOfOrganizationUnitsName { get; set; } = null!;
         public Guid? FkJobLevelId { get; set; }
 
         public string? JobLevelTitle { get; set; }

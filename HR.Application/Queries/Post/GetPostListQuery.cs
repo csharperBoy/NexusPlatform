@@ -1,4 +1,5 @@
 ﻿using Core.Shared.DTOs.Authorization;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Results;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;

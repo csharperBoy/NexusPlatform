@@ -1,6 +1,8 @@
-﻿using HR.Application.DTOs;
+﻿using Core.Shared.DTOs.HR;
+using Core.Shared.Enums.HR;
+using HR.Application.DTOs;
 using HR.Domain.Entities;
-using HR.Domain.Enums;
+ 
 using HR.Domain.Specifications;
 using System;
 using System.Collections.Generic;

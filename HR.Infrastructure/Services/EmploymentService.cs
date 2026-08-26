@@ -6,16 +6,16 @@ using Core.Application.Abstractions.People;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
- 
+
 using DocumentFormat.OpenXml.Drawing.Diagrams;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Wordprocessing;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using HR.Domain.Enums;
 using HR.Domain.Events.Employment;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
@@ -37,6 +37,7 @@ namespace HR.Infrastructure.Services
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
         private readonly IRepository<HRDbContext, EmploymentInfoView, Guid> _employmentInfoRepository;
+        private readonly IRepository<HRDbContext, PostLocation, Guid> _postLocationsRepository;
         private readonly IRepository<HRDbContext, EmploymentLocation, Guid> _employmentLocationsRepository;
         private readonly ISpecificationRepository<EmploymentLocation, Guid> _employmentLocationSpecRepository;
         private readonly ISpecificationRepository<Employment, Guid> _employmentSpecRepository;
@@ -46,6 +47,7 @@ namespace HR.Infrastructure.Services
 
         public EmploymentService(IPersonPublicService personService,
             IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
+            IRepository<HRDbContext, PostLocation, Guid> postLocationsRepository,
              IRepository<HRDbContext, EmploymentLocation, Guid> employmentLocationsRepository,
              ISpecificationRepository<EmploymentLocation, Guid> employmentLocationSpecRepository,
             IRepository<HRDbContext, Employment, Guid> employmentRepository,
@@ -56,6 +58,7 @@ namespace HR.Infrastructure.Services
             IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
             )
         {
+            _postLocationsRepository = postLocationsRepository;
             _employmentInfoRepository = employmentInfoRepository;
             _assignmentRepository = assignmentRepository;
             _contactService = contactService;
@@ -131,7 +134,7 @@ namespace HR.Infrastructure.Services
             var toExpire = existingActive.Where(e => !newIds.Contains(e.FkLocationId)).ToList();
             foreach (var item in toExpire)
             {
-                 item.DoExpire();
+                item.DoExpire();
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -150,9 +153,9 @@ namespace HR.Infrastructure.Services
 
 
         public async Task<Guid> UpdateEmploymentAsync(Guid id,
-            
-            
-            
+
+
+
             List<string>? phone, List<string>? address, List<string>? email, List<string>? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
         {
             Employment? emp = await _employmentRepository.GetByIdAsync(id);
@@ -174,7 +177,7 @@ namespace HR.Infrastructure.Services
 
             await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,
 
-                Phones,  address, Emails, Mobiles
+                Phones, address, Emails, Mobiles
                 );
             if (officePhone != null)
             {
@@ -239,7 +242,7 @@ namespace HR.Infrastructure.Services
                 throw new Exception("can not found employment!!!");
 
             await model.SoftRemove();
-            model.AddDomainEvent(new RemoveEmploymentEvent(model.Id,model.EmploymentCode,model.FkNaturalPersonId,model.FkEmploymentTypeId,model.FkEmploymentStatusId,model.FkContactProfileId));
+            model.AddDomainEvent(new RemoveEmploymentEvent(model.Id, model.EmploymentCode, model.FkNaturalPersonId, model.FkEmploymentTypeId, model.FkEmploymentStatusId, model.FkContactProfileId));
             await ExpireEmploymentPostsAsync(id);
 
 
@@ -252,7 +255,7 @@ namespace HR.Infrastructure.Services
             var locList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkEmploymentId == id && a.IsCurrent));
             foreach (var item in locList)
             {
-                 item.DoExpire();
+                item.DoExpire();
             }
         }
 
@@ -261,8 +264,63 @@ namespace HR.Infrastructure.Services
             var postList = await _assignmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkEmploymentId == id && a.IsCurrent));
             foreach (var item in postList)
             {
-                 item.DoExpire();
+                item.DoExpire();
             }
+        }
+
+        public async Task<IEnumerable<EmploymentFullDto>> GetFullInfoAsync()
+        {
+            var empList = await _employmentInfoRepository.GetAllAsync();
+            var emptIds = empList.Select(p => p.Id).ToList();
+            var postsAssign = await _assignmentRepository.GetAllAsync(queryOptions:
+                q => q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
+                .Include(p => p.Post).ThenInclude(p => p.OrganizationUnit).ThenInclude(p => p.Parent)
+                .Include(p => p.Post).ThenInclude(p => p.CostCenter)
+                .Include(p => p.Post).ThenInclude(p => p.Grade)
+                .Include(p => p.Post).ThenInclude(p => p.JobTitle)
+                .Include(p => p.Post).ThenInclude(p => p.JobLevel)
+
+                );
+            var postIds = postsAssign.Select(p => p.FkPostId).ToList();
+            var empLocList = await _employmentLocationsRepository.GetAllAsync(queryOptions: q =>
+            q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
+                 .Include(a => a.Location)
+            );
+            var postLocList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => postIds.Contains(a.FkPostId) && a.IsCurrent)
+                 .Include(a => a.Post).Include(a => a.Location)
+            );
+
+            var result = empList.Select(s => new EmploymentFullDto
+            {
+                EmploymentCode = s.EmploymentCode,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                Id = s.Id,
+
+                EmploymentEffectiveFrom = s.EmploymentEffectiveFrom,
+                EmploymentEffectiveTo = s.EmploymentEffectiveTo,
+                EmploymentStatusName = s.EmploymentStatusName,
+                EmploymentTypeName = s.EmploymentTypeName,
+                NationalCode = s.NationalCode,
+                ProfileId = s.FkContactProfileId,
+                PartyProfileId = s.FkPartyContactProfileId,
+                PartyId = s.PartyId,
+                empLocations = empLocList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
+                postLocations = postLocList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
+                posts = postsAssign.Where(p => p.FkEmploymentId == s.Id).Select(s => s.Post).ToList().Select(p => new PostInfoDto
+                {
+                    Id = p.Id,
+                    PostCode = p.Code,
+                    JobTitleName = p.JobTitle.Name,
+                    JobLevelTitle = p.JobLevel?.Title,
+                    OrganizationUnitsName = p.OrganizationUnit?.Name,
+                    HeadOfOrganizationUnitsName = p.OrganizationUnit?.Parent?.Name,
+                    GradeTitle = p.Grade?.Title,
+                    ProfileId = p.FkContactProfileId,
+                    CostCenterName = p.CostCenter?.Name
+                }).ToList()
+            }).ToList();
+            return result;
         }
     }
 }

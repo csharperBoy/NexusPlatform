@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions.HR;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Domain.Entities;

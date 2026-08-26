@@ -5,7 +5,7 @@ using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
-using HR.Domain.Enums;
+ 
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;

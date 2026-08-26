@@ -12,6 +12,7 @@ namespace Core.Shared.DTOs.Contact
 
         public Guid ProfileId { get;  set; }
         public ContactTypeEnum ContactType { get;  set; }
+        public ContactProfileTypeEnum Source { get;  set; }
         /// <summary>
         /// مقدار راه ارتباطی (شماره تلفن، آدرس ایمیل، آیدی اینستاگرام، لینک و...)
         /// </summary>

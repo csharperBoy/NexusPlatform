@@ -1,5 +1,6 @@
 ﻿using Core.Application.Abstractions.People;
 using Core.Application.Abstractions.Security;
+using Core.Shared.DTOs.HR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -44,6 +45,11 @@ namespace Core.Application.Abstractions.HR
         public Task<Guid?> GetEmploymentId(Guid? personId)
         {
             return Task.FromResult<Guid?>(null);
+        }
+
+        public Task<IEnumerable<EmploymentFullDto>> GetFullInfoAsync()
+        {
+            throw new NotImplementedException();
         }
 
         public async Task SaveAsync()

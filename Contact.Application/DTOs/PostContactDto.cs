@@ -1,6 +1,6 @@
 ﻿using Core.Shared.DTOs.Contact;
 using Core.Shared.Enums.HR;
-using HR.Domain.Enums;
+ 
 using System;
 using System.Collections.Generic;
 using System.Linq;
