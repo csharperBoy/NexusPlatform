@@ -5,20 +5,32 @@ import logo from "../../../../assets/LOGO2.png";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
   PhoneBookEmploymentDto,
-  PhoneBookContactTypeEnum,
-  PhoneBookContactSourceEnum,
+  ContactTypeEnum,
+  ContactSourceEnum,
   ContactDetailDto,
 } from "../../models/PhoneBookEmploymentDto";
 
 // --- Helper Functions ---
-const getContactTypeBadge = (type?: PhoneBookContactTypeEnum | null) => {
+const getContactTypeBadge = (type?: ContactTypeEnum | null) => {
   switch (type) {
-    case PhoneBookContactTypeEnum.Mobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
-    case PhoneBookContactTypeEnum.Phone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
-    case PhoneBookContactTypeEnum.Email: return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
-    case PhoneBookContactTypeEnum.Fax: return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
-    case PhoneBookContactTypeEnum.Address: return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
+    case ContactTypeEnum.Mobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    case ContactTypeEnum.OrganizationMobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    case ContactTypeEnum.Phone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
+    case ContactTypeEnum.OfficePhone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
+    case ContactTypeEnum.Email: return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
+    case ContactTypeEnum.Fax: return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
+    case ContactTypeEnum.Address: return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
     default: return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
+  }
+};
+
+const getSourceBadge = (source?: ContactSourceEnum | null) => {
+  switch (source) {
+    case ContactSourceEnum.Personal: return { label: "شخصی", color: "bg-gray-200 text-gray-600" };
+    case ContactSourceEnum.post: return { label: "سازمانی", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.employment: return { label: "سازمانی", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.location: return { label: "محل استقرار", color: "bg-blue-200 text-gray-600" };
+   default: return { label: "سازمانی", color: "bg-gray-100 text-gray-700 border-gray-200" };
   }
 };
 
@@ -381,17 +393,18 @@ export const PhoneBookPage: React.FC = () => {
                                   </h4>
                                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
-                                      const badge = getContactTypeBadge(contact.type);
-                                      const isOrg = contact.source === PhoneBookContactSourceEnum.post;
+                                      const typeBadge = getContactTypeBadge(contact.type);
+                                      const sourceBadge =  getSourceBadge(contact.source);
+                                      // const isOrg = contact.source === ContactSourceEnum.post;
 
                                       return (
                                         <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
                                           <div className="flex justify-between items-center mb-1">
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${badge.color}`}>
-                                              {badge.label}
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBadge.color}`}>
+                                              {typeBadge.label}
                                             </span>
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${isOrg ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-gray-200 text-gray-600"}`}>
-                                              {isOrg ? "سازمانی" : "شخصی"}
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded  ${sourceBadge.color}`}>
+                                              {sourceBadge.label}
                                             </span>
                                           </div>
                                           <div className="flex justify-between items-center mt-1">
