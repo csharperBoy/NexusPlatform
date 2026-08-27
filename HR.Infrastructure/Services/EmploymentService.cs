@@ -7,6 +7,7 @@ using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.DTOs.HR;
+using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 
@@ -216,6 +217,7 @@ namespace HR.Infrastructure.Services
                 //Contacts = hrContactList.Where(l=>l.IsCurrent && l.EntityId == s.Id ).ToList(),
                 locations = locList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title }).ToList(),
                 AssignmentsAssigneeType = s.AssignmentsAssigneeType,
+                Gender = s.Gender.ToString().ToEnumOrDefault<Gender>(Gender.Other),
                 AssignmentsEffectiveFrom = s.AssignmentsEffectiveFrom,
                 AssignmentsEffectiveTo = s.AssignmentsEffectiveTo,
                 EmploymentEffectiveFrom = s.EmploymentEffectiveFrom,
@@ -299,11 +301,12 @@ namespace HR.Infrastructure.Services
                 EmploymentStatusName = s.EmploymentStatusName,
                 EmploymentTypeName = s.EmploymentTypeName,
                 NationalCode = s.NationalCode,
+                Gender = s.Gender.ToString().ToEnumOrDefault<Gender>(Gender.Other),
                 ProfileId = s.FkContactProfileId,
                 PartyProfileId = s.FkPartyContactProfileId,
                 PartyId = s.PartyId,
-                empLocations = empLocList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
-                postLocations = postLocList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
+                empLocations = empLocList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
+                postLocations = postLocList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
                 posts = postsAssign.Where(p => p.FkEmploymentId == s.Id).Select(s => s.Post).ToList().Select(p => new PostInfoDto
                 {
                     Id = p.Id,
@@ -311,7 +314,7 @@ namespace HR.Infrastructure.Services
                     JobTitleName = p.JobTitle.Name,
                     JobLevelTitle = p.JobLevel?.Title,
                     OrganizationUnitsName = p.OrganizationUnit?.Name,
-                    HeadOfOrganizationUnitsName = p.OrganizationUnit?.Parent?.Name,
+                    HeadOfOrganizationUnitsName = p.OrganizationUnit?.Parent?.Name ?? p.OrganizationUnit?.Name,
                     GradeTitle = p.Grade?.Title,
                     ProfileId = p.FkContactProfileId,
                     CostCenterName = p.CostCenter?.Name

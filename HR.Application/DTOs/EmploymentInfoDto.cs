@@ -51,7 +51,7 @@ namespace HR.Application.DTOs
         public string? JobTitleName { get; set; }
 
         public string? OrganizationUnitsName { get; set; }
-
+        public Gender? Gender { get; set; }
         public List<LocationInfoDto> locations { get; set; } = null;
     }
 }

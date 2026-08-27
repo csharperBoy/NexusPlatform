@@ -55,12 +55,15 @@ namespace Contact.Application.Mapping
 
                 return new PhoneBookEmploymentDto
                 {
+                    uniqueKey = $"emp-{emp.Id}",
                     EmploymentCode = emp.EmploymentCode,
+                    
                     FirstName = emp.FirstName,
                     LastName = emp.LastName,
                     OrganizationUnitsName = emp.posts.Select(p => p.OrganizationUnitsName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
                     HeadOfOrganizationUnitsName = emp.posts.Select(p => p.HeadOfOrganizationUnitsName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
                     JobTitleName = emp.posts.Select(p => p.JobTitleName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
+                    Gender = emp.Gender,
                     JobLevelTitle = emp.posts.Select(p => p.JobLevelTitle).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
                     LocationTitle = emp.empLocations.Select(l => l.Title)
                                     .Concat(emp.postLocations.Select(l => l.Title))

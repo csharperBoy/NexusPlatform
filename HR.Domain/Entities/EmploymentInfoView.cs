@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Core.Shared.Enums.HR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 
@@ -46,6 +47,7 @@ public partial class EmploymentInfoView
     public string? PostCode { get; set; } = null!;
 
     public string? GradeTitle { get; set; }
+    public int? Gender { get; set; } 
 
     public string? CostCenterName { get; set; }
 

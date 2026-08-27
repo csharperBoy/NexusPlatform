@@ -12,8 +12,10 @@ using Core.Shared.DTOs.Contact;
 using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
+using Core.Shared.Enums.HR;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using HR.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -143,6 +145,7 @@ namespace Contact.Infrastructure.Services
 
                 return new PhoneBookEmploymentDto
                 {
+                    uniqueKey = $"post-{post.Id}",
                     EmploymentCode = null!,
                     FirstName = null!,
                     LastName = null!,
@@ -151,6 +154,7 @@ namespace Contact.Infrastructure.Services
                     JobTitleName = string.IsNullOrEmpty(post.JobTitleName) ? new List<string>() : new List<string> { post.JobTitleName },
                     JobLevelTitle = string.IsNullOrEmpty(post.JobLevelTitle) ? new List<string>() : new List<string> { post.JobLevelTitle },
                     LocationTitle = locationTitles,
+                    Gender = Gender.Other,
                     Contacts = postContacts
                 };
             }).ToList();
@@ -183,6 +187,8 @@ namespace Contact.Infrastructure.Services
 
                 return new PhoneBookEmploymentDto
                 {
+
+                    uniqueKey = $"loc-{location.Id}",
                     EmploymentCode = null!,
                     FirstName = null!,
                     LastName = null!,
@@ -191,6 +197,7 @@ namespace Contact.Infrastructure.Services
                     JobTitleName = new List<string> { "محل استقرار" },
                     JobLevelTitle = new List<string>(),
                     LocationTitle = new List<string> { location.Title },
+                    Gender = Gender.Other,
                     Contacts = locContacts
                 };
             }).ToList();

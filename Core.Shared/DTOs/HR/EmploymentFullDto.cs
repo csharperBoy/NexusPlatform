@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Core.Shared.Enums.HR;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Core.Shared.DTOs.HR
         public Guid Id { get; set; }
         public Guid? ProfileId { get; set; }
         public Guid? PartyProfileId { get; set; }
+        public Gender Gender { get; set; } // جنسیت (Male, Female, Other)
 
         public string NationalCode { get; set; } = null!;
 

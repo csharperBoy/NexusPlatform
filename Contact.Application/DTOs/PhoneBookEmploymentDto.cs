@@ -1,5 +1,6 @@
 ﻿using Contact.Domain.Enums;
 using Core.Shared.Enums.Contact;
+using Core.Shared.Enums.HR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace Contact.Application.DTOs
 
     public class PhoneBookEmploymentDto
     {
+        public string uniqueKey { get; set; } = null!;
         public string EmploymentCode { get; set; } = null!;
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
@@ -31,6 +33,8 @@ namespace Contact.Application.DTOs
         public List<string> JobTitleName { get; set; } = new();
         public List<string> JobLevelTitle { get; set; } = new();
         public List<string> LocationTitle { get; set; } = new();
+        public string? ProfilePictureUrl { get; set; } // آدرس تصویر پروفایل
+        public Gender Gender { get; set; } // جنسیت (Male, Female, Other)
 
 
         // لیست کامل راه‌های ارتباطی

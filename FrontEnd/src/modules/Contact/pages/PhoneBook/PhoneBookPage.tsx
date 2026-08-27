@@ -8,8 +8,31 @@ import {
   ContactTypeEnum,
   ContactSourceEnum,
   ContactDetailDto,
+  GenderEnum,
 } from "../../models/PhoneBookEmploymentDto";
+import { FaUser, FaUserCircle } from 'react-icons/fa';
 
+const getGenderIcon = (gender?: GenderEnum | null) => {
+  switch (gender) {
+    case GenderEnum.Male:
+      return <FaUser className="text-blue-600 text-lg" />;
+    case GenderEnum.Female:
+      return <FaUser className="text-pink-500 text-lg" />;
+    default:
+      return <FaUser className="text-gray-400 text-lg" />;
+  }
+};
+// تابع جدید برای آیکون جنسیت با سایز بزرگ (برای نمایش در بخش اطلاعات شخصی)
+const getGenderIconLarge = (gender?: GenderEnum | null) => {
+  switch (gender) {
+    case GenderEnum.Male:
+      return <FaUser className="text-blue-600 text-5xl" />;
+    case GenderEnum.Female:
+      return <FaUser className="text-pink-500 text-5xl" />;
+    default:
+      return <FaUser className="text-gray-400 text-5xl" />;
+  }
+};
 // --- Helper Functions ---
 const getContactTypeBadge = (type?: ContactTypeEnum | null) => {
   switch (type) {
@@ -91,12 +114,12 @@ export const PhoneBookPage: React.FC = () => {
     });
   };
 
-  const toggleRowExpand = (employmentCode: string, hasMultiple: boolean) => {
+  const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
     if (!hasMultiple) return;
     setExpandedRows((prev) => {
       const next = new Set(prev);
-      if (next.has(employmentCode)) next.delete(employmentCode);
-      else next.add(employmentCode);
+      if (next.has(uniqueKey)) next.delete(uniqueKey);
+      else next.add(uniqueKey);
       return next;
     });
   };
@@ -306,7 +329,7 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
               <th className="py-3 px-4 w-12"></th>
-              
+               <th className="py-3 px-4 w-14 text-center">تصویر</th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
@@ -326,7 +349,7 @@ export const PhoneBookPage: React.FC = () => {
             {/* ردیف دوم: باکس‌های جستجو زیر هر ستون */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="py-2 px-2"></th>
-              
+              <th className="py-2 px-2"></th>
               <th className="py-2 px-2 align-top">
                 <input
                   type="text"
@@ -392,7 +415,7 @@ export const PhoneBookPage: React.FC = () => {
                         className="bg-blue-50/50 hover:bg-blue-50 cursor-pointer border-t-2 border-t-blue-100"
                         onClick={() => toggleGroup(groupName)}
                       >
-                        <td colSpan={6} className="py-3 px-4">
+                        <td colSpan={7} className="py-3 px-4">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-3">
                               <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-90" : "rotate-0"}`}>
@@ -410,15 +433,14 @@ export const PhoneBookPage: React.FC = () => {
 
                     {/* ردیف‌های کارمندان داخل این گروه */}
                     {!isGroupCollapsed && employments.map((emp) => {
-                      const empCode = emp.employmentCode;
-                      const isExpanded = expandedRows.has(empCode);
+                     const isExpanded = expandedRows.has(emp.uniqueKey);
                        const hasMultiple =true;// emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
 
                       return (
-                        <React.Fragment key={empCode}>
+                        <React.Fragment key={emp.uniqueKey}>
                           {/* سطر اصلی */}
                           <tr
-                            onClick={() => toggleRowExpand(empCode, !!hasMultiple)}
+                            onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)}
                             className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}
                           >
                             <td className="py-3 px-4 text-center">
@@ -428,6 +450,22 @@ export const PhoneBookPage: React.FC = () => {
                                 </span>
                               ) : null}
                             </td>
+
+<td className="py-3 px-4 text-center">
+        {emp.profilePictureUrl ? (
+          <img
+            src={emp.profilePictureUrl}
+            alt="پروفایل"
+            className="w-10 h-10 rounded-full object-cover border border-gray-200"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+            {getGenderIcon(emp.gender)}
+          </div>
+        )}
+      </td>
+
+
                             <td className="py-3 px-4 font-medium text-gray-800">
                               {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
                             </td>
@@ -440,41 +478,76 @@ export const PhoneBookPage: React.FC = () => {
                           </tr>
 
                           {/* زیر‌جدول راه‌های ارتباطی */}
-                          {hasMultiple && isExpanded && (
-                            <tr className="bg-gray-50">
-                              <td colSpan={6} className="p-4 px-12 border-b border-gray-200">
-                                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-inner">
-                                  <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2">
-                                    جزییات تماس
-                                  </h4>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
-                                      const typeBadge = getContactTypeBadge(contact.type);
-                                      const sourceBadge =  getSourceBadge(contact.source);
-                                      // const isOrg = contact.source === ContactSourceEnum.post;
+{hasMultiple && isExpanded && (
+  <tr className="bg-gray-50">
+    <td colSpan={7} className="p-4 border-b border-gray-200">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-inner">
+        {/* چیدمان دو ستونی: راست = اطلاعات شخصی، چپ = مخاطبین */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* ستون راست: اطلاعات شخصی */}
+          <div className="md:col-span-1 flex flex-col items-center justify-center border-l border-gray-200 pl-4">
+            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 mb-3">
+              {emp.profilePictureUrl ? (
+                <img
+                  src={emp.profilePictureUrl}
+                  alt="پروفایل"
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
+                  {getGenderIconLarge(emp.gender)}
+                </div>
+              )}
+            </div>
+            <div className="text-center">
+              <h3 className="font-bold text-gray-800 text-base">
+                {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {emp.jobTitleName?.join(" - ") || "-"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}
+              </p>
+              <p className="text-sm text-gray-600">
+                {emp.locationTitle?.join(" - ") || "-"}
+              </p>
+            </div>
+          </div>
 
-                                      return (
-                                        <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
-                                          <div className="flex justify-between items-center mb-1">
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBadge.color}`}>
-                                              {typeBadge.label}
-                                            </span>
-                                            <span className={`text-[10px] px-1.5 py-0.5 rounded  ${sourceBadge.color}`}>
-                                              {sourceBadge.label}
-                                            </span>
-                                          </div>
-                                          <div className="flex justify-between items-center mt-1">
-                                            <span className="text-xs text-gray-500">{contact.title}</span>
-                                            <span className="font-mono text-sm font-semibold text-gray-800 dir-ltr">{contact.value}</span>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
+          {/* ستون چپ: اطلاعات تماس */}
+          <div className="md:col-span-2">
+            <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2">
+              جزییات تماس
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
+                const typeBadge = getContactTypeBadge(contact.type);
+                const sourceBadge = getSourceBadge(contact.source);
+                return (
+                  <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBadge.color}`}>
+                        {typeBadge.label}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${sourceBadge.color}`}>
+                        {sourceBadge.label}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-gray-500">{contact.title}</span>
+                      <span className="font-mono text-sm font-semibold text-gray-800 dir-ltr">{contact.value}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+)}
                         </React.Fragment>
                       );
                     })}

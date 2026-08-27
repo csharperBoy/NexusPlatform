@@ -1,6 +1,7 @@
 // models/PhoneBookEmploymentDto.ts
 
 export interface PhoneBookEmploymentDto {
+  uniqueKey: string; 
   employmentCode: string;
   postCode: string;
   firstName?: string | null;
@@ -13,6 +14,10 @@ export interface PhoneBookEmploymentDto {
   jobLevelTitle: string[];
   locationTitle: string[];
   
+  
+  profilePictureUrl?: string | null;
+  gender?: GenderEnum | null;
+
   contactSummary?: string | null;
   // hasMultipleContacts?: boolean | false;
 
@@ -26,7 +31,11 @@ export interface ContactDetailDto {
  
 
 }
-
+export enum GenderEnum {
+  Male = 1,
+  Female = 2,
+  Other = 3
+}
 export enum ContactTypeEnum {
   Mobile = 1 ,
     Phone = 2,
