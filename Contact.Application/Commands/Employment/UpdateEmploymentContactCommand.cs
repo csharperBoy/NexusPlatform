@@ -15,7 +15,7 @@ namespace Contact.Application.Commands.Employment
     public record UpdateEmploymentContactCommand(
         Guid Id,
         List<string>? OfficePhones,
-         List<string>? OrgEmail,
+         List<string>? OrgEmails,
          List<string>? OrgMobiles
 
 ) : IRequest<Result<Guid>>;
@@ -57,7 +57,7 @@ namespace Contact.Application.Commands.Employment
                     null,
                     null,
                     request.OfficePhones,
-                    request.OrgEmail,
+                    request.OrgEmails,
                     request.OrgMobiles
                     );
                 

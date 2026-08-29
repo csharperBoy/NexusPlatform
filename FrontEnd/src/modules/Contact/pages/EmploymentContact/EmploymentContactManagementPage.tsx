@@ -18,13 +18,9 @@ const columns: GenericColumnDef<EmploymentContactInfoView>[] = [
     key: "fullName",
     label: "نام و نام خانوادگی",
     editable: false,
-    // استفاده از هر دو پارامتر (مقدار سلول و کل آبجکت ردیف) و اعمال Optional Chaining (?)
     render: (value, entity) => {
-      // اگر GenericCrudPage ردیف را به عنوان آرگومان اول پاس می‌دهد، entity در واقع همان value خواهد بود
-      const row = entity || value; 
-      
+      const row = entity || value;
       if (!row) return "-";
-      
       return `${row?.firstName || ""} ${row?.lastName || ""}`.trim() || "-";
     },
   },
@@ -47,7 +43,7 @@ const columns: GenericColumnDef<EmploymentContactInfoView>[] = [
   },
 ];
 
-// ۲. آداپتور API برای تطبیق متدها
+// ۲. آداپتور API
 const crudApiAdapter: GenericCrudApi<
   EmploymentContactInfoView,
   void,
@@ -71,21 +67,20 @@ export const EmploymentContactManagementPage: React.FC = () => {
       crudOptions={{
         api: crudApiAdapter,
         columns: columns,
-        // تبدیل مدل UI به Command مورد نیاز جهت ارسال به سرور
         mapToUpdateCommand: (entity) => ({
           id: entity.id,
-          employmentContactPhone: entity.employmentContactPhone ?? [],
-          employmentContactMobile: entity.employmentContactMobile ?? [],
+          officePhones: entity.employmentContactPhone ?? [],
+          orgMobiles: entity.employmentContactMobile ?? [],
         }),
         pageFeatures:{
-          enableAdd:false
-
+          enableAdd:false,
         },
         tableFeatures: {
-          enableDelete: false,
-          enableSearch: true,          
-          enableColumnFilter: true, // جستجوی مجزای ستونی
-          enableExcelImport: true,  // فعال‌سازی دکمه بارگذاری از اکسل
+          enableSearch: true,
+          enableColumnFilter: true,
+          enableExcelImport: true,
+          enableDelete: false, 
+          
         },
       }}
     />

@@ -52,7 +52,7 @@ namespace Contact.Application.Commands.Employment
                    null,
                    null,
                    command.OfficePhones,
-                   command.OrgEmail,
+                   command.OrgEmails,
                    command.OrgMobiles
                    );
                     
