@@ -22,10 +22,12 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     columns,
   });
 
-  const { features } = crudOptions;
-  const showSearch = features?.enableSearch !== false;
-  const showColumnFilter = features?.enableColumnFilter !== false;
-
+  const { tableFeatures,pageFeatures } = crudOptions;
+  const showSearch = tableFeatures?.enableSearch !== false;
+  const showColumnFilter = tableFeatures?.enableColumnFilter !== false;
+  const showDeleteAction = tableFeatures?.enableDelete !== false;
+  const showAddButton = pageFeatures?.enableAdd !== false;
+  const showActionColumn = tableFeatures?.enableDelete !== false;
   return (
     <div className="space-y-4 p-6">
       {/* Header & Action Bar */}
@@ -46,13 +48,14 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
           >
             {crud.saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
           </button>
-
+ {showAddButton && (
           <button
             onClick={() => crud.setIsAddModalOpen(true)}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             افزودن جدید
           </button>
+ )}
         </div>
       </div>
 
@@ -95,7 +98,9 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                   </div>
                 </th>
               ))}
+               {showActionColumn && (
               <th className="p-3 text-center">عملیات</th>
+               )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -186,14 +191,18 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                       </td>
                     );
                   })}
+                  {showActionColumn && (
                   <td className="p-2 text-center">
+                     {showDeleteAction && (
                     <button
                       onClick={() => crud.prepareDelete(item)}
                       className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       حذف
                     </button>
+                     )}
                   </td>
+                  )}
                 </tr>
               ))
             )}

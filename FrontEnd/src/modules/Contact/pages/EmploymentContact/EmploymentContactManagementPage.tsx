@@ -18,9 +18,15 @@ const columns: GenericColumnDef<EmploymentContactInfoView>[] = [
     key: "fullName",
     label: "نام و نام خانوادگی",
     editable: false,
-    // در صورتی که fullName فیلد ترکیبی باشد با render ترکیب می‌شود
-    render: (entity) =>
-      `${entity.firstName || ""} ${entity.lastName || ""}`.trim() || "-",
+    // استفاده از هر دو پارامتر (مقدار سلول و کل آبجکت ردیف) و اعمال Optional Chaining (?)
+    render: (value, entity) => {
+      // اگر GenericCrudPage ردیف را به عنوان آرگومان اول پاس می‌دهد، entity در واقع همان value خواهد بود
+      const row = entity || value; 
+      
+      if (!row) return "-";
+      
+      return `${row?.firstName || ""} ${row?.lastName || ""}`.trim() || "-";
+    },
   },
   {
     key: "nationalCode",
@@ -71,8 +77,13 @@ export const EmploymentContactManagementPage: React.FC = () => {
           employmentContactPhone: entity.employmentContactPhone ?? [],
           employmentContactMobile: entity.employmentContactMobile ?? [],
         }),
-        features: {
-          enableSearch: true,
+        pageFeatures:{
+          enableAdd:false
+
+        },
+        tableFeatures: {
+          enableDelete: false,
+          enableSearch: true,          
           enableColumnFilter: true, // جستجوی مجزای ستونی
           enableExcelImport: true,  // فعال‌سازی دکمه بارگذاری از اکسل
         },

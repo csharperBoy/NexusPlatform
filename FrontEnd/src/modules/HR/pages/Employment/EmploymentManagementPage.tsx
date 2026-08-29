@@ -91,12 +91,15 @@ columns: employeeColumns,
     LastName: formData.lastName,
     locationsId: formData.locationsId || [],
   }),
-
-  features: {
+pageFeatures:{
+enableAdd: true,
+},
+  tableFeatures: {
     enableExcelImport: true,
     enableExcelExport: true,
     enableSearch: true,
     enableColumnFilter: true,
+    enableDelete:true,
   },
 };
 

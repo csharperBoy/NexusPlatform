@@ -54,7 +54,12 @@ export const LocationContactManagementPage: React.FC = () => {
           officePhone: entity.orgPhone ?? [],
           orgMobile: entity.orgMobile ?? [],
         }),
-        features: {
+          pageFeatures:{
+          enableAdd:false
+
+        },
+        tableFeatures: {
+          enableDelete: false,
           enableSearch: true,
           enableColumnFilter: false,
         },

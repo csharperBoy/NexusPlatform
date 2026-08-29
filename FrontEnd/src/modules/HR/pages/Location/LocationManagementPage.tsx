@@ -32,12 +32,15 @@ columns: columns,
   mapToCreateCommand: (formData) => ({
     title: formData.title || "",
   }),
-
-  features: {
+pageFeatures:{
+enableAdd: true,
+},
+  tableFeatures: {
     enableSearch: true,
     enableColumnFilter: true,
     enableExcelImport: true,
     enableExcelExport: true,
+    enableDelete: true,
   },
 };
 

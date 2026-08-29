@@ -105,7 +105,6 @@ export const usePostManagement = () => {
 
       // ✅ cast امن با as unknown
        const list = (data || []) as unknown as PostInfoDto[];
-    //  const list = Array.isArray(data) ? data : [];
       setPosts(list);
       setInitialPosts(JSON.parse(JSON.stringify(list)));
       setLocations(locList || []);

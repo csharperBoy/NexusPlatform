@@ -33,8 +33,11 @@ export interface TableFeatures {
   enableExcelExport?: boolean;
   enableSearch?: boolean;
   enableColumnFilter?: boolean;
+  enableDelete?: boolean;
 }
-
+export interface PageFeatures {
+  enableAdd?: boolean;
+}
 export interface UseGenericCrudOptions<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   api: GenericCrudApi<T, TCreateCmd, TUpdateCmd>;
   columns: GenericColumnDef<T>[];
@@ -43,7 +46,8 @@ export interface UseGenericCrudOptions<T extends BaseEntity, TCreateCmd, TUpdate
   mapToCreateCommand?: (formData: Record<string, any>) => TCreateCmd;
   transformApiData?: (data: T[]) => T[];
   excelMatchKey?: keyof T;
-  features?: TableFeatures;
+  tableFeatures?: TableFeatures;
+  pageFeatures?: PageFeatures;
 }
 
 export interface DeleteTarget<T> {
