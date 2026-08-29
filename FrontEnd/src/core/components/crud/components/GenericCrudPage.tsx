@@ -4,6 +4,7 @@ import { BaseEntity, GenericColumnDef, UseGenericCrudOptions } from "../types";
 import { useGenericCrud } from "../hooks/useGenericCrud";
 import { GenericAddModal } from "./GenericAddModal";
 import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
+import { TagInput } from "../../Input/TagInput";
 
 interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
@@ -146,6 +147,13 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                                 crud.handleFieldChange(item.id, key, selected)
                               }
                             />
+                          ) : col.type === "taginput" ? (
+                            <TagInput
+                              value={(value as string[]) || []}
+                              onChange={(selected) =>
+                                crud.handleFieldChange(item.id, key, selected)
+                              }
+                            />                            
                           ) : col.type === "boolean" ? (
                             <input
                               type="checkbox"

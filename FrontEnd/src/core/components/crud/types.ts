@@ -6,7 +6,7 @@ export interface BaseEntity {
   id: string | number;
 }
 
-export type ColumnType = "text" | "number" | "select" | "multi-select" | "date" | "boolean";
+export type ColumnType = "text" | "number" | "select" | "multi-select" | "taginput" | "date" | "boolean";
 
 export interface GenericColumnDef<T> {
   key: keyof T | string;

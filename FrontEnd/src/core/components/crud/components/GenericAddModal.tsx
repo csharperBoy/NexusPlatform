@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { GenericColumnDef } from "../types";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
+import { TagInput } from "../../Input/TagInput";
 
 interface GenericAddModalProps<T> {
   isOpen: boolean;
@@ -90,6 +91,11 @@ export function GenericAddModal<T>({
                       value={formData[key] || []}
                       onChange={(selected) => handleChange(key, selected)}
                     />
+                  ) : col.type === "taginput" ? (
+                    <TagInput
+                      value={formData[key] || []}
+                      onChange={(selected) => handleChange(key, selected)}
+                    />  
                   ) : col.type === "boolean" ? (
                     <input
                       type="checkbox"
