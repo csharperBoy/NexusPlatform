@@ -110,6 +110,7 @@ namespace HR.Infrastructure.Services
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, loc.FkContactProfileId);
             }
+            loc.AddDomainEvent(new ChangeLocationEvent(loc.Id));
             return loc.Id;
         }
 

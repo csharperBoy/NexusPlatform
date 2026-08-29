@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Core.Presentation\Core.Presentation.csproj" />
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
     <ProjectReference Include="..\HR.Application\HR.Application.csproj" />
+    <ProjectReference Include="..\People.Presentation\People.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

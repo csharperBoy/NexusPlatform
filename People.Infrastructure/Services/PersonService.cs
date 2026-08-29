@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using People.Application.Interfaces;
 using People.Domain.Entities;
 using People.Domain.Enums;
+using People.Domain.Events;
 using People.Domain.Specifications;
 using People.Infrastructure.Data;
 using System;
@@ -156,6 +157,8 @@ namespace People.Infrastructure.Services
             await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
             await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address, person.Party.FkContactProfileId);
             await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+
+             person.AddDomainEvent(new ChangeNaturalPersonEvent(person.Id));
         }
     }
 }

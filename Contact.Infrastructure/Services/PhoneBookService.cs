@@ -2,6 +2,7 @@
 using Contact.Application.Interfaces;
 using Contact.Application.Mapping;
 using Contact.Domain.Entities;
+using Contact.Domain.Helper;
 using Contact.Domain.Specifications;
 using Contact.Infrastructure.Data;
 using Core.Application.Abstractions;
@@ -39,7 +40,6 @@ namespace Contact.Infrastructure.Services
         private readonly ILogger<PhoneBookService> _logger;
         private readonly ICachePublicService _cacheService;
 
-        private readonly string baseCacheKey = "contact:phonebook";
         private readonly IContactInternalService _contactService;
         public PhoneBookService(ILogger<PhoneBookService> logger,
             ISpecificationRepository<PhoneBookInfoView, Guid> PhoneBookSpecRepository,
@@ -67,7 +67,7 @@ namespace Contact.Infrastructure.Services
 
         public async Task<IReadOnlyList<PhoneBookEmploymentDto>> GetPhoneBookListAsync(Guid? organUnitId)
         {
-            var cacheKey = $"{baseCacheKey}:full-list";
+            var cacheKey = CacheKeyHelper.PhoneBook_GetPhoneBookList;
 
             var cached = await _cacheService.GetAsync<IReadOnlyList<PhoneBookEmploymentDto>>(cacheKey);
             if (cached != null)

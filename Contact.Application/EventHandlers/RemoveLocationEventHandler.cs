@@ -1,5 +1,7 @@
 ﻿using Contact.Application.Interfaces;
+using Contact.Domain.Helper;
 using Core.Application.Abstractions;
+using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Common.Events;
 using HR.Domain.Events.Location;
 using MediatR;
@@ -18,11 +20,14 @@ namespace Contact.Application.EventHandlers
     public class RemoveLocationEventHandler : DomainEventHandler<RemoveLocationEvent>
     {
         private readonly IContactInternalService _service;
+        private readonly ICachePublicService _cacheService;
         private readonly IReadOnlyPolicyRegistry<string> _policies;
-        public RemoveLocationEventHandler(IContactInternalService service, ILogger<DomainEventHandler<RemoveLocationEvent>> logger, IReadOnlyPolicyRegistry<string> policies)  : base(logger) // لاگ استاندارد از کلاس پایه
+        public RemoveLocationEventHandler(IContactInternalService service,
+            ICachePublicService cacheService, ILogger<DomainEventHandler<RemoveLocationEvent>> logger, IReadOnlyPolicyRegistry<string> policies)  : base(logger) // لاگ استاندارد از کلاس پایه
         {
             _service = service;
             _policies = policies;
+            _cacheService = cacheService;
         }
 
         // فقط منطق اصلی هندل کردن رویداد اینجا نوشته می‌شود
@@ -36,6 +41,7 @@ namespace Contact.Application.EventHandlers
                 await _service.DeActiveContactProfileAsync(_event.ProfileId);
                 await _service.ExpireAllContactAsync(_event.ProfileId);
                 await _service.SaveAsync();
+                await _cacheService.RemoveByPatternAsync($"{CacheKeyHelper.PhoneBook_BaseChacheKey}:*");
             }, cancellationToken);
         }
 

@@ -28,7 +28,7 @@ namespace HR.Application.Commands.Employment
     #endregion
     #region Person
 
-     string? FirstlName,
+     string? FirstName,
      string? LastName,
      DateTime? BirthDate,
      string? BirthPlace,

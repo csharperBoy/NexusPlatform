@@ -22,6 +22,7 @@ using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using People.Domain.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -147,6 +148,11 @@ namespace HR.Infrastructure.Services
             if (toAdd.Any())
             {
                 await _employmentLocationsRepository.AddRangeAsync(toAdd);
+                foreach (var item in toAdd)
+                {
+                    item.AddDomainEvent(new ChangeEmploymentEvent(item.Id));
+
+                }
             }
 
         }
@@ -189,6 +195,7 @@ namespace HR.Infrastructure.Services
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, emp.FkContactProfileId);
             }
+            emp.AddDomainEvent(new ChangeEmploymentEvent(emp.Id));
             return emp.Id;
         }
 
@@ -322,5 +329,7 @@ namespace HR.Infrastructure.Services
             }).ToList();
             return result;
         }
+
+       
     }
 }

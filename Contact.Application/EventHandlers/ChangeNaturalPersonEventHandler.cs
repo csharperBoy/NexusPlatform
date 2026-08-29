@@ -2,8 +2,9 @@
 using Contact.Domain.Helper;
 using Core.Application.Abstractions.Caching.PublicService;
 using Core.Application.Common.Events;
-using HR.Domain.Events.Post;
+using HR.Domain.Events.Location;
 using Microsoft.Extensions.Logging;
+using People.Domain.Events;
 using Polly;
 using Polly.Registry;
 using System;
@@ -14,35 +15,29 @@ using System.Threading.Tasks;
 
 namespace Contact.Application.EventHandlers
 {
-    public class RemovePostEventHandler : DomainEventHandler<RemovePostEvent>
+    public class ChangeNaturalPersonEventHandler : DomainEventHandler<ChangeNaturalPersonEvent>
     {
-        private readonly IContactInternalService _service;
         private readonly ICachePublicService _cacheService;
         private readonly IReadOnlyPolicyRegistry<string> _policies;
-        public RemovePostEventHandler(IContactInternalService service,
-            ICachePublicService cacheService, ILogger<DomainEventHandler<RemovePostEvent>> logger, IReadOnlyPolicyRegistry<string> policies) : base(logger) // لاگ استاندارد از کلاس پایه
+        public ChangeNaturalPersonEventHandler(
+            ICachePublicService cacheService, ILogger<DomainEventHandler<ChangeNaturalPersonEvent>> logger, IReadOnlyPolicyRegistry<string> policies) : base(logger) // لاگ استاندارد از کلاس پایه
         {
-            _service = service;
             _policies = policies;
             _cacheService = cacheService;
         }
 
         // فقط منطق اصلی هندل کردن رویداد اینجا نوشته می‌شود
 
-        protected override async Task HandleEventAsync(RemovePostEvent _event, CancellationToken cancellationToken)
+        protected override async Task HandleEventAsync(ChangeNaturalPersonEvent _event, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("RemovePostEventHandler In Contact Start!!!");
+            _logger.LogInformation("ChangeNaturalPersonEventHandler In Contact Start!!!");
             var policy = _policies.Get<IAsyncPolicy>("DefaultRetry");
             await policy.ExecuteAsync(async ct =>
             {
-                await _service.DeActiveContactProfileAsync(_event.FkContactProfileId);
-                await _service.ExpireAllContactAsync(_event.FkContactProfileId);
-                await _service.SaveAsync();
                 await _cacheService.RemoveByPatternAsync($"{CacheKeyHelper.PhoneBook_BaseChacheKey}:*");
             }, cancellationToken);
         }
 
 
     }
-
 }

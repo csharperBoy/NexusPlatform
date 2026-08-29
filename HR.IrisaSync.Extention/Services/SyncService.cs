@@ -10,7 +10,8 @@ using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-
+using HR.Domain.Events.Employment;
+using HR.Domain.Events.Post;
 using HR.Infrastructure.Data;
 using HR.Infrastructure.Services;
 using HR.IrisaSync.Extention.Contexts;
@@ -44,6 +45,7 @@ namespace HR.IrisaSync.Extention.Services
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
         private readonly IIrisaSyncUnitOfWork<IrisaExtentionDbContext> _uow;
         private readonly IEmploymentInternalService _employmentService;
+        private readonly IPostInternalService _postService;
         private readonly IMapService _mapService;
         private readonly IPersonPublicService _personService;
         private readonly IContactPublicService _contactService;
@@ -51,6 +53,7 @@ namespace HR.IrisaSync.Extention.Services
         public SyncService(ISpecificationRepository<PdsIdeaInformationViw, string> repoSpec,
             IHRUnitOfWork<HRDbContext> hrUow, IIrisaSyncUnitOfWork<IrisaExtentionDbContext> uow,
             IEmploymentInternalService employmentService,
+            IPostInternalService postService,
             IPersonPublicService personService,
             IContactPublicService contactService,
             IMapService mapService,
@@ -60,6 +63,7 @@ namespace HR.IrisaSync.Extention.Services
             _mapService = mapService;
             _mediator = mediator;
             _employmentService = employmentService;
+            _postService = postService;
             _contactService = contactService;
             _irisaRepo = irisaRepo;
             _repoSpec = repoSpec;
@@ -139,22 +143,10 @@ namespace HR.IrisaSync.Extention.Services
                         // 7. بررسی وجود کارمند در دیتابیس
                         if (employmentDict.TryGetValue(personalCode, out var existingEmployment))
                         {
-                            // ➡️ کارمند موجود است → به‌روزرسانی از طریق MediatR
-                            /* var updateCommand = new UpdateEmploymentCommand(
-                                 // پارامترهای مورد نیاز برای به‌روزرسانی
-                                 // (همان فیلدهای CreateEmploymentCommand به اضافه Id یا PersonalCode)
-                                 PersonalCode: personalCode,
-                                 FirstName: item.NamFirstEmply,
-                                 LastName: item.NamLastEmply,
-                                 // ... سایر فیلدها
-                                 PostId: postId,
-                                 // ...
-                             );
-
-                             var updateResult = await _mediator.Send(updateCommand);*/
+                            await _postService.AssignToEmploymentAsync(new List<Guid> { postId }, existingEmployment.Id);
                             // در صورت موفقیت، تعداد به‌روز شده را افزایش بده
                             result.UpdatedCount++;
-
+                            existingEmployment.AddDomainEvent(new ChangeEmploymentEvent(existingEmployment.Id));
                             // حذف از دیکشنری تا بعداً متوجه شویم کدام کارمندها حذف می‌شوند
                             employmentDict.Remove(personalCode);
                         }
@@ -197,8 +189,8 @@ namespace HR.IrisaSync.Extention.Services
                 foreach (var emp in employmentsToDelete)
                 {
                     // فرض کنید یک Command برای حذف یا غیرفعال‌سازی دارید
-                    /*  var deleteCommand = new DeactivateEmploymentCommand(emp.Id);
-                      await _mediator.Send(deleteCommand);*/
+                      var deleteCommand = new DeleteEmploymentCommand(emp.Id);
+                      await _mediator.Send(deleteCommand);
                     result.DeletedCount++;
                 }
 
@@ -304,13 +296,16 @@ namespace HR.IrisaSync.Extention.Services
                                     costCenterId: null, // در صورت نیاز
                                     parentId: null      // در صورت نیاز
                                 );
+
+                                existingPost.AddDomainEvent(new ChangePostEvent(existingPost.Id));
                                 hasChanges = true;
                             }
 
                             // در صورت تغییر، به لیست به‌روز اضافه کن
                             if (hasChanges)
+                            {
                                 postsToUpdate.Add(existingPost);
-
+                            }
                             // حذف از دیکشنری تا بعداً متوجه بشیم کدوم پست‌ها حذف شدن
                             existingDict.Remove(key);
                         }

@@ -1,5 +1,6 @@
 ﻿using Contact.Application.Interfaces;
 using Contact.Domain.Entities;
+using Contact.Domain.Events;
 using Contact.Domain.Specifications;
 using Contact.Infrastructure.Data;
 using Core.Application.Abstractions;
@@ -19,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Contact.Infrastructure.Services
 {
@@ -68,38 +70,6 @@ namespace Contact.Infrastructure.Services
 
 
 
-        //public async Task CreateContact(ContactTypeEnum type, List<string>? values, Guid profileId)
-        //{
-        //    if (values != null)
-        //    {
-        //        // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)               
-        //        GetContactResourceSpec spec = new GetContactResourceSpec(type, profileId);
-        //        IEnumerable<ContactResource>? existContact = await _contactItemSpecRepository.ListBySpecAsync(spec);
-
-        //        // ۲. مجموعه‌های شناسه‌ها برای مقایسه (حذف تکراری‌های ورودی)
-        //        var existingValues = existContact.Select(e => e.Value).ToHashSet();
-        //        var newValues = values.Distinct().ToHashSet();
-
-        //        // ۳. مکان‌هایی که باید منقضی شوند (موجود اما در لیست جدید نیستند)
-        //        var toExpire = existContact.Where(e => !newValues.Contains(e.Value)).ToList();
-        //        foreach (var item in toExpire)
-        //        {
-        //            await item.DoExpire();
-        //        }
-
-        //        // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
-        //        var toAdd = newValues
-        //            .Where(val => !existingValues.Contains(val))
-        //            .Select(val => new ContactResource(type, val, profileId, DateTime.UtcNow))
-        //            .ToList();
-
-        //        if (toAdd.Any())
-        //        {
-        //            await _contactItemRepository.AddRangeAsync(toAdd);
-        //        }
-
-        //    }
-        //}
         public async Task SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId)
         {
             var newValues = values?.Distinct().ToHashSet() ?? new HashSet<string>();
@@ -118,6 +88,7 @@ namespace Contact.Infrastructure.Services
             foreach (var assignment in assignmentsToExpire)
             {
                 assignment.DoExpire(); // غیرفعال کردن انتساب (IsCurrent = false, EffectiveTo = UtcNow)
+                assignment.AddDomainEvent(new ChangeContactProfileResourcesEvent(assignment.ContactProfileId));
             }
 
             // ۳. پردازش مقادیر جدید که باید منتسب شوند
@@ -134,11 +105,13 @@ namespace Contact.Infrastructure.Services
                 {
                     resource = new ContactResource(type, val);
                     await _contactResourceRepository.AddAsync(resource);
+                   
                 }
 
                 // ج) ایجاد انتساب جدید بین پروفایل و شماره کاتالوگ
                 var newAssignment = new ContactProfileAssignment(profileId, resource.Id, DateTime.UtcNow);
                 await _assignmentRepository.AddAsync(newAssignment);
+                newAssignment.AddDomainEvent(new ChangeContactProfileResourcesEvent(newAssignment.ContactProfileId));
             }
         }
 
@@ -146,6 +119,7 @@ namespace Contact.Infrastructure.Services
         {
             var newModel = new ContactProfile(Title, Type);
             await _contactProfileRepository.AddAsync(newModel);
+
             return newModel.Id;
         }
 
@@ -187,6 +161,8 @@ namespace Contact.Infrastructure.Services
             if (profile == null)
                 throw new Exception("Can Not Found Profile!!!");
             profile.DeActive();
+
+            profile.AddDomainEvent(new ChangeContactProfileResourcesEvent(profile.Id));
         }
         public async Task ExpireAllContactAsync(Guid profileId)
         {
@@ -199,6 +175,8 @@ namespace Contact.Infrastructure.Services
             foreach (var assignment in activeAssignments)
             {
                 assignment.DoExpire(); // تنظیم IsCurrent = false و EffectiveTo = UtcNow
+
+                assignment.AddDomainEvent(new ChangeContactProfileResourcesEvent(assignment.ContactProfileId));
             }
         }
     }

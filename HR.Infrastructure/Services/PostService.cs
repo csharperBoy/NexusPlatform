@@ -13,6 +13,7 @@ using HR.Application.Interfaces;
 using HR.Domain.Entities;
  
 using HR.Domain.Events.Employment;
+using HR.Domain.Events.Location;
 using HR.Domain.Events.Post;
 using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
@@ -108,6 +109,11 @@ namespace HR.Infrastructure.Services
             if (toAdd.Any())
             {
                 await _postLocationsRepository.AddRangeAsync(toAdd);
+                foreach (var item in toAdd)
+                {
+
+                    item.AddDomainEvent(new ChangePostEvent(item.Id));
+                }
             }
 
         }
@@ -143,37 +149,101 @@ namespace HR.Infrastructure.Services
             }
         }
 
-        public async Task<Guid> AssignToEmploymentAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null)
+        public async Task<Guid> AssignToEmploymentAsync(
+     List<Guid> postIds,
+     Guid employmentId,
+     PostAssignmentType? assigneType = null,
+     DateTime? effectiveFrom = null,
+     DateTime? effectiveTo = null)
         {
-            Assignment assign = new Assignment(postId, employmentId, assigneType, EffectiveFrom, EffectiveTo);
-            var assignments = await GetPostAssignmentAsync(postId);
-            if (assignments?.Count > 0)
-            {
-                foreach (var item in assignments)
-                {
-                    item.DoExpire();
-                    await _assignmentRepository.UpdateAsync(item);
+            // ۱. دریافت انتساب‌های فعال فعلی این شخص
+            var existingAssignments = await GetEmploymentAssignmentAsync(employmentId);
+            var existingPostIds = existingAssignments?.Select(a => a.FkPostId).ToHashSet();
 
-                }
+            // ۲. مجموعه پست‌های جدید (بدون تکراری)
+            var newPostIds = postIds.Distinct().ToHashSet();
+
+            // ۳. انتساب‌هایی که باید منقضی شوند (فعال قبلی، ولی در لیست جدید نیستند)
+            var toExpire = existingAssignments?
+                .Where(a => !newPostIds.Contains(a.FkPostId))
+                .ToList();
+
+            foreach (var item in toExpire)
+            {
+                item.DoExpire();
+                // اگر از ChangeTracker استفاده می‌کنید، نیازی به Update صریح نیست
+                // ولی اگر Repository شما جداگانه است، می‌توانید آن را به لیست Update اضافه کنید
+                await _assignmentRepository.UpdateAsync(item);
             }
-            await _assignmentRepository.AddAsync(assign);
-            return assign.Id;
+
+            // ۴. انتساب‌های جدید (پست‌هایی که در لیست جدید هستند ولی قبلاً فعال نبودند)
+            var toAdd = newPostIds
+                .Where(postId => !existingPostIds.Contains(postId))
+                .Select(postId => new Assignment(postId, employmentId, assigneType, effectiveFrom, effectiveTo))
+                .ToList();
+
+            if (toAdd.Any())
+            {
+                // ۴-۱. ذخیره‌سازی گروهی (بهینه)
+                await _assignmentRepository.AddRangeAsync(toAdd);
+
+                // ۴-۲. افزودن رویداد به هر انتساب جدید (می‌توانید این کار را در سازنده هم انجام دهید)
+                foreach (var assignment in toAdd)
+                {
+                    assignment.AddDomainEvent(new ChangePostEvent(assignment.Id));
+                }
+
+                // در صورت نیاز، شناسه اولین انتساب جدید را برگردانید
+                return toAdd.First().Id;
+            }
+
+            // اگر هیچ انتساب جدیدی اضافه نشد، می‌توانید Guid.Empty برگردانید یا یک استثنا پرتاب کنید
+            return Guid.Empty;
         }
-        public async Task<Guid> AssignToPostAsync(Guid postId, Guid employmentId, PostAssignmentType? assigneType = null, DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null)
+        public async Task<Guid> AssignToPostAsync(
+     Guid postId,
+     List<Guid> employmentIds,
+     PostAssignmentType? assigneType = null,
+     DateTime? effectiveFrom = null,
+     DateTime? effectiveTo = null)
         {
-            Assignment assign = new Assignment(postId, employmentId, assigneType, EffectiveFrom, EffectiveTo);
-            var assignments = await GetEmploymentAssignmentAsync(employmentId);
-            if (assignments?.Count > 0)
-            {
-                foreach (var item in assignments)
-                {
-                    item.DoExpire();
-                    await _assignmentRepository.UpdateAsync(item);
+            // ۱. دریافت انتساب‌های فعال فعلی این پست
+            var existingAssignments = await GetPostAssignmentAsync(postId);
+            var existingEmploymentIds = existingAssignments?.Select(a => a.FkEmploymentId).ToHashSet();
 
-                }
+            // ۲. مجموعه اشخاص جدید (بدون تکراری)
+            var newEmploymentIds = employmentIds.Distinct().ToHashSet();
+
+            // ۳. انتساب‌هایی که باید منقضی شوند (فعال قبلی، ولی در لیست جدید نیستند)
+            var toExpire = existingAssignments?
+                .Where(a => !newEmploymentIds.Contains(a.FkEmploymentId))
+                .ToList();
+
+            foreach (var item in toExpire)
+            {
+                item.DoExpire();
+                await _assignmentRepository.UpdateAsync(item);
             }
-            await _assignmentRepository.AddAsync(assign);
-            return assign.Id;
+
+            // ۴. انتساب‌های جدید (اشخاصی که در لیست جدید هستند ولی قبلاً برای این پست فعال نبودند)
+            var toAdd = newEmploymentIds
+                .Where(empId => !existingEmploymentIds.Contains(empId))
+                .Select(empId => new Assignment(postId, empId, assigneType, effectiveFrom, effectiveTo))
+                .ToList();
+
+            if (toAdd.Any())
+            {
+                await _assignmentRepository.AddRangeAsync(toAdd);
+
+                foreach (var assignment in toAdd)
+                {
+                    assignment.AddDomainEvent(new ChangePostEvent(assignment.Id));
+                }
+
+                return toAdd.First().Id;
+            }
+
+            return Guid.Empty;
         }
 
 
@@ -303,6 +373,7 @@ namespace HR.Infrastructure.Services
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, post.FkContactProfileId);
             }
+            post.AddDomainEvent(new ChangePostEvent(post.Id));
             return post.Id;
         }
         public async Task<IReadOnlyList<PostInfoDto>> GetPostListAsync()
