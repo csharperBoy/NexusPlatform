@@ -72,6 +72,7 @@ namespace HR.IrisaSync.Extention.DependencyInjection
             services.AddScoped<ISpecificationRepository<PdsIdeaInformationViw, string>, EfSpecificationRepository<IrisaOracleDbContext, PdsIdeaInformationViw, string>>();
 
             services.AddScoped<IIrisaSyncUnitOfWork<IrisaExtentionDbContext>, IrisaSyncUnitOfWork>();
+            services.AddHostedService<ModuleInitializer>();
 
             services.AddControllers()
              .AddApplicationPart(typeof(IrisaSyncController).Assembly)

@@ -64,8 +64,7 @@ namespace HR.IrisaSync.Extention.Commands
             {
                 _logger.LogError(
                     ex,
-                    "Failed to Delete Employment: {Id}",
-                     request.Id);
+                    "Failed to Sync!!!");
 
                 return Result<Dictionary<string, SyncResult>>.Fail(ex.Message);
             }
