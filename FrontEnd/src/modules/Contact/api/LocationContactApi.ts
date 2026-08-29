@@ -21,7 +21,7 @@ export const locationContactApi = {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdateLocationsContact: async (commands: UpdateLocationContactCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdateLocationContactCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/Contact/LocationContact/batch`,
@@ -42,7 +42,7 @@ export const locationContactApi = {
   },
   
 // ویرایش منبع (PUT)
-  updateLocationContact: async (data: UpdateLocationContactCommand): Promise<boolean> => {
+  update: async (data: UpdateLocationContactCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/Contact/LocationContact/${data.id}`, data,

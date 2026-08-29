@@ -21,7 +21,7 @@ export const employmentContactApi = {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdateEmploymentsContact: async (commands: UpdateEmploymentContactCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdateEmploymentContactCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/contact/EmploymentContact/batch`,
@@ -42,7 +42,7 @@ export const employmentContactApi = {
   },
   
 // ویرایش منبع (PUT)
-  updateEmploymentContact: async (data: UpdateEmploymentContactCommand): Promise<boolean> => {
+  update: async (data: UpdateEmploymentContactCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/contact/EmploymentContact/${data.id}`, data,

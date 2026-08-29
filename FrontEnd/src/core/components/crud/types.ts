@@ -19,8 +19,6 @@ export interface GenericColumnDef<T> {
   className?: string;
   render?: (value: any, item: T) => React.ReactNode;
 }
-
-
 // بخشی از types.ts
 export interface GenericCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   getList: () => Promise<T[]>;
