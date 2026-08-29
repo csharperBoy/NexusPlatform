@@ -16,6 +16,15 @@ GetJobTitleSelectionList: async (): Promise<SelectionListDto[]> => {
     console.log(response)
     return response.data;
   },
+  GetGradeSelectionList: async (): Promise<SelectionListDto[]> => {
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/hr/OrgChart/Grade/GetSelectionList",
+      {  withCredentials: true }
+    );
+    console.log(response)
+    return response.data;
+  },
   GetOrganizationUnitSelectionList: async (): Promise<SelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<SelectionListDto[]>(
@@ -36,7 +45,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
   },
  // دریافت پست ها (GET)
   gtList: async (): Promise<PostInfoView[]> => {
-    
+    console.log('get list post:')
     const api = getAPI(API_MODULE);
     
     const response = await api.get<PostInfoView[]>(

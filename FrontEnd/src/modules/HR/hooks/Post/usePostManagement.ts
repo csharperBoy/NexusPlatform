@@ -99,14 +99,13 @@ export const usePostManagement = () => {
         postApi.GetJobTitleSelectionList(),
         postApi.GetOrganizationUnitSelectionList(),
         postApi.GetJobLevelSelectionList(),
-        // اگر API برای Grades ندارید، خالی بگذارید
-        Promise.resolve([] as SelectionListDto[]),
-        postApi.gtList // ← فرض می‌کنیم این متد الان PostInfoDto[] برمی‌گرداند
+        postApi.GetGradeSelectionList(),
+        postApi.gtList() // ← فرض می‌کنیم این متد الان PostInfoDto[] برمی‌گرداند
       ]);
 
       // ✅ cast امن با as unknown
-      const list = (data || []) as unknown as PostInfoDto[];
-
+       const list = (data || []) as unknown as PostInfoDto[];
+    //  const list = Array.isArray(data) ? data : [];
       setPosts(list);
       setInitialPosts(JSON.parse(JSON.stringify(list)));
       setLocations(locList || []);

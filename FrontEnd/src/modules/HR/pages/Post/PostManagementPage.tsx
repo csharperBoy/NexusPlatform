@@ -220,6 +220,9 @@ export const PostManagementPage: React.FC = () => {
               <th className="sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 text-center w-24 border-b border-gray-200 shadow-sm">
                 وضعیت
               </th>
+                <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-10 h-[38px] text-center border-b border-gray-200 shadow-sm">              
+               
+              </th>
             </tr>
 
             {/* ردیف سرچ ستونی */}
@@ -272,6 +275,7 @@ export const PostManagementPage: React.FC = () => {
                 />
               </th>
               <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
+                 <th className=" top-[38px] z-20 bg-gray-50 py-1.5 px-2 border-b border-gray-200 shadow-sm"></th>
             </tr>
           </thead>
 
