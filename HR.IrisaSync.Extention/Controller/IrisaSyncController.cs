@@ -1,6 +1,7 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
 using Core.Shared.Results;
+using HR.IrisaSync.Extention.Commands;
 using HR.IrisaSync.Extention.Interface;
 using HR.IrisaSync.Extention.Queries;
 using Microsoft.AspNetCore.Mvc;
@@ -22,6 +23,14 @@ namespace HR.IrisaSync.Extention.Controller
             _syncService = syncService;
         }
 
+        [HttpGet("syncWithIrisa")]
+        [AuthorizeResource("hr.irisasync", "View")]
+        public async Task<IActionResult> SyncWithIrisa([FromQuery] SyncWithIrisaCommand? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        /*
         [HttpGet("GetList")]
         //[AuthorizeResource("hr.orgchart", "View")]
         public async Task<IActionResult> GetList([FromQuery] GetEmploymentQuery? request = null)
@@ -39,7 +48,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("FillJobTitle")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> FillJobTitle()
+        public async Task<IActionResult> SyncJobTitle()
         {
             await _syncService.SyncJobTitle();
 
@@ -47,7 +56,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("FillJobLevel")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> FillJobLevel()
+        public async Task<IActionResult> SyncJobLevel()
         {
             await _syncService.SyncJobLevel();
 
@@ -55,7 +64,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("FillOrganizationUnit")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> FillOrganizationUnit()
+        public async Task<IActionResult> SyncOrganizationUnit()
         {
             await _syncService.SyncOrganizationUnit();
 
@@ -63,12 +72,13 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("FillPost")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> FillPost()
+        public async Task<IActionResult> SyncPost()
         {
             await _syncService.SyncPostAsync();
 
             return HandleResult(Result<bool>.Ok(true));
         }
+        */
     }
 
 }

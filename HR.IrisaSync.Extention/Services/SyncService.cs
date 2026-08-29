@@ -10,7 +10,7 @@ using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
- 
+
 using HR.Infrastructure.Data;
 using HR.Infrastructure.Services;
 using HR.IrisaSync.Extention.Contexts;
@@ -68,22 +68,10 @@ namespace HR.IrisaSync.Extention.Services
             _personService = personService;
         }
 
-        public async Task SyncEmployements()
-        {
-            //var hrEmployments = await _hrUow.EmploymentRepository.GetAllAsync();
-            var irisaEmployments = (await _irisaRepo.GetAllAsync()).Where(a => a.CodEmtyp == true && a.NumPrsnEmply == 310);
-            
-            foreach (var item in irisaEmployments)
-            {
-                //await syncEmployment(item);
-            }
 
-        }
         public async Task<SyncResult> SyncEmploymentsAsync()
         {
             var result = new SyncResult();
-
-            //using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
             try
             {
@@ -93,7 +81,7 @@ namespace HR.IrisaSync.Extention.Services
                     .ToList();
 
                 // 2. دریافت مپ عنوان‌های شغلی
-                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync()).Where(a=>a.IrisaJobTitleId!=null)
+                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync()).Where(a => a.IrisaJobTitleId != null)
                     .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
 
                 // 3. دریافت تمام پست‌های موجود و ساخت دیکشنری (JobTitleId, Code) -> Post
@@ -115,7 +103,7 @@ namespace HR.IrisaSync.Extention.Services
                 var employmentsToDelete = new List<Employment>();
 
                 // 6. گروه‌بندی کارمندان ویو بر اساس CodJobpo
-                var employmentGroups = irisaEmployments.Where(a=>a.CodJobpo != null)
+                var employmentGroups = irisaEmployments.Where(a => a.CodJobpo != null)
                     .GroupBy(e => e.CodJobpo)
                     .ToList();
 
@@ -152,18 +140,18 @@ namespace HR.IrisaSync.Extention.Services
                         if (employmentDict.TryGetValue(personalCode, out var existingEmployment))
                         {
                             // ➡️ کارمند موجود است → به‌روزرسانی از طریق MediatR
-                           /* var updateCommand = new UpdateEmploymentCommand(
-                                // پارامترهای مورد نیاز برای به‌روزرسانی
-                                // (همان فیلدهای CreateEmploymentCommand به اضافه Id یا PersonalCode)
-                                PersonalCode: personalCode,
-                                FirstName: item.NamFirstEmply,
-                                LastName: item.NamLastEmply,
-                                // ... سایر فیلدها
-                                PostId: postId,
-                                // ...
-                            );
+                            /* var updateCommand = new UpdateEmploymentCommand(
+                                 // پارامترهای مورد نیاز برای به‌روزرسانی
+                                 // (همان فیلدهای CreateEmploymentCommand به اضافه Id یا PersonalCode)
+                                 PersonalCode: personalCode,
+                                 FirstName: item.NamFirstEmply,
+                                 LastName: item.NamLastEmply,
+                                 // ... سایر فیلدها
+                                 PostId: postId,
+                                 // ...
+                             );
 
-                            var updateResult = await _mediator.Send(updateCommand);*/
+                             var updateResult = await _mediator.Send(updateCommand);*/
                             // در صورت موفقیت، تعداد به‌روز شده را افزایش بده
                             result.UpdatedCount++;
 
@@ -209,8 +197,8 @@ namespace HR.IrisaSync.Extention.Services
                 foreach (var emp in employmentsToDelete)
                 {
                     // فرض کنید یک Command برای حذف یا غیرفعال‌سازی دارید
-                  /*  var deleteCommand = new DeactivateEmploymentCommand(emp.Id);
-                    await _mediator.Send(deleteCommand);*/
+                    /*  var deleteCommand = new DeactivateEmploymentCommand(emp.Id);
+                      await _mediator.Send(deleteCommand);*/
                     result.DeletedCount++;
                 }
 
@@ -224,48 +212,6 @@ namespace HR.IrisaSync.Extention.Services
                 throw;
             }
         }
-        /*
-        private async Task syncEmployment(PdsIdeaInformationViw item)
-        {
-            #region تعیین اینکه آیا کارمند جدید است یا از قبل وجود داشته است؟
-            //var existEmp = await _uow.EmploymentRepository.GetByIdAsync();
-            #endregion
-            #region افزودن کارمند جدید
-           
-            Guid postId = 
-            var command = new CreateEmploymentCommand(
-                 item.NumTelEmply.ToString(),
-                item.DesAdrEmply,
-                //item.DesEmailAddresEmply,
-                null,
-                item.NumMobilEmply.ToString(),
-                item.CodNatEmply,
-                item.NamFirstEmply,
-                item.NamLastEmply,
-                Convert.ToDateTime(item.DatBirthEmplyEn),
-                item.BirthPlace,
-                item.NamFathrEmply,
-                item.DesSexEmply.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                item.NumPrsnEmply.ToString(),
-                null,
-                null,
-                DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
-                null,
-                null,
-                postId,
-                PostAssignmentType.Delegation,
-                DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
-                null
-                );
-
-            var result = await _mediator.Send(command);
-
-            #endregion
-            #region ویرایش کارمند در صورت تغییر
-
-            #endregion
-        }
-        */
         public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment()
         {
             var spec = new GetEmploymentSpec();
@@ -278,50 +224,6 @@ namespace HR.IrisaSync.Extention.Services
         /// پر کردن جدول اصلی با داده های موجود در جدول های مپ و ویو ایریسا
         /// </summary>
         /// <returns></returns>
-        /*  public async Task SyncPost2()
-          {
-              var irisaList = (await _irisaRepo.GetAllAsync())
-                       .Where(e => e.CodEmtyp == true)
-                       .GroupBy(a => a.CodJobpo)
-                       ;
-              var jobTitleMapList = await _uow.JobTitleMapRepository.GetAllAsync();
-              var jobLevelMapList = await _uow.JobLevelMapRepository.GetAllAsync();
-              var organUnitMapList = await _uow.OrganizationUnitMapRepository.GetAllAsync();
-              List<Post> posts = new List<Post>();
-
-              foreach (var item in irisaList)
-              {
-                  JobTitleMap jobTitle = jobTitleMapList.Where(j => j.IrisaJobTitleId == item.Key).SingleOrDefault();
-                  if (jobTitle?.FkJobTitleId != null)
-                  {
-                      int counter = 0;
-                      foreach (var grp in item.ToList())
-                      {
-                          counter++;
-                          JobLevelMap? jobLevel = jobLevelMapList.Where(j => j.IrisaJobLevelId == grp.CodPosit).SingleOrDefault();
-                          OrganizationUnitMap? orgunit = organUnitMapList.Where(j => j.IrisaOrganizationUnitId == grp.CodBusun).SingleOrDefault();
-                          posts.Add(new Post(
-                              counter.ToString(),
-                              (Guid)jobTitle.FkJobTitleId,
-                              orgunit?.FkOrganizationUnitId,
-                              jobLevel?.FkJobLevelId
-
-                              ));
-                      }
-                  }
-              }
-              await _hrUow.PostRepository.AddRangeAsync(posts);
-              await _hrUow.SaveChangesAsync();
-
-          }
-          */
-        //public async Task<SyncResult> SyncPostAssignToEmployementAsync()
-        //{
-        //    var result = new SyncResult();
-        //    var irisaGroups = (await _irisaRepo.GetAllAsync())
-        //           .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
-        //           .ToList();
-        //}
         public async Task<SyncResult> SyncPostAsync()
         {
             var result = new SyncResult();
@@ -479,15 +381,15 @@ namespace HR.IrisaSync.Extention.Services
             }
         }
 
-        // کلاس نتیجه
-
 
         /// <summary>
         /// پر کردن جدول اصلی با داده های موجود در جدول مپ
         /// </summary>
         /// <returns></returns>
-        public async Task SyncJobTitle()
+        public async Task<SyncResult> SyncJobTitleAsync()
         {
+            var result = new SyncResult();
+
             var list = await _uow.JobTitleMapRepository.GetAllAsync();
             var existList = await _hrUow.JobTitleRepository.GetAllAsync();
 
@@ -504,6 +406,7 @@ namespace HR.IrisaSync.Extention.Services
                             {
                                 existEntity.SetName(item.JobTitle);
                                 await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
+                                result.UpdatedCount++;
                             }
                         }
                         else
@@ -513,6 +416,7 @@ namespace HR.IrisaSync.Extention.Services
                             item.FkJobTitleId = model.Id;
                             item.JobTitle = model.Name;
                             await _uow.JobTitleMapRepository.UpdateAsync(item);
+                            result.AddedCount++;
                         }
                     }
                 }
@@ -520,14 +424,17 @@ namespace HR.IrisaSync.Extention.Services
                 await _hrUow.SaveChangesAsync();
                 await _uow.SaveChangesAsync();
             }
+            return result;
         }
 
         /// <summary>
         /// پر کردن جدول اصلی با داده های موجود در جدول مپ
         /// </summary>
         /// <returns></returns>
-        public async Task SyncJobLevel()
+        public async Task<SyncResult> SyncJobLevelAsync()
         {
+            var result = new SyncResult();
+
             var list = await _uow.JobLevelMapRepository.GetAllAsync();
             var existList = await _hrUow.JobLevelRepository.GetAllAsync();
 
@@ -544,6 +451,7 @@ namespace HR.IrisaSync.Extention.Services
                             {
                                 existEntity.SetTitle(item.JobLevel);
                                 await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
+                                result.UpdatedCount++;
                             }
                         }
                         else
@@ -553,6 +461,7 @@ namespace HR.IrisaSync.Extention.Services
                             item.FkJobLevelId = model.Id;
                             item.JobLevel = model.Title;
                             await _uow.JobLevelMapRepository.UpdateAsync(item);
+                            result.AddedCount++;
                         }
                     }
                 }
@@ -561,14 +470,17 @@ namespace HR.IrisaSync.Extention.Services
                 await _uow.SaveChangesAsync();
 
             }
+            return result;
         }
 
         /// <summary>
         /// پر کردن جدول اصلی با داده های موجود در جدول مپ
         /// </summary>
         /// <returns></returns>
-        public async Task SyncOrganizationUnit()
+        public async Task<SyncResult> SyncOrganizationUnitAsync()
         {
+            var result = new SyncResult();
+
             var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
             // roots node
@@ -583,6 +495,7 @@ namespace HR.IrisaSync.Extention.Services
                         {
                             existEntity.SetName(item.OrganizationUnit);
                             await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
+                            result.UpdatedCount++;
                         }
                     }
                     else
@@ -592,6 +505,7 @@ namespace HR.IrisaSync.Extention.Services
                         item.FkOrganizationUnitId = model.Id;
                         item.OrganizationUnit = model.Name;
                         await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
+                        result.AddedCount++;
                     }
                 }
             }
@@ -609,6 +523,7 @@ namespace HR.IrisaSync.Extention.Services
                             existEntity.SetName(item.OrganizationUnit);
                             existEntity.SetParent(parentMap?.FkOrganizationUnitId);
                             await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
+                            result.UpdatedCount++;
                         }
                     }
                     else
@@ -618,12 +533,14 @@ namespace HR.IrisaSync.Extention.Services
                         item.FkOrganizationUnitId = model.Id;
                         item.OrganizationUnit = model.Name;
                         await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
+                        result.AddedCount++;
                     }
                 }
             }
             await _hrUow.SaveChangesAsync();
             await _uow.SaveChangesAsync();
 
+            return result;
         }
     }
 }

@@ -1,10 +1,14 @@
 ﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Authorization.PublicService;
+using Core.Application.Abstractions.Identity.PublicService;
+using Core.Application.Abstractions.Navigation.PublicService;
+using HR.Infrastructure.Data;
+using HR.IrisaSync.Extention.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using HR.Infrastructure.Data;
 namespace HR.IrisaSync.Extention.DependencyInjection
 {
     /*
@@ -60,7 +64,14 @@ namespace HR.IrisaSync.Extention.DependencyInjection
                 //var repo = scope.ServiceProvider.GetRequiredService<IRepository<HRDbContext, SampleEntity, Guid>>();
                 //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
                 //await HRSeedData.SeedEntityAsync(repo, uow, _configuration, _logger);
+                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
+                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
+                var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
+                var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
 
+                await IrisaExtentionSeedData.SeedHrSyncForAuthorizationAsync(resourceService, permissionService, roleService,/* _configuration,*/ _logger);
+
+                await IrisaExtentionSeedData.SeedHrSyncForNavigationAsync(menuService, _logger);
                 _logger.LogInformation("HR module initialization completed successfully.");
             }
             catch (Exception ex)
