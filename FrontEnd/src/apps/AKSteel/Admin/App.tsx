@@ -1,4 +1,4 @@
-// src/apps/Trader/Server/App.tsx
+//src/apps/AKSteel/Admin/App.tsx
 import { useRoutes, Navigate, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/modules/Identity";
 import { identityPublicRoutes, identityPanelRoutes } from "@/modules/Identity";
