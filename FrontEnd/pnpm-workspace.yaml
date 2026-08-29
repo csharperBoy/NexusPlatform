@@ -4,3 +4,4 @@ packages:
   - "src/core"
   - "src/modules/HR"
   - "src/modules/Authorization"
+  - "src/modules/DashboardCore"

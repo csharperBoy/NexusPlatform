@@ -9,6 +9,7 @@ import LoginPage from "./Pages/LoginPage";
 import { useActiveModules } from "@/core/context/ModuleContext";
 import { hrPanelRoutes } from "@/modules/HR";
 import { ContactPanelRoutes } from "@/modules/Contact";
+import { MenuProvider } from "@/core/context/MenuContext";
 
 export default function App() {
   
@@ -33,11 +34,13 @@ export default function App() {
     /* مسیرهای محافظت‌شده با Layout */
     {
       element: (
+        <MenuProvider>
         <ProtectedRoute>
           <MainLayout>
             <Outlet />
           </MainLayout>
         </ProtectedRoute>
+        </MenuProvider>
       ),
       children: [
         { path: "/dashboard", element: <DashboardPage /> },

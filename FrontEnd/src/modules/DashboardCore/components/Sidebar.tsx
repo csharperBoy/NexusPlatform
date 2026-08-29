@@ -1,17 +1,16 @@
 // modules/DashboardCore/components/Sidebar.tsx
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useMenu } from '@/core/hooks/useMenu';
+// ۱. ایمپورت از Context به جای hook قدیمی
+import { useMenu } from '@/core/context/MenuContext'; 
 import { getIconComponent } from '@/core/components/IconMapper';
 import { MenuDto } from '@/core/models/Menu';
-import { ChevronDown, LayoutDashboard } from 'lucide-react'; // آیکون پیش‌فرض برای لوگو
+import { ChevronDown, LayoutDashboard } from 'lucide-react';
 
-// کامپوننت داخلی برای نمایش هر آیتم منو (به‌صورت بازگشتی)
 const MenuItem: React.FC<{ item: MenuDto; depth: number }> = ({ item, depth }) => {
-  const [isOpen, setIsOpen] = useState(true); // زیرمنوها به‌صورت پیش‌فرض باز باشند
+  const [isOpen, setIsOpen] = useState(true);
   const hasChildren = item.children && item.children.length > 0;
 
-  // اگر آیتم دارای زیرمجموعه باشد، به‌صورت یک دکمه با قابلیت باز/بسته شدن نمایش داده می‌شود
   if (hasChildren) {
     return (
       <div className="mb-1">
@@ -43,7 +42,6 @@ const MenuItem: React.FC<{ item: MenuDto; depth: number }> = ({ item, depth }) =
     );
   }
 
-  // آیتم بدون زیرمجموعه (لینک معمولی)
   return (
     <NavLink
       to={item.path}
@@ -62,9 +60,9 @@ const MenuItem: React.FC<{ item: MenuDto; depth: number }> = ({ item, depth }) =
   );
 };
 
-// کامپوننت اصلی سایدبار
 export const Sidebar: React.FC = () => {
-  const { menus, loading } = useMenu();
+  // ۲. دریافت isMenuLoading و تغییر نام آن به loading جهت عدم تغییر باقی کد
+  const { menus, isMenuLoading: loading } = useMenu();
 
   if (loading) {
     return (
@@ -80,7 +78,6 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 min-h-screen flex flex-col">
-      {/* هدر سایدبار (هماهنگ با هدر اصلی) */}
       <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
           <LayoutDashboard className="w-5 h-5" />
@@ -90,7 +87,6 @@ export const Sidebar: React.FC = () => {
         </span>
       </div>
 
-      {/* ناوبری منوها */}
       <nav className="flex-1 overflow-y-auto p-3 space-y-1">
         {menus
           ?.sort((a, b) => a.order - b.order)
@@ -99,7 +95,6 @@ export const Sidebar: React.FC = () => {
           ))}
       </nav>
 
-      {/* بخش پایین سایدبار (اختیاری - مثلاً اطلاعات نسخه) */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500 text-center">
         نسخه ۱.۰.۰
       </div>

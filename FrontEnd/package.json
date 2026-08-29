@@ -6,7 +6,7 @@
   "workspaces": [
     "src/apps/**",
     "src/core",
-  "src/modules/**"
+    "src/modules/**"
   ],
   "scripts": {
     "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
@@ -15,23 +15,18 @@
     "dev:mahar.website": "pnpm --filter mahar-website run dev",
     "build:mahar.website": "pnpm --filter mahar-website run build",
     "preview:mahar.website": "pnpm --filter mahar-website run preview",
-    
     "dev:akwp.admin": "pnpm --filter akwp-adminpanel run dev",
     "build:akwp.admin": "pnpm --filter akwp-adminpanel run build",
     "preview:akwp.admin": "pnpm --filter akwp-adminpanel run preview",
-
     "dev:akwp.website": "pnpm --filter akwp-website run dev",
     "build:akwp.website": "pnpm --filter akwp-website run build",
     "preview:akwp.website": "pnpm --filter akwp-website run preview",
-
     "dev:trader.server": "pnpm --filter trader-server run dev",
     "build:trader.server": "pnpm --filter trader-server run build",
     "preview:trader.server": "pnpm --filter trader-server run preview",
-    
     "dev:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run dev",
     "build:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run build",
     "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",
-    
     "dev:aksteel.admin": "pnpm --filter aksteel-admin run dev",
     "build:aksteel.admin": "pnpm --filter aksteel-admin run build",
     "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview"
@@ -41,6 +36,7 @@
     "@tanstack/react-query": "^5.90.2",
     "axios": "^1.12.2",
     "clsx": "^2.1.1",
+    "lucide-react": "^1.28.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.2",
