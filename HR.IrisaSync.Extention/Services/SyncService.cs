@@ -297,7 +297,6 @@ namespace HR.IrisaSync.Extention.Services
                                     parentId: null      // در صورت نیاز
                                 );
 
-                                existingPost.AddDomainEvent(new ChangePostEvent(existingPost.Id));
                                 hasChanges = true;
                             }
 
@@ -351,12 +350,23 @@ namespace HR.IrisaSync.Extention.Services
                 if (postsToUpdate.Any())
                 {
                     await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
+
+                    foreach (var post in postsToUpdate)
+                    {
+                        post.AddDomainEvent(new ChangePostEvent(post.Id));
+                    }
                     result.UpdatedCount = postsToUpdate.Count;
                 }
 
                 if (postsToDelete.Any())
                 {
                     await _hrUow.PostRepository.RemoveRangeAsync(postsToDelete);
+                    
+                    foreach (var post in postsToDelete)
+                    {
+                        post.AddDomainEvent(new ChangePostEvent(post.Id));
+                    }
+
                     result.DeletedCount = postsToDelete.Count;
                 }
 
@@ -401,6 +411,7 @@ namespace HR.IrisaSync.Extention.Services
                             {
                                 existEntity.SetName(item.JobTitle);
                                 await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
+                                //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
                                 result.UpdatedCount++;
                             }
                         }
