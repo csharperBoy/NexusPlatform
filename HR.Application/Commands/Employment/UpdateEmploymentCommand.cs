@@ -92,7 +92,7 @@ namespace HR.Application.Commands.Employment
                     request.Address,
                     request.Email,
                     request.Mobile,
-                    request.FirstlName,
+                    request.FirstName,
                     request.LastName,
                     request.BirthDate,
                      request.BirthPlace,
@@ -110,7 +110,7 @@ namespace HR.Application.Commands.Employment
                     );
                 if (request.PostId != Guid.Empty && request.PostId != null)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmploymentAsync((Guid)request.PostId, EmploymentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { request.PostId }, EmploymentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
                 }
                 if (request.locationsId != null)
                 {

@@ -70,7 +70,7 @@ namespace HR.Application.Commands.OrgChart
                     );
                 if (request.EmploymentId != Guid.Empty && request.EmploymentId != null)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(postId, (Guid)request.EmploymentId, request.AssignType);
+                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { postId }, (Guid)request.EmploymentId, request.AssignType);
                 }
                 if (request.locationsId != null)
                 {
