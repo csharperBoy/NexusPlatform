@@ -128,13 +128,13 @@ public partial class PdsIdeaInformationViw
     /// کد معاونت
     /// Cod_Moa_Busun
     /// </summary>
-    public decimal? CodMoaBusun { get; set; }
+    public string? CodMoaBusun { get; set; }
     /// <summary>
     /// توضیح معاونت
     /// DES_MOA_BUSUN
     /// مثال: بازرگانی
     /// </summary>
-    public decimal? DESMOABUSUN { get; set; }
+    public string? DesMoaBusun { get; set; }
     
     /// <summary>
     /// کد رده یا شغل

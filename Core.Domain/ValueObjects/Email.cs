@@ -70,5 +70,18 @@ namespace Core.Domain.ValueObjects
         }
 
         public override string ToString() => Value;
+        public static bool TryCreate(string value, out Email? result)
+        {
+            try
+            {
+                result = Create(value);
+                return true;
+            }
+            catch
+            {
+                result = null;
+                return false;
+            }
+        }
     }
 }

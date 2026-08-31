@@ -28,6 +28,6 @@ namespace Core.Application.Abstractions.People
              List<PhoneNumber>? Phone = null,
        List<string>? Address = null,
         List<Email>? Email = null,
-        List<PhoneNumber>? Mobile = null);
+        List<PhoneNumber>? Mobile = null );
     }
 }

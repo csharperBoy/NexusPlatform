@@ -70,7 +70,7 @@ namespace Contact.Infrastructure.Services
 
 
 
-        public async Task SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId)
+        public async Task SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId )
         {
             var newValues = values?.Distinct().ToHashSet() ?? new HashSet<string>();
 

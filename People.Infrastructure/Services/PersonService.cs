@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.People;
 using Core.Application.Provider;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums.Authorization;
@@ -129,7 +130,7 @@ namespace People.Infrastructure.Services
              List<PhoneNumber>? Phone = null,
        List<string>? Address = null,
         List<Email>? Email = null,
-        List<PhoneNumber>? Mobile = null
+        List<PhoneNumber>? Mobile = null 
             )
         {
             NaturalPerson? person = await _naturalPersonRepository.GetByIdAsync(id, a => a.Party);
@@ -138,15 +139,24 @@ namespace People.Infrastructure.Services
                 throw new Exception("Person not found");
             }
 
-            bool hasChange = await person.ApplyChange(
-                nationalCode,
-                firstlName,
-                lastName,
-                birthDate, 
-                birthPlace, 
-                fatherName,
-                null
-                );
+          bool hasChange = await person.ApplyChange(
+              nationalCode,
+              firstlName,
+              lastName,
+              birthDate, 
+              birthPlace, 
+              fatherName,
+              null
+              );
+            //bool hasChange = person.ApplyChange( new NaturalPerson(
+            //    nationalCode,
+            //    firstlName,
+            //    lastName,
+            //    birthDate, 
+            //    birthPlace, 
+            //    fatherName,
+            //    null,null
+            //    ) ,  UpdateMask);
 
             if (hasChange) {
                 await _naturalPersonRepository.UpdateAsync(person);

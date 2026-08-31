@@ -66,22 +66,51 @@ namespace Core.Domain.Common.EntityProperties
         /// <summary>
         /// منقضی کردن رکورد
         /// </summary>
-        public static void DoExpire(this IHasEffectivePeriod entity)
+        public static void DoExpire(this IHasEffectivePeriod entity , List<string>? updateMask = null)
         {
-            entity.SetEffectiveTo(DateTime.UtcNow);
-            entity.SetIsCurrent(false);
+            if (updateMask != null)
+            {
+                string entityName = entity.GetType().Name;
+                if (updateMask.Contains($"{entityName}.EffectiveTo"))
+                {
+                    entity.SetEffectiveTo(DateTime.UtcNow);
+                }
+                if (updateMask.Contains($"{entityName}.IsCurrent"))
+                {
+                    entity.SetIsCurrent(false);
+                }
+            }
+            else
+            {
+                entity.SetEffectiveTo(DateTime.UtcNow);
+                entity.SetIsCurrent(false);
+            }
         }
 
         /// <summary>
         /// تنظیم بازه زمانی با اعتبارسنجی
         /// </summary>
-        public static void SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt)
+        public static void SetTemporalRange(this IHasEffectivePeriod entity, DateTime? effectiveFrom, DateTime? expiresAt, List<string>? updateMask = null)
         {
             if (effectiveFrom.HasValue && expiresAt.HasValue && effectiveFrom >= expiresAt)
                 throw new ArgumentException("Effective from date must be before expiration date.");
-
-            entity.SetEffectiveFrom(effectiveFrom);
-            entity.SetEffectiveTo(expiresAt);
+            if (updateMask != null)
+            {
+                string entityName = entity.GetType().Name;
+                if (updateMask.Contains($"{entityName}.EffectiveFrom"))
+                {
+                    entity.SetEffectiveFrom(effectiveFrom);
+                }
+                if (updateMask.Contains($"{entityName}.EffectiveTo"))
+                {
+                    entity.SetEffectiveTo(expiresAt);
+                }
+            }
+            else
+            {
+                entity.SetEffectiveFrom(effectiveFrom);
+                entity.SetEffectiveTo(expiresAt);
+            }
         }
     }
 }

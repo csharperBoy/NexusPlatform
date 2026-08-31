@@ -5,7 +5,7 @@ using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
- 
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -90,12 +90,17 @@ namespace HR.Application.Commands.Employment
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
                 #region ساخت شخصیت حقیقی
 
-               List< PhoneNumber>? phone = null;
-               List< Email>? email = null;
-               List< PhoneNumber>? mobile = null;
-                try { phone.AddRange( request.Phone != null ? request.Phone.Select(a=> PhoneNumber.Create(a)).ToList() : null); } catch { }
-                try { email.AddRange(  request.Email != null ? request.Email.Select(a => Email.Create(a)).ToList() : null); } catch { }
-                try { mobile.AddRange( request.Mobile != null ? request.Mobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
+                List<PhoneNumber> phone = new();
+                List<Email> email = new();
+                List<PhoneNumber> mobile = new();
+
+                phone.AddRange(request.Phone?.Select(s => PhoneNumber.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<PhoneNumber>());
+                email.AddRange(request.Email?.Select(s => Email.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<Email>());
+                mobile.AddRange(request.Mobile?.Select(s => PhoneNumber.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<PhoneNumber>());
+
+
+
+
 
 
                 Guid personId = await _personService.CreatePersonAsync(
@@ -112,18 +117,22 @@ namespace HR.Application.Commands.Employment
                 #endregion
 
                 #region ایجاد کارمند
-                List<PhoneNumber>? orgPhone = null;
-                List<Email>? orgEmail = null;
-                List<PhoneNumber>? orgMobile = null;
-                try { orgPhone.AddRange(request.OfficePhone != null ? request.OfficePhone.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
-                try { orgEmail.AddRange(request.OrgEmail != null ? request.OrgEmail.Select(a => Email.Create(a)).ToList() : null); } catch { }
-                try { orgMobile.AddRange(request.OrgMobile != null ? request.OrgMobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
+                
+                List<PhoneNumber> orgPhone = new();
+                List<Email> orgEmail = new();
+                List<PhoneNumber> orgMobile = new();
+
+
+                orgPhone.AddRange(request.OfficePhone?.Select(s => PhoneNumber.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<PhoneNumber>());
+                orgEmail.AddRange(request.OrgEmail?.Select(s => Email.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<Email>());
+                orgMobile.AddRange(request.OrgMobile?.Select(s => PhoneNumber.TryCreate(s, out var p) ? p : null).Where(p => p != null) ?? Enumerable.Empty<PhoneNumber>());
+
 
 
                 Guid employmentId = await _employmentService.CreateEmploymentAsync(
                     request.EmploymentCode, personId, request.EmploymentTypeId, request.EmploymentStatusId, request.StartDate, request.EndDate);
                 #endregion
-                
+
 
                 #region انتصاب مکان ها به شخص
                 if (request.locationsId != null && request.locationsId.Count() > 0)
@@ -134,7 +143,7 @@ namespace HR.Application.Commands.Employment
 
                 #region انتصاب شخص به پست سازمانی
 
-                Guid AssignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid>{ request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                Guid AssignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
 
                 #endregion
 

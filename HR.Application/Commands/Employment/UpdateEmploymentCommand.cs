@@ -58,7 +58,6 @@ namespace HR.Application.Commands.Employment
      DateTime? EffectiveTo
     #endregion
 
-
 ) : IRequest<Result<Guid>>;
 
 

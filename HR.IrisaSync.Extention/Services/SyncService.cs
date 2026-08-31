@@ -3,6 +3,7 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
 using Core.Shared.Enums.HR;
@@ -189,8 +190,8 @@ namespace HR.IrisaSync.Extention.Services
                 foreach (var emp in employmentsToDelete)
                 {
                     // فرض کنید یک Command برای حذف یا غیرفعال‌سازی دارید
-                      var deleteCommand = new DeleteEmploymentCommand(emp.Id);
-                      await _mediator.Send(deleteCommand);
+                    var deleteCommand = new DeleteEmploymentCommand(emp.Id);
+                    await _mediator.Send(deleteCommand);
                     result.DeletedCount++;
                 }
 
@@ -243,7 +244,7 @@ namespace HR.IrisaSync.Extention.Services
 
                 // 3. دریافت پست‌های موجود (فقط فیلدهای لازم)
                 var existingPosts = await _hrUow.PostRepository
-                    .GetAllAsync(); // اگر IQueryable هست، بهتر است Select کنید
+                    .GetAllAsync(queryOptions: q=>q.Where(a=>a.IsRemove != true)); // اگر IQueryable هست، بهتر است Select کنید
 
                 // 4. ساخت دیکشنری از پست‌های موجود با کلید (JobTitleId, Code)
                 var existingDict = existingPosts
@@ -360,10 +361,20 @@ namespace HR.IrisaSync.Extention.Services
 
                 if (postsToDelete.Any())
                 {
-                    await _hrUow.PostRepository.RemoveRangeAsync(postsToDelete);
-                    
+                    foreach (var item in postsToDelete)
+                    {
+                        await item.SoftRemove();
+                        foreach (var ass in item.Assignments)
+                        {
+                            ass.DoExpire();
+                        }
+                        //await _hrUow.PostRepository.UpdateAsync(item);
+                    }
+                    //await _hrUow.PostRepository.RemoveRangeAsync(postsToDelete);
+
                     foreach (var post in postsToDelete)
                     {
+
                         post.AddDomainEvent(new ChangePostEvent(post.Id));
                     }
 
@@ -407,7 +418,7 @@ namespace HR.IrisaSync.Extention.Services
                         var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
                         if (existEntity != null)
                         {
-                            if (existEntity.Name.Trim() != item.JobTitle.Trim())
+                            if (existEntity.Name.Trim() != item.JobTitle?.Trim())
                             {
                                 existEntity.SetName(item.JobTitle);
                                 await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
@@ -453,7 +464,7 @@ namespace HR.IrisaSync.Extention.Services
                         var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
                         if (existEntity != null)
                         {
-                            if (existEntity.Title.Trim() != item.JobLevel.Trim())
+                            if (existEntity.Title.Trim() != item.JobLevel?.Trim())
                             {
                                 existEntity.SetTitle(item.JobLevel);
                                 await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
@@ -497,7 +508,7 @@ namespace HR.IrisaSync.Extention.Services
                     var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
                     if (existEntity != null)
                     {
-                        if (existEntity.Name.Trim() != item.OrganizationUnit.Trim())
+                        if (existEntity.Name.Trim() != item.OrganizationUnit?.Trim())
                         {
                             existEntity.SetName(item.OrganizationUnit);
                             await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
@@ -515,6 +526,7 @@ namespace HR.IrisaSync.Extention.Services
                     }
                 }
             }
+            var trmp = list.Where(i => i.IrisaParentId != null).ToList();
             //Child Node
             foreach (var item in list.Where(i => i.IrisaParentId != null))
             {
@@ -524,7 +536,7 @@ namespace HR.IrisaSync.Extention.Services
                     IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
                     if (existEntity != null)
                     {
-                        if (existEntity.Name.Trim() != item.OrganizationUnit.Trim() || existEntity.FkParentId != parentMap.FkOrganizationUnitId)
+                        if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.FkParentId != parentMap?.FkOrganizationUnitId)
                         {
                             existEntity.SetName(item.OrganizationUnit);
                             existEntity.SetParent(parentMap?.FkOrganizationUnitId);

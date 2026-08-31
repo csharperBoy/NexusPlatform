@@ -1,7 +1,7 @@
 // src/modules/PhoneBook/pages/Post/PhoneBookPage.tsx
 
 import React, { useEffect, useState, useMemo } from "react";
-import logo from "../../../../assets/LOGO2.png";
+import logo from "../../../../assets/LOGO3.png";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
   PhoneBookEmploymentDto,

@@ -39,13 +39,14 @@ namespace HR.IrisaSync.Extention.Commands
                 _logger.LogInformation("Sync Hr with irisa system");
                 await _mapService.FillJobLevelMap();
                 await _mapService.FillJobTitleMap();
+                await _mapService.FillOrganizationUnitRootMap();
                 await _mapService.FillOrganizationUnitMap();
 
                 SyncResult orgResult = await _syncService.SyncOrganizationUnitAsync();
                 SyncResult jlResult = await _syncService.SyncJobLevelAsync();
                 SyncResult jtResult = await _syncService.SyncJobTitleAsync();
-                SyncResult empResult = await _syncService.SyncEmploymentsAsync();
                 SyncResult postResult = await _syncService.SyncPostAsync();
+                SyncResult empResult = await _syncService.SyncEmploymentsAsync();
 
                 Dictionary<string, SyncResult> result = new()
                 {

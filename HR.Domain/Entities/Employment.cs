@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace HR.Domain.Entities
 {
 
-    public class Employment : BaseEntity , IAuditableEntity, ISoftRemovable
+    public class Employment : BaseEntity, IAuditableEntity, ISoftRemovable
     {
 
         #region IAuditableEntity Impelement
@@ -46,7 +46,7 @@ namespace HR.Domain.Entities
 
         public virtual EmploymentType? EmploymentType { get; set; }
 
-        
+
 
         //public virtual ICollection<EmploymentContact> EmploymentContacts { get; set; } = new List<EmploymentContact>();
         protected Employment()
@@ -56,7 +56,7 @@ namespace HR.Domain.Entities
         public Employment(
               string _EmploymentCode,
          Guid _PersonId,
-         Guid _FkContactProfileId ,
+         Guid _FkContactProfileId,
          Guid? _EmploymentTypeId,
          Guid? _EmploymentStatusId,
          DateOnly? _EffectiveFrom = null,
@@ -68,8 +68,19 @@ namespace HR.Domain.Entities
             FkEmploymentTypeId = _EmploymentTypeId;
             FkEmploymentStatusId = _EmploymentStatusId;
             FkContactProfileId = _FkContactProfileId;
-            EffectiveFrom = _EffectiveFrom ?? DateOnly.FromDateTime( DateTime.UtcNow);
+            EffectiveFrom = _EffectiveFrom ?? DateOnly.FromDateTime(DateTime.UtcNow);
 
+            EffectiveTo = _EffectiveTo;
+
+        }
+
+        public Employment(string? _EmploymentCode, Guid? _FkEmploymentTypeId, Guid? _FkEmploymentStatusId, DateOnly? _EffectiveFrom,
+         DateOnly? _EffectiveTo)
+        {
+            EmploymentCode = _EmploymentCode;
+            FkEmploymentTypeId = _FkEmploymentTypeId;
+            FkEmploymentStatusId = _FkEmploymentStatusId;
+            EffectiveFrom = _EffectiveFrom ?? DateOnly.FromDateTime(DateTime.UtcNow);
             EffectiveTo = _EffectiveTo;
 
         }
@@ -79,9 +90,10 @@ namespace HR.Domain.Entities
             Guid? _employmentTypeId = null,
             Guid? _employmentStatusId = null,
             DateOnly? _startDate = null,
-            DateOnly? _endDate = null)
+            DateOnly? _endDate = null
+            )
         {
-         
+
             bool hasChange = false;
 
             if (_employmentCode != null && _employmentCode?.Trim() != EmploymentCode.Trim())
@@ -103,7 +115,7 @@ namespace HR.Domain.Entities
             }
             if (_startDate != null && _startDate != this.EffectiveFrom)
             {
-                this.EffectiveFrom =(DateOnly) _startDate;
+                this.EffectiveFrom = (DateOnly)_startDate;
                 hasChange = true;
             }
             if (_endDate != null && _endDate != this.EffectiveTo)
