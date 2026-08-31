@@ -1,4 +1,5 @@
-﻿using Core.Presentation.Filters;
+﻿using Core.Domain.Common;
+using Core.Presentation.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
@@ -41,8 +42,12 @@ namespace Core.Presentation.DependencyInjection
     {
         public static IServiceCollection Core_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
-           
 
+            services.AddControllers()
+                        .AddJsonOptions(options =>
+                        {
+                            options.JsonSerializerOptions.Converters.Add(new OptionalJsonConverterFactory());
+                        });
             //services.AddScoped<AuthorizeResourceFilter>();
             // 📌 در آینده می‌توان سرویس‌های Presentation را اینجا ثبت کرد
             return services;
