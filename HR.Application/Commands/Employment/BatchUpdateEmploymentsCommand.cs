@@ -19,6 +19,7 @@ namespace HR.Application.Commands.Employment
         private readonly IEmploymentInternalService _employmentService;
         private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdateEmploymentsCommandHandler> _logger;
+        
 
         public BatchUpdateEmploymentsCommandHandler(IPostInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmploymentInternalService employmentService)
         {
@@ -29,6 +30,7 @@ namespace HR.Application.Commands.Employment
 
         public async Task<Result<List<Guid>>> Handle(BatchUpdateEmploymentsCommand request, CancellationToken cancellationToken)
         {
+            
             try
             {
                 var results = new List<Guid>();

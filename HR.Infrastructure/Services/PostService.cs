@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
+using Core.Infrastructure.Repositories;
 using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
@@ -151,16 +152,16 @@ namespace HR.Infrastructure.Services
         }
 
         public async Task<Guid> AssignToEmploymentAsync(
-     List<Guid?> postIds,
-     Guid employmentId,
-     PostAssignmentType? assigneType = null,
-     DateTime? effectiveFrom = null,
-     DateTime? effectiveTo = null)
+    List<Guid?> postIds,
+    Guid employmentId,
+    PostAssignmentType? assigneType = null,
+    DateTime? effectiveFrom = null,
+    DateTime? effectiveTo = null)
         {
             // ۱. دریافت انتساب‌های فعال فعلی این شخص
             var existingEmploymentAssignments = await GetEmploymentAssignmentAsync(employmentId);
 
-            // ۱. دریافت انتساب‌های فعال فعلی این پست ها
+            // ۲. دریافت انتساب‌های فعال فعلی برای هر پست (همه افراد)
             List<Assignment> existingPostAssignments = new List<Assignment>();
             foreach (var postId in postIds)
             {
@@ -170,52 +171,62 @@ namespace HR.Infrastructure.Services
                     existingPostAssignments.AddRange(temp);
                 }
             }
-            
 
-            var existingPostIds = existingEmploymentAssignments?.Select(a => a.FkPostId).ToHashSet();
+            var existingPostIds = existingEmploymentAssignments?
+                .Select(a => a.FkPostId).ToHashSet();
 
-            // ۲. مجموعه پست‌های جدید (بدون تکراری)
-            var newPostIds = postIds.Where(p => p != null).Distinct().ToHashSet();
+            var newPostIds = postIds
+                .Where(p => p != null)
+                .Distinct()
+                .ToHashSet();
 
-            // ۳. انتساب‌هایی که باید منقضی شوند (فعال قبلی، ولی در لیست جدید نیستند)
-            var toExpire = existingEmploymentAssignments?
+            // ۳. تعیین انتساب‌هایی که باید منقضی شوند:
+            //    - انتساب‌های خود شخص که دیگر در لیست جدید نیستند
+            //    - انتساب‌های دیگران برای پست‌های ورودی
+            var toExpire = new List<Assignment>();
+
+            var ownToExpire = existingEmploymentAssignments?
                 .Where(a => !newPostIds.Contains(a.FkPostId))
                 .ToList();
-            // 3. افزودن انتصاب های پست که مربوط به دیگران است
-            toExpire.AddRange(existingPostAssignments?
-                .Where(a => a.FkEmploymentId != employmentId)
-                .ToList());
+            if (ownToExpire != null)
+                toExpire.AddRange(ownToExpire);
 
+            var othersToExpire = existingPostAssignments?
+                .Where(a => a.FkEmploymentId != employmentId)
+                .ToList();
+            if (othersToExpire != null)
+                toExpire.AddRange(othersToExpire);
+
+            // مرحله ۱: انقضای انتساب‌های موجود
             foreach (var item in toExpire)
             {
                 item.DoExpire();
-                // اگر از ChangeTracker استفاده می‌کنید، نیازی به Update صریح نیست
-                // ولی اگر Repository شما جداگانه است، می‌توانید آن را به لیست Update اضافه کنید
                 await _assignmentRepository.UpdateAsync(item);
             }
+            //await SaveAsync(); // ذخیره‌سازی اولیه (انقضاها)
 
-            // ۴. انتساب‌های جدید (پست‌هایی که در لیست جدید هستند ولی قبلاً فعال نبودند)
+            // مرحله ۲: افزودن انتساب‌های جدید
             var toAdd = newPostIds
                 .Where(postId => !existingPostIds.Contains((Guid)postId))
-                .Select(postId => new Assignment((Guid)postId, employmentId, assigneType, effectiveFrom, effectiveTo))
+                .Select(postId => new Assignment(
+                    (Guid)postId,
+                    employmentId,
+                    assigneType,
+                    effectiveFrom,
+                    effectiveTo))
                 .ToList();
 
             if (toAdd.Any())
             {
-                // ۴-۱. ذخیره‌سازی گروهی (بهینه)
                 await _assignmentRepository.AddRangeAsync(toAdd);
-
-                // ۴-۲. افزودن رویداد به هر انتساب جدید (می‌توانید این کار را در سازنده هم انجام دهید)
                 foreach (var assignment in toAdd)
                 {
                     assignment.AddDomainEvent(new ChangePostEvent(assignment.Id));
                 }
-
-                // در صورت نیاز، شناسه اولین انتساب جدید را برگردانید
+                //await SaveAsync(); // ذخیره‌سازی دوم (اضافه‌ها)
                 return toAdd.First().Id;
             }
 
-            // اگر هیچ انتساب جدیدی اضافه نشد، می‌توانید Guid.Empty برگردانید یا یک استثنا پرتاب کنید
             return Guid.Empty;
         }
         public async Task<Guid> AssignToPostAsync(
@@ -379,6 +390,7 @@ namespace HR.Infrastructure.Services
 
         public async Task SaveAsync()
         {
+            await _hrUow.SaveChangesAsync();
             await _uow.SaveChangesAsync();
             await _contactService.SaveAsync();
         }
