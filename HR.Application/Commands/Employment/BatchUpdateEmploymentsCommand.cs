@@ -57,13 +57,13 @@ namespace HR.Application.Commands.Employment
                    command.OrgEmail,
                    command.OrgMobile
                    );
-                    if (command.PostId != Guid.Empty && command.PostId != null)
+                    if (command.PostId.IsSet)
                     {
-                        Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { command.PostId }, EmploymentId, command.AssigneeType, command.EffectiveFrom, command.EffectiveTo);
+                        Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { command.PostId.Value }, EmploymentId, command.AssigneeType.Value, command.EffectiveFrom.Value, command.EffectiveTo.Value);
                     }
-                    if (command.locationsId != null)
+                    if (command.locationsId.IsSet)
                     {
-                        await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId);
+                        await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId.Value);
                     }
 
                     results.Add(EmploymentId);

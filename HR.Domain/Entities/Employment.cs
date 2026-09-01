@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -86,41 +87,41 @@ namespace HR.Domain.Entities
         }
 
         public bool ApplyChange(
-            string? _employmentCode = null,
-            Guid? _employmentTypeId = null,
-            Guid? _employmentStatusId = null,
-            DateOnly? _startDate = null,
-            DateOnly? _endDate = null
+            Optional<string?> _employmentCode ,
+            Optional<Guid?> _employmentTypeId ,
+            Optional<Guid?> _employmentStatusId ,
+            Optional<DateOnly?> _startDate ,
+            Optional<DateOnly?> _endDate 
             )
         {
 
             bool hasChange = false;
 
-            if (_employmentCode != null && _employmentCode?.Trim() != EmploymentCode.Trim())
+            if (_employmentCode.IsSet && _employmentCode.Value?.Trim() != EmploymentCode.Trim())
             {
-                EmploymentCode = _employmentCode;
+                EmploymentCode = _employmentCode.Value;
                 hasChange = true;
             }
 
-            if (_employmentTypeId != null && _employmentTypeId != FkEmploymentTypeId)
+            if (_employmentTypeId.IsSet && _employmentTypeId.Value != FkEmploymentTypeId)
             {
-                FkEmploymentTypeId = (Guid)_employmentTypeId;
+                FkEmploymentTypeId = _employmentTypeId.Value;
                 hasChange = true;
             }
 
-            if (_employmentStatusId != null && _employmentStatusId != FkEmploymentStatusId)
+            if (_employmentStatusId.IsSet && _employmentStatusId.Value != FkEmploymentStatusId)
             {
-                FkEmploymentStatusId = (Guid)_employmentStatusId;
+                FkEmploymentStatusId = _employmentStatusId.Value;
                 hasChange = true;
             }
-            if (_startDate != null && _startDate != this.EffectiveFrom)
+            if (_startDate.IsSet && _startDate.Value != this.EffectiveFrom)
             {
-                this.EffectiveFrom = (DateOnly)_startDate;
+                this.EffectiveFrom = _startDate.Value ?? DateOnly.FromDateTime(DateTime.UtcNow);
                 hasChange = true;
             }
-            if (_endDate != null && _endDate != this.EffectiveTo)
+            if (_endDate.IsSet && _endDate.Value != this.EffectiveTo)
             {
-                this.EffectiveTo = (DateOnly)_endDate;
+                this.EffectiveTo = _endDate.Value;
                 hasChange = true;
             }
 

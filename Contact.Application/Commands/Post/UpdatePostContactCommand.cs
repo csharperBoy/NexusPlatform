@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Interfaces;
  
 using MediatR;
@@ -43,14 +44,14 @@ namespace Contact.Application.Commands.Post
 
                 Guid postId = await _orgChartService.UpdatePostAsync(
                     request.Id,
-                      null,
-                      null,
-                      null,
-                      null,
-                      null,
-                      null,
-                      null,
-                      null,
+                    Optional<string?>.Undefined,
+                    Optional<Guid?>.Undefined,
+                    Optional<Guid>.Undefined,
+                    Optional<Guid?>.Undefined,
+                    Optional<Guid?>.Undefined,
+                    Optional<Guid?>.Undefined,
+                    Optional<Guid?>.Undefined,
+                    Optional<bool?>.Undefined,
                        request.OfficePhone, request.OrgEmail, request.OrgMobile
                     );
                 

@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
@@ -11,7 +12,7 @@ using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
- 
+
 using HR.Domain.Events.Employment;
 using HR.Domain.Events.Location;
 using HR.Domain.Events.Post;
@@ -150,23 +151,40 @@ namespace HR.Infrastructure.Services
         }
 
         public async Task<Guid> AssignToEmploymentAsync(
-     List<Guid> postIds,
+     List<Guid?> postIds,
      Guid employmentId,
      PostAssignmentType? assigneType = null,
      DateTime? effectiveFrom = null,
      DateTime? effectiveTo = null)
         {
             // ۱. دریافت انتساب‌های فعال فعلی این شخص
-            var existingAssignments = await GetEmploymentAssignmentAsync(employmentId);
-            var existingPostIds = existingAssignments?.Select(a => a.FkPostId).ToHashSet();
+            var existingEmploymentAssignments = await GetEmploymentAssignmentAsync(employmentId);
+
+            // ۱. دریافت انتساب‌های فعال فعلی این پست ها
+            List<Assignment> existingPostAssignments = new List<Assignment>();
+            foreach (var postId in postIds)
+            {
+                if (postId != null)
+                {
+                    var temp = await GetPostAssignmentAsync((Guid)postId);
+                    existingPostAssignments.AddRange(temp);
+                }
+            }
+            
+
+            var existingPostIds = existingEmploymentAssignments?.Select(a => a.FkPostId).ToHashSet();
 
             // ۲. مجموعه پست‌های جدید (بدون تکراری)
-            var newPostIds = postIds.Distinct().ToHashSet();
+            var newPostIds = postIds.Where(p => p != null).Distinct().ToHashSet();
 
             // ۳. انتساب‌هایی که باید منقضی شوند (فعال قبلی، ولی در لیست جدید نیستند)
-            var toExpire = existingAssignments?
+            var toExpire = existingEmploymentAssignments?
                 .Where(a => !newPostIds.Contains(a.FkPostId))
                 .ToList();
+            // 3. افزودن انتصاب های پست که مربوط به دیگران است
+            toExpire.AddRange(existingPostAssignments?
+                .Where(a => a.FkEmploymentId != employmentId)
+                .ToList());
 
             foreach (var item in toExpire)
             {
@@ -178,8 +196,8 @@ namespace HR.Infrastructure.Services
 
             // ۴. انتساب‌های جدید (پست‌هایی که در لیست جدید هستند ولی قبلاً فعال نبودند)
             var toAdd = newPostIds
-                .Where(postId => !existingPostIds.Contains(postId))
-                .Select(postId => new Assignment(postId, employmentId, assigneType, effectiveFrom, effectiveTo))
+                .Where(postId => !existingPostIds.Contains((Guid)postId))
+                .Select(postId => new Assignment((Guid)postId, employmentId, assigneType, effectiveFrom, effectiveTo))
                 .ToList();
 
             if (toAdd.Any())
@@ -202,7 +220,7 @@ namespace HR.Infrastructure.Services
         }
         public async Task<Guid> AssignToPostAsync(
      Guid postId,
-     List<Guid> employmentIds,
+     List<Guid?> employmentIds,
      PostAssignmentType? assigneType = null,
      DateTime? effectiveFrom = null,
      DateTime? effectiveTo = null)
@@ -212,7 +230,7 @@ namespace HR.Infrastructure.Services
             var existingEmploymentIds = existingAssignments?.Select(a => a.FkEmploymentId).ToHashSet();
 
             // ۲. مجموعه اشخاص جدید (بدون تکراری)
-            var newEmploymentIds = employmentIds.Distinct().ToHashSet();
+            var newEmploymentIds = employmentIds.Where(a => a != null).Distinct().ToHashSet();
 
             // ۳. انتساب‌هایی که باید منقضی شوند (فعال قبلی، ولی در لیست جدید نیستند)
             var toExpire = existingAssignments?
@@ -227,8 +245,8 @@ namespace HR.Infrastructure.Services
 
             // ۴. انتساب‌های جدید (اشخاصی که در لیست جدید هستند ولی قبلاً برای این پست فعال نبودند)
             var toAdd = newEmploymentIds
-                .Where(empId => !existingEmploymentIds.Contains(empId))
-                .Select(empId => new Assignment(postId, empId, assigneType, effectiveFrom, effectiveTo))
+                .Where(empId => !existingEmploymentIds.Contains((Guid)empId))
+                .Select(empId => new Assignment(postId, (Guid)empId, assigneType, effectiveFrom, effectiveTo))
                 .ToList();
 
             if (toAdd.Any())
@@ -253,14 +271,38 @@ namespace HR.Infrastructure.Services
             List<string>? OrgMobile = null
             )
         {
+            Post? existPost = (await _postRepository.GetAllAsync(queryOptions: q => q.Where(a =>a.FkJobTitleId == jobTitleId && a.Code.Trim() == code.Trim()))).FirstOrDefault();
+            Post post;
+            if (existPost == null)
+            {
+                Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
+                 post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
+                await _postRepository.AddAsync(post);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, OfficePhone, post.FkContactProfileId);
+                return post.Id;
+            }
+            else
+            {
+                post = new Post(code, jobTitleId, existPost.FkContactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
 
-            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
-            Post post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
-            await _postRepository.AddAsync(post);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, OfficePhone, post.FkContactProfileId);
-            return post.Id;
+                existPost.ApplyChange(post,
+                    new List<string> {
+                    "Post.Code",
+                    "Post.FkOrganizationUnitId",
+                    "Post.FkJobTitleId",
+                    "Post.FkJobLevelId",
+                    "Post.FkGradeId",
+                    "Post.FkCostCenterId",
+                    "Post.FkParentId",
+                    "Post.FkContactProfileId"
+                });
+
+                await existPost.SetIsRemove(false);
+                await _postRepository.UpdateAsync(existPost);
+                return existPost.Id;
+            }
         }
 
         public async Task<List<Post>?> GetEmploymentPostAsync(Guid employmentId)
@@ -349,8 +391,18 @@ namespace HR.Infrastructure.Services
         }
 
         public async Task<Guid> UpdatePostAsync(
-            Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive,
-            List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
+            Guid id,
+            Optional<string?> code,
+            Optional<Guid?> organizationUnitId,
+            Optional<Guid> jobTitleId,
+            Optional<Guid?> jobLevelId,
+            Optional<Guid?> gradeId,
+            Optional<Guid?> costCenterId,
+            Optional<Guid?> reportsToPostId,
+            Optional<bool?> isActive,
+            Optional<List<string>?> officePhone,
+            Optional<List<string>?> orgEmail,
+            Optional<List<string>?> orgMobile)
         {
             Post? post = await _postRepository.GetByIdAsync(id);
             if (post == null)
@@ -361,17 +413,17 @@ namespace HR.Infrastructure.Services
             {
                 await _postRepository.UpdateAsync(post);
             }
-            if (officePhone != null)
+            if (officePhone.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, post.FkContactProfileId);
             }
-            if (orgEmail != null)
+            if (orgEmail.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, post.FkContactProfileId);
             }
-            if (orgMobile != null)
+            if (orgMobile.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, post.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, post.FkContactProfileId);
             }
             post.AddDomainEvent(new ChangePostEvent(post.Id));
             return post.Id;
@@ -410,7 +462,7 @@ namespace HR.Infrastructure.Services
                 FkParentId = s.FkParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
-                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title , ProfileId = s.Location.FkContactProfileId }).ToList(),
+                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
 
 
             }).ToList();
@@ -454,7 +506,7 @@ namespace HR.Infrastructure.Services
                 throw new Exception("can not found post!!!");
 
             await model.SoftRemove();
-            model.AddDomainEvent(new RemovePostEvent(model.Id, model.Code,model.IsActive,model.FkPermissionAssigneeId, model.FkContactProfileId));
+            model.AddDomainEvent(new RemovePostEvent(model.Id, model.Code, model.IsActive, model.FkPermissionAssigneeId, model.FkContactProfileId));
 
             await ExpirePostLocationsAsync(id);
 
@@ -513,7 +565,7 @@ namespace HR.Infrastructure.Services
                 FkParentId = s.FkParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
-                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title ,ProfileId = s.Location.FkContactProfileId }).ToList(),
+                locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
 
 
             }).ToList();

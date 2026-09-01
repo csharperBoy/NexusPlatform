@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Core.Domain.Interfaces;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
@@ -105,46 +106,46 @@ namespace People.Domain.Entities
         }
        public void Touch() => ModifiedAt = DateTime.UtcNow;
         public async Task<bool> ApplyChange(
-         string? _NationalCode,
-         string? _FirstName,
-         string? _LastName,
-        DateTime? _BirthDate,
-         string? _BirthPlace,
-        string? _FatherName,
-         Gender? _Gender
+         Optional<string?> _NationalCode,
+         Optional<string?> _FirstName,
+         Optional<string?> _LastName,
+         Optional<DateTime?> _BirthDate,
+         Optional<string?> _BirthPlace,
+         Optional<string?> _FatherName,
+         Optional<Gender?> _Gender
 
           )
         {
             bool hasChange = false;
 
-            if (_NationalCode != null && _NationalCode != NationalCode.ToString())
+            if (_NationalCode.IsSet && _NationalCode.Value != NationalCode.ToString())
             {
-                NationalCode = NationalCode.Create(_NationalCode);
+                NationalCode = NationalCode.Create(_NationalCode.Value);
                 hasChange = true;
             }
-            if (_FirstName != null && _FirstName != FullName?.FirstName || _LastName != null && _LastName != FullName?.LastName)
+            if (_FirstName.IsSet && _FirstName.Value != FullName?.FirstName || _LastName.IsSet && _LastName.Value != FullName?.LastName)
             {
-                SetFullName(_FirstName, _LastName);
+                SetFullName(_FirstName.Value, _LastName.Value);
                 hasChange = true;
             }
-            if (_BirthDate != null && _BirthDate != BirthDate)
+            if (_BirthDate.IsSet && _BirthDate.Value != BirthDate)
             {
-                BirthDate = _BirthDate;
+                BirthDate = _BirthDate.Value;
                 hasChange = true;
             }
-            if (_BirthPlace != null && _BirthPlace != BirthPlace)
+            if (_BirthPlace.IsSet && _BirthPlace.Value != BirthPlace)
             {
-                BirthPlace = _BirthPlace;
+                BirthPlace = _BirthPlace.Value;
                 hasChange = true;
             }
-            if (_FatherName != null && _FatherName != FatherName)
+            if (_FatherName.IsSet && _FatherName.Value != FatherName)
             {
-                FatherName = _FatherName;
+                FatherName = _FatherName.Value;
                 hasChange = true;
             }
-            if (_Gender != null && _Gender != Gender)
+            if (_Gender.IsSet && _Gender.Value != Gender)
             {
-                Gender = _Gender;
+                Gender = _Gender.Value;
                 hasChange = true;
             }
 

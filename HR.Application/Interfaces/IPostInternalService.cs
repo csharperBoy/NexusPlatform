@@ -1,4 +1,5 @@
-﻿using Core.Shared.DTOs.HR;
+﻿using Core.Domain.Common;
+using Core.Shared.DTOs.HR;
 using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Domain.Entities;
@@ -17,9 +18,9 @@ namespace HR.Application.Interfaces
         Task AssignLocationsToPost(Guid postId, List<Guid> locationsId);
 
        
-        Task<Guid> AssignToEmploymentAsync(List<Guid> postId, Guid employmentId, PostAssignmentType? assigneType = null,
+        Task<Guid> AssignToEmploymentAsync(List<Guid?> postId, Guid employmentId, PostAssignmentType? assigneType = null,
             DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
-        Task<Guid> AssignToPostAsync(Guid postId, List<Guid> employmentIds, PostAssignmentType? assigneType = null,
+        Task<Guid> AssignToPostAsync(Guid postId, List<Guid?> employmentIds, PostAssignmentType? assigneType = null,
             DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
         Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null,
             Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true
@@ -38,6 +39,17 @@ namespace HR.Application.Interfaces
         Task<IEnumerable<OrganizationUnit>> GetOrganizationUnitListAsync();
         Task<IReadOnlyList<PostInfoDto>> GetPostListAsync();
         Task SaveAsync();
-        Task<Guid> UpdatePostAsync(Guid id, string? code, Guid? organizationUnitId, Guid? jobTitleId, Guid? jobLevelId, Guid? gradeId, Guid? costCenterId, Guid? reportsToPostId, bool? isActive, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
+        Task<Guid> UpdatePostAsync(Guid id,
+              Optional<string?> code,
+            Optional<Guid?> organizationUnitId,
+            Optional<Guid> jobTitleId,
+            Optional<Guid?> jobLevelId,
+            Optional<Guid?> gradeId,
+            Optional<Guid?> costCenterId,
+            Optional<Guid?> reportsToPostId,
+            Optional<bool?> isActive,
+            Optional<List<string>?> officePhone,
+            Optional<List<string>?> orgEmail,
+            Optional<List<string>?> orgMobile);
     }
 }

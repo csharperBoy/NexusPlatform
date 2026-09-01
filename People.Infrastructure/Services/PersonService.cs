@@ -3,13 +3,14 @@ using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.People;
 using Core.Application.Provider;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Repositories;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
- 
+
 using Microsoft.Extensions.Logging;
 using People.Application.Interfaces;
 using People.Domain.Entities;
@@ -71,32 +72,50 @@ namespace People.Infrastructure.Services
         string? createBy = null
             )
         {
-            //var user =await _userProvider.GetAsync(new CancellationToken());
+            NaturalPerson? existPerson = (await _naturalPersonRepository.GetAllAsync(queryOptions: q => q.Where(a => a.NationalCode.Value.Trim() == nationalCode.Trim()))).FirstOrDefault();
             NaturalPerson naturalPerson = new NaturalPerson(nationalCode, firstName, lastName, birthDate, birthPlace, fatherName, gender, createBy);
-            naturalPerson.setParty(await CreatePartyAsync(Phone, Address, Email, Mobile));
-            await _naturalPersonRepository.AddAsync(naturalPerson);
-            await _naturalPersonProfileRepository.AddAsync(new NaturalPersonProfile(naturalPerson.Id));
-            return naturalPerson.Id;
+            if (existPerson == null)
+            {
+                naturalPerson.setParty(await CreatePartyAsync(Phone, Address, Email, Mobile));
+                await _naturalPersonRepository.AddAsync(naturalPerson);
+                await _naturalPersonProfileRepository.AddAsync(new NaturalPersonProfile(naturalPerson.Id));
+                return naturalPerson.Id;
+            }
+          else
+          {
+              existPerson.ApplyChange(naturalPerson,
+                  new List<string> {
+                  "NaturalPerson.NationalCode",
+                  "NaturalPerson.FullName",
+                  "NaturalPerson.BirthDate",
+                  "NaturalPerson.BirthPlace",
+                  "NaturalPerson.FatherName",
+                  "NaturalPerson.Gender",
+                  "NaturalPerson.CreatedBy"
+              });
+              await _naturalPersonRepository.UpdateAsync(existPerson);
+              return naturalPerson.Id;
+            }
         }
         private async Task<Guid> CreatePartyAsync(
              List<PhoneNumber>? Phone,
              List<string>? Address,
-             List< Email>? Email,
+             List<Email>? Email,
              List<PhoneNumber>? Mobile)
         {
             Guid perAssigneeId = await _permissionService.CreatePermissionAssigneeAsync(AssigneeType.Party);
             Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Party - {perAssigneeId}", ContactProfileTypeEnum.Party);
-            Party party = new Party(contactProfileId,contactProfileId);
+            Party party = new Party(contactProfileId, contactProfileId);
             await _partyRepository.AddAsync(party);
 
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile?.Select(a=>a.Value).ToList(), party.FkContactProfileId);
+            await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile?.Select(a => a.Value).ToList(), party.FkContactProfileId);
             await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), party.FkContactProfileId);
             await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address, party.FkContactProfileId);
             await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), party.FkContactProfileId);
             return party.Id;
         }
 
-        
+
 
         public async Task SaveAsync()
         {
@@ -124,13 +143,16 @@ namespace People.Infrastructure.Services
         }
 
         public async Task UpdatePersonAsync(Guid id,
-            string firstlName, string lastName, DateTime? birthDate,
-            string? birthPlace, string? fatherName, string? nationalCode,
-
-             List<PhoneNumber>? Phone = null,
-       List<string>? Address = null,
-        List<Email>? Email = null,
-        List<PhoneNumber>? Mobile = null 
+            Optional<string> firstlName,
+            Optional<string> lastName,
+            Optional<DateTime?> birthDate,
+            Optional<string?> birthPlace,
+            Optional<string?> fatherName,
+            Optional<string?> nationalCode,
+            Optional<List<PhoneNumber>?> Phone,
+            Optional<List<string>?> Address,
+            Optional<List<Email>?> Email,
+            Optional<List<PhoneNumber>?> Mobile
             )
         {
             NaturalPerson? person = await _naturalPersonRepository.GetByIdAsync(id, a => a.Party);
@@ -139,15 +161,15 @@ namespace People.Infrastructure.Services
                 throw new Exception("Person not found");
             }
 
-          bool hasChange = await person.ApplyChange(
-              nationalCode,
-              firstlName,
-              lastName,
-              birthDate, 
-              birthPlace, 
-              fatherName,
-              null
-              );
+            bool hasChange = await person.ApplyChange(
+                nationalCode,
+                firstlName,
+                lastName,
+                birthDate,
+                birthPlace,
+                fatherName,
+                null
+                );
             //bool hasChange = person.ApplyChange( new NaturalPerson(
             //    nationalCode,
             //    firstlName,
@@ -158,17 +180,21 @@ namespace People.Infrastructure.Services
             //    null,null
             //    ) ,  UpdateMask);
 
-            if (hasChange) {
+            if (hasChange)
+            {
                 await _naturalPersonRepository.UpdateAsync(person);
             }
 
+            if (Mobile.IsSet)
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+            if (Phone.IsSet)
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+            if (Address.IsSet)
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address.Value, person.Party.FkContactProfileId);
+            if (Email.IsSet)
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
 
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address, person.Party.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
-
-             person.AddDomainEvent(new ChangeNaturalPersonEvent(person.Id));
+            person.AddDomainEvent(new ChangeNaturalPersonEvent(person.Id));
         }
     }
 }

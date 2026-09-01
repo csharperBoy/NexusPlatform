@@ -92,7 +92,7 @@ namespace HR.IrisaSync.Extention.Services
                 // 3. دریافت تمام پست‌های موجود و ساخت دیکشنری (JobTitleId, Code) -> Post
                 var allPosts = await _hrUow.PostRepository.GetAllAsync();
                 var postDict = allPosts
-                    .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
+                    .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code) && p.IsRemove != true)
                     .ToDictionary(
                         p => (p.FkJobTitleId, p.Code),
                         p => p
@@ -144,7 +144,26 @@ namespace HR.IrisaSync.Extention.Services
                         // 7. بررسی وجود کارمند در دیتابیس
                         if (employmentDict.TryGetValue(personalCode, out var existingEmployment))
                         {
-                            await _postService.AssignToEmploymentAsync(new List<Guid> { postId }, existingEmployment.Id);
+                            UpdateEmploymentCommand updateCommand = new UpdateEmploymentCommand(
+                                Id: existingEmployment.Id,
+                                Phone: new List<string> { item.NumTelEmply.ToString() },
+                                Address: new List<string> { item.DesAdrEmply },
+                                Mobile: new List<string> { item.NumMobilEmply.ToString() },
+                                nationalCode: item.CodNatEmply,
+                                FirstName: item.NamFirstEmply,
+                                LastName: item.NamLastEmply,
+                                BirthDate: Convert.ToDateTime(item.DatBirthEmplyEn),
+                                BirthPlace: item.BirthPlace,
+                                FatherName: item.NamFathrEmply,
+                                EmploymentCode: personalCode,
+                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
+                                PostId: postId,
+                                EffectiveFrom: Convert.ToDateTime(item.DatEmpltEmplyEn)
+
+                                );
+
+                            var updateResult = await _mediator.Send(updateCommand);
+                            //await _postService.AssignToEmploymentAsync(new List<Guid?> { postId }, existingEmployment.Id);
                             // در صورت موفقیت، تعداد به‌روز شده را افزایش بده
                             result.UpdatedCount++;
                             existingEmployment.AddDomainEvent(new ChangeEmploymentEvent(existingEmployment.Id));
@@ -244,7 +263,7 @@ namespace HR.IrisaSync.Extention.Services
 
                 // 3. دریافت پست‌های موجود (فقط فیلدهای لازم)
                 var existingPosts = await _hrUow.PostRepository
-                    .GetAllAsync(queryOptions: q=>q.Where(a=>a.IsRemove != true)); // اگر IQueryable هست، بهتر است Select کنید
+                    .GetAllAsync(queryOptions: q => q.Where(a => a.IsRemove != true)); // اگر IQueryable هست، بهتر است Select کنید
 
                 // 4. ساخت دیکشنری از پست‌های موجود با کلید (JobTitleId, Code)
                 var existingDict = existingPosts
@@ -289,15 +308,21 @@ namespace HR.IrisaSync.Extention.Services
                             if (existingPost.FkOrganizationUnitId != orgUnitId ||
                                 existingPost.FkJobLevelId != jobLevelId)
                             {
-                                // از متد UpdateDetails استفاده می‌کنیم
-                                existingPost.UpdateDetails(
-                                    organizationUnitId: orgUnitId,
-                                    jobLevelId: jobLevelId,
-                                    gradeId: null,      // در صورت نیاز
-                                    costCenterId: null, // در صورت نیاز
-                                    parentId: null      // در صورت نیاز
+                                UpdatePostCommand updateCommand = new UpdatePostCommand(
+                                    Id: existingPost.Id,
+                                    OrganizationUnitId: orgUnitId,
+                                    JobLevelId: jobLevelId
                                 );
+                                // از متد UpdateDetails استفاده می‌کنیم
+                                //existingPost.UpdateDetails(
+                                //    organizationUnitId: orgUnitId,
+                                //    jobLevelId: jobLevelId,
+                                //    gradeId: null,      // در صورت نیاز
+                                //    costCenterId: null, // در صورت نیاز
+                                //    parentId: null      // در صورت نیاز
+                                //);
 
+                                var createResult = await _mediator.Send(updateCommand);
                                 hasChanges = true;
                             }
 

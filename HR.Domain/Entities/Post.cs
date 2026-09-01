@@ -120,58 +120,58 @@ namespace HR.Domain.Entities
         }
 
         public bool ApplyChange(
-                 string? _Code = null,
-                 Guid? _FkJobTitleId = null,
-                 Guid? _FkOrganizationUnitId = null,
-                 Guid? _FkJobLevelId = null,
-                 Guid? _FkGradeId = null,
-                 Guid? _FkCostCenterId = null,
-                 bool? _IsActive = null,
-            Guid? _FkParentId = null
+                 Optional<string?> _Code ,
+                 Optional<Guid> _FkJobTitleId ,
+                 Optional<Guid?> _FkOrganizationUnitId ,
+                 Optional<Guid?> _FkJobLevelId ,
+                 Optional<Guid?> _FkGradeId ,
+                 Optional<Guid?> _FkCostCenterId ,
+                 Optional<bool?> _IsActive ,
+            Optional<Guid?> _FkParentId
 
            )
         {
             bool hasChange = false;
 
-            if (_Code != null && _Code.Trim() != this.Code.Trim())
+            if (_Code.IsSet && _Code.Value?.Trim() != this.Code.Trim())
             {
-                this.Code = _Code;
+                this.Code = _Code.Value;
                 hasChange = true;
             }
-            if ( _FkParentId != this.FkParentId)
+            if (  _FkParentId.IsSet && _FkParentId.Value != this.FkParentId)
             {
-                this.ChangeParent(_FkParentId);
+                this.ChangeParent(_FkParentId.Value);
                 hasChange = true;
             }
 
-            if (_FkJobTitleId != null && _FkJobTitleId != this.FkJobTitleId)
+            if (_FkJobTitleId.IsSet && _FkJobTitleId.Value != this.FkJobTitleId)
             {
-                this.FkJobTitleId = (Guid)_FkJobTitleId;
+                this.FkJobTitleId = _FkJobTitleId.Value;
                 hasChange = true;
             }
-            if (_FkOrganizationUnitId != null && _FkOrganizationUnitId != this.FkOrganizationUnitId)
+            if (_FkOrganizationUnitId.IsSet && _FkOrganizationUnitId.Value != this.FkOrganizationUnitId)
             {
-                this.FkOrganizationUnitId = (Guid)_FkOrganizationUnitId;
+                this.FkOrganizationUnitId = _FkOrganizationUnitId.Value;
                 hasChange = true;
             }
-            if (_FkJobLevelId != null && _FkJobLevelId != this.FkJobLevelId)
+            if (_FkJobLevelId.IsSet && _FkJobLevelId.Value != this.FkJobLevelId)
             {
-                this.FkJobLevelId = (Guid)_FkJobLevelId;
+                this.FkJobLevelId = _FkJobLevelId.Value;
                 hasChange = true;
             }
-            if (_FkGradeId != null && _FkGradeId != this.FkGradeId)
+            if (_FkGradeId.IsSet && _FkGradeId.Value != this.FkGradeId)
             {
-                this.FkGradeId = _FkGradeId;
+                this.FkGradeId = _FkGradeId.Value;
                 hasChange = true;
             }
-            if (_FkCostCenterId != null && _FkCostCenterId != this.FkCostCenterId)
+            if (_FkCostCenterId.IsSet && _FkCostCenterId.Value != this.FkCostCenterId)
             {
-                this.FkCostCenterId = _FkCostCenterId;
+                this.FkCostCenterId = _FkCostCenterId.Value;
                 hasChange = true;
             }
-            if (_IsActive != null && _IsActive != this.IsActive)
+            if (_IsActive.IsSet && _IsActive.Value != this.IsActive)
             {
-                this.IsActive = (bool)_IsActive;
+                this.IsActive = (bool)_IsActive.Value;
                 hasChange = true;
             }
            

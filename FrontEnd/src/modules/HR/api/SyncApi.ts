@@ -9,7 +9,7 @@ export const SyncApi = {
     const api = getAPI(API_MODULE);
     const response = await api.get<Record<string, SyncResult>>(
       `/api/hr/IrisaSync/syncWithIrisa`,
-      { withCredentials: true }
+      { withCredentials: true  ,timeout: 240000}
     );
     return response.data; // مستقیماً دیکشنری
   },

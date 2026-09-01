@@ -49,13 +49,13 @@ namespace HR.Application.Commands.OrgChart
                     );
 
                     // ۲. تخصیص به کارمند (در صورت وجود)
-                    if (command.EmploymentId.HasValue && command.EmploymentId.Value != Guid.Empty)
+                    if (command.EmploymentId.IsSet && command.EmploymentId.Value != Guid.Empty)
                     {
-                        await _orgChartService.AssignToEmploymentAsync(new List<Guid> { postId }, command.EmploymentId.Value, command.AssignType);
+                        await _orgChartService.AssignToPostAsync( postId , new List<Guid?> { command.EmploymentId.Value }, command.AssignType.Value);
                     }
-                    if (command.locationsId != null)
+                    if (command.locationsId.IsSet)
                     {
-                        await _orgChartService.AssignLocationsToPost(postId, command.locationsId);
+                        await _orgChartService.AssignLocationsToPost(postId, command.locationsId.Value);
                     }
                     results.Add(postId);
                 }

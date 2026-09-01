@@ -1,61 +1,50 @@
-﻿using Core.Domain.ValueObjects;
-using Core.Shared.Enums.Authorization;
-using Core.Shared.Enums.HR;
+﻿using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
-using HR.Domain.Entities;
- 
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
+using Core.Domain.Common;
 namespace HR.Application.Commands.Employment
 {
 
     public record UpdateEmploymentCommand(
            Guid Id,
     #region party
-        List<string>? Phone,
-        List<string>? Address,
-        List<string>? Email,
-        List<string>? Mobile,
+     Optional<List<string>?> Phone = default,
+     Optional<List<string>?> Address = default,
+     Optional<List<string>?> Email = default,
+     Optional<List<string>?> Mobile = default,
     #endregion
     #region Person
 
-     string? FirstName,
-     string? LastName,
-     DateTime? BirthDate,
-     string? BirthPlace,
-     string? FatherName,
-     string? nationalCode,
+     Optional<string?> FirstName = default,
+     Optional<string?> LastName = default,
+     Optional<DateTime?> BirthDate = default,
+     Optional<string?> BirthPlace = default,
+     Optional<string?> FatherName = default,
+     Optional<string?> nationalCode = default,
     #endregion
     #region employment
 
-     string? EmploymentCode,
-     Guid? EmploymentTypeId,
-     Guid? EmploymentStatusId,
-     DateOnly? StartDate,
-     DateOnly? EndDate,
+     Optional<string?> EmploymentCode = default,
+     Optional<Guid?> EmploymentTypeId = default,
+     Optional<Guid?> EmploymentStatusId = default,
+     Optional<DateOnly?> StartDate = default,
+     Optional<DateOnly?> EndDate = default,
 
-     List<Guid>? locationsId,
+     Optional<List<Guid>?> locationsId = default,
 
-     List<string>? OfficePhone,
-            List<string>? OrgEmail,
-            List<string>? OrgMobile,
+     Optional<List<string>?> OfficePhone = default,
+     Optional<List<string>?> OrgEmail = default,
+     Optional<List<string>?> OrgMobile = default,
     #endregion
 
     #region post assign
 
-     Guid PostId,
-     PostAssignmentType AssigneeType,
-     DateTime? EffectiveFrom,
-     DateTime? EffectiveTo
+     Optional<Guid?> PostId = default,
+     Optional<PostAssignmentType?> AssigneeType = default,
+     Optional<DateTime?> EffectiveFrom = default,
+     Optional<DateTime?> EffectiveTo = default
     #endregion
 
 ) : IRequest<Result<Guid>>;
@@ -94,10 +83,10 @@ namespace HR.Application.Commands.Employment
                     request.FirstName,
                     request.LastName,
                     request.BirthDate,
-                     request.BirthPlace,
-                     request.FatherName,
-                     request.nationalCode,
-                     request.EmploymentCode,
+                    request.BirthPlace,
+                    request.FatherName,
+                    request.nationalCode,
+                    request.EmploymentCode,
                     request.EmploymentTypeId,
                     request.EmploymentStatusId,
                     request.StartDate,
@@ -107,13 +96,13 @@ namespace HR.Application.Commands.Employment
                     request.OrgEmail,
                     request.OrgMobile
                     );
-                if (request.PostId != Guid.Empty && request.PostId != null)
+                if (request.PostId.IsSet)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { request.PostId }, EmploymentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId.Value }, EmploymentId, request.AssigneeType.Value, request.EffectiveFrom.Value, request.EffectiveTo.Value);
                 }
-                if (request.locationsId != null)
+                if (request.locationsId.IsSet)
                 {
-                    await _employmentService.AssignLocationsToEmployment(EmploymentId, request.locationsId);
+                    await _employmentService.AssignLocationsToEmployment(EmploymentId, request.locationsId.Value);
                 }
                 await _employmentService.SaveAsync();
                 _logger.LogInformation(

@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.Common;
 using Core.Domain.ValueObjects;
 using Core.Shared.Enums.HR;
 using Microsoft.Extensions.Configuration;
@@ -68,6 +69,11 @@ namespace Core.Application.Abstractions.People
         }
 
         public Task UpdatePersonAsync(Guid id, string firstlName, string lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, List<PhoneNumber>? Phone = null, List<string>? Address = null, List<Email>? Email = null, List<PhoneNumber>? Mobile = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdatePersonAsync(Guid id, Optional<string> firstlName, Optional<string> lastName, Optional<DateTime?> birthDate, Optional<string?> birthPlace, Optional<string?> fatherName, Optional<string?> nationalCode, Optional<List<PhoneNumber>?> Phone, Optional<List<string>?> Address, Optional<List<Email>?> Email, Optional<List<PhoneNumber>?> Mobile)
         {
             throw new NotImplementedException();
         }

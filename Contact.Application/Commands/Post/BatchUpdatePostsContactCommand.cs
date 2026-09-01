@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -34,14 +35,14 @@ namespace Contact.Application.Commands.Post
                     // ۱. به‌روزرسانی اطلاعات پایه پست
                     Guid postId = await _orgChartService.UpdatePostAsync(
                         command.Id,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
+                        Optional<string?>.Undefined,
+                         Optional<Guid?>.Undefined,
+                         Optional<Guid>.Undefined,
+                         Optional<Guid?>.Undefined,
+                         Optional<Guid?>.Undefined,
+                         Optional<Guid?>.Undefined,
+                         Optional<Guid?>.Undefined,
+                         Optional<bool?>.Undefined,
                         command.OfficePhone,
                         command.OrgEmail,
                         command.OrgMobile

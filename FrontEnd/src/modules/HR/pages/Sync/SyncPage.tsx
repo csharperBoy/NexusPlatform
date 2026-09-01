@@ -18,14 +18,18 @@ export const SyncPage: React.FC = () => {
       const data = await SyncApi.syncWithIrisa();
       setSyncData(data);
     } catch (err) {
-      // مدیریت خطاهای برگشتی از سرور
-      if (err instanceof AxiosError && err.response) {
-        // اگر سرور با BadRequest (یا هر خطای دیگه) جواب داده
-        const errorMessage = err.response.data || "خطا در همگام‌سازی";
-        setError(typeof errorMessage === "string" ? errorMessage : JSON.stringify(errorMessage));
-      } else {
-        setError("خطا در برقراری ارتباط با سرور.");
-      }
+        if (err instanceof AxiosError) {
+          if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+            setError('عملیات همگام‌سازی زمان‌بر است، لطفاً منتظر بمانید...');
+          } else if (err.response) {
+            const errorMessage = err.response.data || "خطا در همگام‌سازی";
+            setError(typeof errorMessage === "string" ? errorMessage : JSON.stringify(errorMessage));
+          } else {
+            setError("خطا در برقراری ارتباط با سرور.");
+          }
+        } else {
+          setError("خطای ناشناخته رخ داده است.");
+        }
     } finally {
       setLoading(false);
     }
@@ -53,7 +57,7 @@ export const SyncPage: React.FC = () => {
             : "bg-blue-600 hover:bg-blue-700 active:scale-95"
         }`}
       >
-        {loading ? "در حال همگام‌سازی..." : "شروع همگام‌سازی"}
+          {loading ? "در حال همگام‌سازی (لطفاً صبر کنید)..." : "شروع همگام‌سازی"}
       </button>
 
       {loading && (
