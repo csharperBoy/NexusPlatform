@@ -20,5 +20,6 @@ namespace HR.IrisaSync.Extention.Interface
         Task<SyncResult> SyncOrganizationUnitAsync();
 
         Task<SyncResult> SyncPostAsync();
+        Task<SyncResult> SyncAssignmentsAsync();
     }
 }

@@ -4,6 +4,7 @@ using Core.Shared.Results;
 using HR.IrisaSync.Extention.Commands;
 using HR.IrisaSync.Extention.Interface;
 using HR.IrisaSync.Extention.Queries;
+using HR.IrisaSync.Extention.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -38,47 +39,57 @@ namespace HR.IrisaSync.Extention.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
-        [HttpPost("SyncEmployement")]
+        */
+        [HttpGet("SyncEmployement")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncEmployement()
         {
-            await _syncService.SyncEmploymentsAsync();
+           var result = await _syncService.SyncEmploymentsAsync();
 
-            return HandleResult(Result<bool>.Ok(true));
+            return HandleResult(Result<SyncResult>.Ok(result));
+
         }
-        [HttpPost("FillJobTitle")]
+        [HttpGet("SyncJobTitle")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncJobTitle()
         {
-            await _syncService.SyncJobTitle();
+            var result = await _syncService.SyncJobTitleAsync();
 
-            return HandleResult(Result<bool>.Ok(true));
+            return HandleResult(Result<SyncResult>.Ok(result));
         }
-        [HttpPost("FillJobLevel")]
+        [HttpGet("SyncJobLevel")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncJobLevel()
         {
-            await _syncService.SyncJobLevel();
+            var result = await _syncService.SyncJobLevelAsync();
 
-            return HandleResult(Result<bool>.Ok(true));
+            return HandleResult(Result<SyncResult>.Ok(result));
         }
-        [HttpPost("FillOrganizationUnit")]
+        [HttpGet("SyncOrganizationUnit")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncOrganizationUnit()
         {
-            await _syncService.SyncOrganizationUnit();
+            var result = await _syncService.SyncOrganizationUnitAsync();
 
-            return HandleResult(Result<bool>.Ok(true));
+            return HandleResult(Result<SyncResult>.Ok(result));
         }
-        [HttpPost("FillPost")]
+        [HttpGet("SyncPost")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncPost()
         {
-            await _syncService.SyncPostAsync();
+            var result = await _syncService.SyncPostAsync();
 
-            return HandleResult(Result<bool>.Ok(true));
+            return HandleResult(Result<SyncResult>.Ok(result));
         }
-        */
+        [HttpGet("SyncAssignments")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncAssignments()
+        {
+            SyncResult result = await _syncService.SyncAssignmentsAsync();
+
+            return HandleResult(Result<SyncResult>.Ok(result));
+        }
+
     }
 
 }

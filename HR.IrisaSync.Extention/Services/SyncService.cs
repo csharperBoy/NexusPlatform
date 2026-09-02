@@ -3,10 +3,12 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
 using Core.Shared.Enums.HR;
+using DocumentFormat.OpenXml.Office.CustomUI;
 using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
@@ -375,34 +377,51 @@ namespace HR.IrisaSync.Extention.Services
 
                 if (postsToUpdate.Any())
                 {
-                    await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
+                    BatchUpdatePostsCommand updateCommand = new BatchUpdatePostsCommand(postsToUpdate.Select(a => new UpdatePostCommand(
+                        a.Id,a.Code,a.FkOrganizationUnitId,a.FkJobTitleId,a.FkJobLevelId,
+                        Optional<Guid?>.Undefined,
+                        Optional<Guid?>.Undefined,
+                        Optional<Guid?>.Undefined,
+                        Optional<bool?>.Undefined,
+                        Optional<Guid?>.Undefined,
+                        Optional<PostAssignmentType?>.Undefined,
+                        Optional<List<Guid>?>.Undefined,
+                        Optional<List<string>?>.Undefined,
+                        Optional<List<string>?>.Undefined,
+                        Optional<List<string>?>.Undefined
+                        )).ToList());
 
-                    foreach (var post in postsToUpdate)
-                    {
-                        post.AddDomainEvent(new ChangePostEvent(post.Id));
-                    }
+                    var createResult = await _mediator.Send(updateCommand);
+                    //await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
+
+                    //foreach (var post in postsToUpdate)
+                    //{
+                    //    post.AddDomainEvent(new ChangePostEvent(post.Id));
+                    //}
                     result.UpdatedCount = postsToUpdate.Count;
                 }
 
                 if (postsToDelete.Any())
                 {
-                    foreach (var item in postsToDelete)
-                    {
-                        await item.SoftRemove();
-                        foreach (var ass in item.Assignments)
-                        {
-                            ass.DoExpire();
-                        }
-                        //await _hrUow.PostRepository.UpdateAsync(item);
-                    }
-                    //await _hrUow.PostRepository.RemoveRangeAsync(postsToDelete);
+                    //foreach (var item in postsToDelete)
+                    //{
+                    //    await item.SoftRemove();
+                    //    foreach (var ass in item.Assignments)
+                    //    {
+                    //        ass.DoExpire();
+                    //    }
+                    //}
+                    //foreach (var post in postsToDelete)
+                    //{
 
+                    //    post.AddDomainEvent(new ChangePostEvent(post.Id));
+                    //}
                     foreach (var post in postsToDelete)
                     {
+                        DeletePostCommand deleteCommand = new DeletePostCommand(post.Id);
 
-                        post.AddDomainEvent(new ChangePostEvent(post.Id));
+                        var createResult = await _mediator.Send(deleteCommand);
                     }
-
                     result.DeletedCount = postsToDelete.Count;
                 }
 
@@ -430,7 +449,7 @@ namespace HR.IrisaSync.Extention.Services
         public async Task<SyncResult> SyncJobTitleAsync()
         {
             var result = new SyncResult();
-
+            await _mapService.FillJobTitleMap();
             var list = await _uow.JobTitleMapRepository.GetAllAsync();
             var existList = await _hrUow.JobTitleRepository.GetAllAsync();
 
@@ -476,7 +495,7 @@ namespace HR.IrisaSync.Extention.Services
         public async Task<SyncResult> SyncJobLevelAsync()
         {
             var result = new SyncResult();
-
+            await _mapService.FillJobLevelMap();
             var list = await _uow.JobLevelMapRepository.GetAllAsync();
             var existList = await _hrUow.JobLevelRepository.GetAllAsync();
 
@@ -522,7 +541,8 @@ namespace HR.IrisaSync.Extention.Services
         public async Task<SyncResult> SyncOrganizationUnitAsync()
         {
             var result = new SyncResult();
-
+            await _mapService.FillOrganizationUnitRootMap();
+            await _mapService.FillOrganizationUnitMap();
             var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
             // roots node
@@ -584,6 +604,11 @@ namespace HR.IrisaSync.Extention.Services
             await _uow.SaveChangesAsync();
 
             return result;
+        }
+
+        public Task<SyncResult> SyncAssignmentsAsync()
+        {
+            throw new NotImplementedException();
         }
     }
 }

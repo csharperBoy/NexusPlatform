@@ -5,7 +5,7 @@ export interface SyncResult {
   deletedCount: number;
 }
 
-export type SyncEntityKey = 'orgUnit' | 'jobLevel' | 'jobTitle' | 'employment' | 'post';
+export type SyncEntityKey = 'orgUnit' | 'jobLevel' | 'jobTitle' | 'employment' | 'post' | 'assignment';
 
 export const entityLabels: Record<SyncEntityKey, string> = {
   orgUnit: 'واحد سازمانی',
@@ -13,4 +13,5 @@ export const entityLabels: Record<SyncEntityKey, string> = {
   jobTitle: 'عنوان شغلی',
   employment: 'کارمند',
   post: 'پست',
+  assignment: 'انتصابات'
 };
