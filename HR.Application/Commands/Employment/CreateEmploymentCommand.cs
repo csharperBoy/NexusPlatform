@@ -144,7 +144,7 @@ namespace HR.Application.Commands.Employment
                 #region انتصاب شخص به پست سازمانی
                 if (request.PostId != null )
                 {
-                    Guid AssignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                    await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
                 }
                 #endregion
 

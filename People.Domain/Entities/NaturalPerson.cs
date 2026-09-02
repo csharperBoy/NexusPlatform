@@ -118,14 +118,14 @@ namespace People.Domain.Entities
         {
             bool hasChange = false;
 
-            if (_NationalCode.IsSet && _NationalCode.Value != NationalCode.ToString())
+            if (_NationalCode.IsSet && _NationalCode.Value?.Trim() != NationalCode.ToString())
             {
-                NationalCode = NationalCode.Create(_NationalCode.Value);
+                NationalCode = NationalCode.Create(_NationalCode.Value?.Trim());
                 hasChange = true;
             }
-            if (_FirstName.IsSet && _FirstName.Value != FullName?.FirstName || _LastName.IsSet && _LastName.Value != FullName?.LastName)
+            if (_FirstName.IsSet && _FirstName.Value?.Trim() != FullName?.FirstName.Trim() || _LastName.IsSet && _LastName.Value?.Trim() != FullName?.LastName.Trim())
             {
-                SetFullName(_FirstName.Value, _LastName.Value);
+                SetFullName(_FirstName.Value?.Trim(), _LastName.Value?.Trim());
                 hasChange = true;
             }
             if (_BirthDate.IsSet && _BirthDate.Value != BirthDate)
@@ -133,14 +133,14 @@ namespace People.Domain.Entities
                 BirthDate = _BirthDate.Value;
                 hasChange = true;
             }
-            if (_BirthPlace.IsSet && _BirthPlace.Value != BirthPlace)
+            if (_BirthPlace.IsSet && _BirthPlace.Value?.Trim() != BirthPlace?.Trim())
             {
-                BirthPlace = _BirthPlace.Value;
+                BirthPlace = _BirthPlace.Value?.Trim();
                 hasChange = true;
             }
-            if (_FatherName.IsSet && _FatherName.Value != FatherName)
+            if (_FatherName.IsSet && _FatherName.Value?.Trim() != FatherName?.Trim())
             {
-                FatherName = _FatherName.Value;
+                FatherName = _FatherName.Value?.Trim();
                 hasChange = true;
             }
             if (_Gender.IsSet && _Gender.Value != Gender)

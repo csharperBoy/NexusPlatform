@@ -77,6 +77,11 @@ namespace Core.Application.Abstractions.People
         {
             throw new NotImplementedException();
         }
+
+        Task<bool> IPersonPublicService.UpdatePersonAsync(Guid id, Optional<string> firstlName, Optional<string> lastName, Optional<DateTime?> birthDate, Optional<string?> birthPlace, Optional<string?> fatherName, Optional<string?> nationalCode, Optional<List<PhoneNumber>?> Phone, Optional<List<string>?> Address, Optional<List<Email>?> Email, Optional<List<PhoneNumber>?> Mobile)
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

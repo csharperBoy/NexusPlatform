@@ -74,7 +74,7 @@ namespace HR.Application.Commands.Employment
                     "Creating resource: {EmploymentCode}",
                     request.EmploymentCode);
 
-                Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
+                await _employmentService.UpdateEmploymentAsync(
                     request.Id,
                     request.Phone,
                     request.Address,
@@ -96,9 +96,10 @@ namespace HR.Application.Commands.Employment
                     request.OrgEmail,
                     request.OrgMobile
                     );
+                Guid EmploymentId = request.Id;
                 if (request.PostId.IsSet)
                 {
-                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId.Value }, EmploymentId, request.AssigneeType.Value, request.EffectiveFrom.Value, request.EffectiveTo.Value);
+                    await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId.Value }, EmploymentId, request.AssigneeType.Value, request.EffectiveFrom.Value, request.EffectiveTo.Value);
                 }
                 if (request.locationsId.IsSet)
                 {

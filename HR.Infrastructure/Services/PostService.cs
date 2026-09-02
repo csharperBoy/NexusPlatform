@@ -151,13 +151,14 @@ namespace HR.Infrastructure.Services
             }
         }
 
-        public async Task<Guid> AssignToEmploymentAsync(
+        public async Task<bool> AssignToEmploymentAsync(
     List<Guid?> postIds,
     Guid employmentId,
     PostAssignmentType? assigneType = null,
     DateTime? effectiveFrom = null,
     DateTime? effectiveTo = null)
         {
+            bool hasChange = false;
             // ۱. دریافت انتساب‌های فعال فعلی این شخص
             var existingEmploymentAssignments = await GetEmploymentAssignmentAsync(employmentId);
 
@@ -202,6 +203,7 @@ namespace HR.Infrastructure.Services
             {
                 item.DoExpire();
                 await _assignmentRepository.UpdateAsync(item);
+                hasChange = true;
             }
             //await SaveAsync(); // ذخیره‌سازی اولیه (انقضاها)
 
@@ -223,19 +225,21 @@ namespace HR.Infrastructure.Services
                 {
                     assignment.AddDomainEvent(new ChangePostEvent(assignment.Id));
                 }
+                    hasChange = true;
                 //await SaveAsync(); // ذخیره‌سازی دوم (اضافه‌ها)
-                return toAdd.First().Id;
+                //return toAdd.First().Id;
             }
 
-            return Guid.Empty;
+            return hasChange;
         }
-        public async Task<Guid> AssignToPostAsync(
+        public async Task<bool> AssignToPostAsync(
      Guid postId,
      List<Guid?> employmentIds,
      PostAssignmentType? assigneType = null,
      DateTime? effectiveFrom = null,
      DateTime? effectiveTo = null)
         {
+            bool hasChange = false;
             // ۱. دریافت انتساب‌های فعال فعلی این پست
             var existingAssignments = await GetPostAssignmentAsync(postId);
             var existingEmploymentIds = existingAssignments?.Select(a => a.FkEmploymentId).ToHashSet();
@@ -252,6 +256,7 @@ namespace HR.Infrastructure.Services
             {
                 item.DoExpire();
                 await _assignmentRepository.UpdateAsync(item);
+                hasChange = true;
             }
 
             // ۴. انتساب‌های جدید (اشخاصی که در لیست جدید هستند ولی قبلاً برای این پست فعال نبودند)
@@ -263,16 +268,16 @@ namespace HR.Infrastructure.Services
             if (toAdd.Any())
             {
                 await _assignmentRepository.AddRangeAsync(toAdd);
-
                 foreach (var assignment in toAdd)
                 {
                     assignment.AddDomainEvent(new ChangePostEvent(assignment.Id));
                 }
 
-                return toAdd.First().Id;
+                hasChange = true;
+                //return toAdd.First().Id;
             }
 
-            return Guid.Empty;
+            return hasChange;
         }
 
 
@@ -282,12 +287,12 @@ namespace HR.Infrastructure.Services
             List<string>? OrgMobile = null
             )
         {
-            Post? existPost = (await _postRepository.GetAllAsync(queryOptions: q => q.Where(a =>a.FkJobTitleId == jobTitleId && a.Code.Trim() == code.Trim()))).FirstOrDefault();
+            Post? existPost = (await _postRepository.GetAllAsync(queryOptions: q => q.Where(a => a.FkJobTitleId == jobTitleId && a.Code.Trim() == code.Trim()))).FirstOrDefault();
             Post post;
             if (existPost == null)
             {
                 Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
-                 post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
+                post = new Post(code, jobTitleId, contactProfileId, organizationUnitId, jobLevelId, gradeId, costCenterId, reportsToPostId);
                 await _postRepository.AddAsync(post);
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, OrgMobile, post.FkContactProfileId);
                 await _contactService.SyncProfileContacts(ContactTypeEnum.Email, OrgEmail, post.FkContactProfileId);

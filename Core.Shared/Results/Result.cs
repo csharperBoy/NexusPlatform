@@ -37,6 +37,7 @@
      این کلاس پایه‌ی مکانیزم **Operation Result Pattern** در معماری ماژولار است
      و تضمین می‌کند که مدیریت موفقیت/شکست عملیات به صورت استاندارد، خوانا و قابل تست انجام شود.
     */
+    #region For Single Commands
 
     public record Result(bool Succeeded, string? Error = null)
     {
@@ -49,4 +50,44 @@
         public static Result<T> Ok(T data) => new(true, data);
         public static Result<T> Fail(string error) => new(false, default, error);
     }
+
+    #endregion
+    #region For Batch Commands
+
+    public record BatchResult<T>(
+     bool Succeeded,
+     List<string>? SuccessMessages = null,
+     List<string>? Errors = null,
+     T? Data = default)
+    {
+        // ساخت یک نتیجهٔ موفق با داده و پیام‌های اختیاری
+        public static BatchResult<T> Ok(T data, List<string>? successMessages = null)
+            => new(true, successMessages ?? new(), null, data);
+
+        // ساخت یک نتیجهٔ ناموفق با لیست خطاها (و دادهٔ اختیاری)
+        public static BatchResult<T> Fail(List<string> errors, T? data = default, List<string>? successMessages = null)
+            => new(false, successMessages, errors, data);
+
+        // متد کمکی برای خطای تکی
+        public static BatchResult<T> Fail(string error, T? data = default)
+            => new(false, null, new List<string> { error }, data);
+    }
+
+    // همچنین برای مواقعی که داده‌ای نداریم، می‌توان یک نوع غیرجنریک تعریف کرد:
+    public record BatchResult : BatchResult<object?>
+    {
+        public BatchResult(bool succeeded, List<string>? successMessages = null, List<string>? errors = null)
+            : base(succeeded, successMessages, errors, null) { }
+
+        public static BatchResult Ok(List<string>? successMessages = null)
+            => new(true, successMessages);
+
+        public static BatchResult Fail(List<string> errors, List<string>? successMessages = null)
+            => new(false, successMessages, errors);
+
+        public static BatchResult Fail(string error)
+            => new(false, null, new List<string> { error });
+    }
+
+    #endregion
 }

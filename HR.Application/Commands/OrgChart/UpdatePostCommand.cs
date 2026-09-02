@@ -69,7 +69,7 @@ namespace HR.Application.Commands.OrgChart
                     );
                 if (request.EmploymentId.IsSet )
                 {
-                    Guid assignId = await _orgChartService.AssignToPostAsync(postId ,new List<Guid?> { request.EmploymentId.Value }, request.AssignType.Value);
+                     await _orgChartService.AssignToPostAsync(postId ,new List<Guid?> { request.EmploymentId.Value }, request.AssignType.Value);
                 }
 
                 await _orgChartService.SaveAsync();

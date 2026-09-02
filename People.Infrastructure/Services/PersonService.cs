@@ -90,11 +90,10 @@ namespace People.Infrastructure.Services
                   "NaturalPerson.BirthDate",
                   "NaturalPerson.BirthPlace",
                   "NaturalPerson.FatherName",
-                  "NaturalPerson.Gender",
-                  "NaturalPerson.CreatedBy"
+                  "NaturalPerson.Gender"
               });
               await _naturalPersonRepository.UpdateAsync(existPerson);
-              return naturalPerson.Id;
+              return existPerson.Id;
             }
         }
         private async Task<Guid> CreatePartyAsync(
@@ -142,7 +141,7 @@ namespace People.Infrastructure.Services
 
         }
 
-        public async Task UpdatePersonAsync(Guid id,
+        public async Task<bool> UpdatePersonAsync(Guid id,
             Optional<string> firstlName,
             Optional<string> lastName,
             Optional<DateTime?> birthDate,
@@ -186,15 +185,30 @@ namespace People.Infrastructure.Services
             }
 
             if (Mobile.IsSet)
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
-            if (Phone.IsSet)
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
-            if (Address.IsSet)
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address.Value, person.Party.FkContactProfileId);
-            if (Email.IsSet)
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+            {
+               bool contactChange =  await _contactService.SyncProfileContacts(ContactTypeEnum.Mobile, Mobile.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+               
+                hasChange = (hasChange || contactChange);
 
-            person.AddDomainEvent(new ChangeNaturalPersonEvent(person.Id));
+            }
+            if (Phone.IsSet)
+            {
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.Phone, Phone.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
+            }
+            if (Address.IsSet)
+            {
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.Address, Address.Value, person.Party.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
+            }
+            if (Email.IsSet)
+            {
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.Email, Email.Value?.Select(a => a.Value).ToList(), person.Party.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
+            }
+            if(hasChange)
+                person.AddDomainEvent(new ChangeNaturalPersonEvent(person.Id));
+            return hasChange;
         }
     }
 }

@@ -13,7 +13,7 @@ namespace HR.Application.Interfaces
 {
     public interface IEmploymentInternalService : IEmploymentPublicService
     {
-        Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId);
+        Task<bool> AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId);
         Task<Guid> CreateEmploymentAsync(
             string _EmploymentCode,
         Guid _PersonId,
@@ -28,7 +28,7 @@ namespace HR.Application.Interfaces
            );
         Task DeleteAsync(Guid id);
         Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync();
-        Task<Guid> UpdateEmploymentAsync(
+        Task<bool> UpdateEmploymentAsync(
             Guid id,
             Optional<List<string>?> phone,
           Optional<List<string>?> address,

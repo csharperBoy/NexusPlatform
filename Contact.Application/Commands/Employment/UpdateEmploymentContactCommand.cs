@@ -38,7 +38,7 @@ namespace Contact.Application.Commands.Employment
             {
                 _logger.LogInformation(
                     "Update Employment Contact:{Id}" , request.Id);
-                Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
+                await _employmentService.UpdateEmploymentAsync(
                     request.Id,
                     null,
                     null,
@@ -60,8 +60,8 @@ namespace Contact.Application.Commands.Employment
                     request.OrgEmails,
                     request.OrgMobiles
                     );
-                
-                await _employmentService.SaveAsync();
+                Guid EmploymentId = request.Id;
+               await _employmentService.SaveAsync();
                 _logger.LogInformation(
                     "Employment Contact Update successfully: {EmploymentId}",
                     EmploymentId);

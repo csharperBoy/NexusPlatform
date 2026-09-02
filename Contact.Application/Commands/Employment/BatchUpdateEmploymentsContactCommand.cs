@@ -33,7 +33,7 @@ namespace Contact.Application.Commands.Employment
                 foreach (var command in request.EmploymentsContact)
                 {
                     // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
+                    await _employmentService.UpdateEmploymentAsync(
                    command.Id,
                    null,
                    null,
@@ -55,8 +55,8 @@ namespace Contact.Application.Commands.Employment
                    command.OrgEmails,
                    command.OrgMobiles
                    );
-                    
 
+                    Guid EmploymentId = command.Id;
                     results.Add(EmploymentId);
                 }
 

@@ -51,7 +51,7 @@ namespace Core.Application.Abstractions.Contact
             await Task.CompletedTask;
         }
 
-        public Task SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId)
+        public Task<bool> SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId)
         {
             throw new NotImplementedException();
         }

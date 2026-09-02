@@ -11,15 +11,17 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Commands.Employment
 {
-    public record BatchUpdateEmploymentsCommand(List<UpdateEmploymentCommand> Employments) : IRequest<Result<List<Guid>>>;
+    public record BatchUpdateEmploymentsCommand(List<UpdateEmploymentCommand> Employments)
+        : IRequest<BatchResult>;
 
 
-    public class BatchUpdateEmploymentsCommandHandler : IRequestHandler<BatchUpdateEmploymentsCommand, Result<List<Guid>>>
+    public class BatchUpdateEmploymentsCommandHandler
+        : IRequestHandler<BatchUpdateEmploymentsCommand, BatchResult>
     {
         private readonly IEmploymentInternalService _employmentService;
         private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdateEmploymentsCommandHandler> _logger;
-        
+
 
         public BatchUpdateEmploymentsCommandHandler(IPostInternalService orgChartService, ILogger<BatchUpdateEmploymentsCommandHandler> logger, IEmploymentInternalService employmentService)
         {
@@ -28,60 +30,93 @@ namespace HR.Application.Commands.Employment
             _employmentService = employmentService;
         }
 
-        public async Task<Result<List<Guid>>> Handle(BatchUpdateEmploymentsCommand request, CancellationToken cancellationToken)
+        public async Task<BatchResult> Handle(BatchUpdateEmploymentsCommand request, CancellationToken cancellationToken)
         {
-            
+
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+
             try
             {
-                var results = new List<Guid>();
                 foreach (var command in request.Employments)
                 {
-                    // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
-                   command.Id,
-                   command.Phone,
-                   command.Address,
-                   command.Email,
-                   command.Mobile,
-                   command.FirstName,
-                   command.LastName,
-                   command.BirthDate,
-                   command.BirthPlace,
-                   command.FatherName,
-                   command.nationalCode,
-                   command.EmploymentCode,
-                   command.EmploymentTypeId,
-                   command.EmploymentStatusId,
-                   command.StartDate,
-                   command.EndDate,
-                   command.locationsId,
-                   command.OfficePhone,
-                   command.OrgEmail,
-                   command.OrgMobile
-                   );
-                    if (command.PostId.IsSet)
+                    try
                     {
-                        Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { command.PostId.Value }, EmploymentId, command.AssigneeType.Value, command.EffectiveFrom.Value, command.EffectiveTo.Value);
+                        string successMessage = null;
+                       
+                        // ۱. به‌روزرسانی اطلاعات پایه پست
+                        bool hasChange = await _employmentService.UpdateEmploymentAsync(
+                         command.Id,
+                         command.Phone,
+                         command.Address,
+                         command.Email,
+                         command.Mobile,
+                         command.FirstName,
+                         command.LastName,
+                         command.BirthDate,
+                         command.BirthPlace,
+                         command.FatherName,
+                         command.nationalCode,
+                         command.EmploymentCode,
+                         command.EmploymentTypeId,
+                         command.EmploymentStatusId,
+                         command.StartDate,
+                         command.EndDate,
+                         command.locationsId,
+                         command.OfficePhone,
+                         command.OrgEmail,
+                         command.OrgMobile
+                         );
+                        Guid EmploymentId = command.Id;
+                        if (hasChange)
+                        {
+                            successMessage = $"Employment with EmploymentCode {command.EmploymentCode.Value} updated successfully.";
+                        }
+                        if (command.PostId.IsSet)
+                        {
+                            bool assignHasChange = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { command.PostId.Value }, EmploymentId, command.AssigneeType.Value, command.EffectiveFrom.Value, command.EffectiveTo.Value);
+                            if (assignHasChange)
+                            {
+                                successMessage = $"{successMessage} * Employment Post Assignment Changed:{command.PostId.Value}";
+                            }
+                        }
+                        if (command.locationsId.IsSet)
+                        {
+                            bool locHasChange = await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId.Value);
+                            if (locHasChange)
+                            {
+                                successMessage = $"{successMessage} * Employment Location Changed:{command.locationsId.Value}";
+                            }
+                        }
+                        if (!string.IsNullOrEmpty(successMessage))
+                            successMessages.Add(successMessage);
                     }
-                    if (command.locationsId.IsSet)
+                    catch (Exception ex)
                     {
-                        await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId.Value);
+                        errors.Add($"Failed to update Employment with EmploymentCode {command.EmploymentCode}: {ex.Message}");
                     }
-
-                    results.Add(EmploymentId);
                 }
 
                 // ۳. ذخیره‌سازی یکباره همه تغییرات
                 await _orgChartService.SaveAsync();
                 await _employmentService.SaveAsync();
 
-                _logger.LogInformation("Batch update of {count} Employment completed successfully.", results.Count);
-                return Result<List<Guid>>.Ok(results);
+                _logger.LogInformation(
+               "Batch update completed. SuccessCount: {SuccessCount}, ErrorCount: {ErrorCount}",
+               successMessages.Count, errors.Count);
+
+                // ۳. ساخت نتیجه نهایی بر اساس وجود خطا یا عدم آن
+                return new BatchResult(
+                           succeeded: true,
+                           successMessages: successMessages,
+                           errors: errors.Any() ? errors : null // اگر خطایی نبود، null بفرست
+                       );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to batch update posts.");
-                return Result<List<Guid>>.Fail(ex.Message);
+                // خطای سطح کلی (مثلاً خطا در SaveAsync یا قطعی شبکه)
+                _logger.LogError(ex, "Critical failure during batch update.");
+                return BatchResult.Fail(ex.Message);
             }
         }
     }

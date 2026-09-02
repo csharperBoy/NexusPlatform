@@ -18,9 +18,9 @@ namespace HR.Application.Interfaces
         Task AssignLocationsToPost(Guid postId, List<Guid> locationsId);
 
        
-        Task<Guid> AssignToEmploymentAsync(List<Guid?> postId, Guid employmentId, PostAssignmentType? assigneType = null,
+        Task<bool> AssignToEmploymentAsync(List<Guid?> postId, Guid employmentId, PostAssignmentType? assigneType = null,
             DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
-        Task<Guid> AssignToPostAsync(Guid postId, List<Guid?> employmentIds, PostAssignmentType? assigneType = null,
+        Task<bool> AssignToPostAsync(Guid postId, List<Guid?> employmentIds, PostAssignmentType? assigneType = null,
             DateTime? EffectiveFrom = null, DateTime? EffectiveTo = null);
         Task<Guid> CreatePostAsync(string code, Guid organizationUnitId, Guid jobTitleId, Guid? jobLevelId = null,
             Guid? gradeId = null, Guid? costCenterId = null, Guid? reportsToPositionId = null, bool isActive = true

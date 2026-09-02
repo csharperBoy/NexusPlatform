@@ -1,8 +1,6 @@
 // src/modules/HR/pages/Sync/SyncPage.tsx
 import React, { useState } from "react";
-import {
-  SyncApi
-} from "../../api/SyncApi";
+import { SyncApi } from "../../api/SyncApi";
 import { SyncResult, entityLabels, SyncEntityKey } from "../../models/SyncModels";
 import { AxiosError } from "axios";
 
@@ -23,15 +21,14 @@ const entityConfigs: {
 // نوع وضعیت هر همگام‌سازی تکی
 type IndividualSyncState = {
   loading: boolean;
-  error: string | null;
-  result: SyncResult | null;
+  error: string | null;        // خطای شبکه یا سرور (در صورت عدم دریافت نتیجه)
+  result: SyncResult | null;   // نتیجه‌ی موفق (شامل لیست خطاهای business)
 };
 
 export const SyncPage: React.FC = () => {
   // وضعیت همگام‌سازی کامل (همه‌ی موجودیت‌ها)
   const [mainLoading, setMainLoading] = useState(false);
-  const [mainData, setMainData] = useState<Record<string, SyncResult> | null>(null);
-  const [mainError, setMainError] = useState<string | null>(null);
+  const [mainError, setMainError] = useState<string | null>(null); // خطای کلی (مثلاً قطعی شبکه در حین اجرا)
 
   // وضعیت همگام‌سازی‌های تکی
   const [individualStates, setIndividualStates] = useState<
@@ -59,25 +56,52 @@ export const SyncPage: React.FC = () => {
     return "خطای ناشناخته رخ داده است.";
   };
 
-  // همگام‌سازی کامل
+  // همگام‌سازی کامل (اجرای سریالی همه‌ی APIهای تکی)
   const handleMainSync = async () => {
+    // ریست کردن وضعیت‌ها
     setMainLoading(true);
     setMainError(null);
-    setMainData(null);
 
-    try {
-      const data = await SyncApi.syncWithIrisa();
-      setMainData(data);
-    } catch (err) {
-      setMainError(getErrorMessage(err));
-    } finally {
-      setMainLoading(false);
+    // پاک کردن نتایج و خطاهای قبلی هر بخش
+    const resetStates = {} as Record<SyncEntityKey, IndividualSyncState>;
+    entityConfigs.forEach((cfg) => {
+      resetStates[cfg.key] = { loading: false, error: null, result: null };
+    });
+    setIndividualStates(resetStates);
+
+    // اجرای به‌ترتیب
+    for (const config of entityConfigs) {
+      const { key, api } = config;
+
+      // علامت‌گذاری بخش در حال اجرا
+      setIndividualStates((prev) => ({
+        ...prev,
+        [key]: { loading: true, error: null, result: null },
+      }));
+
+      try {
+        const result = await api();
+        // موفقیت‌آمیز
+        setIndividualStates((prev) => ({
+          ...prev,
+          [key]: { loading: false, error: null, result },
+        }));
+      } catch (err) {
+        // خطا در این بخش (مثلاً قطعی شبکه) - بقیه بخش‌ها ادامه می‌یابند
+        const errorMsg = getErrorMessage(err);
+        setIndividualStates((prev) => ({
+          ...prev,
+          [key]: { loading: false, error: errorMsg, result: null },
+        }));
+        // در صورت تمایل می‌توان خطای کلی را هم ثبت کرد، ولی فعلاً فقط خطای بخش ذخیره می‌شود
+      }
     }
+
+    setMainLoading(false);
   };
 
-  // همگام‌سازی تکی برای یک موجودیت
+  // همگام‌سازی تکی برای یک موجودیت (همانند قبل)
   const handleIndividualSync = async (key: SyncEntityKey, api: () => Promise<SyncResult>) => {
-    // تنظیم وضعیت بارگذاری و پاک کردن نتیجه/خطای قبلی
     setIndividualStates((prev) => ({
       ...prev,
       [key]: { loading: true, error: null, result: null },
@@ -97,20 +121,35 @@ export const SyncPage: React.FC = () => {
     }
   };
 
-  // رندر نتیجه‌ی یک همگام‌سازی (مشترک برای کامل و تکی)
-  const renderSyncResult = (syncResult: SyncResult) => (
-    <div className="flex gap-4 text-sm">
-      <span className="text-green-600">➕ افزوده: {syncResult.addedCount}</span>
-      <span className="text-blue-600">✏️ بروزرسانی: {syncResult.updatedCount}</span>
-      <span className="text-red-600">➖ حذف: {syncResult.deletedCount}</span>
-    </div>
-  );
+  // رندر نتیجه‌ی یک همگام‌سازی (شامل خطاهای business)
+  const renderSyncResult = (syncResult: SyncResult) => {
+    const { addedCount, updatedCount, deletedCount, errors } = syncResult;
+    return (
+      <div className="space-y-1">
+        <div className="flex gap-4 text-sm">
+          <span className="text-green-600">➕ افزوده: {addedCount}</span>
+          <span className="text-blue-600">✏️ بروزرسانی: {updatedCount}</span>
+          <span className="text-red-600">➖ حذف: {deletedCount}</span>
+        </div>
+        {errors && errors.length > 0 && (
+          <div className="text-xs text-red-700 bg-red-50 p-1 rounded">
+            <span className="font-semibold">⚠️ خطاها:</span>
+            <ul className="list-disc list-inside pr-4">
+              {errors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-md">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">همگام‌سازی با سیستم‌های اطلاعاتی</h1>
 
-      {/* دکمه‌ی همگام‌سازی کامل */}
+      {/* دکمه‌ی همگام‌سازی کامل (سریالی) */}
       <button
         onClick={handleMainSync}
         disabled={mainLoading}
@@ -120,7 +159,7 @@ export const SyncPage: React.FC = () => {
             : "bg-blue-600 hover:bg-blue-700 active:scale-95"
         }`}
       >
-        {mainLoading ? "در حال همگام‌سازی (لطفاً صبر کنید)..." : "شروع همگام‌سازی"}
+        {mainLoading ? "در حال همگام‌سازی (لطفاً صبر کنید)..." : "شروع همگام‌سازی کامل"}
       </button>
 
       {mainLoading && (
@@ -135,8 +174,8 @@ export const SyncPage: React.FC = () => {
         </div>
       )}
 
-      {/* نمایش نتایج همگام‌سازی کامل */}
-      {mainData && (
+      {/* نمایش نتایج همگام‌سازی کامل (جدول) */}
+      {/* {!mainLoading && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">گزارش همگام‌سازی کامل</h2>
           <div className="overflow-x-auto shadow rounded-lg">
@@ -152,31 +191,61 @@ export const SyncPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {(Object.keys(mainData) as SyncEntityKey[]).map((key) => (
-                  <tr key={key} className="hover:bg-gray-50 transition">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {entityLabels[key] || key}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {renderSyncResult(mainData[key])}
-                    </td>
-                  </tr>
-                ))}
+                {entityConfigs.map(({ key, label }) => {
+                  const state = individualStates[key];
+                  const hasResult = state?.result !== null;
+                  const hasError = state?.error !== null;
+                  return (
+                    <tr key={key} className="hover:bg-gray-50 transition">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {label}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {state?.loading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                            <span>در حال...</span>
+                          </div>
+                        ) : hasError ? (
+                          <span className="text-red-600">{state.error}</span>
+                        ) : hasResult ? (
+                          renderSyncResult(state.result!)
+                        ) : (
+                          <span className="text-gray-400">انجام نشده</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-          </div>
+          </div> */}
 
-          {/* جمع‌بندی کلی */}
-          <div className="mt-4 text-sm text-gray-500">
-            مجموع افزوده‌ها:{" "}
-            {Object.values(mainData).reduce((sum, r) => sum + r.addedCount, 0)}
-            &nbsp;| مجموع بروزرسانی‌ها:{" "}
-            {Object.values(mainData).reduce((sum, r) => sum + r.updatedCount, 0)}
-            &nbsp;| مجموع حذف‌ها:{" "}
-            {Object.values(mainData).reduce((sum, r) => sum + r.deletedCount, 0)}
+          {/* جمع‌بندی کلی (از روی نتایج موجود) */}
+          {/* <div className="mt-4 text-sm text-gray-500">
+            {(() => {
+              const results = entityConfigs
+                .map((cfg) => individualStates[cfg.key]?.result)
+                .filter((r): r is SyncResult => r !== null && r !== undefined);
+              if (results.length === 0) return "هیچ نتیجه‌ای موجود نیست.";
+              const totalAdded = results.reduce((sum, r) => sum + r.addedCount, 0);
+              const totalUpdated = results.reduce((sum, r) => sum + r.updatedCount, 0);
+              const totalDeleted = results.reduce((sum, r) => sum + r.deletedCount, 0);
+              const totalErrors = results.reduce((sum, r) => sum + (r.errors?.length || 0), 0);
+              return (
+                <>
+                  مجموع افزوده‌ها: {totalAdded}
+                  &nbsp;| مجموع بروزرسانی‌ها: {totalUpdated}
+                  &nbsp;| مجموع حذف‌ها: {totalDeleted}
+                  {totalErrors > 0 && (
+                    <span className="text-red-600 mr-2">| ⚠️ تعداد خطاها: {totalErrors}</span>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* بخش همگام‌سازی‌های تکی */}
       <div className="mt-10">
@@ -190,30 +259,30 @@ export const SyncPage: React.FC = () => {
                   <span className="font-medium text-gray-800">{label}</span>
                   <button
                     onClick={() => handleIndividualSync(key, api)}
-                    disabled={state.loading || mainLoading}
+                    disabled={state?.loading || mainLoading}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition ${
-                      state.loading || mainLoading
+                      state?.loading || mainLoading
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
                     }`}
                   >
-                    {state.loading ? "در حال..." : "همگام‌سازی"}
+                    {state?.loading ? "در حال..." : "همگام‌سازی"}
                   </button>
                 </div>
 
-                {state.loading && (
+                {state?.loading && (
                   <div className="flex justify-center my-2">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
                   </div>
                 )}
 
-                {state.error && (
+                {state?.error && (
                   <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
                     <span className="font-semibold">خطا: </span> {state.error}
                   </div>
                 )}
 
-                {state.result && (
+                {state?.result && (
                   <div className="mt-2 p-2 bg-white rounded border">
                     {renderSyncResult(state.result)}
                   </div>

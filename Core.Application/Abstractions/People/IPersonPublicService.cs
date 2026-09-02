@@ -24,7 +24,7 @@ namespace Core.Application.Abstractions.People
         Task<Guid?> GetPartyPermissionAssigneeIdAsync(Guid? partyId);
         Task SaveAsync();
         Task<Guid?> GetNaturalPersonIdAsync(Guid? partyId);
-        Task UpdatePersonAsync(Guid id,
+        Task<bool> UpdatePersonAsync(Guid id,
             Optional<string> firstlName,
             Optional<string> lastName,
             Optional<DateTime?> birthDate,

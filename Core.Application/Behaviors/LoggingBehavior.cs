@@ -60,7 +60,8 @@ namespace Core.Application.Behaviors
     RequestHandlerDelegate<TResponse> next,
     CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Handling {RequestName} with payload {@Request}", typeof(TRequest).Name, request);
+            //_logger.LogInformation("Handling {RequestName} with payload {@Request}", typeof(TRequest).Name, request);
+            _logger.LogInformation("Handling {RequestName} ", typeof(TRequest).Name);
 
             var response = await next();
 

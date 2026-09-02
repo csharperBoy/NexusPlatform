@@ -243,7 +243,7 @@ namespace HR.IrisaSync.Extention.Services
                 // ساخت دیکشنری با کلید ترکیبی (کدپرسنلی + کدملی) برای دسترسی سریع
                 var existingDict = existingEmployments
                     .ToDictionary(
-                        e => $"{e.EmploymentCode}_{e.NationalCode}",
+                        e => e.EmploymentCode,
                         e => e
                     );
 
@@ -254,8 +254,7 @@ namespace HR.IrisaSync.Extention.Services
                 foreach (var ext in externalEmployments)
                 {
                     string personalCode = ext.NumPrsnEmply.ToString();
-                    string nationalCode = ext.CodNatEmply;
-                    string key = $"{personalCode}_{nationalCode}";
+                    string key = personalCode;
 
                     if (existingDict.TryGetValue(key, out var existing))
                     {
@@ -338,9 +337,7 @@ namespace HR.IrisaSync.Extention.Services
                                 BirthPlace: ext.BirthPlace,
                                 FatherName: ext.NamFathrEmply,
                                 EmploymentCode: personalCode,
-                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
-                                PostId: Optional<Guid?>.Undefined,
-                                EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn)
+                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
                             );
 
                             updateCommands.Add(command);
@@ -356,7 +353,7 @@ namespace HR.IrisaSync.Extention.Services
                         var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCommands);
                         var batchResult = await _mediator.Send(batchUpdateCommand);
 
-                        result.UpdatedCount = updateCommands.Count;
+                        result.UpdatedCount = batchResult.SuccessMessages.Count;
                     }
                 }
 
@@ -855,7 +852,7 @@ namespace HR.IrisaSync.Extention.Services
                             }
 
                             // انتصاب کارمند به این پست
-                            var assignResult = await _postService.AssignToEmploymentAsync(
+                            var assignHasChange = await _postService.AssignToEmploymentAsync(
                                 postId: new List<Guid?> { post.Id },
                                 employmentId: employment.Id,
                                 assigneType: PostAssignmentType.Delegation,
@@ -863,15 +860,9 @@ namespace HR.IrisaSync.Extention.Services
                                 EffectiveTo: null
                             );
 
-                            if (assignResult != Guid.Empty)
+                            if (assignHasChange)
                             {
                                 result.UpdatedCount++; // یا AddedCount، بسته به نیاز
-                            }
-                            else
-                            {
-                                // اگر هیچ انتسابی اضافه نشد (مثلاً قبلاً همین انتساب وجود داشت)، باز هم موفق محسوب می‌شود
-                                // ولی برای شمارش، می‌توانیم آن را به‌عنوان موفق در نظر بگیریم
-                                result.UpdatedCount++;
                             }
 
                             counter++;

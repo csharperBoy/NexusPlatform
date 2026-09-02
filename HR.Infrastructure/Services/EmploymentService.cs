@@ -132,8 +132,9 @@ namespace HR.Infrastructure.Services
 
         }
 
-        public async Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId)
+        public async Task<bool> AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId)
         {
+            bool hasChange = false;
             // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
             var spec = new GetEmploymentLocationsSpec(employmentId);
             var existingActive = await _employmentLocationSpecRepository.ListBySpecAsync(spec);
@@ -147,6 +148,7 @@ namespace HR.Infrastructure.Services
             foreach (var item in toExpire)
             {
                 item.DoExpire();
+                hasChange = true;
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -163,13 +165,14 @@ namespace HR.Infrastructure.Services
                     item.AddDomainEvent(new ChangeEmploymentEvent(item.Id));
 
                 }
+                hasChange = true;
             }
-
+            return hasChange;
         }
 
 
 
-        public async Task<Guid> UpdateEmploymentAsync(
+        public async Task<bool> UpdateEmploymentAsync(
             Guid id,
           Optional<List<string>?> phone,
           Optional<List<string>?> address,
@@ -210,24 +213,29 @@ namespace HR.Infrastructure.Services
             try { Emails.AddRange(email.IsSet ? email.Value?.Select(a => Email.Create(a)).ToList() : null); } catch { }
             try { Mobiles.AddRange(mobile.IsSet ? mobile.Value?.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
 
-            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,
+            bool personHasChange = await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,
 
                 Phones, address, Emails, Mobiles
                 );
             if (officePhone.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, emp.FkContactProfileId);
+               bool contactChange= await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
+
             }
             if (orgEmail.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, emp.FkContactProfileId);
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
             }
             if (orgMobile.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, emp.FkContactProfileId);
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
             }
-            emp.AddDomainEvent(new ChangeEmploymentEvent(emp.Id));
-            return emp.Id;
+            if (hasChange)
+                emp.AddDomainEvent(new ChangeEmploymentEvent(emp.Id));
+            return (hasChange || personHasChange);
         }
 
 
