@@ -3,6 +3,7 @@ export interface SyncResult {
   addedCount: number;
   updatedCount: number;
   deletedCount: number;
+  errors: string[];
 }
 
 export type SyncEntityKey = 'orgUnit' | 'jobLevel' | 'jobTitle' | 'employment' | 'post' | 'assignment';

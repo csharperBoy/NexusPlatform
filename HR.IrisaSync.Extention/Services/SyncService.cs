@@ -37,7 +37,7 @@ namespace HR.IrisaSync.Extention.Services
         public int AddedCount { get; set; }
         public int UpdatedCount { get; set; }
         public int DeletedCount { get; set; }
-
+        public List<string> Errors { get; set; } = new List<string>();
         public override string ToString()
             => $"Added: {AddedCount}, Updated: {UpdatedCount}, Deleted: {DeletedCount}";
     }
@@ -74,9 +74,8 @@ namespace HR.IrisaSync.Extention.Services
             _hrUow = hrUow;
             _personService = personService;
         }
-
-
-        public async Task<SyncResult> SyncEmploymentsAsync()
+        /*
+        public async Task<SyncResult> SyncEmploymentsAsync2()
         {
             var result = new SyncResult();
 
@@ -226,6 +225,166 @@ namespace HR.IrisaSync.Extention.Services
                 throw;
             }
         }
+        */
+        public async Task<SyncResult> SyncEmploymentsAsync()
+        {
+            var result = new SyncResult();
+
+            try
+            {
+                // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
+                List<PdsIdeaInformationViw> externalEmployments = (await _irisaRepo.GetAllAsync())
+                    .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
+                    .ToList();
+
+                // 2. دریافت تمام کارمندان موجود در دیتابیس
+                IEnumerable<EmploymentInfoView> existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
+
+                // ساخت دیکشنری با کلید ترکیبی (کدپرسنلی + کدملی) برای دسترسی سریع
+                var existingDict = existingEmployments
+                    .ToDictionary(
+                        e => $"{e.EmploymentCode}_{e.NationalCode}",
+                        e => e
+                    );
+
+                // 3. دسته‌بندی رکوردها
+                var toAdd = new List<PdsIdeaInformationViw>();
+                var toUpdate = new List<(PdsIdeaInformationViw External, EmploymentInfoView Existing)>();
+
+                foreach (var ext in externalEmployments)
+                {
+                    string personalCode = ext.NumPrsnEmply.ToString();
+                    string nationalCode = ext.CodNatEmply;
+                    string key = $"{personalCode}_{nationalCode}";
+
+                    if (existingDict.TryGetValue(key, out var existing))
+                    {
+                        toUpdate.Add((ext, existing));
+                        existingDict.Remove(key);
+                    }
+                    else
+                    {
+                        toAdd.Add(ext);
+                    }
+                }
+
+                // کارمندانی که باید حذف شوند
+                var toDelete = existingDict.Values.ToList();
+
+
+                // ============ 5. عملیات افزودن (تکی) ============
+                foreach (var ext in toAdd)
+                {
+                    try
+                    {
+
+
+                        var createCommand = new CreateEmploymentCommand(
+                            Phone: new List<string> { ext.NumTelEmply.ToString() },
+                            Address: new List<string> { ext.DesAdrEmply },
+                            Email: null,
+                            Mobile: new List<string> { ext.NumMobilEmply.ToString() },
+                            OfficePhone: null,
+                            OrgEmail: null,
+                            OrgMobile: null,
+                            NationalCode: ext.CodNatEmply,
+                            FirstlName: ext.NamFirstEmply,
+                            LastName: ext.NamLastEmply,
+                            BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
+                            BirthPlace: ext.BirthPlace,
+                            FatherName: ext.NamFathrEmply,
+                            Gender: ext.DesSexEmply.Trim() == "مذکر" ? Gender.Male : Gender.Female,
+                            EmploymentCode: ext.NumPrsnEmply.ToString(),
+                            StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
+                            PostId: null,
+                            AssigneeType: null,
+                            EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn),
+                            EffectiveTo: null,
+                            EmploymentStatusId: null,
+                            EmploymentTypeId: null,
+                            EndDate: null,
+                            locationsId: null
+                        );
+
+                        await _mediator.Send(createCommand);
+                        result.AddedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"Error adding {ext.NumPrsnEmply}: {ex.Message}");
+                    }
+                }
+
+                // ============ 6. عملیات بروزرسانی (دسته‌جمعی) ============
+                if (toUpdate.Any())
+                {
+                    var updateCommands = new List<UpdateEmploymentCommand>();
+
+                    foreach (var (ext, existing) in toUpdate)
+                    {
+                        try
+                        {
+                            string personalCode = ext.NumPrsnEmply.ToString();
+
+                            var command = new UpdateEmploymentCommand(
+                                Id: existing.Id,
+                                Phone: new List<string> { ext.NumTelEmply.ToString() },
+                                Address: new List<string> { ext.DesAdrEmply },
+                                Mobile: new List<string> { ext.NumMobilEmply.ToString() },
+                                nationalCode: ext.CodNatEmply,
+                                FirstName: ext.NamFirstEmply,
+                                LastName: ext.NamLastEmply,
+                                BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
+                                BirthPlace: ext.BirthPlace,
+                                FatherName: ext.NamFathrEmply,
+                                EmploymentCode: personalCode,
+                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
+                                PostId: Optional<Guid?>.Undefined,
+                                EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn)
+                            );
+
+                            updateCommands.Add(command);
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"Error preparing update for {ext.NumPrsnEmply}: {ex.Message}");
+                        }
+                    }
+
+                    if (updateCommands.Any())
+                    {
+                        var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCommands);
+                        var batchResult = await _mediator.Send(batchUpdateCommand);
+
+                        result.UpdatedCount = updateCommands.Count;
+                    }
+                }
+
+                // ============ 7. عملیات حذف (تکی) ============
+                foreach (var emp in toDelete)
+                {
+                    try
+                    {
+                        var deleteCommand = new DeleteEmploymentCommand(emp.Id);
+                        await _mediator.Send(deleteCommand);
+                        result.DeletedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"Error deleting {emp.EmploymentCode}: {ex.Message}");
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"Sync failed: {ex.Message}");
+            }
+
+            return result;
+        }
+
+
         public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment()
         {
             var spec = new GetEmploymentSpec();
@@ -378,7 +537,7 @@ namespace HR.IrisaSync.Extention.Services
                 if (postsToUpdate.Any())
                 {
                     BatchUpdatePostsCommand updateCommand = new BatchUpdatePostsCommand(postsToUpdate.Select(a => new UpdatePostCommand(
-                        a.Id,a.Code,a.FkOrganizationUnitId,a.FkJobTitleId,a.FkJobLevelId,
+                        a.Id, a.Code, a.FkOrganizationUnitId, a.FkJobTitleId, a.FkJobLevelId,
                         Optional<Guid?>.Undefined,
                         Optional<Guid?>.Undefined,
                         Optional<Guid?>.Undefined,
@@ -455,32 +614,31 @@ namespace HR.IrisaSync.Extention.Services
 
             foreach (var item in list)
             {
+
                 if (item.IrisaJobTitle != null)
                 {
-                    if (item.IrisaJobTitle != null)
+                    var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
+                    if (existEntity != null)
                     {
-                        var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
-                        if (existEntity != null)
+                        if (existEntity.Name.Trim() != item.JobTitle?.Trim())
                         {
-                            if (existEntity.Name.Trim() != item.JobTitle?.Trim())
-                            {
-                                existEntity.SetName(item.JobTitle);
-                                await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
-                                //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
-                                result.UpdatedCount++;
-                            }
-                        }
-                        else
-                        {
-                            JobTitle model = new JobTitle(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
-                            await _hrUow.JobTitleRepository.AddAsync(model);
-                            item.FkJobTitleId = model.Id;
-                            item.JobTitle = model.Name;
-                            await _uow.JobTitleMapRepository.UpdateAsync(item);
-                            result.AddedCount++;
+                            existEntity.SetName(item.JobTitle);
+                            await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
+                            //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
+                            result.UpdatedCount++;
                         }
                     }
+                    else
+                    {
+                        JobTitle model = new JobTitle(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
+                        await _hrUow.JobTitleRepository.AddAsync(model);
+                        item.FkJobTitleId = model.Id;
+                        item.JobTitle = model.Name;
+                        await _uow.JobTitleMapRepository.UpdateAsync(item);
+                        result.AddedCount++;
+                    }
                 }
+
 
                 await _hrUow.SaveChangesAsync();
                 await _uow.SaveChangesAsync();
@@ -606,9 +764,162 @@ namespace HR.IrisaSync.Extention.Services
             return result;
         }
 
-        public Task<SyncResult> SyncAssignmentsAsync()
+        public async Task<SyncResult> SyncAssignmentsAsync()
         {
-            throw new NotImplementedException();
+            var result = new SyncResult();
+
+            try
+            {
+                // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
+                List<PdsIdeaInformationViw> externalList = (await _irisaRepo.GetAllAsync())
+                    .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
+                    .ToList();
+
+                if (!externalList.Any())
+                {
+                    result.Errors.Add("No external employment data found.");
+                    return result;
+                }
+
+                // 2. دریافت کارمندان موجود در دیتابیس (برای یافتن EmploymentId)
+                var existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
+                var employmentDict = existingEmployments
+                    .ToDictionary(e => e.EmploymentCode, e => e); // کلید: کد پرسنلی
+
+                // 3. دریافت مپ‌های عنوان شغلی (Irisa → داخلی)
+                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync())
+                    .Where(j => j.IrisaJobTitleId != null)
+                    .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
+
+                // 4. دریافت تمام پست‌های فعال (برای یافتن پست متناظر با کلید JobTitleId + Code)
+                var allPosts = await _hrUow.PostRepository
+                    .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true));
+                var postDict = allPosts
+                    .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
+                    .ToDictionary(
+                        p => (p.FkJobTitleId, p.Code),
+                        p => p
+                    );
+
+                // 5. مجموعه کدهای پرسنلی موجود در سیستم خارجی (برای تشخیص کارمندانی که باید انتسابشان خالی شود)
+                var externalEmploymentCodes = externalList
+                    .Select(e => e.NumPrsnEmply.ToString())
+                    .ToHashSet();
+
+
+                // 7. گروه‌بندی کارمندان خارجی بر اساس عنوان شغلی (CodJobpo)
+                var groups = externalList
+                    .GroupBy(e => e.CodJobpo)
+                    .ToList();
+
+                foreach (var group in groups)
+                {
+                    var irisJobTitleId = group.Key;
+                    if (irisJobTitleId == null) continue;
+
+                    // یافتن JobTitleId داخلی
+                    if (!jobTitleMap.TryGetValue(irisJobTitleId, out var jobTitleId))
+                    {
+                        result.Errors.Add($"JobTitle map not found for Irisa ID: {irisJobTitleId}");
+                        continue;
+                    }
+
+                    // مرتب‌سازی کارمندان گروه بر اساس کد پرسنلی (برای تطابق با ترتیب ایجاد پست‌ها)
+                    var sortedEmployees = group
+                        .OrderBy(e => e.NumPrsnEmply)
+                        .ToList();
+
+                    int counter = 1;
+                    foreach (var ext in sortedEmployees)
+                    {
+                        try
+                        {
+                            string employmentCode = ext.NumPrsnEmply.ToString();
+
+                            // بررسی وجود کارمند در سیستم داخلی
+                            if (!employmentDict.TryGetValue(employmentCode, out var employment))
+                            {
+                                result.Errors.Add($"Employment not found in internal system: {employmentCode}");
+                                continue;
+                            }
+
+                            // ساخت کد پست بر اساس شمارنده (همانند همگام‌سازی پست‌ها)
+                            string postCode = counter.ToString();
+                            var key = (JobTitleId: (Guid)jobTitleId, Code: postCode);
+
+                            // یافتن پست متناظر
+                            if (!postDict.TryGetValue(key, out var post))
+                            {
+                                result.Errors.Add($"Post not found for JobTitleId: {jobTitleId}, Code: {postCode}");
+                                continue;
+                            }
+
+                            // انتصاب کارمند به این پست
+                            var assignResult = await _postService.AssignToEmploymentAsync(
+                                postId: new List<Guid?> { post.Id },
+                                employmentId: employment.Id,
+                                assigneType: PostAssignmentType.Delegation,
+                                EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn),
+                                EffectiveTo: null
+                            );
+
+                            if (assignResult != Guid.Empty)
+                            {
+                                result.UpdatedCount++; // یا AddedCount، بسته به نیاز
+                            }
+                            else
+                            {
+                                // اگر هیچ انتسابی اضافه نشد (مثلاً قبلاً همین انتساب وجود داشت)، باز هم موفق محسوب می‌شود
+                                // ولی برای شمارش، می‌توانیم آن را به‌عنوان موفق در نظر بگیریم
+                                result.UpdatedCount++;
+                            }
+
+                            counter++;
+                        }
+                        catch (Exception ex)
+                        {
+                            result.Errors.Add($"Error assigning employment {ext.NumPrsnEmply}: {ex.Message}");
+                        }
+                    }
+                }
+
+                // 8. منقضی کردن انتسابات کارمندانی که در سیستم خارجی وجود ندارند
+                var employmentsToClear = employmentDict.Keys
+                    .Where(code => !externalEmploymentCodes.Contains(code))
+                    .ToList();
+
+                foreach (var employmentCode in employmentsToClear)
+                {
+                    try
+                    {
+                        var employment = employmentDict[employmentCode];
+                        // فراخوانی با لیست خالی → تمام انتسابات فعال منقضی می‌شوند
+                        await _postService.AssignToEmploymentAsync(
+                            postId: new List<Guid?>(),
+                            employmentId: employment.Id,
+                            assigneType: null,
+                            EffectiveFrom: null,
+                            EffectiveTo: null
+                        );
+                        // شمارش حذف‌ها (اختیاری)
+                        result.DeletedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Errors.Add($"Error clearing assignments for employment {employmentCode}: {ex.Message}");
+                    }
+                }
+
+                // 9. ذخیره‌سازی نهایی تغییرات (اگر متد AssignToEmploymentAsync خودش Save نمی‌کند)
+                await _hrUow.SaveChangesAsync();
+
+            }
+            catch (Exception ex)
+            {
+                result.Errors.Add($"SyncAssignments failed: {ex.Message}");
+            }
+
+            return result;
         }
     }
 }

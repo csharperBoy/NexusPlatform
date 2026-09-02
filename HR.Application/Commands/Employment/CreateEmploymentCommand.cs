@@ -50,8 +50,8 @@ namespace HR.Application.Commands.Employment
 
     #region post assign
 
-     Guid PostId,
-     PostAssignmentType AssigneeType,
+     Guid? PostId,
+     PostAssignmentType? AssigneeType,
      DateTime? EffectiveFrom,
      DateTime? EffectiveTo
     #endregion
@@ -142,9 +142,10 @@ namespace HR.Application.Commands.Employment
                 #endregion
 
                 #region انتصاب شخص به پست سازمانی
-
-                Guid AssignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
-
+                if (request.PostId != null )
+                {
+                    Guid AssignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { request.PostId }, employmentId, request.AssigneeType, request.EffectiveFrom, request.EffectiveTo);
+                }
                 #endregion
 
                 #region ذخیره تغییرات
