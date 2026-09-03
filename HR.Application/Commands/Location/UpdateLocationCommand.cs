@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Interfaces;
  
 using MediatR;
@@ -14,10 +15,8 @@ namespace HR.Application.Commands.Location
     
     public record UpdateLocationCommand(
            Guid Id,
-   string Title,
-     List<string>? OfficePhone,
-            List<string>? OrgEmail,
-            List<string>? OrgMobile
+   Optional<string?> Title
+     
     
 
 
@@ -45,14 +44,14 @@ namespace HR.Application.Commands.Location
                     "Creating location: {Title}",
                     request.Title);
 
-                Guid LocationId = await _locationService.UpdateLocationAsync(
+              bool hasChange =  await _locationService.UpdateLocationAsync(
                     request.Id,
                     request.Title,
-                    request.OfficePhone,
-                    request.OrgEmail,
-                    request.OrgMobile
+                    Optional<List<string>?>.Undefined,
+                    Optional<List<string>?>.Undefined,
+                    Optional<List<string>?>.Undefined
                     );
-                
+                Guid LocationId = request.Id;
                 await _locationService.SaveAsync();
                 _logger.LogInformation(
                     "Location created successfully: {Id} ({Title})",

@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace HR.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
         #region IHierarchicalStructureEntity Impelement
-        public Guid? FkParentId { get; private set; }
+        public Guid? ParentId { get; private set; }
         public virtual Location? Parent { get; private set; }
         public virtual ICollection<Location> Children { get; private set; } = new List<Location>();
         public void ChangeParent(Guid? newParentId)
@@ -27,7 +28,7 @@ namespace HR.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Menu cannot be its own parent.");
 
-            FkParentId = newParentId;
+            ParentId = newParentId;
             Touch();
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
@@ -57,14 +58,14 @@ namespace HR.Domain.Entities
             
         }
         public bool ApplyChange(
-           string? _title = null)
+          Optional<string?> _title)
         {
 
             bool hasChange = false;
 
-            if (_title != null && _title?.Trim() != Title.Trim())
+            if (_title.IsSet && _title.Value?.Trim() != Title.Trim())
             {
-                Title = _title;
+                Title = _title.Value?.Trim();
                 hasChange = true;
             }
 

@@ -42,7 +42,7 @@ namespace Core.Infrastructure.Database.Configurations
 
             builder.HasOne(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Parent)
                 .WithMany(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Children)
-                .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).FkParentId)
+                .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).ParentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
 

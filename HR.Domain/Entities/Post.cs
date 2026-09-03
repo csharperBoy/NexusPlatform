@@ -25,7 +25,7 @@ namespace HR.Domain.Entities
         #endregion
 
         #region IHierarchicalStructureEntity Impelement
-        public Guid? FkParentId { get; private set; }
+        public Guid? ParentId { get; private set; }
         public virtual Post? Parent { get; private set; }
         public virtual ICollection<Post> Children { get; private set; } = new List<Post>();
         public void ChangeParent(Guid? newParentId)
@@ -33,7 +33,7 @@ namespace HR.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Menu cannot be its own parent.");
 
-            FkParentId = newParentId;
+            ParentId = newParentId;
             Touch();
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
@@ -92,7 +92,7 @@ namespace HR.Domain.Entities
             FkJobLevelId = jobLevelId;
             FkGradeId = gradeId;
             FkCostCenterId = costCenterId;
-            FkParentId = parentId;
+            ParentId = parentId;
             Touch(); // به‌روزرسانی ModifiedAt
         }
 
@@ -115,7 +115,7 @@ namespace HR.Domain.Entities
             FkJobLevelId = _JobLevelId;
             FkGradeId = _GradeId;
             FkCostCenterId = _CostCenterId;
-            FkParentId = _parentId;
+            ParentId = _parentId;
             FkContactProfileId = _FkContactProfileId;
         }
 
@@ -138,7 +138,7 @@ namespace HR.Domain.Entities
                 this.Code = _Code.Value;
                 hasChange = true;
             }
-            if (  _FkParentId.IsSet && _FkParentId.Value != this.FkParentId)
+            if (  _FkParentId.IsSet && _FkParentId.Value != this.ParentId)
             {
                 this.ChangeParent(_FkParentId.Value);
                 hasChange = true;

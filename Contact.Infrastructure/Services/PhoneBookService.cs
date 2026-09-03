@@ -69,12 +69,12 @@ namespace Contact.Infrastructure.Services
         {
             var cacheKey = CacheKeyHelper.PhoneBook_GetPhoneBookList;
 
-            var cached = await _cacheService.GetAsync<IReadOnlyList<PhoneBookEmploymentDto>>(cacheKey);
-            if (cached != null)
-            {
-                _logger.LogDebug("Cache hit for full Get PhoneBook List");
-                return cached;
-            }
+            //var cached = await _cacheService.GetAsync<IReadOnlyList<PhoneBookEmploymentDto>>(cacheKey);
+            //if (cached != null)
+            //{
+            //    _logger.LogDebug("Cache hit for full Get PhoneBook List");
+            //    return cached;
+            //}
 
             IEnumerable<EmploymentFullDto> empList = await _employmentservice.GetFullInfoAsync();
          

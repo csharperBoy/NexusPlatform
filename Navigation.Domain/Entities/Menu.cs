@@ -58,7 +58,7 @@ namespace Navigation.Domain.Entities
 
         #endregion
         #region IHierarchicalStructureEntity Impelement
-        public Guid? FkParentId { get; private set; }
+        public Guid? ParentId { get; private set; }
         public virtual Menu? Parent { get; private set; }
         public virtual ICollection<Menu> Children { get; private set; } = new List<Menu>();
         public void ChangeParent(Guid? newParentId)
@@ -66,7 +66,7 @@ namespace Navigation.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Menu cannot be its own parent.");
 
-            FkParentId = newParentId;
+            ParentId = newParentId;
             Touch();
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
@@ -97,7 +97,7 @@ namespace Navigation.Domain.Entities
             Path = _Path;
             Icon = _Icon;
             Order = _Order;
-            FkParentId = _ParentId;
+            ParentId = _ParentId;
         }
 
         public void Update(string _title, string? _description, Icon? _icon, int? _order, string _key)

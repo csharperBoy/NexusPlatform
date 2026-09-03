@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Commands.Employment;
 using HR.Application.Interfaces;
 using MediatR;
@@ -35,22 +36,22 @@ namespace Contact.Application.Commands.Employment
                     // ۱. به‌روزرسانی اطلاعات پایه پست
                     await _employmentService.UpdateEmploymentAsync(
                    command.Id,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
+                    Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<DateTime?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<List<Guid>?>.Undefined,
                    command.OfficePhones,
                    command.OrgEmails,
                    command.OrgMobiles

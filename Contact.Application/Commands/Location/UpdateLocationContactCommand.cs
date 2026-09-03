@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Interfaces;
  
 using MediatR;
@@ -44,14 +45,14 @@ namespace Contact.Application.Commands.Location
                     "Update LocationContact: {id}",
                     request.Id);
 
-                Guid LocationId = await _locationService.UpdateLocationAsync(
+                bool hasChange = await _locationService.UpdateLocationAsync(
                     request.Id,
-                    null,
+                    Optional<string?>.Undefined,
                     request.OfficePhone,
                     request.OrgEmail,
                     request.OrgMobile
                     );
-                
+                Guid LocationId = request.Id;
                 await _locationService.SaveAsync();
                 _logger.LogInformation(
                     "LocationContact Update successfully: {Id}",

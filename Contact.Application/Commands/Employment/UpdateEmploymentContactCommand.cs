@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.Common;
 using Core.Shared.Results;
 using HR.Application.Commands.Employment;
 using HR.Application.Interfaces;
@@ -40,22 +41,23 @@ namespace Contact.Application.Commands.Employment
                     "Update Employment Contact:{Id}" , request.Id);
                 await _employmentService.UpdateEmploymentAsync(
                     request.Id,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
+                     Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<DateTime?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<List<Guid>?>.Undefined,
+                    
                     request.OfficePhones,
                     request.OrgEmails,
                     request.OrgMobiles

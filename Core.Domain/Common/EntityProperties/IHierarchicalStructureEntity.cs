@@ -9,7 +9,7 @@ namespace Core.Domain.Common.EntityProperties
     public interface IHierarchicalStructureEntity<TEntity, TParentId>
      where TEntity : class
     {
-        TParentId FkParentId { get;  }
+        TParentId ParentId { get;  }
         TEntity? Parent { get; }
         ICollection<TEntity>? Children { get;    }
         void ChangeParent(TParentId? newParentId);
@@ -20,3 +20,20 @@ namespace Core.Domain.Common.EntityProperties
     }
      
     }
+
+//#region IHierarchicalStructureEntity Impelement
+//public Guid? ParentId { get; private set; }
+//public virtual Location? Parent { get; private set; }
+//public virtual ICollection<Location> Children { get; private set; } = new List<Location>();
+//public void ChangeParent(Guid? newParentId)
+//{
+//    if (newParentId == Id)
+//        throw new InvalidOperationException("Menu cannot be its own parent.");
+
+//    ParentId = newParentId;
+//    Touch();
+
+//    // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+//    //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+//}
+//#endregion

@@ -2,6 +2,7 @@
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Shared.DTOs.HR;
@@ -86,32 +87,39 @@ namespace HR.Infrastructure.Services
         
 
 
-        public async Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
+        public async Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile)
         {
+            bool hasChange = false;
             Location? loc = await _LocationRepository.GetByIdAsync(id);
             if (loc == null)
                 throw new Exception("can not found Location!!!");
 
-            bool hasChange = loc.ApplyChange(title);
+            hasChange = loc.ApplyChange(title);
             if (hasChange)
             {
                 await _LocationRepository.UpdateAsync(loc);
             }
 
-            if (officePhone != null)
+            if (officePhone.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, loc.FkContactProfileId);
+                hasChange = true;
             }
-            if (orgEmail != null)
+            if (orgEmail.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, loc.FkContactProfileId);
+                hasChange = true;
             }
-            if (orgMobile != null)
+            if (orgMobile.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, loc.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, loc.FkContactProfileId);
+                hasChange = true;
             }
-            loc.AddDomainEvent(new ChangeLocationEvent(loc.Id));
-            return loc.Id;
+
+            if(hasChange)
+                loc.AddDomainEvent(new ChangeLocationEvent(loc.Id));
+
+            return hasChange;
         }
 
         public async Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync()

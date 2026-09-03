@@ -1,21 +1,49 @@
 CREATE VIEW [dbo].[Post_Info_View]
 AS
-SELECT        hr.Post.Id, hr.Post.Code AS Post_Code, hr.Post.ParentId, hr.Post.FkParentId, hr.Post.FkJobTitleId, hr.Post.FkOrganizationUnitId, hr.Post.FkJobLevelId, hr.Post.FkGradeId, hr.Post.FkCostCenterId, 
-                         hr.CostCenter.Name AS CostCenter_Name, hr.Grade.Title AS Grade_Title, hr.JobLevel.Title AS JobLevel_Title, hr.JobTitle.Name AS JobTitle_Name, OfficePhone.Value AS OfficePhone, OrgMobile.Value AS OrgMobile, 
-                         OrgEmail.Value AS OrgEmail, hr.Employment.Id AS EmploymentId, hr.Employment.EmploymentCode, people.naturalPersons.FirstName, people.naturalPersons.LastName, people.naturalPersons.NationalCode, people.naturalPersons.Gender, 
-                         hr.Assignments.AssigneeType AS Assignments_AssigneeType, hr.OrganizationUnits.Name AS OrganizationUnits_Name, hr.PostLocations.EffectiveFrom AS Locations_EffectiveFrom, 
-                         hr.PostLocations.EffectiveTo AS Locations_EffectiveTo, hr.Location.Title AS Location_Title, hr.Location.Id AS Location_Id
-FROM            hr.Post LEFT OUTER JOIN
-                         hr.Grade ON hr.Post.FkGradeId = hr.Grade.Id LEFT OUTER JOIN
-                         hr.PostLocations ON hr.Post.Id = hr.PostLocations.FkPostId LEFT OUTER JOIN
-                         hr.Location ON hr.PostLocations.FkLocationId = hr.Location.Id LEFT OUTER JOIN
-                         hr.OrganizationUnits ON hr.Post.FkOrganizationUnitId = hr.OrganizationUnits.Id LEFT OUTER JOIN
-                         hr.CostCenter ON hr.Post.FkCostCenterId = hr.CostCenter.Id LEFT OUTER JOIN
-                         hr.Employment  LEFT OUTER JOIN
-                         hr.Assignments ON hr.Employment.Id = hr.Assignments.FkEmploymentId LEFT OUTER JOIN
-                         people.naturalPersons ON hr.Employment.FkNaturalPersonId = people.naturalPersons.Id ON hr.Post.Id = hr.Assignments.FkPostId LEFT OUTER JOIN
-                         hr.JobLevel ON hr.Post.FkJobLevelId = hr.JobLevel.Id LEFT OUTER JOIN
-                         hr.JobTitle ON hr.Post.FkJobTitleId = hr.JobTitle.Id LEFT OUTER JOIN
-                         contact.PostContacts AS OfficePhone ON hr.Post.Id = OfficePhone.FkPostId AND OfficePhone.ContactType = 0 AND OfficePhone.IsCurrent = 1 LEFT OUTER JOIN
-                         contact.PostContacts AS OrgMobile ON hr.Post.Id = OrgMobile.FkPostId AND OrgMobile.ContactType = 1 AND OrgMobile.IsCurrent = 1 LEFT OUTER JOIN
-                         contact.PostContacts AS OrgEmail ON hr.Post.Id = OrgEmail.FkPostId AND OrgEmail.ContactType = 3 AND OrgEmail.IsCurrent = 1
+SELECT
+    hr.Post.Id,
+    hr.Post.Code AS Post_Code,
+    hr.Post.ParentId,
+    hr.Post.FkParentId,
+    hr.Post.FkJobTitleId,
+    hr.Post.FkOrganizationUnitId,
+    hr.Post.FkJobLevelId,
+    hr.Post.FkGradeId,
+    hr.Post.FkCostCenterId,
+    hr.CostCenter.Name AS CostCenter_Name,
+    hr.Grade.Title AS Grade_Title,
+    hr.JobLevel.Title AS JobLevel_Title,
+    hr.JobTitle.Name AS JobTitle_Name,
+    Assign.EmploymentId,
+    Assign.EmploymentCode,
+    Assign.FirstName,
+    Assign.LastName,
+    Assign.NationalCode,
+    Assign.Gender,
+    Assign.AssigneeType AS Assignments_AssigneeType,
+    hr.OrganizationUnits.Name AS OrganizationUnits_Name,
+    hr.Post.FkContactProfileId
+FROM hr.Post
+LEFT JOIN hr.JobTitle ON hr.Post.FkJobTitleId = hr.JobTitle.Id
+LEFT JOIN hr.Grade ON hr.Post.FkGradeId = hr.Grade.Id
+LEFT JOIN hr.OrganizationUnits ON hr.Post.FkOrganizationUnitId = hr.OrganizationUnits.Id
+LEFT JOIN hr.CostCenter ON hr.Post.FkCostCenterId = hr.CostCenter.Id
+LEFT JOIN hr.JobLevel ON hr.Post.FkJobLevelId = hr.JobLevel.Id
+
+OUTER APPLY (
+    SELECT TOP 1
+        e.Id AS EmploymentId,
+        e.EmploymentCode,
+        np.FirstName,
+        np.LastName,
+        np.NationalCode,
+        np.Gender,
+        a.AssigneeType
+    FROM hr.Assignments a
+    INNER JOIN hr.Employment e ON a.FkEmploymentId = e.Id
+    INNER JOIN people.naturalPersons np ON e.FkNaturalPersonId = np.Id
+    WHERE a.FkPostId = hr.Post.Id AND a.IsCurrent = 1
+    ORDER BY a.EffectiveFrom DESC   -- یا هر معیار مناسب
+) Assign
+
+WHERE hr.Post.IsRemove <> 1;

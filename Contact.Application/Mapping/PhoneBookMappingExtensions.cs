@@ -57,7 +57,7 @@ namespace Contact.Application.Mapping
                 {
                     uniqueKey = $"emp-{emp.Id}",
                     EmploymentCode = emp.EmploymentCode,
-                    
+
                     FirstName = emp.FirstName,
                     LastName = emp.LastName,
                     OrganizationUnitsName = emp.posts.Select(p => p.OrganizationUnitsName).Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList(),
@@ -70,7 +70,7 @@ namespace Contact.Application.Mapping
                                     .Where(s => !string.IsNullOrEmpty(s))
                                     .Distinct()
                                     .ToList(),
-                    Contacts = contacts
+                    Contacts = contacts.Where(c => c.Source != ContactProfileTypeEnum.Party).ToList()
                 };
             }).ToList();
         }

@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using HR.Application.Commands.Location;
 using HR.Application.Interfaces;
 using MediatR;
@@ -33,16 +34,16 @@ namespace HR.Application.Commands.Location
                 foreach (var command in request.Locations)
                 {
                     // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid LocationId = await _locationService.UpdateLocationAsync(
+                  bool hasChange = await _locationService.UpdateLocationAsync(
                    command.Id,
                    command.Title,
-                   command.OfficePhone,
-                   command.OrgEmail,
-                   command.OrgMobile
+                    Optional<List<string>?>.Undefined,
+                    Optional<List<string>?>.Undefined,
+                    Optional<List<string>?>.Undefined
                    );
-                    
 
-                    results.Add(LocationId);
+                    Guid LocationId = command.Id;
+                   results.Add(LocationId);
                 }
 
                 await _locationService.SaveAsync();

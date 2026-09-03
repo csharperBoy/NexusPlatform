@@ -32,6 +32,7 @@ namespace HR.Infrastructure.Services
         private readonly IContactPublicService _contactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
+        private readonly IHRUnitOfWork<HRDbContext> _hrUow;
 
         public EmploymentService(IPersonPublicService personService,
             IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
@@ -43,6 +44,7 @@ namespace HR.Infrastructure.Services
             ISpecificationRepository<Employment, Guid> employmentSpecRepository,
            IContactPublicService contactService,
             IUnitOfWork<HRDbContext> uow,
+            IHRUnitOfWork<HRDbContext> hrUow,
             IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
             )
         {
@@ -56,6 +58,7 @@ namespace HR.Infrastructure.Services
             _employmentSpecRepository = employmentSpecRepository;
             _logger = logger;
             _uow = uow;
+            _hrUow = hrUow;
             _employmentLocationSpecRepository = employmentLocationSpecRepository;
         }
 
@@ -317,6 +320,7 @@ namespace HR.Infrastructure.Services
         {
             var empList = await _employmentInfoRepository.GetAllAsync();
             var emptIds = empList.Select(p => p.Id).ToList();
+            var tempList = await _hrUow.OrganizationUnitRepository.GetAllAsync(queryOptions: q=>q.Include(a=>a.Parent));
             var postsAssign = await _assignmentRepository.GetAllAsync(queryOptions:
                 q => q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
                 .Include(p => p.Post).ThenInclude(p => p.OrganizationUnit).ThenInclude(p => p.Parent)
