@@ -18,7 +18,7 @@ export const SyncApi = {
     const api = getAPI(API_MODULE);
     const response = await api.get<  BatchResult<SyncResult>>(
       `/api/hr/IrisaSync/SyncEmployement`,
-      { withCredentials: true  ,timeout: 240000}
+      { withCredentials: true  ,timeout: 540000}
     );
     return response.data;  
   },
@@ -50,7 +50,7 @@ export const SyncApi = {
     const api = getAPI(API_MODULE);
     const response = await api.get<  BatchResult<SyncResult>>(
       `/api/hr/IrisaSync/SyncPost`,
-      { withCredentials: true  ,timeout: 240000}
+      { withCredentials: true  ,timeout: 540000}
     );
     return response.data;  
   },

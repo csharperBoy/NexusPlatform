@@ -48,10 +48,10 @@ namespace Core.Infrastructure.Database.Configurations
 
             //builder.HasMany(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Children)
             //.WithOne(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Parent)
-            //.HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).FkParentId)
+            //.HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).ParentId)
             //.OnDelete(DeleteBehavior.Cascade);
 
-            builder.HasIndex("FkParentId").HasDatabaseName($"IX_{typeof(TEntity).Name}_ParentId");
+            builder.HasIndex("ParentId").HasDatabaseName($"IX_{typeof(TEntity).Name}_ParentId");
         }
 
         private void ConfigureAuditable(EntityTypeBuilder<TEntity> builder)

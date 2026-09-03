@@ -818,7 +818,7 @@ namespace HR.IrisaSync.Extention.Services
                             IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
                             if (existEntity != null)
                             {
-                                if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.FkParentId != parentMap?.FkOrganizationUnitId)
+                                if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.ParentId != parentMap?.FkOrganizationUnitId)
                                 {
                                     existEntity.SetName(item.OrganizationUnit);
                                     existEntity.SetParent(parentMap?.FkOrganizationUnitId);

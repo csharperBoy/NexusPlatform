@@ -109,7 +109,7 @@ namespace Navigation.Infrastructure.Services
                         // --- UPDATE ---
                         // فقط در صورتی آپدیت می‌کنیم که تغییری کرده باشد
                         bool hasChanges = existingMenu.Title != def.Title ||
-                                          existingMenu.FkParentId != parentId ||
+                                          existingMenu.ParentId != parentId ||
                                           existingMenu.Path != def.Path ||
                                           existingMenu.Icon != def.Icon.ToEnumOrDefault(Icon.Default) || 
                                           existingMenu.Order != def.Order || 
@@ -128,7 +128,7 @@ namespace Navigation.Infrastructure.Services
                                 def.Key
                             );
                             // اگر والد تغییر کرده
-                            if (existingMenu.FkParentId != parentId)
+                            if (existingMenu.ParentId != parentId)
                             {
                                 existingMenu.ChangeParent(parentId);
                             }

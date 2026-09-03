@@ -28,7 +28,6 @@ namespace Navigation.Infrastructure.Migrations
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Key = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: false),

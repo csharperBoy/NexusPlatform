@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HR.Infrastructure.Migrations
 {
     [DbContext(typeof(HRDbContext))]
-    [Migration("20260820071436_Edit_12_HR")]
-    partial class Edit_12_HR
+    [Migration("20260903110013_Edit_1_HR")]
+    partial class Edit_1_HR
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -253,11 +253,11 @@ namespace HR.Infrastructure.Migrations
 
             modelBuilder.Entity("HR.Domain.Entities.EmploymentInfoView", b =>
                 {
-                    b.Property<int>("AssignmentsAssigneeType")
+                    b.Property<int?>("AssignmentsAssigneeType")
                         .HasColumnType("int")
                         .HasColumnName("Assignments_AssigneeType");
 
-                    b.Property<DateTime>("AssignmentsEffectiveFrom")
+                    b.Property<DateTime?>("AssignmentsEffectiveFrom")
                         .HasColumnType("datetime2")
                         .HasColumnName("Assignments_EffectiveFrom");
 
@@ -294,11 +294,14 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("FkContactProfileId")
+                    b.Property<Guid?>("FkContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("FkPartyContactProfileId")
+                    b.Property<Guid?>("FkPartyContactProfileId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Gender")
+                        .HasColumnType("int");
 
                     b.Property<string>("GradeTitle")
                         .HasColumnType("nvarchar(max)")
@@ -335,7 +338,6 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnName("Party_Id");
 
                     b.Property<string>("PostCode")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Post_Code");
 
@@ -398,9 +400,9 @@ namespace HR.Infrastructure.Migrations
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_EmploymentLocation_ModifiedBy");
 
-                    b.HasIndex(new[] { "FkEmploymentId" }, "IX_ EmploymentLocations_fkEmploymentId");
+                    b.HasIndex(new[] { "FkEmploymentId" }, "IX_EmploymentLocations_fkEmploymentId");
 
-                    b.HasIndex(new[] { "FkLocationId" }, "IX_ EmploymentLocations_fkLocationId");
+                    b.HasIndex(new[] { "FkLocationId" }, "IX_EmploymentLocations_fkLocationId");
 
                     b.ToTable("EmploymentLocations", "hr");
                 });
@@ -578,9 +580,6 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid>("FkContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsRemove")
                         .HasColumnType("bit");
 
@@ -639,9 +638,6 @@ namespace HR.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -726,9 +722,6 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("FkOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("FkParentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkPermissionAssigneeId")
@@ -821,7 +814,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid?>("FkOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FkParentId")
+                    b.Property<Guid?>("ParentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("Gender")
@@ -933,7 +926,7 @@ namespace HR.Infrastructure.Migrations
                         .WithMany("Assignments")
                         .HasForeignKey("FkEmploymentId")
                         .IsRequired()
-                        .HasConstraintName("FK_Assignments_ Employment");
+                        .HasConstraintName("FK_Assignments_Employment");
 
                     b.HasOne("HR.Domain.Entities.Post", "Post")
                         .WithMany("Assignments")
@@ -952,13 +945,13 @@ namespace HR.Infrastructure.Migrations
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentStatusId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_ Employment_ EmploymentStatus");
+                        .HasConstraintName("FK_Employment_EmploymentStatus");
 
                     b.HasOne("HR.Domain.Entities.EmploymentType", "EmploymentType")
                         .WithMany("Employments")
                         .HasForeignKey("FkEmploymentTypeId")
                         .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_ Employment_ EmploymentType");
+                        .HasConstraintName("FK_Employment_EmploymentType");
 
                     b.Navigation("EmploymentStatus");
 
@@ -972,14 +965,14 @@ namespace HR.Infrastructure.Migrations
                         .HasForeignKey("FkEmploymentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_ EmploymentLocations_ Employment");
+                        .HasConstraintName("FK_EmploymentLocations_Employment");
 
                     b.HasOne("HR.Domain.Entities.Location", "Location")
                         .WithMany("EmploymentLocations")
                         .HasForeignKey("FkLocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("FK_ EmploymentLocations_Location");
+                        .HasConstraintName("FK_EmploymentLocations_Location");
 
                     b.Navigation("Employment");
 
@@ -1009,12 +1002,12 @@ namespace HR.Infrastructure.Migrations
                     b.HasOne("HR.Domain.Entities.CostCenter", "CostCenter")
                         .WithMany("Posts")
                         .HasForeignKey("FkCostCenterId")
-                        .HasConstraintName("FK_Post_ CostCenter");
+                        .HasConstraintName("FK_Post_CostCenter");
 
                     b.HasOne("HR.Domain.Entities.Grade", "Grade")
                         .WithMany("Posts")
                         .HasForeignKey("FkGradeId")
-                        .HasConstraintName("FK_Post_ Grade");
+                        .HasConstraintName("FK_Post_Grade");
 
                     b.HasOne("HR.Domain.Entities.JobLevel", "JobLevel")
                         .WithMany("Posts")

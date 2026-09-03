@@ -47,7 +47,8 @@ namespace People.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    FkPermissionAssigneeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FkPermissionAssigneeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FkContactProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -137,39 +138,6 @@ namespace People.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_PartiesRelations_Parties1",
                         column: x => x.FkDestinationPartyId,
-                        principalSchema: "people",
-                        principalTable: "Parties",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PartyContacts",
-                schema: "people",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ContactType = table.Column<byte>(type: "tinyint", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FkPartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PartyContact", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PartyContacts_Parties",
-                        column: x => x.FkPartyId,
                         principalSchema: "people",
                         principalTable: "Parties",
                         principalColumn: "Id",
@@ -475,79 +443,6 @@ namespace People.Infrastructure.Migrations
                 schema: "people",
                 table: "PartiesRelations",
                 column: "FkSourcePartyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_CreatedAt",
-                schema: "people",
-                table: "PartyContacts",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_CreatedBy",
-                schema: "people",
-                table: "PartyContacts",
-                column: "CreatedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_ModifiedAt",
-                schema: "people",
-                table: "PartyContacts",
-                column: "ModifiedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_ModifiedBy",
-                schema: "people",
-                table: "PartyContacts",
-                column: "ModifiedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_OwnerOrgUnit",
-                schema: "people",
-                table: "PartyContacts",
-                column: "OwnerOrganizationUnitId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_OwnerPerson",
-                schema: "people",
-                table: "PartyContacts",
-                column: "OwnerPersonId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContact_ScopedLookup",
-                schema: "people",
-                table: "PartyContacts",
-                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PartyContacts_Id",
-                schema: "people",
-                table: "PartyContacts",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonContact_OwnerOrgUnit",
-                schema: "people",
-                table: "PartyContacts",
-                column: "OwnerOrganizationUnitId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonContact_OwnerPerson",
-                schema: "people",
-                table: "PartyContacts",
-                column: "OwnerPersonId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonContact_ScopedLookup",
-                schema: "people",
-                table: "PartyContacts",
-                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PersonContacts_FkPartyId",
-                schema: "people",
-                table: "PartyContacts",
-                column: "FkPartyId");
         }
 
         /// <inheritdoc />
@@ -567,10 +462,6 @@ namespace People.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "PartiesRelations",
-                schema: "people");
-
-            migrationBuilder.DropTable(
-                name: "PartyContacts",
                 schema: "people");
 
             migrationBuilder.DropTable(

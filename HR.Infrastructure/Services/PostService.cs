@@ -314,7 +314,7 @@ namespace HR.Infrastructure.Services
                     "Post.FkJobLevelId",
                     "Post.FkGradeId",
                     "Post.FkCostCenterId",
-                    "Post.FkParentId",
+                    "Post.ParentId",
                     "Post.FkContactProfileId"
                 });
 
@@ -483,7 +483,7 @@ namespace HR.Infrastructure.Services
                 AssigneeType = s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
                 FkOrganizationUnitId = s.FkOrganizationUnitId,
                 OrganizationUnitsName = s.OrganizationUnitsName,
-                FkParentId = s.FkParentId,
+                ParentId = s.ParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
                 locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
@@ -586,7 +586,7 @@ namespace HR.Infrastructure.Services
                 AssigneeType = s.AssignmentsAssigneeType?.ToString().ToEnumOrDefault<PostAssignmentType>(PostAssignmentType.Permanent),
                 FkOrganizationUnitId = s.FkOrganizationUnitId,
                 OrganizationUnitsName = s.OrganizationUnitsName,
-                FkParentId = s.FkParentId,
+                ParentId = s.ParentId,
                 Gender = s.Gender,
                 PostCode = s.PostCode,
                 locations = locList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),

@@ -268,9 +268,6 @@ namespace Authorization.Infrastructure.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Icon")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");

@@ -4,7 +4,6 @@ SELECT
     hr.Post.Id,
     hr.Post.Code AS Post_Code,
     hr.Post.ParentId,
-    hr.Post.FkParentId,
     hr.Post.FkJobTitleId,
     hr.Post.FkOrganizationUnitId,
     hr.Post.FkJobLevelId,

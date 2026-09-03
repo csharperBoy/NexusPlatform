@@ -297,6 +297,9 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid?>("FkPartyContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int?>("Gender")
+                        .HasColumnType("int");
+
                     b.Property<string>("GradeTitle")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Grade_Title");
@@ -574,9 +577,6 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid>("FkContactProfileId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsRemove")
                         .HasColumnType("bit");
 
@@ -635,9 +635,6 @@ namespace HR.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -722,9 +719,6 @@ namespace HR.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("FkOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("FkParentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("FkPermissionAssigneeId")
@@ -817,7 +811,7 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid?>("FkOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("FkParentId")
+                    b.Property<Guid?>("ParentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("Gender")

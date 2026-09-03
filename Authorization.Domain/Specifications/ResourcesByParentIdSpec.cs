@@ -11,7 +11,7 @@ namespace Authorization.Domain.Specifications
     public class ResourcesByParentIdSpec : BaseSpecification<Resource>
     {
         public ResourcesByParentIdSpec(Guid? parentId)
-            : base(r => r.FkParentId == parentId)
+            : base(r => r.ParentId == parentId)
         {
             AddInclude(r => r.Children);
             AddInclude(r => r.Permissions);

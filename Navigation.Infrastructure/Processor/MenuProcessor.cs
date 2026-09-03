@@ -17,7 +17,7 @@ namespace Navigation.Infrastructure.Processor
         public IReadOnlyList<MenuDto> BuildTree(IEnumerable<Menu> menus, Guid? parentId = null)
         {
             var nodes = menus
-                .Where(r => r.FkParentId == parentId)
+                .Where(r => r.ParentId == parentId)
                 .OrderBy(r => r.Order)
                 .ThenBy(r => r.Title)
                 .Select(menu => new MenuDto
@@ -28,7 +28,7 @@ namespace Navigation.Infrastructure.Processor
                     Path = menu.Path,
                     Icon =  menu.Icon.GetIconString(),
                     Description = menu.Description,
-                    ParentId = menu.FkParentId,
+                    ParentId = menu.ParentId,
                     Key = menu.Key,
                     ParentKey = menu.Parent?.Key,
                     Children = BuildTree(menus, menu.Id)

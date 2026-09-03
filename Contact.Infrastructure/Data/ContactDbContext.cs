@@ -39,7 +39,7 @@ namespace Contact.Infrastructure.Data
         }
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {
-            EnsureView("Contact.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "contact");
+            //EnsureView("Contact.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "contact");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

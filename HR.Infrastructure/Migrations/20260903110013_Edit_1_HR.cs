@@ -15,7 +15,7 @@ namespace HR.Infrastructure.Migrations
                 name: "hr");
 
             migrationBuilder.CreateTable(
-                name: " CostCenter",
+                name: "CostCenter",
                 schema: "hr",
                 columns: table => new
                 {
@@ -30,7 +30,7 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: " EmploymentStatus",
+                name: "EmploymentStatus",
                 schema: "hr",
                 columns: table => new
                 {
@@ -45,7 +45,7 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: " EmploymentType",
+                name: "EmploymentType",
                 schema: "hr",
                 columns: table => new
                 {
@@ -60,7 +60,7 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: " Grade",
+                name: "Grade",
                 schema: "hr",
                 columns: table => new
                 {
@@ -72,45 +72,6 @@ namespace HR.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Grade", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EmployementInfoViews",
-                schema: "hr",
-                columns: table => new
-                {
-                    NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmploymentEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    EmploymentEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
-                    PartyId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    PartyMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PartyAddress = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PartyPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PartyEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmploymentStatusName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmploymentTypeName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
-                    AssignmentsEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    AssignmentsEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
-                    PostCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    GradeTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CostCenterName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    JobLevelTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    JobTitleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrganizationUnitsName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PostContactPhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PostContactMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PostContactEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PostContactFax = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EmploymentLocationsEffectiveFrom = table.Column<DateOnly>(type: "date", nullable: true),
-                    EmploymentLocationsEffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
-                    LocationTitle = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
                 });
 
             migrationBuilder.CreateTable(
@@ -135,6 +96,10 @@ namespace HR.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
@@ -154,9 +119,10 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    IsRemove = table.Column<bool>(type: "bit", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FkContactProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -179,7 +145,6 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Code = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -220,62 +185,39 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PostInfoViews",
-                schema: "hr",
-                columns: table => new
-                {
-                    FkJobTitleId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FkOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FkJobLevelId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FkGradeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    FkCostCenterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    NationalCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AssignmentsAssigneeType = table.Column<int>(type: "int", nullable: false),
-                    PostCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    GradeTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CostCenterName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    JobLevelTitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    JobTitleName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrganizationUnitsName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OfficePhone = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrgMobile = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OrgEmail = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                });
-
-            migrationBuilder.CreateTable(
-                name: " Employment",
+                name: "Employment",
                 schema: "hr",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    IsRemove = table.Column<bool>(type: "bit", nullable: false),
                     EmploymentCode = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FkNaturalPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkEmploymentTypeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkEmploymentStatusId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     EffectiveFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true)
+                    EffectiveTo = table.Column<DateOnly>(type: "date", nullable: true),
+                    FkContactProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Employment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ Employment_ EmploymentStatus",
+                        name: "FK_Employment_EmploymentStatus",
                         column: x => x.FkEmploymentStatusId,
                         principalSchema: "hr",
-                        principalTable: " EmploymentStatus",
+                        principalTable: "EmploymentStatus",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
-                        name: "FK_ Employment_ EmploymentType",
+                        name: "FK_Employment_EmploymentType",
                         column: x => x.FkEmploymentTypeId,
                         principalSchema: "hr",
-                        principalTable: " EmploymentType",
+                        principalTable: "EmploymentType",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
                 });
@@ -290,8 +232,8 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IsRemove = table.Column<bool>(type: "bit", nullable: false),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FkJobTitleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
@@ -299,22 +241,23 @@ namespace HR.Infrastructure.Migrations
                     FkGradeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FkCostCenterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    FkPermissionAssigneeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    FkPermissionAssigneeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FkContactProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Post", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Post_ CostCenter",
+                        name: "FK_Post_CostCenter",
                         column: x => x.FkCostCenterId,
                         principalSchema: "hr",
-                        principalTable: " CostCenter",
+                        principalTable: "CostCenter",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Post_ Grade",
+                        name: "FK_Post_Grade",
                         column: x => x.FkGradeId,
                         principalSchema: "hr",
-                        principalTable: " Grade",
+                        principalTable: "Grade",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Post_JobLevel",
@@ -343,7 +286,7 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: " EmploymentLocations",
+                name: "EmploymentLocations",
                 schema: "hr",
                 columns: table => new
                 {
@@ -362,14 +305,14 @@ namespace HR.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_EmploymentLocation", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ EmploymentLocations_ Employment",
+                        name: "FK_EmploymentLocations_Employment",
                         column: x => x.FkEmploymentId,
                         principalSchema: "hr",
-                        principalTable: " Employment",
+                        principalTable: "Employment",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ EmploymentLocations_Location",
+                        name: "FK_EmploymentLocations_Location",
                         column: x => x.FkLocationId,
                         principalSchema: "hr",
                         principalTable: "Location",
@@ -398,10 +341,10 @@ namespace HR.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Assignment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Assignments_ Employment",
+                        name: "FK_Assignments_Employment",
                         column: x => x.FkEmploymentId,
                         principalSchema: "hr",
-                        principalTable: " Employment",
+                        principalTable: "Employment",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Assignments_Post",
@@ -412,7 +355,7 @@ namespace HR.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PostContacts",
+                name: "PostLocations",
                 schema: "hr",
                 columns: table => new
                 {
@@ -421,118 +364,30 @@ namespace HR.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
                     EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
                     IsCurrent = table.Column<bool>(type: "bit", nullable: false),
-                    ContactType = table.Column<byte>(type: "tinyint", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FkLocationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FkPostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PostContact", x => x.Id);
+                    table.PrimaryKey("PK_PostLocation", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PostContacts_Posts",
+                        name: "FK_PostLocations_Location",
+                        column: x => x.FkLocationId,
+                        principalSchema: "hr",
+                        principalTable: "Location",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PostLocations_Post",
                         column: x => x.FkPostId,
                         principalSchema: "hr",
                         principalTable: "Post",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ CostCenter_Id",
-                schema: "hr",
-                table: " CostCenter",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ Employment_FkEmploymentStatusId",
-                schema: "hr",
-                table: " Employment",
-                column: "FkEmploymentStatusId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ Employment_FkEmploymentTypeId",
-                schema: "hr",
-                table: " Employment",
-                column: "FkEmploymentTypeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ Employment_Id",
-                schema: "hr",
-                table: " Employment",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentLocations_fkEmploymentId",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "FkEmploymentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentLocations_fkLocationId",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "FkLocationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentLocations_Id",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmploymentLocation_CreatedAt",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmploymentLocation_CreatedBy",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "CreatedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmploymentLocation_ModifiedAt",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "ModifiedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EmploymentLocation_ModifiedBy",
-                schema: "hr",
-                table: " EmploymentLocations",
-                column: "ModifiedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentStatus_Id",
-                schema: "hr",
-                table: " EmploymentStatus",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ EmploymentType_Id",
-                schema: "hr",
-                table: " EmploymentType",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ Grade_Id",
-                schema: "hr",
-                table: " Grade",
-                column: "Id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Assignment_CreatedAt",
@@ -578,6 +433,120 @@ namespace HR.Infrastructure.Migrations
                 column: "FkPostId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CostCenter_Id",
+                schema: "hr",
+                table: "CostCenter",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_CreatedAt",
+                schema: "hr",
+                table: "Employment",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_CreatedBy",
+                schema: "hr",
+                table: "Employment",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_FkEmploymentStatusId",
+                schema: "hr",
+                table: "Employment",
+                column: "FkEmploymentStatusId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_FkEmploymentTypeId",
+                schema: "hr",
+                table: "Employment",
+                column: "FkEmploymentTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_Id",
+                schema: "hr",
+                table: "Employment",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_ModifiedAt",
+                schema: "hr",
+                table: "Employment",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employment_ModifiedBy",
+                schema: "hr",
+                table: "Employment",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocation_CreatedAt",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocation_CreatedBy",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocation_ModifiedAt",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocation_ModifiedBy",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocations_fkEmploymentId",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "FkEmploymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocations_fkLocationId",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "FkLocationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentLocations_Id",
+                schema: "hr",
+                table: "EmploymentLocations",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentStatus_Id",
+                schema: "hr",
+                table: "EmploymentStatus",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmploymentType_Id",
+                schema: "hr",
+                table: "EmploymentType",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Grade_Id",
+                schema: "hr",
+                table: "Grade",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobLevel_Id",
                 schema: "hr",
                 table: "JobLevel",
@@ -585,11 +554,35 @@ namespace HR.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_JobTitle_CreatedAt",
+                schema: "hr",
+                table: "JobTitle",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobTitle_CreatedBy",
+                schema: "hr",
+                table: "JobTitle",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobTitle_Id",
                 schema: "hr",
                 table: "JobTitle",
                 column: "Id",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobTitle_ModifiedAt",
+                schema: "hr",
+                table: "JobTitle",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobTitle_ModifiedBy",
+                schema: "hr",
+                table: "JobTitle",
+                column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Location_CreatedAt",
@@ -764,57 +757,45 @@ namespace HR.Infrastructure.Migrations
                 column: "ParentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PersonContacts_FkPostId",
+                name: "IX_PostLocation_CreatedAt",
                 schema: "hr",
-                table: "PostContacts",
-                column: "FkPostId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PostContact_CreatedAt",
-                schema: "hr",
-                table: "PostContacts",
+                table: "PostLocations",
                 column: "CreatedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_CreatedBy",
+                name: "IX_PostLocation_CreatedBy",
                 schema: "hr",
-                table: "PostContacts",
+                table: "PostLocations",
                 column: "CreatedBy");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_ModifiedAt",
+                name: "IX_PostLocation_ModifiedAt",
                 schema: "hr",
-                table: "PostContacts",
+                table: "PostLocations",
                 column: "ModifiedAt");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_ModifiedBy",
+                name: "IX_PostLocation_ModifiedBy",
                 schema: "hr",
-                table: "PostContacts",
+                table: "PostLocations",
                 column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_OwnerOrgUnit",
+                name: "IX_PostLocations_fkLocationId",
                 schema: "hr",
-                table: "PostContacts",
-                column: "OwnerOrganizationUnitId");
+                table: "PostLocations",
+                column: "FkLocationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_OwnerPerson",
+                name: "IX_PostLocations_fkPostId",
                 schema: "hr",
-                table: "PostContacts",
-                column: "OwnerPersonId");
+                table: "PostLocations",
+                column: "FkPostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PostContact_ScopedLookup",
+                name: "IX_PostLocations_Id",
                 schema: "hr",
-                table: "PostContacts",
-                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PostContacts_Id",
-                schema: "hr",
-                table: "PostContacts",
+                table: "PostLocations",
                 column: "Id",
                 unique: true);
         }
@@ -823,15 +804,11 @@ namespace HR.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: " EmploymentLocations",
-                schema: "hr");
-
-            migrationBuilder.DropTable(
                 name: "Assignments",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: "EmployementInfoViews",
+                name: "EmploymentLocations",
                 schema: "hr");
 
             migrationBuilder.DropTable(
@@ -839,11 +816,11 @@ namespace HR.Infrastructure.Migrations
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: "PostContacts",
+                name: "PostLocations",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: "PostInfoViews",
+                name: "Employment",
                 schema: "hr");
 
             migrationBuilder.DropTable(
@@ -851,27 +828,23 @@ namespace HR.Infrastructure.Migrations
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: " Employment",
-                schema: "hr");
-
-            migrationBuilder.DropTable(
                 name: "Post",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: " EmploymentStatus",
+                name: "EmploymentStatus",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: " EmploymentType",
+                name: "EmploymentType",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: " CostCenter",
+                name: "CostCenter",
                 schema: "hr");
 
             migrationBuilder.DropTable(
-                name: " Grade",
+                name: "Grade",
                 schema: "hr");
 
             migrationBuilder.DropTable(
