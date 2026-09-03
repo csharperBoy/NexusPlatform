@@ -85,8 +85,9 @@ namespace HR.Infrastructure.Services
             _postLocationSpecRepository = postLocationSpecRepository;
             _postLocationsRepository = postLocationsRepository;
         }
-        public async Task AssignLocationsToPost(Guid postId, List<Guid> locationsId)
+        public async Task<bool> AssignLocationsToPost(Guid postId, List<Guid> locationsId)
         {
+            bool hasChange = false;
             // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
             var spec = new GetPostLocationsSpec(postId);
             var existingActive = await _postLocationSpecRepository.ListBySpecAsync(spec);
@@ -100,6 +101,7 @@ namespace HR.Infrastructure.Services
             foreach (var item in toExpire)
             {
                 item.DoExpire();
+                hasChange = true;
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -116,8 +118,9 @@ namespace HR.Infrastructure.Services
 
                     item.AddDomainEvent(new ChangePostEvent(item.Id));
                 }
+                hasChange = true;
             }
-
+            return hasChange;
         }
         public async Task<List<Guid>?> GetEmploymentPostsId(Guid? employmentId)
         {
@@ -407,7 +410,7 @@ namespace HR.Infrastructure.Services
             return post.Select(p => p.FkPermissionAssigneeId).ToList();
         }
 
-        public async Task<Guid> UpdatePostAsync(
+        public async Task<(bool,string)> UpdatePostAsync(
             Guid id,
             Optional<string?> code,
             Optional<Guid?> organizationUnitId,
@@ -421,7 +424,7 @@ namespace HR.Infrastructure.Services
             Optional<List<string>?> orgEmail,
             Optional<List<string>?> orgMobile)
         {
-            Post? post = await _postRepository.GetByIdAsync(id);
+            Post? post = await _postRepository.GetByIdAsync(id , a=>a.JobTitle);
             if (post == null)
                 throw new Exception("can not found post!!!");
 
@@ -433,17 +436,21 @@ namespace HR.Infrastructure.Services
             if (officePhone.IsSet)
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, post.FkContactProfileId);
+                hasChange = true;
             }
             if (orgEmail.IsSet)
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, post.FkContactProfileId);
+                hasChange = true;
             }
             if (orgMobile.IsSet)
             {
                 await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, post.FkContactProfileId);
+                hasChange = true;
             }
-            post.AddDomainEvent(new ChangePostEvent(post.Id));
-            return post.Id;
+            if(hasChange)
+                post.AddDomainEvent(new ChangePostEvent(post.Id));
+            return (hasChange,post.JobTitle.Name);
         }
         public async Task<IReadOnlyList<PostInfoDto>> GetPostListAsync()
         {

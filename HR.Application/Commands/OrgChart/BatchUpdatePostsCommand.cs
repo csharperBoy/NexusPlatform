@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Application.Helper;
+using Core.Shared.Results;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
 using MediatR;
@@ -8,13 +9,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace HR.Application.Commands.OrgChart
 {
-    public record BatchUpdatePostsCommand(List<UpdatePostCommand> Posts) : IRequest<Result<List<Guid>>>;
+    public record BatchUpdatePostsCommand(List<UpdatePostCommand> Posts) : IRequest<BatchResult>;
 
-    
-    public class BatchUpdatePostsCommandHandler : IRequestHandler<BatchUpdatePostsCommand, Result<List<Guid>>>
+
+    public class BatchUpdatePostsCommandHandler : IRequestHandler<BatchUpdatePostsCommand, BatchResult>
     {
         private readonly IPostInternalService _orgChartService;
         private readonly ILogger<BatchUpdatePostsCommandHandler> _logger;
@@ -25,51 +27,94 @@ namespace HR.Application.Commands.OrgChart
             _logger = logger;
         }
 
-        public async Task<Result<List<Guid>>> Handle(BatchUpdatePostsCommand request, CancellationToken cancellationToken)
+        public async Task<BatchResult> Handle(BatchUpdatePostsCommand request, CancellationToken cancellationToken)
         {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+
             try
             {
-                var results = new List<Guid>();
+
                 foreach (var command in request.Posts)
                 {
-                    // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid postId = await _orgChartService.UpdatePostAsync(
-                        command.Id,
-                        command.Code,
-                        command.OrganizationUnitId,
-                        command.JobTitleId,
-                        command.JobLevelId,
-                        command.GradeId,
-                        command.CostCenterId,
-                        command.ReportsToPostId,
-                        command.IsActive,
-                        command.OfficePhone,
-                        command.OrgEmail,
-                        command.OrgMobile
-                    );
+                    bool assignHasChange = false;
+                    bool hasChange = false;
+                    string jobTitleName = null;
+                    bool locHasChange = false;
 
-                    // ۲. تخصیص به کارمند (در صورت وجود)
-                    if (command.EmploymentId.IsSet && command.EmploymentId.Value != Guid.Empty)
+                    try
                     {
-                        await _orgChartService.AssignToPostAsync( postId , new List<Guid?> { command.EmploymentId.Value }, command.AssignType.Value);
+
+
+                        // ۱. به‌روزرسانی اطلاعات پایه پست
+                        (hasChange, jobTitleName) = await _orgChartService.UpdatePostAsync(
+                            command.Id,
+                            command.Code,
+                            command.OrganizationUnitId,
+                            command.JobTitleId,
+                            command.JobLevelId,
+                            command.GradeId,
+                            command.CostCenterId,
+                            command.ReportsToPostId,
+                            command.IsActive,
+                            command.OfficePhone,
+                            command.OrgEmail,
+                            command.OrgMobile
+                        );
+                        string successMessage = $"{IconInTextHelper.IconUpdate} برای پست با عنوان شغلی '{jobTitleName}' و کد '{command.Code}' ";
+
+                        Guid postId = command.Id;
+                        if (hasChange)
+                        {
+                            successMessage = $"اطلاعات پست با موفقیت بروزرسانی شد.";
+                        }
+                        // ۲. تخصیص به کارمند (در صورت وجود)
+                        if (command.EmploymentId.IsSet)
+                        {
+                            assignHasChange = await _orgChartService.AssignToPostAsync(postId, new List<Guid?> { command.EmploymentId.Value }, command.AssignType.Value);
+                            if (assignHasChange)
+                            {
+                                successMessage = $"{successMessage} * اطلاعات مربوط به انتصاب به کارمند با موفقیت بروزرسانی شد";
+                            }
+                        }
+                        if (command.locationsId.IsSet)
+                        {
+                            locHasChange = await _orgChartService.AssignLocationsToPost(postId, command.locationsId.Value);
+                            if (locHasChange)
+                            {
+                                successMessage = $"{successMessage} * اطلاعات مربوط به محل استقرار با موفقیت بروزرسانی شد";
+                            }
+                        }
+                        if (hasChange || assignHasChange || locHasChange)
+                        {
+                            successMessages.Add(successMessage);
+                        }
                     }
-                    if (command.locationsId.IsSet)
+                    catch (Exception ex)
                     {
-                        await _orgChartService.AssignLocationsToPost(postId, command.locationsId.Value);
+                        errors.Add($"{IconInTextHelper.IconError} بروزرسانی اطلاعات پست با عنوان شغلی '{jobTitleName}' با خطا مواجه شد!!!: {ex.Message}");
                     }
-                    results.Add(postId);
                 }
 
                 // ۳. ذخیره‌سازی یکباره همه تغییرات
                 await _orgChartService.SaveAsync();
 
-                _logger.LogInformation("Batch update of {count} posts completed successfully.", results.Count);
-                return Result<List<Guid>>.Ok(results);
+                _logger.LogInformation(
+              "Batch update completed. SuccessCount: {SuccessCount}, ErrorCount: {ErrorCount}",
+              successMessages.Count, errors.Count);
+
+                // ۳. ساخت نتیجه نهایی بر اساس وجود خطا یا عدم آن
+                return new BatchResult(
+                           succeeded: true,
+                           successMessages: successMessages,
+                           errors: errors.Any() ? errors : null // اگر خطایی نبود، null بفرست
+                       );
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to batch update posts.");
-                return Result<List<Guid>>.Fail(ex.Message);
+                // خطای سطح کلی (مثلاً خطا در SaveAsync یا قطعی شبکه)
+                _logger.LogError(ex, "Critical failure during batch update.");
+                return BatchResult.Fail(ex.Message);
             }
         }
     }

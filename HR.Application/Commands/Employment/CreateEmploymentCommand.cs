@@ -26,7 +26,7 @@ namespace HR.Application.Commands.Employment
     #region Person
 
      string NationalCode,
-     string FirstlName,
+     string FirstName,
      string LastName,
      DateTime? BirthDate,
      string? BirthPlace,
@@ -105,7 +105,7 @@ namespace HR.Application.Commands.Employment
 
                 Guid personId = await _personService.CreatePersonAsync(
                     request.NationalCode,
-                    request.FirstlName,
+                    request.FirstName,
                     request.LastName,
                     request.BirthDate,
                     request.BirthPlace,

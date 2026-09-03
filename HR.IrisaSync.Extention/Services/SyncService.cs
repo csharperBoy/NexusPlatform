@@ -3,11 +3,13 @@ using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
+using Core.Application.Helper;
 using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
 using Core.Shared.Enums.HR;
+using Core.Shared.Results;
 using DocumentFormat.OpenXml.Office.CustomUI;
 using HR.Application.Commands.Employment;
 using HR.Application.Commands.OrgChart;
@@ -23,6 +25,7 @@ using HR.IrisaSync.Extention.Entities;
 using HR.IrisaSync.Extention.Interface;
 using HR.IrisaSync.Extention.Specifications;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,12 +40,13 @@ namespace HR.IrisaSync.Extention.Services
         public int AddedCount { get; set; }
         public int UpdatedCount { get; set; }
         public int DeletedCount { get; set; }
-        public List<string> Errors { get; set; } = new List<string>();
+        //public List<string> Errors { get; set; } = new List<string>();
         public override string ToString()
             => $"Added: {AddedCount}, Updated: {UpdatedCount}, Deleted: {DeletedCount}";
     }
     public class SyncService : ISyncService
     {
+
         private readonly ISpecificationRepository<PdsIdeaInformationViw, string> _repoSpec;
         private readonly IRepository<IrisaOracleDbContext, PdsIdeaInformationViw, string> _irisaRepo;
         private readonly IHRUnitOfWork<HRDbContext> _hrUow;
@@ -226,9 +230,13 @@ namespace HR.IrisaSync.Extention.Services
             }
         }
         */
-        public async Task<SyncResult> SyncEmploymentsAsync()
+        public async Task<BatchResult<SyncResult>> SyncEmploymentsAsync()
         {
-            var result = new SyncResult();
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var DeletedCount = 0;
+            var AddedCount = 0;
 
             try
             {
@@ -287,7 +295,7 @@ namespace HR.IrisaSync.Extention.Services
                             OrgEmail: null,
                             OrgMobile: null,
                             NationalCode: ext.CodNatEmply,
-                            FirstlName: ext.NamFirstEmply,
+                            FirstName: ext.NamFirstEmply,
                             LastName: ext.NamLastEmply,
                             BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
                             BirthPlace: ext.BirthPlace,
@@ -306,11 +314,12 @@ namespace HR.IrisaSync.Extention.Services
                         );
 
                         await _mediator.Send(createCommand);
-                        result.AddedCount++;
+                        AddedCount++;
+                        SuccessMessages.Add($"{IconInTextHelper.IconAdd} کارمند با کد پرسنلی '{createCommand.EmploymentCode}' با موفقیت افزوده شد.");
                     }
                     catch (Exception ex)
                     {
-                        result.Errors.Add($"Error adding {ext.NumPrsnEmply}: {ex.Message}");
+                        Errors.Add($"{IconInTextHelper.IconError} افزودن کارمند با کد پرسنلی '{ext.NumPrsnEmply.ToString()}' با خطا مواجه شد!!!: {ex.Message}");
                     }
                 }
 
@@ -321,39 +330,36 @@ namespace HR.IrisaSync.Extention.Services
 
                     foreach (var (ext, existing) in toUpdate)
                     {
-                        try
-                        {
-                            string personalCode = ext.NumPrsnEmply.ToString();
 
-                            var command = new UpdateEmploymentCommand(
-                                Id: existing.Id,
-                                Phone: new List<string> { ext.NumTelEmply.ToString() },
-                                Address: new List<string> { ext.DesAdrEmply },
-                                Mobile: new List<string> { ext.NumMobilEmply.ToString() },
-                                nationalCode: ext.CodNatEmply,
-                                FirstName: ext.NamFirstEmply,
-                                LastName: ext.NamLastEmply,
-                                BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
-                                BirthPlace: ext.BirthPlace,
-                                FatherName: ext.NamFathrEmply,
-                                EmploymentCode: personalCode,
-                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
-                            );
+                        string personalCode = ext.NumPrsnEmply.ToString();
 
-                            updateCommands.Add(command);
-                        }
-                        catch (Exception ex)
-                        {
-                            result.Errors.Add($"Error preparing update for {ext.NumPrsnEmply}: {ex.Message}");
-                        }
+                        var command = new UpdateEmploymentCommand(
+                            Id: existing.Id,
+                            Phone: new List<string> { ext.NumTelEmply.ToString() },
+                            Address: new List<string> { ext.DesAdrEmply },
+                            Mobile: new List<string> { ext.NumMobilEmply.ToString() },
+                            nationalCode: ext.CodNatEmply,
+                            FirstName: ext.NamFirstEmply,
+                            LastName: ext.NamLastEmply,
+                            BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
+                            BirthPlace: ext.BirthPlace,
+                            FatherName: ext.NamFathrEmply,
+                            EmploymentCode: personalCode,
+                            StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
+                        );
+
+                        updateCommands.Add(command);
+
                     }
 
                     if (updateCommands.Any())
                     {
                         var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCommands);
                         var batchResult = await _mediator.Send(batchUpdateCommand);
+                        SuccessMessages.AddRange(batchResult.SuccessMessages.ToList());
+                        Errors.AddRange(batchResult.Errors.ToList());
 
-                        result.UpdatedCount = batchResult.SuccessMessages.Count;
+                        UpdatedCount = batchResult.SuccessMessages.Count;
                     }
                 }
 
@@ -364,21 +370,22 @@ namespace HR.IrisaSync.Extention.Services
                     {
                         var deleteCommand = new DeleteEmploymentCommand(emp.Id);
                         await _mediator.Send(deleteCommand);
-                        result.DeletedCount++;
+                        DeletedCount++;
+                        SuccessMessages.Add($"{IconInTextHelper.IconDelete} حذف کارمند با کد پرسنلی '{emp.EmploymentCode}' با موفقیت انجام شد.");
                     }
                     catch (Exception ex)
                     {
-                        result.Errors.Add($"Error deleting {emp.EmploymentCode}: {ex.Message}");
+                        Errors.Add($"{IconInTextHelper.IconError} حذف کارمند با کد پرسنلی '{emp.EmploymentCode}' با خطا مواجه شد!!!: {ex.Message}");
                     }
                 }
 
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
             }
             catch (Exception ex)
             {
-                result.Errors.Add($"Sync failed: {ex.Message}");
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
             }
-
-            return result;
         }
 
 
@@ -394,9 +401,13 @@ namespace HR.IrisaSync.Extention.Services
         /// پر کردن جدول اصلی با داده های موجود در جدول های مپ و ویو ایریسا
         /// </summary>
         /// <returns></returns>
-        public async Task<SyncResult> SyncPostAsync()
+        public async Task<BatchResult<SyncResult>> SyncPostAsync()
         {
-            var result = new SyncResult();
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var DeletedCount = 0;
+            var AddedCount = 0;
 
             // استفاده از TransactionScope برای اتمیک بودن
             //using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
@@ -421,7 +432,7 @@ namespace HR.IrisaSync.Extention.Services
 
                 // 3. دریافت پست‌های موجود (فقط فیلدهای لازم)
                 var existingPosts = await _hrUow.PostRepository
-                    .GetAllAsync(queryOptions: q => q.Where(a => a.IsRemove != true)); // اگر IQueryable هست، بهتر است Select کنید
+                    .GetAllAsync(queryOptions: q => q.Where(a => a.IsRemove != true).Include(b => b.JobTitle)); // اگر IQueryable هست، بهتر است Select کنید
 
                 // 4. ساخت دیکشنری از پست‌های موجود با کلید (JobTitleId, Code)
                 var existingDict = existingPosts
@@ -461,7 +472,6 @@ namespace HR.IrisaSync.Extention.Services
                         if (existingDict.TryGetValue(key, out var existingPost))
                         {
                             // ➡️ پست موجود است – بررسی تغییرات و به‌روزرسانی
-                            bool hasChanges = false;
 
                             if (existingPost.FkOrganizationUnitId != orgUnitId ||
                                 existingPost.FkJobLevelId != jobLevelId)
@@ -480,15 +490,13 @@ namespace HR.IrisaSync.Extention.Services
                                 //    parentId: null      // در صورت نیاز
                                 //);
 
-                                var createResult = await _mediator.Send(updateCommand);
-                                hasChanges = true;
-                            }
+                                //var createResult = await _mediator.Send(updateCommand);
 
-                            // در صورت تغییر، به لیست به‌روز اضافه کن
-                            if (hasChanges)
-                            {
                                 postsToUpdate.Add(existingPost);
                             }
+
+
+
                             // حذف از دیکشنری تا بعداً متوجه بشیم کدوم پست‌ها حذف شدن
                             existingDict.Remove(key);
                         }
@@ -515,7 +523,8 @@ namespace HR.IrisaSync.Extention.Services
                             );
 
                             var createResult = await _mediator.Send(createCommand);
-                            result.AddedCount++;
+                            AddedCount++;
+                            SuccessMessages.Add($"{IconInTextHelper.IconAdd} پست با عنوان شغلی '{item.DesJobpo}' و کد '{code}' با موفقیت افزوده شد. ");
                             //postsToAdd.Add(newPost);
                         }
                     }
@@ -547,14 +556,12 @@ namespace HR.IrisaSync.Extention.Services
                         Optional<List<string>?>.Undefined
                         )).ToList());
 
-                    var createResult = await _mediator.Send(updateCommand);
+                    var batchResult = await _mediator.Send(updateCommand);
                     //await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
+                    SuccessMessages.AddRange(batchResult.SuccessMessages.ToList());
+                    Errors.AddRange(batchResult.Errors.ToList());
 
-                    //foreach (var post in postsToUpdate)
-                    //{
-                    //    post.AddDomainEvent(new ChangePostEvent(post.Id));
-                    //}
-                    result.UpdatedCount = postsToUpdate.Count;
+                    UpdatedCount = batchResult.SuccessMessages.Count;
                 }
 
                 if (postsToDelete.Any())
@@ -577,8 +584,16 @@ namespace HR.IrisaSync.Extention.Services
                         DeletePostCommand deleteCommand = new DeletePostCommand(post.Id);
 
                         var createResult = await _mediator.Send(deleteCommand);
+                        if (createResult.Succeeded)
+                        {
+                            SuccessMessages.Add($"{IconInTextHelper.IconDelete} پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با موفقیت حذف شد.");
+                        }
+                        else
+                        {
+                            Errors.Add($"{IconInTextHelper.IconError} حذف پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با خطا مواجه شد.");
+                        }
                     }
-                    result.DeletedCount = postsToDelete.Count;
+                    DeletedCount = postsToDelete.Count;
                 }
 
                 // ذخیره‌سازی نهایی
@@ -587,13 +602,12 @@ namespace HR.IrisaSync.Extention.Services
                 // تکمیل تراکنش
                 //scope.Complete();
 
-                return result;
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
             }
             catch (Exception ex)
             {
-                // لاگ خطا (در صورت وجود ILogger)
-                // _logger.LogError(ex, "خطا در سینک پست‌ها");
-                throw; // یا بازگرداندن یک نتیجه با خطا
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
             }
         }
 
@@ -602,195 +616,289 @@ namespace HR.IrisaSync.Extention.Services
         /// پر کردن جدول اصلی با داده های موجود در جدول مپ
         /// </summary>
         /// <returns></returns>
-        public async Task<SyncResult> SyncJobTitleAsync()
+        public async Task<BatchResult<SyncResult>> SyncJobTitleAsync()
         {
-            var result = new SyncResult();
-            await _mapService.FillJobTitleMap();
-            var list = await _uow.JobTitleMapRepository.GetAllAsync();
-            var existList = await _hrUow.JobTitleRepository.GetAllAsync();
-
-            foreach (var item in list)
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var DeletedCount = 0;
+            var AddedCount = 0;
+            try
             {
+                await _mapService.FillJobTitleMap();
+                var list = await _uow.JobTitleMapRepository.GetAllAsync();
+                var existList = await _hrUow.JobTitleRepository.GetAllAsync();
 
-                if (item.IrisaJobTitle != null)
+                foreach (var item in list)
                 {
-                    var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
-                    if (existEntity != null)
+                    try
                     {
-                        if (existEntity.Name.Trim() != item.JobTitle?.Trim())
+
+
+                        if (item.IrisaJobTitle != null)
                         {
-                            existEntity.SetName(item.JobTitle);
-                            await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
-                            //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
-                            result.UpdatedCount++;
-                        }
-                    }
-                    else
-                    {
-                        JobTitle model = new JobTitle(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
-                        await _hrUow.JobTitleRepository.AddAsync(model);
-                        item.FkJobTitleId = model.Id;
-                        item.JobTitle = model.Name;
-                        await _uow.JobTitleMapRepository.UpdateAsync(item);
-                        result.AddedCount++;
-                    }
-                }
-
-
-                await _hrUow.SaveChangesAsync();
-                await _uow.SaveChangesAsync();
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
-        /// </summary>
-        /// <returns></returns>
-        public async Task<SyncResult> SyncJobLevelAsync()
-        {
-            var result = new SyncResult();
-            await _mapService.FillJobLevelMap();
-            var list = await _uow.JobLevelMapRepository.GetAllAsync();
-            var existList = await _hrUow.JobLevelRepository.GetAllAsync();
-
-            foreach (var item in list)
-            {
-                if (item.IrisaJobLevel != null)
-                {
-                    if (item.IrisaJobLevel != null)
-                    {
-                        var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
-                        if (existEntity != null)
-                        {
-                            if (existEntity.Title.Trim() != item.JobLevel?.Trim())
+                            var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
+                            if (existEntity != null)
                             {
-                                existEntity.SetTitle(item.JobLevel);
-                                await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
-                                result.UpdatedCount++;
+                                if (existEntity.Name.Trim() != item.JobTitle?.Trim())
+                                {
+                                    existEntity.SetName(item.JobTitle);
+                                    await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
+                                    //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
+                                    UpdatedCount++;
+                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} عنوان شغلی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
+                                }
+                            }
+                            else
+                            {
+                                JobTitle model = new JobTitle(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
+                                await _hrUow.JobTitleRepository.AddAsync(model);
+                                item.FkJobTitleId = model.Id;
+                                item.JobTitle = model.Name;
+                                await _uow.JobTitleMapRepository.UpdateAsync(item);
+                                AddedCount++;
+                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} عنوان شغلی  '{model.Name}' با موفقیت افزوده شد.  ");
                             }
                         }
-                        else
-                        {
-                            JobLevel model = new JobLevel(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
-                            await _hrUow.JobLevelRepository.AddAsync(model);
-                            item.FkJobLevelId = model.Id;
-                            item.JobLevel = model.Title;
-                            await _uow.JobLevelMapRepository.UpdateAsync(item);
-                            result.AddedCount++;
-                        }
+
+
+                        await _hrUow.SaveChangesAsync();
+                        await _uow.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Add($"ذخیره سازی عنوان شغلی '{item.IrisaJobTitle}' با خطا مواجه شد: {ex.Message}");
                     }
                 }
-
-                await _hrUow.SaveChangesAsync();
-                await _uow.SaveChangesAsync();
-
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
             }
-            return result;
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+            }
         }
 
         /// <summary>
         /// پر کردن جدول اصلی با داده های موجود در جدول مپ
         /// </summary>
         /// <returns></returns>
-        public async Task<SyncResult> SyncOrganizationUnitAsync()
+        public async Task<BatchResult<SyncResult>> SyncJobLevelAsync()
         {
-            var result = new SyncResult();
-            await _mapService.FillOrganizationUnitRootMap();
-            await _mapService.FillOrganizationUnitMap();
-            var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
-            var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
-            // roots node
-            foreach (var item in list.Where(i => i.IrisaParentId == null))
-            {
-                if (item.IrisaOrganizationUnit != null)
-                {
-                    var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
-                    if (existEntity != null)
-                    {
-                        if (existEntity.Name.Trim() != item.OrganizationUnit?.Trim())
-                        {
-                            existEntity.SetName(item.OrganizationUnit);
-                            await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
-                            result.UpdatedCount++;
-                        }
-                    }
-                    else
-                    {
-                        OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), null);
-                        await _hrUow.OrganizationUnitRepository.AddAsync(model);
-                        item.FkOrganizationUnitId = model.Id;
-                        item.OrganizationUnit = model.Name;
-                        await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
-                        result.AddedCount++;
-                    }
-                }
-            }
-            var trmp = list.Where(i => i.IrisaParentId != null).ToList();
-            //Child Node
-            foreach (var item in list.Where(i => i.IrisaParentId != null))
-            {
-                if (item.IrisaOrganizationUnit != null)
-                {
-                    var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
-                    IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
-                    if (existEntity != null)
-                    {
-                        if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.FkParentId != parentMap?.FkOrganizationUnitId)
-                        {
-                            existEntity.SetName(item.OrganizationUnit);
-                            existEntity.SetParent(parentMap?.FkOrganizationUnitId);
-                            await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
-                            result.UpdatedCount++;
-                        }
-                    }
-                    else
-                    {
-                        OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), parentMap?.FkOrganizationUnitId);
-                        await _hrUow.OrganizationUnitRepository.AddAsync(model);
-                        item.FkOrganizationUnitId = model.Id;
-                        item.OrganizationUnit = model.Name;
-                        await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
-                        result.AddedCount++;
-                    }
-                }
-            }
-            await _hrUow.SaveChangesAsync();
-            await _uow.SaveChangesAsync();
 
-            return result;
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var DeletedCount = 0;
+            var AddedCount = 0;
+            try
+            {
+                await _mapService.FillJobLevelMap();
+                var list = await _uow.JobLevelMapRepository.GetAllAsync();
+                var existList = await _hrUow.JobLevelRepository.GetAllAsync();
+
+                foreach (var item in list)
+                {
+                    try
+                    {
+
+                        if (item.IrisaJobLevel != null)
+                        {
+                            if (item.IrisaJobLevel != null)
+                            {
+                                var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
+                                if (existEntity != null)
+                                {
+                                    if (existEntity.Title.Trim() != item.JobLevel?.Trim())
+                                    {
+                                        existEntity.SetTitle(item.JobLevel);
+                                        await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
+                                        UpdatedCount++;
+                                        SuccessMessages.Add($"{IconInTextHelper.IconUpdate} سطح شغلی  '{existEntity.Title}' با موفقیت بروزرسانی شد.  ");
+                                    }
+                                }
+                                else
+                                {
+                                    JobLevel model = new JobLevel(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
+                                    await _hrUow.JobLevelRepository.AddAsync(model);
+                                    item.FkJobLevelId = model.Id;
+                                    item.JobLevel = model.Title;
+                                    await _uow.JobLevelMapRepository.UpdateAsync(item);
+                                    AddedCount++;
+                                    SuccessMessages.Add($"{IconInTextHelper.IconAdd} سطح شغلی  '{model.Title}' با موفقیت افزوده شد.  ");
+                                }
+                            }
+                        }
+
+                        await _hrUow.SaveChangesAsync();
+                        await _uow.SaveChangesAsync();
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Add($"ذخیره سازی سطح شغلی '{item.IrisaJobLevel}' با خطا مواجه شد: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+            }
         }
 
-        public async Task<SyncResult> SyncAssignmentsAsync()
+        /// <summary>
+        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
+        /// </summary>
+        /// <returns></returns>
+        public async Task<BatchResult<SyncResult>> SyncOrganizationUnitAsync()
         {
-            var result = new SyncResult();
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var DeletedCount = 0;
+            var AddedCount = 0;
+            try
+            {
+
+
+                await _mapService.FillOrganizationUnitRootMap();
+                await _mapService.FillOrganizationUnitMap();
+                var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
+                var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
+                // roots node
+                foreach (var item in list.Where(i => i.IrisaParentId == null))
+                {
+                    try
+                    {
+
+                        if (item.IrisaOrganizationUnit != null)
+                        {
+                            var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
+                            if (existEntity != null)
+                            {
+                                if (existEntity.Name.Trim() != item.OrganizationUnit?.Trim())
+                                {
+                                    existEntity.SetName(item.OrganizationUnit);
+                                    await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
+                                    UpdatedCount++;
+                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} واحد سازمانی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
+                                }
+                            }
+                            else
+                            {
+                                OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), null);
+                                await _hrUow.OrganizationUnitRepository.AddAsync(model);
+                                item.FkOrganizationUnitId = model.Id;
+                                item.OrganizationUnit = model.Name;
+                                await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
+                                AddedCount++;
+                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} واحد سازمانی  '{model.Name}' با موفقیت افزوده شد.  ");
+
+                            }
+
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Add($"{IconInTextHelper.IconError} ذخیره سازی واحد سازمانی '{item.IrisaOrganizationUnit}' با خطا مواجه شد: {ex.Message}");
+                    }
+                }
+                var trmp = list.Where(i => i.IrisaParentId != null).ToList();
+                //Child Node
+                foreach (var item in list.Where(i => i.IrisaParentId != null))
+                {
+                    try
+                    {
+
+                        if (item.IrisaOrganizationUnit != null)
+                        {
+                            var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
+                            IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
+                            if (existEntity != null)
+                            {
+                                if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.FkParentId != parentMap?.FkOrganizationUnitId)
+                                {
+                                    existEntity.SetName(item.OrganizationUnit);
+                                    existEntity.SetParent(parentMap?.FkOrganizationUnitId);
+                                    await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
+                                    UpdatedCount++;
+                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} واحد سازمانی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
+                                }
+                            }
+                            else
+                            {
+                                OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), parentMap?.FkOrganizationUnitId);
+                                await _hrUow.OrganizationUnitRepository.AddAsync(model);
+                                item.FkOrganizationUnitId = model.Id;
+                                item.OrganizationUnit = model.Name;
+                                await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
+                                AddedCount++;
+                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} واحد سازمانی  '{model.Name}' با موفقیت افزوده شد.  ");
+
+                            }
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.Add($"{IconInTextHelper.IconError} ذخیره سازی واحد سازمانی '{item.IrisaOrganizationUnit}' با خطا مواجه شد: {ex.Message}");
+                    }
+                }
+                await _hrUow.SaveChangesAsync();
+                await _uow.SaveChangesAsync();
+
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncAssignmentsAsync()
+        {
+            var SuccessMessages = new List<string>();
+            var Errors = new List<string>();
+            var UpdatedCount = 0;
+            var AddedCount = 0;
+            var DeletedCount = 0;
 
             try
             {
-                // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
+                // 1. دریافت کارمندان از ویو خارجی
                 List<PdsIdeaInformationViw> externalList = (await _irisaRepo.GetAllAsync())
                     .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
                     .ToList();
 
                 if (!externalList.Any())
                 {
-                    result.Errors.Add("No external employment data found.");
-                    return result;
+                    // خطای جزئی: هیچ داده‌ای وجود ندارد، اما عملیات کلی ناموفق نیست
+                    Errors.Add("هیچ داده ای یافت نشد.");
+                    // همچنان یک نتیجه با داده‌های صفر برمی‌گردانیم
+                    return BatchResult<SyncResult>.Ok(
+                        new SyncResult() { DeletedCount = 0, UpdatedCount = 0 },
+                        Errors
+                    );
                 }
 
-                // 2. دریافت کارمندان موجود در دیتابیس (برای یافتن EmploymentId)
+                // 2. دریافت کارمندان موجود در دیتابیس
                 var existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
                 var employmentDict = existingEmployments
-                    .ToDictionary(e => e.EmploymentCode, e => e); // کلید: کد پرسنلی
+                    .ToDictionary(e => e.EmploymentCode, e => e);
 
-                // 3. دریافت مپ‌های عنوان شغلی (Irisa → داخلی)
+                // 3. دریافت مپ‌های عنوان شغلی
                 var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync())
                     .Where(j => j.IrisaJobTitleId != null)
                     .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
 
-                // 4. دریافت تمام پست‌های فعال (برای یافتن پست متناظر با کلید JobTitleId + Code)
+                // 4. دریافت تمام پست‌های فعال
                 var allPosts = await _hrUow.PostRepository
-                    .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true));
+                    .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true).Include(a=>a.JobTitle));
                 var postDict = allPosts
                     .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
                     .ToDictionary(
@@ -798,13 +906,12 @@ namespace HR.IrisaSync.Extention.Services
                         p => p
                     );
 
-                // 5. مجموعه کدهای پرسنلی موجود در سیستم خارجی (برای تشخیص کارمندانی که باید انتسابشان خالی شود)
+                // 5. مجموعه کدهای پرسنلی خارجی
                 var externalEmploymentCodes = externalList
                     .Select(e => e.NumPrsnEmply.ToString())
                     .ToHashSet();
 
-
-                // 7. گروه‌بندی کارمندان خارجی بر اساس عنوان شغلی (CodJobpo)
+                // 6. گروه‌بندی بر اساس عنوان شغلی
                 var groups = externalList
                     .GroupBy(e => e.CodJobpo)
                     .ToList();
@@ -814,14 +921,12 @@ namespace HR.IrisaSync.Extention.Services
                     var irisJobTitleId = group.Key;
                     if (irisJobTitleId == null) continue;
 
-                    // یافتن JobTitleId داخلی
                     if (!jobTitleMap.TryGetValue(irisJobTitleId, out var jobTitleId))
                     {
-                        result.Errors.Add($"JobTitle map not found for Irisa ID: {irisJobTitleId}");
+                        Errors.Add($"عنوان شغلی متناظر یافت نشد: {irisJobTitleId}");
                         continue;
                     }
 
-                    // مرتب‌سازی کارمندان گروه بر اساس کد پرسنلی (برای تطابق با ترتیب ایجاد پست‌ها)
                     var sortedEmployees = group
                         .OrderBy(e => e.NumPrsnEmply)
                         .ToList();
@@ -833,25 +938,21 @@ namespace HR.IrisaSync.Extention.Services
                         {
                             string employmentCode = ext.NumPrsnEmply.ToString();
 
-                            // بررسی وجود کارمند در سیستم داخلی
                             if (!employmentDict.TryGetValue(employmentCode, out var employment))
                             {
-                                result.Errors.Add($"Employment not found in internal system: {employmentCode}");
+                                Errors.Add($"کارمند با کد پرسنلی '{employmentCode}' یافت نشد");
                                 continue;
                             }
 
-                            // ساخت کد پست بر اساس شمارنده (همانند همگام‌سازی پست‌ها)
                             string postCode = counter.ToString();
                             var key = (JobTitleId: (Guid)jobTitleId, Code: postCode);
 
-                            // یافتن پست متناظر
                             if (!postDict.TryGetValue(key, out var post))
                             {
-                                result.Errors.Add($"Post not found for JobTitleId: {jobTitleId}, Code: {postCode}");
+                                Errors.Add($"هیچ پستی برای عنوان شغلی '{ext.DesJobpo}' و کد '{postCode}' یافت نشد");
                                 continue;
                             }
 
-                            // انتصاب کارمند به این پست
                             var assignHasChange = await _postService.AssignToEmploymentAsync(
                                 postId: new List<Guid?> { post.Id },
                                 employmentId: employment.Id,
@@ -862,19 +963,21 @@ namespace HR.IrisaSync.Extention.Services
 
                             if (assignHasChange)
                             {
-                                result.UpdatedCount++; // یا AddedCount، بسته به نیاز
+                                AddedCount++;
+                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} انتصاب کارمند با کد پرسنلی '{employmentCode}' به پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با موفقیت انجام شد.");
                             }
+
 
                             counter++;
                         }
                         catch (Exception ex)
                         {
-                            result.Errors.Add($"Error assigning employment {ext.NumPrsnEmply}: {ex.Message}");
+                            Errors.Add($"خطا در انتصاب پست به کارمند با کد پرسنلی '{ext.NumPrsnEmply}': {ex.Message}");                            
                         }
                     }
                 }
 
-                // 8. منقضی کردن انتسابات کارمندانی که در سیستم خارجی وجود ندارند
+                // 7. منقضی کردن انتسابات کارمندانی که در سیستم خارجی نیستند
                 var employmentsToClear = employmentDict.Keys
                     .Where(code => !externalEmploymentCodes.Contains(code))
                     .ToList();
@@ -884,7 +987,6 @@ namespace HR.IrisaSync.Extention.Services
                     try
                     {
                         var employment = employmentDict[employmentCode];
-                        // فراخوانی با لیست خالی → تمام انتسابات فعال منقضی می‌شوند
                         await _postService.AssignToEmploymentAsync(
                             postId: new List<Guid?>(),
                             employmentId: employment.Id,
@@ -892,25 +994,25 @@ namespace HR.IrisaSync.Extention.Services
                             EffectiveFrom: null,
                             EffectiveTo: null
                         );
-                        // شمارش حذف‌ها (اختیاری)
-                        result.DeletedCount++;
+                        DeletedCount++;
+                        SuccessMessages.Add($"{IconInTextHelper.IconDelete} حذف انتصاب های کارمند با کد پرسنلی '{employmentCode}' با موفقیت انجام شد");
                     }
                     catch (Exception ex)
                     {
-                        result.Errors.Add($"Error clearing assignments for employment {employmentCode}: {ex.Message}");
+                        Errors.Add($"{IconInTextHelper.IconError} خطا در حذف انتصاب های کارمند با کد پرسنلی '{employmentCode}': {ex.Message}");
                     }
                 }
 
-                // 9. ذخیره‌سازی نهایی تغییرات (اگر متد AssignToEmploymentAsync خودش Save نمی‌کند)
+                // 8. ذخیره‌سازی نهایی (اگر خطایی رخ دهد، به catch بیرونی می‌رویم)
                 await _hrUow.SaveChangesAsync();
 
+                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
+                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
             }
             catch (Exception ex)
             {
-                result.Errors.Add($"SyncAssignments failed: {ex.Message}");
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
             }
-
-            return result;
         }
     }
 }

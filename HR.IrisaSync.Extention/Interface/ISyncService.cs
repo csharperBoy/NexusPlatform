@@ -1,4 +1,5 @@
-﻿using HR.IrisaSync.Extention.Entities;
+﻿using Core.Shared.Results;
+using HR.IrisaSync.Extention.Entities;
 using HR.IrisaSync.Extention.Services;
 using System;
 using System.Collections.Generic;
@@ -10,16 +11,16 @@ namespace HR.IrisaSync.Extention.Interface
 {
     public interface ISyncService
     {
-        Task<SyncResult> SyncEmploymentsAsync();
+        Task<BatchResult<SyncResult>> SyncEmploymentsAsync();
         Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment();
 
-        Task<SyncResult> SyncJobTitleAsync();
+        Task<BatchResult<SyncResult>> SyncJobTitleAsync();
 
-        Task<SyncResult> SyncJobLevelAsync();
+        Task<BatchResult<SyncResult>> SyncJobLevelAsync();
 
-        Task<SyncResult> SyncOrganizationUnitAsync();
+        Task<BatchResult<SyncResult>> SyncOrganizationUnitAsync();
 
-        Task<SyncResult> SyncPostAsync();
-        Task<SyncResult> SyncAssignmentsAsync();
+        Task<BatchResult<SyncResult>> SyncPostAsync();
+        Task<BatchResult< SyncResult>> SyncAssignmentsAsync();
     }
 }

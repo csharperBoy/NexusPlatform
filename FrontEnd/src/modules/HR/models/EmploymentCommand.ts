@@ -9,7 +9,7 @@ Phone?: string[] | null;
 Address?: string[] | null;
 Email?: string[] | null;
 Mobile?: string[] | null;
-FirstlName?: string | null;
+FirstName?: string | null;
 LastName?: string | null; 
 BirthDate?: Date | null;
 BirthPlace?: string | null;
@@ -40,7 +40,7 @@ export interface CreateEmploymentCommand {
       Email?: string[] | null;
       Mobile?: string[] | null;
 NationalCode?: string | null;
-FirstlName?: string | null;
+FirstName?: string | null;
 LastName?: string | null;
 BirthDate?: Date | null;
 BirthPlace?: string | null;

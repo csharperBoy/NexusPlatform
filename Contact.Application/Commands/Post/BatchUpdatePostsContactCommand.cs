@@ -33,7 +33,7 @@ namespace Contact.Application.Commands.Post
                 foreach (var command in request.Posts)
                 {
                     // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid postId = await _orgChartService.UpdatePostAsync(
+                  var(hasChange , jobTitleName) =  await _orgChartService.UpdatePostAsync(
                         command.Id,
                         Optional<string?>.Undefined,
                          Optional<Guid?>.Undefined,
@@ -48,7 +48,7 @@ namespace Contact.Application.Commands.Post
                         command.OrgMobile
                     );
 
-
+                    Guid postId = command.Id;
                     results.Add(postId);
                 }
 

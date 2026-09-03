@@ -46,7 +46,7 @@ namespace HR.IrisaSync.Extention.Controller
         {
            var result = await _syncService.SyncEmploymentsAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
 
         }
         [HttpGet("SyncJobTitle")]
@@ -55,7 +55,7 @@ namespace HR.IrisaSync.Extention.Controller
         {
             var result = await _syncService.SyncJobTitleAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
         }
         [HttpGet("SyncJobLevel")]
         //[AuthorizeResource("hr.employment", "Create")]
@@ -63,7 +63,7 @@ namespace HR.IrisaSync.Extention.Controller
         {
             var result = await _syncService.SyncJobLevelAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
         }
         [HttpGet("SyncOrganizationUnit")]
         //[AuthorizeResource("hr.employment", "Create")]
@@ -71,7 +71,7 @@ namespace HR.IrisaSync.Extention.Controller
         {
             var result = await _syncService.SyncOrganizationUnitAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
         }
         [HttpGet("SyncPost")]
         //[AuthorizeResource("hr.employment", "Create")]
@@ -79,15 +79,15 @@ namespace HR.IrisaSync.Extention.Controller
         {
             var result = await _syncService.SyncPostAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
         }
         [HttpGet("SyncAssignments")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncAssignments()
         {
-            SyncResult result = await _syncService.SyncAssignmentsAsync();
+            var result = await _syncService.SyncAssignmentsAsync();
 
-            return HandleResult(Result<SyncResult>.Ok(result));
+            return HandleBatchResult(result);
         }
 
     }

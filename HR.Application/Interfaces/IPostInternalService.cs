@@ -15,7 +15,7 @@ namespace HR.Application.Interfaces
 {
     public interface IPostInternalService
     {
-        Task AssignLocationsToPost(Guid postId, List<Guid> locationsId);
+        Task<bool> AssignLocationsToPost(Guid postId, List<Guid> locationsId);
 
        
         Task<bool> AssignToEmploymentAsync(List<Guid?> postId, Guid employmentId, PostAssignmentType? assigneType = null,
@@ -39,7 +39,7 @@ namespace HR.Application.Interfaces
         Task<IEnumerable<OrganizationUnit>> GetOrganizationUnitListAsync();
         Task<IReadOnlyList<PostInfoDto>> GetPostListAsync();
         Task SaveAsync();
-        Task<Guid> UpdatePostAsync(Guid id,
+        Task<(bool,string)> UpdatePostAsync(Guid id,
               Optional<string?> code,
             Optional<Guid?> organizationUnitId,
             Optional<Guid> jobTitleId,

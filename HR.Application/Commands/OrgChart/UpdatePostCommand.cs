@@ -53,7 +53,7 @@ namespace HR.Application.Commands.OrgChart
                     "Creating resource: {postCode}",
                     request.Code);
 
-                Guid postId = await _orgChartService.UpdatePostAsync(
+                var (hasChanged,jobTitleName) = await _orgChartService.UpdatePostAsync(
                     request.Id,
                        request.Code,
                        request.OrganizationUnitId,
@@ -69,15 +69,15 @@ namespace HR.Application.Commands.OrgChart
                     );
                 if (request.EmploymentId.IsSet )
                 {
-                     await _orgChartService.AssignToPostAsync(postId ,new List<Guid?> { request.EmploymentId.Value }, request.AssignType.Value);
+                     await _orgChartService.AssignToPostAsync(request.Id, new List<Guid?> { request.EmploymentId.Value }, request.AssignType.Value);
                 }
 
                 await _orgChartService.SaveAsync();
                 _logger.LogInformation(
                     "Post created successfully: {postId} ({Code})",
-                    postId, request.Code);
+                    request.Id, request.Code);
 
-                return Result<Guid>.Ok(postId);
+                return Result<Guid>.Ok(request.Id);
             }
             catch (Exception ex)
             {

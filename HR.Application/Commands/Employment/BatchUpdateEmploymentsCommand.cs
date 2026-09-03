@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Application.Helper;
+using Core.Shared.Results;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using MediatR;
@@ -42,8 +43,10 @@ namespace HR.Application.Commands.Employment
                 {
                     try
                     {
-                        string successMessage = null;
-                       
+                        string successMessage = $"{IconInTextHelper.IconUpdate} برای کارمند با کد پرسنلی '{command.EmploymentCode}' ";
+
+                        bool assignHasChange = false;
+                        bool locHasChange = false;
                         // ۱. به‌روزرسانی اطلاعات پایه پست
                         bool hasChange = await _employmentService.UpdateEmploymentAsync(
                          command.Id,
@@ -70,30 +73,32 @@ namespace HR.Application.Commands.Employment
                         Guid EmploymentId = command.Id;
                         if (hasChange)
                         {
-                            successMessage = $"Employment with EmploymentCode {command.EmploymentCode.Value} updated successfully.";
+                            successMessage = $"اطلاعات مربوط شخصی با موفقیت بروزرسانی شد.";
                         }
                         if (command.PostId.IsSet)
                         {
-                            bool assignHasChange = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { command.PostId.Value }, EmploymentId, command.AssigneeType.Value, command.EffectiveFrom.Value, command.EffectiveTo.Value);
+                            assignHasChange = await _orgChartService.AssignToEmploymentAsync(new List<Guid?> { command.PostId.Value }, EmploymentId, command.AssigneeType.Value, command.EffectiveFrom.Value, command.EffectiveTo.Value);
                             if (assignHasChange)
                             {
-                                successMessage = $"{successMessage} * Employment Post Assignment Changed:{command.PostId.Value}";
+                                successMessage = $"{successMessage} * اطلاعات مربوط به انتصاب به پست با موفقیت بروزرسانی شد";
                             }
                         }
                         if (command.locationsId.IsSet)
                         {
-                            bool locHasChange = await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId.Value);
+                            locHasChange = await _employmentService.AssignLocationsToEmployment(EmploymentId, command.locationsId.Value);
                             if (locHasChange)
                             {
-                                successMessage = $"{successMessage} * Employment Location Changed:{command.locationsId.Value}";
+                                successMessage = $"{successMessage} * اطلاعات مربوط به محل استقرار با موفقیت بروزرسانی شد";
                             }
                         }
-                        if (!string.IsNullOrEmpty(successMessage))
+                        if (hasChange || assignHasChange || locHasChange)
+                        {
                             successMessages.Add(successMessage);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        errors.Add($"Failed to update Employment with EmploymentCode {command.EmploymentCode}: {ex.Message}");
+                        errors.Add($"{IconInTextHelper.IconError} بروزرسانی اطلاعات کارمند با کد پرسنلی '{command.EmploymentCode}' با خطا مواجه شد!!!: {ex.Message}");
                     }
                 }
 

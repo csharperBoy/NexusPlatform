@@ -13,10 +13,10 @@ using System.Threading.Tasks;
 namespace HR.IrisaSync.Extention.Commands
 {
 
-    public record SyncWithIrisaCommand : IRequest<Result<Dictionary<string, SyncResult>>>;
+    public record SyncWithIrisaCommand : IRequest<Result<Dictionary<string, BatchResult<SyncResult>>>>;
 
 
-    public class SyncWithIrisaCommandHandler : IRequestHandler<SyncWithIrisaCommand, Result<Dictionary<string, SyncResult>>>
+    public class SyncWithIrisaCommandHandler : IRequestHandler<SyncWithIrisaCommand, Result<Dictionary<string, BatchResult<SyncResult>>>>
     {
         private readonly ISyncService _syncService;
         private readonly IMapService _mapService;
@@ -32,7 +32,7 @@ namespace HR.IrisaSync.Extention.Commands
             _logger = logger;
         }
 
-        public async Task<Result<Dictionary<string, SyncResult>>> Handle(SyncWithIrisaCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Dictionary<string, BatchResult<SyncResult>>>> Handle(SyncWithIrisaCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -42,13 +42,13 @@ namespace HR.IrisaSync.Extention.Commands
                 await _mapService.FillOrganizationUnitRootMap();
                 await _mapService.FillOrganizationUnitMap();
 
-                SyncResult orgResult = await _syncService.SyncOrganizationUnitAsync();
-                SyncResult jlResult = await _syncService.SyncJobLevelAsync();
-                SyncResult jtResult = await _syncService.SyncJobTitleAsync();
-                SyncResult postResult = await _syncService.SyncPostAsync();
-                SyncResult empResult = await _syncService.SyncEmploymentsAsync();
+                BatchResult<SyncResult> orgResult = await _syncService.SyncOrganizationUnitAsync();
+                BatchResult<SyncResult> jlResult = await _syncService.SyncJobLevelAsync();
+                BatchResult<SyncResult> jtResult = await _syncService.SyncJobTitleAsync();
+                BatchResult<SyncResult> postResult = await _syncService.SyncPostAsync();
+                BatchResult<SyncResult> empResult = await _syncService.SyncEmploymentsAsync();
 
-                Dictionary<string, SyncResult> result = new()
+                Dictionary<string, BatchResult<SyncResult>> result = new()
                 {
                     { "orgUnit", orgResult },
                     { "jobLevel", jlResult },
@@ -57,9 +57,9 @@ namespace HR.IrisaSync.Extention.Commands
                     { "post", postResult }
                 };  
 
-                _logger.LogInformation($"Sync successfully: org = Add({orgResult.AddedCount}) | Edit({orgResult.UpdatedCount}), jl = Add({jlResult.AddedCount}) | Edit({jlResult.UpdatedCount}), jt = Add({jtResult.AddedCount}) | Edit({jtResult.UpdatedCount}), emp = Add({empResult.AddedCount}) | Edit({empResult.UpdatedCount}), post = Add({postResult.AddedCount}) | Edit({postResult.UpdatedCount})");
+                _logger.LogInformation($"Sync successfully: org = Add({orgResult.Data.AddedCount}) | Edit({orgResult.Data.UpdatedCount}), jl = Add({jlResult.Data.AddedCount}) | Edit({jlResult.Data.UpdatedCount}), jt = Add({jtResult.Data.AddedCount}) | Edit({jtResult.Data.UpdatedCount}), emp = Add({empResult.Data.AddedCount}) | Edit({empResult.Data.UpdatedCount}), post = Add({postResult.Data.AddedCount}) | Edit({postResult.Data.UpdatedCount})");
 
-                return Result<Dictionary<string, SyncResult>>.Ok(result);
+                return Result<Dictionary<string, BatchResult<SyncResult>>>.Ok(result);
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace HR.IrisaSync.Extention.Commands
                     ex,
                     "Failed to Sync!!!");
 
-                return Result<Dictionary<string, SyncResult>>.Fail(ex.Message);
+                return Result<Dictionary<string, BatchResult<SyncResult>>>.Fail(ex.Message);
             }
         }
     }

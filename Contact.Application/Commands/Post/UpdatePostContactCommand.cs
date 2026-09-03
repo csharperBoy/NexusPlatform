@@ -42,7 +42,7 @@ namespace Contact.Application.Commands.Post
                     "Updating PostContact : {id}",
                     request.Id);
 
-                Guid postId = await _orgChartService.UpdatePostAsync(
+              var(hasChange , jobTitleName) = await _orgChartService.UpdatePostAsync(
                     request.Id,
                     Optional<string?>.Undefined,
                     Optional<Guid?>.Undefined,
@@ -54,7 +54,7 @@ namespace Contact.Application.Commands.Post
                     Optional<bool?>.Undefined,
                        request.OfficePhone, request.OrgEmail, request.OrgMobile
                     );
-                
+                Guid postId = request.Id;
 
                 await _orgChartService.SaveAsync();
                 _logger.LogInformation(
