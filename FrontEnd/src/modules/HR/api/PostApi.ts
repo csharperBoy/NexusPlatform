@@ -3,6 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { PostInfoView } from "../models/postInfoView";
 import { CreatePostCommand, UpdatePostCommand } from "../models/postCommand";
+import { BatchResult, BatchResultWithoutData } from "@/core/models/apiResults";
 const API_MODULE = "hr";
 
 export const postApi = {
@@ -57,14 +58,14 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdatePosts: async (commands: UpdatePostCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdatePostCommand[]): Promise<BatchResultWithoutData> => {
     const api = getAPI(API_MODULE);
-    const response = await api.put<string[]>(
+    const response = await api.put<BatchResultWithoutData>(
       `/api/hr/OrgChart/batch`,
       { posts: commands },
       { withCredentials: true }
     );
-    return response.data; // آرایه‌ای از GUIDهای به‌روز شده
+    return response.data; 
   },
   
   getSelectionList: async (): Promise<SelectionListDto[]> => {

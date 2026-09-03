@@ -2,7 +2,7 @@
 
 // مدل استاندارد لیست‌های انتخابی
 export interface SelectionListDto {
-  value: string;  
+  value: string ;  
   label: string;   
   display: string; 
 } 

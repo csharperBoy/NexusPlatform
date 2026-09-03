@@ -356,8 +356,8 @@ namespace HR.IrisaSync.Extention.Services
                     {
                         var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCommands);
                         var batchResult = await _mediator.Send(batchUpdateCommand);
-                        SuccessMessages.AddRange(batchResult.SuccessMessages.ToList());
-                        Errors.AddRange(batchResult.Errors.ToList());
+                        SuccessMessages.AddRange(batchResult.SuccessMessages?.ToList());
+                        Errors.AddRange(batchResult.Errors?.ToList());
 
                         UpdatedCount = batchResult.SuccessMessages.Count;
                     }
@@ -558,8 +558,8 @@ namespace HR.IrisaSync.Extention.Services
 
                     var batchResult = await _mediator.Send(updateCommand);
                     //await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
-                    SuccessMessages.AddRange(batchResult.SuccessMessages.ToList());
-                    Errors.AddRange(batchResult.Errors.ToList());
+                    SuccessMessages.AddRange(batchResult.SuccessMessages?.ToList());
+                    Errors.AddRange(batchResult.Errors?.ToList());
 
                     UpdatedCount = batchResult.SuccessMessages.Count;
                 }
@@ -704,30 +704,28 @@ namespace HR.IrisaSync.Extention.Services
 
                         if (item.IrisaJobLevel != null)
                         {
-                            if (item.IrisaJobLevel != null)
+                            var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
+                            if (existEntity != null)
                             {
-                                var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
-                                if (existEntity != null)
+                                if (existEntity.Title.Trim() != item.JobLevel?.Trim())
                                 {
-                                    if (existEntity.Title.Trim() != item.JobLevel?.Trim())
-                                    {
-                                        existEntity.SetTitle(item.JobLevel);
-                                        await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
-                                        UpdatedCount++;
-                                        SuccessMessages.Add($"{IconInTextHelper.IconUpdate} سطح شغلی  '{existEntity.Title}' با موفقیت بروزرسانی شد.  ");
-                                    }
-                                }
-                                else
-                                {
-                                    JobLevel model = new JobLevel(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
-                                    await _hrUow.JobLevelRepository.AddAsync(model);
-                                    item.FkJobLevelId = model.Id;
-                                    item.JobLevel = model.Title;
-                                    await _uow.JobLevelMapRepository.UpdateAsync(item);
-                                    AddedCount++;
-                                    SuccessMessages.Add($"{IconInTextHelper.IconAdd} سطح شغلی  '{model.Title}' با موفقیت افزوده شد.  ");
+                                    existEntity.SetTitle(item.JobLevel);
+                                    await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
+                                    UpdatedCount++;
+                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} سطح شغلی  '{existEntity.Title}' با موفقیت بروزرسانی شد.  ");
                                 }
                             }
+                            else
+                            {
+                                JobLevel model = new JobLevel(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
+                                await _hrUow.JobLevelRepository.AddAsync(model);
+                                item.FkJobLevelId = model.Id;
+                                item.JobLevel = model.Title;
+                                await _uow.JobLevelMapRepository.UpdateAsync(item);
+                                AddedCount++;
+                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} سطح شغلی  '{model.Title}' با موفقیت افزوده شد.  ");
+                            }
+
                         }
 
                         await _hrUow.SaveChangesAsync();
@@ -898,7 +896,7 @@ namespace HR.IrisaSync.Extention.Services
 
                 // 4. دریافت تمام پست‌های فعال
                 var allPosts = await _hrUow.PostRepository
-                    .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true).Include(a=>a.JobTitle));
+                    .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true).Include(a => a.JobTitle));
                 var postDict = allPosts
                     .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
                     .ToDictionary(
@@ -972,7 +970,7 @@ namespace HR.IrisaSync.Extention.Services
                         }
                         catch (Exception ex)
                         {
-                            Errors.Add($"خطا در انتصاب پست به کارمند با کد پرسنلی '{ext.NumPrsnEmply}': {ex.Message}");                            
+                            Errors.Add($"خطا در انتصاب پست به کارمند با کد پرسنلی '{ext.NumPrsnEmply}': {ex.Message}");
                         }
                     }
                 }

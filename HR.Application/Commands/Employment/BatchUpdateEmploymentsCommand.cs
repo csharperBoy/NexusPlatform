@@ -114,7 +114,7 @@ namespace HR.Application.Commands.Employment
                 return new BatchResult(
                            succeeded: true,
                            successMessages: successMessages,
-                           errors: errors.Any() ? errors : null // اگر خطایی نبود، null بفرست
+                           errors: errors  // اگر خطایی نبود، null بفرست
                        );
             }
             catch (Exception ex)

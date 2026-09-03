@@ -338,7 +338,7 @@ export const PostManagementPage: React.FC = () => {
                           options={jobTitles}
                           value={node.fkJobTitleId || ""}
                           onChange={(selected) =>
-                            handleFieldChange(node.id, "fkJobTitleId", selected?.value || "")
+                            handleFieldChange(node.id, "fkJobTitleId", selected?.value  ?? null)
                           }
                           placeholder="انتخاب عنوان شغل..."
                           className="min-w-[100px]"
@@ -352,7 +352,7 @@ export const PostManagementPage: React.FC = () => {
                         options={orgUnits}
                         value={node.fkOrganizationUnitId || ""}
                         onChange={(selected) =>
-                          handleFieldChange(node.id, "fkOrganizationUnitId", selected?.value || "")
+                          handleFieldChange(node.id, "fkOrganizationUnitId", selected?.value  ?? null)
                         }
                         placeholder="انتخاب واحد..."
                       />
@@ -364,7 +364,7 @@ export const PostManagementPage: React.FC = () => {
                         options={employments}
                         value={node.employmentId || ""}
                         onChange={(selected) =>
-                          handleFieldChange(node.id, "employmentId", selected?.value || "")
+                          handleFieldChange(node.id, "employmentId", selected?.value ?? null)
                         }
                         placeholder="انتخاب شاغل..."
                       />
@@ -376,7 +376,7 @@ export const PostManagementPage: React.FC = () => {
                         options={jobLevels}
                         value={node.fkJobLevelId || ""}
                         onChange={(selected) =>
-                          handleFieldChange(node.id, "fkJobLevelId", selected?.value || "")
+                          handleFieldChange(node.id, "fkJobLevelId", selected?.value  ?? null)
                         }
                         placeholder="سطح..."
                       />

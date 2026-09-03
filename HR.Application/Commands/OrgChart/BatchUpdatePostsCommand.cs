@@ -61,7 +61,7 @@ namespace HR.Application.Commands.OrgChart
                             command.OrgEmail,
                             command.OrgMobile
                         );
-                        string successMessage = $"{IconInTextHelper.IconUpdate} برای پست با عنوان شغلی '{jobTitleName}' و کد '{command.Code}' ";
+                        string successMessage = $"{IconInTextHelper.IconUpdate} برای پست با عنوان شغلی '{jobTitleName}' و کد '{command.Code.Value}' ";
 
                         Guid postId = command.Id;
                         if (hasChange)
@@ -107,7 +107,7 @@ namespace HR.Application.Commands.OrgChart
                 return new BatchResult(
                            succeeded: true,
                            successMessages: successMessages,
-                           errors: errors.Any() ? errors : null // اگر خطایی نبود، null بفرست
+                           errors: errors 
                        );
             }
             catch (Exception ex)
