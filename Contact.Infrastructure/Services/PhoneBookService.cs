@@ -153,7 +153,8 @@ namespace Contact.Infrastructure.Services
 
                         Value = c.Value,
                         Type = c.ContactType,
-                        Source = ContactProfileTypeEnum.Post
+                        Source = ContactProfileTypeEnum.Post,
+                        Ownership = ContactOwnershipEnum.Organizational
                     })
                     .ToList();
 
@@ -199,7 +200,9 @@ namespace Contact.Infrastructure.Services
 
                         Value = c.Value,
                         Type = c.ContactType,
-                        Source = ContactProfileTypeEnum.Location
+                        Source = ContactProfileTypeEnum.Location,
+
+                        Ownership = ContactOwnershipEnum.Organizational
                     })
                     .ToList();
 

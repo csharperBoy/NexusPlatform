@@ -39,12 +39,25 @@ namespace Contact.Application.Mapping
                     .Select(g => g.First())
                     .Select(c => new ContactDetailDto
                     {
-                        //Title = c.Label ?? c.ContactType.ToString(), // عنوان پیش‌فرض
                         Title = string.IsNullOrWhiteSpace(c.Label) ? c.ContactType.GetPersianDescription() : c.Label,
 
                         Value = c.Value,
-                        Type = c.ContactType,
-                        Source = c.Source
+                        Type = c.ContactType switch
+                        {
+                            ContactTypeEnum.OfficePhone => ContactTypeEnum.Phone,
+                            ContactTypeEnum.OrganizationMobile => ContactTypeEnum.Mobile,
+                            _ => c.ContactType
+                        },
+                        Source = c.Source,
+
+                        Ownership = c.Source switch
+                        {
+                            ContactProfileTypeEnum.Party => ContactOwnershipEnum.Personal,
+                            ContactProfileTypeEnum.Location => ContactOwnershipEnum.Organizational,
+                            ContactProfileTypeEnum.Employment => ContactOwnershipEnum.Organizational,
+                            ContactProfileTypeEnum.Post => ContactOwnershipEnum.Organizational,
+                            _ => ContactOwnershipEnum.Organizational
+                        },
                     })
                     .ToList();
 

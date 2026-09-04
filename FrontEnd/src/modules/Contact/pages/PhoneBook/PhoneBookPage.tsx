@@ -10,7 +10,7 @@ import {
   ContactDetailDto,
   GenderEnum,
 } from "../../models/PhoneBookEmploymentDto";
-import { FaUser, FaUserCircle } from 'react-icons/fa';
+import { FaUser, FaUserCircle , FaFemale , FaMale  } from 'react-icons/fa';
 
 const getGenderIcon = (gender?: GenderEnum | null) => {
   switch (gender) {

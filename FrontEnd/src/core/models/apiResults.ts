@@ -5,3 +5,7 @@ export interface BatchResult<T> {
   errors?: string[];
   data?: T;
 }
+
+// نوع مخصوص زمانی که داده‌ای برگردانده نمی‌شود
+// export type BatchResultWithoutData = BatchResult<undefined>;
+ export type BatchResultWithoutData = BatchResult<never>;

@@ -141,19 +141,20 @@ namespace Contact.Infrastructure.Services
                 Source = a.ContactProfile.ProfileType,
                 Value = a.ContactResource.Value,
                 Label = a.ContactResource.Label,
-
+                
                 // اطلاعات مربوط به زمان و وضعیت انتساب
                 EffectiveFrom = a.EffectiveFrom,
                 EffectiveTo = a.EffectiveTo,
                 IsCurrent = a.IsCurrent,
 
                 // مپ کردن موارد وابسته/فرزند از کاتالوگ منبع
-                ChildContactItems = a.ContactResource.ChildContactResources != null && a.ContactResource.ChildContactResources.Any()
-                    ? a.ContactResource.ChildContactResources.Select(c => new ContactItemDto
+                ChildContactItems = a.ContactResource.Children != null && a.ContactResource.Children.Any()
+                    ? a.ContactResource.Children.Select(c => new ContactItemDto
                     {
                         Value = c.Value,
                         Label = c.Label,
                         ContactType = c.ContactType,
+                        
                         
                     }).ToList()
                     : null

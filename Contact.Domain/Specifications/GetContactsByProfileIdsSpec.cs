@@ -36,7 +36,7 @@ namespace Contact.Domain.Specifications
             AddInclude(a => a.ContactProfile);
 
             // دریافت منابع فرعی/فرزند (مثل داخلی‌ها یا کانال‌های وابسته)
-            AddInclude(a => a.ContactResource.ChildContactResources);
+            AddInclude(a => a.ContactResource.Children);
         }
     }
 }
