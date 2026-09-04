@@ -18,6 +18,7 @@ export interface GenericColumnDef<T> {
   dir?: "ltr" | "rtl";
   className?: string;
   render?: (value: any, item: T) => React.ReactNode;
+  getFilterValue?: (entity: T) => string;
 }
 // بخشی از types.ts
 export interface GenericCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {

@@ -188,6 +188,7 @@ namespace HR.Infrastructure.Services
           Optional<string?> fatherName,
           Optional<string?> nationalCode,
           Optional<string?> employmentCode,
+          Optional<Gender?> gender,
           Optional<Guid?> employmentTypeId,
           Optional<Guid?> employmentStatusId,
           Optional<DateOnly?> startDate,
@@ -216,7 +217,7 @@ namespace HR.Infrastructure.Services
             try { Emails.AddRange(email.IsSet ? email.Value?.Select(a => Email.Create(a)).ToList() : null); } catch { }
             try { Mobiles.AddRange(mobile.IsSet ? mobile.Value?.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
 
-            bool personHasChange = await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,
+            bool personHasChange = await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,gender,
 
                 Phones, address, Emails, Mobiles
                 );

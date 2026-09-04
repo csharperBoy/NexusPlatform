@@ -31,6 +31,7 @@ namespace Core.Application.Abstractions.People
             Optional<string?> birthPlace,
             Optional<string?> fatherName,
             Optional<string?> nationalCode,
+            Optional<Gender?> gender,
             Optional<List<PhoneNumber>?> Phone,
             Optional<List<string>?> Address ,
             Optional<List<Email>?> Email,

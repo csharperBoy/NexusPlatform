@@ -23,6 +23,7 @@ namespace HR.Application.Commands.Employment
      Optional<string?> BirthPlace = default,
      Optional<string?> FatherName = default,
      Optional<string?> nationalCode = default,
+     Optional<Gender?> Gender = default,
     #endregion
     #region employment
 
@@ -87,6 +88,7 @@ namespace HR.Application.Commands.Employment
                     request.FatherName,
                     request.nationalCode,
                     request.EmploymentCode,
+                    request.Gender,
                     request.EmploymentTypeId,
                     request.EmploymentStatusId,
                     request.StartDate,

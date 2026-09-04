@@ -300,7 +300,7 @@ namespace HR.IrisaSync.Extention.Services
                             BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
                             BirthPlace: ext.BirthPlace,
                             FatherName: ext.NamFathrEmply,
-                            Gender: ext.DesSexEmply.Trim() == "مذکر" ? Gender.Male : Gender.Female,
+                            Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
                             EmploymentCode: ext.NumPrsnEmply.ToString(),
                             StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
                             PostId: null,
@@ -345,6 +345,7 @@ namespace HR.IrisaSync.Extention.Services
                             BirthPlace: ext.BirthPlace,
                             FatherName: ext.NamFathrEmply,
                             EmploymentCode: personalCode,
+                            Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
                             StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
                         );
 

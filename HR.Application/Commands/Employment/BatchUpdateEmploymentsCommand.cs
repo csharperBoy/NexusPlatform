@@ -61,6 +61,7 @@ namespace HR.Application.Commands.Employment
                          command.FatherName,
                          command.nationalCode,
                          command.EmploymentCode,
+                         command.Gender,
                          command.EmploymentTypeId,
                          command.EmploymentStatusId,
                          command.StartDate,

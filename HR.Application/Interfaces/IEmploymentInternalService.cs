@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions.HR;
 using Core.Domain.Common;
 using Core.Domain.ValueObjects;
+using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Domain.Entities;
 using System;
@@ -41,6 +42,7 @@ namespace HR.Application.Interfaces
           Optional<string?> fatherName,
           Optional<string?> nationalCode,
           Optional<string?> employmentCode,
+          Optional<Gender?> gender,
           Optional<Guid?> employmentTypeId,
           Optional<Guid?> employmentStatusId,
           Optional<DateOnly?> startDate,

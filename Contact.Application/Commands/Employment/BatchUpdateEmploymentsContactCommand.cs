@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common;
+using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Commands.Employment;
 using HR.Application.Interfaces;
@@ -47,6 +48,7 @@ namespace Contact.Application.Commands.Employment
                    Optional<string?>.Undefined,
                    Optional<string?>.Undefined,
                    Optional<string?>.Undefined,
+                   Optional<Gender?>.Undefined,
                    Optional<Guid?>.Undefined,
                    Optional<Guid?>.Undefined,
                    Optional<DateOnly?>.Undefined,

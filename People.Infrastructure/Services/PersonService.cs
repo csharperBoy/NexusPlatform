@@ -148,6 +148,7 @@ namespace People.Infrastructure.Services
             Optional<string?> birthPlace,
             Optional<string?> fatherName,
             Optional<string?> nationalCode,
+            Optional<Gender?> gender,
             Optional<List<PhoneNumber>?> Phone,
             Optional<List<string>?> Address,
             Optional<List<Email>?> Email,
@@ -167,7 +168,7 @@ namespace People.Infrastructure.Services
                 birthDate,
                 birthPlace,
                 fatherName,
-                null
+                gender
                 );
             //bool hasChange = person.ApplyChange( new NaturalPerson(
             //    nationalCode,

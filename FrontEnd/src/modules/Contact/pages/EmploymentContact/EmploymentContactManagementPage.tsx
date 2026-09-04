@@ -23,6 +23,7 @@ const columns: GenericColumnDef<EmploymentContactInfoView>[] = [
       if (!row) return "-";
       return `${row?.firstName || ""} ${row?.lastName || ""}`.trim() || "-";
     },
+    getFilterValue: (entity) => `${entity?.firstName || ""} ${entity?.lastName || ""}`.trim(),
   },
   {
     key: "nationalCode",
