@@ -511,28 +511,22 @@ export const PhoneBookPage: React.FC = () => {
               <h3 className="font-bold text-gray-800 text-base">
                 {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
               </h3>
-               <p className="text-sm text-gray-600">
-<span className="text-sm text-gray-400">               رده: </span> 
-              <span className="text-base text-gray-600">  {emp.jobLevelTitle?.join(" - ") || "-"}</span>
+               <p className="text-sm text-gray-600" title="رده">
+                 {emp.jobLevelTitle?.join(" - ") || "-"}
               </p>
-              <p className="text-sm text-gray-600 mt-1">
-              <span className="text-sm text-gray-400">  عنوان شغلی:</span>
-                <span className="text-base  text-gray-600"> {emp.jobTitleName?.join(" - ") || "-"}</span>
+              <p className="text-sm text-gray-600 mt-1" title="عنوان شغلی">
+               {emp.jobTitleName?.join(" - ") || "-"}
               </p>
-              <p className="text-sm text-gray-600">
-<span className="text-sm text-gray-600">      معاونت:</span>         
-               <span  className="text-base text-gray-600"> {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</span>
+              <p className="text-sm text-gray-600" title="معاونت">
+ {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}
               </p>
               
               
-              <p className="text-sm text-gray-600">
-                <span className="text-sm text-gray-600">  واحد: </span>
-              <span  className="text-base text-gray-600">  {emp.organizationUnitsName?.join(" - ") || "-"} </span>
+              <p className="text-sm text-gray-600" title="واحد">
+                {emp.organizationUnitsName?.join(" - ") || "-"}
               </p>
-              <p className="text-sm text-gray-600">
-                
-              <span className="text-sm text-gray-600"> محل استقرار: </span>
-              <span  className="text-base  text-gray-600">  {emp.locationTitle?.join(" - ") || "-"}  </span>
+              <p className="text-sm text-gray-600" title=" محل استقرار">
+                 {emp.locationTitle?.join(" - ") || "-"} 
               </p>
             </div>
           </div>
