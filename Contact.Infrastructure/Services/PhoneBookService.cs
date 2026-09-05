@@ -89,6 +89,7 @@ namespace Contact.Infrastructure.Services
                 .ToList();
 
             List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(existingProfileIds);
+            var test = contactList.Where(a => a.Value == "09902582588" || a.Value == "258");
             var employmentDtos = empList.ToPhoneBookDtos(contactList).ToList();
             // ۵. حذف کارمندهایی که هیچ کانتکتی ندارند
             employmentDtos = employmentDtos

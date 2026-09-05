@@ -25,6 +25,7 @@ namespace Contact.Application.DTOs
         public ContactProfileTypeEnum Source { get; set; }
         public ContactOwnershipEnum Ownership { get; set; }
 
+        public ICollection<ContactDetailDto>? RelativeContact { get; set; } = null;
     }
 
     public class PhoneBookEmploymentDto

@@ -24,6 +24,7 @@ namespace Core.Shared.DTOs.Contact
         public DateTime? EffectiveFrom { get;  set; }
         public DateTime? EffectiveTo { get;  set; }
         public bool IsCurrent { get;  set; }
+        //public bool IsPrimary { get;  set; }
         public ICollection<ContactItemDto>? ChildContactItems { get; set; } = null;
     }
 }

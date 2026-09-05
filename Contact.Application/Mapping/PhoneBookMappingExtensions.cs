@@ -5,6 +5,7 @@ using Core.Shared.DTOs.Contact;
 using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
+using System.Diagnostics.Contracts;
 using System.Net.Mime;
 
 
@@ -35,7 +36,7 @@ namespace Contact.Application.Mapping
                 // استخراج کانتکت‌ها از Lookup و حذف تکراری‌ها
                 var contacts = relevantProfileIds
                     .SelectMany(id => contactsLookup.GetValueOrDefault(id, new List<ContactItemDto>()))
-                    .GroupBy(c => new { c.ContactType, c.Value, c.Source }) // حذف تکراری‌ها
+                    .GroupBy(c => new { c.ContactType, c.Value, c.Source  }) // حذف تکراری‌ها
                     .Select(g => g.First())
                     .Select(c => new ContactDetailDto
                     {
@@ -49,7 +50,6 @@ namespace Contact.Application.Mapping
                             _ => c.ContactType
                         },
                         Source = c.Source,
-
                         Ownership = c.Source switch
                         {
                             ContactProfileTypeEnum.Party => ContactOwnershipEnum.Personal,
@@ -58,6 +58,29 @@ namespace Contact.Application.Mapping
                             ContactProfileTypeEnum.Post => ContactOwnershipEnum.Organizational,
                             _ => ContactOwnershipEnum.Organizational
                         },
+                        IsPrimary = true,
+                        RelativeContact = c.ChildContactItems?.Select(s=> new ContactDetailDto
+                        {
+                            Title = string.IsNullOrWhiteSpace(s.Label) ? s.ContactType.GetPersianDescription() : s.Label,
+
+                            Value = s.Value,
+                            Type = s.ContactType switch
+                            {
+                                ContactTypeEnum.OfficePhone => ContactTypeEnum.Phone,
+                                ContactTypeEnum.OrganizationMobile => ContactTypeEnum.Mobile,
+                                _ => s.ContactType
+                            },
+                            Source = s.Source,
+                            Ownership = s.Source switch
+                            {
+                                ContactProfileTypeEnum.Party => ContactOwnershipEnum.Personal,
+                                ContactProfileTypeEnum.Location => ContactOwnershipEnum.Organizational,
+                                ContactProfileTypeEnum.Employment => ContactOwnershipEnum.Organizational,
+                                ContactProfileTypeEnum.Post => ContactOwnershipEnum.Organizational,
+                                _ => ContactOwnershipEnum.Organizational
+                            },
+                            IsPrimary = false
+                        }).ToList()
                     })
                     .ToList();
 
