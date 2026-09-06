@@ -509,8 +509,29 @@ export const PhoneBookPage: React.FC = () => {
                             <td className="py-3 px-4 text-gray-600">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.jobTitleName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.locationTitle?.join(" - ") || "-"}</td>
-                           {isExpanded ?  <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">{emp.contactSummary || "-"}</td> }
-                           
+                           <td className="py-3 px-4">
+  <div className="flex flex-wrap items-center gap-1.5">
+    {emp.contacts && emp.contacts.length > 0 ? (
+      emp.contacts.map((contact, idx) => {
+        // دریافت برچسب نوع تماس (برای رنگ‌بندی)
+        const typeBadge = getContactTypeBadge(contact.type);
+        return (
+          <span
+            key={idx}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${typeBadge.color}`}
+          >
+            {/* آیکون کوچک (اختیاری) */}
+            <span className="text-[10px]">{getContactIcon(contact.type)}</span>
+            {/* مقدار شماره */}
+            <span className="font-mono dir-ltr">{contact.value}</span>
+          </span>
+        );
+      })
+    ) : (
+      <span className="text-gray-400 text-sm">-</span>
+    )}
+  </div>
+</td>
                           </tr>
 
                           {/* زیرجدول تماس‌ها */}
