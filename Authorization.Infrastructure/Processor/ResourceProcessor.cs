@@ -15,7 +15,7 @@ namespace Authorization.Infrastructure.Processor
         public IReadOnlyList<ResourceTreeDto> BuildTree(IEnumerable<Resource> resources, Guid? parentId = null)
         {
             var nodes = resources
-                .Where(r => r.FkParentId == parentId)
+                .Where(r => r.ParentId == parentId)
                 .OrderBy(r => r.DisplayOrder)
                 .ThenBy(r => r.Name)
                 .Select(resource => new ResourceTreeDto
@@ -26,7 +26,7 @@ namespace Authorization.Infrastructure.Processor
                     Description = resource.Description,
                     Type = resource.Type,
                     Category = resource.Category,
-                    ParentId = resource.FkParentId,
+                    ParentId = resource.ParentId,
                     ParentKey = resource.Parent?.Key ?? string.Empty,
                     IsActive = resource.IsActive,
                     DisplayOrder = resource.DisplayOrder,

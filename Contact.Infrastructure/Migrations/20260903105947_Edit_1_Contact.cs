@@ -6,14 +6,36 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Contact.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Edit_6_Contact : Migration
+    public partial class Edit_1_Contact : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ContactItems",
-                schema: "contact");
+            migrationBuilder.EnsureSchema(
+                name: "contact");
+
+            migrationBuilder.CreateTable(
+                name: "ContactProfiles",
+                schema: "contact",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    ProfileType = table.Column<byte>(type: "tinyint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ContactProfile", x => x.Id);
+                });
 
             migrationBuilder.CreateTable(
                 name: "ContactResources",
@@ -46,6 +68,29 @@ namespace Contact.Infrastructure.Migrations
                         principalSchema: "contact",
                         principalTable: "ContactResources",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OutboxMessages",
+                schema: "contact",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TypeName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    AssemblyQualifiedName = table.Column<string>(type: "nvarchar(1024)", maxLength: 1024, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OccurredOnUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProcessedOnUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    ErrorStackTrace = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    RetryCount = table.Column<int>(type: "int", nullable: false),
+                    EventVersion = table.Column<int>(type: "int", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OutboxMessages", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -127,6 +172,55 @@ namespace Contact.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_CreatedAt",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_CreatedBy",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_ModifiedAt",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_ModifiedBy",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "ModifiedBy");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_OwnerOrgUnit",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "OwnerOrganizationUnitId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_OwnerPerson",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "OwnerPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfile_ScopedLookup",
+                schema: "contact",
+                table: "ContactProfiles",
+                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ContactProfiles_Id",
+                schema: "contact",
+                table: "ContactProfiles",
+                column: "Id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ContactResource_CreatedAt",
                 schema: "contact",
                 table: "ContactResources",
@@ -180,6 +274,24 @@ namespace Contact.Infrastructure.Migrations
                 schema: "contact",
                 table: "ContactResources",
                 column: "ParentContactResourceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_ProcessedOnUtc",
+                schema: "contact",
+                table: "OutboxMessages",
+                column: "ProcessedOnUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_Status_OccurredOnUtc",
+                schema: "contact",
+                table: "OutboxMessages",
+                columns: new[] { "Status", "OccurredOnUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OutboxMessages_TypeName",
+                schema: "contact",
+                table: "OutboxMessages",
+                column: "TypeName");
         }
 
         /// <inheritdoc />
@@ -190,113 +302,16 @@ namespace Contact.Infrastructure.Migrations
                 schema: "contact");
 
             migrationBuilder.DropTable(
-                name: "ContactResources",
+                name: "OutboxMessages",
                 schema: "contact");
 
-            migrationBuilder.CreateTable(
-                name: "ContactItems",
-                schema: "contact",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ContactProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ParentContactItemId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    ContactType = table.Column<byte>(type: "tinyint", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EffectiveFrom = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    EffectiveTo = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsCurrent = table.Column<bool>(type: "bit", nullable: false),
-                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
-                    Label = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPersonId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    OwnerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    RelationType = table.Column<int>(type: "int", nullable: true),
-                    SortOrder = table.Column<int>(type: "int", nullable: true),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ContactItem", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ContactItems_ContactItems_ParentContactItemId",
-                        column: x => x.ParentContactItemId,
-                        principalSchema: "contact",
-                        principalTable: "ContactItems",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_ContactItems_ContactProfiles",
-                        column: x => x.ContactProfileId,
-                        principalSchema: "contact",
-                        principalTable: "ContactProfiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.DropTable(
+                name: "ContactProfiles",
+                schema: "contact");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_CreatedAt",
-                schema: "contact",
-                table: "ContactItems",
-                column: "CreatedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_CreatedBy",
-                schema: "contact",
-                table: "ContactItems",
-                column: "CreatedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_ModifiedAt",
-                schema: "contact",
-                table: "ContactItems",
-                column: "ModifiedAt");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_ModifiedBy",
-                schema: "contact",
-                table: "ContactItems",
-                column: "ModifiedBy");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_OwnerOrgUnit",
-                schema: "contact",
-                table: "ContactItems",
-                column: "OwnerOrganizationUnitId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_OwnerPerson",
-                schema: "contact",
-                table: "ContactItems",
-                column: "OwnerPersonId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItem_ScopedLookup",
-                schema: "contact",
-                table: "ContactItems",
-                columns: new[] { "OwnerOrganizationUnitId", "OwnerPersonId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItems_ContactProfileId",
-                schema: "contact",
-                table: "ContactItems",
-                column: "ContactProfileId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItems_Id",
-                schema: "contact",
-                table: "ContactItems",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ContactItems_ParentContactItemId",
-                schema: "contact",
-                table: "ContactItems",
-                column: "ParentContactItemId");
+            migrationBuilder.DropTable(
+                name: "ContactResources",
+                schema: "contact");
         }
     }
 }

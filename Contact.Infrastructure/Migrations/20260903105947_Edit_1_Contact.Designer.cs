@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Contact.Infrastructure.Migrations
 {
     [DbContext(typeof(ContactDbContext))]
-    [Migration("20260815070203_Edit_3_Contact")]
-    partial class Edit_3_Contact
+    [Migration("20260903105947_Edit_1_Contact")]
+    partial class Edit_1_Contact
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,13 +26,10 @@ namespace Contact.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Contact.Domain.Entities.EmploymentContact", b =>
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfile", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte>("ContactType")
-                        .HasColumnType("tinyint");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -43,16 +40,7 @@ namespace Contact.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("FkEmploymentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsCurrent")
+                    b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("ModifiedAt")
@@ -74,49 +62,53 @@ namespace Contact.Infrastructure.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Value")
+                    b.Property<byte>("ProfileType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
-                        .HasName("PK_EmploymentContact");
+                        .HasName("PK_ContactProfile");
 
                     b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_EmploymentContact_CreatedAt");
+                        .HasDatabaseName("IX_ContactProfile_CreatedAt");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_EmploymentContact_CreatedBy");
+                        .HasDatabaseName("IX_ContactProfile_CreatedBy");
 
                     b.HasIndex("Id")
                         .IsUnique();
 
                     b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_EmploymentContact_ModifiedAt");
+                        .HasDatabaseName("IX_ContactProfile_ModifiedAt");
 
                     b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_EmploymentContact_ModifiedBy");
+                        .HasDatabaseName("IX_ContactProfile_ModifiedBy");
 
                     b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_EmploymentContact_OwnerOrgUnit");
+                        .HasDatabaseName("IX_ContactProfile_OwnerOrgUnit");
 
                     b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_EmploymentContact_OwnerPerson");
+                        .HasDatabaseName("IX_ContactProfile_OwnerPerson");
 
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_EmploymentContact_ScopedLookup");
+                        .HasDatabaseName("IX_ContactProfile_ScopedLookup");
 
-                    b.HasIndex(new[] { "FkEmploymentId" }, "IX_PersonContacts_FkEmploymentId");
-
-                    b.ToTable("EmploymentContacts", "contact");
+                    b.ToTable("ContactProfiles", "contact");
                 });
 
-            modelBuilder.Entity("Contact.Domain.Entities.LocationContact", b =>
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfileAssignment", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<byte>("ContactType")
-                        .HasColumnType("tinyint");
+                    b.Property<Guid>("ContactProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContactResourceId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -133,9 +125,6 @@ namespace Contact.Infrastructure.Migrations
                     b.Property<DateTime?>("EffectiveTo")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("FkLocationId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsCurrent")
                         .HasColumnType("bit");
 
@@ -146,55 +135,32 @@ namespace Contact.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<Guid?>("OwnerOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPersonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPositionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id")
-                        .HasName("PK_LocationContact");
+                        .HasName("PK_ContactProfileAssignment");
+
+                    b.HasIndex("ContactProfileId");
+
+                    b.HasIndex("ContactResourceId");
 
                     b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_LocationContact_CreatedAt");
+                        .HasDatabaseName("IX_ContactProfileAssignment_CreatedAt");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_LocationContact_CreatedBy");
+                        .HasDatabaseName("IX_ContactProfileAssignment_CreatedBy");
 
                     b.HasIndex("Id")
                         .IsUnique();
 
                     b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_LocationContact_ModifiedAt");
+                        .HasDatabaseName("IX_ContactProfileAssignment_ModifiedAt");
 
                     b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_LocationContact_ModifiedBy");
+                        .HasDatabaseName("IX_ContactProfileAssignment_ModifiedBy");
 
-                    b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_LocationContact_OwnerOrgUnit");
-
-                    b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_LocationContact_OwnerPerson");
-
-                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_LocationContact_ScopedLookup");
-
-                    b.HasIndex(new[] { "FkLocationId" }, "IX_LocationContacts_FkLocationId");
-
-                    b.ToTable("LocationContacts", "contact");
+                    b.ToTable("ContactProfileAssignments", "contact");
                 });
 
-            modelBuilder.Entity("Contact.Domain.Entities.PartyContact", b =>
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
@@ -211,17 +177,11 @@ namespace Contact.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("FkPartyId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsCurrent")
+                    b.Property<bool>("IsPrimary")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -242,46 +202,49 @@ namespace Contact.Infrastructure.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("ParentContactResourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("RelationType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SortOrder")
+                        .HasColumnType("int");
+
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id")
-                        .HasName("PK_PartyContact");
+                        .HasName("PK_ContactResource");
 
                     b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_PartyContact_CreatedAt");
+                        .HasDatabaseName("IX_ContactResource_CreatedAt");
 
                     b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_PartyContact_CreatedBy");
+                        .HasDatabaseName("IX_ContactResource_CreatedBy");
 
                     b.HasIndex("Id")
                         .IsUnique();
 
                     b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_PartyContact_ModifiedAt");
+                        .HasDatabaseName("IX_ContactResource_ModifiedAt");
 
                     b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_PartyContact_ModifiedBy");
+                        .HasDatabaseName("IX_ContactResource_ModifiedBy");
 
                     b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_PartyContact_OwnerOrgUnit");
+                        .HasDatabaseName("IX_ContactResource_OwnerOrgUnit");
 
                     b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_PartyContact_OwnerPerson");
+                        .HasDatabaseName("IX_ContactResource_OwnerPerson");
+
+                    b.HasIndex("ParentContactResourceId");
 
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_PartyContact_ScopedLookup");
+                        .HasDatabaseName("IX_ContactResource_ScopedLookup");
 
-                    b.HasIndex(new[] { "OwnerOrganizationUnitId" }, "IX_PersonContact_OwnerOrgUnit");
-
-                    b.HasIndex(new[] { "OwnerPersonId" }, "IX_PersonContact_OwnerPerson");
-
-                    b.HasIndex(new[] { "OwnerOrganizationUnitId", "OwnerPersonId" }, "IX_PersonContact_ScopedLookup");
-
-                    b.HasIndex(new[] { "FkPartyId" }, "IX_PersonContacts_FkPartyId");
-
-                    b.ToTable("PartyContacts", "contact");
+                    b.ToTable("ContactResources", "contact");
                 });
 
             modelBuilder.Entity("Contact.Domain.Entities.PhoneBookInfoView", b =>
@@ -402,90 +365,6 @@ namespace Contact.Infrastructure.Migrations
                     b.ToView("PhoneBook_Info_View", "contact");
                 });
 
-            modelBuilder.Entity("Contact.Domain.Entities.PostContact", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte>("ContactType")
-                        .HasColumnType("tinyint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("FkPostId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("OwnerOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPersonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPositionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id")
-                        .HasName("PK_PostContact");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_PostContact_CreatedAt");
-
-                    b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_PostContact_CreatedBy");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_PostContact_ModifiedAt");
-
-                    b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_PostContact_ModifiedBy");
-
-                    b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_PostContact_OwnerOrgUnit");
-
-                    b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_PostContact_OwnerPerson");
-
-                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_PostContact_ScopedLookup");
-
-                    b.HasIndex(new[] { "FkPostId" }, "IX_PersonContacts_FkPostId");
-
-                    b.ToTable("PostContacts", "contact");
-                });
-
             modelBuilder.Entity("Core.Domain.Common.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -544,6 +423,48 @@ namespace Contact.Infrastructure.Migrations
                     b.HasIndex("Status", "OccurredOnUtc");
 
                     b.ToTable("OutboxMessages", "contact");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfileAssignment", b =>
+                {
+                    b.HasOne("Contact.Domain.Entities.ContactProfile", "ContactProfile")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ContactProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ContactItems_ContactProfiles");
+
+                    b.HasOne("Contact.Domain.Entities.ContactResource", "ContactResource")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ContactResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ContactResources_ContactProfiles");
+
+                    b.Navigation("ContactProfile");
+
+                    b.Navigation("ContactResource");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
+                {
+                    b.HasOne("Contact.Domain.Entities.ContactResource", "ParentContactResource")
+                        .WithMany("ChildContactResources")
+                        .HasForeignKey("ParentContactResourceId");
+
+                    b.Navigation("ParentContactResource");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfile", b =>
+                {
+                    b.Navigation("Assignments");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
+                {
+                    b.Navigation("Assignments");
+
+                    b.Navigation("ChildContactResources");
                 });
 #pragma warning restore 612, 618
         }

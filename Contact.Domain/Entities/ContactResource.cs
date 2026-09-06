@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity
+    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity , IHierarchicalStructureEntity<ContactResource,Guid?>
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -54,6 +54,22 @@ namespace Contact.Domain.Entities
         #endregion
 
 
+        #region IHierarchicalStructureEntity Impelement
+        public Guid? ParentId { get; private set; }
+        public virtual ContactResource? Parent { get; private set; }
+        public virtual ICollection<ContactResource> Children { get; private set; } = new List<ContactResource>();
+        public void ChangeParent(Guid? newParentId)
+        {
+            if (newParentId == Id)
+                throw new InvalidOperationException("Menu cannot be its own parent.");
+
+            ParentId = newParentId;
+            Touch();
+
+            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
+            //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
+        }
+        #endregion
         public ContactTypeEnum ContactType { get; private set; }
         /// <summary>
         /// مقدار راه ارتباطی (شماره تلفن، آدرس ایمیل، آیدی اینستاگرام، لینک و...)
@@ -68,15 +84,8 @@ namespace Contact.Domain.Entities
         public bool IsPrimary { get; private set; } // آیا کانال اصلی این نوع است؟
         public int? SortOrder { get; private set; } // ترتیب نمایش در UI
 
-        /// <summary>
-        /// اشاره به یک ContactItem دیگر (مثلاً متصل بودن این شماره به شماره همگانی/اصلی)
-        /// </summary>
-        public Guid? ParentContactResourceId { get; private set; }
-        public ContactResource ParentContactResource { get; private set; }
-
         public ContactRelationTypeEnum? RelationType { get; private set; }
         public ICollection<ContactProfileAssignment> Assignments { get; private set; } = new List<ContactProfileAssignment>();
-        public ICollection<ContactResource> ChildContactResources { get; private set; } = new List<ContactResource>();
         //public virtual Employment Employment { get; private set; } = null!;
         // Constructor for EF
         protected ContactResource() { }
@@ -96,7 +105,7 @@ namespace Contact.Domain.Entities
             Label= _Label;
             IsPrimary = _IsPrimary;
             SortOrder = _SortOrder;
-            ParentContactResourceId = _ParentContactResourceId;
+            ParentId = _ParentContactResourceId;
             RelationType = _RelationType;
         }
     }

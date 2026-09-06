@@ -5,7 +5,7 @@
 
 dotnet ef migrations add Edit5_Navigation -p Navigation.Infrastructure -s "AkSteel Welfare Platform"
 or
-Add-Migration Edit_1_Navigation -Project Navigation.Infrastructure -Context NavigationDbContext -Start "TraderServer.WebApi"
+Add-Migration Edit_1_Navigation -Project Navigation.Infrastructure -Context NavigationDbContext -Start "AkSteel.WebApi"
 for debug:
 dotnet ef migrations add Edit5_Navigation --project Navigation.Infrastructure -c NavigationDbContext --verbose
 

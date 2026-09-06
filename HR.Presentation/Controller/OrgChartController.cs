@@ -84,7 +84,7 @@ namespace HR.Presentation.Controller
         public async Task<IActionResult> BatchUpdatePosts([FromBody] BatchUpdatePostsCommand command)
         {
             var result = await Mediator.Send(command);
-            return HandleResult(result);
+            return HandleBatchResult(result);
         }
 
        

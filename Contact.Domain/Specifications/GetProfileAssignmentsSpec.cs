@@ -17,7 +17,7 @@ namespace Contact.Domain.Specifications
                         a.ContactResource.ContactType == contactType)
         {
             AddInclude(a => a.ContactResource);
-            AddInclude(a => a.ContactResource.ParentContactResource); // در صورت نیاز به اطلاعات شماره پایه
+            AddInclude(a => a.ContactResource.Parent); // در صورت نیاز به اطلاعات شماره پایه
         }
     }
 }

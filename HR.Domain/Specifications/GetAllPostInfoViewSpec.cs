@@ -11,7 +11,7 @@ namespace HR.Domain.Specifications
     public class GetAllPostInfoViewSpec : BaseSpecification<PostInfoView>
     {
         public GetAllPostInfoViewSpec(Guid? rootId = null)
-            : base(u => rootId == null ||  u.FkParentId == rootId)
+            : base(u => rootId == null ||  u.ParentId == rootId)
         {
             ApplyOrderBy(u => u.PostCode);
         }

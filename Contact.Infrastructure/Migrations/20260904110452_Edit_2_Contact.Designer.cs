@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Contact.Infrastructure.Migrations
 {
     [DbContext(typeof(ContactDbContext))]
-    [Migration("20260819185121_Edit_5_Contact")]
-    partial class Edit_5_Contact
+    [Migration("20260904110452_Edit_2_Contact")]
+    partial class Edit_2_Contact
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,107 +25,6 @@ namespace Contact.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Contact.Domain.Entities.ContactItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ContactProfileId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte>("ContactType")
-                        .HasColumnType("tinyint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Label")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("OwnerOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPersonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPositionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ParentContactItemId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("RelationType")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id")
-                        .HasName("PK_ContactItem");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_ContactItem_CreatedAt");
-
-                    b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_ContactItem_CreatedBy");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_ContactItem_ModifiedAt");
-
-                    b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_ContactItem_ModifiedBy");
-
-                    b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_ContactItem_OwnerOrgUnit");
-
-                    b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_ContactItem_OwnerPerson");
-
-                    b.HasIndex("ParentContactItemId");
-
-                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_ContactItem_ScopedLookup");
-
-                    b.HasIndex(new[] { "ContactProfileId" }, "IX_ContactItems_ContactProfileId");
-
-                    b.ToTable("ContactItems", "contact");
-                });
 
             modelBuilder.Entity("Contact.Domain.Entities.ContactProfile", b =>
                 {
@@ -198,6 +97,154 @@ namespace Contact.Infrastructure.Migrations
                         .HasDatabaseName("IX_ContactProfile_ScopedLookup");
 
                     b.ToTable("ContactProfiles", "contact");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfileAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContactProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContactResourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("EffectiveFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ContactProfileAssignment");
+
+                    b.HasIndex("ContactProfileId");
+
+                    b.HasIndex("ContactResourceId");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_ContactProfileAssignment_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_ContactProfileAssignment_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_ContactProfileAssignment_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_ContactProfileAssignment_ModifiedBy");
+
+                    b.ToTable("ContactProfileAssignments", "contact");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte>("ContactType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Label")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("OwnerOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("RelationType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ContactResource");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_ContactResource_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_ContactResource_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_ContactResource_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_ContactResource_ModifiedBy");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_ContactResource_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_ContactResource_OwnerPerson");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_ContactResource_ScopedLookup");
+
+                    b.ToTable("ContactResources", "contact");
                 });
 
             modelBuilder.Entity("Contact.Domain.Entities.PhoneBookInfoView", b =>
@@ -378,32 +425,46 @@ namespace Contact.Infrastructure.Migrations
                     b.ToTable("OutboxMessages", "contact");
                 });
 
-            modelBuilder.Entity("Contact.Domain.Entities.ContactItem", b =>
+            modelBuilder.Entity("Contact.Domain.Entities.ContactProfileAssignment", b =>
                 {
                     b.HasOne("Contact.Domain.Entities.ContactProfile", "ContactProfile")
-                        .WithMany("ContactItems")
+                        .WithMany("Assignments")
                         .HasForeignKey("ContactProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_ContactItems_ContactProfiles");
 
-                    b.HasOne("Contact.Domain.Entities.ContactItem", "ParentContactItem")
-                        .WithMany("ChildContactItems")
-                        .HasForeignKey("ParentContactItemId");
+                    b.HasOne("Contact.Domain.Entities.ContactResource", "ContactResource")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ContactResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ContactResources_ContactProfiles");
 
                     b.Navigation("ContactProfile");
 
-                    b.Navigation("ParentContactItem");
+                    b.Navigation("ContactResource");
                 });
 
-            modelBuilder.Entity("Contact.Domain.Entities.ContactItem", b =>
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
                 {
-                    b.Navigation("ChildContactItems");
+                    b.HasOne("Contact.Domain.Entities.ContactResource", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Contact.Domain.Entities.ContactProfile", b =>
                 {
-                    b.Navigation("ContactItems");
+                    b.Navigation("Assignments");
+                });
+
+            modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
+                {
+                    b.Navigation("Assignments");
+
+                    b.Navigation("Children");
                 });
 #pragma warning restore 612, 618
         }

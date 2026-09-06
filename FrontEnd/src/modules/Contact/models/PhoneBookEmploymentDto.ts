@@ -29,7 +29,15 @@ export interface ContactDetailDto {
   type?: ContactTypeEnum | null;
   source?: ContactSourceEnum | null;
  
+  Ownership?: ContactOwnershipEnum  | null;//add new
+  RelativeContact?:ContactDetailDto[] | null;//add new
 
+
+}
+export enum ContactOwnershipEnum
+{
+    Personal = 1,
+    Organizational = 2
 }
 export enum GenderEnum {
   Male = 1,

@@ -14,7 +14,7 @@ namespace HR.Domain.Entities
     public class JobTitle :BaseEntity ,IAuditableEntity//, IHierarchicalStructureEntity<JobTitle,Guid?>
     {
         /*    #region IHierarchicalStructureEntity Impelement
-       public Guid? FkParentId { get; private set; }
+       public Guid? ParentId { get; private set; }
        public virtual JobTitle? Parent { get; private set; }
        public virtual ICollection<JobTitle> Children { get; private set; } = new List<JobTitle>();
        public void ChangeParent(Guid? newParentId)
@@ -22,7 +22,7 @@ namespace HR.Domain.Entities
            if (newParentId == Id)
                throw new InvalidOperationException("JobTitle cannot be its own parent.");
 
-           FkParentId = newParentId;
+           ParentId = newParentId;
            Touch();
 
            // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند

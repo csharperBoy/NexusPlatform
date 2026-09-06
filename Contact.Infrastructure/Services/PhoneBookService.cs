@@ -69,12 +69,12 @@ namespace Contact.Infrastructure.Services
         {
             var cacheKey = CacheKeyHelper.PhoneBook_GetPhoneBookList;
 
-            var cached = await _cacheService.GetAsync<IReadOnlyList<PhoneBookEmploymentDto>>(cacheKey);
-            if (cached != null)
-            {
-                _logger.LogDebug("Cache hit for full Get PhoneBook List");
-                return cached;
-            }
+            //var cached = await _cacheService.GetAsync<IReadOnlyList<PhoneBookEmploymentDto>>(cacheKey);
+            //if (cached != null)
+            //{
+            //    _logger.LogDebug("Cache hit for full Get PhoneBook List");
+            //    return cached;
+            //}
 
             IEnumerable<EmploymentFullDto> empList = await _employmentservice.GetFullInfoAsync();
          
@@ -89,6 +89,7 @@ namespace Contact.Infrastructure.Services
                 .ToList();
 
             List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(existingProfileIds);
+            var test = contactList.Where(a => a.Value == "09902582588" || a.Value == "258");
             var employmentDtos = empList.ToPhoneBookDtos(contactList).ToList();
             // ۵. حذف کارمندهایی که هیچ کانتکتی ندارند
             employmentDtos = employmentDtos
@@ -153,7 +154,8 @@ namespace Contact.Infrastructure.Services
 
                         Value = c.Value,
                         Type = c.ContactType,
-                        Source = ContactProfileTypeEnum.Post
+                        Source = ContactProfileTypeEnum.Post,
+                        Ownership = ContactOwnershipEnum.Organizational
                     })
                     .ToList();
 
@@ -199,7 +201,9 @@ namespace Contact.Infrastructure.Services
 
                         Value = c.Value,
                         Type = c.ContactType,
-                        Source = ContactProfileTypeEnum.Location
+                        Source = ContactProfileTypeEnum.Location,
+
+                        Ownership = ContactOwnershipEnum.Organizational
                     })
                     .ToList();
 

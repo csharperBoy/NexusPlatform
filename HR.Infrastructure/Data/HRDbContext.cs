@@ -44,7 +44,7 @@ namespace HR.Infrastructure.Data
         public virtual DbSet<PostInfoView> PostInfoViews { get; set; }
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
-            EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
+            //EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
         }
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {

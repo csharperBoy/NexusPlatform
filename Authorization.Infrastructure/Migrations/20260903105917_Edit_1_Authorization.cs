@@ -64,7 +64,6 @@ namespace Authorization.Infrastructure.Migrations
                     CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    FkParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ParentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerOrganizationUnitId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OwnerPositionId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),

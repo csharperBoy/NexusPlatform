@@ -1,7 +1,7 @@
 // src/modules/PhoneBook/pages/Post/PhoneBookPage.tsx
 
 import React, { useEffect, useState, useMemo } from "react";
-import logo from "../../../../assets/LOGO2.png";
+import logo from "../../../../assets/LOGO3.png";
 import { phonebookApi } from "../../api/PhoneBookApi";
 import {
   PhoneBookEmploymentDto,
@@ -9,8 +9,9 @@ import {
   ContactSourceEnum,
   ContactDetailDto,
   GenderEnum,
+  ContactOwnershipEnum,
 } from "../../models/PhoneBookEmploymentDto";
-import { FaUser, FaUserCircle } from 'react-icons/fa';
+import { FaUser, FaUserCircle , FaFemale , FaMale  } from 'react-icons/fa';
 
 const getGenderIcon = (gender?: GenderEnum | null) => {
   switch (gender) {
@@ -49,14 +50,21 @@ const getContactTypeBadge = (type?: ContactTypeEnum | null) => {
 
 const getSourceBadge = (source?: ContactSourceEnum | null) => {
   switch (source) {
-    case ContactSourceEnum.Personal: return { label: "شخصی", color: "bg-gray-200 text-gray-600" };
-    case ContactSourceEnum.post: return { label: "سازمانی", color: "bg-amber-50 text-amber-700 border border-amber-200" };
-    case ContactSourceEnum.employment: return { label: "سازمانی", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.Personal: return { label: "شخص", color: "bg-gray-200 text-gray-600" };
+    case ContactSourceEnum.post: return { label: "پست", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.employment: return { label: "کارمند", color: "bg-amber-50 text-amber-700 border border-amber-200" };
     case ContactSourceEnum.location: return { label: "محل استقرار", color: "bg-blue-200 text-gray-600" };
    default: return { label: "سازمانی", color: "bg-gray-100 text-gray-700 border-gray-200" };
   }
 };
-
+const getOwnerBadge = (source?: ContactOwnershipEnum | null) => {
+  switch (source) {
+    case ContactOwnershipEnum.Personal: return { label: "شخصی", color: "bg-yellow-200 text-gray-600" };
+    case ContactOwnershipEnum.Organizational: return { label: "سازمانی", color: "bg-purpel-50 text-amber-700 border border-amber-200" };
+    
+   default: return { label: "سازمانی", color: "bg-purpel-50 text-amber-700 border border-amber-200" };
+  }
+};
 // تابع بیرون کشیده شده برای آیکون سورت (جلوگیری از re-render)
 const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConfig }) => {
   if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
@@ -503,14 +511,22 @@ export const PhoneBookPage: React.FC = () => {
               <h3 className="font-bold text-gray-800 text-base">
                 {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
               </h3>
-              <p className="text-sm text-gray-600 mt-1">
-                {emp.jobTitleName?.join(" - ") || "-"}
+               <p className="text-sm text-gray-600" title="رده">
+                 {emp.jobLevelTitle?.join(" - ") || "-"}
               </p>
-              <p className="text-sm text-gray-600">
-                {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}
+              <p className="text-sm text-gray-600 mt-1" title="عنوان شغلی">
+               {emp.jobTitleName?.join(" - ") || "-"}
               </p>
-              <p className="text-sm text-gray-600">
-                {emp.locationTitle?.join(" - ") || "-"}
+              <p className="text-sm text-gray-600" title="معاونت">
+ {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}
+              </p>
+              
+              
+              <p className="text-sm text-gray-600" title="واحد">
+                {emp.organizationUnitsName?.join(" - ") || "-"}
+              </p>
+              <p className="text-sm text-gray-600" title=" محل استقرار">
+                 {emp.locationTitle?.join(" - ") || "-"} 
               </p>
             </div>
           </div>
@@ -523,20 +539,24 @@ export const PhoneBookPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
                 const typeBadge = getContactTypeBadge(contact.type);
+                const ownerBadge = getOwnerBadge(contact.Ownership);
                 const sourceBadge = getSourceBadge(contact.source);
                 return (
                   <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="flex justify-between items-center mb-1">
+                    <div className="flex flex-warp justify-begin gap-1 mb-1">
                       <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBadge.color}`}>
                         {typeBadge.label}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${ownerBadge.color}`}>
+                        {ownerBadge.label}
                       </span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded ${sourceBadge.color}`}>
                         {sourceBadge.label}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-1">
-                      <span className="text-xs text-gray-500">{contact.title}</span>
-                      <span className="font-mono text-sm font-semibold text-gray-800 dir-ltr">{contact.value}</span>
+                       <span className="text-xs  text-gray-500">{contact.title}</span> 
+                      <span className="font-mono  text-base font-bold text-gray-800 dir-ltr">{contact.value}</span>
                     </div>
                   </div>
                 );

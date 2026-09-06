@@ -51,7 +51,7 @@ namespace Contact.Application.Queries
                 IReadOnlyList<PostContactDto> result = posts.Select(post => new PostContactDto
                 {
                     Id = post.Id,
-                    FkParentId = post.FkParentId,
+                    ParentId = post.ParentId,
                     CostCenterName = post.CostCenterName,
                     GradeTitle = post.GradeTitle,
                     OrganizationUnitsName = post.OrganizationUnitsName,

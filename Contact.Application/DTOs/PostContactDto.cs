@@ -13,7 +13,7 @@ namespace Contact.Application.DTOs
     {
         public Guid Id { get; set; }
 
-        public Guid? FkParentId { get; set; }
+        public Guid? ParentId { get; set; }
 
         public string? CostCenterName { get; set; }
 

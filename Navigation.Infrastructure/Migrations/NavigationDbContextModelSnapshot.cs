@@ -100,9 +100,6 @@ namespace Navigation.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int?>("Icon")
                         .HasColumnType("int");
 

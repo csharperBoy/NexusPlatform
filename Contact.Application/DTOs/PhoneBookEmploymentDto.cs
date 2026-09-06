@@ -1,4 +1,5 @@
 ﻿using Contact.Domain.Enums;
+using Core.Shared.Attributes;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using System;
@@ -9,14 +10,22 @@ using System.Threading.Tasks;
 
 namespace Contact.Application.DTOs
 {
-    
+    public enum ContactOwnershipEnum
+    {
+        Personal = 1,
+        Organizational = 2
+    }
     public class ContactDetailDto
     {
+
         public string Title { get; set; } = null!;
         public string Value { get; set; } = null!;
+        public bool IsPrimary { get; set; } = true!;
         public ContactTypeEnum Type { get; set; }
         public ContactProfileTypeEnum Source { get; set; }
-        
+        public ContactOwnershipEnum Ownership { get; set; }
+
+        public ICollection<ContactDetailDto>? RelativeContact { get; set; } = null;
     }
 
     public class PhoneBookEmploymentDto
@@ -41,11 +50,8 @@ namespace Contact.Application.DTOs
         public List<ContactDetailDto> Contacts { get; set; } = new();
 
         // ۱. رشته ترکیب‌شده شماره‌ها برای سطر اصلی (با -)
-        public string ContactSummary => string.Join(" - ", Contacts.Where(t=>t.Type == ContactTypeEnum.Phone 
-        || t.Type == ContactTypeEnum.Mobile
-        || t.Type == ContactTypeEnum.OrganizationMobile
-        || t.Type == ContactTypeEnum.OfficePhone
-        ).Select(c => c.Value));
+        public string ContactSummary => string.Join(" - ", Contacts.Where(t => t.IsPrimary)
+            .Select(c => c.Value));
 
         // ۲. فلاگ کنترل‌کننده آکاردئون در فرانت‌اند
         public bool HasMultipleContacts => Contacts.Count > 1;

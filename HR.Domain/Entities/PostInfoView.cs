@@ -11,7 +11,7 @@ public partial class PostInfoView
     public string PostCode { get; set; } = null!;
 
 
-    public Guid? FkParentId { get; set; }
+    public Guid? ParentId { get; set; }
 
     public Guid FkJobTitleId { get; set; }
 

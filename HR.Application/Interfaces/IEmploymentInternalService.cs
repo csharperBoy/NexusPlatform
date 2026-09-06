@@ -1,5 +1,7 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.Common;
 using Core.Domain.ValueObjects;
+using Core.Shared.Enums.HR;
 using HR.Application.DTOs;
 using HR.Domain.Entities;
 using System;
@@ -12,7 +14,7 @@ namespace HR.Application.Interfaces
 {
     public interface IEmploymentInternalService : IEmploymentPublicService
     {
-        Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId);
+        Task<bool> AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId);
         Task<Guid> CreateEmploymentAsync(
             string _EmploymentCode,
         Guid _PersonId,
@@ -27,6 +29,27 @@ namespace HR.Application.Interfaces
            );
         Task DeleteAsync(Guid id);
         Task<IReadOnlyList<EmploymentInfoDto>> GetEmploymentListAsync();
-        Task<Guid> UpdateEmploymentAsync(Guid id, List<string>? phone, List<string>? address, List<string>? email, List<string>? mobile, string? firstlName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
+        Task<bool> UpdateEmploymentAsync(
+            Guid id,
+            Optional<List<string>?> phone,
+          Optional<List<string>?> address,
+          Optional<List<string>?> email,
+          Optional<List<string>?> mobile,
+          Optional<string?> firstName,
+          Optional<string?> lastName,
+          Optional<DateTime?> birthDate,
+          Optional<string?> birthPlace,
+          Optional<string?> fatherName,
+          Optional<string?> nationalCode,
+          Optional<string?> employmentCode,
+          Optional<Gender?> gender,
+          Optional<Guid?> employmentTypeId,
+          Optional<Guid?> employmentStatusId,
+          Optional<DateOnly?> startDate,
+          Optional<DateOnly?> endDate,
+          Optional<List<Guid>?> locationsId,
+          Optional<List<string>?> officePhone,
+          Optional<List<string>?> orgEmail,
+          Optional<List<string>?> orgMobile);
     }
 }

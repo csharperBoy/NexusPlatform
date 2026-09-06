@@ -47,9 +47,9 @@ namespace HR.IrisaSync.Extention.Services
                 var existEntity = existlist.Where(a => a.IrisaJobTitleId == item.IrisaJobTitleId).SingleOrDefault();
                 if (existEntity != null)
                 {
-                    if (existEntity.IrisaJobTitle.Trim() != item.IrisaJobTitle.Trim())
+                    if (existEntity.IrisaJobTitle?.Trim() != item.IrisaJobTitle?.Trim())
                     {
-                        existEntity.IrisaJobTitle =item.IrisaJobTitle;
+                        existEntity.IrisaJobTitle = item.IrisaJobTitle;
                         await _uow.JobTitleMapRepository.UpdateAsync(existEntity);
                     }
                 }
@@ -81,7 +81,7 @@ namespace HR.IrisaSync.Extention.Services
                 var existEntity = existlist.Where(a => a.IrisaJobLevelId == item.IrisaJobLevelId).SingleOrDefault();
                 if (existEntity != null)
                 {
-                    if (existEntity.IrisaJobLevel.Trim() != item.IrisaJobLevel.Trim())
+                    if (existEntity.IrisaJobLevel?.Trim() != item.IrisaJobLevel?.Trim())
                     {
                         existEntity.IrisaJobLevel = item.IrisaJobLevel;
                         await _uow.JobLevelMapRepository.UpdateAsync(existEntity);
@@ -96,18 +96,22 @@ namespace HR.IrisaSync.Extention.Services
             await _uow.SaveChangesAsync();
 
         }
-
         /// <summary>
-        /// پر کردن جدول مپ با داده های موجود در ویو ایریسا
+        /// پر کردن جدول مپ با داده های موجود در ویو ایریسا - روت های جدول
         /// </summary>
         /// <returns></returns>
-        public async Task FillOrganizationUnitMap()
+        public async Task FillOrganizationUnitRootMap()
         {
             IEnumerable<PdsIdeaInformationViw> irisaList = await _irisaRepo.GetAllAsync();
+            //var temp = irisaList.Where(a=>a.NamLastEmply.Contains("سنا") ).ToList();
             var lst = irisaList
                      .Where(e => e.CodEmtyp == true)
-                     .GroupBy(a => a.CodBusun)
-                     .Select(group => new IrisaSyncOrganizationUnitMap(group.Key, group.First().DesBusun, group.First().CodMoaBusun))
+                     .GroupBy(a => a.CodMoaBusun)
+                     .Select(group => new IrisaSyncOrganizationUnitMap(
+                          decimal.TryParse(group.Key, out var val) ? val : (decimal?)null
+                         , group.First().DesMoaBusun, null
+                     )
+                     )
                      .ToList();
             var existlist = await _uow.OrganizationUnitMapRepository.GetAllAsync();
             foreach (var item in lst)
@@ -115,7 +119,46 @@ namespace HR.IrisaSync.Extention.Services
                 var existEntity = existlist.Where(a => a.IrisaOrganizationUnitId == item.IrisaOrganizationUnitId).SingleOrDefault();
                 if (existEntity != null)
                 {
-                    if (existEntity.IrisaOrganizationUnit.Trim() != item.IrisaOrganizationUnit.Trim() || existEntity.IrisaParentId != item.IrisaParentId)
+                    if (existEntity.IrisaOrganizationUnit?.Trim() != item.IrisaOrganizationUnit?.Trim() || existEntity.IrisaParentId != item.IrisaParentId)
+                    {
+                        existEntity.IrisaOrganizationUnit = item.IrisaOrganizationUnit;
+                        existEntity.IrisaParentId = item.IrisaParentId;
+                        await _uow.OrganizationUnitMapRepository.UpdateAsync(existEntity);
+                    }
+                }
+                else
+                {
+                    await _uow.OrganizationUnitMapRepository.AddAsync(item);
+
+                }
+            }
+            await _uow.SaveChangesAsync();
+
+        }
+        /// <summary>
+        /// پر کردن جدول مپ با داده های موجود در ویو ایریسا
+        /// </summary>
+        /// <returns></returns>
+        public async Task FillOrganizationUnitMap()
+        {
+            IEnumerable<PdsIdeaInformationViw> irisaList = await _irisaRepo.GetAllAsync();
+            //var temp = irisaList.Where(a=>a.NamLastEmply.Contains("سنا") ).ToList();
+            var lst = irisaList
+                     .Where(e => e.CodEmtyp == true && e.CodMoaBusun != null && e.CodBusun != (decimal.TryParse(e.CodMoaBusun, out var val) ? val : (decimal?)null))
+                     .GroupBy(a => a.CodBusun)
+                     .Select(group => new IrisaSyncOrganizationUnitMap(group.Key, group.First().DesBusun,
+                      //decimal.Parse(group.First().CodMoaBusun)
+                      decimal.TryParse(group.First().CodMoaBusun, out var val) ? val : (decimal?)null
+                     )
+                     )
+                     .ToList();
+            var existlist = await _uow.OrganizationUnitMapRepository.GetAllAsync();
+            foreach (var item in lst)
+            {
+                var existEntity = existlist.Where(a => a.IrisaOrganizationUnitId == item.IrisaOrganizationUnitId).SingleOrDefault();
+                if (existEntity != null)
+                {
+                    if (existEntity.IrisaOrganizationUnit?.Trim() != item.IrisaOrganizationUnit?.Trim() || existEntity.IrisaParentId != item.IrisaParentId)
                     {
                         existEntity.IrisaOrganizationUnit = item.IrisaOrganizationUnit;
                         existEntity.IrisaParentId = item.IrisaParentId;

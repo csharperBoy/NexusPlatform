@@ -3,6 +3,7 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { EmploymentInfoView } from "../models/EmploymentInfoView";
 import {  CreateEmploymentCommand, UpdateEmploymentCommand } from "../models/EmploymentCommand";
+import { BatchResult, BatchResultWithoutData } from "@/core/models/apiResults";
 const API_MODULE = "hr";
 
 export const employmentApi = {
@@ -30,14 +31,14 @@ export const employmentApi = {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdate: async (commands: UpdateEmploymentCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdateEmploymentCommand[]): Promise<BatchResultWithoutData> => {
     const api = getAPI(API_MODULE);
-    const response = await api.put<string[]>(
+    const response = await api.put<BatchResultWithoutData>(
       `/api/hr/Employment/batch`,
       { employments: commands },
       { withCredentials: true }
     );
-    return response.data; // آرایه‌ای از GUIDهای به‌روز شده
+    return response.data; 
   },
   
   

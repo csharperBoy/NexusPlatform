@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions.HR;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Shared.DTOs.HR;
@@ -24,7 +25,7 @@ namespace HR.Application.Interfaces
          List<string>? _orgEmail = null,
          List<string>? _orgMobile = null
              );
-        Task<Guid> UpdateLocationAsync(Guid id, string? title, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile);
+        Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile);
       
         Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync();
         Task DeleteAsync(Guid id);

@@ -16,7 +16,6 @@ namespace Core.Shared.DTOs.HR
 
         public Guid? ParentId { get; set; }
 
-        public Guid? FkParentId { get; set; }
 
         public Guid FkJobTitleId { get; set; }
 

@@ -1,4 +1,6 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Enums.HR;
+using Core.Shared.Results;
 using HR.Application.Commands.Employment;
 using HR.Application.Interfaces;
 using MediatR;
@@ -33,30 +35,31 @@ namespace Contact.Application.Commands.Employment
                 foreach (var command in request.EmploymentsContact)
                 {
                     // ۱. به‌روزرسانی اطلاعات پایه پست
-                    Guid EmploymentId = await _employmentService.UpdateEmploymentAsync(
+                    await _employmentService.UpdateEmploymentAsync(
                    command.Id,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
-                   null,
+                    Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<List<string>?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<DateTime?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<string?>.Undefined,
+                   Optional<Gender?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<Guid?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<DateOnly?>.Undefined,
+                   Optional<List<Guid>?>.Undefined,
                    command.OfficePhones,
                    command.OrgEmails,
                    command.OrgMobiles
                    );
-                    
 
+                    Guid EmploymentId = command.Id;
                     results.Add(EmploymentId);
                 }
 

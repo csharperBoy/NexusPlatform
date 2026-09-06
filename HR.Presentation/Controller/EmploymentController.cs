@@ -39,7 +39,7 @@ namespace HR.Presentation.Controller
         public async Task<IActionResult> BatchUpdateemployments([FromBody] BatchUpdateEmploymentsCommand command)
         {
             var result = await Mediator.Send(command);
-            return HandleResult(result);
+            return HandleBatchResult(result);
         }
         [HttpGet("GetList")]
         [AuthorizeResource("hr.employment", "View")]

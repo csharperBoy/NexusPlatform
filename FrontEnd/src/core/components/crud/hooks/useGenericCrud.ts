@@ -17,14 +17,16 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   transformApiData,
   excelMatchKey,
 }: UseGenericCrudOptions<T, TCreateCmd, TUpdateCmd>) {
+  
+  const [globalSearch, setGlobalSearch] = useState<string>("");
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+
   const [items, setItems] = useState<T[]>([]);
   const [initialItems, setInitialItems] = useState<T[]>([]);
   const [selectionLists, setSelectionLists] = useState<Record<string, SelectionListDto[]>>({});
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
-  const [globalSearch, setGlobalSearch] = useState<string>("");
-  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget<T> | null>(null);
@@ -186,6 +188,10 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
       if (globalSearch.trim()) {
         const query = globalSearch.toLowerCase();
         const matchesGlobal = columns.some((col) => {
+          if (col.getFilterValue) {
+            const customVal = col.getFilterValue(item);
+            return customVal?.toLowerCase().includes(query);
+          }
           const val = item[col.key as keyof T];
           if (val == null) return false;
 
@@ -226,6 +232,13 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
         if (!filterVal) continue;
 
         const colDef = columns.find((c) => String(c.key) === colKey);
+       
+        if (colDef?.getFilterValue) {
+          const customVal = colDef.getFilterValue(item)?.toLowerCase() || "";
+          if (!customVal.includes(filterVal)) return false;
+          continue; // اگر مچ شد یا نشد، کار این ستون تمام است و به سراغ منطق زیرین نرود
+        }
+       
         const val = item[colKey as keyof T];
         if (val == null) return false;
 

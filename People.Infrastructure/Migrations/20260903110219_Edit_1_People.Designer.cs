@@ -12,7 +12,7 @@ using People.Infrastructure.Data;
 namespace People.Infrastructure.Migrations
 {
     [DbContext(typeof(PeopleDbContext))]
-    [Migration("20260720082030_Edit_1_People")]
+    [Migration("20260903110219_Edit_1_People")]
     partial class Edit_1_People
     {
         /// <inheritdoc />
@@ -370,6 +370,9 @@ namespace People.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<Guid>("FkContactProfileId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("FkPermissionAssigneeId")
                         .HasColumnType("uniqueidentifier");
 
@@ -399,96 +402,6 @@ namespace People.Infrastructure.Migrations
                         .HasDatabaseName("IX_Party_ModifiedBy");
 
                     b.ToTable("Parties", "people");
-                });
-
-            modelBuilder.Entity("People.Domain.Entities.PartyContact", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<byte>("ContactType")
-                        .HasColumnType("tinyint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("CreatedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("EffectiveFrom")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("EffectiveTo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("FkPartyId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsCurrent")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ModifiedBy")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<Guid?>("OwnerOrganizationUnitId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPersonId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerPositionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("OwnerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id")
-                        .HasName("PK_PartyContact");
-
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_PartyContact_CreatedAt");
-
-                    b.HasIndex("CreatedBy")
-                        .HasDatabaseName("IX_PartyContact_CreatedBy");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("ModifiedAt")
-                        .HasDatabaseName("IX_PartyContact_ModifiedAt");
-
-                    b.HasIndex("ModifiedBy")
-                        .HasDatabaseName("IX_PartyContact_ModifiedBy");
-
-                    b.HasIndex("OwnerOrganizationUnitId")
-                        .HasDatabaseName("IX_PartyContact_OwnerOrgUnit");
-
-                    b.HasIndex("OwnerPersonId")
-                        .HasDatabaseName("IX_PartyContact_OwnerPerson");
-
-                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
-                        .HasDatabaseName("IX_PartyContact_ScopedLookup");
-
-                    b.HasIndex(new[] { "OwnerOrganizationUnitId" }, "IX_PersonContact_OwnerOrgUnit");
-
-                    b.HasIndex(new[] { "OwnerPersonId" }, "IX_PersonContact_OwnerPerson");
-
-                    b.HasIndex(new[] { "OwnerOrganizationUnitId", "OwnerPersonId" }, "IX_PersonContact_ScopedLookup");
-
-                    b.HasIndex(new[] { "FkPartyId" }, "IX_PersonContacts_FkPartyId");
-
-                    b.ToTable("PartyContacts", "people");
                 });
 
             modelBuilder.Entity("People.Domain.Entities.LegalPerson", b =>
@@ -603,18 +516,6 @@ namespace People.Infrastructure.Migrations
                     b.Navigation("SourceParty");
                 });
 
-            modelBuilder.Entity("People.Domain.Entities.PartyContact", b =>
-                {
-                    b.HasOne("People.Domain.Entities.Party", "Party")
-                        .WithMany("PartyContacts")
-                        .HasForeignKey("FkPartyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_PartyContacts_Parties");
-
-                    b.Navigation("Party");
-                });
-
             modelBuilder.Entity("People.Domain.Entities.NaturalPerson", b =>
                 {
                     b.Navigation("NaturalPersonProfiles");
@@ -629,8 +530,6 @@ namespace People.Infrastructure.Migrations
                     b.Navigation("PartiesRelationFkDestinationParties");
 
                     b.Navigation("PartiesRelationFkSourceParties");
-
-                    b.Navigation("PartyContacts");
                 });
 #pragma warning restore 612, 618
         }

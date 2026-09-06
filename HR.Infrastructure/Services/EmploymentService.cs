@@ -1,19 +1,14 @@
-﻿using Azure.Core;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
-using Core.Infrastructure.Repositories;
 using Core.Shared.DTOs.HR;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
-
-using DocumentFormat.OpenXml.Drawing.Diagrams;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
-using DocumentFormat.OpenXml.Wordprocessing;
 using HR.Application.DTOs;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
@@ -22,19 +17,10 @@ using HR.Domain.Specifications;
 using HR.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using People.Domain.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace HR.Infrastructure.Services
 {
     public class EmploymentService : IEmploymentInternalService, IEmploymentPublicService
     {
-
         private readonly IPersonPublicService _personService;
         private readonly IRepository<HRDbContext, Employment, Guid> _employmentRepository;
         private readonly IRepository<HRDbContext, Assignment, Guid> _assignmentRepository;
@@ -46,6 +32,7 @@ namespace HR.Infrastructure.Services
         private readonly IContactPublicService _contactService;
         private readonly ILogger<EmploymentService> _logger;
         private readonly IUnitOfWork<HRDbContext> _uow;
+        private readonly IHRUnitOfWork<HRDbContext> _hrUow;
 
         public EmploymentService(IPersonPublicService personService,
             IRepository<HRDbContext, Assignment, Guid> assignmentRepository,
@@ -57,6 +44,7 @@ namespace HR.Infrastructure.Services
             ISpecificationRepository<Employment, Guid> employmentSpecRepository,
            IContactPublicService contactService,
             IUnitOfWork<HRDbContext> uow,
+            IHRUnitOfWork<HRDbContext> hrUow,
             IRepository<HRDbContext, EmploymentInfoView, Guid> employmentInfoRepository
             )
         {
@@ -70,31 +58,56 @@ namespace HR.Infrastructure.Services
             _employmentSpecRepository = employmentSpecRepository;
             _logger = logger;
             _uow = uow;
+            _hrUow = hrUow;
             _employmentLocationSpecRepository = employmentLocationSpecRepository;
         }
 
         public async Task<Guid> CreateEmploymentAsync(
              string _EmploymentCode,
-         Guid _PersonId,
-        Guid? _EmploymentTypeId,
-        Guid? _EmploymentStatusId,
-        DateOnly? _StartDate = null,
-        DateOnly? _EndDate = null,
-
-        List<PhoneNumber>? _orgPhone = null,
-        List<Email>? _orgEmail = null,
-        List<PhoneNumber>? _orgMobile = null
+             Guid _PersonId,
+             Guid? _EmploymentTypeId,
+             Guid? _EmploymentStatusId,
+             DateOnly? _StartDate = null,
+             DateOnly? _EndDate = null,
+             List<PhoneNumber>? _orgPhone = null,
+             List<Email>? _orgEmail = null,
+             List<PhoneNumber>? _orgMobile = null
             )
         {
+            Employment? existEmp = (await _employmentRepository.GetAllAsync(queryOptions: q => q.Where(a => a.EmploymentCode.Trim() == _EmploymentCode.Trim()))).FirstOrDefault();
+            Employment emp;
+            if (existEmp == null)
+            {
+                Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Employment - {_EmploymentCode}", ContactProfileTypeEnum.Employment);
+                emp = new Employment(_EmploymentCode, _PersonId, contactProfileId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
 
-            Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Employment - {_EmploymentCode}", ContactProfileTypeEnum.Employment);
-            Employment emp = new Employment(_EmploymentCode, _PersonId, contactProfileId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
-            await _employmentRepository.AddAsync(emp);
+                await _employmentRepository.AddAsync(emp);
 
-            await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, _orgMobile?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, _orgPhone?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
-            await _contactService.SyncProfileContacts(ContactTypeEnum.Email, _orgEmail?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
-            return emp.Id;
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, _orgMobile?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, _orgPhone?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
+                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, _orgEmail?.Select(t => t.Value).ToList(), emp.FkContactProfileId);
+                return emp.Id;
+            }
+            else
+            {
+                emp = new Employment(_EmploymentCode, _PersonId, existEmp.FkContactProfileId, _EmploymentTypeId, _EmploymentStatusId, _StartDate, _EndDate);
+
+                existEmp.ApplyChange(emp,
+                    new List<string> {
+                    "Employment.EmploymentCode",
+                    "Employment.FkNaturalPersonId",
+                    "Employment.FkEmploymentTypeId",
+                    "Employment.FkEmploymentStatusId",
+                    "Employment.FkContactProfileId",
+                    "Employment.EffectiveFrom",
+                    "Employment.EffectiveTo"
+                });
+
+
+                await existEmp.SetIsRemove(false);
+                await _employmentRepository.UpdateAsync(existEmp);
+                return existEmp.Id;
+            }
         }
         //private async Task CreateEmploymentContact(HrContactType type, string? value, Guid employmentId)
         //{
@@ -122,8 +135,9 @@ namespace HR.Infrastructure.Services
 
         }
 
-        public async Task AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId)
+        public async Task<bool> AssignLocationsToEmployment(Guid employmentId, List<Guid> locationsId)
         {
+            bool hasChange = false;
             // ۱. دریافت مکان‌های فعال فعلی کارمند (فرض بر این است که اسپک فقط Activeها را برمی‌گرداند)
             var spec = new GetEmploymentLocationsSpec(employmentId);
             var existingActive = await _employmentLocationSpecRepository.ListBySpecAsync(spec);
@@ -137,6 +151,7 @@ namespace HR.Infrastructure.Services
             foreach (var item in toExpire)
             {
                 item.DoExpire();
+                hasChange = true;
             }
 
             // ۴. مکان‌هایی که باید اضافه شوند (در لیست جدید هستند اما قبلاً وجود نداشتند)
@@ -153,20 +168,43 @@ namespace HR.Infrastructure.Services
                     item.AddDomainEvent(new ChangeEmploymentEvent(item.Id));
 
                 }
+                hasChange = true;
             }
-
+            return hasChange;
         }
 
 
 
-        public async Task<Guid> UpdateEmploymentAsync(Guid id,
-            List<string>? phone, List<string>? address, List<string>? email, List<string>? mobile, string? firstName, string? lastName, DateTime? birthDate, string? birthPlace, string? fatherName, string? nationalCode, string? employmentCode, Guid? employmentTypeId, Guid? employmentStatusId, DateOnly? startDate, DateOnly? endDate, List<Guid>? locationsId, List<string>? officePhone, List<string>? orgEmail, List<string>? orgMobile)
+        public async Task<bool> UpdateEmploymentAsync(
+            Guid id,
+          Optional<List<string>?> phone,
+          Optional<List<string>?> address,
+          Optional<List<string>?> email,
+          Optional<List<string>?> mobile,
+          Optional<string?> firstName,
+          Optional<string?> lastName,
+          Optional<DateTime?> birthDate,
+          Optional<string?> birthPlace,
+          Optional<string?> fatherName,
+          Optional<string?> nationalCode,
+          Optional<string?> employmentCode,
+          Optional<Gender?> gender,
+          Optional<Guid?> employmentTypeId,
+          Optional<Guid?> employmentStatusId,
+          Optional<DateOnly?> startDate,
+          Optional<DateOnly?> endDate,
+          Optional<List<Guid>?> locationsId,
+          Optional<List<string>?> officePhone,
+          Optional<List<string>?> orgEmail,
+          Optional<List<string>?> orgMobile
+            )
         {
             Employment? emp = await _employmentRepository.GetByIdAsync(id);
             if (emp == null)
                 throw new Exception("can not found employment!!!");
 
             bool hasChange = emp.ApplyChange(employmentCode, employmentTypeId, employmentStatusId, startDate, endDate);
+            //bool hasChange = emp.ApplyChange(new Employment(employmentCode, employmentTypeId, employmentStatusId, startDate, endDate), UpdateMask);
             if (hasChange)
             {
                 await _employmentRepository.UpdateAsync(emp);
@@ -175,28 +213,33 @@ namespace HR.Infrastructure.Services
             List<PhoneNumber>? Phones = new List<PhoneNumber>();
             List<Email>? Emails = new List<Email>();
             List<PhoneNumber>? Mobiles = new List<PhoneNumber>();
-            try { Phones.AddRange(phone != null ? phone.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
-            try { Emails.AddRange(email != null ? email.Select(a => Email.Create(a)).ToList() : null); } catch { }
-            try { Mobiles.AddRange(mobile != null ? mobile.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
+            try { Phones.AddRange(phone.IsSet ? phone.Value?.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
+            try { Emails.AddRange(email.IsSet ? email.Value?.Select(a => Email.Create(a)).ToList() : null); } catch { }
+            try { Mobiles.AddRange(mobile.IsSet ? mobile.Value?.Select(a => PhoneNumber.Create(a)).ToList() : null); } catch { }
 
-            await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,
+            bool personHasChange = await _personService.UpdatePersonAsync(emp.FkNaturalPersonId, firstName, lastName, birthDate, birthPlace, fatherName, nationalCode,gender,
 
                 Phones, address, Emails, Mobiles
                 );
-            if (officePhone != null)
+            if (officePhone.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone, emp.FkContactProfileId);
+               bool contactChange= await _contactService.SyncProfileContacts(ContactTypeEnum.OfficePhone, officePhone.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
+
             }
-            if (orgEmail != null)
+            if (orgEmail.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail, emp.FkContactProfileId);
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.Email, orgEmail.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
             }
-            if (orgMobile != null)
+            if (orgMobile.IsSet)
             {
-                await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile, emp.FkContactProfileId);
+                bool contactChange = await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, orgMobile.Value, emp.FkContactProfileId);
+                hasChange = (hasChange || contactChange);
             }
-            emp.AddDomainEvent(new ChangeEmploymentEvent(emp.Id));
-            return emp.Id;
+            if (hasChange)
+                emp.AddDomainEvent(new ChangeEmploymentEvent(emp.Id));
+            return (hasChange || personHasChange);
         }
 
 
@@ -278,6 +321,7 @@ namespace HR.Infrastructure.Services
         {
             var empList = await _employmentInfoRepository.GetAllAsync();
             var emptIds = empList.Select(p => p.Id).ToList();
+            var tempList = await _hrUow.OrganizationUnitRepository.GetAllAsync(queryOptions: q=>q.Include(a=>a.Parent));
             var postsAssign = await _assignmentRepository.GetAllAsync(queryOptions:
                 q => q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
                 .Include(p => p.Post).ThenInclude(p => p.OrganizationUnit).ThenInclude(p => p.Parent)
@@ -330,6 +374,6 @@ namespace HR.Infrastructure.Services
             return result;
         }
 
-       
+
     }
 }

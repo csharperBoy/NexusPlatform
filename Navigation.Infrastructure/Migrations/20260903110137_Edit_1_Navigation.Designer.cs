@@ -12,7 +12,7 @@ using Navigation.Infrastructure.Data;
 namespace Navigation.Infrastructure.Migrations
 {
     [DbContext(typeof(NavigationDbContext))]
-    [Migration("20260630104552_Edit_1_Navigation")]
+    [Migration("20260903110137_Edit_1_Navigation")]
     partial class Edit_1_Navigation
     {
         /// <inheritdoc />
@@ -102,9 +102,6 @@ namespace Navigation.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("Icon")
                         .HasColumnType("int");

@@ -1,6 +1,6 @@
 // src/modules/HR/models/postInfoDto.ts
 
-import { Location } from "./LocationInfoView";
+import { LocationInfoView as Location } from "./LocationInfoView";
 export interface PostInfoDto {
   id: string;
   postCode: string;

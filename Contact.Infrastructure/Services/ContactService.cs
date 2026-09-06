@@ -70,8 +70,9 @@ namespace Contact.Infrastructure.Services
 
 
 
-        public async Task SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId)
+        public async Task<bool> SyncProfileContacts(ContactTypeEnum type, List<string>? values, Guid profileId )
         {
+            bool hasChange = false;
             var newValues = values?.Distinct().ToHashSet() ?? new HashSet<string>();
 
             // ۱. دریافت انتساب‌های فعال فعلی این پروفایل
@@ -89,6 +90,7 @@ namespace Contact.Infrastructure.Services
             {
                 assignment.DoExpire(); // غیرفعال کردن انتساب (IsCurrent = false, EffectiveTo = UtcNow)
                 assignment.AddDomainEvent(new ChangeContactProfileResourcesEvent(assignment.ContactProfileId));
+                hasChange = true;
             }
 
             // ۳. پردازش مقادیر جدید که باید منتسب شوند
@@ -112,7 +114,9 @@ namespace Contact.Infrastructure.Services
                 var newAssignment = new ContactProfileAssignment(profileId, resource.Id, DateTime.UtcNow);
                 await _assignmentRepository.AddAsync(newAssignment);
                 newAssignment.AddDomainEvent(new ChangeContactProfileResourcesEvent(newAssignment.ContactProfileId));
+                hasChange = true;
             }
+            return hasChange;
         }
 
         public async Task<Guid> CreateContactProfileAsync(string Title, ContactProfileTypeEnum Type, CancellationToken cancellationToken = default)
@@ -137,19 +141,20 @@ namespace Contact.Infrastructure.Services
                 Source = a.ContactProfile.ProfileType,
                 Value = a.ContactResource.Value,
                 Label = a.ContactResource.Label,
-
+                
                 // اطلاعات مربوط به زمان و وضعیت انتساب
                 EffectiveFrom = a.EffectiveFrom,
                 EffectiveTo = a.EffectiveTo,
                 IsCurrent = a.IsCurrent,
 
                 // مپ کردن موارد وابسته/فرزند از کاتالوگ منبع
-                ChildContactItems = a.ContactResource.ChildContactResources != null && a.ContactResource.ChildContactResources.Any()
-                    ? a.ContactResource.ChildContactResources.Select(c => new ContactItemDto
+                ChildContactItems = a.ContactResource.Children != null && a.ContactResource.Children.Any()
+                    ? a.ContactResource.Children.Select(c => new ContactItemDto
                     {
                         Value = c.Value,
                         Label = c.Label,
                         ContactType = c.ContactType,
+                        
                         
                     }).ToList()
                     : null

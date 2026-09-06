@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authorization.Infrastructure.Migrations
 {
     [DbContext(typeof(AuthorizationDbContext))]
-    [Migration("20260720081713_Edit_1_Authorization")]
+    [Migration("20260903105917_Edit_1_Authorization")]
     partial class Edit_1_Authorization
     {
         /// <inheritdoc />
@@ -270,9 +270,6 @@ namespace Authorization.Infrastructure.Migrations
 
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
-
-                    b.Property<Guid?>("FkParentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Icon")
                         .IsRequired()

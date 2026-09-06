@@ -125,23 +125,23 @@ namespace Core.Infrastructure.Repositories
             {
 
 
-                _logger.LogInformation(
-                      "DbContext Hash befor ApplySpecification: {Hash}",
-                      _dbContext.GetHashCode()
-                    );
+                //_logger.LogInformation(
+                //      "DbContext Hash befor ApplySpecification: {Hash}",
+                //      _dbContext.GetHashCode()
+                //    );
                 var result =await ApplySpecification(specification);
 
-                _logger.LogInformation(
-                      "DbContext Hash after ApplySpecification: {Hash}",
-                      _dbContext.GetHashCode()
-                    );
+                //_logger.LogInformation(
+                //      "DbContext Hash after ApplySpecification: {Hash}",
+                //      _dbContext.GetHashCode()
+                //    );
 
-                var a = await result.ToListAsync();
-                _logger.LogInformation(
-                      "DbContext Hash after ToListAsync: {Hash}",
-                      _dbContext.GetHashCode()
-                    );
-                return a;
+                return await result.ToListAsync();
+                //_logger.LogInformation(
+                //      "DbContext Hash after ToListAsync: {Hash}",
+                //      _dbContext.GetHashCode()
+                //    );
+                //return a;
             }
             catch (Exception ex)
             {

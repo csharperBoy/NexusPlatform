@@ -21,7 +21,7 @@ namespace HR.Domain.Entities
         public string? ModifiedBy { get; set; }                     // 📌 کاربر آخرین تغییر
         #endregion
         #region IHierarchicalStructureEntity Impelement
-        public Guid? FkParentId { get; private set; }
+        public Guid? ParentId { get; private set; }
         public virtual OrganizationUnit? Parent { get; private set; }
         public virtual ICollection<OrganizationUnit> Children { get; private set; } = new List<OrganizationUnit>();
         public void ChangeParent(Guid? newParentId)
@@ -29,7 +29,7 @@ namespace HR.Domain.Entities
             if (newParentId == Id)
                 throw new InvalidOperationException("Menu cannot be its own parent.");
 
-            FkParentId = newParentId;
+            ParentId = newParentId;
             Touch();
 
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
@@ -60,7 +60,7 @@ namespace HR.Domain.Entities
         {
             Name = name;
             Code = code;
-            FkParentId = parentId;
+            ParentId = parentId;
             // Path در زمان سرویس ایجاد (Create) مقداردهی اولیه می‌شود
             // چون اینجا Id هنوز شاید تولید نشده باشد (اگر از Identity دیتابیس استفاده کنید)
             // اما چون Guid دارید، می‌توانید همینجا بسازید
@@ -79,7 +79,7 @@ namespace HR.Domain.Entities
 
         public void SetParent(Guid? fkOrganizationUnitId)
         {
-            FkParentId = fkOrganizationUnitId;
+            ParentId = fkOrganizationUnitId;
         }
     }
 }

@@ -130,7 +130,7 @@ export const usePostManagement = () => {
   };
 
   // --- 2. ویرایش درجا ---
-  const handleFieldChange = (id: string, field: EditableField, value: string | string[]) => {
+  const handleFieldChange = (id: string, field: EditableField, value: string | string[] | null) => {
     setPosts((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -636,7 +636,7 @@ export const usePostManagement = () => {
         };
       });
 
-      await postApi.batchUpdatePosts(commands);
+      await postApi.batchUpdate(commands);
 
       setSuccessMessage(`تعداد ${commands.length} تغییر با موفقیت ذخیره شد.`);
       setInitialPosts(JSON.parse(JSON.stringify(posts)));

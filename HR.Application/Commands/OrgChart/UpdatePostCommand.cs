@@ -1,7 +1,8 @@
-﻿using Core.Shared.Enums.HR;
+﻿using Core.Domain.Common;
+using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
- 
+
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,23 +15,20 @@ namespace HR.Application.Commands.OrgChart
 {
     public record UpdatePostCommand(
         Guid Id,
-  string? Code,
-  Guid? OrganizationUnitId,
-  Guid? JobTitleId,
-  Guid? JobLevelId,
-  Guid? GradeId,
-  Guid? CostCenterId,
-  Guid? ReportsToPostId,
-  bool? IsActive,
-
-  Guid? EmploymentId,
-  PostAssignmentType? AssignType,
-
-     List<Guid>? locationsId,
-  List<string>? OfficePhone,
-  List<string>? OrgEmail,
-  List<string>? OrgMobile
-
+  Optional<string?> Code = default,
+  Optional<Guid?> OrganizationUnitId = default,
+  Optional<Guid> JobTitleId = default,
+  Optional<Guid?> JobLevelId = default,
+  Optional<Guid?> GradeId = default,
+  Optional<Guid?> CostCenterId = default,
+  Optional<Guid?> ReportsToPostId = default,
+  Optional<bool?> IsActive = default,
+  Optional<Guid?> EmploymentId = default,
+  Optional<PostAssignmentType?> AssignType = default,
+  Optional<List<Guid>?> locationsId = default,
+  Optional<List<string>?> OfficePhone = default,
+  Optional<List<string>?> OrgEmail = default,
+  Optional<List<string>?> OrgMobile = default
 ) : IRequest<Result<Guid>>;
 
 
@@ -55,7 +53,7 @@ namespace HR.Application.Commands.OrgChart
                     "Creating resource: {postCode}",
                     request.Code);
 
-                Guid postId = await _orgChartService.UpdatePostAsync(
+                var (hasChanged,jobTitleName) = await _orgChartService.UpdatePostAsync(
                     request.Id,
                        request.Code,
                        request.OrganizationUnitId,
@@ -64,19 +62,22 @@ namespace HR.Application.Commands.OrgChart
                        request.GradeId,
                        request.CostCenterId,
                        request.ReportsToPostId,
-                       request.IsActive, request.OfficePhone, request.OrgEmail, request.OrgMobile
+                       request.IsActive,
+                       request.OfficePhone,
+                       request.OrgEmail,
+                       request.OrgMobile
                     );
-                if (request.EmploymentId != Guid.Empty && request.EmploymentId != null)
+                if (request.EmploymentId.IsSet )
                 {
-                    Guid assignId = await _orgChartService.AssignToEmploymentAsync(new List<Guid> { postId }, (Guid)request.EmploymentId, request.AssignType);
+                     await _orgChartService.AssignToPostAsync(request.Id, new List<Guid?> { request.EmploymentId.Value }, request.AssignType.Value);
                 }
 
                 await _orgChartService.SaveAsync();
                 _logger.LogInformation(
                     "Post created successfully: {postId} ({Code})",
-                    postId, request.Code);
+                    request.Id, request.Code);
 
-                return Result<Guid>.Ok(postId);
+                return Result<Guid>.Ok(request.Id);
             }
             catch (Exception ex)
             {

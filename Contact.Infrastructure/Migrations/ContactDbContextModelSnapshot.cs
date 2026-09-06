@@ -199,7 +199,7 @@ namespace Contact.Infrastructure.Migrations
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ParentContactResourceId")
+                    b.Property<Guid?>("ParentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("RelationType")
@@ -236,7 +236,7 @@ namespace Contact.Infrastructure.Migrations
                     b.HasIndex("OwnerPersonId")
                         .HasDatabaseName("IX_ContactResource_OwnerPerson");
 
-                    b.HasIndex("ParentContactResourceId");
+                    b.HasIndex("ParentId");
 
                     b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
                         .HasDatabaseName("IX_ContactResource_ScopedLookup");
@@ -445,11 +445,11 @@ namespace Contact.Infrastructure.Migrations
 
             modelBuilder.Entity("Contact.Domain.Entities.ContactResource", b =>
                 {
-                    b.HasOne("Contact.Domain.Entities.ContactResource", "ParentContactResource")
-                        .WithMany("ChildContactResources")
-                        .HasForeignKey("ParentContactResourceId");
+                    b.HasOne("Contact.Domain.Entities.ContactResource", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId");
 
-                    b.Navigation("ParentContactResource");
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("Contact.Domain.Entities.ContactProfile", b =>
@@ -461,7 +461,7 @@ namespace Contact.Infrastructure.Migrations
                 {
                     b.Navigation("Assignments");
 
-                    b.Navigation("ChildContactResources");
+                    b.Navigation("Children");
                 });
 #pragma warning restore 612, 618
         }
