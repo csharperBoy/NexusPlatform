@@ -148,62 +148,59 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
   return (
     <div className="flex items-stretch gap-2 transition-all">
       {/* ---------- کارت اصلی ---------- */}
-      <div className="flex-1 bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative">
-        {/* آیکون نوع تماس */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm mt-0.5">
-          {icon}
-        </div>
+      {/* ---------- کارت اصلی ---------- */}
+<div className="flex-1 bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex items-center gap-3 relative">
+  {/* آیکون نوع تماس */}
+  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
+    {icon}
+  </div>
 
-        {/* محتوای کارت */}
-        <div className="flex-1 min-w-0">
-          {/* برچسب‌ها */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
-              {typeBadge.label}
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
-              {sourceBadge.label}
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
-              {ownershipBadge.label}
-            </span>
-            {contact.isPrimary && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
-                ★ اصلی
-              </span>
-            )}
-          </div>
+  {/* محتوای سمت راست: فقط برچسب‌ها و عنوان */}
+  <div className="flex-1 min-w-0">
+    <div className="flex flex-wrap items-center gap-1.5 mb-1">
+      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
+        {typeBadge.label}
+      </span>
+      <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
+        {sourceBadge.label}
+      </span>
+      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
+        {ownershipBadge.label}
+      </span>
+      {contact.isPrimary && (
+        <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
+          ★ اصلی
+        </span>
+      )}
+    </div>
+    <span className="text-sm text-gray-600 font-medium truncate block">
+      {contact.title || 'بدون عنوان'}
+    </span>
+  </div>
 
-         {/* بخش عنوان و مقدار به همراه دکمه در یک ردیف متوازن */}
-        <div className="flex justify-between items-center gap-2 mt-1">
-          <span className="text-sm text-gray-600 font-medium truncate">
-            {contact.title || 'بدون عنوان'}
-          </span>
+  {/* محتوای انتهای کارت (سمت چپ): شماره تماس و دکمه زنجیر که دقیقا هم‌سطح یکدیگرند */}
+  <div className="flex items-center gap-2 flex-shrink-0">
+    {/* مقدار شماره اصلی */}
+    <span className="font-mono text-base font-bold text-gray-800 bg-gray-100/70 px-2 py-1 rounded-md dir-ltr">
+      {contact.value || '-'}
+    </span>
 
-          <div className="flex items-center gap-2">
-            {/* مقدار شماره اصلی */}
-            <span className="font-mono text-base font-bold text-gray-800 bg-gray-100/70 px-2 py-0.5 rounded-md dir-ltr">
-              {contact.value || '-'}
-            </span>
-
-            {/* دکمه آیکون زنجیر هم‌سطح با value */}
-            {hasRelativeContacts && (
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
-                className={`flex-shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer ${
-                  isOpen
-                    ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
-                    : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-600'
-                }`}
-              >
-                <FaLink className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-          </div>
-        </div>
-      </div>
+    {/* دکمه آیکون زنجیر */}
+    {hasRelativeContacts && (
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
+        className={`p-2 rounded-lg border transition-all cursor-pointer ${
+          isOpen
+            ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
+            : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-600'
+        }`}
+      >
+        <FaLink className="w-3.5 h-3.5" />
+      </button>
+    )}
+  </div>
+</div>
 
       {/* ---------- ستون شماره‌های مرتبط (سمت چپ کارت اصلی) ---------- */}
       {hasRelativeContacts && isOpen && (
