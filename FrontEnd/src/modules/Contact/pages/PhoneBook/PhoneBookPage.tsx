@@ -9,9 +9,48 @@ import {
   ContactSourceEnum,
   ContactDetailDto,
   GenderEnum,
-  ContactOwnershipEnum,
+  ContactOwnershipEnum, // اضافه شده
 } from "../../models/PhoneBookEmploymentDto";
-import { FaUser, FaUserCircle , FaFemale , FaMale  } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
+// آیکون‌های متناسب با نوع تماس
+import { 
+  FaMobileAlt, FaPhone, FaEnvelope, FaFax, FaGlobe, 
+  FaWhatsapp, FaInstagram, FaTelegram, FaLinkedin, 
+  FaMapMarkerAlt, FaMailBulk, FaHashtag, FaAddressCard,
+  FaArrowLeft
+} from 'react-icons/fa';
+// --- Helper Functions ---
+
+const getContactIcon = (type?: ContactTypeEnum | null) => {
+  switch (type) {
+    case ContactTypeEnum.Mobile:
+    case ContactTypeEnum.OrganizationMobile:
+      return <FaMobileAlt className="text-blue-500" />;
+    case ContactTypeEnum.Phone:
+    case ContactTypeEnum.OfficePhone:
+      return <FaPhone className="text-green-500" />;
+    case ContactTypeEnum.Email:
+      return <FaEnvelope className="text-purple-500" />;
+    case ContactTypeEnum.Fax:
+      return <FaFax className="text-orange-500" />;
+    case ContactTypeEnum.Website:
+      return <FaGlobe className="text-teal-500" />;
+    case ContactTypeEnum.WhatsApp:
+      return <FaWhatsapp className="text-green-600" />;
+    case ContactTypeEnum.Instagram:
+      return <FaInstagram className="text-pink-600" />;
+    case ContactTypeEnum.Telegram:
+      return <FaTelegram className="text-cyan-600" />;
+    case ContactTypeEnum.LinkedIn:
+      return <FaLinkedin className="text-indigo-600" />;
+    case ContactTypeEnum.Address:
+      return <FaMapMarkerAlt className="text-gray-600" />;
+    case ContactTypeEnum.PostalCode:
+      return <FaHashtag className="text-gray-500" />;
+    default:
+      return <FaAddressCard className="text-gray-400" />;
+  }
+};
 
 const getGenderIcon = (gender?: GenderEnum | null) => {
   switch (gender) {
@@ -23,7 +62,7 @@ const getGenderIcon = (gender?: GenderEnum | null) => {
       return <FaUser className="text-gray-400 text-lg" />;
   }
 };
-// تابع جدید برای آیکون جنسیت با سایز بزرگ (برای نمایش در بخش اطلاعات شخصی)
+
 const getGenderIconLarge = (gender?: GenderEnum | null) => {
   switch (gender) {
     case GenderEnum.Male:
@@ -34,45 +73,209 @@ const getGenderIconLarge = (gender?: GenderEnum | null) => {
       return <FaUser className="text-gray-400 text-5xl" />;
   }
 };
-// --- Helper Functions ---
+
 const getContactTypeBadge = (type?: ContactTypeEnum | null) => {
   switch (type) {
-    case ContactTypeEnum.Mobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
-    case ContactTypeEnum.OrganizationMobile: return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
-    case ContactTypeEnum.Phone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
-    case ContactTypeEnum.OfficePhone: return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
-    case ContactTypeEnum.Email: return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
-    case ContactTypeEnum.Fax: return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
-    case ContactTypeEnum.Address: return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
-    default: return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
+    case ContactTypeEnum.Mobile:
+    case ContactTypeEnum.OrganizationMobile:
+      return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    case ContactTypeEnum.Phone:
+    case ContactTypeEnum.OfficePhone:
+      return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
+    case ContactTypeEnum.Email:
+      return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
+    case ContactTypeEnum.Fax:
+      return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
+    case ContactTypeEnum.Website:
+      return { label: "وب‌سایت", color: "bg-teal-100 text-teal-800 border-teal-200" };
+    case ContactTypeEnum.WhatsApp:
+      return { label: "واتس‌اپ", color: "bg-green-200 text-green-800 border-green-300" };
+    case ContactTypeEnum.Instagram:
+      return { label: "اینستاگرام", color: "bg-pink-200 text-pink-800 border-pink-300" };
+    case ContactTypeEnum.Telegram:
+      return { label: "تلگرام", color: "bg-cyan-100 text-cyan-800 border-cyan-200" };
+    case ContactTypeEnum.LinkedIn:
+      return { label: "لینکدین", color: "bg-indigo-100 text-indigo-800 border-indigo-200" };
+    case ContactTypeEnum.Address:
+      return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
+    case ContactTypeEnum.PostalCode:
+      return { label: "کد پستی", color: "bg-gray-200 text-gray-700 border-gray-300" };
+    default:
+      return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
   }
 };
 
 const getSourceBadge = (source?: ContactSourceEnum | null) => {
   switch (source) {
-    case ContactSourceEnum.Personal: return { label: "شخص", color: "bg-gray-200 text-gray-600" };
-    case ContactSourceEnum.post: return { label: "پست", color: "bg-amber-50 text-amber-700 border border-amber-200" };
-    case ContactSourceEnum.employment: return { label: "کارمند", color: "bg-amber-50 text-amber-700 border border-amber-200" };
-    case ContactSourceEnum.location: return { label: "محل استقرار", color: "bg-blue-200 text-gray-600" };
-   default: return { label: "سازمانی", color: "bg-gray-100 text-gray-700 border-gray-200" };
+    case ContactSourceEnum.Personal:
+      return { label: "فرد", color: "bg-gray-200 text-gray-600" };
+    case ContactSourceEnum.post:
+       return { label: "پست", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.employment:
+      return { label: "کارمند", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+    case ContactSourceEnum.location:
+      return { label: "محل استقرار", color: "bg-blue-200 text-gray-600" };
+    default:
+      return { label: "کارمند", color: "bg-gray-100 text-gray-700 border-gray-200" };
   }
-};
-const getOwnerBadge = (source?: ContactOwnershipEnum | null) => {
-  switch (source) {
-    case ContactOwnershipEnum.Personal: return { label: "شخصی", color: "bg-yellow-200 text-gray-600" };
-    case ContactOwnershipEnum.Organizational: return { label: "سازمانی", color: "bg-purpel-50 text-amber-700 border border-amber-200" };
-    
-   default: return { label: "سازمانی", color: "bg-purpel-50 text-amber-700 border border-amber-200" };
-  }
-};
-// تابع بیرون کشیده شده برای آیکون سورت (جلوگیری از re-render)
-const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConfig }) => {
-  if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
-  if (sortConfig.direction === "asc") return <span className="text-blue-600 mr-1 text-[10px]">▲</span>;
-  if (sortConfig.direction === "desc") return <span className="text-blue-600 mr-1 text-[10px]">▼</span>;
-  return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
 };
 
+// تابع جدید برای نمایش مالکیت (Owner)
+const getOwnershipBadge = (ownership?: ContactOwnershipEnum | null) => {
+  switch (ownership) {
+    case ContactOwnershipEnum.Personal:
+      return { label: "شخصی", color: "bg-indigo-100 text-indigo-800 border-indigo-200" };
+    case ContactOwnershipEnum.Organizational:
+      return { label: "سازمانی", color: "bg-amber-100 text-amber-800 border-amber-200" };
+    default:
+      return { label: "نامشخص", color: "bg-gray-100 text-gray-500 border-gray-200" };
+  }
+};
+
+// ---------- کامپوننت ContactItem ----------
+const ContactItem: React.FC<{
+  contact: ContactDetailDto;
+  depth?: number;       // سطح تو رفتگی (0 برای اصلی، 1 و بیشتر برای مرتبط)
+  isLast?: boolean;     // آیا آخرین آیتم در سطح خود است (برای خطوط اتصال)
+}> = ({ contact, depth = 0, isLast = true }) => {
+  // استیت برای باز/بسته شدن آکاردئون (فقط برای آیتمهایی که RelativeContact دارند)
+  const [isOpen, setIsOpen] = useState(false);
+
+  // اطلاعات برچسبها و آیکون
+  const typeBadge = getContactTypeBadge(contact.type);
+  const sourceBadge = getSourceBadge(contact.source);
+  const ownershipBadge = getOwnershipBadge(contact.ownership);
+  const icon = getContactIcon(contact.type);
+
+  // بررسی وجود تماسهای مرتبط
+  const hasRelativeContacts = contact.relativeContact && contact.relativeContact.length > 0;
+  const relativeCount = contact.relativeContact?.length || 0;
+
+  // تغییر وضعیت آکاردئون
+  const toggleAccordion = (e: React.MouseEvent) => {
+    e.stopPropagation(); // جلوگیری از انتشار کلیک به والد
+    if (hasRelativeContacts) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  return (
+    <div className="relative">
+      {/* ---------- خطوط اتصال برای سطوح بالاتر از صفر ---------- */}
+      {depth > 0 && (
+        <>
+          <div 
+            className={`absolute right-6 top-0 w-0.5 bg-gray-300 ${isLast ? 'h-1/2' : 'h-full'}`} 
+            style={{ right: '12px' }} 
+          />
+          <div 
+            className="absolute right-4 top-1/2 w-6 border-t border-gray-300" 
+            style={{ right: '12px' }} 
+          />
+        </>
+      )}
+
+      <div className={`flex items-start gap-3 ${depth > 0 ? 'mr-8' : ''}`}>
+        {/* ---------- آیکون نوع تماس ---------- */}
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
+          {icon}
+        </div>
+
+        {/* ---------- کارت اصلی ---------- */}
+        <div 
+          className={`flex-1 rounded-xl p-3 transition-all duration-200 relative ${
+            depth === 0 
+              ? 'bg-white border border-gray-200 shadow-md hover:shadow-lg' 
+              : 'bg-gray-50/90 border border-gray-200/70 shadow-sm hover:shadow-md'
+          } ${depth === 0 && hasRelativeContacts ? 'pb-7' : ''}`} 
+          // برای سطح ۰ و دارای زیرمجموعه، padding پایین بیشتر برای جا دادن دکمه
+        >
+          {/* ---------- ردیف برچسبها ---------- */}
+          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
+                {typeBadge.label}
+              </span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
+                {sourceBadge.label}
+              </span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
+                {ownershipBadge.label}
+              </span>
+              {contact.isPrimary && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
+                  ★ اصلی
+                </span>
+              )}
+              {depth > 0 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full border border-purple-200 bg-purple-50 text-purple-600">
+                  مرتبط
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ---------- عنوان و مقدار ---------- */}
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-600 font-medium">{contact.title || 'بدون عنوان'}</span>
+            <span className="font-mono text-base font-bold text-gray-800 bg-gray-100/70 px-2 py-0.5 rounded-md dir-ltr">
+              {contact.value || '-'}
+            </span>
+          </div>
+
+          {/* ---------- بخش آکاردئون (تماسهای مرتبط) ---------- */}
+          {hasRelativeContacts && (
+            <div 
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                isOpen ? 'max-h-[1000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
+              }`}
+            >
+              <div className="pt-2 border-t border-dashed border-gray-200 space-y-2">
+                {contact.relativeContact!.map((rel, idx) => (
+                  <ContactItem 
+                    key={idx} 
+                    contact={rel} 
+                    depth={depth + 1} 
+                    isLast={idx === contact.relativeContact!.length - 1} 
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ---------- دکمه آکاردئون ---------- */}
+          {/* برای سطح ۰: دکمه روی خط border پایین کارت */}
+          {depth === 0 && hasRelativeContacts && (
+            <button
+              onClick={toggleAccordion}
+              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white hover:bg-gray-50 transition-all border-2 border-gray-200 shadow-sm hover:shadow-md z-10 whitespace-nowrap"
+            >
+              <span className="text-gray-600">
+                {isOpen ? 'بستن' : `${relativeCount} مورد`}
+              </span>
+              <span className={`transform transition-transform duration-300 inline-block text-gray-500 ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
+                ▼
+              </span>
+            </button>
+          )}
+
+          {/* برای سطوح عمیقتر: دکمه بهصورت معمولی درون کارت */}
+          {depth > 0 && hasRelativeContacts && (
+            <button
+              onClick={toggleAccordion}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200 mt-2"
+            >
+              <span className="text-gray-600">{relativeCount} مورد</span>
+              <span className={`transform transition-transform duration-300 inline-block ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
+                ▼
+              </span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 // --- Types ---
 type GroupByOption = "none" | "headOfOrganizationUnitsName" | "jobTitleName" | "locationTitle";
 type SortDirection = "asc" | "desc" | null;
@@ -81,18 +284,21 @@ interface SortConfig {
   direction: SortDirection;
 }
 
+const SortIcon = ({ column, sortConfig }: { column: string, sortConfig: SortConfig }) => {
+  if (sortConfig.column !== column) return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
+  if (sortConfig.direction === "asc") return <span className="text-blue-600 mr-1 text-[10px]">▲</span>;
+  if (sortConfig.direction === "desc") return <span className="text-blue-600 mr-1 text-[10px]">▼</span>;
+  return <span className="text-gray-300 mr-1 text-[10px]">↕</span>;
+};
+
 export const PhoneBookPage: React.FC = () => {
   const [data, setData] = useState<PhoneBookEmploymentDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // --- States ---
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
   const [groupBy, setGroupBy] = useState<GroupByOption>("headOfOrganizationUnitsName");
-
-  // Setهایی برای مدیریت باز و بسته بودن کرکره‌ها
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -112,7 +318,6 @@ export const PhoneBookPage: React.FC = () => {
     }
   };
 
-  // --- Handlers ---
   const toggleGroup = (groupName: string) => {
     setCollapsedGroups((prev) => {
       const next = new Set(prev);
@@ -145,199 +350,142 @@ export const PhoneBookPage: React.FC = () => {
     setColumnSearch((prev) => ({ ...prev, [column]: value }));
   };
 
-  // --- Data Pipeline (Filter -> Sort -> Group) ---
   const processedData = useMemo(() => {
-  let result = [...data];
+    let result = [...data];
 
-  // ۱. فیلتر ستون‌ها
-  Object.entries(columnSearch).forEach(([key, term]) => {
-    if (term.trim()) {
+    Object.entries(columnSearch).forEach(([key, term]) => {
+      if (term.trim()) {
+        result = result.filter((emp) => {
+          const q = term.toLowerCase();
+          if (key === "fullName") {
+            const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
+            return full.toLowerCase().includes(q);
+          }
+          const value = emp[key as keyof PhoneBookEmploymentDto];
+          if (value == null) return false;
+          if (Array.isArray(value)) {
+            return value.some(item => typeof item === 'string' && item.toLowerCase().includes(q));
+          }
+          if (typeof value === 'string') {
+            return value.toLowerCase().includes(q);
+          }
+          return false;
+        });
+      }
+    });
+
+    if (globalSearch.trim()) {
+      const q = globalSearch.toLowerCase();
       result = result.filter((emp) => {
-        const q = term.toLowerCase();
-
-        if (key === "fullName") {
-          const full = emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`;
-          return full.toLowerCase().includes(q);
-        }
-
-        const value = emp[key as keyof PhoneBookEmploymentDto];
-        
-        // اگر undefined یا null باشه
-        if (value == null) return false;
-
-        // اگر آرایه باشه
-        if (Array.isArray(value)) {
-          return value.some(item => {
-            if (typeof item !== 'string') return false;
-            return item.toLowerCase().includes(q);
-          });
-        }
-
-        // اگر رشته باشه
-        if (typeof value === 'string') {
+        const searchInString = (value?: string | null): boolean => {
+          if (!value) return false;
           return value.toLowerCase().includes(q);
-        }
-
-        return false;
+        };
+        const searchInArray = (arr?: string[] | null): boolean => {
+          if (!arr || arr.length === 0) return false;
+          return arr.some(item => item && item.toLowerCase().includes(q));
+        };
+        return (
+          searchInString(emp.firstName) ||
+          searchInString(emp.lastName) ||
+          searchInArray(emp.headOfOrganizationUnitsName) ||
+          searchInArray(emp.jobTitleName) ||
+          searchInArray(emp.locationTitle) ||
+          searchInString(emp.contactSummary)
+        );
       });
     }
-  });
 
-  // ۲. فیلتر گلوبال
-  if (globalSearch.trim()) {
-    const q = globalSearch.toLowerCase();
-    result = result.filter((emp) => {
-      const searchInString = (value?: string | null): boolean => {
-        if (!value) return false;
-        return value.toLowerCase().includes(q);
-      };
-
-      const searchInArray = (arr?: string[] | null): boolean => {
-        if (!arr || arr.length === 0) return false;
-        return arr.some(item => {
-          if (!item) return false;
-          return item.toLowerCase().includes(q);
-        });
-      };
-
-      return (
-        searchInString(emp.firstName) ||
-        searchInString(emp.lastName) ||
-        searchInArray(emp.headOfOrganizationUnitsName) ||
-        searchInArray(emp.jobTitleName) ||
-        searchInArray(emp.locationTitle) ||
-        searchInString(emp.contactSummary)
-      );
-    });
-  }
-
-  // ۳. سورت
-  if (sortConfig.direction && sortConfig.column) {
-    result.sort((a, b) => {
-      const col = sortConfig.column as keyof PhoneBookEmploymentDto;
-      
-      const getStringValue = (obj: PhoneBookEmploymentDto, column: keyof PhoneBookEmploymentDto): string => {
-        if (column === "fullName") {
-          return obj.fullName || `${obj.firstName || ""} ${obj.lastName || ""}`;
-        }
-        
-        const val = obj[column];
-        if (val == null) return "";
-        if (Array.isArray(val)) {
-          return val.filter(v => v != null).join(" - ");
-        }
-        return val.toString();
-      };
-
-      const aVal = getStringValue(a, col);
-      const bVal = getStringValue(b, col);
-      
-      const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
-      return sortConfig.direction === "asc" ? compareResult : -compareResult;
-    });
-  }
-
-  // ۴. گروه‌بندی
-  if (groupBy === "none") return { "همه اعضا": result };
-
-  const groups: Record<string, PhoneBookEmploymentDto[]> = {};
-  result.forEach(emp => {
-    let groupValues: string[] = [];
-    switch (groupBy) {
-      case "headOfOrganizationUnitsName":
-        groupValues = emp.headOfOrganizationUnitsName || [];
-        break;
-      case "jobTitleName":
-        groupValues = emp.jobTitleName || [];
-        break;
-      case "locationTitle":
-        groupValues = emp.locationTitle || [];
-        break;
-      default:
-        groupValues = [];
+    if (sortConfig.direction && sortConfig.column) {
+      result.sort((a, b) => {
+        const col = sortConfig.column as keyof PhoneBookEmploymentDto;
+        const getStringValue = (obj: PhoneBookEmploymentDto, column: keyof PhoneBookEmploymentDto): string => {
+          if (column === "fullName") {
+            return obj.fullName || `${obj.firstName || ""} ${obj.lastName || ""}`;
+          }
+          const val = obj[column];
+          if (val == null) return "";
+          if (Array.isArray(val)) {
+            return val.filter(v => v != null).join(" - ");
+          }
+          return val.toString();
+        };
+        const aVal = getStringValue(a, col);
+        const bVal = getStringValue(b, col);
+        const compareResult = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+        return sortConfig.direction === "asc" ? compareResult : -compareResult;
+      });
     }
 
-    // حذف مقادیر null/undefined و خالی
-    const validGroupValues = groupValues.filter(v => v && v.trim().length > 0);
-    
-    if (validGroupValues.length === 0) {
-      validGroupValues.push("تعریف نشده");
-    }
+    if (groupBy === "none") return { "همه اعضا": result };
 
-    validGroupValues.forEach(value => {
-      if (!groups[value]) groups[value] = [];
-      groups[value].push(emp);
+    const groups: Record<string, PhoneBookEmploymentDto[]> = {};
+    result.forEach(emp => {
+      let groupValues: string[] = [];
+      switch (groupBy) {
+        case "headOfOrganizationUnitsName":
+          groupValues = emp.headOfOrganizationUnitsName || [];
+          break;
+        case "jobTitleName":
+          groupValues = emp.jobTitleName || [];
+          break;
+        case "locationTitle":
+          groupValues = emp.locationTitle || [];
+          break;
+        default:
+          groupValues = [];
+      }
+      const validGroupValues = groupValues.filter(v => v && v.trim().length > 0);
+      if (validGroupValues.length === 0) {
+        validGroupValues.push("تعریف نشده");
+      }
+      validGroupValues.forEach(value => {
+        if (!groups[value]) groups[value] = [];
+        groups[value].push(emp);
+      });
     });
-  });
-
-  return groups;
-}, [data, globalSearch, columnSearch, sortConfig, groupBy]);
-
+    return groups;
+  }, [data, globalSearch, columnSearch, sortConfig, groupBy]);
 
   if (loading) return <div className="p-8 text-center text-gray-500">در حال دریافت...</div>;
   if (error) return <div className="p-4 bg-red-50 text-red-700 rounded m-6">{error}</div>;
 
   return (
     <div className="p-6 dir-rtl text-right font-sans">
-      {/* هدر و کنترل‌های اصلی */}
-<div className="flex flex-wrap items-end justify-between gap-4 mb-6 p-4 rounded-xl border border-gray-200 shadow-sm"
-     style={{ backgroundColor: 'rgb(0, 48, 111)' }}>
-  
-  {/* بخش لوگو و عنوان */}
-  <div className="flex items-center gap-4 mb-3">
-    <img 
-      src={logo} 
-      alt="لوگو سازمان" 
-      className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
-    />
-    <div className="h-10 md:h-12 w-[1.5px] bg-gray-300 rounded-full"></div>
-    <div className="flex flex-col">
-      <h1 className="font-black text-xl md:text-2xl text-white tracking-wide">
-        سامانه جامع اطلاعات تماس همکاران
-      </h1>
-      <span className="text-xs text-blue-200 font-medium mt-0.5">
-        دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان
-      </span>
-    </div>
-  </div>
+      {/* هدر */}
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6 p-4 rounded-xl border border-gray-200 shadow-sm" style={{ backgroundColor: 'rgb(0, 48, 111)' }}>
+        <div className="flex items-center gap-4 mb-3">
+          <img src={logo} alt="لوگو سازمان" className="h-16 md:h-20 w-auto object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105" />
+          <div className="h-10 md:h-12 w-[1.5px] bg-gray-300 rounded-full"></div>
+          <div className="flex flex-col">
+            <h1 className="font-black text-xl md:text-2xl text-white tracking-wide">سامانه جامع اطلاعات تماس همکاران</h1>
+            <span className="text-xs text-blue-200 font-medium mt-0.5">دفترچه تلفن و راهنمای ارتباطات درون‌سازمانی شرکت فولاد امیرکبیر کاشان</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col">
+            <label className="text-xs text-blue-200 mb-1">جستجوی کلی</label>
+            <input type="text" placeholder="جستجو در تمام فیلدها..." value={globalSearch} onChange={(e) => setGlobalSearch(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 backdrop-blur-sm" />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs text-blue-200 mb-1">گروه‌بندی بر اساس</label>
+            <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white/90 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 outline-none">
+              <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
+              <option value="jobTitleName">عنوان شغلی</option>
+              <option value="locationTitle">محل استقرار</option>
+              <option value="none">بدون گروه‌بندی</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-  {/* بخش کنترل‌ها (جستجو و گروه‌بندی) - بدون تغییر */}
-  <div className="flex items-center gap-4">
-    <div className="flex flex-col">
-      <label className="text-xs text-blue-200 mb-1">جستجوی کلی</label>
-      <input
-        type="text"
-        placeholder="جستجو در تمام فیلدها..."
-        value={globalSearch}
-        onChange={(e) => setGlobalSearch(e.target.value)}
-        className="px-4 py-2 border border-gray-300 rounded-lg text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none bg-white/90 backdrop-blur-sm"
-      />
-    </div>
-
-    <div className="flex flex-col">
-      <label className="text-xs text-blue-200 mb-1">گروه‌بندی بر اساس</label>
-      <select
-        value={groupBy}
-        onChange={(e) => setGroupBy(e.target.value as GroupByOption)}
-        className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white/90 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 outline-none"
-      >
-        <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
-        <option value="jobTitleName">عنوان شغلی</option>
-        <option value="locationTitle">محل استقرار</option>
-        <option value="none">بدون گروه‌بندی</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-      {/* جدول یکپارچه */}
+      {/* جدول */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden overflow-x-auto">
         <table className="w-full text-right border-collapse">
           <thead>
-            {/* ردیف اول: عنوان ستون‌ها و دکمه سورت */}
             <tr className="bg-gray-100 border-b border-gray-200 text-gray-700 text-sm">
               <th className="py-3 px-4 w-12"></th>
-               <th className="py-3 px-4 w-14 text-center">تصویر</th>
+              <th className="py-3 px-4 w-14 text-center">تصویر</th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("fullName")}>
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
@@ -354,220 +502,117 @@ export const PhoneBookPage: React.FC = () => {
                 اطلاعات تماس <SortIcon column="contactSummary" sortConfig={sortConfig} />
               </th>
             </tr>
-            {/* ردیف دوم: باکس‌های جستجو زیر هر ستون */}
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="py-2 px-2"></th>
               <th className="py-2 px-2"></th>
               <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="جستجو نام..."
-                  value={columnSearch["fullName"] || ""}
-                  onChange={(e) => handleColumnSearch("fullName", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
+                <input type="text" placeholder="جستجو نام..." value={columnSearch["fullName"] || ""} onChange={(e) => handleColumnSearch("fullName", e.target.value)} className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
               </th>
               <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="جستجو واحد..."
-                  value={columnSearch["headOfOrganizationUnitsName"] || ""}
-                  onChange={(e) => handleColumnSearch("headOfOrganizationUnitsName", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
+                <input type="text" placeholder="جستجو واحد..." value={columnSearch["headOfOrganizationUnitsName"] || ""} onChange={(e) => handleColumnSearch("headOfOrganizationUnitsName", e.target.value)} className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
               </th>
               <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="جستجو سمت..."
-                  value={columnSearch["jobTitleName"] || ""}
-                  onChange={(e) => handleColumnSearch("jobTitleName", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
+                <input type="text" placeholder="جستجو سمت..." value={columnSearch["jobTitleName"] || ""} onChange={(e) => handleColumnSearch("jobTitleName", e.target.value)} className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
               </th>
               <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="جستجو محل..."
-                  value={columnSearch["locationTitle"] || ""}
-                  onChange={(e) => handleColumnSearch("locationTitle", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
+                <input type="text" placeholder="جستجو محل..." value={columnSearch["locationTitle"] || ""} onChange={(e) => handleColumnSearch("locationTitle", e.target.value)} className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
               </th>
               <th className="py-2 px-2 align-top">
-                <input
-                  type="text"
-                  placeholder="جستجو تماس..."
-                  value={columnSearch["contactSummary"] || ""}
-                  onChange={(e) => handleColumnSearch("contactSummary", e.target.value)}
-                  className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500"
-                />
+                <input type="text" placeholder="جستجو تماس..." value={columnSearch["contactSummary"] || ""} onChange={(e) => handleColumnSearch("contactSummary", e.target.value)} className="w-full mt-2 px-2 py-1 text-xs font-normal text-gray-700 bg-white border border-gray-300 rounded focus:outline-none focus:border-blue-500" />
               </th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-gray-100">
             {Object.keys(processedData).length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-500">رکوردی یافت نشد.</td>
-              </tr>
+              <tr><td colSpan={7} className="text-center py-12 text-gray-500">رکوردی یافت نشد.</td></tr>
             ) : (
               Object.entries(processedData).map(([groupName, employments]) => {
                 const isGroupCollapsed = collapsedGroups.has(groupName);
-
                 return (
                   <React.Fragment key={groupName}>
-                    {/* ردیف هدر گروه (فقط اگر گروه‌بندی فعال باشد) */}
                     {groupBy !== "none" && (
-                      <tr 
-                        className="bg-blue-50/50 hover:bg-blue-50 cursor-pointer border-t-2 border-t-blue-100"
-                        onClick={() => toggleGroup(groupName)}
-                      >
+                      <tr className="bg-blue-50/50 hover:bg-blue-50 cursor-pointer border-t-2 border-t-blue-100" onClick={() => toggleGroup(groupName)}>
                         <td colSpan={7} className="py-3 px-4">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-3">
-                              <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-90" : "rotate-0"}`}>
-                                ▼
-                              </span>
+                              <span className={`transform transition-transform duration-200 inline-block text-blue-600 text-xs ${isGroupCollapsed ? "rotate-90" : "rotate-0"}`}>▼</span>
                               <span className="font-bold text-gray-800">{groupName}</span>
                             </div>
-                            <span className="text-xs bg-white text-blue-800 border border-blue-200 px-3 py-1 rounded-full shadow-sm">
-                              {employments.length} نفر
-                            </span>
+                            <span className="text-xs bg-white text-blue-800 border border-blue-200 px-3 py-1 rounded-full shadow-sm">{employments.length} نفر</span>
                           </div>
                         </td>
                       </tr>
                     )}
-
-                    {/* ردیف‌های کارمندان داخل این گروه */}
                     {!isGroupCollapsed && employments.map((emp) => {
-                     const isExpanded = expandedRows.has(emp.uniqueKey);
-                       const hasMultiple =true;// emp.hasMultipleContacts ?? (emp.contacts && emp.contacts.length > 1);
+                      const isExpanded = expandedRows.has(emp.uniqueKey);
+                      const hasMultiple = emp.contacts && emp.contacts.length > 1;
 
                       return (
                         <React.Fragment key={emp.uniqueKey}>
-                          {/* سطر اصلی */}
-                          <tr
-                            onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)}
-                            className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}
-                          >
+                          <tr onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)} className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}>
                             <td className="py-3 px-4 text-center">
-                              {hasMultiple ? (
-                                <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>
-                                  ◀
-                                </span>
-                              ) : null}
+                              {hasMultiple ? <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>◀</span> : null}
                             </td>
-
-<td className="py-3 px-4 text-center">
-        {emp.profilePictureUrl ? (
-          <img
-            src={emp.profilePictureUrl}
-            alt="پروفایل"
-            className="w-10 h-10 rounded-full object-cover border border-gray-200"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-            {getGenderIcon(emp.gender)}
-          </div>
-        )}
-      </td>
-
-
-                            <td className="py-3 px-4 font-medium text-gray-800">
-                              {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
+                            <td className="py-3 px-4 text-center">
+                              {emp.profilePictureUrl ? (
+                                <img src={emp.profilePictureUrl} alt="پروفایل" className="w-10 h-10 rounded-full object-cover border border-gray-200" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
+                                  {getGenderIcon(emp.gender)}
+                                </div>
+                              )}
                             </td>
+                            <td className="py-3 px-4 font-medium text-gray-800">{emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.jobTitleName?.join(" - ") || "-"}</td>
-                            <td className="py-3 px-4 text-gray-600"> {emp.locationTitle?.join(" - ") || "-"}</td>
-                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-                              {emp.contactSummary || "-"}
-                            </td>
+                            <td className="py-3 px-4 text-gray-600">{emp.locationTitle?.join(" - ") || "-"}</td>
+                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">{emp.contactSummary || "-"}</td>
                           </tr>
 
-                          {/* زیر‌جدول راه‌های ارتباطی */}
-{hasMultiple && isExpanded && (
-  <tr className="bg-gray-50">
-    <td colSpan={7} className="p-4 border-b border-gray-200">
-      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-inner">
-        {/* چیدمان دو ستونی: راست = اطلاعات شخصی، چپ = مخاطبین */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* ستون راست: اطلاعات شخصی */}
-          <div className="md:col-span-1 flex flex-col items-center justify-center border-l border-gray-200 pl-4">
-            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 mb-3">
-              {emp.profilePictureUrl ? (
-                <img
-                  src={emp.profilePictureUrl}
-                  alt="پروفایل"
-                  className="w-24 h-24 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
-                  {getGenderIconLarge(emp.gender)}
-                </div>
-              )}
-            </div>
-            <div className="text-center">
-              <h3 className="font-bold text-gray-800 text-base">
-                {emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}
-              </h3>
-               <p className="text-sm text-gray-600" title="رده">
-                 {emp.jobLevelTitle?.join(" - ") || "-"}
-              </p>
-              <p className="text-sm text-gray-600 mt-1" title="عنوان شغلی">
-               {emp.jobTitleName?.join(" - ") || "-"}
-              </p>
-              <p className="text-sm text-gray-600" title="معاونت">
- {emp.headOfOrganizationUnitsName?.join(" - ") || "-"}
-              </p>
-              
-              
-              <p className="text-sm text-gray-600" title="واحد">
-                {emp.organizationUnitsName?.join(" - ") || "-"}
-              </p>
-              <p className="text-sm text-gray-600" title=" محل استقرار">
-                 {emp.locationTitle?.join(" - ") || "-"} 
-              </p>
-            </div>
-          </div>
+                          {/* زیرجدول تماس‌ها */}
+                          {hasMultiple && isExpanded && (
+                            <tr className="bg-gray-50">
+                              <td colSpan={7} className="p-4 border-b border-gray-200">
+                                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-inner">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {/* ستون اطلاعات شخصی */}
+                                    <div className="md:col-span-1 flex flex-col items-center justify-center border-l border-gray-200 pl-4">
+                                      <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 mb-3">
+                                        {emp.profilePictureUrl ? (
+                                          <img src={emp.profilePictureUrl} alt="پروفایل" className="w-24 h-24 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
+                                            {getGenderIconLarge(emp.gender)}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="text-center">
+                                        <h3 className="font-bold text-gray-800 text-base">{emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}</h3>
+                                        <p className="text-sm text-gray-600" title="رده">{emp.jobLevelTitle?.join(" - ") || "-"}</p>
+                                        <p className="text-sm text-gray-600 mt-1" title="عنوان شغلی">{emp.jobTitleName?.join(" - ") || "-"}</p>
+                                        <p className="text-sm text-gray-600" title="معاونت">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</p>
+                                        <p className="text-sm text-gray-600" title="واحد">{emp.organizationUnitsName?.join(" - ") || "-"}</p>
+                                        <p className="text-sm text-gray-600" title="محل استقرار">{emp.locationTitle?.join(" - ") || "-"}</p>
+                                      </div>
+                                    </div>
 
-          {/* ستون چپ: اطلاعات تماس */}
-          <div className="md:col-span-2">
-            <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2">
-              جزییات تماس
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {emp.contacts?.map((contact: ContactDetailDto, index: number) => {
-                const typeBadge = getContactTypeBadge(contact.type);
-                const ownerBadge = getOwnerBadge(contact.Ownership);
-                const sourceBadge = getSourceBadge(contact.source);
-                return (
-                  <div key={index} className="flex flex-col p-2.5 bg-gray-50 rounded-md border border-gray-100">
-                    <div className="flex flex-warp justify-begin gap-1 mb-1">
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${typeBadge.color}`}>
-                        {typeBadge.label}
-                      </span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded border ${ownerBadge.color}`}>
-                        {ownerBadge.label}
-                      </span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${sourceBadge.color}`}>
-                        {sourceBadge.label}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                       <span className="text-xs  text-gray-500">{contact.title}</span> 
-                      <span className="font-mono  text-base font-bold text-gray-800 dir-ltr">{contact.value}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    </td>
-  </tr>
-)}
+                                    {/* ستون اطلاعات تماس */}
+                                    <div className="md:col-span-2">
+                                      <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2 flex items-center gap-2">
+                                        <FaAddressCard className="text-gray-400" /> جزییات تماس
+                                      </h4>
+                                      <div className="space-y-3">
+                                        {emp.contacts?.map((contact, index) => (
+                                          <ContactItem key={index} contact={contact} depth={0} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
                         </React.Fragment>
                       );
                     })}

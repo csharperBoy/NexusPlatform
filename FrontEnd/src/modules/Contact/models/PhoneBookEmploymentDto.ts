@@ -29,9 +29,9 @@ export interface ContactDetailDto {
   type?: ContactTypeEnum | null;
   source?: ContactSourceEnum | null;
  
-  Ownership?: ContactOwnershipEnum  | null;//add new
-  RelativeContact?:ContactDetailDto[] | null;//add new
-
+  ownership?: ContactOwnershipEnum  | null;//add new
+  relativeContact?:ContactDetailDto[] | null;//add new
+  isPrimary?: boolean | null;
 
 }
 export enum ContactOwnershipEnum
