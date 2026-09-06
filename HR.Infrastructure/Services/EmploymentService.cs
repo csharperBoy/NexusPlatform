@@ -321,7 +321,7 @@ namespace HR.Infrastructure.Services
         {
             var empList = await _employmentInfoRepository.GetAllAsync();
             var emptIds = empList.Select(p => p.Id).ToList();
-            var tempList = await _hrUow.OrganizationUnitRepository.GetAllAsync(queryOptions: q=>q.Include(a=>a.Parent));
+            //var tempList = await _hrUow.OrganizationUnitRepository.GetAllAsync(queryOptions: q=>q.Include(a=>a.Parent));
             var postsAssign = await _assignmentRepository.GetAllAsync(queryOptions:
                 q => q.Where(a => emptIds.Contains(a.FkEmploymentId) && a.IsCurrent)
                 .Include(p => p.Post).ThenInclude(p => p.OrganizationUnit).ThenInclude(p => p.Parent)
@@ -357,7 +357,17 @@ namespace HR.Infrastructure.Services
                 PartyProfileId = s.FkPartyContactProfileId,
                 PartyId = s.PartyId,
                 empLocations = empLocList.Where(l => l.FkEmploymentId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
-                postLocations = postLocList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
+                //postLocations = postLocList.Where(l => l.FkPostId == s.Id).Select(s => new LocationInfoDto { Id = s.Location.Id, Title = s.Location.Title, ProfileId = s.Location.FkContactProfileId }).ToList(),
+                postLocations = postsAssign
+                                        .Where(p => p.FkEmploymentId == s.Id)                   // پست‌های جاری این کارمند
+                                        .SelectMany(p => postLocList.Where(l => l.FkPostId == p.FkPostId)) // موقعیت‌های آن پست‌ها
+                                        .Select(loc => new LocationInfoDto
+                                        {
+                                            Id = loc.Location.Id,
+                                            Title = loc.Location.Title,
+                                            ProfileId = loc.Location.FkContactProfileId
+                                        })
+                                        .ToList(),
                 posts = postsAssign.Where(p => p.FkEmploymentId == s.Id).Select(s => s.Post).ToList().Select(p => new PostInfoDto
                 {
                     Id = p.Id,

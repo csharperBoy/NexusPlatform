@@ -79,45 +79,45 @@ const getContactTypeBadge = (type?: ContactTypeEnum | null) => {
   switch (type) {
     case ContactTypeEnum.Mobile:
     case ContactTypeEnum.OrganizationMobile:
-      return { label: "موبایل", color: "bg-blue-100 text-blue-800 border-blue-200" };
+      return { label: "تلفن همراه", color: "bg-blue-100 text-blue-800 border-blue-300" };
     case ContactTypeEnum.Phone:
     case ContactTypeEnum.OfficePhone:
-      return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-200" };
-    case ContactTypeEnum.Email:
-      return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-200" };
+      return { label: "تلفن ثابت", color: "bg-green-100 text-green-800 border-green-300" };
     case ContactTypeEnum.Fax:
-      return { label: "فکس", color: "bg-orange-100 text-orange-800 border-orange-200" };
+      return { label: "فکس", color: "bg-red-100 text-red-800 border-red-300" };
+    case ContactTypeEnum.Email:
+      return { label: "ایمیل", color: "bg-purple-100 text-purple-800 border-purple-300" };
     case ContactTypeEnum.Website:
-      return { label: "وب‌سایت", color: "bg-teal-100 text-teal-800 border-teal-200" };
+      return { label: "وب‌سایت", color: "bg-teal-100 text-teal-800 border-teal-300" };
     case ContactTypeEnum.WhatsApp:
-      return { label: "واتس‌اپ", color: "bg-green-200 text-green-800 border-green-300" };
+      return { label: "واتس‌اپ", color: "bg-yellow-100 text-yellow-800 border-yellow-300" };
     case ContactTypeEnum.Instagram:
-      return { label: "اینستاگرام", color: "bg-pink-200 text-pink-800 border-pink-300" };
+      return { label: "اینستاگرام", color: "bg-pink-100 text-pink-800 border-pink-300" };
     case ContactTypeEnum.Telegram:
-      return { label: "تلگرام", color: "bg-cyan-100 text-cyan-800 border-cyan-200" };
+      return { label: "تلگرام", color: "bg-cyan-100 text-cyan-800 border-cyan-300" };
     case ContactTypeEnum.LinkedIn:
-      return { label: "لینکدین", color: "bg-indigo-100 text-indigo-800 border-indigo-200" };
+      return { label: "لینکدین", color: "bg-indigo-100 text-indigo-800 border-indigo-300" };
     case ContactTypeEnum.Address:
-      return { label: "آدرس", color: "bg-gray-100 text-gray-800 border-gray-200" };
+      return { label: "آدرس", color: "bg-sky-100 text-sky-800 border-sky-300" };
     case ContactTypeEnum.PostalCode:
-      return { label: "کد پستی", color: "bg-gray-200 text-gray-700 border-gray-300" };
+      return { label: "کد پستی", color: "bg-lime-100 text-lime-800 border-lime-300" };
     default:
-      return { label: "تماس", color: "bg-gray-100 text-gray-700 border-gray-200" };
+      return { label: "تماس", color: "bg-gray-100 text-gray-800 border-gray-300" };
   }
 };
 
 const getSourceBadge = (source?: ContactSourceEnum | null) => {
   switch (source) {
     case ContactSourceEnum.Personal:
-      return { label: "فرد", color: "bg-gray-200 text-gray-600" };
+      return { label: "فرد", color: "bg-purple-100 text-purple-800 border-purple-300" };
     case ContactSourceEnum.post:
-       return { label: "پست", color: "bg-amber-50 text-amber-700 border border-amber-200" };
-    case ContactSourceEnum.employment:
-      return { label: "کارمند", color: "bg-amber-50 text-amber-700 border border-amber-200" };
+       return { label: "پست", color: "bg-amber-100 text-amber-800 border-amber-300" };
     case ContactSourceEnum.location:
-      return { label: "محل استقرار", color: "bg-blue-200 text-gray-600" };
+      return { label: "محل استقرار", color: "bg-red-100 text-red-800 border-red-300" };
+    case ContactSourceEnum.employment:
+      return { label: "کارمند", color: "bg-orange-100 text-orange-800  border-orange-300" };
     default:
-      return { label: "کارمند", color: "bg-gray-100 text-gray-700 border-gray-200" };
+      return { label: "نامشخص", color: "bg-gray-100 text-gray-800  border-gray-300" };
   }
 };
 
@@ -125,11 +125,11 @@ const getSourceBadge = (source?: ContactSourceEnum | null) => {
 const getOwnershipBadge = (ownership?: ContactOwnershipEnum | null) => {
   switch (ownership) {
     case ContactOwnershipEnum.Personal:
-      return { label: "شخصی", color: "bg-indigo-100 text-indigo-800 border-indigo-200" };
+      return { label: "شخصی", color: "bg-cyan-100 text-cyan-800 border-cyan-300" };
     case ContactOwnershipEnum.Organizational:
-      return { label: "سازمانی", color: "bg-amber-100 text-amber-800 border-amber-200" };
+      return { label: "سازمانی", color: "bg-sky-100 text-sky-800 border-sky-300" };
     default:
-      return { label: "نامشخص", color: "bg-gray-100 text-gray-500 border-gray-200" };
+      return { label: "نامشخص", color: "bg-gray-100 text-gray-800 border-gray-300" };
   }
 };
 
@@ -163,7 +163,7 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
         {ownershipBadge.label}
       </span>
-      <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
+      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${sourceBadge.color}`}>
         {sourceBadge.label}
       </span>
       
@@ -189,7 +189,7 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
     {hasRelativeContacts && (
       <button
         onClick={() => setIsOpen(!isOpen)}
-        title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
+        title={isOpen ? 'بستن اطلاعات تماس مرتبط' : 'نمایش اطلاعات تماس مرتبط'}
         className={`p-2 rounded-lg border transition-all cursor-pointer ${
           isOpen
             ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
@@ -412,7 +412,7 @@ export const PhoneBookPage: React.FC = () => {
           <div className="flex flex-col">
             <label className="text-xs text-blue-200 mb-1">گروه‌بندی بر اساس</label>
             <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white/90 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="headOfOrganizationUnitsName">واحد سازمانی</option>
+              <option value="headOfOrganizationUnitsName">معاونت</option>
               <option value="jobTitleName">عنوان شغلی</option>
               <option value="locationTitle">محل استقرار</option>
               <option value="none">بدون گروه‌بندی</option>
@@ -432,7 +432,7 @@ export const PhoneBookPage: React.FC = () => {
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("headOfOrganizationUnitsName")}>
-                واحد سازمانی <SortIcon column="headOfOrganizationUnitsName" sortConfig={sortConfig} />
+                معاونت <SortIcon column="headOfOrganizationUnitsName" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("jobTitleName")}>
                 عنوان شغلی <SortIcon column="jobTitleName" sortConfig={sortConfig} />
@@ -509,7 +509,8 @@ export const PhoneBookPage: React.FC = () => {
                             <td className="py-3 px-4 text-gray-600">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.jobTitleName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.locationTitle?.join(" - ") || "-"}</td>
-                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">{emp.contactSummary || "-"}</td>
+                           {isExpanded ?  <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">{emp.contactSummary || "-"}</td> }
+                           
                           </tr>
 
                           {/* زیرجدول تماس‌ها */}

@@ -77,7 +77,7 @@ namespace Contact.Infrastructure.Services
             //}
 
             IEnumerable<EmploymentFullDto> empList = await _employmentservice.GetFullInfoAsync();
-            var test = empList.Where(a => a.EmploymentCode == "868");
+            //var test = empList.Where(a => a.EmploymentCode == "868");
             var existingProfileIds = empList
                 .Where(e => e.ProfileId.HasValue)
                 .Select(e => e.ProfileId.Value)
