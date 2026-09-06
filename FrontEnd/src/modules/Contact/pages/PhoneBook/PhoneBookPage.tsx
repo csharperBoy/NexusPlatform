@@ -174,31 +174,35 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
             )}
           </div>
 
-          {/* عنوان و مقدار */}
-          <div className="flex justify-between items-center gap-2">
-            <span className="text-sm text-gray-600 font-medium truncate">
-              {contact.title || 'بدون عنوان'}
-            </span>
+         {/* بخش عنوان و مقدار به همراه دکمه در یک ردیف متوازن */}
+        <div className="flex justify-between items-center gap-2 mt-1">
+          <span className="text-sm text-gray-600 font-medium truncate">
+            {contact.title || 'بدون عنوان'}
+          </span>
+
+          <div className="flex items-center gap-2">
+            {/* مقدار شماره اصلی */}
             <span className="font-mono text-base font-bold text-gray-800 bg-gray-100/70 px-2 py-0.5 rounded-md dir-ltr">
               {contact.value || '-'}
             </span>
+
+            {/* دکمه آیکون زنجیر هم‌سطح با value */}
+            {hasRelativeContacts && (
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
+                className={`flex-shrink-0 p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  isOpen
+                    ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
+                    : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                <FaLink className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           </div>
         </div>
-
-        {/* دکمه آیکون زنجیر (فقط در صورت وجود شماره مرتبط) */}
-        {hasRelativeContacts && (
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
-            className={`self-center flex-shrink-0 p-2 rounded-lg border transition-all ${
-              isOpen
-                ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
-                : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-600'
-            }`}
-          >
-            <FaLink className="w-3.5 h-3.5" />
-          </button>
-        )}
       </div>
 
       {/* ---------- ستون شماره‌های مرتبط (سمت چپ کارت اصلی) ---------- */}
