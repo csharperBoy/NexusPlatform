@@ -148,7 +148,6 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
   return (
     <div className="flex items-stretch gap-2 transition-all">
       {/* ---------- کارت اصلی ---------- */}
-      {/* ---------- کارت اصلی ---------- */}
 <div className="flex-1 bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex items-center gap-3 relative">
   {/* آیکون نوع تماس */}
   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
@@ -161,17 +160,18 @@ const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
         {typeBadge.label}
       </span>
-      <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
-        {sourceBadge.label}
-      </span>
       <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
         {ownershipBadge.label}
       </span>
-      {contact.isPrimary && (
+      <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
+        {sourceBadge.label}
+      </span>
+      
+      {/* {contact.isPrimary && (
         <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
           ★ اصلی
         </span>
-      )}
+      )} */}
     </div>
     <span className="text-sm text-gray-600 font-medium truncate block">
       {contact.title || 'بدون عنوان'}

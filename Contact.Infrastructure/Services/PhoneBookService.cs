@@ -77,19 +77,19 @@ namespace Contact.Infrastructure.Services
             //}
 
             IEnumerable<EmploymentFullDto> empList = await _employmentservice.GetFullInfoAsync();
-         
+            var test = empList.Where(a => a.EmploymentCode == "868");
             var existingProfileIds = empList
                 .Where(e => e.ProfileId.HasValue)
                 .Select(e => e.ProfileId.Value)
                 .Concat(empList.Where(e => e.PartyProfileId.HasValue).Select(e => e.PartyProfileId.Value))
-                .Concat(empList.SelectMany(e => e.posts.Select(p => p.ProfileId))) 
+                .Concat(empList.SelectMany(e => e.posts.Select(p => p.ProfileId)))                 
                 .Concat(empList.SelectMany(e => e.empLocations.Select(l => l.ProfileId)))
                 .Concat(empList.SelectMany(e => e.postLocations.Select(l => l.ProfileId)))
                 .Distinct()
                 .ToList();
 
             List<ContactItemDto> contactList = await _contactService.GetContactsByProfilesIdsAsync(existingProfileIds);
-            var test = contactList.Where(a => a.Value == "09902582588" || a.Value == "258");
+            //var test = contactList.Where(a => a.Value == "09902582588" || a.Value == "258");
             var employmentDtos = empList.ToPhoneBookDtos(contactList).ToList();
             // ۵. حذف کارمندهایی که هیچ کانتکتی ندارند
             employmentDtos = employmentDtos

@@ -337,7 +337,7 @@ namespace HR.Infrastructure.Services
                  .Include(a => a.Location)
             );
             var postLocList = await _postLocationsRepository.GetAllAsync(queryOptions: q => q.Where(a => postIds.Contains(a.FkPostId) && a.IsCurrent)
-                 .Include(a => a.Post).Include(a => a.Location)
+                 .Include(a => a.Location).Include(a => a.Post).ThenInclude(a => a.PostLocations)
             );
 
             var result = empList.Select(s => new EmploymentFullDto

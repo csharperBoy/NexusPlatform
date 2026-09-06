@@ -22,7 +22,16 @@ namespace Contact.Application.Mapping
             var contactsLookup = contactList
                 .GroupBy(c => c.ProfileId)
                 .ToDictionary(g => g.Key, g => g.ToList());
-
+            #region test
+            //var tempEmp = rawList.Where(e => e.EmploymentCode == "868");
+            //var emp = tempEmp.FirstOrDefault();
+            //    var relevantProfileIds = new HashSet<Guid>();
+            //if (emp.ProfileId.HasValue) relevantProfileIds.Add(emp.ProfileId.Value);
+            //if (emp.PartyProfileId.HasValue) relevantProfileIds.Add(emp.PartyProfileId.Value);
+            //foreach (var post in emp.posts) relevantProfileIds.Add(post.ProfileId);
+            //foreach (var loc in emp.empLocations) relevantProfileIds.Add(loc.ProfileId);
+            //foreach (var loc in emp.postLocations) relevantProfileIds.Add(loc.ProfileId);
+            #endregion
             return rawList.Select(emp =>
             {
                 // جمع‌آوری تمام ProfileIdهای مرتبط با این کارمند
@@ -32,7 +41,7 @@ namespace Contact.Application.Mapping
                 foreach (var post in emp.posts) relevantProfileIds.Add(post.ProfileId);
                 foreach (var loc in emp.empLocations) relevantProfileIds.Add(loc.ProfileId);
                 foreach (var loc in emp.postLocations) relevantProfileIds.Add(loc.ProfileId);
-
+               
                 // استخراج کانتکت‌ها از Lookup و حذف تکراری‌ها
                 var contacts = relevantProfileIds
                     .SelectMany(id => contactsLookup.GetValueOrDefault(id, new List<ContactItemDto>()))
