@@ -509,8 +509,11 @@ export const PhoneBookPage: React.FC = () => {
                             <td className="py-3 px-4 text-gray-600">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.jobTitleName?.join(" - ") || "-"}</td>
                             <td className="py-3 px-4 text-gray-600">{emp.locationTitle?.join(" - ") || "-"}</td>
-                           <td className="py-3 px-4">
-  <div className="flex flex-wrap items-center gap-1.5">
+                          
+                            {isExpanded ?  
+                           <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: 
+  <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
+    <div className="flex flex-wrap items-center gap-1.5">
     {emp.contacts && emp.contacts.length > 0 ? (
       emp.contacts.map((contact, idx) => {
         // دریافت برچسب نوع تماس (برای رنگ‌بندی)
@@ -531,7 +534,9 @@ export const PhoneBookPage: React.FC = () => {
       <span className="text-gray-400 text-sm">-</span>
     )}
   </div>
-</td>
+</td> 
+                           }
+  
                           </tr>
 
                           {/* زیرجدول تماس‌ها */}
