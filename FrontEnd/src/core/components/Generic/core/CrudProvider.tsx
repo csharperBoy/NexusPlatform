@@ -1,25 +1,15 @@
-// src/components/crud/CrudProvider.tsx
-import React, { createContext, useContext, useRef } from 'react';
-import { useStore } from 'zustand';
+// src/core/components/Generic/core/CrudProvider.tsx
+import React, { createContext, useRef } from 'react';
 import { createCrudStore } from './store';
-import {  CrudState } from '../core/types';
+import { CrudState, BaseApi } from './types';
 
-// این تایپ بر اساس استاندارد API شماست
-export interface BaseApi<T, S, C, U> {
-  search: (req: S) => Promise<T[]>;
-  create: (cmd: C) => Promise<void>;
-  update: (cmd: U) => Promise<void>;
-  batchUpdate: (cmds: U[]) => Promise<void>;
-  // ... سایر متدها
-}
-
-interface CrudContextProps<T, S, C, U> {
+export interface CrudContextProps<T, S, C, U> {
   store: ReturnType<typeof createCrudStore<T, S>>;
   api: BaseApi<T, S, C, U>;
 }
 
-// ساخت Context
-const CrudContext = createContext<CrudContextProps<any, any, any, any> | null>(null);
+// Context اکسپورت شد تا در useCrudStore قابل دریافت باشد
+export const CrudContext = createContext<CrudContextProps<any, any, any, any> | null>(null);
 
 interface CrudProviderProps<T, S, C, U> {
   children: React.ReactNode;
@@ -28,7 +18,6 @@ interface CrudProviderProps<T, S, C, U> {
 }
 
 export function CrudProvider<T, S, C, U>({ children, api, initialState }: CrudProviderProps<T, S, C, U>) {
-  // استفاده از useRef برای اطمینان از اینکه استور فقط یک بار در اولین رندر ساخته می‌شود
   const storeRef = useRef<ReturnType<typeof createCrudStore<T, S>>>(undefined);
   
   if (!storeRef.current) {

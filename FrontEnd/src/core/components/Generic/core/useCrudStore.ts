@@ -1,9 +1,8 @@
-// src/components/crud/hooks/useCrudStore.ts
-
+// src/core/components/Generic/core/useCrudStore.ts
 import { useContext } from 'react';
 import { useStore } from 'zustand';
-import { CrudContext } from '../CrudProvider'; 
-import { CrudStore } from './types';
+import { CrudContext } from './CrudProvider'; 
+import { CrudStore, BaseApi } from './types';
 
 /**
  * هوک پایه برای دریافت کانتکست
@@ -18,18 +17,11 @@ export function useCrudContext() {
 
 /**
  * هوک اصلی اتصال به استور Zustand
- * T: مدل موجودیت (مثلاً PostDto)
- * S: مدل جستجو (مثلاً PostSearchDto)
- * U: خروجی سلکتور (مثلاً number برای page)
  */
 export function useCrudStore<T, S, U>(
   selector: (state: CrudStore<T, S>) => U
 ): U {
-  // ۱. دریافت رفرنس استور از کانتکست
   const { store } = useCrudContext();
-  
-  // ۲. پاس دادن استور و سلکتور به هوک useStore خود Zustand
-  // این کار باعث می‌شود کامپوننت فقط زمانی رندر شود که خروجی سلکتور تغییر کند
   return useStore(store, selector);
 }
 
