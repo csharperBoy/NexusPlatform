@@ -513,20 +513,17 @@ export const PhoneBookPage: React.FC = () => {
                             {isExpanded ?  
                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: 
   <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-    <div className="flex flex-wrap items-center gap-1.5">
+     <div className="flex flex-wrap justify-start items-center gap-1.5 dir-ltr">
     {emp.contacts && emp.contacts.length > 0 ? (
       emp.contacts.map((contact, idx) => {
-        // دریافت برچسب نوع تماس (برای رنگ‌بندی)
         const typeBadge = getContactTypeBadge(contact.type);
         return (
           <span
             key={idx}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${typeBadge.color}`}
           >
-            {/* آیکون کوچک (اختیاری) */}
             <span className="text-[10px]">{getContactIcon(contact.type)}</span>
-            {/* مقدار شماره */}
-            <span className="font-mono dir-ltr">{contact.value}</span>
+            <span className="font-mono">{contact.value}</span>
           </span>
         );
       })
