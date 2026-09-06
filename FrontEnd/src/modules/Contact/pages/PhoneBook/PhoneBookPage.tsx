@@ -513,7 +513,7 @@ export const PhoneBookPage: React.FC = () => {
                             {isExpanded ?  
                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: 
   <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-     <div className="flex flex-wrap justify-start items-center gap-1.5 dir-ltr">
+     <div className="flex flex-wrap justify-end items-center gap-1.5 dir-ltr">
     {emp.contacts && emp.contacts.length > 0 ? (
       emp.contacts.map((contact, idx) => {
         const typeBadge = getContactTypeBadge(contact.type);
@@ -522,8 +522,9 @@ export const PhoneBookPage: React.FC = () => {
             key={idx}
             className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${typeBadge.color}`}
           >
-            <span className="text-[10px]">{getContactIcon(contact.type)}</span>
             <span className="font-mono">{contact.value}</span>
+            
+            <span className="text-[10px]">{getContactIcon(contact.type)}</span>
           </span>
         );
       })
@@ -566,7 +567,7 @@ export const PhoneBookPage: React.FC = () => {
                                     {/* ستون اطلاعات تماس */}
                                     <div className="md:col-span-2">
                                       <h4 className="text-xs font-bold text-gray-500 mb-3 border-b pb-2 flex items-center gap-2">
-                                        <FaAddressCard className="text-gray-400" /> جزییات تماس
+                                        <FaAddressCard className="text-gray-400 text-base" /> جزییات تماس
                                       </h4>
                                       <div className="space-y-3">
                                         {emp.contacts?.map((contact, index) => (
