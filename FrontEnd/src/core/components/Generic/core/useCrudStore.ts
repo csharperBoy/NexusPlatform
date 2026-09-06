@@ -3,7 +3,7 @@
 import { useContext } from 'react';
 import { useStore } from 'zustand';
 import { CrudContext } from '../CrudProvider'; 
-import { CrudStore } from '../types';
+import { CrudStore } from './types';
 
 /**
  * هوک پایه برای دریافت کانتکست

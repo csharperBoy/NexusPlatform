@@ -1,4 +1,4 @@
-import { useCrudStore } from '../../core/useCrudStore';
+
 
 export function useCrudPagination() {
   // استفاده از سلکتور برای جلوگیری از رندرهای اضافی

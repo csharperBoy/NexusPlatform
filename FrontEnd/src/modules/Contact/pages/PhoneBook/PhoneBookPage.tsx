@@ -19,6 +19,7 @@ import {
   FaMapMarkerAlt, FaMailBulk, FaHashtag, FaAddressCard,
   FaArrowLeft
 } from 'react-icons/fa';
+import { FaLink } from 'react-icons/fa';
 // --- Helper Functions ---
 
 const getContactIcon = (type?: ContactTypeEnum | null) => {
@@ -133,146 +134,86 @@ const getOwnershipBadge = (ownership?: ContactOwnershipEnum | null) => {
 };
 
 // ---------- کامپوننت ContactItem ----------
-const ContactItem: React.FC<{
-  contact: ContactDetailDto;
-  depth?: number;       // سطح تو رفتگی (0 برای اصلی، 1 و بیشتر برای مرتبط)
-  isLast?: boolean;     // آیا آخرین آیتم در سطح خود است (برای خطوط اتصال)
-}> = ({ contact, depth = 0, isLast = true }) => {
-  // استیت برای باز/بسته شدن آکاردئون (فقط برای آیتمهایی که RelativeContact دارند)
+const ContactItem: React.FC<{ contact: ContactDetailDto }> = ({ contact }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // اطلاعات برچسبها و آیکون
   const typeBadge = getContactTypeBadge(contact.type);
   const sourceBadge = getSourceBadge(contact.source);
   const ownershipBadge = getOwnershipBadge(contact.ownership);
   const icon = getContactIcon(contact.type);
 
-  // بررسی وجود تماسهای مرتبط
-  const hasRelativeContacts = contact.relativeContact && contact.relativeContact.length > 0;
-  const relativeCount = contact.relativeContact?.length || 0;
-
-  // تغییر وضعیت آکاردئون
-  const toggleAccordion = (e: React.MouseEvent) => {
-    e.stopPropagation(); // جلوگیری از انتشار کلیک به والد
-    if (hasRelativeContacts) {
-      setIsOpen(!isOpen);
-    }
-  };
+  const relativeContacts = contact.relativeContact || [];
+  const hasRelativeContacts = relativeContacts.length > 0;
 
   return (
-    <div className="relative">
-      {/* ---------- خطوط اتصال برای سطوح بالاتر از صفر ---------- */}
-      {depth > 0 && (
-        <>
-          <div 
-            className={`absolute right-6 top-0 w-0.5 bg-gray-300 ${isLast ? 'h-1/2' : 'h-full'}`} 
-            style={{ right: '12px' }} 
-          />
-          <div 
-            className="absolute right-4 top-1/2 w-6 border-t border-gray-300" 
-            style={{ right: '12px' }} 
-          />
-        </>
-      )}
-
-      <div className={`flex items-start gap-3 ${depth > 0 ? 'mr-8' : ''}`}>
-        {/* ---------- آیکون نوع تماس ---------- */}
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm">
+    <div className="flex items-stretch gap-2 transition-all">
+      {/* ---------- کارت اصلی ---------- */}
+      <div className="flex-1 bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative">
+        {/* آیکون نوع تماس */}
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center shadow-sm mt-0.5">
           {icon}
         </div>
 
-        {/* ---------- کارت اصلی ---------- */}
-        <div 
-          className={`flex-1 rounded-xl p-3 transition-all duration-200 relative ${
-            depth === 0 
-              ? 'bg-white border border-gray-200 shadow-md hover:shadow-lg' 
-              : 'bg-gray-50/90 border border-gray-200/70 shadow-sm hover:shadow-md'
-          } ${depth === 0 && hasRelativeContacts ? 'pb-7' : ''}`} 
-          // برای سطح ۰ و دارای زیرمجموعه، padding پایین بیشتر برای جا دادن دکمه
-        >
-          {/* ---------- ردیف برچسبها ---------- */}
-          <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
-                {typeBadge.label}
+        {/* محتوای کارت */}
+        <div className="flex-1 min-w-0">
+          {/* برچسب‌ها */}
+          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${typeBadge.color}`}>
+              {typeBadge.label}
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
+              {sourceBadge.label}
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
+              {ownershipBadge.label}
+            </span>
+            {contact.isPrimary && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
+                ★ اصلی
               </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full ${sourceBadge.color}`}>
-                {sourceBadge.label}
-              </span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ownershipBadge.color}`}>
-                {ownershipBadge.label}
-              </span>
-              {contact.isPrimary && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-bold">
-                  ★ اصلی
-                </span>
-              )}
-              {depth > 0 && (
-                <span className="text-[10px] px-2 py-0.5 rounded-full border border-purple-200 bg-purple-50 text-purple-600">
-                  مرتبط
-                </span>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* ---------- عنوان و مقدار ---------- */}
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600 font-medium">{contact.title || 'بدون عنوان'}</span>
+          {/* عنوان و مقدار */}
+          <div className="flex justify-between items-center gap-2">
+            <span className="text-sm text-gray-600 font-medium truncate">
+              {contact.title || 'بدون عنوان'}
+            </span>
             <span className="font-mono text-base font-bold text-gray-800 bg-gray-100/70 px-2 py-0.5 rounded-md dir-ltr">
               {contact.value || '-'}
             </span>
           </div>
-
-          {/* ---------- بخش آکاردئون (تماسهای مرتبط) ---------- */}
-          {hasRelativeContacts && (
-            <div 
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                isOpen ? 'max-h-[1000px] opacity-100 mt-3' : 'max-h-0 opacity-0'
-              }`}
-            >
-              <div className="pt-2 border-t border-dashed border-gray-200 space-y-2">
-                {contact.relativeContact!.map((rel, idx) => (
-                  <ContactItem 
-                    key={idx} 
-                    contact={rel} 
-                    depth={depth + 1} 
-                    isLast={idx === contact.relativeContact!.length - 1} 
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ---------- دکمه آکاردئون ---------- */}
-          {/* برای سطح ۰: دکمه روی خط border پایین کارت */}
-          {depth === 0 && hasRelativeContacts && (
-            <button
-              onClick={toggleAccordion}
-              className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white hover:bg-gray-50 transition-all border-2 border-gray-200 shadow-sm hover:shadow-md z-10 whitespace-nowrap"
-            >
-              <span className="text-gray-600">
-                {isOpen ? 'بستن' : `${relativeCount} مورد`}
-              </span>
-              <span className={`transform transition-transform duration-300 inline-block text-gray-500 ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
-                ▼
-              </span>
-            </button>
-          )}
-
-          {/* برای سطوح عمیقتر: دکمه بهصورت معمولی درون کارت */}
-          {depth > 0 && hasRelativeContacts && (
-            <button
-              onClick={toggleAccordion}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 hover:bg-gray-200 transition-colors border border-gray-200 mt-2"
-            >
-              <span className="text-gray-600">{relativeCount} مورد</span>
-              <span className={`transform transition-transform duration-300 inline-block ${isOpen ? 'rotate-180' : 'rotate-0'}`}>
-                ▼
-              </span>
-            </button>
-          )}
         </div>
+
+        {/* دکمه آیکون زنجیر (فقط در صورت وجود شماره مرتبط) */}
+        {hasRelativeContacts && (
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            title={isOpen ? 'بستن شماره‌های مرتبط' : 'نمایش شماره‌های مرتبط'}
+            className={`self-center flex-shrink-0 p-2 rounded-lg border transition-all ${
+              isOpen
+                ? 'bg-blue-50 border-blue-300 text-blue-600 shadow-inner'
+                : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <FaLink className="w-3.5 h-3.5" />
+          </button>
+        )}
       </div>
+
+      {/* ---------- ستون شماره‌های مرتبط (سمت چپ کارت اصلی) ---------- */}
+      {hasRelativeContacts && isOpen && (
+        <div className="flex flex-col gap-1 w-auto animate-fadeIn">
+          {relativeContacts.map((rel, idx) => (
+            <div
+              key={idx}
+              className="flex-1 flex items-center justify-center bg-gray-100/80 border border-gray-200/80 rounded-lg px-2.5 py-1 text-xs font-mono font-semibold text-gray-600 shadow-2xs dir-ltr whitespace-nowrap"
+            >
+              {rel.value || '-'}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -604,7 +545,7 @@ export const PhoneBookPage: React.FC = () => {
                                       </h4>
                                       <div className="space-y-3">
                                         {emp.contacts?.map((contact, index) => (
-                                          <ContactItem key={index} contact={contact} depth={0} />
+                                          <ContactItem key={index} contact={contact} />
                                         ))}
                                       </div>
                                     </div>

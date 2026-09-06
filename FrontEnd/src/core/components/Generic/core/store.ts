@@ -1,44 +1,38 @@
-// src/components/crud/store.ts
 import { createStore } from 'zustand/vanilla';
-import { CrudStore, CrudState } from './types';
+import { CrudState } from './types';
 
-export const createCrudStore = <T, S>(
-  initialState?: Partial<CrudState<T, S>>
-) => {
-  const defaultState: CrudState<T, S> = {
+export const createCrudStore = <T, S>(initialState?: Partial<CrudState<T, S>>) => {
+  return createStore<CrudState<T, S> & any>()((set) => ({
+    // استیت‌های اولیه
     data: [],
-    totalCount: 0,
     isLoading: false,
     error: null,
+    filters: {},
+    
+    // استیت اولیه Pagination
     page: 1,
     pageSize: 10,
-    sortBy: null,
-    sortDesc: false,
-    filters: {},
+    totalCount: 0,
+    
+    // استیت اولیه Selection
     selectedIds: [],
-  };
 
-  return createStore<CrudStore<T, S>>()((set) => ({
-    ...defaultState,
     ...initialState,
 
-    setData: (data, totalCount) => set({ data, totalCount, isLoading: false, error: null }),
-    setLoading: (isLoading) => set({ isLoading }),
-    setError: (error) => set({ error, isLoading: false }),
+    // اکشن‌های عمومی
+    setData: (data: T[], totalCount: number) => set({ data, totalCount, isLoading: false }),
+    setLoading: (isLoading: boolean) => set({ isLoading }),
     
-    setPagination: (page, pageSize) => set({ page, pageSize }),
-    setSorting: (sortBy, sortDesc) => set({ sortBy, sortDesc, page: 1 }), // تغییر سورت یعنی رفتن به صفحه اول
+    // اکشن‌های صفحه‌بندی
+    setPagination: (page: number, pageSize: number) => set({ page, pageSize }),
     
-    setFilters: (filters) => set({ filters, page: 1 }), // تغییر فیلتر یعنی رفتن به صفحه اول
-    
-    toggleSelection: (id) => 
-      set((state) => ({
+    // اکشن‌های انتخاب
+    toggleSelection: (id: string) => 
+      set((state: CrudState<T, S>) => ({
         selectedIds: state.selectedIds.includes(id)
           ? state.selectedIds.filter((i) => i !== id)
           : [...state.selectedIds, id],
       })),
-      
-    selectAll: (ids) => set({ selectedIds: ids }),
     clearSelection: () => set({ selectedIds: [] }),
   }));
 };
