@@ -284,22 +284,23 @@ export const PhoneBookPage: React.FC = () => {
   setExpandedRows((prev) => {
     const next = new Set(prev);
     const wasOpen = next.has(uniqueKey);
-    
+
     if (wasOpen) {
       next.delete(uniqueKey);
     } else {
       next.add(uniqueKey);
     }
 
-    // بعد از به‌روزرسانی state، اگر ردیف باز شده، اسکرول کن
+    // اگر ردیف باز شده، اسکرول را با تأخیر دو فریم انجام بده
     if (!wasOpen) {
-      // از تاخیر برای اطمینان از رندر شدن DOM استفاده می‌کنیم
-      setTimeout(() => {
-        const row = document.getElementById(`row-${uniqueKey}`);
-        if (row) {
-          row.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const row = document.getElementById(`row-${uniqueKey}`);
+          if (row) {
+            row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
     }
 
     return next;
