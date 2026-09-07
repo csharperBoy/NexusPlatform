@@ -45,20 +45,22 @@ export enum GenderEnum {
   Other = 3
 }
 export enum ContactTypeEnum {
-  Mobile = 1 ,
+    Mobile = 1 ,
     Phone = 2,
     OfficePhone = 3,
     OrganizationMobile = 4,
     Email = 5,
- Fax = 6,            // فکس
- Website = 7,        // وب‌سایت
- WhatsApp = 8,       // واتس‌اپ
- Instagram = 9,      // اینستاگرام
- Telegram = 10,       // تلگرام
- LinkedIn = 11,      // لینکدین
- Address = 12, // آدرس پستی یا لوکیشن
- PostalCode = 13, // کد پستی
- Other = 99          // سایر راه ارتباطی
+    Fax = 6,            // فکس
+    Website = 7,        // وب‌سایت
+    WhatsApp = 8,       // واتس‌اپ
+    Instagram = 9,      // اینستاگرام
+    Telegram = 10,       // تلگرام
+    LinkedIn = 11,      // لینکدین
+    Address = 12, // آدرس پستی یا لوکیشن
+    PostalCode = 13, // کد پستی
+    Eitaa = 14, // ایتا
+    x = 15, // ایکس
+    Other = 99          // سایر راه ارتباطی
 }
 
 export enum ContactSourceEnum {

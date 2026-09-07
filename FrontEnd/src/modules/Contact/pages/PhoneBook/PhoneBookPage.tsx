@@ -240,7 +240,7 @@ export const PhoneBookPage: React.FC = () => {
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnSearch, setColumnSearch] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
-  const [groupBy, setGroupBy] = useState<GroupByOption>("headOfOrganizationUnitsName");
+  const [groupBy, setGroupBy] = useState<GroupByOption>("none");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
