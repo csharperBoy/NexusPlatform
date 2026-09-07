@@ -1,32 +1,31 @@
 // src/core/components/Generic/core/CrudProvider.tsx
-import React, { createContext, useRef } from 'react';
-import { createCrudStore } from './store';
-import { CrudState, BaseApi } from './types';
 
-export interface CrudContextProps<T, S, C, U> {
-  store: ReturnType<typeof createCrudStore<T, S>>;
-  api: BaseApi<T, S, C, U>;
+import React, { createContext, useRef, ReactNode } from 'react';
+import { createCrudStore, CrudStoreInstance } from './store';
+import { GenericCrudApi } from './types';
+
+// استفاده از any برای مقدار اولیه Context مجاز است، زیرا Type-Safety در هوک useCrudStore تضمین می‌شود
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const CrudContext = createContext<CrudStoreInstance<any, any, any, any> | null>(null);
+
+interface CrudProviderProps<TDto, TCreateCmd, TUpdateCmd, TSearchReq> {
+  api: GenericCrudApi<TDto, TCreateCmd, TUpdateCmd, TSearchReq>;
+  children: ReactNode;
 }
 
-// Context اکسپورت شد تا در useCrudStore قابل دریافت باشد
-export const CrudContext = createContext<CrudContextProps<any, any, any, any> | null>(null);
+export const CrudProvider = <TDto, TCreateCmd, TUpdateCmd, TSearchReq>({
+  api,
+  children,
+}: CrudProviderProps<TDto, TCreateCmd, TUpdateCmd, TSearchReq>) => {
+  const storeRef = useRef<CrudStoreInstance<TDto, TCreateCmd, TUpdateCmd, TSearchReq>>(null);
 
-interface CrudProviderProps<T, S, C, U> {
-  children: React.ReactNode;
-  api: BaseApi<T, S, C, U>;
-  initialState?: Partial<CrudState<T, S>>;
-}
-
-export function CrudProvider<T, S, C, U>({ children, api, initialState }: CrudProviderProps<T, S, C, U>) {
-  const storeRef = useRef<ReturnType<typeof createCrudStore<T, S>>>(undefined);
-  
   if (!storeRef.current) {
-    storeRef.current = createCrudStore(initialState);
+    storeRef.current = createCrudStore<TDto, TCreateCmd, TUpdateCmd, TSearchReq>(api);
   }
 
   return (
-    <CrudContext.Provider value={{ store: storeRef.current, api }}>
+    <CrudContext.Provider value={storeRef.current}>
       {children}
     </CrudContext.Provider>
   );
-}
+};

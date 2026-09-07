@@ -9,6 +9,10 @@
     "src/modules/**"
   ],
   "scripts": {
+    
+    "dev:test": "pnpm --filter test run dev",
+    "build:test": "pnpm --filter test run build",
+    "preview:test": "pnpm --filter test run preview",
     "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
     "build:mahar.admin": "pnpm --filter mahar-adminpanel run build",
     "preview:mahar.admin": "pnpm --filter mahar-adminpanel run preview",

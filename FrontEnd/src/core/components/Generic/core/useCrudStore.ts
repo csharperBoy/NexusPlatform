@@ -1,34 +1,24 @@
 // src/core/components/Generic/core/useCrudStore.ts
+
 import { useContext } from 'react';
 import { useStore } from 'zustand';
-import { CrudContext } from './CrudProvider'; 
-import { CrudStore, BaseApi } from './types';
+import { CrudContext } from './CrudProvider';
+import { CrudStore } from './types';
+import { CrudStoreInstance } from './store';
 
-/**
- * هوک پایه برای دریافت کانتکست
- */
-export function useCrudContext() {
+// هوک کمکی برای دریافت نمونه Context با اعمال تایپ‌های داینامیک
+export function useCrudContext<TDto, TCreateCmd, TUpdateCmd, TSearchReq>(): CrudStoreInstance<TDto, TCreateCmd, TUpdateCmd, TSearchReq> {
   const context = useContext(CrudContext);
   if (!context) {
-    throw new Error('تمامی کامپوننت‌های CRUD باید داخل CrudProvider قرار بگیرند.');
+    throw new Error('useCrudStore must be used within a CrudProvider');
   }
-  return context;
+  return context as CrudStoreInstance<TDto, TCreateCmd, TUpdateCmd, TSearchReq>;
 }
 
-/**
- * هوک اصلی اتصال به استور Zustand
- */
-export function useCrudStore<T, S, U>(
-  selector: (state: CrudStore<T, S>) => U
-): U {
-  const { store } = useCrudContext();
+// هوک اصلی برای Select کردن از استور
+export function useCrudStore<TDto, TCreateCmd, TUpdateCmd, TSearchReq, TSelected>(
+  selector: (state: CrudStore<TDto, TCreateCmd, TUpdateCmd, TSearchReq>) => TSelected
+): TSelected {
+  const store = useCrudContext<TDto, TCreateCmd, TUpdateCmd, TSearchReq>();
   return useStore(store, selector);
-}
-
-/**
- * هوک دریافت API با تایپ‌های استاندارد شما
- */
-export function useCrudApi<T, S, C, U_Update>() {
-  const { api } = useCrudContext();
-  return api as BaseApi<T, S, C, U_Update>;
 }
