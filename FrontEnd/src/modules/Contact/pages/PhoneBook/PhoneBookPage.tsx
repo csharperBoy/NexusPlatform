@@ -269,15 +269,42 @@ export const PhoneBookPage: React.FC = () => {
     });
   };
 
+  // const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
+  //   if (!hasMultiple) return;
+  //   setExpandedRows((prev) => {
+  //     const next = new Set(prev);
+  //     if (next.has(uniqueKey)) next.delete(uniqueKey);
+  //     else next.add(uniqueKey);
+  //     return next;
+  //   });
+  // };
   const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
-    if (!hasMultiple) return;
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(uniqueKey)) next.delete(uniqueKey);
-      else next.add(uniqueKey);
-      return next;
-    });
-  };
+  if (!hasMultiple) return;
+
+  setExpandedRows((prev) => {
+    const next = new Set(prev);
+    const wasOpen = next.has(uniqueKey);
+    
+    if (wasOpen) {
+      next.delete(uniqueKey);
+    } else {
+      next.add(uniqueKey);
+    }
+
+    // بعد از به‌روزرسانی state، اگر ردیف باز شده، اسکرول کن
+    if (!wasOpen) {
+      // از تاخیر برای اطمینان از رندر شدن DOM استفاده می‌کنیم
+      setTimeout(() => {
+        const row = document.getElementById(`row-${uniqueKey}`);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+
+    return next;
+  });
+};
 
   const handleSort = (column: string) => {
     let direction: SortDirection = "asc";
@@ -412,7 +439,7 @@ export const PhoneBookPage: React.FC = () => {
           <div className="flex flex-col">
             <label className="text-xs text-blue-200 mb-1">گروه‌بندی بر اساس</label>
             <select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupByOption)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white/90 backdrop-blur-sm focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="headOfOrganizationUnitsName">معاونت</option>
+              <option value="headOfOrganizationUnitsName">مدیریت</option>
               <option value="jobTitleName">عنوان شغلی</option>
               <option value="locationTitle">محل استقرار</option>
               <option value="none">بدون گروه‌بندی</option>
@@ -432,7 +459,7 @@ export const PhoneBookPage: React.FC = () => {
                 نام و نام خانوادگی <SortIcon column="fullName" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("headOfOrganizationUnitsName")}>
-                معاونت <SortIcon column="headOfOrganizationUnitsName" sortConfig={sortConfig} />
+                مدیریت <SortIcon column="headOfOrganizationUnitsName" sortConfig={sortConfig} />
               </th>
               <th className="py-3 px-4 font-semibold cursor-pointer hover:bg-gray-200" onClick={() => handleSort("jobTitleName")}>
                 عنوان شغلی <SortIcon column="jobTitleName" sortConfig={sortConfig} />
@@ -492,7 +519,7 @@ export const PhoneBookPage: React.FC = () => {
 
                       return (
                         <React.Fragment key={emp.uniqueKey}>
-                          <tr onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)} className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}>
+                          <tr   id={`row-${emp.uniqueKey}`}  onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)} className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}>
                             <td className="py-3 px-4 text-center">
                               {hasMultiple ? <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>◀</span> : null}
                             </td>
@@ -512,27 +539,27 @@ export const PhoneBookPage: React.FC = () => {
                           
                             {isExpanded ?  
                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr"></td>: 
-  <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
-     <div className="flex flex-wrap justify-end items-center gap-1.5 dir-ltr">
-    {emp.contacts && emp.contacts.length > 0 ? (
-      emp.contacts.map((contact, idx) => {
-        const typeBadge = getContactTypeBadge(contact.type);
-        return (
-          <span
-            key={idx}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${typeBadge.color}`}
-          >
-            <span className="font-mono">{contact.value}</span>
-            
-            <span className="text-[10px]">{getContactIcon(contact.type)}</span>
-          </span>
-        );
-      })
-    ) : (
-      <span className="text-gray-400 text-sm">-</span>
-    )}
-  </div>
-</td> 
+                            <td className="py-3 px-4 font-mono text-gray-700 text-left dir-ltr">
+                              <div className="flex flex-wrap justify-end items-center gap-1.5 dir-ltr">
+                              {emp.contacts && emp.contacts.length > 0 ? (
+                                emp.contacts.map((contact, idx) => {
+                                  const typeBadge = getContactTypeBadge(contact.type);
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${typeBadge.color}`}
+                                    >
+                                      <span className="font-mono">{contact.value}</span>
+                                      
+                                      <span className="text-[10px]">{getContactIcon(contact.type)}</span>
+                                    </span>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-gray-400 text-sm">-</span>
+                              )}
+                            </div>
+                          </td> 
                            }
   
                           </tr>
@@ -558,7 +585,7 @@ export const PhoneBookPage: React.FC = () => {
                                         <h3 className="font-bold text-gray-800 text-base">{emp.fullName || `${emp.firstName || ""} ${emp.lastName || ""}`}</h3>
                                         <p className="text-sm text-gray-600" title="رده">{emp.jobLevelTitle?.join(" - ") || "-"}</p>
                                         <p className="text-sm text-gray-600 mt-1" title="عنوان شغلی">{emp.jobTitleName?.join(" - ") || "-"}</p>
-                                        <p className="text-sm text-gray-600" title="معاونت">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</p>
+                                        <p className="text-sm text-gray-600" title="مدیریت">{emp.headOfOrganizationUnitsName?.join(" - ") || "-"}</p>
                                         <p className="text-sm text-gray-600" title="واحد">{emp.organizationUnitsName?.join(" - ") || "-"}</p>
                                         <p className="text-sm text-gray-600" title="محل استقرار">{emp.locationTitle?.join(" - ") || "-"}</p>
                                       </div>
