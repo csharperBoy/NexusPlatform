@@ -278,26 +278,49 @@ export const PhoneBookPage: React.FC = () => {
   //      return next;
   //    });
   //  };
-  const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
+  const customSmoothScroll = (targetElement: HTMLElement, duration = 800, offset = 0) => {
+  const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - offset;
+  const startPosition = window.scrollY;
+  const distance = targetPosition - startPosition;
+  let startTime: number | null = null;
+
+  // تابع Easing برای حرکتی بسیار نرم (کاهش سرعت در ابتدا و انتها)
+  const easeInOutCubic = (t: number) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  const animation = (currentTime: number) => {
+    if (startTime === null) startTime = currentTime;
+    const timeElapsed = currentTime - startTime;
+    const progress = Math.min(timeElapsed / duration, 1);
+    const easeProgress = easeInOutCubic(progress);
+
+    window.scrollTo(0, startPosition + distance * easeProgress);
+
+    if (timeElapsed < duration) {
+      requestAnimationFrame(animation);
+    }
+  };
+
+  requestAnimationFrame(animation);
+};
+const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
   if (!hasMultiple) return;
 
   setExpandedRows((prev) => {
     const next = new Set(prev);
-    const isOpening = !next.has(uniqueKey); // بررسی اینکه آیا سطر در حال باز شدن است یا بستن
+    const isOpening = !next.has(uniqueKey);
 
     if (isOpening) {
       next.add(uniqueKey);
 
-      // اسکرول نرم به سمت سطر باز شده پس از رندر شدن DOM
       setTimeout(() => {
         const element = document.getElementById(`row-${uniqueKey}`);
         if (element) {
-          element.scrollIntoView({
-            behavior: 'smooth', // ایجاد اسکرول نرم و غیر پرشی
-            block: 'start',     // قرار دادن عنصر در بالای صفحه
-          });
+          // عدد 800 مدت زمان اسکرول به میلی‌ثانیه است (می‌توانید به 1000 تغییر دهید تا کندتر شود)
+          // عدد 20 میزان فاصله از بالای صفحه (Offset) برای جانیفتادن زیر هدر است
+          customSmoothScroll(element, 800, 20);
         }
-      }, 100); // تاخیر ۱۰۰ میلی‌ثانیه‌ای برای مطمئن شدن از رندر شدن کامل محتوای جدید
+      }, 150);
     } else {
       next.delete(uniqueKey);
     }
