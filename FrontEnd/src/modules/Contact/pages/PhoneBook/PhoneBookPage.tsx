@@ -269,38 +269,37 @@ export const PhoneBookPage: React.FC = () => {
     });
   };
 
-  // const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
-  //   if (!hasMultiple) return;
-  //   setExpandedRows((prev) => {
-  //     const next = new Set(prev);
-  //     if (next.has(uniqueKey)) next.delete(uniqueKey);
-  //     else next.add(uniqueKey);
-  //     return next;
-  //   });
-  // };
+  //  const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
+  //    if (!hasMultiple) return;
+  //    setExpandedRows((prev) => {
+  //      const next = new Set(prev);
+  //      if (next.has(uniqueKey)) next.delete(uniqueKey);
+  //      else next.add(uniqueKey);
+  //      return next;
+  //    });
+  //  };
   const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
   if (!hasMultiple) return;
 
   setExpandedRows((prev) => {
     const next = new Set(prev);
-    const wasOpen = next.has(uniqueKey);
+    const isOpening = !next.has(uniqueKey); // بررسی اینکه آیا سطر در حال باز شدن است یا بستن
 
-    if (wasOpen) {
-      next.delete(uniqueKey);
-    } else {
+    if (isOpening) {
       next.add(uniqueKey);
-    }
 
-    // اگر ردیف باز شده، اسکرول را با تأخیر دو فریم انجام بده
-    if (!wasOpen) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const row = document.getElementById(`row-${uniqueKey}`);
-          if (row) {
-            row.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        });
-      });
+      // اسکرول نرم به سمت سطر باز شده پس از رندر شدن DOM
+      setTimeout(() => {
+        const element = document.getElementById(`row-${uniqueKey}`);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth', // ایجاد اسکرول نرم و غیر پرشی
+            block: 'start',     // قرار دادن عنصر در بالای صفحه
+          });
+        }
+      }, 100); // تاخیر ۱۰۰ میلی‌ثانیه‌ای برای مطمئن شدن از رندر شدن کامل محتوای جدید
+    } else {
+      next.delete(uniqueKey);
     }
 
     return next;
@@ -520,7 +519,18 @@ export const PhoneBookPage: React.FC = () => {
 
                       return (
                         <React.Fragment key={emp.uniqueKey}>
-                          <tr   id={`row-${emp.uniqueKey}`}  onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)} className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}>
+                          {/* <tr 
+                            id={`row-${emp.uniqueKey}`}  
+                            onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)} 
+                            className={`transition-colors text-sm ${hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""} ${isExpanded ? "bg-gray-50" : ""}`}
+                            > */}
+                              <tr
+                                id={`row-${emp.uniqueKey}`}
+                                onClick={() => toggleRowExpand(emp.uniqueKey, !!hasMultiple)}
+                                className={`transition-colors text-sm scroll-mt-20 ${
+                                  hasMultiple ? "cursor-pointer hover:bg-gray-50" : ""
+                                } ${isExpanded ? "bg-gray-50" : ""}`}
+                              >
                             <td className="py-3 px-4 text-center">
                               {hasMultiple ? <span className={`text-gray-400 font-bold text-[10px] inline-block transition-transform duration-200 ${isExpanded ? "rotate-[-90deg]" : "rotate-0"}`}>◀</span> : null}
                             </td>
