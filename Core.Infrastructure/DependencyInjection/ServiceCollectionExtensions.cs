@@ -147,6 +147,7 @@ namespace Core.Infrastructure.DependencyInjection
         {
             var corsSettings = configuration.GetSection("Cors").Get<CorsSettings>();
             var allowedOrigins = corsSettings?.AllowedOrigins ?? new[] { "http://localhost:3000" };
+            Log.Information("========== test1 ===========");
             Log.Information("****************** allowedOrigins: {@Origins}", allowedOrigins);
 
             services.AddCors(options =>

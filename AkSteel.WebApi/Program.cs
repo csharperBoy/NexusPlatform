@@ -11,7 +11,8 @@ using Serilog;
 try
 {
     Console.OutputEncoding = System.Text.Encoding.UTF8;
-    Log.Information("🚀 Starting AkSteel Management application...");
+    Log.Information("🚀 Starting AkSteel Management application... ");
+    Log.Information("Version 1.0.0 ");
 
     var builder = WebApplication.CreateBuilder(args);
     builder.Configuration

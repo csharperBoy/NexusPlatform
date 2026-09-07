@@ -10,16 +10,16 @@ namespace Core.Shared.Enums.Contact
    
     public enum ContactTypeEnum
     {
-        [PersianDescription("موبایل")]
+        [PersianDescription("تلفن همراه")]
         Mobile = 1,
 
         [PersianDescription("تلفن ثابت")]
         Phone = 2,
 
-        [PersianDescription("شماره داخلی")]
+        [PersianDescription("ثابت داخلی")]
         OfficePhone = 3,
 
-        [PersianDescription("موبایل سازمانی")]
+        [PersianDescription("همراه سازمانی")]
         OrganizationMobile = 4,
 
         [PersianDescription("ایمیل")]
@@ -48,6 +48,12 @@ namespace Core.Shared.Enums.Contact
 
         [PersianDescription("کد پستی")]
         PostalCode = 13,
+
+        [PersianDescription("ایتا")]
+        Eitaa = 14,
+
+        [PersianDescription("ایکس")]
+        x = 15,
 
         [PersianDescription("سایر")]
         Other = 99
