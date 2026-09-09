@@ -303,20 +303,20 @@ const EntitySyncCard: React.FC<{ config: EntityConfig }> = ({ config }) => {
              </div>
            )}
 
-          {applyResult.successMessages?.length > 0 && (
+          {(applyResult.successMessages?.length ?? 0) > 0 && (
              <div className="mb-3 text-emerald-700 text-sm bg-emerald-50/50 p-3 rounded-lg border border-emerald-100">
                <span className="font-bold block mb-1">✅ عملیات‌های موفق:</span>
                <ul className="list-disc list-inside space-y-1">
-                 {applyResult.successMessages.map((msg, idx) => <li key={idx}>{msg}</li>)}
+                 {applyResult.successMessages?.map((msg, idx) => <li key={idx}>{msg}</li>)}
                </ul>
              </div>
            )}
 
-           {applyResult.errors?.length > 0 && (
+           {(applyResult.errors?.length ?? 0) > 0 && (
              <div className="text-rose-700 text-sm bg-rose-50/50 p-3 rounded-lg border border-rose-100">
                <span className="font-bold block mb-1">❌ خطاها در حین اعمال:</span>
                <ul className="list-disc list-inside space-y-1">
-                 {applyResult.errors.map((err, idx) => <li key={idx}>{err}</li>)}
+                 {applyResult.errors?.map((err, idx) => <li key={idx}>{err}</li>)}
                </ul>
              </div>
            )}
