@@ -80,6 +80,10 @@ namespace HR.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifiedBy = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Order = table.Column<int>(type: "int", nullable: true),
@@ -547,11 +551,35 @@ namespace HR.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_JobLevel_CreatedAt",
+                schema: "hr",
+                table: "JobLevel",
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobLevel_CreatedBy",
+                schema: "hr",
+                table: "JobLevel",
+                column: "CreatedBy");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_JobLevel_Id",
                 schema: "hr",
                 table: "JobLevel",
                 column: "Id",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobLevel_ModifiedAt",
+                schema: "hr",
+                table: "JobLevel",
+                column: "ModifiedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_JobLevel_ModifiedBy",
+                schema: "hr",
+                table: "JobLevel",
+                column: "ModifiedBy");
 
             migrationBuilder.CreateIndex(
                 name: "IX_JobTitle_CreatedAt",

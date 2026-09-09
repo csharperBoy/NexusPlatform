@@ -488,8 +488,24 @@ namespace HR.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int?>("Order")
                         .HasColumnType("int");
@@ -501,8 +517,20 @@ namespace HR.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("PK_JobLevel");
 
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_JobLevel_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_JobLevel_CreatedBy");
+
                     b.HasIndex("Id")
                         .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_JobLevel_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_JobLevel_ModifiedBy");
 
                     b.ToTable("JobLevel", "hr");
                 });
@@ -811,9 +839,6 @@ namespace HR.Infrastructure.Migrations
                     b.Property<Guid?>("FkOrganizationUnitId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<int?>("Gender")
                         .HasColumnType("int");
 
@@ -845,6 +870,9 @@ namespace HR.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("OrganizationUnits_Name");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("PostCode")
                         .IsRequired()
