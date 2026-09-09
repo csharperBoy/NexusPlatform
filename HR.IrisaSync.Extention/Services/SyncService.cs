@@ -834,7 +834,6 @@ namespace HR.IrisaSync.Extention.Services
                                 await _hrUow.OrganizationUnitRepository.AddAsync(model);
                                 item.FkOrganizationUnitId = model.Id;
                                 item.OrganizationUnit = model.Name;
-                                await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
                                 AddedCount++;
                                 SuccessMessages.Add($"{IconInTextHelper.IconAdd} واحد سازمانی  '{model.Name}' با موفقیت افزوده شد.  ");
 
