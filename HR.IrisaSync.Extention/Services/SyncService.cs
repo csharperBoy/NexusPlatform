@@ -8,10 +8,16 @@ using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Domain.ValueObjects;
 using Core.Infrastructure.Exporter.Excel;
+using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using DocumentFormat.OpenXml.Office.CustomUI;
+using HR.Application.Commands.Assignment;
 using HR.Application.Commands.Employment;
+using HR.Application.Commands.JobLevel;
+using HR.Application.Commands.JobTitle;
+using HR.Application.Commands.OrganizationUnit;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
@@ -23,6 +29,7 @@ using HR.IrisaSync.Extention.Contexts;
 using HR.IrisaSync.Extention.Data;
 using HR.IrisaSync.Extention.Entities;
 using HR.IrisaSync.Extention.Interface;
+using HR.IrisaSync.Extention.Services;
 using HR.IrisaSync.Extention.Specifications;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -32,18 +39,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace HR.IrisaSync.Extention.Services
 {
-    public class SyncResult
-    {
-        public int AddedCount { get; set; }
-        public int UpdatedCount { get; set; }
-        public int DeletedCount { get; set; }
-        //public List<string> Errors { get; set; } = new List<string>();
-        public override string ToString()
-            => $"Added: {AddedCount}, Updated: {UpdatedCount}, Deleted: {DeletedCount}";
-    }
+    
     public class SyncService : ISyncService
     {
 
@@ -78,364 +78,297 @@ namespace HR.IrisaSync.Extention.Services
             _hrUow = hrUow;
             _personService = personService;
         }
-        /*
-        public async Task<SyncResult> SyncEmploymentsAsync2()
+        #region Employment
+
+        private bool HasEmploymentChanged(PdsIdeaInformationViw ext, EmploymentInfoView existing, Dictionary<Guid, List<ContactItemDto>> allContacts)
         {
-            var result = new SyncResult();
+            #region مقایسه اطلاعات مربوط به شخصیت حقیقی فرد 
+            bool hasChange =
+                ext.NamFirstEmply != existing.FirstName ||
+                ext.NamLastEmply != existing.LastName ||
+                ext.DesSexEmply?.Trim() != (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث") ||
+                ext.CodNatEmply != existing.NationalCode;
 
-            try
+            if (hasChange)
+                return true;
+            #endregion
+
+            #region مقایسه اطلاعات مربوط به مشخصات کارمندی
+            hasChange =
+                DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)) != existing.EmploymentEffectiveFrom ||
+                ext.NumPrsnEmply.ToString() != existing.EmploymentCode?.Trim();
+
+            if (hasChange)
+                return true;
+            #endregion
+
+            #region مقایسه اطلاعات تماس شخصیت حقیقی
+            List<ContactItemDto> contacts = new();
+            if (existing.FkPartyContactProfileId != null &&
+                allContacts.TryGetValue(existing.FkPartyContactProfileId.Value, out var foundContacts))
             {
-                // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
-                var irisaEmployments = (await _irisaRepo.GetAllAsync())
-                    .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
-                    .ToList();
-
-                // 2. دریافت مپ عنوان‌های شغلی
-                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync()).Where(a => a.IrisaJobTitleId != null)
-                    .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
-
-                // 3. دریافت تمام پست‌های موجود و ساخت دیکشنری (JobTitleId, Code) -> Post
-                var allPosts = await _hrUow.PostRepository.GetAllAsync();
-                var postDict = allPosts
-                    .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code) && p.IsRemove != true)
-                    .ToDictionary(
-                        p => (p.FkJobTitleId, p.Code),
-                        p => p
-                    );
-
-                // 4. دریافت تمام کارمندان موجود در دیتابیس (برای تشخیص جدید/موجود)
-                var existingEmployments = await _hrUow.EmploymentRepository.GetAllAsync();
-                var employmentDict = existingEmployments
-                    .ToDictionary(e => e.EmploymentCode, e => e); // PersonalCode = NumPrsnEmply
-
-                // 5. لیست عملیات (برای رهگیری)
-                var employmentsToUpdate = new List<Employment>();
-                var employmentsToDelete = new List<Employment>();
-
-                // 6. گروه‌بندی کارمندان ویو بر اساس CodJobpo
-                var employmentGroups = irisaEmployments.Where(a => a.CodJobpo != null)
-                    .GroupBy(e => e.CodJobpo)
-                    .ToList();
-
-                foreach (var group in employmentGroups)
-                {
-                    // یافتن FkJobTitleId معتبر
-                    if (!jobTitleMap.TryGetValue(group.Key, out var jobTitleId))
-                        continue; // اگر عنوان شغلی مپ نشده، گروه را نادیده بگیر
-
-                    // مرتب‌سازی کارمندان گروه بر اساس یک ترتیب مشخص (مثلاً NumPrsnEmply)
-                    var sortedEmployments = group
-                        .OrderBy(e => e.NumPrsnEmply) // یا هر فیلد دیگری مانند تاریخ استخدام
-                        .ToList();
-
-                    int counter = 0;
-                    foreach (var item in sortedEmployments)
-                    {
-                        counter++;
-                        string code = counter.ToString();
-                        var key = (JobTitleId: (Guid)jobTitleId, Code: code);
-
-                        // پیدا کردن پست متناظر
-                        if (!postDict.TryGetValue(key, out var post))
-                        {
-                            // اگر پست وجود نداشت، خطا ثبت کن یا ادامه بده
-                            // _logger.LogWarning($"پستی با عنوان شغلی {jobTitleId} و کد {code} یافت نشد.");
-                            continue;
-                        }
-
-                        var personalCode = item.NumPrsnEmply.ToString();
-                        var postId = post.Id;
-
-                        // 7. بررسی وجود کارمند در دیتابیس
-                        if (employmentDict.TryGetValue(personalCode, out var existingEmployment))
-                        {
-                            UpdateEmploymentCommand updateCommand = new UpdateEmploymentCommand(
-                                Id: existingEmployment.Id,
-                                Phone: new List<string> { item.NumTelEmply.ToString() },
-                                Address: new List<string> { item.DesAdrEmply },
-                                Mobile: new List<string> { item.NumMobilEmply.ToString() },
-                                nationalCode: item.CodNatEmply,
-                                FirstName: item.NamFirstEmply,
-                                LastName: item.NamLastEmply,
-                                BirthDate: Convert.ToDateTime(item.DatBirthEmplyEn),
-                                BirthPlace: item.BirthPlace,
-                                FatherName: item.NamFathrEmply,
-                                EmploymentCode: personalCode,
-                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
-                                PostId: postId,
-                                EffectiveFrom: Convert.ToDateTime(item.DatEmpltEmplyEn)
-
-                                );
-
-                            var updateResult = await _mediator.Send(updateCommand);
-                            //await _postService.AssignToEmploymentAsync(new List<Guid?> { postId }, existingEmployment.Id);
-                            // در صورت موفقیت، تعداد به‌روز شده را افزایش بده
-                            result.UpdatedCount++;
-                            existingEmployment.AddDomainEvent(new ChangeEmploymentEvent(existingEmployment.Id));
-                            // حذف از دیکشنری تا بعداً متوجه شویم کدام کارمندها حذف می‌شوند
-                            employmentDict.Remove(personalCode);
-                        }
-                        else
-                        {
-
-                            // ➕ کارمند جدید → ایجاد از طریق MediatR
-                            var createCommand = new CreateEmploymentCommand(
-                                Phone: new List<string> { item.NumTelEmply.ToString() },
-                                Address: new List<string> { item.DesAdrEmply },
-                                Email: null, // یا item.DesEmailAddresEmply
-                                Mobile: new List<string> { item.NumMobilEmply.ToString() },
-                                OfficePhone: null,
-                                OrgEmail: null,
-                                OrgMobile: null,
-                                NationalCode: item.CodNatEmply,
-                                FirstlName: item.NamFirstEmply,
-                                LastName: item.NamLastEmply,
-                                BirthDate: Convert.ToDateTime(item.DatBirthEmplyEn),
-                                BirthPlace: item.BirthPlace,
-                                FatherName: item.NamFathrEmply,
-                                Gender: item.DesSexEmply.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                                EmploymentCode: personalCode,
-                                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(item.DatEmpltEmplyEn)),
-                                PostId: postId,
-                                AssigneeType: PostAssignmentType.Delegation,
-                                EffectiveFrom: Convert.ToDateTime(item.DatEmpltEmplyEn),
-                                EffectiveTo: null, EmploymentStatusId: null, EmploymentTypeId: null, EndDate: null, locationsId: null
-                            );
-
-                            var createResult = await _mediator.Send(createCommand);
-                            result.AddedCount++;
-                        }
-                    }
-                }
-
-                // 8. کارمندانی که در دیکشنری باقی مانده‌اند = در ویو نیستند → باید حذف یا غیرفعال شوند
-                employmentsToDelete = employmentDict.Values.ToList();
-
-                foreach (var emp in employmentsToDelete)
-                {
-                    // فرض کنید یک Command برای حذف یا غیرفعال‌سازی دارید
-                    var deleteCommand = new DeleteEmploymentCommand(emp.Id);
-                    await _mediator.Send(deleteCommand);
-                    result.DeletedCount++;
-                }
-
-                //scope.Complete();
-                return result;
+                contacts = foundContacts;
             }
-            catch (Exception ex)
-            {
-                // لاگ خطا
-                // _logger.LogError(ex, "خطا در سینک کارمندان");
-                throw;
-            }
+
+            string tel = ext.NumTelEmply?.ToString() ?? string.Empty;
+            string mobile = ext.NumMobilEmply?.ToString() ?? string.Empty;
+            string address = ext.DesAdrEmply ?? string.Empty;
+
+            hasChange = !contacts.Any(c => c.Value == tel) ||
+                        !contacts.Any(c => c.Value == address) ||
+                        !contacts.Any(c => c.Value == mobile);
+            #endregion
+
+            return hasChange;
         }
-        */
-        public async Task<BatchResult<SyncResult>> SyncEmploymentsAsync()
+
+        private CreateEmploymentCommand CreateCreateCommand(PdsIdeaInformationViw ext)
         {
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var DeletedCount = 0;
-            var AddedCount = 0;
+            return new CreateEmploymentCommand(
+                Phone: new List<string> { ext.NumTelEmply?.ToString() ?? string.Empty },
+                Address: new List<string> { ext.DesAdrEmply ?? string.Empty },
+                Email: null,
+                Mobile: new List<string> { ext.NumMobilEmply?.ToString() ?? string.Empty },
+                OfficePhone: null,
+                OrgEmail: null,
+                OrgMobile: null,
+                NationalCode: ext.CodNatEmply,
+                FirstName: ext.NamFirstEmply,
+                LastName: ext.NamLastEmply,
+                BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
+                BirthPlace: ext.BirthPlace,
+                FatherName: ext.NamFathrEmply,
+                Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
+                EmploymentCode: ext.NumPrsnEmply.ToString(),
+                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
+                PostId: null,
+                AssigneeType: null,
+                EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn),
+                EffectiveTo: null,
+                EmploymentStatusId: null,
+                EmploymentTypeId: null,
+                EndDate: null,
+                locationsId: null
+            );
+        }
+
+        private UpdateEmploymentCommand CreateUpdateCommand(PdsIdeaInformationViw ext, EmploymentInfoView existing)
+        {
+            return new UpdateEmploymentCommand(
+                Id: existing.Id,
+                Phone: new List<string> { ext.NumTelEmply?.ToString() ?? string.Empty },
+                Address: new List<string> { ext.DesAdrEmply ?? string.Empty },
+                Mobile: new List<string> { ext.NumMobilEmply?.ToString() ?? string.Empty },
+                nationalCode: ext.CodNatEmply,
+                FirstName: ext.NamFirstEmply,
+                LastName: ext.NamLastEmply,
+                BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
+                BirthPlace: ext.BirthPlace,
+                FatherName: ext.NamFathrEmply,
+                EmploymentCode: ext.NumPrsnEmply.ToString(),
+                Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
+                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
+            );
+        }
+
+        public async Task<BatchResult<SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand>>> SyncEmploymentsPreviewAsync()
+        {
+            var bundle = new SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand>();
+            var errors = new List<string>();
 
             try
             {
-                // 1. دریافت کارمندان از ویو خارجی (فیلتر شده)
-                List<PdsIdeaInformationViw> externalEmployments = (await _irisaRepo.GetAllAsync())
-                    .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
+                // ۱. دریافت داده‌های خارجی
+                List<PdsIdeaInformationViw> externalEmployments = (await _irisaRepo.GetAllAsync(queryOptions: q => q.Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null))).ToList();
+
+                if (!externalEmployments.Any())
+                {
+                    bundle.Warnings.Add("هیچ داده‌ای از سیستم مبدأ دریافت نشد. عملیات همگام‌سازی متوقف شد.");
+                    return new BatchResult<SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand>>(true, Data: bundle);
+                }
+
+                // ۲. دریافت داده‌های موجود
+                IEnumerable<EmploymentInfoView> existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
+                var existingDict = existingEmployments.ToDictionary(e => e.EmploymentCode, e => e);
+
+                var contactProfileIds = existingEmployments
+                    .Where(e => e.FkPartyContactProfileId != null)
+                    .Select(e => e.FkPartyContactProfileId.Value)
+                    .Distinct()
                     .ToList();
 
-                // 2. دریافت تمام کارمندان موجود در دیتابیس
-                IEnumerable<EmploymentInfoView> existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
+                var allContacts = (await _contactService.GetContactsByProfilesIdsAsync(contactProfileIds))
+                    .GroupBy(c => c.ProfileId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
 
-                // ساخت دیکشنری با کلید ترکیبی (کدپرسنلی + کدملی) برای دسترسی سریع
-                var existingDict = existingEmployments
-                    .ToDictionary(
-                        e => e.EmploymentCode,
-                        e => e
-                    );
-
-                // 3. دسته‌بندی رکوردها
-                var toAdd = new List<PdsIdeaInformationViw>();
-                var toUpdate = new List<(PdsIdeaInformationViw External, EmploymentInfoView Existing)>();
-
+                // ۳. پردازش هر رکورد خارجی
                 foreach (var ext in externalEmployments)
                 {
                     string personalCode = ext.NumPrsnEmply.ToString();
-                    string key = personalCode;
 
-                    if (existingDict.TryGetValue(key, out var existing))
+                    if (existingDict.TryGetValue(personalCode, out var existing))
                     {
-                        toUpdate.Add((ext, existing));
-                        existingDict.Remove(key);
+                        // بررسی تغییرات
+                        if (HasEmploymentChanged(ext, existing, allContacts))
+                        {
+                            var updateCommand = CreateUpdateCommand(ext, existing);
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateEmploymentCommand>
+                            {
+                                Summary = $"ویرایش اطلاعات کارمند '{existing.FirstName} {existing.LastName}' (کد پرسنلی: {personalCode})",
+                                Command = updateCommand
+                            });
+                        }
+
+                        existingDict.Remove(personalCode);
                     }
                     else
                     {
-                        toAdd.Add(ext);
+                        // رکورد جدید
+                        var createCommand = CreateCreateCommand(ext);
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateEmploymentCommand>
+                        {
+                            Summary = $"افزودن کارمند جدید '{ext.NamFirstEmply} {ext.NamLastEmply}' (کد پرسنلی: {personalCode})",
+                            Command = createCommand
+                        });
                     }
                 }
 
-                // کارمندانی که باید حذف شوند
-                var toDelete = existingDict.Values.ToList();
-
-
-                // ============ 5. عملیات افزودن (تکی) ============
-                foreach (var ext in toAdd)
+                // ۴. رکوردهای باقی‌مانده => حذف
+                foreach (var emp in existingDict.Values)
                 {
-                    try
+                    var deleteCommand = new DeleteEmploymentCommand(emp.Id);
+                    bundle.DeleteCommands.Add(new SyncPreviewItem<DeleteEmploymentCommand>
                     {
-
-
-                        var createCommand = new CreateEmploymentCommand(
-                            Phone: new List<string> { ext.NumTelEmply.ToString() },
-                            Address: new List<string> { ext.DesAdrEmply },
-                            Email: null,
-                            Mobile: new List<string> { ext.NumMobilEmply.ToString() },
-                            OfficePhone: null,
-                            OrgEmail: null,
-                            OrgMobile: null,
-                            NationalCode: ext.CodNatEmply,
-                            FirstName: ext.NamFirstEmply,
-                            LastName: ext.NamLastEmply,
-                            BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
-                            BirthPlace: ext.BirthPlace,
-                            FatherName: ext.NamFathrEmply,
-                            Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                            EmploymentCode: ext.NumPrsnEmply.ToString(),
-                            StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
-                            PostId: null,
-                            AssigneeType: null,
-                            EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn),
-                            EffectiveTo: null,
-                            EmploymentStatusId: null,
-                            EmploymentTypeId: null,
-                            EndDate: null,
-                            locationsId: null
-                        );
-
-                        await _mediator.Send(createCommand);
-                        AddedCount++;
-                        SuccessMessages.Add($"{IconInTextHelper.IconAdd} کارمند با کد پرسنلی '{createCommand.EmploymentCode}' با موفقیت افزوده شد.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"{IconInTextHelper.IconError} افزودن کارمند با کد پرسنلی '{ext.NumPrsnEmply.ToString()}' با خطا مواجه شد!!!: {ex.Message}");
-                    }
+                        Summary = $"حذف کارمند '{emp.FirstName} {emp.LastName}' (کد پرسنلی: {emp.EmploymentCode})",
+                        Command = deleteCommand
+                    });
                 }
 
-                // ============ 6. عملیات بروزرسانی (دسته‌جمعی) ============
-                if (toUpdate.Any())
-                {
-                    var updateCommands = new List<UpdateEmploymentCommand>();
-
-                    foreach (var (ext, existing) in toUpdate)
-                    {
-
-                        string personalCode = ext.NumPrsnEmply.ToString();
-
-                        var command = new UpdateEmploymentCommand(
-                            Id: existing.Id,
-                            Phone: new List<string> { ext.NumTelEmply.ToString() },
-                            Address: new List<string> { ext.DesAdrEmply },
-                            Mobile: new List<string> { ext.NumMobilEmply.ToString() },
-                            nationalCode: ext.CodNatEmply,
-                            FirstName: ext.NamFirstEmply,
-                            LastName: ext.NamLastEmply,
-                            BirthDate: Convert.ToDateTime(ext.DatBirthEmplyEn),
-                            BirthPlace: ext.BirthPlace,
-                            FatherName: ext.NamFathrEmply,
-                            EmploymentCode: personalCode,
-                            Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                            StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
-                        );
-
-                        updateCommands.Add(command);
-
-                    }
-
-                    if (updateCommands.Any())
-                    {
-                        var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCommands);
-                        var batchResult = await _mediator.Send(batchUpdateCommand);
-                        SuccessMessages.AddRange(batchResult.SuccessMessages?.ToList());
-                        Errors.AddRange(batchResult.Errors?.ToList());
-
-                        UpdatedCount = batchResult.SuccessMessages.Count;
-                    }
-                }
-
-                // ============ 7. عملیات حذف (تکی) ============
-                foreach (var emp in toDelete)
-                {
-                    try
-                    {
-                        var deleteCommand = new DeleteEmploymentCommand(emp.Id);
-                        await _mediator.Send(deleteCommand);
-                        DeletedCount++;
-                        SuccessMessages.Add($"{IconInTextHelper.IconDelete} حذف کارمند با کد پرسنلی '{emp.EmploymentCode}' با موفقیت انجام شد.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"{IconInTextHelper.IconError} حذف کارمند با کد پرسنلی '{emp.EmploymentCode}' با خطا مواجه شد!!!: {ex.Message}");
-                    }
-                }
-
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+                return new BatchResult<SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand>>(true, Data: bundle);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+                return BatchResult<SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش همگام‌سازی کارمندان: {ex.Message}");
             }
         }
 
-
-        public async Task<IReadOnlyList<PdsIdeaInformationViw>> GetEmployment()
+        public async Task<BatchResult<SyncResult>> ApplyEmploymentsAsync(SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand> selectedBundle)
         {
-            var spec = new GetEmploymentSpec();
-            var lst = await _repoSpec.ListBySpecAsync(spec);
-            return lst.ToList();
-        }
-
-
-        /// <summary>
-        /// پر کردن جدول اصلی با داده های موجود در جدول های مپ و ویو ایریسا
-        /// </summary>
-        /// <returns></returns>
-        public async Task<BatchResult<SyncResult>> SyncPostAsync()
-        {
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var DeletedCount = 0;
-            var AddedCount = 0;
-
-            // استفاده از TransactionScope برای اتمیک بودن
-            //using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            var addedCount = 0;
+            var updatedCount = 0;
+            var deletedCount = 0;
 
             try
             {
-                // 1. دریافت داده‌های خارجی و گروه‌بندی
-                var irisaGroups = (await _irisaRepo.GetAllAsync())
-                    .Where(e => e.CodEmtyp == true && e.CodJobpo != null)
+                // ۱. اجرای دستورات افزودن
+                foreach (var item in selectedBundle.AddCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۲. اجرای دستورات بروزرسانی (دسته‌جمعی)
+                if (selectedBundle.UpdateCommands.Any())
+                {
+                    try
+                    {
+                        var updateCmdList = selectedBundle.UpdateCommands.Select(x => x.Command).ToList();
+                        var batchUpdateCommand = new BatchUpdateEmploymentsCommand(updateCmdList);
+                        var batchResult = await _mediator.Send(batchUpdateCommand);
+
+                        successMessages.AddRange(batchResult.SuccessMessages);
+                        errors.AddRange(batchResult.Errors);
+                        updatedCount = batchResult.SuccessMessages.Count;
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در بروزرسانی دسته‌جمعی کارمندان: {ex.Message}");
+                    }
+                }
+
+                // ۳. اجرای دستورات حذف
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        deletedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult { AddedCount = addedCount, UpdatedCount = updatedCount, DeletedCount = deletedCount };
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی کارمندان: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncEmploymentsAsync()
+        {
+            var previewResult = await SyncEmploymentsPreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
+            {
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
+            }
+
+            return await ApplyEmploymentsAsync(previewResult.Data);
+        }
+
+        #endregion
+        #region Post
+
+        public async Task<BatchResult<SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand>>> SyncPostPreviewAsync()
+        {
+            var bundle = new SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand>();
+
+            try
+            {
+                // ۱. دریافت داده‌های خارجی و گروه‌بندی
+                var irisaGroups = (await _irisaRepo.GetAllAsync(queryOptions: q => q.Where(e => e.CodEmtyp == true && e.CodJobpo != null)))
                     .GroupBy(a => a.CodJobpo)
                     .ToList();
 
-                // 2. دریافت مپ‌ها به صورت دیکشنری برای جستجوی O(1)
-                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync()).Where(a => a.IrisaJobTitleId != null)
+                if (!irisaGroups.Any())
+                {
+                    bundle.Warnings.Add("هیچ داده‌ای از پست‌ها در سیستم خارجی یافت نشد.");
+                    return new BatchResult<SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand>>(true, Data: bundle);
+                }
+
+                // ۲. دریافت مپ‌ها
+                var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync())
+                    .Where(a => a.IrisaJobTitleId != null)
                     .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
 
-                var jobLevelMap = (await _uow.JobLevelMapRepository.GetAllAsync()).Where(a => a.IrisaJobLevelId != null)
+                var jobLevelMap = (await _uow.JobLevelMapRepository.GetAllAsync())
+                    .Where(a => a.IrisaJobLevelId != null)
                     .ToDictionary(j => j.IrisaJobLevelId, j => j.FkJobLevelId);
 
-                var organUnitMap = (await _uow.OrganizationUnitMapRepository.GetAllAsync()).Where(a => a.IrisaOrganizationUnitId != null)
+                var organUnitMap = (await _uow.OrganizationUnitMapRepository.GetAllAsync())
+                    .Where(a => a.IrisaOrganizationUnitId != null)
                     .ToDictionary(j => j.IrisaOrganizationUnitId, j => j.FkOrganizationUnitId);
 
-                // 3. دریافت پست‌های موجود (فقط فیلدهای لازم)
+                // ۳. دریافت پست‌های موجود
                 var existingPosts = await _hrUow.PostRepository
-                    .GetAllAsync(queryOptions: q => q.Where(a => a.IsRemove != true).Include(b => b.JobTitle)); // اگر IQueryable هست، بهتر است Select کنید
+                    .GetAllAsync(queryOptions: q => q.Where(a => a.IsRemove != true).Include(b => b.JobTitle));
 
-                // 4. ساخت دیکشنری از پست‌های موجود با کلید (JobTitleId, Code)
                 var existingDict = existingPosts
                     .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
                     .ToDictionary(
@@ -443,476 +376,250 @@ namespace HR.IrisaSync.Extention.Services
                         p => p
                     );
 
-                // 5. مجموعه کلیدهای جدید برای تشخیص پست‌های حذفی
-                var newKeys = new HashSet<(Guid JobTitleId, string Code)>();
-
-                // 6. لیست عملیات
-                //var postsToAdd = new List<Post>();
-                var postsToUpdate = new List<Post>();
-
-                // 7. پردازش هر گروه عنوان شغلی
+                // ۴. پردازش هر گروه
                 foreach (var group in irisaGroups)
                 {
-                    // پیدا کردن عنوان شغلی معتبر
-                    if (!jobTitleMap.TryGetValue(group.Key, out var jobTitleId))
-                        continue; // اگر مپ وجود ندارد، کل گروه را نادیده بگیر
+                    if (!jobTitleMap.TryGetValue(group.Key, out var jobTitleId) || jobTitleId == null)
+                    {
+                        bundle.Warnings.Add($"عنوان شغلی متناظر با شناسه سیستم خارجی '{group.Key}' پیدا نشد.");
+                        continue;
+                    }
 
                     int counter = 0;
-                    foreach (var item in group)
+                    var sortedGroup = group.OrderBy(e => e.NumPrsnEmply).ToList();
+
+                    foreach (var item in sortedGroup)
                     {
                         counter++;
                         string code = counter.ToString();
 
-                        // دریافت مقادیر مپ‌شده (در صورت وجود)
                         jobLevelMap.TryGetValue(item.CodPosit, out var jobLevelId);
                         organUnitMap.TryGetValue(item.CodBusun, out var orgUnitId);
 
                         var key = (JobTitleId: (Guid)jobTitleId, Code: code);
-                        newKeys.Add(key);
 
                         if (existingDict.TryGetValue(key, out var existingPost))
                         {
-                            // ➡️ پست موجود است – بررسی تغییرات و به‌روزرسانی
+                            // بررسی تغییرات
+                            bool hasChange = existingPost.FkOrganizationUnitId != orgUnitId ||
+                                            existingPost.FkJobLevelId != jobLevelId;
 
-                            if (existingPost.FkOrganizationUnitId != orgUnitId ||
-                                existingPost.FkJobLevelId != jobLevelId)
+                            if (hasChange)
                             {
-                                UpdatePostCommand updateCommand = new UpdatePostCommand(
+                                var updateCommand = new UpdatePostCommand(
                                     Id: existingPost.Id,
                                     OrganizationUnitId: orgUnitId,
                                     JobLevelId: jobLevelId
                                 );
-                                // از متد UpdateDetails استفاده می‌کنیم
-                                //existingPost.UpdateDetails(
-                                //    organizationUnitId: orgUnitId,
-                                //    jobLevelId: jobLevelId,
-                                //    gradeId: null,      // در صورت نیاز
-                                //    costCenterId: null, // در صورت نیاز
-                                //    parentId: null      // در صورت نیاز
-                                //);
 
-                                //var createResult = await _mediator.Send(updateCommand);
-
-                                postsToUpdate.Add(existingPost);
+                                bundle.UpdateCommands.Add(new SyncPreviewItem<UpdatePostCommand>
+                                {
+                                    Summary = $"ویرایش پست '{existingPost.JobTitle?.Name ?? code}' (کد: {code})",
+                                    Command = updateCommand
+                                });
                             }
 
-
-
-                            // حذف از دیکشنری تا بعداً متوجه بشیم کدوم پست‌ها حذف شدن
                             existingDict.Remove(key);
                         }
                         else
                         {
+                            // پست جدید
+                            if (orgUnitId == null)
+                            {
+                                bundle.Warnings.Add($"واحد سازمانی متناظر برای پست کد '{code}' عنوان شغلی '{item.DesJobpo}' یافت نشد.");
+                                continue;
+                            }
 
-                            //Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Post - {code}", ContactProfileTypeEnum.Post);
-                            // ➕ پست جدید
                             var createCommand = new CreatePostCommand(
                                 code,
-                                 (Guid)orgUnitId,
-                                 (Guid)jobTitleId,
-                                 jobLevelId,
-                                 null,
-                                 null,
-                                 null,
-                                 true,
-                                 null,
-                                 null,
-                                 null,
-                                 null,
-                                 null,
-                                 null
+                                (Guid)orgUnitId,
+                                (Guid)jobTitleId,
+                                jobLevelId,
+                                null, null, null, true,
+                                null, null, null, null, null, null
                             );
 
-                            var createResult = await _mediator.Send(createCommand);
-                            AddedCount++;
-                            SuccessMessages.Add($"{IconInTextHelper.IconAdd} پست با عنوان شغلی '{item.DesJobpo}' و کد '{code}' با موفقیت افزوده شد. ");
-                            //postsToAdd.Add(newPost);
+                            bundle.AddCommands.Add(new SyncPreviewItem<CreatePostCommand>
+                            {
+                                Summary = $"افزودن پست جدید با کد '{code}' برای عنوان شغلی '{item.DesJobpo ?? "نامشخص"}'",
+                                Command = createCommand
+                            });
                         }
                     }
                 }
 
-                // 8. پست‌های باقی‌مانده در دیکشنری = باید حذف شوند
-                var postsToDelete = existingDict.Values.ToList();
-
-                // 9. اعمال تغییرات روی دیتابیس
-                //if (postsToAdd.Any())
-                //{
-                //    await _hrUow.PostRepository.AddRangeAsync(postsToAdd);
-                //    result.AddedCount = postsToAdd.Count;
-                //}
-
-                if (postsToUpdate.Any())
+                // ۵. پست‌های باقی‌مانده => باید حذف شوند
+                foreach (var post in existingDict.Values)
                 {
-                    BatchUpdatePostsCommand updateCommand = new BatchUpdatePostsCommand(postsToUpdate.Select(a => new UpdatePostCommand(
-                        a.Id, a.Code, a.FkOrganizationUnitId, a.FkJobTitleId, a.FkJobLevelId,
-                        Optional<Guid?>.Undefined,
-                        Optional<Guid?>.Undefined,
-                        Optional<Guid?>.Undefined,
-                        Optional<bool?>.Undefined,
-                        Optional<Guid?>.Undefined,
-                        Optional<PostAssignmentType?>.Undefined,
-                        Optional<List<Guid>?>.Undefined,
-                        Optional<List<string>?>.Undefined,
-                        Optional<List<string>?>.Undefined,
-                        Optional<List<string>?>.Undefined
-                        )).ToList());
+                    var deleteCommand = new DeletePostCommand(post.Id);
 
-                    var batchResult = await _mediator.Send(updateCommand);
-                    //await _hrUow.PostRepository.UpdateRangeAsync(postsToUpdate);
-                    SuccessMessages.AddRange(batchResult.SuccessMessages?.ToList());
-                    Errors.AddRange(batchResult.Errors?.ToList());
-
-                    UpdatedCount = batchResult.SuccessMessages.Count;
+                    bundle.DeleteCommands.Add(new SyncPreviewItem<DeletePostCommand>
+                    {
+                        Summary = $"حذف پست '{post.JobTitle?.Name ?? post.Code}' (کد: {post.Code})",
+                        Command = deleteCommand
+                    });
                 }
 
-                if (postsToDelete.Any())
+                return new BatchResult<SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand>>(true, Data: bundle);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش پست‌ها: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> ApplyPostAsync(SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand> selectedBundle)
+        {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            var addedCount = 0;
+            var updatedCount = 0;
+            var deletedCount = 0;
+
+            try
+            {
+                // ۱. اجرای دستورات افزودن
+                foreach (var item in selectedBundle.AddCommands)
                 {
-                    //foreach (var item in postsToDelete)
-                    //{
-                    //    await item.SoftRemove();
-                    //    foreach (var ass in item.Assignments)
-                    //    {
-                    //        ass.DoExpire();
-                    //    }
-                    //}
-                    //foreach (var post in postsToDelete)
-                    //{
-
-                    //    post.AddDomainEvent(new ChangePostEvent(post.Id));
-                    //}
-                    foreach (var post in postsToDelete)
+                    try
                     {
-                        DeletePostCommand deleteCommand = new DeletePostCommand(post.Id);
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
 
-                        var createResult = await _mediator.Send(deleteCommand);
-                        if (createResult.Succeeded)
+                // ۲. اجرای دستورات بروزرسانی (دسته‌جمعی)
+                if (selectedBundle.UpdateCommands.Any())
+                {
+                    try
+                    {
+                        var updateCmdList = selectedBundle.UpdateCommands.Select(x => new UpdatePostCommand(
+                            x.Command.Id, null, x.Command.OrganizationUnitId, x.Command.JobTitleId, x.Command.JobLevelId,
+                            Optional<Guid?>.Undefined,
+                            Optional<Guid?>.Undefined,
+                            Optional<Guid?>.Undefined,
+                            Optional<bool?>.Undefined,
+                            Optional<Guid?>.Undefined,
+                            Optional<PostAssignmentType?>.Undefined,
+                            Optional<List<Guid>?>.Undefined,
+                            Optional<List<string>?>.Undefined,
+                            Optional<List<string>?>.Undefined,
+                            Optional<List<string>?>.Undefined
+                        )).ToList();
+
+                        var batchUpdateCommand = new BatchUpdatePostsCommand(updateCmdList);
+                        var batchResult = await _mediator.Send(batchUpdateCommand);
+
+                        successMessages.AddRange(batchResult.SuccessMessages);
+                        errors.AddRange(batchResult.Errors);
+                        updatedCount = batchResult.SuccessMessages.Count;
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در بروزرسانی دسته‌جمعی پست‌ها: {ex.Message}");
+                    }
+                }
+
+                // ۳. اجرای دستورات حذف
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                        var result = await _mediator.Send(item.Command);
+                        if (result.Succeeded)
                         {
-                            SuccessMessages.Add($"{IconInTextHelper.IconDelete} پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با موفقیت حذف شد.");
+                            deletedCount++;
+                            successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
                         }
                         else
                         {
-                            Errors.Add($"{IconInTextHelper.IconError} حذف پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با خطا مواجه شد.");
+                            errors.Add($"{IconInTextHelper.IconError} {item.Summary} ناموفق بود.");
                         }
                     }
-                    DeletedCount = postsToDelete.Count;
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
                 }
 
-                // ذخیره‌سازی نهایی
                 await _hrUow.SaveChangesAsync();
 
-                // تکمیل تراکنش
-                //scope.Complete();
-
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+                var syncResult = new SyncResult { AddedCount = addedCount, UpdatedCount = updatedCount, DeletedCount = deletedCount };
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی پست‌ها: {ex.Message}");
             }
         }
 
-
-        /// <summary>
-        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
-        /// </summary>
-        /// <returns></returns>
-        public async Task<BatchResult<SyncResult>> SyncJobTitleAsync()
+        public async Task<BatchResult<SyncResult>> SyncPostAsync()
         {
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var DeletedCount = 0;
-            var AddedCount = 0;
-            try
+            var previewResult = await SyncPostPreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
             {
-                await _mapService.FillJobTitleMap();
-                var list = await _uow.JobTitleMapRepository.GetAllAsync();
-                var existList = await _hrUow.JobTitleRepository.GetAllAsync();
-
-                foreach (var item in list)
-                {
-                    try
-                    {
-
-
-                        if (item.IrisaJobTitle != null)
-                        {
-                            var existEntity = existList.Where(a => a.Id == item.FkJobTitleId).SingleOrDefault();
-                            if (existEntity != null)
-                            {
-                                if (existEntity.Name.Trim() != item.JobTitle?.Trim())
-                                {
-                                    existEntity.SetName(item.JobTitle);
-                                    await _hrUow.JobTitleRepository.UpdateAsync(existEntity);
-                                    //existEntity.AddDomainEvent(new ChangeJobTitleEvent(existEntity.Id));
-                                    UpdatedCount++;
-                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} عنوان شغلی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
-                                }
-                            }
-                            else
-                            {
-                                JobTitle model = new JobTitle(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
-                                await _hrUow.JobTitleRepository.AddAsync(model);
-                                item.FkJobTitleId = model.Id;
-                                item.JobTitle = model.Name;
-                                await _uow.JobTitleMapRepository.UpdateAsync(item);
-                                AddedCount++;
-                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} عنوان شغلی  '{model.Name}' با موفقیت افزوده شد.  ");
-                            }
-                        }
-
-
-                        await _hrUow.SaveChangesAsync();
-                        await _uow.SaveChangesAsync();
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"ذخیره سازی عنوان شغلی '{item.IrisaJobTitle}' با خطا مواجه شد: {ex.Message}");
-                    }
-                }
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
             }
-            catch (Exception ex)
+
+            var applyResult = await ApplyPostAsync(previewResult.Data);
+
+            if (previewResult.Data.Warnings.Any())
             {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+                applyResult.Errors.AddRange(previewResult.Data.Warnings);
             }
+
+            return applyResult;
         }
 
-        /// <summary>
-        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
-        /// </summary>
-        /// <returns></returns>
-        public async Task<BatchResult<SyncResult>> SyncJobLevelAsync()
+        #endregion
+        #region Assignment
+
+        public async Task<BatchResult<SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand>>> SyncAssignmentsPreviewAsync()
         {
-
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var DeletedCount = 0;
-            var AddedCount = 0;
-            try
-            {
-                await _mapService.FillJobLevelMap();
-                var list = await _uow.JobLevelMapRepository.GetAllAsync();
-                var existList = await _hrUow.JobLevelRepository.GetAllAsync();
-
-                foreach (var item in list)
-                {
-                    try
-                    {
-
-                        if (item.IrisaJobLevel != null)
-                        {
-                            var existEntity = existList.Where(a => a.Id == item.FkJobLevelId).SingleOrDefault();
-                            if (existEntity != null)
-                            {
-                                if (existEntity.Title.Trim() != item.JobLevel?.Trim())
-                                {
-                                    existEntity.SetTitle(item.JobLevel);
-                                    await _hrUow.JobLevelRepository.UpdateAsync(existEntity);
-                                    UpdatedCount++;
-                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} سطح شغلی  '{existEntity.Title}' با موفقیت بروزرسانی شد.  ");
-                                }
-                            }
-                            else
-                            {
-                                JobLevel model = new JobLevel(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
-                                await _hrUow.JobLevelRepository.AddAsync(model);
-                                item.FkJobLevelId = model.Id;
-                                item.JobLevel = model.Title;
-                                await _uow.JobLevelMapRepository.UpdateAsync(item);
-                                AddedCount++;
-                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} سطح شغلی  '{model.Title}' با موفقیت افزوده شد.  ");
-                            }
-
-                        }
-
-                        await _hrUow.SaveChangesAsync();
-                        await _uow.SaveChangesAsync();
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"ذخیره سازی سطح شغلی '{item.IrisaJobLevel}' با خطا مواجه شد: {ex.Message}");
-                    }
-                }
-
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
-            }
-            catch (Exception ex)
-            {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
-        /// </summary>
-        /// <returns></returns>
-        public async Task<BatchResult<SyncResult>> SyncOrganizationUnitAsync()
-        {
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var DeletedCount = 0;
-            var AddedCount = 0;
-            try
-            {
-
-
-                await _mapService.FillOrganizationUnitRootMap();
-                await _mapService.FillOrganizationUnitMap();
-                var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
-                var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
-                // roots node
-                foreach (var item in list.Where(i => i.IrisaParentId == null))
-                {
-                    try
-                    {
-
-                        if (item.IrisaOrganizationUnit != null)
-                        {
-                            var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
-                            if (existEntity != null)
-                            {
-                                if (existEntity.Name.Trim() != item.OrganizationUnit?.Trim())
-                                {
-                                    existEntity.SetName(item.OrganizationUnit);
-                                    await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
-                                    UpdatedCount++;
-                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} واحد سازمانی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
-                                }
-                            }
-                            else
-                            {
-                                OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), null);
-                                await _hrUow.OrganizationUnitRepository.AddAsync(model);
-                                item.FkOrganizationUnitId = model.Id;
-                                item.OrganizationUnit = model.Name;
-                                await _uow.OrganizationUnitMapRepository.UpdateAsync(item);
-                                AddedCount++;
-                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} واحد سازمانی  '{model.Name}' با موفقیت افزوده شد.  ");
-
-                            }
-
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"{IconInTextHelper.IconError} ذخیره سازی واحد سازمانی '{item.IrisaOrganizationUnit}' با خطا مواجه شد: {ex.Message}");
-                    }
-                }
-                var trmp = list.Where(i => i.IrisaParentId != null).ToList();
-                //Child Node
-                foreach (var item in list.Where(i => i.IrisaParentId != null))
-                {
-                    try
-                    {
-
-                        if (item.IrisaOrganizationUnit != null)
-                        {
-                            var existEntity = existList.Where(a => a.Id == item.FkOrganizationUnitId).SingleOrDefault();
-                            IrisaSyncOrganizationUnitMap parentMap = list.Where(i => i.IrisaOrganizationUnitId == item.IrisaParentId).SingleOrDefault();
-                            if (existEntity != null)
-                            {
-                                if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim() || existEntity.ParentId != parentMap?.FkOrganizationUnitId)
-                                {
-                                    existEntity.SetName(item.OrganizationUnit);
-                                    existEntity.SetParent(parentMap?.FkOrganizationUnitId);
-                                    await _hrUow.OrganizationUnitRepository.UpdateAsync(existEntity);
-                                    UpdatedCount++;
-                                    SuccessMessages.Add($"{IconInTextHelper.IconUpdate} واحد سازمانی  '{existEntity.Name}' با موفقیت بروزرسانی شد.  ");
-                                }
-                            }
-                            else
-                            {
-                                OrganizationUnit model = new OrganizationUnit(item.IrisaOrganizationUnit, item.IrisaOrganizationUnitId.ToString(), parentMap?.FkOrganizationUnitId);
-                                await _hrUow.OrganizationUnitRepository.AddAsync(model);
-                                item.FkOrganizationUnitId = model.Id;
-                                item.OrganizationUnit = model.Name;
-                                AddedCount++;
-                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} واحد سازمانی  '{model.Name}' با موفقیت افزوده شد.  ");
-
-                            }
-                        }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"{IconInTextHelper.IconError} ذخیره سازی واحد سازمانی '{item.IrisaOrganizationUnit}' با خطا مواجه شد: {ex.Message}");
-                    }
-                }
-                await _hrUow.SaveChangesAsync();
-                await _uow.SaveChangesAsync();
-
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
-            }
-            catch (Exception ex)
-            {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
-            }
-        }
-
-        public async Task<BatchResult<SyncResult>> SyncAssignmentsAsync()
-        {
-            var SuccessMessages = new List<string>();
-            var Errors = new List<string>();
-            var UpdatedCount = 0;
-            var AddedCount = 0;
-            var DeletedCount = 0;
+            var bundle = new SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand>();
 
             try
             {
-                // 1. دریافت کارمندان از ویو خارجی
-                List<PdsIdeaInformationViw> externalList = (await _irisaRepo.GetAllAsync())
-                    .Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)
+                // ۱. دریافت داده‌های خارجی
+                var externalList = (await _irisaRepo.GetAllAsync(queryOptions: q => q.Where(e => e.CodEmtyp == true && e.NumPrsnEmply != null)))
                     .ToList();
 
                 if (!externalList.Any())
                 {
-                    // خطای جزئی: هیچ داده‌ای وجود ندارد، اما عملیات کلی ناموفق نیست
-                    Errors.Add("هیچ داده ای یافت نشد.");
-                    // همچنان یک نتیجه با داده‌های صفر برمی‌گردانیم
-                    return BatchResult<SyncResult>.Ok(
-                        new SyncResult() { DeletedCount = 0, UpdatedCount = 0 },
-                        Errors
-                    );
+                    bundle.Warnings.Add("هیچ داده‌ای از سیستم خارجی یافت نشد.");
+                    return new BatchResult<SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand>>(true, Data: bundle);
                 }
 
-                // 2. دریافت کارمندان موجود در دیتابیس
+                // ۲. دریافت اطلاعات پایه
                 var existingEmployments = await _hrUow.EmployementInfoViewRepository.GetAllAsync();
-                var employmentDict = existingEmployments
-                    .ToDictionary(e => e.EmploymentCode, e => e);
+                var employmentDict = existingEmployments.ToDictionary(e => e.EmploymentCode, e => e);
 
-                // 3. دریافت مپ‌های عنوان شغلی
                 var jobTitleMap = (await _uow.JobTitleMapRepository.GetAllAsync())
                     .Where(j => j.IrisaJobTitleId != null)
                     .ToDictionary(j => j.IrisaJobTitleId, j => j.FkJobTitleId);
 
-                // 4. دریافت تمام پست‌های فعال
                 var allPosts = await _hrUow.PostRepository
                     .GetAllAsync(queryOptions: q => q.Where(p => p.IsRemove != true).Include(a => a.JobTitle));
                 var postDict = allPosts
                     .Where(p => p.FkJobTitleId != Guid.Empty && !string.IsNullOrEmpty(p.Code))
-                    .ToDictionary(
-                        p => (p.FkJobTitleId, p.Code),
-                        p => p
-                    );
+                    .ToDictionary(p => (p.FkJobTitleId, p.Code), p => p);
 
-                // 5. مجموعه کدهای پرسنلی خارجی
-                var externalEmploymentCodes = externalList
-                    .Select(e => e.NumPrsnEmply.ToString())
-                    .ToHashSet();
+                // ۳. دریافت انتصابات فعال
+                var currentAssignments = await _hrUow.AssignmentRepository
+                    .GetAllAsync(q => q.Where(a => a.IsCurrent == true));
 
-                // 6. گروه‌بندی بر اساس عنوان شغلی
-                var groups = externalList
-                    .GroupBy(e => e.CodJobpo)
-                    .ToList();
+                var employmentAssignments = currentAssignments
+                    .GroupBy(a => a.FkEmploymentId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                // ۴. بررسی گروه‌ها و ایجاد دستورات Add / Update
+                var groups = externalList.GroupBy(e => e.CodJobpo).ToList();
 
                 foreach (var group in groups)
                 {
@@ -921,24 +628,21 @@ namespace HR.IrisaSync.Extention.Services
 
                     if (!jobTitleMap.TryGetValue(irisJobTitleId, out var jobTitleId))
                     {
-                        Errors.Add($"عنوان شغلی متناظر یافت نشد: {irisJobTitleId}");
+                        bundle.Warnings.Add($"عنوان شغلی متناظر یافت نشد: {irisJobTitleId}");
                         continue;
                     }
 
-                    var sortedEmployees = group
-                        .OrderBy(e => e.NumPrsnEmply)
-                        .ToList();
-
+                    var sortedEmployees = group.OrderBy(e => e.NumPrsnEmply).ToList();
                     int counter = 1;
+
                     foreach (var ext in sortedEmployees)
                     {
                         try
                         {
                             string employmentCode = ext.NumPrsnEmply.ToString();
-
                             if (!employmentDict.TryGetValue(employmentCode, out var employment))
                             {
-                                Errors.Add($"کارمند با کد پرسنلی '{employmentCode}' یافت نشد");
+                                bundle.Warnings.Add($"کارمند با کد پرسنلی '{employmentCode}' در سیستم یافت نشد.");
                                 continue;
                             }
 
@@ -947,70 +651,652 @@ namespace HR.IrisaSync.Extention.Services
 
                             if (!postDict.TryGetValue(key, out var post))
                             {
-                                Errors.Add($"هیچ پستی برای عنوان شغلی '{ext.DesJobpo}' و کد '{postCode}' یافت نشد");
+                                bundle.Warnings.Add($"پست با عنوان '{ext.DesJobpo}' و کد '{postCode}' یافت نشد.");
                                 continue;
                             }
 
-                            var assignHasChange = await _postService.AssignToEmploymentAsync(
-                                postId: new List<Guid?> { post.Id },
-                                employmentId: employment.Id,
-                                assigneType: PostAssignmentType.Delegation,
-                                EffectiveFrom: Convert.ToDateTime(ext.DatEmpltEmplyEn),
-                                EffectiveTo: null
-                            );
+                            DateTime effectiveFrom = Convert.ToDateTime(ext.DatEmpltEmplyEn);
+                            var activeAssignments = employmentAssignments.GetValueOrDefault(employment.Id, new List<Assignment>());
 
-                            if (assignHasChange)
+                            // بررسی وجود انتصاب دقیقا مشابه (پست و تاریخ شروع یکسان)
+                            bool isExactMatch = activeAssignments.Any(a =>
+                                a.FkPostId == post.Id &&
+                                a.EffectiveFrom?.Date == effectiveFrom.Date);
+
+                            if (!isExactMatch)
                             {
-                                AddedCount++;
-                                SuccessMessages.Add($"{IconInTextHelper.IconAdd} انتصاب کارمند با کد پرسنلی '{employmentCode}' به پست با عنوان شغلی '{post.JobTitle.Name}' و کد '{post.Code}' با موفقیت انجام شد.");
-                            }
+                                bool hasActiveAssignments = activeAssignments.Any();
 
+                                if (hasActiveAssignments)
+                                {
+                                    var updateCmd = new UpdateAssignmentCommand(
+                                        employmentId: employment.Id,
+                                        postIds: new List<Guid?> { post.Id },
+                                        assigneType: PostAssignmentType.Delegation,
+                                        effectiveFrom: effectiveFrom,
+                                        effectiveTo: null
+                                    );
+
+                                    bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateAssignmentCommand>
+                                    {
+                                        Summary = $"بروزرسانی انتصاب کارمند '{employmentCode}' به پست '{post.JobTitle?.Name}' (کد {post.Code})",
+                                        Command = updateCmd
+                                    });
+                                }
+                                else
+                                {
+                                    var createCmd = new CreateAssignmentCommand(
+                                        employmentId: employment.Id,
+                                        postIds: new List<Guid?> { post.Id },
+                                        assigneType: PostAssignmentType.Delegation,
+                                        effectiveFrom: effectiveFrom,
+                                        effectiveTo: null
+                                    );
+
+                                    bundle.AddCommands.Add(new SyncPreviewItem<CreateAssignmentCommand>
+                                    {
+                                        Summary = $"افزودن انتصاب کارمند '{employmentCode}' به پست '{post.JobTitle?.Name}' (کد {post.Code})",
+                                        Command = createCmd
+                                    });
+                                }
+                            }
 
                             counter++;
                         }
                         catch (Exception ex)
                         {
-                            Errors.Add($"خطا در انتصاب پست به کارمند با کد پرسنلی '{ext.NumPrsnEmply}': {ex.Message}");
+                            bundle.Warnings.Add($"خطا در پردازش پیش‌نمایش انتصاب برای کد پرسنلی '{ext.NumPrsnEmply}': {ex.Message}");
                         }
                     }
                 }
 
-                // 7. منقضی کردن انتسابات کارمندانی که در سیستم خارجی نیستند
+                // ۵. کارمندانی که در سیستم خارجی نیستند => Delete
+                var externalCodes = externalList.Select(e => e.NumPrsnEmply.ToString()).ToHashSet();
                 var employmentsToClear = employmentDict.Keys
-                    .Where(code => !externalEmploymentCodes.Contains(code))
+                    .Where(code => !externalCodes.Contains(code))
                     .ToList();
 
                 foreach (var employmentCode in employmentsToClear)
                 {
-                    try
+                    var employment = employmentDict[employmentCode];
+                    if (employmentAssignments.TryGetValue(employment.Id, out var activeList) && activeList.Any())
                     {
-                        var employment = employmentDict[employmentCode];
-                        await _postService.AssignToEmploymentAsync(
-                            postId: new List<Guid?>(),
-                            employmentId: employment.Id,
-                            assigneType: null,
-                            EffectiveFrom: null,
-                            EffectiveTo: null
-                        );
-                        DeletedCount++;
-                        SuccessMessages.Add($"{IconInTextHelper.IconDelete} حذف انتصاب های کارمند با کد پرسنلی '{employmentCode}' با موفقیت انجام شد");
-                    }
-                    catch (Exception ex)
-                    {
-                        Errors.Add($"{IconInTextHelper.IconError} خطا در حذف انتصاب های کارمند با کد پرسنلی '{employmentCode}': {ex.Message}");
+                        var deleteCmd = new DeleteAssignmentCommand(employment.Id);
+
+                        bundle.DeleteCommands.Add(new SyncPreviewItem<DeleteAssignmentCommand>
+                        {
+                            Summary = $"حذف تمام انتصابات کارمند '{employmentCode}' (عدم وجود در سیستم خارجی)",
+                            Command = deleteCmd
+                        });
                     }
                 }
 
-                // 8. ذخیره‌سازی نهایی (اگر خطایی رخ دهد، به catch بیرونی می‌رویم)
-                await _hrUow.SaveChangesAsync();
-
-                var syncResult = new SyncResult() { AddedCount = AddedCount, UpdatedCount = UpdatedCount, DeletedCount = DeletedCount };
-                return new BatchResult<SyncResult>(true, SuccessMessages, Errors, syncResult);
+                return new BatchResult<SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand>>(true, Data: bundle);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در همگام سازی: {ex.Message}");
+                return BatchResult<SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش انتصابات: {ex.Message}");
             }
         }
+
+        public async Task<BatchResult<SyncResult>> ApplyAssignmentsAsync(SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand> selectedBundle)
+        {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            int addedCount = 0, updatedCount = 0, deletedCount = 0;
+
+            try
+            {
+                // ۱. اجرای دستورات ایجاد انتصاب
+                foreach (var item in selectedBundle.AddCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۲. اجرای دستورات بروزرسانی انتصاب
+                foreach (var item in selectedBundle.UpdateCommands)
+                {
+                    try
+                    {
+                        var response =  await _mediator.Send(item.Command);
+                        if(response.Data == true)
+                            updatedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconUpdate} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۳. اجرای دستورات حذف انتصاب
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                       var response = await _mediator.Send(item.Command);
+                        if(response.Data == true)
+                            deletedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult
+                {
+                    AddedCount = addedCount,
+                    UpdatedCount = updatedCount,
+                    DeletedCount = deletedCount
+                };
+
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی انتصابات: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncAssignmentsAsync()
+        {
+            var previewResult = await SyncAssignmentsPreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
+            {
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
+            }
+
+            var applyResult = await ApplyAssignmentsAsync(previewResult.Data);
+
+            if (previewResult.Data.Warnings.Any())
+            {
+                applyResult.Errors.AddRange(previewResult.Data.Warnings);
+            }
+
+            return applyResult;
+        }
+
+        #endregion
+        /// <summary>
+        /// پر کردن جدول اصلی با داده های موجود در جدول مپ
+        /// </summary>
+        /// <returns></returns>
+        /// 
+        #region JobTitle
+
+        public async Task<BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>> SyncJobTitlePreviewAsync()
+        {
+            var bundle = new SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>();
+
+            try
+            {
+                await _mapService.FillJobTitleMap();
+                var mapList = await _uow.JobTitleMapRepository.GetAllAsync();
+                var existList = await _hrUow.JobTitleRepository.GetAllAsync();
+                var existDict = existList.ToDictionary(a => a.Id);
+
+                foreach (var item in mapList.Where(i => i.IrisaJobTitle != null))
+                {
+                    if (item.FkJobTitleId.HasValue && existDict.TryGetValue(item.FkJobTitleId.Value, out var existEntity))
+                    {
+                        if (existEntity.Name?.Trim() != item.JobTitle?.Trim())
+                        {
+                            var updateCmd = new UpdateJobTitleCommand(existEntity.Id, Optional<string>.Undefined, item.JobTitle?.Trim(), Optional<bool>.Undefined);
+
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobTitleCommand>
+                            {
+                                Summary = $"تغییر عنوان شغلی از '{existEntity.Name}' به '{item.JobTitle}'",
+                                Command = updateCmd
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var createCmd = new CreateJobTitleCommand(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
+
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobTitleCommand>
+                        {
+                            Summary = $"افزودن عنوان شغلی جدید '{item.IrisaJobTitle}'",
+                            Command = createCmd
+                        });
+                    }
+                }
+
+                return new BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>(true, Data: bundle);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش عناوین شغلی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> ApplyJobTitleAsync(SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand> selectedBundle)
+        {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            int addedCount = 0, updatedCount = 0, deletedCount = 0;
+
+            try
+            {
+                // ۱. اجرای دستورات ایجاد
+                foreach (var item in selectedBundle.AddCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۲. اجرای دستورات بروزرسانی
+                foreach (var item in selectedBundle.UpdateCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        updatedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconUpdate} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۳. اجرای دستورات حذف
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        deletedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult { AddedCount = addedCount, UpdatedCount = updatedCount, DeletedCount = deletedCount };
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی عناوین شغلی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncJobTitleAsync()
+        {
+            var previewResult = await SyncJobTitlePreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
+            {
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
+            }
+
+            var applyResult = await ApplyJobTitleAsync(previewResult.Data);
+
+            if (previewResult.Data.Warnings.Any())
+            {
+                applyResult.Errors.AddRange(previewResult.Data.Warnings);
+            }
+
+            return applyResult;
+        }
+
+        #endregion
+
+        #region JobLevel
+
+        public async Task<BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>> SyncJobLevelPreviewAsync()
+        {
+            var bundle = new SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>();
+
+            try
+            {
+                await _mapService.FillJobLevelMap();
+                var mapList = await _uow.JobLevelMapRepository.GetAllAsync();
+                var existList = await _hrUow.JobLevelRepository.GetAllAsync();
+                var existDict = existList.ToDictionary(a => a.Id);
+
+                foreach (var item in mapList.Where(i => i.IrisaJobLevel != null))
+                {
+                    if (item.FkJobLevelId.HasValue && existDict.TryGetValue(item.FkJobLevelId.Value, out var existEntity))
+                    {
+                        if (existEntity.Title?.Trim() != item.JobLevel?.Trim())
+                        {
+                            var updateCmd = new UpdateJobLevelCommand(existEntity.Id, Optional<string>.Undefined, item.JobLevel);
+
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobLevelCommand>
+                            {
+                                Summary = $"تغییر سطح شغلی از '{existEntity.Title}' به '{item.JobLevel}'",
+                                Command = updateCmd
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var createCmd = new CreateJobLevelCommand(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
+
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobLevelCommand>
+                        {
+                            Summary = $"افزودن سطح شغلی جدید '{item.IrisaJobLevel}'",
+                            Command = createCmd
+                        });
+                    }
+                }
+
+                return new BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>(true, Data: bundle);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش سطوح شغلی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> ApplyJobLevelAsync(SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand> selectedBundle)
+        {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            int addedCount = 0, updatedCount = 0, deletedCount = 0;
+
+            try
+            {
+                // ۱. اجرای دستورات ایجاد
+                foreach (var item in selectedBundle.AddCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۲. اجرای دستورات بروزرسانی
+                foreach (var item in selectedBundle.UpdateCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        updatedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconUpdate} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۳. اجرای دستورات حذف
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        deletedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult { AddedCount = addedCount, UpdatedCount = updatedCount, DeletedCount = deletedCount };
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی سطوح شغلی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncJobLevelAsync()
+        {
+            var previewResult = await SyncJobLevelPreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
+            {
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
+            }
+
+            var applyResult = await ApplyJobLevelAsync(previewResult.Data);
+
+            if (previewResult.Data.Warnings.Any())
+            {
+                applyResult.Errors.AddRange(previewResult.Data.Warnings);
+            }
+
+            return applyResult;
+        }
+
+        #endregion
+
+        #region Organization Unit
+
+        public async Task<BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>> SyncOrganizationUnitPreviewAsync()
+        {
+            var bundle = new SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>();
+
+            try
+            {
+                await _mapService.FillOrganizationUnitRootMap();
+                await _mapService.FillOrganizationUnitMap();
+
+                var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
+                var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
+                var existDict = existList.ToDictionary(a => a.Id);
+                var mapDictByIrisaId = list.ToDictionary(i => i.IrisaOrganizationUnitId);
+
+                // ۱. بررسی ریشه‌ها (Roots)
+                foreach (var item in list.Where(i => i.IrisaParentId == null && i.IrisaOrganizationUnit != null))
+                {
+                    if (item.FkOrganizationUnitId.HasValue && existDict.TryGetValue(item.FkOrganizationUnitId.Value, out var existEntity))
+                    {
+                        if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim())
+                        {
+                            var updateCmd = new UpdateOrganizationUnitCommand(
+                                existEntity.Id,
+                                Optional<string>.Undefined,
+                                item.OrganizationUnit,
+                                null
+                            );
+
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitCommand>
+                            {
+                                Summary = $"تغییر نام واحد سازمانی ریشه از '{existEntity.Name}' به '{item.OrganizationUnit}'",
+                                Command = updateCmd
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var createCmd = new CreateOrganizationUnitCommand(
+                            item.IrisaOrganizationUnitId.ToString(),
+                            item.IrisaOrganizationUnit,
+                            null
+                        );
+
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitCommand>
+                        {
+                            Summary = $"افزودن واحد سازمانی ریشه جدید '{item.IrisaOrganizationUnit}'",
+                            Command = createCmd
+                        });
+                    }
+                }
+
+                // ۲. بررسی فرزندان (Children)
+                foreach (var item in list.Where(i => i.IrisaParentId != null && i.IrisaOrganizationUnit != null))
+                {
+                    mapDictByIrisaId.TryGetValue(item.IrisaParentId.Value, out var parentMap);
+
+                    if (item.FkOrganizationUnitId.HasValue && existDict.TryGetValue(item.FkOrganizationUnitId.Value, out var existEntity))
+                    {
+                        bool nameChanged = existEntity.Name?.Trim() != item.OrganizationUnit?.Trim();
+                        bool parentChanged = existEntity.ParentId != parentMap?.FkOrganizationUnitId;
+
+                        if (nameChanged || parentChanged)
+                        {
+                            var updateCmd = new UpdateOrganizationUnitCommand(
+                                existEntity.Id,
+                                Optional<string>.Undefined,
+                                item.OrganizationUnit,
+                                parentMap?.FkOrganizationUnitId
+                            );
+
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitCommand>
+                            {
+                                Summary = $"بروزرسانی واحد سازمانی '{existEntity.Name}'",
+                                Command = updateCmd
+                            });
+                        }
+                    }
+                    else
+                    {
+                        var createCmd = new CreateOrganizationUnitCommand(
+                            item.IrisaOrganizationUnitId.ToString(),
+                            item.IrisaOrganizationUnit,
+                            parentMap?.FkOrganizationUnitId
+                        );
+
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitCommand>
+                        {
+                            Summary = $"افزودن واحد سازمانی جدید '{item.IrisaOrganizationUnit}'",
+                            Command = createCmd
+                        });
+                    }
+                }
+
+                return new BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>(true, Data: bundle);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش واحدهای سازمانی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> ApplyOrganizationUnitAsync(SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand> selectedBundle)
+        {
+            var successMessages = new List<string>();
+            var errors = new List<string>();
+            int addedCount = 0, updatedCount = 0, deletedCount = 0;
+
+            try
+            {
+                // ۱. ابتدا ایجاد گره‌های ریشه (ParentId == null)
+                var rootCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.ParentId == null).ToList();
+                foreach (var item in rootCreateCmds)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۲. ایجاد گره‌های فرزند (ParentId != null)
+                var childCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.ParentId != null).ToList();
+                foreach (var item in childCreateCmds)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        addedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۳. بروزرسانی‌ها
+                foreach (var item in selectedBundle.UpdateCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        updatedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconUpdate} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                // ۴. حذف‌ها
+                foreach (var item in selectedBundle.DeleteCommands)
+                {
+                    try
+                    {
+                        await _mediator.Send(item.Command);
+                        deletedCount++;
+                        successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
+                    }
+                    catch (Exception ex)
+                    {
+                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                    }
+                }
+
+                var syncResult = new SyncResult { AddedCount = addedCount, UpdatedCount = updatedCount, DeletedCount = deletedCount };
+                return new BatchResult<SyncResult>(!errors.Any(), successMessages, errors, syncResult);
+            }
+            catch (Exception ex)
+            {
+                return BatchResult<SyncResult>.Fail($"{IconInTextHelper.IconError} خطا در اعمال همگام‌سازی واحدهای سازمانی: {ex.Message}");
+            }
+        }
+
+        public async Task<BatchResult<SyncResult>> SyncOrganizationUnitAsync()
+        {
+            var previewResult = await SyncOrganizationUnitPreviewAsync();
+
+            if (!previewResult.Succeeded || previewResult.Data == null)
+            {
+                return BatchResult<SyncResult>.Fail(previewResult.Errors);
+            }
+
+            var applyResult = await ApplyOrganizationUnitAsync(previewResult.Data);
+
+            if (previewResult.Data.Warnings.Any())
+            {
+                applyResult.Errors.AddRange(previewResult.Data.Warnings);
+            }
+
+            return applyResult;
+        }
+
+        #endregion
     }
 }

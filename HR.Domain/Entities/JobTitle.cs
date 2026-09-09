@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,26 +46,26 @@ namespace HR.Domain.Entities
         public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
    
         public bool ApplyChange(
-                  string? _Code ,
-            string? _Name ,
-                bool? _IsActive
+                  Optional<string?> _Code ,
+            Optional<string?> _Name ,
+                Optional<bool> _IsActive
            )
         {
             bool hasChange = false;
 
-            if (_Code.Trim() != null && _Code.Trim() != this.Code.Trim())
+            if (_Code.IsSet && _Code.Value?.Trim() != this.Code.Trim())
             {
-                this.Code = _Code;
+                this.Code = _Code.Value?.Trim();
                 hasChange = true;
             }
-            if (_Name.Trim() != null && _Name.Trim() != this.Name.Trim())
+            if (_Name.IsSet && _Name.Value?.Trim() != this.Name.Trim())
             {
-                this.Name = _Name;
+                this.Name = _Name.Value?.Trim();
                 hasChange = true;
             }
-            if (_IsActive != null && _IsActive != this.IsActive)
+            if (_IsActive.IsSet && _IsActive.Value != this.IsActive)
             {
-                this.IsActive = (bool)_IsActive;
+                this.IsActive = _IsActive.Value;
                 hasChange = true;
             }
 

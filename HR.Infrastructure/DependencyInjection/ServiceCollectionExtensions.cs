@@ -66,6 +66,10 @@ namespace HR.Infrastructure.DependencyInjection
             services.AddScoped<PostService>();
             services.AddScoped<EmploymentService>();
             services.AddScoped<LocationService>();
+            services.AddScoped<OrganizationUnitService>();
+            services.AddScoped<JobLevelService>();
+            services.AddScoped<JobTitleService>();
+
             services.AddScoped<IUnitOfWork<HRDbContext>, EfUnitOfWork<HRDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             //services.AddScoped<ISpecificationRepository<SampleEntity, Guid>, EfSpecificationRepository<SampleDbContext, SampleEntity, Guid>>();
@@ -78,6 +82,10 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<ILocationPublicService>(sp => sp.GetRequiredService<LocationService>());
             services.AddScoped<ILocationInternalService>(sp => sp.GetRequiredService<LocationService>());
+
+            services.AddScoped<IJobLevelInternalService>(sp => sp.GetRequiredService<JobLevelService>());
+            services.AddScoped<IJobTitleInternalService>(sp => sp.GetRequiredService<JobTitleService>());
+            services.AddScoped<IOrganizationUnitInternalService>(sp => sp.GetRequiredService<OrganizationUnitService>());
 
             services.AddScoped<IRepository<HRDbContext, Employment, Guid>, EfRepository<HRDbContext, Employment, Guid>>();
             services.AddScoped<ISpecificationRepository<Employment, Guid>, EfSpecificationRepository<HRDbContext, Employment, Guid>>();
@@ -133,6 +141,9 @@ namespace HR.Infrastructure.DependencyInjection
 
             services.AddScoped<IPostInternalService, PostService>();
             services.AddScoped<IEmploymentInternalService, EmploymentService>();
+            services.AddScoped<IJobTitleInternalService, JobTitleService>();
+            services.AddScoped<IJobLevelInternalService, JobLevelService>();
+            services.AddScoped<IOrganizationUnitInternalService, OrganizationUnitService>();
             // 📌 رجیستر OutboxProcessor برای پردازش رویدادهای دامنه
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();

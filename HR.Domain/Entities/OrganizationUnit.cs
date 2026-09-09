@@ -81,5 +81,31 @@ namespace HR.Domain.Entities
         {
             ParentId = fkOrganizationUnitId;
         }
+
+        public bool ApplyChange(Optional<string?> name, Optional<string?> code, Optional<Guid?> parentId)
+        {
+            bool hasChange = false;
+            if (name.IsSet && name.Value?.Trim() != Name.Trim())
+            {
+                Name = name.Value?.Trim();
+                hasChange = true;
+            }
+            if (code.IsSet && code.Value?.Trim() != Code.Trim())
+            {
+                Code = code.Value?.Trim();
+                hasChange = true;
+            }
+            if (parentId.IsSet && parentId.Value != ParentId)
+            {
+                ParentId = parentId.Value;
+                hasChange = true;
+            }
+           
+            if (hasChange)
+            {
+                Touch();
+            }
+            return hasChange;
+        }
     }
 }

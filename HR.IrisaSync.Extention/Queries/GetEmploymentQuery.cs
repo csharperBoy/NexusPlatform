@@ -10,24 +10,24 @@ using System.Threading.Tasks;
 
 namespace HR.IrisaSync.Extention.Queries
 {
-    public record GetEmploymentQuery( int Page = 1, int PageSize = 10)
-        : IRequest<Result<IReadOnlyList<PdsIdeaInformationViw>>>;
+    //public record GetEmploymentQuery( int Page = 1, int PageSize = 10)
+    //    : IRequest<Result<IReadOnlyList<PdsIdeaInformationViw>>>;
 
-    public class GetEmploymentQueryHandler
-      : IRequestHandler<GetEmploymentQuery, Result<IReadOnlyList<PdsIdeaInformationViw>>>
-    {
-        private readonly ISyncService _service;
+    //public class GetEmploymentQueryHandler
+    //  : IRequestHandler<GetEmploymentQuery, Result<IReadOnlyList<PdsIdeaInformationViw>>>
+    //{
+    //    private readonly ISyncService _service;
 
-        public GetEmploymentQueryHandler(ISyncService service)
-        {
-            _service = service;
-        }
+    //    public GetEmploymentQueryHandler(ISyncService service)
+    //    {
+    //        _service = service;
+    //    }
 
-        public async Task<Result<IReadOnlyList<PdsIdeaInformationViw>>> Handle(GetEmploymentQuery request, CancellationToken ct)
-        {
-             //await _service.SyncEmployements();
-            var lst = await _service.GetEmployment();
-            return Result<IReadOnlyList<PdsIdeaInformationViw>>.Ok(lst);
-        }
-    }
+    //    public async Task<Result<IReadOnlyList<PdsIdeaInformationViw>>> Handle(GetEmploymentQuery request, CancellationToken ct)
+    //    {
+    //         //await _service.SyncEmployements();
+    //        var lst = await _service.GetEmployment();
+    //        return Result<IReadOnlyList<PdsIdeaInformationViw>>.Ok(lst);
+    //    }
+    //}
 }
