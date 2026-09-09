@@ -1,6 +1,12 @@
 ﻿using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
 using Core.Shared.Results;
+using HR.Application.Commands.Assignment;
+using HR.Application.Commands.Employment;
+using HR.Application.Commands.JobLevel;
+using HR.Application.Commands.JobTitle;
+using HR.Application.Commands.OrganizationUnit;
+using HR.Application.Commands.OrgChart;
 using HR.IrisaSync.Extention.Commands;
 using HR.IrisaSync.Extention.Interface;
 using HR.IrisaSync.Extention.Queries;
@@ -31,15 +37,7 @@ namespace HR.IrisaSync.Extention.Controller
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
-        /*
-        [HttpGet("GetList")]
-        //[AuthorizeResource("hr.orgchart", "View")]
-        public async Task<IActionResult> GetList([FromQuery] GetEmploymentQuery? request = null)
-        {
-            var result = await Mediator.Send(request);
-            return HandleResult(result);
-        }
-        */
+      
         [HttpGet("SyncEmployement")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncEmployement()
@@ -48,6 +46,42 @@ namespace HR.IrisaSync.Extention.Controller
 
             return HandleBatchResult(result);
 
+        }
+      
+        [HttpGet("SyncEmploymentsPreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncEmploymentsPreview()
+        {
+           var result = await _syncService.SyncEmploymentsPreviewAsync();
+
+            return HandleBatchResult(result);
+
+        }
+      
+        [HttpPost("ApplyEmployments")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyEmployments([FromBody] SyncCommandBundle<CreateEmploymentCommand, UpdateEmploymentCommand, DeleteEmploymentCommand> selectedBundle)
+        {
+           var result = await _syncService.ApplyEmploymentsAsync(selectedBundle);
+
+            return HandleBatchResult(result);
+
+        }
+        [HttpGet("SyncJobTitlePreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncJobTitlePreview()
+        {
+            var result = await _syncService.SyncJobTitlePreviewAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpPost("ApplyJobTitle")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyJobTitle([FromBody] SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand> selectedBundle)
+        {
+            var result = await _syncService.ApplyJobTitleAsync(selectedBundle);
+
+            return HandleBatchResult(result);
         }
         [HttpGet("SyncJobTitle")]
         //[AuthorizeResource("hr.employment", "Create")]
@@ -65,11 +99,43 @@ namespace HR.IrisaSync.Extention.Controller
 
             return HandleBatchResult(result);
         }
+        [HttpGet("SyncJobLevelPreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncJobLevelPreview()
+        {
+            var result = await _syncService.SyncJobLevelPreviewAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpPost("ApplyJobLevel")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyJobLevel([FromBody] SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand> selectedBundle)
+        {
+            var result = await _syncService.ApplyJobLevelAsync(selectedBundle);
+
+            return HandleBatchResult(result);
+        }
         [HttpGet("SyncOrganizationUnit")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncOrganizationUnit()
         {
             var result = await _syncService.SyncOrganizationUnitAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpGet("SyncOrganizationUnitPreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncOrganizationUnitPreview()
+        {
+            var result = await _syncService.SyncOrganizationUnitPreviewAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpPost("ApplyOrganizationUnit")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyOrganizationUnit([FromBody] SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand> selectedBundle)
+        {
+            var result = await _syncService.ApplyOrganizationUnitAsync(selectedBundle);
 
             return HandleBatchResult(result);
         }
@@ -81,11 +147,43 @@ namespace HR.IrisaSync.Extention.Controller
 
             return HandleBatchResult(result);
         }
+        [HttpGet("SyncPostPreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncPostPreview()
+        {
+            var result = await _syncService.SyncPostPreviewAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpPost("ApplyPost")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyPost([FromBody] SyncCommandBundle<CreatePostCommand, UpdatePostCommand, DeletePostCommand> selectedBundle)
+        {
+            var result = await _syncService.ApplyPostAsync(selectedBundle);
+
+            return HandleBatchResult(result);
+        }
         [HttpGet("SyncAssignments")]
         //[AuthorizeResource("hr.employment", "Create")]
         public async Task<IActionResult> SyncAssignments()
         {
             var result = await _syncService.SyncAssignmentsAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpGet("SyncAssignmentsPreview")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> SyncAssignmentsPreview()
+        {
+            var result = await _syncService.SyncAssignmentsPreviewAsync();
+
+            return HandleBatchResult(result);
+        }
+        [HttpPost("ApplyAssignments")]
+        //[AuthorizeResource("hr.employment", "Create")]
+        public async Task<IActionResult> ApplyAssignments([FromBody] SyncCommandBundle<CreateAssignmentCommand, UpdateAssignmentCommand, DeleteAssignmentCommand> selectedBundle)
+        {
+            var result = await _syncService.ApplyAssignmentsAsync(selectedBundle);
 
             return HandleBatchResult(result);
         }
