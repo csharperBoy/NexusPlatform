@@ -1,7 +1,6 @@
 // src/modules/HR/pages/Sync/SyncPage.tsx
 import React, {
   useState,
-  useEffect,
   forwardRef,
   useImperativeHandle,
   useRef,
@@ -41,11 +40,15 @@ type SyncStep = "idle" | "loading_preview" | "preview" | "applying" | "result" |
 
 // Handle ای که هر کارت به والد expose می‌کند
 export interface EntitySyncCardHandle {
-  runFullSync: () => Promise<void>;
+  /**
+   * در حالت همگام‌سازی کلی: فقط پیش‌نمایش را خودکار می‌گیرد
+   * و یک Promise برمی‌گرداند که وقتی کاربر Apply یا Skip کرد resolve می‌شود.
+   */
+  runInteractive: () => Promise<void>;
 }
 
 // ---------------------------------------------------------
-// 2. Helper Components (Icons & UI)
+// 2. Helper Components
 // ---------------------------------------------------------
 
 const Spinner = () => (
@@ -58,16 +61,19 @@ const Spinner = () => (
 
 interface EntitySyncCardProps {
   config: EntityConfig;
-  disabled?: boolean; // برای غیرفعال کردن دکمه‌ها در زمان همگام‌سازی کلی
 }
 
 const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
-  ({ config, disabled = false }, ref) => {
+  ({ config }, ref) => {
     const [step, setStep] = useState<SyncStep>("idle");
     const [bundle, setBundle] = useState<SyncCommandBundle | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [applyResult, setApplyResult] = useState<BatchResult<SyncResult> | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [isInteractive, setIsInteractive] = useState(false);
+
+    // resolver برای همگام‌سازی کلی
+    const interactiveResolverRef = useRef<(() => void) | null>(null);
 
     const getErrorMessage = (err: unknown): string => {
       if (err instanceof AxiosError) {
@@ -81,11 +87,19 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       return "خطای ناشناخته رخ داده است.";
     };
 
-    // --- Actions ---
+    // resolve کردن promise و خارج شدن از حالت interactive
+    const resolveInteractive = () => {
+      setIsInteractive(false);
+      const resolver = interactiveResolverRef.current;
+      interactiveResolverRef.current = null;
+      if (resolver) resolver();
+    };
 
+    // --- Manual Preview (کاربر خودش دکمه را می‌زند) ---
     const handlePreview = async () => {
       setStep("loading_preview");
       setErrorMessage(null);
+      setApplyResult(null);
       try {
         const res = await config.previewApi();
         if (res.succeeded && res.data) {
@@ -107,6 +121,7 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       }
     };
 
+    // --- Apply ---
     const handleApply = async () => {
       if (!bundle) return;
       setStep("applying");
@@ -126,67 +141,78 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       } catch (err) {
         setErrorMessage(getErrorMessage(err));
         setStep("error");
+      } finally {
+        // اگر در حالت interactive بودیم، به والد خبر بده
+        if (isInteractive) {
+          resolveInteractive();
+        }
       }
     };
 
-    const reset = () => {
+    // --- Reset / Skip ---
+    const handleResetOrSkip = () => {
+      const wasInteractive = isInteractive;
+
       setStep("idle");
       setBundle(null);
       setApplyResult(null);
       setSelectedIds(new Set());
       setErrorMessage(null);
-    };
+      setIsInteractive(false);
 
-    // --- متد همگام‌سازی کامل (برای فراخوانی از والد) ---
-    const runFullSync = async (): Promise<void> => {
-      // ریست وضعیت
-      setStep("loading_preview");
-      setErrorMessage(null);
-      setBundle(null);
-      setApplyResult(null);
-      setSelectedIds(new Set());
-
-      try {
-        // ۱. دریافت پیش‌نمایش
-        const previewRes = await config.previewApi();
-        if (!previewRes.succeeded || !previewRes.data) {
-          setErrorMessage(previewRes.errors?.join(" - ") || "خطا در دریافت پیش‌نمایش");
-          setStep("error");
-          return;
-        }
-
-        const previewData = previewRes.data;
-        const allIds = [
-          ...previewData.addCommands.map((i) => i.id),
-          ...previewData.updateCommands.map((i) => i.id),
-          ...previewData.deleteCommands.map((i) => i.id),
-        ];
-
-        setBundle(previewData);
-        setSelectedIds(new Set(allIds));
-
-        // اگر هیچ تغییری نیست، به مرحله preview با حالت "بدون تغییر" می‌رویم
-        if (allIds.length === 0) {
-          setStep("preview");
-          return;
-        }
-
-        // ۲. اعمال همه تغییرات (خودکار)
-        setStep("applying");
-        const applyRes = await config.applyApi(previewData);
-        setApplyResult(applyRes);
-        setStep("result");
-      } catch (err) {
-        setErrorMessage(getErrorMessage(err));
-        setStep("error");
+      if (wasInteractive) {
+        const resolver = interactiveResolverRef.current;
+        interactiveResolverRef.current = null;
+        if (resolver) resolver();
       }
     };
 
-    // expose کردن متد به والد
-    useImperativeHandle(ref, () => ({ runFullSync }));
+    // --- متد interactive برای همگام‌سازی کلی ---
+    const runInteractive = (): Promise<void> => {
+      return new Promise<void>(async (resolve) => {
+        interactiveResolverRef.current = resolve;
+        setIsInteractive(true);
+
+        // ریست وضعیت
+        setStep("loading_preview");
+        setErrorMessage(null);
+        setBundle(null);
+        setApplyResult(null);
+        setSelectedIds(new Set());
+
+        try {
+          const res = await config.previewApi();
+          if (res.succeeded && res.data) {
+            const previewData = res.data;
+            const allIds = [
+              ...previewData.addCommands.map((i) => i.id),
+              ...previewData.updateCommands.map((i) => i.id),
+              ...previewData.deleteCommands.map((i) => i.id),
+            ];
+            setBundle(previewData);
+            setSelectedIds(new Set(allIds));
+            setStep("preview");
+
+            // اگر هیچ تغییری نیست، بلافاصله resolve کن
+            if (allIds.length === 0) {
+              resolveInteractive();
+            }
+          } else {
+            setErrorMessage(res.errors?.join(" - ") || "خطا در دریافت پیش‌نمایش");
+            setStep("error");
+            resolveInteractive();
+          }
+        } catch (err) {
+          setErrorMessage(getErrorMessage(err));
+          setStep("error");
+          resolveInteractive();
+        }
+      });
+    };
+
+    useImperativeHandle(ref, () => ({ runInteractive }));
 
     // --- Toggles ---
-
     const toggleSelection = (id: string) => {
       const newSet = new Set(selectedIds);
       if (newSet.has(id)) newSet.delete(id);
@@ -199,7 +225,6 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       : 0;
 
     // --- Renders ---
-
     const renderChangesList = (
       title: string,
       items: SyncPreviewItem[],
@@ -216,9 +241,7 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       return (
         <div className={`mt-4 border rounded-lg p-3 ${colors[type]}`}>
           <h4 className="font-bold mb-2 flex items-center justify-between">
-            <span>
-              {title} ({items.length})
-            </span>
+            <span>{title} ({items.length})</span>
           </h4>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
             {items.map((item) => (
@@ -240,8 +263,7 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
       );
     };
 
-    const isBusy =
-      step === "loading_preview" || step === "applying";
+    const isBusy = step === "loading_preview" || step === "applying";
 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md">
@@ -252,23 +274,31 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
             {step === "idle" && (
               <p className="text-sm text-gray-500 mt-1">آماده برای بررسی تغییرات</p>
             )}
+            {step === "loading_preview" && (
+              <p className="text-sm text-blue-600 mt-1 font-medium">در حال دریافت پیش‌نمایش...</p>
+            )}
             {step === "preview" && (
               <p className="text-sm text-blue-600 mt-1 font-medium">
                 {totalChanges > 0 ? `${totalChanges} تغییر یافت شد.` : "هیچ تغییری یافت نشد."}
               </p>
             )}
+            {step === "applying" && (
+              <p className="text-sm text-emerald-600 mt-1 font-medium">در حال اعمال تغییرات...</p>
+            )}
+            {step === "result" && (
+              <p className="text-sm text-slate-600 mt-1 font-medium">نتیجه اعمال تغییرات</p>
+            )}
+            {step === "error" && (
+              <p className="text-sm text-rose-600 mt-1 font-medium">خطا رخ داد</p>
+            )}
           </div>
 
-          <div className="flex gap-2">
-            {(step === "idle" || step === "error") && (
+          <div className="flex gap-2 flex-wrap">
+            {/* دکمه پیش‌نمایش دستی (فقط وقتی interactive نیست) */}
+            {(step === "idle" || (step === "error" && !isInteractive)) && (
               <button
                 onClick={handlePreview}
-                disabled={disabled}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition active:scale-95 ${
-                  disabled
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 دریافت پیش‌نمایش
               </button>
@@ -286,9 +316,9 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
             {step === "preview" && totalChanges > 0 && (
               <button
                 onClick={handleApply}
-                disabled={selectedIds.size === 0 || disabled}
+                disabled={selectedIds.size === 0}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition active:scale-95 ${
-                  selectedIds.size > 0 && !disabled
+                  selectedIds.size > 0
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
@@ -306,15 +336,27 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
               </button>
             )}
 
-            {(step === "result" || step === "preview" || step === "error") && !isBusy && (
+            {/* دکمه Skip در حالت interactive */}
+            {step === "preview" && isInteractive && (
               <button
-                onClick={reset}
-                disabled={disabled && isBusy}
-                className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition"
+                onClick={handleResetOrSkip}
+                className="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg font-medium transition"
               >
-                بازنشانی
+                ⏭ رد کردن و ادامه
               </button>
             )}
+
+            {/* دکمه بازنشانی در حالت غیر-interactive */}
+            {!isInteractive &&
+              !isBusy &&
+              (step === "result" || step === "preview" || step === "error") && (
+                <button
+                  onClick={handleResetOrSkip}
+                  className="px-4 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition"
+                >
+                  بازنشانی
+                </button>
+              )}
           </div>
         </div>
 
@@ -439,7 +481,7 @@ export const SyncPage: React.FC = () => {
   const [mainSyncRunning, setMainSyncRunning] = useState(false);
   const [mainSyncPhase, setMainSyncPhase] = useState<string>("");
 
-  // refs برای هر کارت
+  // refs
   const orgUnitRef = useRef<EntitySyncCardHandle>(null);
   const jobLevelRef = useRef<EntitySyncCardHandle>(null);
   const jobTitleRef = useRef<EntitySyncCardHandle>(null);
@@ -447,10 +489,7 @@ export const SyncPage: React.FC = () => {
   const postRef = useRef<EntitySyncCardHandle>(null);
   const assignmentRef = useRef<EntitySyncCardHandle>(null);
 
-  const refsByKey: Record<
-    SyncEntityKey,
-    React.RefObject<EntitySyncCardHandle | null>
-  > = {
+  const refsByKey: Record<SyncEntityKey, React.RefObject<EntitySyncCardHandle | null>> = {
     orgUnit: orgUnitRef,
     jobLevel: jobLevelRef,
     jobTitle: jobTitleRef,
@@ -459,50 +498,47 @@ export const SyncPage: React.FC = () => {
     assignment: assignmentRef,
   };
 
-  /**
-   * همگام‌سازی کلی با ترتیب و وابستگی‌ها:
-   * فاز ۱ (موازی): واحد سازمانی، سطح شغلی، عنوان شغلی، کارمند
-   * فاز ۲ (سری): پست (نیاز به مپ‌های واحد/سطح/عنوان شغلی)
-   * فاز ۳ (سری): انتصابات (نیاز به پست و کارمند)
-   */
   const handleMainSync = async () => {
-  if (mainSyncRunning) return;
-  setMainSyncRunning(true);
+    if (mainSyncRunning) return;
+    setMainSyncRunning(true);
 
-  try {
-    // ---------- شروع کارمند به‌صورت موازی از همان ابتدا ----------
-    // (کارمند مستقل است و منتظر هیچ‌چیز نمی‌ماند)
-    const employmentPromise = refsByKey.employment.current?.runFullSync();
+    try {
+      // شروع کارمند به‌صورت موازی از همان ابتدا (مستقل)
+      const employmentPromise = refsByKey.employment.current?.runInteractive();
 
-    // ---------- فاز ۱: پیش‌نیازهای پست ----------
-    setMainSyncPhase(
-      "فاز ۱ از ۳: در حال همگام‌سازی واحد سازمانی، سطح شغلی و عنوان شغلی..."
-    );
-    await Promise.all([
-      refsByKey.orgUnit.current?.runFullSync(),
-      refsByKey.jobLevel.current?.runFullSync(),
-      refsByKey.jobTitle.current?.runFullSync(),
-    ]);
+      // فاز ۱: پیش‌نیازهای پست (موازی)
+      setMainSyncPhase(
+        "فاز ۱ از ۳: پیش‌نمایش واحد سازمانی، سطح شغلی و عنوان شغلی... لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await Promise.all([
+        refsByKey.orgUnit.current?.runInteractive(),
+        refsByKey.jobLevel.current?.runInteractive(),
+        refsByKey.jobTitle.current?.runInteractive(),
+      ]);
 
-    // ---------- فاز ۲: پست + انتظار برای پایان کارمند (موازی) ----------
-    setMainSyncPhase("فاز ۲ از ۳: در حال همگام‌سازی پست‌ها...");
-    const postPromise = refsByKey.post.current?.runFullSync();
-    await Promise.all([postPromise, employmentPromise]);
+      // فاز ۲: پست (موازی با انتظار برای کارمند)
+      setMainSyncPhase(
+        "فاز ۲ از ۳: پیش‌نمایش پست‌ها... لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      const postPromise = refsByKey.post.current?.runInteractive();
+      await Promise.all([postPromise, employmentPromise]);
 
-    // ---------- فاز ۳: انتصابات ----------
-    setMainSyncPhase("فاز ۳ از ۳: در حال همگام‌سازی انتصابات...");
-    await refsByKey.assignment.current?.runFullSync();
-  } catch (err) {
-    console.error("Main sync failed", err);
-  } finally {
-    setMainSyncRunning(false);
-    setMainSyncPhase("");
-  }
-};
+      // فاز ۳: انتصابات
+      setMainSyncPhase(
+        "فاز ۳ از ۳: پیش‌نمایش انتصابات... لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await refsByKey.assignment.current?.runInteractive();
+    } catch (err) {
+      console.error("Main sync failed", err);
+    } finally {
+      setMainSyncRunning(false);
+      setMainSyncPhase("");
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-      {/* Header Section */}
+      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
           همگام‌سازی با سیستم‌های اطلاعاتی (ایریسا)
@@ -518,11 +554,12 @@ export const SyncPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
               <h3 className="font-bold text-gray-800 mb-1">
-                ⚡ همگام‌سازی کلی (خودکار)
+                ⚡ همگام‌سازی کلی (نیمه‌خودکار)
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                با کلیک روی این دکمه، تمام بخش‌ها با ترتیب صحیح وابستگی‌ها به‌صورت
-                خودکار همگام‌سازی می‌شوند. (پیش‌نمایش + تایید و اعمال همه تغییرات)
+                با کلیک روی این دکمه، پیش‌نمایش همه‌ی بخش‌ها با ترتیب صحیح وابستگی‌ها
+                نمایش داده می‌شود. شما می‌توانید تغییرات مورد نظر خود را در هر بخش
+                تایید یا رد کنید.
               </p>
               {mainSyncRunning && mainSyncPhase && (
                 <p className="text-sm text-indigo-700 font-medium mt-2 flex items-center gap-2">
@@ -560,7 +597,6 @@ export const SyncPage: React.FC = () => {
             key={config.key}
             ref={refsByKey[config.key]}
             config={config}
-            disabled={mainSyncRunning}
           />
         ))}
       </div>
