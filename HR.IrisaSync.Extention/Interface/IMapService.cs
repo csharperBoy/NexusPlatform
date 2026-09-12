@@ -15,6 +15,11 @@ namespace HR.IrisaSync.Extention.Interface
 
         Task FillOrganizationUnitRootMap();
         Task FillOrganizationUnitMap();
+        Task SyncJobLevelDoneAsync(Guid newId,string? Title, decimal? irisaId);
+        Task SyncJobTitleDoneAsync(Guid newId, string? Name, decimal? irisaId);
+        Task SyncOrganizationUnitDoneAsync(Guid newId, string? Name, decimal? irisaId);
+        Task SaveAsync();
+        Task<IrisaSyncOrganizationUnitMap?> GetOrgUnitByIrisaId(decimal? irsiaId);
         //Guid GetPostId(decimal? codJobpo);
     }
 }

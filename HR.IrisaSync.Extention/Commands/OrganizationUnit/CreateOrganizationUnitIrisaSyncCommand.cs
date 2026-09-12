@@ -3,6 +3,7 @@ using Core.Application.Provider;
 using Core.Domain.Common;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
+using HR.IrisaSync.Extention.Interface;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,32 +12,35 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.Commands.OrganizationUnit
+namespace HR.IrisaSync.Extention.Commands.OrganizationUnit
 {
-    public record CreateOrganizationUnitCommand(
+    public record CreateOrganizationUnitIrisaSyncCommand(
            string Code,
            string Name,
-           Guid? ParentId,
-           Optional<string?> IrsiaSyncId
+           //Guid? ParentId,
+           decimal? IrsiaSyncId,
+           decimal? IrsiaSyncParentId
        ) : IRequest<Result<Guid>>;
 
 
-    public class CreateOrganizationUnitCommandHandler : IRequestHandler<CreateOrganizationUnitCommand, Result<Guid>>
+    public class CreateOrganizationUnitIrisaSyncCommandHandler : IRequestHandler<CreateOrganizationUnitIrisaSyncCommand, Result<Guid>>
     {
         private readonly IOrganizationUnitInternalService _service;
-        private readonly ILogger<CreateOrganizationUnitCommandHandler> _logger;
+        private readonly IMapService _mapService;
+        private readonly ILogger<CreateOrganizationUnitIrisaSyncCommandHandler> _logger;
         private readonly IUserDataContextProvider _userProvider;
-        public CreateOrganizationUnitCommandHandler(
-            IOrganizationUnitInternalService service,
+        public CreateOrganizationUnitIrisaSyncCommandHandler(
+            IOrganizationUnitInternalService service, IMapService mapService,
            IUserDataContextProvider userProvider,
-        ILogger<CreateOrganizationUnitCommandHandler> logger)
+        ILogger<CreateOrganizationUnitIrisaSyncCommandHandler> logger)
         {
             _service = service;
+            _mapService = mapService;
             _logger = logger;
             _userProvider = userProvider;
         }
 
-        public async Task<Result<Guid>> Handle(CreateOrganizationUnitCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreateOrganizationUnitIrisaSyncCommand request, CancellationToken cancellationToken)
         {
             try
             {
@@ -44,11 +48,13 @@ namespace HR.Application.Commands.OrganizationUnit
                     $"Creating OrganizationUnit: {request.Name}");
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
 
-
+                var parentmap = await _mapService.GetOrgUnitByIrisaId(request.IrsiaSyncParentId);
                 Guid newId = await _service.CreateAsync(request.Code,
-                    request.Name,request.ParentId
+                    request.Name, parentmap.FkOrganizationUnitId
                   , userContext.UserName
                     );
+                await _mapService.SyncOrganizationUnitDoneAsync(newId,request.Name, request.IrsiaSyncId);
+                await _mapService.SaveAsync();
                 await _service.SaveAsync();
                 _logger.LogInformation(
                     $"OrganizationUnit created successfully: {request.Name}");

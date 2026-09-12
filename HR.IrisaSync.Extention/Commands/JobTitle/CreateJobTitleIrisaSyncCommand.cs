@@ -1,8 +1,8 @@
 ﻿using Core.Application.Context;
 using Core.Application.Provider;
-using Core.Domain.Common;
 using Core.Shared.Results;
 using HR.Application.Interfaces;
+using HR.IrisaSync.Extention.Interface;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System;
@@ -11,47 +11,53 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HR.Application.Commands.OrganizationUnit
+namespace HR.IrisaSync.Extention.Commands.JobTitle
 {
-    public record CreateOrganizationUnitCommand(
+    public record CreateJobTitleIrisaSyncCommand(
            string Code,
            string Name,
-           Guid? ParentId,
-           Optional<string?> IrsiaSyncId
+            decimal? IrisaId
        ) : IRequest<Result<Guid>>;
 
 
-    public class CreateOrganizationUnitCommandHandler : IRequestHandler<CreateOrganizationUnitCommand, Result<Guid>>
+    public class CreateJobTitleIrisaSyncCommandHandler : IRequestHandler<CreateJobTitleIrisaSyncCommand, Result<Guid>>
     {
-        private readonly IOrganizationUnitInternalService _service;
-        private readonly ILogger<CreateOrganizationUnitCommandHandler> _logger;
+        private readonly IJobTitleInternalService _service; 
+        private readonly IMapService _mapService;
+
+        private readonly ILogger<CreateJobTitleIrisaSyncCommandHandler> _logger;
         private readonly IUserDataContextProvider _userProvider;
-        public CreateOrganizationUnitCommandHandler(
-            IOrganizationUnitInternalService service,
+        public CreateJobTitleIrisaSyncCommandHandler(
+            IJobTitleInternalService service,
+            IMapService mapService,
            IUserDataContextProvider userProvider,
-        ILogger<CreateOrganizationUnitCommandHandler> logger)
+        ILogger<CreateJobTitleIrisaSyncCommandHandler> logger)
         {
             _service = service;
+            _mapService = mapService;
             _logger = logger;
             _userProvider = userProvider;
         }
 
-        public async Task<Result<Guid>> Handle(CreateOrganizationUnitCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(CreateJobTitleIrisaSyncCommand request, CancellationToken cancellationToken)
         {
             try
             {
                 _logger.LogInformation(
-                    $"Creating OrganizationUnit: {request.Name}");
+                    $"Creating JobTitle: {request.Name}");
                 UserDataContext userContext = await _userProvider.GetAsync(new CancellationToken());
 
 
                 Guid newId = await _service.CreateAsync(request.Code,
-                    request.Name,request.ParentId
+                    request.Name
                   , userContext.UserName
                     );
+
+                await _mapService.SyncJobTitleDoneAsync(newId,request.Name, request.IrisaId);
+                await _mapService.SaveAsync();
                 await _service.SaveAsync();
                 _logger.LogInformation(
-                    $"OrganizationUnit created successfully: {request.Name}");
+                    $"JobTitle created successfully: {request.Name}");
 
                 return Result<Guid>.Ok(newId);
             }
@@ -65,4 +71,5 @@ namespace HR.Application.Commands.OrganizationUnit
             }
         }
     }
+
 }

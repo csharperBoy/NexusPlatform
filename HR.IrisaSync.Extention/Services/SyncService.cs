@@ -1,46 +1,26 @@
-﻿using Azure.Core;
-using Core.Application.Abstractions;
+﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Contact;
-using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.People;
 using Core.Application.Helper;
 using Core.Domain.Common;
-using Core.Domain.Common.EntityProperties;
-using Core.Domain.ValueObjects;
-using Core.Infrastructure.Exporter.Excel;
 using Core.Shared.DTOs.Contact;
-using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
-using DocumentFormat.OpenXml.Office.CustomUI;
 using HR.Application.Commands.Assignment;
 using HR.Application.Commands.Employment;
-using HR.Application.Commands.JobLevel;
-using HR.Application.Commands.JobTitle;
-using HR.Application.Commands.OrganizationUnit;
 using HR.Application.Commands.OrgChart;
 using HR.Application.Interfaces;
 using HR.Domain.Entities;
-using HR.Domain.Events.Employment;
-using HR.Domain.Events.Post;
 using HR.Infrastructure.Data;
-using HR.Infrastructure.Services;
+using HR.IrisaSync.Extention.Commands.JobLevel;
+using HR.IrisaSync.Extention.Commands.JobTitle;
+using HR.IrisaSync.Extention.Commands.OrganizationUnit;
 using HR.IrisaSync.Extention.Contexts;
 using HR.IrisaSync.Extention.Data;
 using HR.IrisaSync.Extention.Entities;
 using HR.IrisaSync.Extention.Interface;
-using HR.IrisaSync.Extention.Services;
-using HR.IrisaSync.Extention.Specifications;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 namespace HR.IrisaSync.Extention.Services
 {
     
@@ -148,7 +128,7 @@ namespace HR.IrisaSync.Extention.Services
                 EmploymentStatusId: null,
                 EmploymentTypeId: null,
                 EndDate: null,
-                locationsId: null
+                locationsId: new List<Guid>()
             );
         }
 
@@ -836,9 +816,9 @@ namespace HR.IrisaSync.Extention.Services
         /// 
         #region JobTitle
 
-        public async Task<BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>> SyncJobTitlePreviewAsync()
+        public async Task<BatchResult<SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand>>> SyncJobTitlePreviewAsync()
         {
-            var bundle = new SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>();
+            var bundle = new SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand>();
 
             try
             {
@@ -853,9 +833,9 @@ namespace HR.IrisaSync.Extention.Services
                     {
                         if (existEntity.Name?.Trim() != item.JobTitle?.Trim())
                         {
-                            var updateCmd = new UpdateJobTitleCommand(existEntity.Id, Optional<string>.Undefined, item.JobTitle?.Trim(), Optional<bool>.Undefined);
+                            var updateCmd = new UpdateJobTitleIrisaSyncCommand(existEntity.Id, Optional<string>.Undefined, item.JobTitle?.Trim(), Optional<bool>.Undefined);
 
-                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobTitleCommand>
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobTitleIrisaSyncCommand>
                             {
                                 Summary = $"تغییر عنوان شغلی از '{existEntity.Name}' به '{item.JobTitle}'",
                                 Command = updateCmd
@@ -864,9 +844,9 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateJobTitleCommand(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle);
+                        var createCmd = new CreateJobTitleIrisaSyncCommand(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle , item.IrisaJobTitleId);
 
-                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobTitleCommand>
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobTitleIrisaSyncCommand>
                         {
                             Summary = $"افزودن عنوان شغلی جدید '{item.IrisaJobTitle}'",
                             Command = createCmd
@@ -874,15 +854,15 @@ namespace HR.IrisaSync.Extention.Services
                     }
                 }
 
-                return new BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>(true, Data: bundle);
+                return new BatchResult<SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand>>(true, Data: bundle);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش عناوین شغلی: {ex.Message}");
+                return BatchResult<SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش عناوین شغلی: {ex.Message}");
             }
         }
 
-        public async Task<BatchResult<SyncResult>> ApplyJobTitleAsync(SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand> selectedBundle)
+        public async Task<BatchResult<SyncResult>> ApplyJobTitleAsync(SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand> selectedBundle)
         {
             var successMessages = new List<string>();
             var errors = new List<string>();
@@ -967,9 +947,9 @@ namespace HR.IrisaSync.Extention.Services
 
         #region JobLevel
 
-        public async Task<BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>> SyncJobLevelPreviewAsync()
+        public async Task<BatchResult<SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand>>> SyncJobLevelPreviewAsync()
         {
-            var bundle = new SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>();
+            var bundle = new SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand>();
 
             try
             {
@@ -984,9 +964,9 @@ namespace HR.IrisaSync.Extention.Services
                     {
                         if (existEntity.Title?.Trim() != item.JobLevel?.Trim())
                         {
-                            var updateCmd = new UpdateJobLevelCommand(existEntity.Id, Optional<string>.Undefined, item.JobLevel);
+                            var updateCmd = new UpdateJobLevelIrisaSyncCommand(existEntity.Id, Optional<string>.Undefined, item.JobLevel);
 
-                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobLevelCommand>
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateJobLevelIrisaSyncCommand>
                             {
                                 Summary = $"تغییر سطح شغلی از '{existEntity.Title}' به '{item.JobLevel}'",
                                 Command = updateCmd
@@ -995,9 +975,9 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateJobLevelCommand(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel);
+                        var createCmd = new CreateJobLevelIrisaSyncCommand(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel , item.IrisaJobLevelId);
 
-                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobLevelCommand>
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateJobLevelIrisaSyncCommand>
                         {
                             Summary = $"افزودن سطح شغلی جدید '{item.IrisaJobLevel}'",
                             Command = createCmd
@@ -1005,15 +985,15 @@ namespace HR.IrisaSync.Extention.Services
                     }
                 }
 
-                return new BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>(true, Data: bundle);
+                return new BatchResult<SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand>>(true, Data: bundle);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش سطوح شغلی: {ex.Message}");
+                return BatchResult<SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش سطوح شغلی: {ex.Message}");
             }
         }
 
-        public async Task<BatchResult<SyncResult>> ApplyJobLevelAsync(SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand> selectedBundle)
+        public async Task<BatchResult<SyncResult>> ApplyJobLevelAsync(SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand> selectedBundle)
         {
             var successMessages = new List<string>();
             var errors = new List<string>();
@@ -1098,9 +1078,9 @@ namespace HR.IrisaSync.Extention.Services
 
         #region Organization Unit
 
-        public async Task<BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>> SyncOrganizationUnitPreviewAsync()
+        public async Task<BatchResult<SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand>>> SyncOrganizationUnitPreviewAsync()
         {
-            var bundle = new SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>();
+            var bundle = new SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand>();
 
             try
             {
@@ -1110,7 +1090,7 @@ namespace HR.IrisaSync.Extention.Services
                 var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
                 var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
                 var existDict = existList.ToDictionary(a => a.Id);
-                var mapDictByIrisaId = list.ToDictionary(i => i.IrisaOrganizationUnitId);
+                var mapDictByIrisaId = list.Where(l=>l.IrisaOrganizationUnitId != null).ToDictionary(i => i.IrisaOrganizationUnitId);
 
                 // ۱. بررسی ریشه‌ها (Roots)
                 foreach (var item in list.Where(i => i.IrisaParentId == null && i.IrisaOrganizationUnit != null))
@@ -1119,14 +1099,14 @@ namespace HR.IrisaSync.Extention.Services
                     {
                         if (existEntity.Name?.Trim() != item.OrganizationUnit?.Trim())
                         {
-                            var updateCmd = new UpdateOrganizationUnitCommand(
+                            var updateCmd = new UpdateOrganizationUnitIrisaSyncCommand(
                                 existEntity.Id,
                                 Optional<string>.Undefined,
                                 item.OrganizationUnit,
                                 null
                             );
 
-                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitCommand>
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitIrisaSyncCommand>
                             {
                                 Summary = $"تغییر نام واحد سازمانی ریشه از '{existEntity.Name}' به '{item.OrganizationUnit}'",
                                 Command = updateCmd
@@ -1135,13 +1115,14 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateOrganizationUnitCommand(
+                        var createCmd = new CreateOrganizationUnitIrisaSyncCommand(
                             item.IrisaOrganizationUnitId.ToString(),
                             item.IrisaOrganizationUnit,
-                            null
+                            null,
+                            item.IrisaOrganizationUnitId
                         );
 
-                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitCommand>
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitIrisaSyncCommand>
                         {
                             Summary = $"افزودن واحد سازمانی ریشه جدید '{item.IrisaOrganizationUnit}'",
                             Command = createCmd
@@ -1161,14 +1142,14 @@ namespace HR.IrisaSync.Extention.Services
 
                         if (nameChanged || parentChanged)
                         {
-                            var updateCmd = new UpdateOrganizationUnitCommand(
+                            var updateCmd = new UpdateOrganizationUnitIrisaSyncCommand(
                                 existEntity.Id,
                                 Optional<string>.Undefined,
                                 item.OrganizationUnit,
                                 parentMap?.FkOrganizationUnitId
                             );
 
-                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitCommand>
+                            bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateOrganizationUnitIrisaSyncCommand>
                             {
                                 Summary = $"بروزرسانی واحد سازمانی '{existEntity.Name}'",
                                 Command = updateCmd
@@ -1177,13 +1158,14 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateOrganizationUnitCommand(
+                        var createCmd = new CreateOrganizationUnitIrisaSyncCommand(
                             item.IrisaOrganizationUnitId.ToString(),
                             item.IrisaOrganizationUnit,
-                            parentMap?.FkOrganizationUnitId
+                            item.IrisaOrganizationUnitId,
+                            item.IrisaParentId
                         );
 
-                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitCommand>
+                        bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitIrisaSyncCommand>
                         {
                             Summary = $"افزودن واحد سازمانی جدید '{item.IrisaOrganizationUnit}'",
                             Command = createCmd
@@ -1191,15 +1173,15 @@ namespace HR.IrisaSync.Extention.Services
                     }
                 }
 
-                return new BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>(true, Data: bundle);
+                return new BatchResult<SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand>>(true, Data: bundle);
             }
             catch (Exception ex)
             {
-                return BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش واحدهای سازمانی: {ex.Message}");
+                return BatchResult<SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand>>.Fail($"{IconInTextHelper.IconError} خطا در پیش‌نمایش واحدهای سازمانی: {ex.Message}");
             }
         }
 
-        public async Task<BatchResult<SyncResult>> ApplyOrganizationUnitAsync(SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand> selectedBundle)
+        public async Task<BatchResult<SyncResult>> ApplyOrganizationUnitAsync(SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand> selectedBundle)
         {
             var successMessages = new List<string>();
             var errors = new List<string>();
@@ -1208,12 +1190,13 @@ namespace HR.IrisaSync.Extention.Services
             try
             {
                 // ۱. ابتدا ایجاد گره‌های ریشه (ParentId == null)
-                var rootCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.ParentId == null).ToList();
+                var rootCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.IrsiaSyncParentId == null).ToList();
                 foreach (var item in rootCreateCmds)
                 {
                     try
                     {
                         await _mediator.Send(item.Command);
+                        
                         addedCount++;
                         successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
                     }
@@ -1224,7 +1207,7 @@ namespace HR.IrisaSync.Extention.Services
                 }
 
                 // ۲. ایجاد گره‌های فرزند (ParentId != null)
-                var childCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.ParentId != null).ToList();
+                var childCreateCmds = selectedBundle.AddCommands.Where(c => c.Command.IrsiaSyncParentId != null).ToList();
                 foreach (var item in childCreateCmds)
                 {
                     try

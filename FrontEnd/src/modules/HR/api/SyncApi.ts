@@ -14,42 +14,48 @@ export const SyncApi = {
   SyncOrganizationUnitPreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncOrganizationUnitPreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncOrganizationUnitPreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncOrganizationUnitPreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
   SyncJobLevelPreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncJobLevelPreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncJobLevelPreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncJobLevelPreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
   SyncJobTitlePreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncJobTitlePreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncJobTitlePreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncJobTitlePreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
   SyncEmploymentsPreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncEmploymentsPreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncEmploymentsPreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncEmploymentsPreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
   SyncPostPreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncPostPreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncPostPreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncPostPreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
   SyncAssignmentsPreview: async (): Promise<BatchResult<SyncCommandBundle>> => {
     if (IS_MOCK_MODE) return mockSyncApi.SyncAssignmentsPreview();
     const api = getAPI(API_MODULE);
-    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncAssignmentsPreview`);
+    const res = await api.get<BatchResult<SyncCommandBundle>>(`/api/hr/IrisaSync/SyncAssignmentsPreview`,
+      { withCredentials: true  ,timeout: 240000});
     return res.data;
   },
 
@@ -57,42 +63,48 @@ export const SyncApi = {
   ApplyOrganizationUnit: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyOrganizationUnit`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyOrganizationUnit`, bundle,
+      {timeout: 240000});
     return res.data;
   },
 
   ApplyJobLevel: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyJobLevel`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyJobLevel`, bundle,
+      {timeout: 240000});
     return res.data;
   },
 
   ApplyJobTitle: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyJobTitle`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyJobTitle`, bundle,
+      {timeout: 240000});
     return res.data;
   },
 
   ApplyEmployments: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyEmployments`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyEmployments`, bundle,
+      {timeout: 240000});
     return res.data;
   },
 
   ApplyPost: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyPost`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyPost`, bundle,
+      {timeout: 240000});
     return res.data;
   },
 
   ApplyAssignments: async (bundle: SyncCommandBundle): Promise<BatchResult<SyncResult>> => {
     if (IS_MOCK_MODE) return mockSyncApi.ApplyGeneric(bundle);
     const api = getAPI(API_MODULE);
-    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyAssignments`, bundle);
+    const res = await api.post<BatchResult<SyncResult>>(`/api/hr/IrisaSync/ApplyAssignments`, bundle,
+      {timeout: 240000});
     return res.data;
   }
 };

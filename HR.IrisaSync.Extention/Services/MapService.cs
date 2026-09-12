@@ -175,5 +175,46 @@ namespace HR.IrisaSync.Extention.Services
 
         }
 
+        public async Task SyncJobLevelDoneAsync(Guid newId, string? Title, decimal? irisaId)
+        {
+            var map =(await _uow.JobLevelMapRepository.GetAllAsync(queryOptions: q => q.Where(a => a.IrisaJobLevelId == irisaId))).FirstOrDefault();
+            if (map == null)
+                throw new Exception($"JobLevel irisaId {irisaId} not found!!!");
+            map.FkJobLevelId = newId;
+            map.JobLevel = Title;
+            await _uow.JobLevelMapRepository.UpdateAsync(map);
+
+        }
+        public async Task SyncJobTitleDoneAsync(Guid newId, string? Name, decimal? irisaId)
+        {
+            var map =(await _uow.JobTitleMapRepository.GetAllAsync(queryOptions: q => q.Where(a => a.IrisaJobTitleId == irisaId))).FirstOrDefault();
+            if (map == null)
+                throw new Exception($"JobTitle irisaId {irisaId} not found!!!");
+            map.FkJobTitleId = newId;
+            map.JobTitle = Name;
+            await _uow.JobTitleMapRepository.UpdateAsync(map);
+            
+        }
+        public async Task SyncOrganizationUnitDoneAsync(Guid newId, string? Name, decimal? irisaId)
+        {
+            var map =(await _uow.OrganizationUnitMapRepository.GetAllAsync(queryOptions: q => q.Where(a => a.IrisaOrganizationUnitId == irisaId))).FirstOrDefault();
+            if (map == null)
+                throw new Exception($"OrganizationUnit irisaId {irisaId} not found!!!");
+            map.FkOrganizationUnitId = newId;
+            map.OrganizationUnit = Name;
+            await _uow.OrganizationUnitMapRepository.UpdateAsync(map);
+
+        }
+
+        public async Task SaveAsync()
+        {
+            await _uow.SaveChangesAsync();
+        }
+
+        public async Task<IrisaSyncOrganizationUnitMap?> GetOrgUnitByIrisaId(decimal? irisaId)
+        {
+            var r = (await _uow.OrganizationUnitMapRepository.GetAllAsync(queryOptions: q => q.Where(a => a.IrisaOrganizationUnitId == irisaId))).FirstOrDefault();
+            return r;
+        }
     }
 }

@@ -2,10 +2,10 @@
 using Core.Shared.Results;
 using HR.Application.Commands.Assignment;
 using HR.Application.Commands.Employment;
-using HR.Application.Commands.JobLevel;
-using HR.Application.Commands.JobTitle;
-using HR.Application.Commands.OrganizationUnit;
 using HR.Application.Commands.OrgChart;
+using HR.IrisaSync.Extention.Commands.JobLevel;
+using HR.IrisaSync.Extention.Commands.JobTitle;
+using HR.IrisaSync.Extention.Commands.OrganizationUnit;
 using HR.IrisaSync.Extention.Entities;
 using HR.IrisaSync.Extention.Services;
 using System;
@@ -62,20 +62,20 @@ namespace HR.IrisaSync.Extention.Interface
         #endregion
 
         #region JobTitle
-        Task<BatchResult<SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand>>> SyncJobTitlePreviewAsync();
-        Task<BatchResult<SyncResult>> ApplyJobTitleAsync(SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand> selectedBundle);
+        Task<BatchResult<SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand>>> SyncJobTitlePreviewAsync();
+        Task<BatchResult<SyncResult>> ApplyJobTitleAsync(SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand> selectedBundle);
         Task<BatchResult<SyncResult>> SyncJobTitleAsync();
         #endregion
 
         #region JobLevel
-        Task<BatchResult<SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand>>> SyncJobLevelPreviewAsync();
-        Task<BatchResult<SyncResult>> ApplyJobLevelAsync(SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand> selectedBundle);
+        Task<BatchResult<SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand>>> SyncJobLevelPreviewAsync();
+        Task<BatchResult<SyncResult>> ApplyJobLevelAsync(SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand> selectedBundle);
         Task<BatchResult<SyncResult>> SyncJobLevelAsync();
         #endregion
 
         #region OrganizationUnit
-        Task<BatchResult<SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand>>> SyncOrganizationUnitPreviewAsync();
-        Task<BatchResult<SyncResult>> ApplyOrganizationUnitAsync(SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand> selectedBundle);
+        Task<BatchResult<SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand>>> SyncOrganizationUnitPreviewAsync();
+        Task<BatchResult<SyncResult>> ApplyOrganizationUnitAsync(SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand> selectedBundle);
         Task<BatchResult<SyncResult>> SyncOrganizationUnitAsync();
         #endregion
 

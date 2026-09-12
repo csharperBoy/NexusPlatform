@@ -3,11 +3,11 @@ using Core.Presentation.Filters;
 using Core.Shared.Results;
 using HR.Application.Commands.Assignment;
 using HR.Application.Commands.Employment;
-using HR.Application.Commands.JobLevel;
-using HR.Application.Commands.JobTitle;
-using HR.Application.Commands.OrganizationUnit;
 using HR.Application.Commands.OrgChart;
 using HR.IrisaSync.Extention.Commands;
+using HR.IrisaSync.Extention.Commands.JobLevel;
+using HR.IrisaSync.Extention.Commands.JobTitle;
+using HR.IrisaSync.Extention.Commands.OrganizationUnit;
 using HR.IrisaSync.Extention.Interface;
 using HR.IrisaSync.Extention.Queries;
 using HR.IrisaSync.Extention.Services;
@@ -77,7 +77,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("ApplyJobTitle")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> ApplyJobTitle([FromBody] SyncCommandBundle<CreateJobTitleCommand, UpdateJobTitleCommand, DeleteJobTitleCommand> selectedBundle)
+        public async Task<IActionResult> ApplyJobTitle([FromBody] SyncCommandBundle<CreateJobTitleIrisaSyncCommand, UpdateJobTitleIrisaSyncCommand, DeleteJobTitleIrisaSyncCommand> selectedBundle)
         {
             var result = await _syncService.ApplyJobTitleAsync(selectedBundle);
 
@@ -109,7 +109,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("ApplyJobLevel")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> ApplyJobLevel([FromBody] SyncCommandBundle<CreateJobLevelCommand, UpdateJobLevelCommand, DeleteJobLevelCommand> selectedBundle)
+        public async Task<IActionResult> ApplyJobLevel([FromBody] SyncCommandBundle<CreateJobLevelIrisaSyncCommand, UpdateJobLevelIrisaSyncCommand, DeleteJobLevelIrisaSyncCommand> selectedBundle)
         {
             var result = await _syncService.ApplyJobLevelAsync(selectedBundle);
 
@@ -133,7 +133,7 @@ namespace HR.IrisaSync.Extention.Controller
         }
         [HttpPost("ApplyOrganizationUnit")]
         //[AuthorizeResource("hr.employment", "Create")]
-        public async Task<IActionResult> ApplyOrganizationUnit([FromBody] SyncCommandBundle<CreateOrganizationUnitCommand, UpdateOrganizationUnitCommand, DeleteOrganizationUnitCommand> selectedBundle)
+        public async Task<IActionResult> ApplyOrganizationUnit([FromBody] SyncCommandBundle<CreateOrganizationUnitIrisaSyncCommand, UpdateOrganizationUnitIrisaSyncCommand, DeleteOrganizationUnitIrisaSyncCommand> selectedBundle)
         {
             var result = await _syncService.ApplyOrganizationUnitAsync(selectedBundle);
 
