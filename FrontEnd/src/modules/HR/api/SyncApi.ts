@@ -4,8 +4,8 @@ import { BatchResult } from "@/core/models/apiResults";
 import { SyncResult, SyncCommandBundle } from "../models/SyncModels";
 import { mockSyncApi } from "./mockSyncApi";
 
-// 🟢 تغییر این متغیر برای سوئیچ بین Mock و Server واقعی
-const IS_MOCK_MODE = true; 
+//  تغییر این متغیر برای سوئیچ بین Mock و Server واقعی
+const IS_MOCK_MODE = false; 
 
 const API_MODULE = "hr";
 
