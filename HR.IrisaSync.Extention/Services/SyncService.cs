@@ -1110,8 +1110,7 @@ namespace HR.IrisaSync.Extention.Services
                 var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
                 var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
                 var existDict = existList.ToDictionary(a => a.Id);
-               
-                var mapDictByIrisaId = list.Where(i => i.IrisaOrganizationUnitId != null).ToDictionary(i => i.IrisaOrganizationUnitId);
+                var mapDictByIrisaId = list.ToDictionary(i => i.IrisaOrganizationUnitId);
 
                 // ۱. بررسی ریشه‌ها (Roots)
                 foreach (var item in list.Where(i => i.IrisaParentId == null && i.IrisaOrganizationUnit != null))
