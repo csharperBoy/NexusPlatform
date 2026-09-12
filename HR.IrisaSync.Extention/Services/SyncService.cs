@@ -1118,8 +1118,8 @@ namespace HR.IrisaSync.Extention.Services
                         var createCmd = new CreateOrganizationUnitIrisaSyncCommand(
                             item.IrisaOrganizationUnitId.ToString(),
                             item.IrisaOrganizationUnit,
-                            null,
-                            item.IrisaOrganizationUnitId
+                            item.IrisaOrganizationUnitId,
+                            null
                         );
 
                         bundle.AddCommands.Add(new SyncPreviewItem<CreateOrganizationUnitIrisaSyncCommand>

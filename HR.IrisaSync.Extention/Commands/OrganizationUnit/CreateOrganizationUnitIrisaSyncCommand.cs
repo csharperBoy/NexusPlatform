@@ -50,7 +50,7 @@ namespace HR.IrisaSync.Extention.Commands.OrganizationUnit
 
                 var parentmap = await _mapService.GetOrgUnitByIrisaId(request.IrsiaSyncParentId);
                 Guid newId = await _service.CreateAsync(request.Code,
-                    request.Name, parentmap.FkOrganizationUnitId
+                    request.Name, parentmap?.FkOrganizationUnitId
                   , userContext.UserName
                     );
                 await _mapService.SyncOrganizationUnitDoneAsync(newId,request.Name, request.IrsiaSyncId);
