@@ -57,10 +57,9 @@ volumes:
 
 # ۱. لاگین به داکر هاب
 # docker login
-
+# cd D:\Project\NexusPlatform
 # ۲. ساخت ایمیج
-# docker compose build aksteel-webapi
+# docker compose -f docker-compose.BackAkSteel.Dev.yml build aksteel-webapi
 
 # ۳. ارسال به داکر هاب
-# docker push YOUR_DOCKERHUB_USERNAME/aksteel-webapi:latest
 # docker push m2931374/aksteel-webapi:latest

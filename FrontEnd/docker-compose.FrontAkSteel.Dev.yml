@@ -29,8 +29,8 @@ networks:
 
     # for create
     # docker login
-    # docker compose build aksteel-admin aksteel-website-phonebook
-    # docker compose push aksteel-admin aksteel-website-phonebook
+    # docker compose -f docker-compose.FrontAkSteel.Dev.yml build aksteel-admin aksteel-website-phonebook
+    # docker compose -f docker-compose.FrontAkSteel.Dev.yml push aksteel-admin aksteel-website-phonebook
 
     # cd D:\Project\NexusPlatform\FrontEnd
-    # docker compose -f AkSteel-docker-compose.yml  up --build --no-cache
+    # docker compose -f docker-compose.FrontAkSteel.Dev.yml  up --build --no-cache
