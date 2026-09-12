@@ -1,0 +1,57 @@
+services:
+  aksteel-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: aksteel_sqlserver
+    user: root
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Fajr@123
+    ports:
+      - "1434:1433"
+    volumes:
+      - mssql_2025_data:/var/opt/mssql/data
+      - ./sqlserver-data:/var/opt/mssql/import
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Fajr@123 -Q 'SELECT 1' -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - aksteel-network
+
+  aksteel-redis:
+    image: redis:alpine
+    container_name: aksteel_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - aksteel-network
+
+  aksteel-webapi:
+    image: m2931374/aksteel-webapi:latest
+    container_name: aksteel_webapi
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=aksteel-sqlserver;Database=AksteelDb;User Id=sa;Password=Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__Redis=aksteel-redis:6379,abortConnect=false
+    depends_on:
+      aksteel-sqlserver:
+        condition: service_healthy
+      aksteel-redis:
+        condition: service_started
+    networks:
+      - aksteel-network
+
+networks:
+  aksteel-network:
+    external: true
+
+volumes:
+  mssql_2025_data:
+  
+
+
+# docker login
+# docker compose -f docker-compose.prod.yml pull aksteel-webapi
+# docker compose -f docker-compose.prod.yml up -d

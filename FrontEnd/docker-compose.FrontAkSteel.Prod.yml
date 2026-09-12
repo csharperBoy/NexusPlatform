@@ -1,0 +1,28 @@
+services:
+  aksteel-admin:
+    image: m2931374/aksteel-admin:latest
+    container_name: aksteel-admin
+    ports:
+      - "3000:80"
+    restart: always
+    networks:
+      - aksteel-network
+
+  aksteel-website-phonebook:
+    image: m2931374/aksteel-website-phonebook:latest
+    container_name: aksteel-website-phonebook
+    ports:
+      - "3001:80"
+    restart: always
+    networks:
+      - aksteel-network
+
+networks:
+  aksteel-network:
+    external: true
+
+# ۱. دریافت آخرین نسخه ایمیج‌ها از داکر هاب
+# docker compose -f docker-compose.FrontAkSteel.Prod.yml pull
+
+# ۲. اجرای کانتینرها
+# docker compose -f docker-compose.FrontAkSteel.Prod.yml up -d

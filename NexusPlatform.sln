@@ -75,6 +75,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		ContactInfo.txt = ContactInfo.txt
 		docker-compose.aksteel.yml = docker-compose.aksteel.yml
+		docker-compose.BackAkSteel.Dev.yml = docker-compose.BackAkSteel.Dev.yml
+		docker-compose.BackAkSteel.Prod.yml = docker-compose.BackAkSteel.Prod.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Event", "Event", "{3A93DF49-24E6-45B2-8B73-0692137A304C}"
