@@ -506,28 +506,75 @@ export const SyncPage: React.FC = () => {
       // شروع کارمند به‌صورت موازی از همان ابتدا (مستقل)
       const employmentPromise = refsByKey.employment.current?.runInteractive();
 
-      // فاز ۱: پیش‌نیازهای پست (موازی)
       setMainSyncPhase(
-        "فاز ۱ از ۳: پیش‌نمایش واحد سازمانی، سطح شغلی و عنوان شغلی... لطفاً تغییرات را بررسی و تایید کنید."
+        "فاز 1 از 6: پیش‌نمایش واحد سازمانی لطفاً تغییرات را بررسی و تایید کنید."
+      );
+       await Promise.all([
+        refsByKey.orgUnit.current?.runInteractive()
+        
+      ]);
+      setMainSyncPhase(
+        "فاز 2 از 6: پیش‌نمایش سطح شغلی لطفاً تغییرات را بررسی و تایید کنید."
       );
       await Promise.all([
-        refsByKey.orgUnit.current?.runInteractive(),
-        refsByKey.jobLevel.current?.runInteractive(),
-        refsByKey.jobTitle.current?.runInteractive(),
+       
+      refsByKey.jobLevel.current?.runInteractive()
+      
       ]);
+      setMainSyncPhase(
+        "فاز 3 از 6: پیش‌نمایش عنوان شغلی لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await Promise.all([
+       
+        refsByKey.jobTitle.current?.runInteractive()
+        
+      ]);
+      setMainSyncPhase(
+        "فاز 4 از 6: پیش‌نمایش کارکنان لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await Promise.all([
+       
+        refsByKey.employment.current?.runInteractive()
+        
+      ]);
+      setMainSyncPhase(
+        "فاز 5 از 6: پیش‌نمایش پست لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await Promise.all([
+       
+        refsByKey.post.current?.runInteractive()
+        
+      ]);
+       setMainSyncPhase(
+        "فاز 6 از 6: پیش‌نمایش انتصابات لطفاً تغییرات را بررسی و تایید کنید."
+      );
+      await Promise.all([
+       
+        refsByKey.assignment.current?.runInteractive()
+        
+      ]);
+      // فاز ۱: پیش‌نیازهای پست (موازی)
+      // setMainSyncPhase(
+      //   "فاز ۱ از ۳: پیش‌نمایش واحد سازمانی، سطح شغلی و عنوان شغلی... لطفاً تغییرات را بررسی و تایید کنید."
+      // );
+      // await Promise.all([
+      //   refsByKey.orgUnit.current?.runInteractive(),
+      //   refsByKey.jobLevel.current?.runInteractive(),
+      //   refsByKey.jobTitle.current?.runInteractive(),
+      // ]);
 
       // فاز ۲: پست (موازی با انتظار برای کارمند)
-      setMainSyncPhase(
-        "فاز ۲ از ۳: پیش‌نمایش پست‌ها... لطفاً تغییرات را بررسی و تایید کنید."
-      );
-      const postPromise = refsByKey.post.current?.runInteractive();
-      await Promise.all([postPromise, employmentPromise]);
+      // setMainSyncPhase(
+      //   "فاز ۲ از ۳: پیش‌نمایش پست‌ها... لطفاً تغییرات را بررسی و تایید کنید."
+      // );
+      // const postPromise = refsByKey.post.current?.runInteractive();
+      // await Promise.all([postPromise, employmentPromise]);
 
-      // فاز ۳: انتصابات
-      setMainSyncPhase(
-        "فاز ۳ از ۳: پیش‌نمایش انتصابات... لطفاً تغییرات را بررسی و تایید کنید."
-      );
-      await refsByKey.assignment.current?.runInteractive();
+      // // فاز ۳: انتصابات
+      // setMainSyncPhase(
+      //   "فاز ۳ از ۳: پیش‌نمایش انتصابات... لطفاً تغییرات را بررسی و تایید کنید."
+      // );
+      // await refsByKey.assignment.current?.runInteractive();
     } catch (err) {
       console.error("Main sync failed", err);
     } finally {
