@@ -43,7 +43,7 @@ namespace HR.Application.Commands.Employment
                 {
                     try
                     {
-                        string successMessage = $"{IconInTextHelper.IconUpdate} برای کارمند با کد پرسنلی '{command.EmploymentCode}' ";
+                        string successMessage = $"{IconInTextHelper.IconUpdate} برای کارمند با کد پرسنلی '{command.EmploymentCode.Value}' ";
 
                         bool assignHasChange = false;
                         bool locHasChange = false;
@@ -74,7 +74,7 @@ namespace HR.Application.Commands.Employment
                         Guid EmploymentId = command.Id;
                         if (hasChange)
                         {
-                            successMessage = $"اطلاعات مربوط شخصی با موفقیت بروزرسانی شد.";
+                            successMessage = $"{successMessage} اطلاعات مربوط شخصی با موفقیت بروزرسانی شد.";
                         }
                         if (command.PostId.IsSet)
                         {
@@ -99,7 +99,7 @@ namespace HR.Application.Commands.Employment
                     }
                     catch (Exception ex)
                     {
-                        errors.Add($"{IconInTextHelper.IconError} بروزرسانی اطلاعات کارمند با کد پرسنلی '{command.EmploymentCode}' با خطا مواجه شد!!!: {ex.Message}");
+                        errors.Add($"{IconInTextHelper.IconError} بروزرسانی اطلاعات کارمند با کد پرسنلی '{command.EmploymentCode.Value}' با خطا مواجه شد!!!: {ex.Message}");
                     }
                 }
 

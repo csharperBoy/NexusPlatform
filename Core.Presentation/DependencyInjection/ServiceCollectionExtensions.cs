@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
+using System.Text.Json.Serialization.Metadata;
 namespace Core.Presentation.DependencyInjection
 {
     /*
@@ -42,15 +43,35 @@ namespace Core.Presentation.DependencyInjection
     {
         public static IServiceCollection Core_AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
-
             services.AddControllers()
-                        .AddJsonOptions(options =>
-                        {
-                            options.JsonSerializerOptions.Converters.Add(new OptionalJsonConverterFactory());
-                        });
-            //services.AddScoped<AuthorizeResourceFilter>();
-            // 📌 در آینده می‌توان سرویس‌های Presentation را اینجا ثبت کرد
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new OptionalJsonConverterFactory());
+
+                    // این بخش فیلدهایی که IsSet = false دارند را کلاً از JSON خروجی حذف می‌کند
+                    options.JsonSerializerOptions.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+                    {
+                        Modifiers = { OmitUndefinedOptionalProperties }
+                    };
+                });
+
             return services;
+        }
+
+        private static void OmitUndefinedOptionalProperties(JsonTypeInfo typeInfo)
+        {
+            if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
+
+            foreach (var property in typeInfo.Properties)
+            {
+                if (typeof(IOptional).IsAssignableFrom(property.PropertyType))
+                {
+                    property.ShouldSerialize = (declaringObject, propertyValue) =>
+                    {
+                        return propertyValue is IOptional { IsSet: true };
+                    };
+                }
+            }
         }
     }
 }

@@ -79,7 +79,8 @@ namespace HR.IrisaSync.Extention.Services
                 !string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal) ||
                 !string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal) ||
                 !string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal);
-
+            if (hasChange)
+                return hasChange;
             #endregion
             #region مقایسه اطلاعات مربوط به مشخصات کارمندی
             hasChange =
@@ -87,7 +88,7 @@ namespace HR.IrisaSync.Extention.Services
                !string.Equals(ext.NumPrsnEmply.ToString(), existing.EmploymentCode);
 
             if (hasChange)
-                return true;
+                return hasChange;
             #endregion
 
             #region مقایسه اطلاعات تماس شخصیت حقیقی
@@ -99,9 +100,9 @@ namespace HR.IrisaSync.Extention.Services
             }
 
             string? tel = ext.NumTelEmply?.ToString() ?? null;
-             string? mobile = ext.NumMobilEmply?.ToString() ?? null;
+            string? mobile = ext.NumMobilEmply?.ToString() ?? null;
             string? address = ext.DesAdrEmply ?? null;
-            
+
             hasChange = (PhoneNumber.CanCreate(tel) && !contacts.Any(c => c.Value == tel)) ||
                         (address != null && !contacts.Any(c => c.Value == address)) ||
                         (PhoneNumber.CanCreate(mobile) && !contacts.Any(c => c.Value == mobile));
@@ -110,7 +111,7 @@ namespace HR.IrisaSync.Extention.Services
             hasChange = (tel == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Phone)) ||
                         (address == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Address)) ||
                         (mobile == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Mobile));
-            
+
             #endregion
             return hasChange;
         }
@@ -160,7 +161,12 @@ namespace HR.IrisaSync.Extention.Services
                 FatherName: ext.NamFathrEmply,
                 EmploymentCode: ext.NumPrsnEmply.ToString(),
                 Gender: ext.DesSexEmply?.Trim() == "مذکر" ? Gender.Male : Gender.Female,
-                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn))
+                StartDate: DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)),
+                locationsId: Optional<List<Guid>?>.Undefined,
+                PostId: Optional<Guid?>.Undefined,
+                 OfficePhone: Optional<List<string>?>.Undefined,
+                 OrgEmail: Optional<List<string>?>.Undefined,
+                 OrgMobile: Optional<List<string>?>.Undefined
             );
         }
 

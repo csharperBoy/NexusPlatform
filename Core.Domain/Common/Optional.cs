@@ -6,12 +6,22 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+// Core/Domain/Common/Optional.cs
+
 namespace Core.Domain.Common
 {
-    public readonly struct Optional<T>
+    // اینترفیس کمکی برای تشخیص غیرژنریک
+    public interface IOptional
+    {
+        bool IsSet { get; }
+        object? Value { get; }
+    }
+
+    public readonly struct Optional<T> : IOptional
     {
         public bool IsSet { get; }
         public T? Value { get; }
+        object? IOptional.Value => Value; // پیاده‌سازی اینترفیس
 
         public Optional(T? value)
         {
@@ -28,18 +38,15 @@ namespace Core.Domain.Common
 
     public class OptionalJsonConverter<T> : JsonConverter<Optional<T>>
     {
-        // این خاصیت حیاتی است تا System.Text.Json مقدار null صریح در JSON را به متد Read بفرستد
         public override bool HandleNull => true;
 
         public override Optional<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType == JsonTokenType.Null)
             {
-                // کلید در JSON وجود داشته اما مقدار آن null بوده است (IsSet = true, Value = null)
                 return new Optional<T>(default);
             }
 
-            // کلید وجود داشته و مقدار دارد
             var value = JsonSerializer.Deserialize<T>(ref reader, options);
             return new Optional<T>(value);
         }
@@ -52,7 +59,7 @@ namespace Core.Domain.Common
             }
             else
             {
-                // اگر تنظیم شده که فیلدهای غیر ست شده هم سریالایز شوند، می‌توانید null بنویسید
+                // در صورتی که به صورت مستقیم سریالایز شود
                 writer.WriteNullValue();
             }
         }
