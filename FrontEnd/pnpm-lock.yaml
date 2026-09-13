@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@capacitor/core':
+        specifier: ^8.5.2
+        version: 8.5.2
+      '@capacitor/preferences':
+        specifier: ^8.0.1
+        version: 8.0.1(@capacitor/core@8.5.2)
       '@tailwindcss/vite':
         specifier: ^4.1.13
         version: 4.1.18(vite@7.3.1)
@@ -532,6 +538,20 @@ packages:
       react-dom: 19.2.4(react@19.2.4)
       reselect: 5.2.0
       use-sync-external-store: 1.6.0(react@19.2.4)
+    dev: false
+
+  /@capacitor/core@8.5.2:
+    resolution: {integrity: sha512-agnQbGdhGw/KZFuLf7H9SY2o+oE7upkr/WPQsYaokXP6f9chaE8iVmbKkfN6SVl4w3pmz7oZ3Ur1hbkmy1hx+w==}
+    dependencies:
+      tslib: 2.8.1
+    dev: false
+
+  /@capacitor/preferences@8.0.1(@capacitor/core@8.5.2):
+    resolution: {integrity: sha512-T6no3ebi79XJCk91U3Jp/liJUwgBdvHR+s6vhvPkPxSuch7z3zx5Rv1bdWM6sWruNx+pViuEGqZvbfCdyBvcHQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+    dependencies:
+      '@capacitor/core': 8.5.2
     dev: false
 
   /@dnd-kit/accessibility@3.1.1(react@19.2.4):
