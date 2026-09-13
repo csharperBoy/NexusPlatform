@@ -84,20 +84,20 @@ namespace HR.IrisaSync.Extention.Services
             //    !string.Equals(ext.NamLastEmply?.Trim(), existing.LastName?.Trim()) ||
             //    !string.Equals(ext.DesSexEmply?.Trim(), (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث")) ||
             //   !string.Equals(ext.CodNatEmply?.Trim(), existing.NationalCode?.Trim());
-            #region test
-            if (!string.Equals(Normalize(ext.NamFirstEmply), Normalize(existing.FirstName), StringComparison.Ordinal))
-                hasChange = true;
-            if (!string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal))
-                hasChange = true;
-            string temp = (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث");
-            if (!string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal))
-                hasChange = true;
-            if (!string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal))
-                hasChange = true;
-            #endregion
-            if (hasChange)
-                return true;
-            #endregion
+            //#region test
+            //if (!string.Equals(Normalize(ext.NamFirstEmply), Normalize(existing.FirstName), StringComparison.Ordinal))
+            //    hasChange = true;
+            //if (!string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal))
+            //    hasChange = true;
+            //string temp = (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث");
+            //if (!string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal))
+            //    hasChange = true;
+            //if (!string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal))
+            //    hasChange = true;
+            //#endregion
+            //if (hasChange)
+            //    return true;
+            //#endregion
 
             #region مقایسه اطلاعات مربوط به مشخصات کارمندی
             hasChange =
@@ -117,11 +117,11 @@ namespace HR.IrisaSync.Extention.Services
             }
 
             string? tel = ext.NumTelEmply?.ToString() ?? null;
-            List<string>? existTel = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Phone && c.IsCurrent).Select(s => s.Value).ToList();
+            //List<string>? existTel = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Phone && c.IsCurrent).Select(s => s.Value).ToList();
             string? mobile = ext.NumMobilEmply?.ToString() ?? null;
-            List<string>? existMobile = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Mobile && c.IsCurrent).Select(s => s.Value).ToList();
+            //List<string>? existMobile = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Mobile && c.IsCurrent).Select(s => s.Value).ToList();
             string? address = ext.DesAdrEmply ?? null;
-            List<string>? existAddress = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Address && c.IsCurrent).Select(s => s.Value).ToList();
+            //List<string>? existAddress = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Address && c.IsCurrent).Select(s => s.Value).ToList();
 
             hasChange = (PhoneNumber.CanCreate(tel) && !contacts.Any(c => c.Value == tel)) ||
                         (address != null && !contacts.Any(c => c.Value == address)) ||
@@ -141,8 +141,8 @@ namespace HR.IrisaSync.Extention.Services
             //    hasChange = true;
             //#endregion
             #endregion
-            if (hasChange)
-                hasChange = true;
+            //if (hasChange)
+            //    hasChange = true;
             return hasChange;
         }
 
