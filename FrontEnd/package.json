@@ -32,10 +32,15 @@
     "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",
     "dev:aksteel.admin": "pnpm --filter aksteel-admin run dev",
     "build:aksteel.admin": "pnpm --filter aksteel-admin run build",
-    "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview"
+    "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview",
+    "cap:add:aksteel.admin": "npx cap add android --config capacitor.config.aksteel.admin.ts",
+    "cap:sync:aksteel.admin": "npx cap sync android --config capacitor.config.aksteel.admin.ts",
+    "cap:open:aksteel.admin": "npx cap open android --config capacitor.config.aksteel.admin.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
     "@capacitor/preferences": "^8.0.1",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.90.2",
@@ -49,6 +54,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.5.2",
     "@types/react": "^19.2.0",
