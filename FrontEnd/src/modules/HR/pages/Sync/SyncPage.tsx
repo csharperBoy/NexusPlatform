@@ -410,7 +410,7 @@ const EntitySyncCard = forwardRef<EntitySyncCardHandle, EntitySyncCardProps>(
         {/* Body: Empty State */}
         {step === "preview" && totalChanges === 0 && (
           <div className="p-8 text-center text-gray-500 bg-gray-50 border-t border-gray-100">
-            <span className="text-4xl block mb-2">🎉</span>
+            {/* <span className="text-4xl block mb-2">🎉</span> */}
             اطلاعات این بخش کاملاً بروز است و نیازی به همگام‌سازی ندارد.
           </div>
         )}
@@ -554,7 +554,7 @@ export const SyncPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
               <h3 className="font-bold text-gray-800 mb-1">
-                ⚡ همگام‌سازی کلی (نیمه‌خودکار)
+                 همگام‌سازی کلی (نیمه‌خودکار)
               </h3>
               <p className="text-sm text-gray-600 leading-relaxed">
                 با کلیک روی این دکمه، پیش‌نمایش همه‌ی بخش‌ها با ترتیب صحیح وابستگی‌ها
@@ -583,7 +583,7 @@ export const SyncPage: React.FC = () => {
                   در حال اجرا...
                 </>
               ) : (
-                <>🚀 شروع همگام‌سازی کلی</>
+                <> شروع همگام‌سازی کلی</>
               )}
             </button>
           </div>

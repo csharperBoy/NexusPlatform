@@ -85,5 +85,17 @@ namespace Core.Domain.ValueObjects
                 return false;
             }
         }
+        public static bool CanCreate(string value)
+        {
+            try
+            {
+                Create(value);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

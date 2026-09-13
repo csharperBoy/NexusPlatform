@@ -3,7 +3,9 @@ using Core.Application.Abstractions.Contact;
 using Core.Application.Abstractions.People;
 using Core.Application.Helper;
 using Core.Domain.Common;
+using Core.Domain.ValueObjects;
 using Core.Shared.DTOs.Contact;
+using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
 using Core.Shared.Results;
 using HR.Application.Commands.Assignment;
@@ -23,7 +25,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 namespace HR.IrisaSync.Extention.Services
 {
-    
+
     public class SyncService : ISyncService
     {
 
@@ -63,12 +65,36 @@ namespace HR.IrisaSync.Extention.Services
         private bool HasEmploymentChanged(PdsIdeaInformationViw ext, EmploymentInfoView existing, Dictionary<Guid, List<ContactItemDto>> allContacts)
         {
             #region مقایسه اطلاعات مربوط به شخصیت حقیقی فرد 
-            bool hasChange =
-                ext.NamFirstEmply != existing.FirstName ||
-                ext.NamLastEmply != existing.LastName ||
-                ext.DesSexEmply?.Trim() != (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث") ||
-                ext.CodNatEmply != existing.NationalCode;
+            static string Normalize(string? s) => (s ?? string.Empty).Trim();
 
+            string GetGenderText(int? gender) => gender switch
+            {
+                (int)Gender.Male => "مذکر",
+                (int)Gender.Female => "مونث",
+                _ => string.Empty 
+            };
+
+            bool hasChange =
+                !string.Equals(Normalize(ext.NamFirstEmply), Normalize(existing.FirstName), StringComparison.Ordinal) ||
+                !string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal) ||
+                !string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal) ||
+                !string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal);
+            //bool hasChange =
+            //    !string.Equals(ext.NamFirstEmply?.Trim(), existing.FirstName?.Trim()) ||
+            //    !string.Equals(ext.NamLastEmply?.Trim(), existing.LastName?.Trim()) ||
+            //    !string.Equals(ext.DesSexEmply?.Trim(), (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث")) ||
+            //   !string.Equals(ext.CodNatEmply?.Trim(), existing.NationalCode?.Trim());
+            #region test
+            if (!string.Equals(Normalize(ext.NamFirstEmply), Normalize(existing.FirstName), StringComparison.Ordinal))
+                hasChange = true;
+            if (!string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal))
+                hasChange = true;
+            string temp = (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث");
+            if (!string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal))
+                hasChange = true;
+            if (!string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal))
+                hasChange = true;
+            #endregion
             if (hasChange)
                 return true;
             #endregion
@@ -76,7 +102,7 @@ namespace HR.IrisaSync.Extention.Services
             #region مقایسه اطلاعات مربوط به مشخصات کارمندی
             hasChange =
                 DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)) != existing.EmploymentEffectiveFrom ||
-                ext.NumPrsnEmply.ToString() != existing.EmploymentCode?.Trim();
+               !string.Equals(ext.NumPrsnEmply.ToString() ,existing.EmploymentCode);
 
             if (hasChange)
                 return true;
@@ -90,15 +116,33 @@ namespace HR.IrisaSync.Extention.Services
                 contacts = foundContacts;
             }
 
-            string tel = ext.NumTelEmply?.ToString() ?? string.Empty;
-            string mobile = ext.NumMobilEmply?.ToString() ?? string.Empty;
-            string address = ext.DesAdrEmply ?? string.Empty;
+            string? tel = ext.NumTelEmply?.ToString() ?? null;
+            List<string>? existTel = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Phone && c.IsCurrent).Select(s => s.Value).ToList();
+            string? mobile = ext.NumMobilEmply?.ToString() ?? null;
+            List<string>? existMobile = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Mobile && c.IsCurrent).Select(s => s.Value).ToList();
+            string? address = ext.DesAdrEmply ?? null;
+            List<string>? existAddress = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Address && c.IsCurrent).Select(s => s.Value).ToList();
 
-            hasChange = !contacts.Any(c => c.Value == tel) ||
-                        !contacts.Any(c => c.Value == address) ||
-                        !contacts.Any(c => c.Value == mobile);
+            hasChange = (PhoneNumber.CanCreate(tel) && !contacts.Any(c => c.Value == tel)) ||
+                        (address != null && !contacts.Any(c => c.Value == address)) ||
+                        (PhoneNumber.CanCreate(mobile) && !contacts.Any(c => c.Value == mobile));
+            if (hasChange)
+               return hasChange;
+            hasChange = (tel == null && contacts.Any(c => c.ContactType ==  ContactTypeEnum.Phone )) ||
+                        (address == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Address)) ||
+                        (mobile == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Mobile));
+            //#region test
+            //PhoneNumber tempn;
+            //if (PhoneNumber.TryCreate(tel ,out tempn) && !contacts.Any(c => c.Value == tel))
+            //    hasChange = true;
+            //if (!contacts.Any(c => c.Value == address))
+            //    hasChange = true;
+            //if (!contacts.Any(c => c.Value == mobile))
+            //    hasChange = true;
+            //#endregion
             #endregion
-
+            if (hasChange)
+                hasChange = true;
             return hasChange;
         }
 
@@ -243,17 +287,37 @@ namespace HR.IrisaSync.Extention.Services
             try
             {
                 // ۱. اجرای دستورات افزودن
-                foreach (var item in selectedBundle.AddCommands)
+                //foreach (var item in selectedBundle.AddCommands)
+                //{
+                //    try
+                //    {
+                //        await _mediator.Send(item.Command);
+                //        addedCount++;
+                //        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                //    }
+
+                //}
+
+                // ۲. اجرای دستورات افزودن (دسته‌جمعی)
+                if (selectedBundle.AddCommands.Any())
                 {
                     try
                     {
-                        await _mediator.Send(item.Command);
-                        addedCount++;
-                        successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
+                        var addCmdList = selectedBundle.AddCommands.Select(x => x.Command).ToList();
+                        var batchAddCommand = new BatchCreateEmploymentsCommand(addCmdList);
+                        var batchResult = await _mediator.Send(batchAddCommand);
+
+                        successMessages.AddRange(batchResult.SuccessMessages);
+                        errors.AddRange(batchResult.Errors);
+                        addedCount = batchResult.SuccessMessages.Count;
                     }
                     catch (Exception ex)
                     {
-                        errors.Add($"{IconInTextHelper.IconError} خطا در {item.Summary}: {ex.Message}");
+                        errors.Add($"{IconInTextHelper.IconError} خطا در افزودن دسته‌جمعی کارمندان: {ex.Message}");
                     }
                 }
 
@@ -747,8 +811,8 @@ namespace HR.IrisaSync.Extention.Services
                 {
                     try
                     {
-                        var response =  await _mediator.Send(item.Command);
-                        if(response.Data == true)
+                        var response = await _mediator.Send(item.Command);
+                        if (response.Data == true)
                             updatedCount++;
                         successMessages.Add($"{IconInTextHelper.IconUpdate} {item.Summary} با موفقیت انجام شد.");
                     }
@@ -763,8 +827,8 @@ namespace HR.IrisaSync.Extention.Services
                 {
                     try
                     {
-                       var response = await _mediator.Send(item.Command);
-                        if(response.Data == true)
+                        var response = await _mediator.Send(item.Command);
+                        if (response.Data == true)
                             deletedCount++;
                         successMessages.Add($"{IconInTextHelper.IconDelete} {item.Summary} با موفقیت انجام شد.");
                     }
@@ -844,7 +908,7 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateJobTitleIrisaSyncCommand(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle , item.IrisaJobTitleId);
+                        var createCmd = new CreateJobTitleIrisaSyncCommand(item.IrisaJobTitleId.ToString(), item.IrisaJobTitle, item.IrisaJobTitleId);
 
                         bundle.AddCommands.Add(new SyncPreviewItem<CreateJobTitleIrisaSyncCommand>
                         {
@@ -975,7 +1039,7 @@ namespace HR.IrisaSync.Extention.Services
                     }
                     else
                     {
-                        var createCmd = new CreateJobLevelIrisaSyncCommand(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel , item.IrisaJobLevelId);
+                        var createCmd = new CreateJobLevelIrisaSyncCommand(item.IrisaJobLevelId.ToString(), item.IrisaJobLevel, item.IrisaJobLevelId);
 
                         bundle.AddCommands.Add(new SyncPreviewItem<CreateJobLevelIrisaSyncCommand>
                         {
@@ -1090,7 +1154,7 @@ namespace HR.IrisaSync.Extention.Services
                 var list = await _uow.OrganizationUnitMapRepository.GetAllAsync();
                 var existList = await _hrUow.OrganizationUnitRepository.GetAllAsync();
                 var existDict = existList.ToDictionary(a => a.Id);
-                var mapDictByIrisaId = list.Where(l=>l.IrisaOrganizationUnitId != null).ToDictionary(i => i.IrisaOrganizationUnitId);
+                var mapDictByIrisaId = list.Where(l => l.IrisaOrganizationUnitId != null).ToDictionary(i => i.IrisaOrganizationUnitId);
 
                 // ۱. بررسی ریشه‌ها (Roots)
                 foreach (var item in list.Where(i => i.IrisaParentId == null && i.IrisaOrganizationUnit != null))
@@ -1196,7 +1260,7 @@ namespace HR.IrisaSync.Extention.Services
                     try
                     {
                         await _mediator.Send(item.Command);
-                        
+
                         addedCount++;
                         successMessages.Add($"{IconInTextHelper.IconAdd} {item.Summary} با موفقیت انجام شد.");
                     }
