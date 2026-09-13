@@ -71,7 +71,7 @@ namespace HR.IrisaSync.Extention.Services
             {
                 (int)Gender.Male => "مذکر",
                 (int)Gender.Female => "مونث",
-                _ => string.Empty 
+                _ => string.Empty
             };
 
             bool hasChange =
@@ -79,30 +79,12 @@ namespace HR.IrisaSync.Extention.Services
                 !string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal) ||
                 !string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal) ||
                 !string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal);
-            //bool hasChange =
-            //    !string.Equals(ext.NamFirstEmply?.Trim(), existing.FirstName?.Trim()) ||
-            //    !string.Equals(ext.NamLastEmply?.Trim(), existing.LastName?.Trim()) ||
-            //    !string.Equals(ext.DesSexEmply?.Trim(), (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث")) ||
-            //   !string.Equals(ext.CodNatEmply?.Trim(), existing.NationalCode?.Trim());
-            //#region test
-            //if (!string.Equals(Normalize(ext.NamFirstEmply), Normalize(existing.FirstName), StringComparison.Ordinal))
-            //    hasChange = true;
-            //if (!string.Equals(Normalize(ext.NamLastEmply), Normalize(existing.LastName), StringComparison.Ordinal))
-            //    hasChange = true;
-            //string temp = (existing.Gender == (int)Gender.Male ? "مذکر" : "مونث");
-            //if (!string.Equals(Normalize(ext.DesSexEmply), GetGenderText(existing.Gender), StringComparison.Ordinal))
-            //    hasChange = true;
-            //if (!string.Equals(Normalize(ext.CodNatEmply), Normalize(existing.NationalCode), StringComparison.Ordinal))
-            //    hasChange = true;
-            //#endregion
-            //if (hasChange)
-            //    return true;
-            //#endregion
 
+            #endregion
             #region مقایسه اطلاعات مربوط به مشخصات کارمندی
             hasChange =
                 DateOnly.FromDateTime(Convert.ToDateTime(ext.DatEmpltEmplyEn)) != existing.EmploymentEffectiveFrom ||
-               !string.Equals(ext.NumPrsnEmply.ToString() ,existing.EmploymentCode);
+               !string.Equals(ext.NumPrsnEmply.ToString(), existing.EmploymentCode);
 
             if (hasChange)
                 return true;
@@ -117,32 +99,19 @@ namespace HR.IrisaSync.Extention.Services
             }
 
             string? tel = ext.NumTelEmply?.ToString() ?? null;
-            //List<string>? existTel = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Phone && c.IsCurrent).Select(s => s.Value).ToList();
-            string? mobile = ext.NumMobilEmply?.ToString() ?? null;
-            //List<string>? existMobile = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Mobile && c.IsCurrent).Select(s => s.Value).ToList();
+             string? mobile = ext.NumMobilEmply?.ToString() ?? null;
             string? address = ext.DesAdrEmply ?? null;
-            //List<string>? existAddress = contacts.Where(c => c.ContactType == Core.Shared.Enums.Contact.ContactTypeEnum.Address && c.IsCurrent).Select(s => s.Value).ToList();
-
+            
             hasChange = (PhoneNumber.CanCreate(tel) && !contacts.Any(c => c.Value == tel)) ||
                         (address != null && !contacts.Any(c => c.Value == address)) ||
                         (PhoneNumber.CanCreate(mobile) && !contacts.Any(c => c.Value == mobile));
             if (hasChange)
-               return hasChange;
-            hasChange = (tel == null && contacts.Any(c => c.ContactType ==  ContactTypeEnum.Phone )) ||
+                return hasChange;
+            hasChange = (tel == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Phone)) ||
                         (address == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Address)) ||
                         (mobile == null && contacts.Any(c => c.ContactType == ContactTypeEnum.Mobile));
-            //#region test
-            //PhoneNumber tempn;
-            //if (PhoneNumber.TryCreate(tel ,out tempn) && !contacts.Any(c => c.Value == tel))
-            //    hasChange = true;
-            //if (!contacts.Any(c => c.Value == address))
-            //    hasChange = true;
-            //if (!contacts.Any(c => c.Value == mobile))
-            //    hasChange = true;
-            //#endregion
+            
             #endregion
-            //if (hasChange)
-            //    hasChange = true;
             return hasChange;
         }
 
