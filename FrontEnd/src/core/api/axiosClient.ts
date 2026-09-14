@@ -5,7 +5,7 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 import { storageAdapter } from "@/core/storage/storageAdapter";
-
+import { offlineQueue } from "./offlineQueue";
 /* ============================================================
    ENV CONFIG
 ============================================================ */
@@ -107,17 +107,16 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
     },
     async (error) => {
       const originalRequest: any = error.config;
-
-      // 🔴 بخش جدید: هندل کردن حالت آفلاین (Network Error یا Timeout)
-      // اگر error.response وجود نداشت یعنی اصلاً به سرور نرسیده‌ایم (قطعی اینترنت)
-      if (!error.response && originalRequest?.method?.toUpperCase() === "GET") {
+      const method = originalRequest?.method?.toUpperCase();
+      
+      // 🔴 هندل کردن حالت آفلاین (Network Error یا Timeout)
+    if (!error.response) {
+      // حالت اول: خواندن GET از کش (کد قبلی شما)
+      if (method === "GET") {
         try {
           const cacheKey = generateCacheKey(originalRequest);
           const cachedDataStr = await storageAdapter.getItem(cacheKey);
-          
           if (cachedDataStr) {
-            console.warn(`[Offline Fallback] در حال استفاده از دیتای کش شده برای: ${originalRequest.url}`);
-            // ساختن یک Response مجازی (Mock) برای جلوگیری از کرش کردن کامپوننت
             return Promise.resolve({
               data: JSON.parse(cachedDataStr),
               status: 200,
@@ -130,7 +129,28 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
         } catch (cacheError) {
           console.error("خطا در خواندن از کش", cacheError);
         }
+      } 
+      
+      // حالت سوم: ثبت کامندهای POST / PUT / DELETE در Offline Queue
+      else if (["POST", "PUT", "DELETE"].includes(method) && originalRequest?.enableOfflineQueue) {
+        await offlineQueue.enqueue({
+          moduleName: originalRequest.moduleName || "hr",
+          url: originalRequest.url,
+          method: method as any,
+          data: originalRequest.data ? JSON.parse(originalRequest.data) : undefined,
+        });
+
+        // بازگرداندن پاسخ موفق فرضی جهت عدم کرش کامپوننت
+        return Promise.resolve({
+          data: true,
+          status: 202,
+          statusText: "Accepted (Queued Offline)",
+          headers: {},
+          config: originalRequest,
+          request: {},
+        } as AxiosResponse);
       }
+    }
 
       // منطق قبلی برای رفرش توکن (401 Unauthorized)
       if (
