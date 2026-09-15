@@ -6,6 +6,18 @@ import axios, {
 } from "axios";
 import { storageAdapter } from "@/core/storage/storageAdapter";
 import { offlineQueue } from "./offlineQueue";
+import { OfflineStrategy } from "./apiOptions";
+
+/* ============================================================
+   AXIOS TYPE EXTENSION
+============================================================ */
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    offlineStrategy?: OfflineStrategy;
+    moduleName?: string;
+  }
+}
+
 /* ============================================================
    ENV CONFIG
 ============================================================ */
@@ -111,7 +123,7 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
       
       // 🔴 هندل کردن حالت آفلاین (Network Error یا Timeout)
     if (!error.response) {
-      // حالت اول: خواندن GET از کش (کد قبلی شما)
+      // حالت اول: خواندن GET از کش
       if (method === "GET") {
         try {
           const cacheKey = generateCacheKey(originalRequest);
@@ -131,28 +143,32 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
         }
       } 
       
-      // حالت سوم: ثبت کامندهای POST / PUT / DELETE در Offline Queue
-      else if (["POST", "PUT", "DELETE"].includes(method) && originalRequest?.enableOfflineQueue) {
-        await offlineQueue.enqueue({
-          moduleName: originalRequest.moduleName || "hr",
-          url: originalRequest.url,
-          method: method as any,
-          data: originalRequest.data ? JSON.parse(originalRequest.data) : undefined,
-        });
+      // حالت صف آفلاین با معماری جدید
+      else if (["POST", "PUT", "DELETE"].includes(method)) {
+        const strategy = originalRequest.offlineStrategy || "direct";
 
-        // بازگرداندن پاسخ موفق فرضی جهت عدم کرش کامپوننت
-        return Promise.resolve({
-          data: true,
-          status: 202,
-          statusText: "Accepted (Queued Offline)",
-          headers: {},
-          config: originalRequest,
-          request: {},
-        } as AxiosResponse);
+        if (strategy === "queueOffline") {
+          await offlineQueue.enqueue({
+            moduleName: originalRequest.moduleName || "default",
+            url: originalRequest.url,
+            method: method as any,
+            data: originalRequest.data ? JSON.parse(originalRequest.data) : undefined,
+          });
+
+          // بازگرداندن پاسخ موفق فرضی با پرچم مخصوص جهت عدم کرش کامپوننت و اعمال آپدیت لوکال
+          return Promise.resolve({
+            data: { _isOfflineQueued: true },
+            status: 202,
+            statusText: "Accepted (Queued Offline)",
+            headers: {},
+            config: originalRequest,
+            request: {},
+          } as AxiosResponse);
+        }
       }
     }
 
-      // منطق قبلی برای رفرش توکن (401 Unauthorized)
+      // منطق رفرش توکن (401 Unauthorized)
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&

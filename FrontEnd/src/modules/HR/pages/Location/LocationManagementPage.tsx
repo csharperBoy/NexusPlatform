@@ -1,3 +1,4 @@
+//src/modules/HR/pages/Location/LocationManagementPage.tsx
 import React from "react";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
 import { GenericColumnDef, UseGenericCrudOptions } from "@/core/components/crud/types";
@@ -5,7 +6,7 @@ import { locationApi } from "../../api/LocationApi";
 import { LocationInfoView } from "../../models/LocationInfoView";
 import { CreateLocationCommand, UpdateLocationCommand } from "../../models/LocationCommand";
 
-// ۱. تعریف ستون‌ها مطابق با GenericColumnDef (تغییر title به label)
+// ۱. تعریف ستون‌ها مطابق با GenericColumnDef
 const columns: GenericColumnDef<LocationInfoView>[] = [
   {
     key: "title",
@@ -16,14 +17,18 @@ const columns: GenericColumnDef<LocationInfoView>[] = [
   },
 ];
 
-// ۲. تنظیمات CRUD همگام با تایپ‌های جدید
+// ۲. تنظیمات CRUD همگام با استراتژی جدید آفلاین
 const crudOptions: UseGenericCrudOptions<
   LocationInfoView,
   CreateLocationCommand,
   UpdateLocationCommand
 > = {
   api: locationApi,
-columns: columns,
+  // 👈 فعال‌سازی استراتژی ذخیره در صف آفلاین و کش‌سازی برای این صفحه
+  apiOptions: {
+    offlineStrategy: "queueOffline"
+  },
+  columns: columns,
   mapToUpdateCommand: (entity) => ({
     id: entity.id,
     title: entity.title || null,
@@ -32,9 +37,11 @@ columns: columns,
   mapToCreateCommand: (formData) => ({
     title: formData.title || "",
   }),
-pageFeatures:{
-enableAdd: true,
-},
+
+  pageFeatures: {
+    enableAdd: true,
+  },
+
   tableFeatures: {
     enableSearch: true,
     enableColumnFilter: true,

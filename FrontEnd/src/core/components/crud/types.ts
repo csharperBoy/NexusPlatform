@@ -1,12 +1,20 @@
 //src/core/components/crud/types.ts
 import React from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
+import { ApiOptions } from "@/core/api/apiOptions";
 
 export interface BaseEntity {
   id: string | number;
 }
 
-export type ColumnType = "text" | "number" | "select" | "multi-select" | "taginput" | "date" | "boolean";
+export type ColumnType =
+  | "text"
+  | "number"
+  | "select"
+  | "multi-select"
+  | "taginput"
+  | "date"
+  | "boolean";
 
 export interface GenericColumnDef<T> {
   key: keyof T | string;
@@ -20,13 +28,13 @@ export interface GenericColumnDef<T> {
   render?: (value: any, item: T) => React.ReactNode;
   getFilterValue?: (entity: T) => string;
 }
-// بخشی از types.ts
+
 export interface GenericCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
-  getList: () => Promise<T[]>;
-  getSelectionList?: () => Promise<SelectionListDto[]>;
-  create: (cmd: TCreateCmd) => Promise<any>;
-  batchUpdate: (cmds: TUpdateCmd[]) => Promise<any>;
-  delete: (id: T["id"]) => Promise<any>; // <--- تغییر از (string | number) به T["id"]
+  getList: (options?: ApiOptions) => Promise<T[]>;
+  getSelectionList?: (options?: ApiOptions) => Promise<SelectionListDto[]>;
+  create: (cmd: TCreateCmd, options?: ApiOptions) => Promise<any>;
+  batchUpdate: (cmds: TUpdateCmd[], options?: ApiOptions) => Promise<any>;
+  delete: (id: T["id"], options?: ApiOptions) => Promise<any>;
 }
 
 export interface TableFeatures {
@@ -36,13 +44,16 @@ export interface TableFeatures {
   enableColumnFilter?: boolean;
   enableDelete?: boolean;
 }
+
 export interface PageFeatures {
   enableAdd?: boolean;
 }
+
 export interface UseGenericCrudOptions<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   api: GenericCrudApi<T, TCreateCmd, TUpdateCmd>;
+  apiOptions?: ApiOptions; // 👈 تنظیمات سراسری استراتژی درخواست‌ها (مثل queueOffline) برای این CRUD
   columns: GenericColumnDef<T>[];
-  selectionApis?: Record<string, () => Promise<SelectionListDto[]>>;
+  selectionApis?: Record<string, (options?: ApiOptions) => Promise<SelectionListDto[]>>;
   mapToUpdateCommand?: (entity: T) => TUpdateCmd;
   mapToCreateCommand?: (formData: Record<string, any>) => TCreateCmd;
   transformApiData?: (data: T[]) => T[];
