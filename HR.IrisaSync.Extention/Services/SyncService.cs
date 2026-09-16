@@ -518,7 +518,7 @@ namespace HR.IrisaSync.Extention.Services
                     try
                     {
                         var updateCmdList = selectedBundle.UpdateCommands.Select(x => new UpdatePostCommand(
-                            x.Command.Id, null, x.Command.OrganizationUnitId, x.Command.JobTitleId, x.Command.JobLevelId,
+                            x.Command.Id, x.Command.Code, x.Command.OrganizationUnitId, x.Command.JobTitleId, x.Command.JobLevelId,
                             Optional<Guid?>.Undefined,
                             Optional<Guid?>.Undefined,
                             Optional<Guid?>.Undefined,

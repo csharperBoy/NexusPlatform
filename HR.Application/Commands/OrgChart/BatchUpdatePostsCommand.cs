@@ -95,9 +95,11 @@ namespace HR.Application.Commands.OrgChart
                         errors.Add($"{IconInTextHelper.IconError} بروزرسانی اطلاعات پست با عنوان شغلی '{jobTitleName}' با خطا مواجه شد!!!: {ex.Message}");
                     }
                 }
-
-                // ۳. ذخیره‌سازی یکباره همه تغییرات
+               
                 await _orgChartService.SaveAsync();
+
+                
+                // ۳. ذخیره‌سازی یکباره همه تغییرات
 
                 _logger.LogInformation(
               "Batch update completed. SuccessCount: {SuccessCount}, ErrorCount: {ErrorCount}",

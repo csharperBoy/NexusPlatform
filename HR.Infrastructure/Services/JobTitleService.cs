@@ -54,7 +54,7 @@ namespace HR.Infrastructure.Services
                 throw new Exception($"Job title with ID {id} not found.");
             }
 
-            hasChange =  model.ApplyChange(name, code, isActive);
+            hasChange =  model.ApplyChange(code, name,  isActive);
 
             await _unitOfWork.JobTitleRepository.UpdateAsync(model);
             return true;
