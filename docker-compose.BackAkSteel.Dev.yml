@@ -37,7 +37,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=aksteel-sqlserver;Database=AksteelDb;User Id=sa;Password=Fajr@123;TrustServerCertificate=True;MultipleActiveResultSets=true
-      - ConnectionStrings__Redis=aksteel-redis:6379,abortConnect=false
+      - ConnectionStrings__Redis=aksteel-redis,abortConnect=false
     depends_on:
       aksteel-sqlserver:
         condition: service_healthy
