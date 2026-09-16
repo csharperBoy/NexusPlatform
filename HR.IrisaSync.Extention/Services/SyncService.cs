@@ -518,7 +518,7 @@ namespace HR.IrisaSync.Extention.Services
                     try
                     {
                         var updateCmdList = selectedBundle.UpdateCommands.Select(x => new UpdatePostCommand(
-                            x.Command.Id, null, x.Command.OrganizationUnitId, x.Command.JobTitleId, x.Command.JobLevelId,
+                            x.Command.Id, x.Command.Code, x.Command.OrganizationUnitId, x.Command.JobTitleId, x.Command.JobLevelId,
                             Optional<Guid?>.Undefined,
                             Optional<Guid?>.Undefined,
                             Optional<Guid?>.Undefined,
@@ -661,7 +661,7 @@ namespace HR.IrisaSync.Extention.Services
                             string employmentCode = ext.NumPrsnEmply.ToString();
                             if (!employmentDict.TryGetValue(employmentCode, out var employment))
                             {
-                                bundle.Warnings.Add($"کارمند با کد پرسنلی '{employmentCode}' در سیستم یافت نشد.");
+                                bundle.Warnings.Add($"کارمند '{ext.NamFirstEmply} {ext.NamLastEmply} (کد پرسنلی : {employmentCode})' در سیستم یافت نشد.");
                                 continue;
                             }
 
@@ -698,7 +698,8 @@ namespace HR.IrisaSync.Extention.Services
 
                                     bundle.UpdateCommands.Add(new SyncPreviewItem<UpdateAssignmentCommand>
                                     {
-                                        Summary = $"بروزرسانی انتصاب کارمند '{employmentCode}' به پست '{post.JobTitle?.Name}' (کد {post.Code})",
+                                       
+                                        Summary = $"بروزرسانی انتصاب کارمند '{employment.FirstName} {employment.LastName} (کد پرسنلی : {employment.EmploymentCode})' به پست '{post.JobTitle?.Name}' (کد {post.Code})",
                                         Command = updateCmd
                                     });
                                 }
@@ -714,7 +715,7 @@ namespace HR.IrisaSync.Extention.Services
 
                                     bundle.AddCommands.Add(new SyncPreviewItem<CreateAssignmentCommand>
                                     {
-                                        Summary = $"افزودن انتصاب کارمند '{employmentCode}' به پست '{post.JobTitle?.Name}' (کد {post.Code})",
+                                        Summary = $"افزودن انتصاب کارمند '{employment.FirstName} {employment.LastName} (کد پرسنلی : {employment.EmploymentCode})' (کد {post.Code})",
                                         Command = createCmd
                                     });
                                 }
