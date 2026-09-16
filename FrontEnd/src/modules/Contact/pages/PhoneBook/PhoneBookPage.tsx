@@ -242,7 +242,7 @@ export const PhoneBookPage: React.FC = () => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ column: "", direction: null });
   const [groupBy, setGroupBy] = useState<GroupByOption>("none");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPhoneBook();
@@ -306,27 +306,20 @@ export const PhoneBookPage: React.FC = () => {
 const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
   if (!hasMultiple) return;
 
-  setExpandedRows((prev) => {
-    const next = new Set(prev);
-    const isOpening = !next.has(uniqueKey);
+  const isOpening = expandedRow !== uniqueKey;
 
-    if (isOpening) {
-      next.add(uniqueKey);
+  if (isOpening) {
+    setExpandedRow(uniqueKey);
 
-      setTimeout(() => {
-        const element = document.getElementById(`row-${uniqueKey}`);
-        if (element) {
-          // عدد 800 مدت زمان اسکرول به میلی‌ثانیه است (می‌توانید به 1000 تغییر دهید تا کندتر شود)
-          // عدد 20 میزان فاصله از بالای صفحه (Offset) برای جانیفتادن زیر هدر است
-          customSmoothScroll(element, 800, 20);
-        }
-      }, 150);
-    } else {
-      next.delete(uniqueKey);
-    }
-
-    return next;
-  });
+    setTimeout(() => {
+      const element = document.getElementById(`row-${uniqueKey}`);
+      if (element) {
+        customSmoothScroll(element, 800, 20);
+      }
+    }, 150);
+  } else {
+    setExpandedRow(null);
+  }
 };
 
   const handleSort = (column: string) => {
@@ -537,7 +530,7 @@ const toggleRowExpand = (uniqueKey: string, hasMultiple: boolean) => {
                       </tr>
                     )}
                     {!isGroupCollapsed && employments.map((emp) => {
-                      const isExpanded = expandedRows.has(emp.uniqueKey);
+                      const isExpanded = expandedRow === emp.uniqueKey;
                       const hasMultiple = emp.contacts && emp.contacts.length > 0;
 
                       return (
