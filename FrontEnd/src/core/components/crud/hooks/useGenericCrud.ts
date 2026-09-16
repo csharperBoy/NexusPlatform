@@ -7,9 +7,11 @@ import {
   UseGenericCrudOptions,
   DeleteTarget,
 } from "../types";
+import { ApiOptions } from "@/core/api/apiOptions";
 
 export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   api,
+  apiOptions,
   columns,
   selectionApis,
   mapToUpdateCommand,
@@ -90,41 +92,86 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   const hasChanges = modifiedItems.length > 0;
 
   // 4. Save All Modified Items (Bulk Update)
-  const handleSaveAll = useCallback(async () => {
+ const handleSaveAll = useCallback(async (options?: ApiOptions) => { // 👈 ۲. پارامتر اختیاری
     if (!hasChanges) return;
     setSaving(true);
     try {
       const updateCmds: TUpdateCmd[] = modifiedItems.map((item) =>
         mapToUpdateCommand ? mapToUpdateCommand(item) : (item as unknown as TUpdateCmd)
       );
-      await api.batchUpdate(updateCmds);
-      await fetchData();
+      
+      // ترکیب تنظیمات هوک با تنظیمات ورودی تابع
+      const mergedOptions = { ...apiOptions, ...options };
+      const res = await api.batchUpdate(updateCmds, mergedOptions);
+      
+      if (res && res._isOfflineQueued) {
+         alert("ارتباط با اینترنت قطع است. تغییرات شما در صف ذخیره شد.");
+         setInitialItems(JSON.parse(JSON.stringify(items)));
+      } else {
+         await fetchData();
+      }
     } catch (error) {
       console.error("Failed to save changes:", error);
     } finally {
       setSaving(false);
     }
-  }, [hasChanges, modifiedItems, mapToUpdateCommand, api, fetchData]);
+  }, [hasChanges, modifiedItems, mapToUpdateCommand, api, apiOptions, fetchData, items]);
 
-  // 5. Create Single Item
+  // ۵. ایجاد رکورد جدید
   const handleCreate = useCallback(
-    async (formData: Record<string, any>) => {
+    async (formData: Record<string, any>, options?: ApiOptions) => { // 👈 پارامتر اختیاری
       setSaving(true);
       try {
         const createCmd = mapToCreateCommand
           ? mapToCreateCommand(formData)
           : (formData as TCreateCmd);
-        await api.create(createCmd);
+          
+        const mergedOptions = { ...apiOptions, ...options };
+        const res = await api.create(createCmd, mergedOptions);
+        
+        if (res && res._isOfflineQueued) {
+            const tempId = `temp-${Date.now()}`;
+            const newItem = { id: tempId, ...formData } as unknown as T;
+            setItems((prev) => [newItem, ...prev]);
+            setInitialItems((prev) => [newItem, ...prev]);
+            alert("ارتباط با اینترنت قطع است. رکورد در صف ثبت قرار گرفت.");
+        } else {
+            await fetchData();
+        }
+        
         setIsAddModalOpen(false);
-        await fetchData();
       } catch (error) {
         console.error("Failed to create record:", error);
       } finally {
         setSaving(false);
       }
     },
-    [mapToCreateCommand, api, fetchData]
+    [mapToCreateCommand, api, apiOptions, fetchData]
   );
+
+  // ۶. حذف رکورد
+  const confirmDelete = useCallback(async (options?: ApiOptions) => { // 👈 پارامتر اختیاری
+    if (!deleteTarget) return;
+    setSaving(true);
+    try {
+      const mergedOptions = { ...apiOptions, ...options };
+      const res = await api.delete(deleteTarget.item.id, mergedOptions);
+      
+      if (res && res._isOfflineQueued) {
+         setItems((prev) => prev.filter((i) => i.id !== deleteTarget.item.id));
+         setInitialItems((prev) => prev.filter((i) => i.id !== deleteTarget.item.id));
+         alert("ارتباط با اینترنت قطع است. رکورد برای حذف در صف قرار گرفت.");
+      } else {
+         await fetchData();
+      }
+      
+      setDeleteTarget(null);
+    } catch (error) {
+      console.error("Failed to delete record:", error);
+    } finally {
+      setSaving(false);
+    }
+  }, [deleteTarget, api, apiOptions, fetchData]);
 
   // 6. Delete Management
   const prepareDelete = useCallback(
@@ -138,20 +185,6 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     },
     [initialItems]
   );
-
-  const confirmDelete = useCallback(async () => {
-    if (!deleteTarget) return;
-    setSaving(true);
-    try {
-      await api.delete(deleteTarget.item.id);
-      setDeleteTarget(null);
-      await fetchData();
-    } catch (error) {
-      console.error("Failed to delete record:", error);
-    } finally {
-      setSaving(false);
-    }
-  }, [deleteTarget, api, fetchData]);
 
   // 7. Excel Import & Merge Logic
   const handleExcelImport = useCallback(
@@ -232,13 +265,13 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
         if (!filterVal) continue;
 
         const colDef = columns.find((c) => String(c.key) === colKey);
-       
+        
         if (colDef?.getFilterValue) {
           const customVal = colDef.getFilterValue(item)?.toLowerCase() || "";
           if (!customVal.includes(filterVal)) return false;
           continue; // اگر مچ شد یا نشد، کار این ستون تمام است و به سراغ منطق زیرین نرود
         }
-       
+        
         const val = item[colKey as keyof T];
         if (val == null) return false;
 

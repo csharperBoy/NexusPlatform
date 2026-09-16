@@ -1,14 +1,14 @@
-// src/modules/Identity/context/AuthContext.tsx
 import React, {
   createContext,
   useContext,
   useEffect,
   useState,
   ReactNode,
-  useRef ,
+  useRef,
   useCallback,
 } from "react";
 import { identityApi } from "../api/identityApi";
+import { storageAdapter } from "@/core/storage/storageAdapter"; // اضافه شد
 
 interface UserInfo {
   id: string;
@@ -54,17 +54,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true); 
   
-   const refreshAttempted = useRef(false); 
+  const refreshAttempted = useRef(false); 
+
   const setAccessToken = (token: string | null) => {
     setAccessTokenState(token);
     setGlobalAccessToken(token);
   };
 
   /* ===========================
+     EVENT LISTENER FOR 401 UNAUTHORIZED
+  =========================== */
+  // اضافه شد: شنود رویدادی که از axiosClient در زمان اکسپایر شدن توکن می‌آید
+  useEffect(() => {
+    const handleUnauthorized = async () => {
+      setAccessToken(null);
+      setUser(null);
+      await storageAdapter.removeAccessToken();
+      await storageAdapter.removeItem('user_info');
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
+  }, []);
+
+  /* ===========================
      LOGIN
   =========================== */
 
-  const login = (data: {
+  const login = async (data: {
     accessToken: string;
     userId: string;
     userName: string;
@@ -72,13 +89,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("AuthContext login called with:", data);
   
     setAccessToken(data.accessToken);
-      console.log("AuthContext 2");
     setUser({
       id: data.userId,
       userName: data.userName,
     });
-    
-      console.log("AuthContext 3");
+
+    // اضافه شد: ذخیره در حافظه امن برای استفاده‌های آفلاین/موبایل
+    await storageAdapter.setAccessToken(data.accessToken);
+    await storageAdapter.setItem('user_info', JSON.stringify({
+      id: data.userId,
+      userName: data.userName
+    }));
   };
 
   /* ===========================
@@ -93,33 +114,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setAccessToken(null);
       setUser(null);
-      window.location.href = "/login";
+      
+      // پاکسازی حافظه امن
+      await storageAdapter.removeAccessToken();
+      await storageAdapter.removeItem('user_info');
+      
+      // تغییر مهم: window.location.href حذف شد. 
+      // وقتی stateها null شوند، ProtectedRoute کاربر را به صفحه لاگین می‌فرستد.
     }
   }, []);
 
   /* ===========================
-     SILENT REFRESH ON LOAD
+     SILENT REFRESH ON LOAD (Update for Offline/Mobile)
   =========================== */
   useEffect(() => {
-    // جلوگیری از اجرای دو باره در StrictMode
     if (refreshAttempted.current) return;
     refreshAttempted.current = true;
 
-    const silentRefresh = async () => {
+    const initAuth = async () => {
       try {
+        // تلاش برای رفرش توکن از سرور (در حالت وب/آنلاین)
         const res = await identityApi.refresh();
-        // console.info(res);
         setAccessToken(res.accessToken);
         setUser({ id: res.userId, userName: res.userName });
+        
+        // همگام‌سازی توکن جدید با استوریج
+        await storageAdapter.setAccessToken(res.accessToken);
+        await storageAdapter.setItem('user_info', JSON.stringify({ id: res.userId, userName: res.userName }));
+        
       } catch {
-        setAccessToken(null);
-        setUser(null);
+        // اضافه شد: حالت آفلاین یا موبایل!
+        // اگر سرور در دسترس نبود یا کوکی کار نکرد، توکن ذخیره شده در دیتابیس لوکال را می‌خوانیم
+        const savedToken = await storageAdapter.getAccessToken();
+        const savedUserInfoString = await storageAdapter.getItem('user_info');
+
+        if (savedToken && savedUserInfoString) {
+          setAccessToken(savedToken);
+          setUser(JSON.parse(savedUserInfoString));
+        } else {
+          setAccessToken(null);
+          setUser(null);
+          await storageAdapter.removeAccessToken();
+          await storageAdapter.removeItem('user_info');
+        }
       } finally {
-      setIsLoading(false); // پایان بارگذاری
-    }
+        setIsLoading(false);
+      }
     };
 
-    silentRefresh();
+    initAuth();
   }, []);
 
   return (

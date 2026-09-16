@@ -42,7 +42,7 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
           )}
 
           <button
-            onClick={crud.handleSaveAll}
+            onClick={() => crud.handleSaveAll()}
             disabled={!crud.hasChanges || crud.saving}
             className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
           >
@@ -245,7 +245,7 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                 انصراف
               </button>
               <button
-                onClick={crud.confirmDelete}
+                onClick={() => crud.confirmDelete()}
                 disabled={crud.saving}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >

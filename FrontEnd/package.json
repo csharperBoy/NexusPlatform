@@ -9,13 +9,12 @@
     "src/modules/**"
   ],
   "scripts": {
-    
     "dev:test": "pnpm --filter test run dev",
     "build:test": "pnpm --filter test run build",
     "preview:test": "pnpm --filter test run preview",
     "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
     "build:mahar.admin": "pnpm --filter mahar-adminpanel run build",
-    "preview:mahar.admin": "pnpm --filter mahar-adminpanel run preview",
+    "preview:mahar.admin": "pnpm --filter mahar-website run preview",
     "dev:mahar.website": "pnpm --filter mahar-website run dev",
     "build:mahar.website": "pnpm --filter mahar-website run build",
     "preview:mahar.website": "pnpm --filter mahar-website run preview",
@@ -33,9 +32,18 @@
     "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",
     "dev:aksteel.admin": "pnpm --filter aksteel-admin run dev",
     "build:aksteel.admin": "pnpm --filter aksteel-admin run build",
-    "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview"
+    "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview",
+    "cap:add:aksteel.admin": "cd src/apps/AKSteel/Admin && npx cap add android",
+    "cap:sync:aksteel.admin": "cd src/apps/AKSteel/Admin && npx cap sync android",
+    "cap:open:aksteel.admin": "cd src/apps/AKSteel/Admin && npx cap open android",
+    "apk:aksteel.admin": "pnpm run build:aksteel.admin && pnpm run cap:sync:aksteel.admin && cd src/apps/AKSteel/Admin/android && gradlew assembleDebug",
+    "icon:aksteel.admin": "cd src/apps/AKSteel/Admin && npx @capacitor/assets generate --android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2",
+    "@capacitor/preferences": "^8.0.1",
     "@tailwindcss/vite": "^4.1.13",
     "@tanstack/react-query": "^5.90.2",
     "axios": "^1.12.2",
@@ -48,6 +56,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.5.2",
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.5.2",
     "@types/react": "^19.2.0",

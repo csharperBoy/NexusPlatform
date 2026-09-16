@@ -4,8 +4,20 @@ import axios, {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from "axios";
+import { storageAdapter } from "@/core/storage/storageAdapter";
+import { offlineQueue } from "./offlineQueue";
+import { OfflineStrategy } from "./apiOptions";
 
-import { getAccessToken , setGlobalAccessToken } from "@/modules/Identity/context/AuthContext";
+/* ============================================================
+   AXIOS TYPE EXTENSION
+============================================================ */
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    offlineStrategy?: OfflineStrategy;
+    moduleName?: string;
+  }
+}
+
 /* ============================================================
    ENV CONFIG
 ============================================================ */
@@ -25,11 +37,9 @@ function getAPIModules(): Record<string, string> {
       const moduleName = key
         .slice(prefix.length, -4)
         .toLowerCase();
-
       modules[moduleName] = import.meta.env[key] as string;
     }
   });
-
   return modules;
 }
 
@@ -49,6 +59,17 @@ function subscribeTokenRefresh(cb: (token: string) => void) {
 function onRefreshed(token: string) {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
+}
+
+/* ============================================================
+   CACHE HELPERS
+============================================================ */
+
+// ساخت کلید یکتا برای کش کردن هر درخواست بر اساس URL و پارامترها
+function generateCacheKey(config: InternalAxiosRequestConfig | any): string {
+  const url = config.url || "";
+  const params = config.params ? JSON.stringify(config.params) : "";
+  return `req_cache_${url}_${params}`;
 }
 
 /* ============================================================
@@ -72,14 +93,12 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
   /* ===========================
      REQUEST INTERCEPTOR
   =========================== */
-
   client.interceptors.request.use(
-    (config: InternalAxiosRequestConfig) => {
-      const token = getAccessToken();
+    async (config: InternalAxiosRequestConfig) => {
+      const token = await storageAdapter.getAccessToken();
       if (token) {
         config.headers.set("Authorization", `Bearer ${token}`);
       }
-
       return config;
     }
   );
@@ -87,12 +106,69 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
   /* ===========================
      RESPONSE INTERCEPTOR
   =========================== */
-
   client.interceptors.response.use(
-    (response: AxiosResponse) => response,
+    async (response: AxiosResponse) => {
+      // 🟢 بخش جدید: ذخیره دیتا در صورت موفقیت‌آمیز بودن درخواست GET
+      const config = response.config;
+      if (config.method?.toUpperCase() === "GET") {
+        const cacheKey = generateCacheKey(config);
+        // به صورت Async ذخیره می‌کنیم تا جلوی رندر شدن UI را نگیرد
+        storageAdapter.setItem(cacheKey, JSON.stringify(response.data)).catch(console.error);
+      }
+      return response;
+    },
     async (error) => {
       const originalRequest: any = error.config;
+      const method = originalRequest?.method?.toUpperCase();
+      
+      // 🔴 هندل کردن حالت آفلاین (Network Error یا Timeout)
+    if (!error.response) {
+      // حالت اول: خواندن GET از کش
+      if (method === "GET") {
+        try {
+          const cacheKey = generateCacheKey(originalRequest);
+          const cachedDataStr = await storageAdapter.getItem(cacheKey);
+          if (cachedDataStr) {
+            return Promise.resolve({
+              data: JSON.parse(cachedDataStr),
+              status: 200,
+              statusText: "OK (Cached)",
+              headers: {},
+              config: originalRequest,
+              request: {},
+            } as AxiosResponse);
+          }
+        } catch (cacheError) {
+          console.error("خطا در خواندن از کش", cacheError);
+        }
+      } 
+      
+      // حالت صف آفلاین با معماری جدید
+      else if (["POST", "PUT", "DELETE"].includes(method)) {
+        const strategy = originalRequest.offlineStrategy || "direct";
 
+        if (strategy === "queueOffline") {
+          await offlineQueue.enqueue({
+            moduleName: originalRequest.moduleName || "default",
+            url: originalRequest.url,
+            method: method as any,
+            data: originalRequest.data ? JSON.parse(originalRequest.data) : undefined,
+          });
+
+          // بازگرداندن پاسخ موفق فرضی با پرچم مخصوص جهت عدم کرش کامپوننت و اعمال آپدیت لوکال
+          return Promise.resolve({
+            data: { _isOfflineQueued: true },
+            status: 202,
+            statusText: "Accepted (Queued Offline)",
+            headers: {},
+            config: originalRequest,
+            request: {},
+          } as AxiosResponse);
+        }
+      }
+    }
+
+      // منطق رفرش توکن (401 Unauthorized)
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&
@@ -119,14 +195,14 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
 
           const newToken = refreshResponse.data.accessToken;
 
-          setGlobalAccessToken(newToken);
+          await storageAdapter.setAccessToken(newToken);
           onRefreshed(newToken);
 
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return client(originalRequest);
         } catch (refreshError) {
-          setGlobalAccessToken(null);
-          window.location.href = "/login";
+          await storageAdapter.removeAccessToken();
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -145,14 +221,13 @@ Object.entries(apiModules).forEach(([moduleName, baseURL]) => {
 ============================================================ */
 
 export function getAPI(moduleName: string): AxiosInstance {
-  const normalized = moduleName.toLowerCase();   // ← همیشه کوچک
+  const normalized = moduleName.toLowerCase();
 
   const client = axiosClients[normalized];
 
   if (!client) {
-    
-  console.log("axiosClients keys =", Object.keys(axiosClients));
-  console.log("requested =", moduleName, "normalized =", normalized);
+    console.log("axiosClients keys =", Object.keys(axiosClients));
+    console.log("requested =", moduleName, "normalized =", normalized);
 
     throw new Error(
       `Axios client for module "${normalized}" not found.`
