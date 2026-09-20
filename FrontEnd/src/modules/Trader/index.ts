@@ -10,8 +10,11 @@ export * from "./hooks";
 /* utils */
 export * from "./utils";
 
+/* components */
+export * from "./components";
+
 /* api */
 export * as traderApi from "./api";
 
-/* routes (فعلاً خالی — بعداً پر میشه) */
-export const TraderShotgunPublicRoutes = [];
+/* routes */
+export { TraderShotgunPublicRoutes } from "./routes";

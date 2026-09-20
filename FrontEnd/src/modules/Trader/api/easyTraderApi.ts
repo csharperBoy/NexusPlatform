@@ -1,5 +1,5 @@
 import { EASYTRADER_BASE, fetchJson } from "./client";
-import type { OrderPayload, OrderResponse, ServerClockSample } from "../models";
+import type { OrderPayload, OrderResponse, RawSymbolInfoResponse, ServerClockSample, SymbolInfo } from "../models";
 
 /* ═══════ ارسال سفارش ═══════ */
 export async function sendOrder(
@@ -21,6 +21,32 @@ export async function sendOrder(
   return data;
 }
 
+/* ═══════ اطلاعات نماد ═══════ */
+export async function fetchSymbolInfo(
+  token: string,
+  isin: string,
+): Promise<SymbolInfo> {
+  const raw = await fetchJson<RawSymbolInfoResponse>(
+    `${EASYTRADER_BASE}/symbols/api/MarketData/symbol-info-data`,
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ isin }),
+      credentials: "include",
+    },
+  );
+
+  return {
+    symbolIsin: raw.symbolISIN ?? isin,
+    highAllowedPrice: raw.highAllowedPrice ?? null,
+    lowAllowedPrice: raw.lowAllowedPrice ?? null,
+    lastTradedPrice: raw.lastTradedPrice ?? null,
+    closingPrice: raw.closingPrice ?? null,
+    firstTradedPrice: raw.firstTradedPrice ?? null,
+    tradeDate: raw.tradeDate ?? null,
+    fetchedAt: Date.now(),
+  };
+}
 /* ═══════ سینک ساعت سرور ═══════ */
 export async function fetchServerTime(
   token: string,
