@@ -1,4 +1,4 @@
-import { EASYTRADER_BASE, fetchJson } from "./client";
+import { ApiError, EASYTRADER_BASE, fetchJson } from "./client";
 import type { OrderPayload, OrderResponse, RawSymbolInfoResponse, ServerClockSample, SymbolInfo } from "../models";
 
 /* ═══════ ارسال سفارش ═══════ */
@@ -46,6 +46,41 @@ export async function fetchSymbolInfo(
     tradeDate: raw.tradeDate ?? null,
     fetchedAt: Date.now(),
   };
+}
+
+/* ═══════ فعال‌سازی توکن روی api-mts ═══════ */
+/**
+ * بعد از گرفتن توکن از OIDC، باید یک بار same-login بزنیم تا
+ * سرور api-mts یه session براش بسازه. بدون این، همه درخواست‌ها 403 می‌شن.
+ *
+ * اگر 400 با پیام "already logged in" بگیری، یعنی قبلاً فعال شده — بازم موفق در نظر بگیر.
+ */
+export async function activateToken(token: string): Promise<void> {
+  const body = {
+    uuid: crypto.randomUUID(),
+    appBuildNo: "53559",
+    width: window.innerWidth || 452,
+    height: window.innerHeight || 599,
+    devicePlatform: "Desktop",
+    platformInfo: navigator.userAgent,
+  };
+
+  try {
+    await fetchJson<unknown>(`${EASYTRADER_BASE}/easy/api/account/same-login`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+  } catch (e) {
+    /* 400 با پیام "already logged in" = قبلاً فعال شده = OK */
+    if (e instanceof ApiError && e.status === 400) {
+      const b = e.body as { errors?: { ""?: string[] } } | undefined;
+      const msg = b?.errors?.[""]?.[0] ?? "";
+      if (msg.includes("already logged in")) return;
+    }
+    throw e;
+  }
 }
 /* ═══════ سینک ساعت سرور ═══════ */
 export async function fetchServerTime(

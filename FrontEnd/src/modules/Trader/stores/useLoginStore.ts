@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useAccountsStore, getTokenStatus } from "./useAccountsStore";
 import { useLoginLogStore } from "./useLoginLogStore";
 import { loginToEasyTrader } from "../api/authServerApi";
+import { activateToken } from "../api";
 
 interface LoginState {
   /** حساب‌هایی که در حال لاگین هستن */
@@ -39,11 +40,24 @@ export const useLoginStore = create<LoginState>()((set, get) => ({
       useLoginLogStore.getState().append(`[${acc.name}] در حال لاگین...`, "info", id);
 
     try {
-      const token = await loginToEasyTrader(acc.username, acc.password);
-      accountsStore.setToken(id, token);
-      set({ lastError: null });
-      useLoginLogStore.getState().append(`[${acc.name}] ✅ لاگین موفق`, "ok", id);
-      return token;
+  const token = await loginToEasyTrader(acc.username, acc.password);
+
+  /* ✅ مرحله حیاتی: فعال‌سازی توکن روی api-mts */
+        try {
+            await activateToken(token);
+        } catch (activateErr) {
+            const msg =
+            activateErr instanceof Error ? activateErr.message : "خطای فعال‌سازی";
+            useLoginLogStore
+            .getState()
+            .append(`[${acc.name}] ⚠️ فعال‌سازی توکن: ${msg}`, "err", id);
+            /* با این حال توکن رو ذخیره می‌کنیم — شاید بعداً بشه فعالش کرد */
+        }
+
+    accountsStore.setToken(id, token);
+    set({ lastError: null });
+    useLoginLogStore.getState().append(`[${acc.name}] ✅ لاگین موفق`, "ok", id);
+    return token;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "خطای نامشخص";
       set({ lastError: msg });
