@@ -1,11 +1,12 @@
+
 {
-  "name": "trader-server",
+  "name": "trader-shotgun",
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite --config ../../../../vite.config.trader.server.ts --mode trader.server.development",
-    "build": "vite build --config ../../../../vite.config.trader.server.ts --mode trader.server.production",
-    "preview": "vite preview --config ../../../../vite.config.trader.server.ts --port 5173"
+    "dev": "vite --config ../../../../vite.config.trader.shotgun.ts --mode trader.shotgun.development",
+    "build": "vite build --config ../../../../vite.config.trader.shotgun.ts --mode trader.shotgun.production",
+    "preview": "vite preview --config ../../../../vite.config.trader.shotgun.ts --port 5173"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",

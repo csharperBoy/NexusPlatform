@@ -1,3 +1,4 @@
+// src/core/components/Generic/core/store.ts
 import { createStore } from 'zustand/vanilla';
 import { CrudStore, GenericCrudApi } from './types';
 import { createDataSlice, PaginationState } from '../features/page/data/dataSlice';

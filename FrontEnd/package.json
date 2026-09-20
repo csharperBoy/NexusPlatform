@@ -12,24 +12,37 @@
     "dev:test": "pnpm --filter test run dev",
     "build:test": "pnpm --filter test run build",
     "preview:test": "pnpm --filter test run preview",
+ 
+    "dev:trader.auth-server": "pnpm --filter trader-auth-server run dev",
+
+     "dev:trader.shotgun": "pnpm --filter trader-shotgun run dev",
+    "build:trader.shotgun": "pnpm --filter trader-shotgun run build",
+    "preview:trader.shotgun": "pnpm --filter trader-shotgun run preview",
+
     "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
     "build:mahar.admin": "pnpm --filter mahar-adminpanel run build",
     "preview:mahar.admin": "pnpm --filter mahar-website run preview",
+
     "dev:mahar.website": "pnpm --filter mahar-website run dev",
     "build:mahar.website": "pnpm --filter mahar-website run build",
     "preview:mahar.website": "pnpm --filter mahar-website run preview",
+
     "dev:akwp.admin": "pnpm --filter akwp-adminpanel run dev",
     "build:akwp.admin": "pnpm --filter akwp-adminpanel run build",
     "preview:akwp.admin": "pnpm --filter akwp-adminpanel run preview",
+
     "dev:akwp.website": "pnpm --filter akwp-website run dev",
     "build:akwp.website": "pnpm --filter akwp-website run build",
     "preview:akwp.website": "pnpm --filter akwp-website run preview",
+
     "dev:trader.server": "pnpm --filter trader-server run dev",
     "build:trader.server": "pnpm --filter trader-server run build",
     "preview:trader.server": "pnpm --filter trader-server run preview",
+
     "dev:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run dev",
     "build:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run build",
     "preview:aksteel.website.phonebook": "pnpm --filter aksteel-website-phonebook run preview",
+
     "dev:aksteel.admin": "pnpm --filter aksteel-admin run dev",
     "build:aksteel.admin": "pnpm --filter aksteel-admin run build",
     "preview:aksteel.admin": "pnpm --filter aksteel-admin run preview",
@@ -38,6 +51,7 @@
     "cap:open:aksteel.admin": "cd src/apps/AKSteel/Admin && npx cap open android",
     "apk:aksteel.admin": "pnpm run build:aksteel.admin && pnpm run cap:sync:aksteel.admin && cd src/apps/AKSteel/Admin/android && gradlew assembleDebug",
     "icon:aksteel.admin": "cd src/apps/AKSteel/Admin && npx @capacitor/assets generate --android"
+
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

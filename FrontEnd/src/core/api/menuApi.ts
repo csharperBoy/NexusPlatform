@@ -5,7 +5,7 @@ const API_MODULE = "core";
 
 export const menuApi = {
 
- // دریافت ماژول های فعال (GET)
+ // دریافت منو های فعال (GET)
   GetMenus: async (): Promise<MenuDto[]> => {
     
     console.info('GetMenus :');
