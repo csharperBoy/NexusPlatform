@@ -6,6 +6,7 @@ export type { SymbolInfo, RawSymbolInfoResponse } from "./SymbolInfo";
 export type {
   ScheduledOrder,
   OrderMode,
+  PlanRuntimeState,
   SchedulePlan,
   SchedulerStatus,
   SchedulerRuntime,

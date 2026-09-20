@@ -2,13 +2,16 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
 import { storageAdapter } from "@/core/storage/storageAdapter";
-import { uid, todayDateKey } from "../utils";
+import { uid, todayDateKey, logTimestamp } from "../utils";
 import type {
   ScheduledOrder,
   SchedulePlan,
+  PlanRuntimeState,
   SchedulerRuntime,
+  SchedulerStatus,
   ExportedSchedule,
 } from "../models";
+import { PlanLogEntry } from "../models/ScheduledOrder";
 
 const DEFAULT_LOGIN_AT = "08:30:00";
 const DEFAULT_REFRESH_AT = "08:40:00";
@@ -23,36 +26,38 @@ const asyncStorage: StateStorage = {
   },
 };
 
-const initialRuntime: SchedulerRuntime = {
-  status: "idle",
-  message: "",
-  currentDate: null,
+const emptyPlanState = (): PlanRuntimeState => ({
   lastLoginDate: null,
   lastRefreshDate: null,
-  firedKeys: [],
-  lastLoginAt: null,
-  lastRefreshAt: null,
-};
+  firedOrderIds: [],
+  clockSyncedForOrderId: null,
+  logs: [],
+});
+
+const initialRuntime = (): SchedulerRuntime => ({
+  currentDate: null,
+  planStates: {},
+  status: "idle",
+  message: "",
+  planMessages: {},
+});
 
 interface ScheduleState {
   enabled: boolean;
-  autoLoginAt: string;
-  autoRefreshAt: string;
   plans: SchedulePlan[];
   runtime: SchedulerRuntime;
 
   /* config */
   setEnabled: (v: boolean) => void;
-  setAutoLoginAt: (v: string) => void;
-  setAutoRefreshAt: (v: string) => void;
 
   /* plans */
   addPlan: (date?: string, name?: string) => SchedulePlan;
   updatePlan: (id: string, patch: Partial<SchedulePlan>) => void;
   removePlan: (id: string) => void;
   duplicatePlan: (id: string, newDate: string) => void;
+  toggleCollapsed: (id: string) => void;
 
-  /* orders in plan */
+  /* orders */
   addOrder: (
     planId: string,
     symbolIsin?: string,
@@ -70,30 +75,29 @@ interface ScheduleState {
   importAll: (json: string) => { ok: boolean; error?: string; count?: number };
 
   /* runtime */
-  setRuntime: (patch: Partial<SchedulerRuntime>) => void;
   resetRuntime: () => void;
-  markFired: (planId: string, orderId: string) => void;
+  resetForDay: (date: string) => void;
+  setStatus: (status: SchedulerStatus, message: string) => void;
+  setPlanMessage: (planId: string, message: string) => void;
+  getPlanState: (planId: string) => PlanRuntimeState;
+  setPlanState: (planId: string, patch: Partial<PlanRuntimeState>) => void;
+  markOrderFired: (planId: string, orderId: string) => void;
+   appendPlanLog: (planId: string, msg: string, type: PlanLogEntry["type"]) => void;
+  clearPlanLogs: (planId: string) => void;
 }
 
 export const useScheduleStore = create<ScheduleState>()(
   persist(
     (set, get) => ({
       enabled: false,
-      autoLoginAt: DEFAULT_LOGIN_AT,
-      autoRefreshAt: DEFAULT_REFRESH_AT,
       plans: [],
-      runtime: initialRuntime,
+      runtime: initialRuntime(),
 
       setEnabled: (v) =>
         set((s) => ({
           enabled: v,
-          runtime: v
-            ? initialRuntime
-            : { ...s.runtime, status: "idle", message: "" },
+          runtime: v ? initialRuntime() : s.runtime,
         })),
-
-      setAutoLoginAt: (v) => set({ autoLoginAt: v }),
-      setAutoRefreshAt: (v) => set({ autoRefreshAt: v }),
 
       /* ───── Plans ───── */
       addPlan: (date, name = "برنامه جدید") => {
@@ -102,6 +106,9 @@ export const useScheduleStore = create<ScheduleState>()(
           name,
           date: date ?? todayDateKey(),
           enabled: true,
+          autoLoginAt: DEFAULT_LOGIN_AT,
+          autoRefreshAt: DEFAULT_REFRESH_AT,
+          collapsed: false,
           orders: [],
         };
         set((s) => ({ plans: [...s.plans, p] }));
@@ -114,21 +121,37 @@ export const useScheduleStore = create<ScheduleState>()(
         })),
 
       removePlan: (id) =>
-        set((s) => ({ plans: s.plans.filter((p) => p.id !== id) })),
+        set((s) => {
+          const nextRuntime = { ...s.runtime };
+          delete nextRuntime.planStates[id];
+          delete nextRuntime.planMessages[id];
+          return {
+            plans: s.plans.filter((p) => p.id !== id),
+            runtime: nextRuntime,
+          };
+        }),
 
       duplicatePlan: (id, newDate) =>
         set((s) => {
           const src = s.plans.find((p) => p.id === id);
           if (!src) return s;
           const copy: SchedulePlan = {
+            ...src,
             id: uid(),
             name: `${src.name} (کپی)`,
             date: newDate,
-            enabled: src.enabled,
+            collapsed: false,
             orders: src.orders.map((o) => ({ ...o, id: uid() })),
           };
           return { plans: [...s.plans, copy] };
         }),
+
+      toggleCollapsed: (id) =>
+        set((s) => ({
+          plans: s.plans.map((p) =>
+            p.id === id ? { ...p, collapsed: !p.collapsed } : p,
+          ),
+        })),
 
       /* ───── Orders ───── */
       addOrder: (planId, symbolIsin = "", accountId = "") => {
@@ -177,15 +200,15 @@ export const useScheduleStore = create<ScheduleState>()(
       exportAll: () => {
         const s = get();
         const data: ExportedSchedule = {
-          version: 1,
+          version: 2,
           exportedAt: new Date().toISOString(),
           enabled: s.enabled,
-          autoLoginAt: s.autoLoginAt,
-          autoRefreshAt: s.autoRefreshAt,
           plans: s.plans.map((p) => ({
             name: p.name,
             date: p.date,
             enabled: p.enabled,
+            autoLoginAt: p.autoLoginAt,
+            autoRefreshAt: p.autoRefreshAt,
             orders: p.orders.map((o) => ({
               accountId: o.accountId,
               symbolIsin: o.symbolIsin,
@@ -203,7 +226,7 @@ export const useScheduleStore = create<ScheduleState>()(
       importAll: (json) => {
         try {
           const data = JSON.parse(json) as ExportedSchedule;
-          if (data.version !== 1) {
+          if (data.version !== 2) {
             return { ok: false, error: `نسخه نامعتبر: ${data.version}` };
           }
           if (!Array.isArray(data.plans)) {
@@ -215,6 +238,9 @@ export const useScheduleStore = create<ScheduleState>()(
             name: p.name || "برنامه واردشده",
             date: p.date || todayDateKey(),
             enabled: p.enabled ?? true,
+            autoLoginAt: p.autoLoginAt || DEFAULT_LOGIN_AT,
+            autoRefreshAt: p.autoRefreshAt || DEFAULT_REFRESH_AT,
+            collapsed: true,
             orders: (p.orders || []).map((o) => ({
               id: uid(),
               accountId: o.accountId || "",
@@ -229,8 +255,6 @@ export const useScheduleStore = create<ScheduleState>()(
 
           set((s) => ({
             enabled: data.enabled ?? s.enabled,
-            autoLoginAt: data.autoLoginAt || s.autoLoginAt,
-            autoRefreshAt: data.autoRefreshAt || s.autoRefreshAt,
             plans: [...s.plans, ...newPlans],
           }));
 
@@ -244,30 +268,104 @@ export const useScheduleStore = create<ScheduleState>()(
       },
 
       /* ───── Runtime ───── */
-      setRuntime: (patch) =>
-        set((s) => ({ runtime: { ...s.runtime, ...patch } })),
+      resetRuntime: () => set({ runtime: initialRuntime() }),
 
-      resetRuntime: () => set({ runtime: initialRuntime }),
+      resetForDay: (date) =>
+        set({
+          runtime: {
+            currentDate: date,
+            planStates: {},
+            status: "waiting",
+            message: "",
+            planMessages: {},
+          },
+        }),
 
-      markFired: (planId, orderId) =>
+      setStatus: (status, message) =>
+        set((s) => ({ runtime: { ...s.runtime, status, message } })),
+
+      setPlanMessage: (planId, message) =>
+        set((s) => ({
+          runtime: {
+            ...s.runtime,
+            planMessages: { ...s.runtime.planMessages, [planId]: message },
+          },
+        })),
+
+      getPlanState: (planId) =>
+        get().runtime.planStates[planId] ?? emptyPlanState(),
+
+      setPlanState: (planId, patch) =>
         set((s) => {
-          const key = `${planId}:${orderId}`;
-          if (s.runtime.firedKeys.includes(key)) return s;
+          const current = s.runtime.planStates[planId] ?? emptyPlanState();
           return {
             runtime: {
               ...s.runtime,
-              firedKeys: [...s.runtime.firedKeys, key],
+              planStates: {
+                ...s.runtime.planStates,
+                [planId]: { ...current, ...patch },
+              },
+            },
+          };
+        }),
+      appendPlanLog: (planId, msg, type) =>
+        set((s) => {
+          const current = s.runtime.planStates[planId] ?? emptyPlanState();
+          const newLog: PlanLogEntry = {
+            t: logTimestamp(),
+            msg,
+            type,
+          };
+          return {
+            runtime: {
+              ...s.runtime,
+              planStates: {
+                ...s.runtime.planStates,
+                [planId]: {
+                  ...current,
+                  logs: [...current.logs, newLog].slice(-200),
+                },
+              },
+            },
+          };
+        }),
+
+      clearPlanLogs: (planId) =>
+        set((s) => {
+          const current = s.runtime.planStates[planId] ?? emptyPlanState();
+          return {
+            runtime: {
+              ...s.runtime,
+              planStates: {
+                ...s.runtime.planStates,
+                [planId]: { ...current, logs: [] },
+              },
+            },
+          };
+        }),
+      markOrderFired: (planId, orderId) =>
+        set((s) => {
+          const current = s.runtime.planStates[planId] ?? emptyPlanState();
+          if (current.firedOrderIds.includes(orderId)) return s;
+          return {
+            runtime: {
+              ...s.runtime,
+              planStates: {
+                ...s.runtime.planStates,
+                [planId]: {
+                  ...current,
+                  firedOrderIds: [...current.firedOrderIds, orderId],
+                },
+              },
             },
           };
         }),
     }),
     {
-      name: "trader:schedule:v2",
+      name: "trader:schedule:v3",
       storage: createJSONStorage(() => asyncStorage),
       partialize: (s) => ({
         enabled: s.enabled,
-        autoLoginAt: s.autoLoginAt,
-        autoRefreshAt: s.autoRefreshAt,
         plans: s.plans,
         runtime: s.runtime,
       }),
@@ -276,12 +374,7 @@ export const useScheduleStore = create<ScheduleState>()(
         return {
           ...current,
           ...p,
-          runtime: {
-            ...initialRuntime,
-            ...(p.runtime ?? {}),
-            status: "idle",
-            message: "",
-          },
+          runtime: p.runtime ?? initialRuntime(),
         };
       },
     },
