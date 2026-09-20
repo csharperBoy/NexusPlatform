@@ -17,7 +17,7 @@ import type { UseServerClockResult } from "./useServerClock";
 const TICK_MS = 1000;
 const MAX_LATE_MS = 5 * 1000;
 /** پنجره‌ی سینک قبل از شلیک (ms) */
-const PRE_SYNC_MS = 2500;
+const PRE_SYNC_MS = 3000;
 /** دو سفارش با اختلاف کمتر از این، هم‌گروه حساب می‌شن */
 const GROUP_TOLERANCE_MS = 5;
 
@@ -46,7 +46,75 @@ function resetPreparedState() {
   preparedByPlan.clear();
   syncedTargets.clear();
 }
+/* ══════════════════════════════════════════════
+   ساخت payload برای همه‌ی سفارش‌های یه پلن
+   (بدون fetch — فقط از cache symbol-info)
+   ══════════════════════════════════════════════ */
+async function rebuildPrepared(
+  plan: SchedulePlan,
+  today: string,
+): Promise<PreparedOrder[]> {
+  const store = useScheduleStore.getState();
+  const log = (msg: string, type: "ok" | "err" | "info" | "send" = "info") =>
+    store.appendPlanLog(plan.id, msg, type);
 
+  const prepared: PreparedOrder[] = [];
+  const errors: string[] = [];
+
+  for (const o of plan.orders) {
+    const account = useAccountsStore.getState().getAccount(o.accountId);
+    if (!account || !account.token?.trim()) {
+      errors.push(`حساب خالی/بدون توکن`);
+      continue;
+    }
+    const symbol = useSymbolsStore.getState().getSymbol(o.symbolIsin);
+    if (!symbol) {
+      errors.push(`نماد ${o.symbolIsin}: پیدا نشد`);
+      continue;
+    }
+    const info = useSymbolInfoStore.getState().cache[o.symbolIsin];
+    if (!info) {
+      errors.push(`نماد ${symbol.symbolName}: اطلاعات لود نشده`);
+      continue;
+    }
+    const price = o.side === 0 ? info.highAllowedPrice : info.lowAllowedPrice;
+    if (!price || price <= 0) {
+      errors.push(`نماد ${symbol.symbolName}: قیمت مجاز موجود نیست`);
+      continue;
+    }
+    let quantity: number;
+    if (o.mode === "quantity") {
+      quantity = Number(o.quantity);
+    } else {
+      quantity = Math.floor(
+        Number(o.totalValue) / (price * (1 + symbol.commission)),
+      );
+    }
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      errors.push(`نماد ${symbol.symbolName}: تعداد نامعتبر`);
+      continue;
+    }
+    const target = parseTargetTime(o.time, today);
+    if (target === null) {
+      errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر`);
+      continue;
+    }
+    prepared.push({
+      orderId: o.id,
+      accountId: account.id,
+      accountName: account.name,
+      token: account.token,
+      symbol: { ...symbol, side: o.side },
+      price,
+      quantity,
+      target,
+    });
+  }
+
+  preparedByPlan.set(plan.id, prepared);
+  for (const err of errors) log(`⚠️ ${err}`, "err");
+  return prepared;
+}
 /* ══════════════════════════════════════════════ */
 interface Options {
   clock: UseServerClockResult;
@@ -121,7 +189,6 @@ export function useSchedulerRunner({ clock }: Options): void {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
-
 /* ══════════════════════════════════════════════
    هر پلن، یه قدم جلو میره
    ══════════════════════════════════════════════ */
@@ -224,7 +291,6 @@ async function stepPlan(
       store.setPlanMessage(plan.id, "توکن معتبری نیست");
       return;
     }
-
     const uniqueIsins = Array.from(
       new Set(plan.orders.map((o) => o.symbolIsin).filter((x) => !!x)),
     );
@@ -239,79 +305,39 @@ async function stepPlan(
       ok > 0 ? "ok" : "err",
     );
 
-    /* ─── ساخت Payload برای همه سفارش‌ها ─── */
-    const prepared: PreparedOrder[] = [];
-    const errors: string[] = [];
-
-    for (const o of plan.orders) {
-      const account = useAccountsStore.getState().getAccount(o.accountId);
-      if (!account || !account.token?.trim()) {
-        errors.push(`حساب خالی/بدون توکن`);
-        continue;
-      }
-      const symbol = useSymbolsStore.getState().getSymbol(o.symbolIsin);
-      if (!symbol) {
-        errors.push(`نماد ${o.symbolIsin}: پیدا نشد`);
-        continue;
-      }
-      const info = useSymbolInfoStore.getState().cache[o.symbolIsin];
-      if (!info) {
-        errors.push(`نماد ${symbol.symbolName}: اطلاعات لود نشده`);
-        continue;
-      }
-      const price = o.side === 0 ? info.highAllowedPrice : info.lowAllowedPrice;
-      if (!price || price <= 0) {
-        errors.push(`نماد ${symbol.symbolName}: قیمت مجاز موجود نیست`);
-        continue;
-      }
-      let quantity: number;
-      if (o.mode === "quantity") {
-        quantity = Number(o.quantity);
-      } else {
-        quantity = Math.floor(
-          Number(o.totalValue) / (price * (1 + symbol.commission)),
-        );
-      }
-      if (!Number.isFinite(quantity) || quantity <= 0) {
-        errors.push(`نماد ${symbol.symbolName}: تعداد نامعتبر`);
-        continue;
-      }
-      const target = parseTargetTime(o.time, today);
-      if (target === null) {
-        errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر`);
-        continue;
-      }
-      prepared.push({
-        orderId: o.id,
-        accountId: account.id,
-        accountName: account.name,
-        token: account.token,
-        symbol: { ...symbol, side: o.side },
-        price,
-        quantity,
-        target,
-      });
-    }
-
-    preparedByPlan.set(plan.id, prepared);
+    /* ─── ساخت Payload ─── */
+    const built = await rebuildPrepared(plan, today);
     log(
-      `📦 ${prepared.length}/${plan.orders.length} سفارش آماده شلیک`,
-      prepared.length > 0 ? "ok" : "err",
+      `📦 ${built.length}/${plan.orders.length} سفارش آماده شلیک`,
+      built.length > 0 ? "ok" : "err",
     );
-    for (const err of errors) log(`⚠️ ${err}`, "err");
 
     store.setPlanState(plan.id, { lastRefreshDate: today });
-    store.setPlanMessage(plan.id, `${prepared.length} سفارش آماده`);
+    store.setPlanMessage(plan.id, `${built.length} سفارش آماده`);
     return;
   }
 
   /* ═══ ۳. شلیک ═══ */
-  const prepared = preparedByPlan.get(plan.id);
+  /* ✅ safety net: اگه prepared خالی بود (مثلاً بعد از reload)، همین‌جا بازسازی کن */
+  let prepared = preparedByPlan.get(plan.id);
   if (!prepared || prepared.length === 0) {
-    store.setPlanMessage(plan.id, "هیچ سفارش آماده‌ای نیست");
-    return;
+    const hasPending = plan.orders.some(
+      (o) => !planState.firedOrderIds.includes(o.id),
+    );
+    if (!hasPending) {
+      store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
+      return;
+    }
+    log("📦 prepared خالی بود — بازسازی می‌کنم...", "info");
+    const rebuilt = await rebuildPrepared(plan, today);
+    if (rebuilt.length === 0) {
+      store.setPlanMessage(plan.id, "بازسازی ناموفق");
+      return;
+    }
+    prepared = rebuilt;
   }
 
+  /* از اینجا prepared قطعاً آرایه‌ی غیرخالیه */
   planState = store.getPlanState(plan.id);
   const pending = prepared
     .filter((p) => !planState.firedOrderIds.includes(p.orderId))
@@ -334,6 +360,11 @@ async function stepPlan(
   }
 
   const group = groups[0];
+  if (!group) {
+    store.setPlanMessage(plan.id, "گروهی برای شلیک نیست");
+    return;
+  }
+
   const now = Date.now();
 
   /* خیلی دیر شده → کنسل کل گروه */
@@ -352,7 +383,7 @@ async function stepPlan(
 
   /* ─── در انتظار شلیک ─── */
   if (remainToFire > 5) {
-    /* سینک یک‌باره ۲.۵ ثانیه قبل از هر گروه */
+    /* سینک یک‌باره ۳ ثانیه قبل از هر گروه */
     if (remainToFire < PRE_SYNC_MS && !syncedTargets.has(group.target)) {
       log(
         `⏰ سینک متراکم (${group.items.length} سفارش — target=${logTimestamp(new Date(group.target))})`,
@@ -360,7 +391,7 @@ async function stepPlan(
       );
       await clock.sync(5);
       syncedTargets.add(group.target);
-      return; // tick بعدی با diff تازه محاسبه میشه
+      return; // tick بعدی با diff تازه
     }
 
     store.setPlanMessage(
@@ -382,7 +413,10 @@ async function stepPlan(
 
   /* ─── شلیک همزمان کل گروه ─── */
   const fireAt = logTimestamp(new Date());
-  store.setPlanMessage(plan.id, `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`);
+  store.setPlanMessage(
+    plan.id,
+    `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`,
+  );
 
   for (const p of group.items) {
     store.markOrderFired(plan.id, p.orderId);
