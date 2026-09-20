@@ -1,16 +1,19 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { SchedulerRunner } from "./SchedulerRunner";
 
 const links = [
   { to: "/base", label: "اطلاعات پایه" },
   { to: "/single", label: "تک‌سفارش" },
   { to: "/group", label: "چندسفارش" },
   { to: "/multi", label: "چندحساب" },
+  { to: "/scheduler", label: "زمان‌بندی" },
 ];
 
 export function TraderLayout() {
   return (
     <div dir="rtl" className="min-h-screen bg-slate-950 text-slate-100">
-      <nav className="sticky top-0 z-50 flex justify-center gap-2 border-b border-slate-800 bg-slate-900 px-4 py-3">
+      <SchedulerRunner />
+      <nav className="sticky top-0 z-50 flex flex-wrap justify-center gap-2 border-b border-slate-800 bg-slate-900 px-4 py-3">
         {links.map((l) => (
           <NavLink
             key={l.to}

@@ -3,3 +3,11 @@ export type { Symbol } from "./Symbol";
 export type { DraftOrder, OrderPayload, OrderResponse } from "./Order";
 export type { ServerClockSample, ServerClockInfo } from "./Timing";
 export type { SymbolInfo, RawSymbolInfoResponse } from "./SymbolInfo";
+export type {
+  ScheduledOrder,
+  OrderMode,
+  SchedulePlan,
+  SchedulerStatus,
+  SchedulerRuntime,
+  ExportedSchedule,
+} from "./ScheduledOrder";

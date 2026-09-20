@@ -8,16 +8,29 @@ export function formatEasyTraderDateTime(d: Date = new Date()): string {
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}, ${h12}:${mm}:${ss} ${ampm}`;
 }
 
-/** "HH:MM:SS.mmm" → timestamp امروز */
-export function parseTargetTime(hms: string): number | null {
+/**
+ * "HH:MM:SS.mmm" → timestamp
+ * @param hms زمان
+ * @param dateStr تاریخ به فرمت YYYY-MM-DD (اختیاری — پیش‌فرض: امروز)
+ */
+export function parseTargetTime(hms: string, dateStr?: string): number | null {
   const m = hms.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/);
   if (!m) return null;
   const [, h, mi, s = "0", ms = "0"] = m;
-  const now = new Date();
+
+  let baseDate: Date;
+  if (dateStr) {
+    const dm = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!dm) return null;
+    baseDate = new Date(Number(dm[1]), Number(dm[2]) - 1, Number(dm[3]));
+  } else {
+    baseDate = new Date();
+  }
+
   return new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    baseDate.getFullYear(),
+    baseDate.getMonth(),
+    baseDate.getDate(),
     Number(h),
     Number(mi),
     Number(s),
@@ -25,7 +38,20 @@ export function parseTargetTime(hms: string): number | null {
   ).getTime();
 }
 
-/** "HH:MM:SS.mmm" با میلیثانیه برای لاگ */
+/** "YYYY-MM-DD" امروز به وقت محلی */
+export function todayDateKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** "YYYY-MM-DD" فردا */
+export function tomorrowDateKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** "HH:MM:SS.mmm" با میلی‌ثانیه برای لاگ */
 export function logTimestamp(d: Date = new Date()): string {
   const pad = (n: number, len = 2) => String(n).padStart(len, "0");
   return (
@@ -34,10 +60,7 @@ export function logTimestamp(d: Date = new Date()): string {
   );
 }
 
-/**
- * انتظار دقیق تا یک timestamp مشخص (به وقت کلاینت).
- * دقت: ~1-3ms در آخرین فاز (busy-wait).
- */
+/** انتظار دقیق تا یک timestamp مشخص (به وقت کلاینت) */
 export function preciseWait(
   targetMs: number,
   onTick?: (remainingMs: number) => void,

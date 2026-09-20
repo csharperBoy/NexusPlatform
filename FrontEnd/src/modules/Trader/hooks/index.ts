@@ -1,5 +1,6 @@
 export { useServerClock } from "./useServerClock";
 export type { UseServerClockResult } from "./useServerClock";
+
 export { useShotgunScheduler } from "./useShotgunScheduler";
 export type {
   ShotgunTask,
@@ -7,3 +8,5 @@ export type {
   SchedulerLogFn,
   UseShotgunSchedulerResult,
 } from "./useShotgunScheduler";
+
+export { useSchedulerRunner } from "./useSchedulerRunner";

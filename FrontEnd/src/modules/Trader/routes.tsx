@@ -1,11 +1,12 @@
 import { Navigate, type RouteObject } from "react-router-dom";
 import { TraderLayout } from "./components";
-import { BaseInfoPage } from "./pages/BaseInfoPage";
 import {
   SingleOrderPage,
+  ScheduledOrdersPage,
+  BaseInfoPage,
   GroupOrderPage,
   MultiGroupOrderPage,
-} from "./pages/Shotgun";
+} from "./pages";
 
 export const TraderShotgunPublicRoutes: RouteObject[] = [
   {
@@ -17,6 +18,7 @@ export const TraderShotgunPublicRoutes: RouteObject[] = [
       { path: "single", element: <SingleOrderPage /> },
       { path: "group", element: <GroupOrderPage /> },
       { path: "multi", element: <MultiGroupOrderPage /> },
+      { path: "scheduler", element: <ScheduledOrdersPage /> },
     ],
   },
 ];
