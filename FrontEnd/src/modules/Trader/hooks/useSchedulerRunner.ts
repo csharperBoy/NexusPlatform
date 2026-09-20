@@ -5,16 +5,49 @@ import { useSymbolInfoStore } from "../stores/useSymbolInfoStore";
 import { useSymbolsStore } from "../stores/useSymbolsStore";
 import { useLoginStore } from "../stores/useLoginStore";
 import { fireOrder } from "../utils/fireOrder";
-import { parseTargetTime, preciseWait, todayDateKey } from "../utils";
-import type { SchedulePlan, ScheduledOrder } from "../models";
+import {
+  parseTargetTime,
+  preciseWait,
+  todayDateKey,
+  logTimestamp,
+} from "../utils";
+import type { SchedulePlan, Symbol } from "../models";
 import type { UseServerClockResult } from "./useServerClock";
 
 const TICK_MS = 1000;
 const MAX_LATE_MS = 5 * 1000;
-const PRE_CLOCK_SYNC_MS = 5000;
-/** پنجره‌ی همزمانی برای شلیک سفارش‌هایی که زمانشون رسیده */
-const FIRE_TOLERANCE_MS = 5;
+/** پنجره‌ی سینک قبل از شلیک (ms) */
+const PRE_SYNC_MS = 2500;
+/** دو سفارش با اختلاف کمتر از این، هم‌گروه حساب می‌شن */
+const GROUP_TOLERANCE_MS = 5;
 
+/* ══════════════════════════════════════════════
+   state مشترک بین tick ها (in-memory)
+   ══════════════════════════════════════════════ */
+interface PreparedOrder {
+  orderId: string;
+  accountId: string;
+  accountName: string;
+  token: string;
+  symbol: Symbol;
+  price: number;
+  quantity: number;
+  /** timestamp دقیق هدف (ms) */
+  target: number;
+}
+
+/** key: planId → لیست سفارش‌های آماده */
+const preparedByPlan = new Map<string, PreparedOrder[]>();
+
+/** targetهایی که برای اون‌ها clock sync انجام شده */
+const syncedTargets = new Set<number>();
+
+function resetPreparedState() {
+  preparedByPlan.clear();
+  syncedTargets.clear();
+}
+
+/* ══════════════════════════════════════════════ */
 interface Options {
   clock: UseServerClockResult;
 }
@@ -38,7 +71,10 @@ export function useSchedulerRunner({ clock }: Options): void {
         }
 
         const today = todayDateKey();
+
+        /* ─── روز عوض شده؟ همه‌چیز رو ریست کن ─── */
         if (s.runtime.currentDate !== today) {
+          resetPreparedState();
           useScheduleStore.getState().resetForDay(today);
           return;
         }
@@ -86,7 +122,9 @@ export function useSchedulerRunner({ clock }: Options): void {
   }, []);
 }
 
-/* ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   هر پلن، یه قدم جلو میره
+   ══════════════════════════════════════════════ */
 async function stepPlan(
   plan: SchedulePlan,
   today: string,
@@ -98,7 +136,7 @@ async function stepPlan(
 
   let planState = store.getPlanState(plan.id);
 
-  /* ─── ۱. لاگین ─── */
+  /* ═══ ۱. لاگین ═══ */
   if (planState.lastLoginDate !== today) {
     const loginAt = parseTargetTime(plan.autoLoginAt, today);
     if (loginAt === null) {
@@ -155,7 +193,7 @@ async function stepPlan(
     return;
   }
 
-  /* ─── ۲. رفرش قیمت ─── */
+  /* ═══ ۲. رفرش + ساخت payload همه سفارش‌ها ═══ */
   if (planState.lastRefreshDate !== today) {
     const refreshAt = parseTargetTime(plan.autoRefreshAt, today);
     if (refreshAt === null) {
@@ -175,7 +213,7 @@ async function stepPlan(
       return;
     }
 
-    store.setPlanMessage(plan.id, "در حال رفرش...");
+    store.setPlanMessage(plan.id, "در حال رفرش قیمت‌ها...");
     log(`🔄 رفرش قیمت نمادها`, "info");
 
     const validToken =
@@ -196,160 +234,170 @@ async function stepPlan(
       const info = await ensureInfo(isin, validToken, true);
       if (info) ok++;
     }
-
     log(
       `✅ ${ok}/${uniqueIsins.length} نماد بروزرسانی شد`,
       ok > 0 ? "ok" : "err",
     );
 
+    /* ─── ساخت Payload برای همه سفارش‌ها ─── */
+    const prepared: PreparedOrder[] = [];
+    const errors: string[] = [];
+
+    for (const o of plan.orders) {
+      const account = useAccountsStore.getState().getAccount(o.accountId);
+      if (!account || !account.token?.trim()) {
+        errors.push(`حساب خالی/بدون توکن`);
+        continue;
+      }
+      const symbol = useSymbolsStore.getState().getSymbol(o.symbolIsin);
+      if (!symbol) {
+        errors.push(`نماد ${o.symbolIsin}: پیدا نشد`);
+        continue;
+      }
+      const info = useSymbolInfoStore.getState().cache[o.symbolIsin];
+      if (!info) {
+        errors.push(`نماد ${symbol.symbolName}: اطلاعات لود نشده`);
+        continue;
+      }
+      const price = o.side === 0 ? info.highAllowedPrice : info.lowAllowedPrice;
+      if (!price || price <= 0) {
+        errors.push(`نماد ${symbol.symbolName}: قیمت مجاز موجود نیست`);
+        continue;
+      }
+      let quantity: number;
+      if (o.mode === "quantity") {
+        quantity = Number(o.quantity);
+      } else {
+        quantity = Math.floor(
+          Number(o.totalValue) / (price * (1 + symbol.commission)),
+        );
+      }
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        errors.push(`نماد ${symbol.symbolName}: تعداد نامعتبر`);
+        continue;
+      }
+      const target = parseTargetTime(o.time, today);
+      if (target === null) {
+        errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر`);
+        continue;
+      }
+      prepared.push({
+        orderId: o.id,
+        accountId: account.id,
+        accountName: account.name,
+        token: account.token,
+        symbol: { ...symbol, side: o.side },
+        price,
+        quantity,
+        target,
+      });
+    }
+
+    preparedByPlan.set(plan.id, prepared);
+    log(
+      `📦 ${prepared.length}/${plan.orders.length} سفارش آماده شلیک`,
+      prepared.length > 0 ? "ok" : "err",
+    );
+    for (const err of errors) log(`⚠️ ${err}`, "err");
+
     store.setPlanState(plan.id, { lastRefreshDate: today });
-    store.setPlanMessage(plan.id, "قیمت‌ها آماده");
+    store.setPlanMessage(plan.id, `${prepared.length} سفارش آماده`);
     return;
   }
 
-  /* ─── ۳. شلیک ─── */
-  planState = store.getPlanState(plan.id);
+  /* ═══ ۳. شلیک ═══ */
+  const prepared = preparedByPlan.get(plan.id);
+  if (!prepared || prepared.length === 0) {
+    store.setPlanMessage(plan.id, "هیچ سفارش آماده‌ای نیست");
+    return;
+  }
 
-  const pending = plan.orders
-    .filter(
-      (o) =>
-        o.accountId && o.symbolIsin && !planState.firedOrderIds.includes(o.id),
-    )
-    .map((o) => ({ o, t: parseTargetTime(o.time, today) }))
-    .filter((x): x is { o: ScheduledOrder; t: number } => x.t !== null)
-    .sort((a, b) => a.t - b.t);
+  planState = store.getPlanState(plan.id);
+  const pending = prepared
+    .filter((p) => !planState.firedOrderIds.includes(p.orderId))
+    .sort((a, b) => a.target - b.target);
 
   if (pending.length === 0) {
-    store.setPlanMessage(
-      plan.id,
-      plan.orders.length > 0 ? "تمام — همه ارسال شد" : "سفارشی ندارد",
+    store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
+    return;
+  }
+
+  /* ─── گروه‌بندی بر اساس زمان هدف ─── */
+  const groups: { target: number; items: PreparedOrder[] }[] = [];
+  for (const p of pending) {
+    const last = groups[groups.length - 1];
+    if (last && Math.abs(p.target - last.target) <= GROUP_TOLERANCE_MS) {
+      last.items.push(p);
+    } else {
+      groups.push({ target: p.target, items: [p] });
+    }
+  }
+
+  const group = groups[0];
+  const now = Date.now();
+
+  /* خیلی دیر شده → کنسل کل گروه */
+  if (now - group.target > MAX_LATE_MS) {
+    for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
+    log(
+      `⏭ گروه کنسل — از ${logTimestamp(new Date(group.target))} بیش از حد گذشته`,
+      "err",
     );
     return;
   }
 
-  const first = pending[0];
-  const now1 = Date.now();
-  const lateBy = now1 - first.t;
-
-  /* خیلی دیر شده → کنسل همه */
-  if (lateBy > MAX_LATE_MS) {
-    for (const { o } of pending) {
-      store.markOrderFired(plan.id, o.id);
-    }
-    log(`⏭ کنسل — از ${first.o.time} بیش از حد گذشته`, "err");
-    return;
-  }
-
-  /* محاسبه‌ی زمان شلیک به وقت کلاینت */
   const diff = clock.info.diff || 0;
-  const clientFire = first.t - diff;
-  const nowClient = Date.now();
-  const remainToFire = clientFire - nowClient;
+  const clientFire = group.target - diff;
+  const remainToFire = clientFire - now;
 
-  /* هنوز تا شلیک وقت هست */
-  if (remainToFire > FIRE_TOLERANCE_MS) {
-    /* نزدیک شلیک → سینک دقیقاً یک بار برای هر order */
-    if (
-      remainToFire < PRE_CLOCK_SYNC_MS &&
-      planState.clockSyncedForOrderId !== first.o.id
-    ) {
-      log(`⏰ سینک متراکم قبل از شلیک...`, "info");
+  /* ─── در انتظار شلیک ─── */
+  if (remainToFire > 5) {
+    /* سینک یک‌باره ۲.۵ ثانیه قبل از هر گروه */
+    if (remainToFire < PRE_SYNC_MS && !syncedTargets.has(group.target)) {
+      log(
+        `⏰ سینک متراکم (${group.items.length} سفارش — target=${logTimestamp(new Date(group.target))})`,
+        "info",
+      );
       await clock.sync(5);
-      store.setPlanState(plan.id, { clockSyncedForOrderId: first.o.id });
-      return; // tick بعدی، clock تازه
+      syncedTargets.add(group.target);
+      return; // tick بعدی با diff تازه محاسبه میشه
     }
 
-    /* خیلی نزدیک → انتظار دقیق */
+    store.setPlanMessage(
+      plan.id,
+      `شلیک ${group.items.length} سفارش — تا ${(remainToFire / 1000).toFixed(1)}s`,
+    );
+
+    /* نزدیک شلیک → preciseWait */
     if (remainToFire < 2000) {
-      /* بعد از sync، دوباره محاسبه کن که now قدیمی نباشه */
-      const freshClientFire = first.t - (clock.info.diff || 0);
+      const freshClientFire = group.target - (clock.info.diff || 0);
       if (freshClientFire > Date.now()) {
         await preciseWait(freshClientFire);
       }
-      /* بعد از preciseWait، با همون tick ادامه بده و شلیک کن */
+      /* بعد از preciseWait، ادامه بده تا شلیک شه */
     } else {
-      store.setPlanMessage(
-        plan.id,
-        `شلیک بعدی تا ${(remainToFire / 1000).toFixed(1)} ثانیه`,
-      );
       return;
     }
   }
 
-  /* الان موقع شلیکه — همه‌ی order‌هایی که زمانشون رسیده رو با هم شلیک کن */
-  const nowFire = Date.now();
-  const toFire = pending.filter((x) => {
-    const cf = x.t - diff;
-    return nowFire >= cf - FIRE_TOLERANCE_MS;
-  });
+  /* ─── شلیک همزمان کل گروه ─── */
+  const fireAt = logTimestamp(new Date());
+  store.setPlanMessage(plan.id, `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`);
 
-  if (toFire.length === 0) {
-    /* این حالت نباید پیش بیاد، ولی محض اطمینان */
-    store.setPlanMessage(plan.id, "در انتظار...");
-    return;
+  for (const p of group.items) {
+    store.markOrderFired(plan.id, p.orderId);
   }
 
-  /* علامت بزن که همه شلیک شدن */
-  for (const { o } of toFire) {
-    store.markOrderFired(plan.id, o.id);
-  }
-
-  store.setPlanMessage(plan.id, `🔥 شلیک ${toFire.length} سفارش`);
-
-  /* همه رو همزمان (بدون await) بفرست */
   await Promise.all(
-    toFire.map((x) => fireScheduledOrder(plan, x.o, clock)),
+    group.items.map((p) =>
+      fireOrder({
+        token: p.token,
+        symbol: p.symbol,
+        price: p.price,
+        quantity: p.quantity,
+        accountName: p.accountName,
+        onLog: log,
+      }),
+    ),
   );
-}
-
-/* ══════════════════════════════════════════════ */
-async function fireScheduledOrder(
-  plan: SchedulePlan,
-  o: ScheduledOrder,
-  _clock: UseServerClockResult,
-): Promise<void> {
-  const store = useScheduleStore.getState();
-  const log = (msg: string, type: "ok" | "err" | "info" | "send" = "info") =>
-    store.appendPlanLog(plan.id, msg, type);
-
-  const account = useAccountsStore.getState().getAccount(o.accountId);
-  if (!account) return log(`❌ حساب پیدا نشد`, "err");
-  if (!account.token?.trim())
-    return log(`❌ [${account.name}] توکن خالیه`, "err");
-
-  const symbol = useSymbolsStore.getState().getSymbol(o.symbolIsin);
-  if (!symbol) return log(`❌ نماد پیدا نشد`, "err");
-
-  const info = useSymbolInfoStore.getState().cache[o.symbolIsin];
-  if (!info)
-    return log(`❌ اطلاعات ${symbol.symbolName} لود نشده`, "err");
-
-  const price = o.side === 0 ? info.highAllowedPrice : info.lowAllowedPrice;
-  if (!price || price <= 0)
-    return log(`❌ ${symbol.symbolName}: قیمت مجاز موجود نیست`, "err");
-
-  let quantity: number;
-  if (o.mode === "quantity") {
-    quantity = Number(o.quantity);
-  } else {
-    const totalValue = Number(o.totalValue);
-    quantity = Math.floor(totalValue / (price * (1 + symbol.commission)));
-  }
-
-  if (!Number.isFinite(quantity) || quantity <= 0)
-    return log(`❌ ${symbol.symbolName}: تعداد نامعتبر`, "err");
-
-  log(
-    `📋 ${symbol.symbolName} — قیمت ${price} × ${quantity}`,
-    "info",
-  );
-
-  await fireOrder({
-    token: account.token,
-    symbol: { ...symbol, side: o.side },
-    price,
-    quantity,
-    accountName: account.name,
-    onLog: log,
-  });
 }
