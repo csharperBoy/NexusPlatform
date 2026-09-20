@@ -14,15 +14,18 @@ import {
 import type { SchedulePlan, Symbol } from "../models";
 import type { UseServerClockResult } from "./useServerClock";
 
+/* ══════════════════════════════════════════════
+   ثابت‌ها
+   ══════════════════════════════════════════════ */
 const TICK_MS = 1000;
 const MAX_LATE_MS = 5 * 1000;
-/** پنجره‌ی سینک قبل از شلیک (ms) */
-const PRE_SYNC_MS = 3000;
-/** دو سفارش با اختلاف کمتر از این، هم‌گروه حساب می‌شن */
+const PRE_SYNC_MS = 5000;
 const GROUP_TOLERANCE_MS = 5;
+/** اگه از آخرین سینک کمتر از این مدت گذشته باشه، سینک دوباره انجام نمیشه */
+const SYNC_COOLDOWN_MS = 60_000;
 
 /* ══════════════════════════════════════════════
-   state مشترک بین tick ها (in-memory)
+   state مشترک (in-memory)
    ══════════════════════════════════════════════ */
 interface PreparedOrder {
   orderId: string;
@@ -32,23 +35,23 @@ interface PreparedOrder {
   symbol: Symbol;
   price: number;
   quantity: number;
-  /** timestamp دقیق هدف (ms) */
   target: number;
 }
 
-/** key: planId → لیست سفارش‌های آماده */
 const preparedByPlan = new Map<string, PreparedOrder[]>();
+const runningPlans = new Set<string>();
 
-/** targetهایی که برای اون‌ها clock sync انجام شده */
-const syncedTargets = new Set<number>();
+/** آخرین باری که سینک متراکم انجام شد (ms) */
+let lastSyncAt = 0;
 
-function resetPreparedState() {
+function clearAllState() {
   preparedByPlan.clear();
-  syncedTargets.clear();
+  runningPlans.clear();
+  lastSyncAt = 0;
 }
+
 /* ══════════════════════════════════════════════
    ساخت payload برای همه‌ی سفارش‌های یه پلن
-   (بدون fetch — فقط از cache symbol-info)
    ══════════════════════════════════════════════ */
 async function rebuildPrepared(
   plan: SchedulePlan,
@@ -96,7 +99,7 @@ async function rebuildPrepared(
     }
     const target = parseTargetTime(o.time, today);
     if (target === null) {
-      errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر`);
+      errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر (${o.time})`);
       continue;
     }
     prepared.push({
@@ -115,62 +118,346 @@ async function rebuildPrepared(
   for (const err of errors) log(`⚠️ ${err}`, "err");
   return prepared;
 }
+
+/* ══════════════════════════════════════════════
+   اجرای کامل یه پلن
+   ══════════════════════════════════════════════ */
+async function runPlan(
+  plan: SchedulePlan,
+  today: string,
+  clock: UseServerClockResult,
+): Promise<void> {
+  const store = useScheduleStore.getState();
+  const log = (msg: string, type: "ok" | "err" | "info" | "send" = "info") =>
+    store.appendPlanLog(plan.id, msg, type);
+
+  let planState = store.getPlanState(plan.id);
+
+  /* ─── ۱. لاگین ─── */
+  if (planState.lastLoginDate !== today) {
+    const loginAt = parseTargetTime(plan.autoLoginAt, today);
+    if (loginAt === null) {
+      store.setPlanMessage(plan.id, "زمان لاگین نامعتبره");
+      return;
+    }
+
+    const now = Date.now();
+    if (now < loginAt) {
+      store.setPlanMessage(
+        plan.id,
+        `لاگین تا ${((loginAt - now) / 1000).toFixed(1)}s`,
+      );
+      await new Promise((r) => setTimeout(r, loginAt - now));
+    }
+
+    if (Date.now() - loginAt > MAX_LATE_MS) {
+      log(`⏭ از زمان لاگین (${plan.autoLoginAt}) بیش از حد گذشته`, "err");
+      store.setPlanState(plan.id, { lastLoginDate: today });
+    } else {
+      store.setPlanMessage(plan.id, "در حال لاگین...");
+      log(`🔄 لاگین همه حساب‌ها`, "info");
+
+      const accounts = useAccountsStore.getState().accounts;
+      const needsLogin = accounts.filter(
+        (a) =>
+          a.username?.trim() &&
+          a.password?.trim() &&
+          getTokenStatus(a.token).state !== "valid",
+      );
+
+      if (needsLogin.length > 0) {
+        const login = useLoginStore.getState().loginAccount;
+        for (const acc of needsLogin) {
+          await login(acc.id, { silent: true });
+        }
+      }
+
+      const validCount = useAccountsStore
+        .getState()
+        .accounts.filter(
+          (a) => getTokenStatus(a.token).state === "valid",
+        ).length;
+
+      log(
+        `✅ ${validCount}/${accounts.length} حساب معتبر`,
+        validCount > 0 ? "ok" : "err",
+      );
+
+      if (validCount === 0) {
+        store.setPlanMessage(plan.id, "هیچ حسابی لاگین نشد");
+        return;
+      }
+
+      store.setPlanState(plan.id, { lastLoginDate: today });
+    }
+
+    planState = store.getPlanState(plan.id);
+  }
+
+  /* ─── ۲. رفرش ─── */
+  if (planState.lastRefreshDate !== today) {
+    const refreshAt = parseTargetTime(plan.autoRefreshAt, today);
+    if (refreshAt === null) {
+      store.setPlanMessage(plan.id, "زمان رفرش نامعتبره");
+      return;
+    }
+
+    const now = Date.now();
+    if (now < refreshAt) {
+      store.setPlanMessage(
+        plan.id,
+        `رفرش تا ${((refreshAt - now) / 1000).toFixed(1)}s`,
+      );
+      await new Promise((r) => setTimeout(r, refreshAt - now));
+    }
+
+    if (Date.now() - refreshAt > MAX_LATE_MS) {
+      log(`⏭ از زمان رفرش (${plan.autoRefreshAt}) بیش از حد گذشته`, "err");
+      store.setPlanState(plan.id, { lastRefreshDate: today });
+    } else {
+      store.setPlanMessage(plan.id, "در حال رفرش...");
+      log(`🔄 رفرش قیمت نمادها`, "info");
+
+      const validToken =
+        useAccountsStore
+          .getState()
+          .accounts.find((a) => a.token?.trim())?.token ?? "";
+      if (!validToken) {
+        store.setPlanMessage(plan.id, "توکن معتبری نیست");
+        return;
+      }
+
+      const uniqueIsins = Array.from(
+        new Set(plan.orders.map((o) => o.symbolIsin).filter((x) => !!x)),
+      );
+      const ensureInfo = useSymbolInfoStore.getState().ensureInfo;
+      let ok = 0;
+      for (const isin of uniqueIsins) {
+        const info = await ensureInfo(isin, validToken, true);
+        if (info) ok++;
+      }
+      log(
+        `✅ ${ok}/${uniqueIsins.length} نماد بروزرسانی شد`,
+        ok > 0 ? "ok" : "err",
+      );
+
+      const built = await rebuildPrepared(plan, today);
+      log(
+        `📦 ${built.length}/${plan.orders.length} سفارش آماده شلیک`,
+        built.length > 0 ? "ok" : "err",
+      );
+
+      store.setPlanState(plan.id, { lastRefreshDate: today });
+    }
+
+    planState = store.getPlanState(plan.id);
+  }
+
+  /* ─── ۳. آماده‌سازی ─── */
+  let prepared = preparedByPlan.get(plan.id);
+  if (!prepared || prepared.length === 0) {
+    log("📦 prepared خالی بود — بازسازی می‌کنم...", "info");
+    prepared = await rebuildPrepared(plan, today);
+  }
+  if (prepared.length === 0) {
+    store.setPlanMessage(plan.id, "هیچ سفارشی آماده نیست");
+    return;
+  }
+
+  const pending = prepared
+    .filter((p) => !planState.firedOrderIds.includes(p.orderId))
+    .sort((a, b) => a.target - b.target);
+
+  if (pending.length === 0) {
+    store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
+    return;
+  }
+
+  /* ─── ۴. گروه‌بندی ─── */
+  const groups: { target: number; items: PreparedOrder[] }[] = [];
+  for (const p of pending) {
+    const last = groups[groups.length - 1];
+    if (last && Math.abs(p.target - last.target) <= GROUP_TOLERANCE_MS) {
+      last.items.push(p);
+    } else {
+      groups.push({ target: p.target, items: [p] });
+    }
+  }
+
+  log(`🎯 ${groups.length} گروه زمانی`, "info");
+
+  /* ─── ۵. حلقه‌ی fire ─── */
+  for (let gi = 0; gi < groups.length; gi++) {
+    const group = groups[gi];
+    const now = Date.now();
+
+    if (now - group.target > MAX_LATE_MS) {
+      for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
+      log(
+        `⏭ گروه ${gi + 1} کنسل — از ${logTimestamp(new Date(group.target))} گذشته`,
+        "err",
+      );
+      continue;
+    }
+
+    let diff = clock.info.diff || 0;
+    let clientFire = group.target - diff;
+    let remainToFire = clientFire - now;
+
+    /* ✅ سینک ۵ ثانیه قبل — ولی فقط اگه از سینک قبلی به‌اندازه‌ی کافی گذشته باشه */
+    if (remainToFire > 0 && remainToFire < PRE_SYNC_MS) {
+      const sinceLastSync = Date.now() - lastSyncAt;
+
+      if (lastSyncAt > 0 && sinceLastSync < SYNC_COOLDOWN_MS) {
+        /* سینک تازه انجام شده — استفاده مجدد */
+        log(
+          `⏭ سینک لازم نیست — ${Math.round(sinceLastSync / 1000)}s پیش سینک شد (diff=${Math.round(diff)}ms)`,
+          "info",
+        );
+      } else {
+        log(
+          `⏰ سینک متراکم (گروه ${gi + 1}/${groups.length} — ${group.items.length} سفارش)`,
+          "info",
+        );
+        const freshDiff = await clock.sync(5);
+        lastSyncAt = Date.now();
+        if (typeof freshDiff === "number" && Number.isFinite(freshDiff)) {
+          diff = freshDiff;
+          log(`✅ diff تازه: ${Math.round(freshDiff)}ms`, "info");
+        } else {
+          log(`⚠️ سینک ناموفق — diff قدیمی (${Math.round(diff)}ms)`, "err");
+        }
+        clientFire = group.target - diff;
+        remainToFire = clientFire - Date.now();
+      }
+    }
+
+    if (remainToFire > 0) {
+      store.setPlanMessage(
+        plan.id,
+        `گروه ${gi + 1}/${groups.length} — شلیک ${group.items.length} تا ${(remainToFire / 1000).toFixed(1)}s`,
+      );
+      await preciseWait(clientFire);
+    } else if (remainToFire < -MAX_LATE_MS) {
+      for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
+      log(
+        `⏭ گروه ${gi + 1} کنسل — بعد از سینک دیر شد (${Math.round(-remainToFire)}ms)`,
+        "err",
+      );
+      continue;
+    }
+
+    const fireAt = logTimestamp();
+    store.setPlanMessage(
+      plan.id,
+      `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`,
+    );
+
+    for (const p of group.items) {
+      store.markOrderFired(plan.id, p.orderId);
+    }
+
+    for (const p of group.items) {
+      fireOrder({
+        token: p.token,
+        symbol: p.symbol,
+        price: p.price,
+        quantity: p.quantity,
+        accountName: p.accountName,
+        onLog: log,
+      }).catch((e) =>
+        log(
+          `💥 ${p.symbol.symbolName} — ${e instanceof Error ? e.message : "خطا"}`,
+          "err",
+        ),
+      );
+    }
+  }
+
+  store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
+}
+
 /* ══════════════════════════════════════════════ */
 interface Options {
   clock: UseServerClockResult;
 }
 
 export function useSchedulerRunner({ clock }: Options): void {
-  const runningRef = useRef(false);
   const clockRef = useRef(clock);
   clockRef.current = clock;
 
   useEffect(() => {
-    const tick = async () => {
-      if (runningRef.current) return;
-      runningRef.current = true;
+    const tick = () => {
+      const s = useScheduleStore.getState();
 
-      try {
-        const s = useScheduleStore.getState();
+      if (!s.enabled) {
+        if (s.runtime.status !== "idle") s.setStatus("idle", "");
+        return;
+      }
 
-        if (!s.enabled) {
-          if (s.runtime.status !== "idle") s.setStatus("idle", "");
-          return;
-        }
+      const today = todayDateKey();
 
-        const today = todayDateKey();
+      if (s.runtime.currentDate !== today) {
+        clearAllState();
+        useScheduleStore.getState().resetForDay(today);
+        return;
+      }
 
-        /* ─── روز عوض شده؟ همه‌چیز رو ریست کن ─── */
-        if (s.runtime.currentDate !== today) {
-          resetPreparedState();
-          useScheduleStore.getState().resetForDay(today);
-          return;
-        }
+      const todayPlans = s.plans.filter(
+        (p) => p.enabled && p.date === today && p.orders.length > 0,
+      );
 
-        const todayPlans = s.plans.filter(
-          (p) => p.enabled && p.date === today && p.orders.length > 0,
+      if (todayPlans.length === 0) {
+        const futureCount = s.plans.filter(
+          (p) => p.enabled && p.date > today && p.orders.length > 0,
+        ).length;
+        s.setStatus(
+          "idle",
+          futureCount > 0
+            ? `${futureCount} برنامه آینده در انتظار`
+            : "هیچ برنامه فعالی برای امروز نیست",
         );
+        return;
+      }
 
-        if (todayPlans.length === 0) {
-          const futureCount = s.plans.filter(
-            (p) => p.enabled && p.date > today && p.orders.length > 0,
-          ).length;
-          useScheduleStore
-            .getState()
-            .setStatus(
-              "idle",
-              futureCount > 0
-                ? `${futureCount} برنامه آینده در انتظار`
-                : "هیچ برنامه فعالی برای امروز نیست",
-            );
-          return;
-        }
+      for (const plan of todayPlans) {
+        if (runningPlans.has(plan.id)) continue;
 
-        for (const plan of todayPlans) {
-          await stepPlan(plan, today, clockRef.current);
+        const loginAt = parseTargetTime(plan.autoLoginAt, today);
+        if (loginAt === null) continue;
+        if (Date.now() < loginAt) continue;
+
+        runningPlans.add(plan.id);
+        s.setStatus("waiting", `اجرای «${plan.name}»`);
+
+        runPlan(plan, today, clockRef.current)
+          .catch((e) => {
+            useScheduleStore
+              .getState()
+              .appendPlanLog(
+                plan.id,
+                `💥 خطای غیرمنتظره: ${e instanceof Error ? e.message : "خطا"}`,
+                "err",
+              );
+          })
+          .finally(() => {
+            runningPlans.delete(plan.id);
+          });
+      }
+
+      const stillRunning = todayPlans.filter((p) => runningPlans.has(p.id));
+      if (stillRunning.length > 0) {
+        s.setStatus("waiting", `${stillRunning.length} پلن در حال اجرا`);
+      } else {
+        const allDone = todayPlans.every((p) => {
+          const st = s.getPlanState(p.id);
+          return st.firedOrderIds.length >= p.orders.length;
+        });
+        if (allDone) {
+          s.setStatus("done", "همه برنامه‌ها تمام");
+        } else {
+          s.setStatus("idle", "در انتظار زمان اجرا");
         }
-      } finally {
-        runningRef.current = false;
       }
     };
 
@@ -189,249 +476,8 @@ export function useSchedulerRunner({ clock }: Options): void {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
-/* ══════════════════════════════════════════════
-   هر پلن، یه قدم جلو میره
-   ══════════════════════════════════════════════ */
-async function stepPlan(
-  plan: SchedulePlan,
-  today: string,
-  clock: UseServerClockResult,
-): Promise<void> {
-  const store = useScheduleStore.getState();
-  const log = (msg: string, type: "ok" | "err" | "info" | "send" = "info") =>
-    store.appendPlanLog(plan.id, msg, type);
 
-  let planState = store.getPlanState(plan.id);
-
-  /* ═══ ۱. لاگین ═══ */
-  if (planState.lastLoginDate !== today) {
-    const loginAt = parseTargetTime(plan.autoLoginAt, today);
-    if (loginAt === null) {
-      store.setPlanMessage(plan.id, "زمان لاگین نامعتبره");
-      return;
-    }
-
-    const now = Date.now();
-    if (now < loginAt) {
-      const remain = Math.floor((loginAt - now) / 1000);
-      store.setPlanMessage(plan.id, `لاگین تا ${remain} ثانیه دیگر`);
-      return;
-    }
-    if (now - loginAt > MAX_LATE_MS) {
-      log(`⏭ از زمان لاگین (${plan.autoLoginAt}) گذشته — کنسل`, "err");
-      store.setPlanState(plan.id, { lastLoginDate: today });
-      return;
-    }
-
-    store.setPlanMessage(plan.id, "در حال لاگین...");
-    log(`🔄 لاگین همه حساب‌ها`, "info");
-
-    const accounts = useAccountsStore.getState().accounts;
-    const needsLogin = accounts.filter(
-      (a) =>
-        a.username?.trim() &&
-        a.password?.trim() &&
-        getTokenStatus(a.token).state !== "valid",
-    );
-
-    if (needsLogin.length > 0) {
-      const login = useLoginStore.getState().loginAccount;
-      for (const acc of needsLogin) {
-        await login(acc.id, { silent: true });
-      }
-    }
-
-    const validCount = useAccountsStore
-      .getState()
-      .accounts.filter((a) => getTokenStatus(a.token).state === "valid").length;
-
-    log(
-      `✅ ${validCount}/${accounts.length} حساب معتبر`,
-      validCount > 0 ? "ok" : "err",
-    );
-
-    if (validCount === 0) {
-      store.setPlanMessage(plan.id, "هیچ حسابی لاگین نشد");
-      return;
-    }
-
-    store.setPlanState(plan.id, { lastLoginDate: today });
-    store.setPlanMessage(plan.id, "لاگین شد");
-    return;
-  }
-
-  /* ═══ ۲. رفرش + ساخت payload همه سفارش‌ها ═══ */
-  if (planState.lastRefreshDate !== today) {
-    const refreshAt = parseTargetTime(plan.autoRefreshAt, today);
-    if (refreshAt === null) {
-      store.setPlanMessage(plan.id, "زمان رفرش نامعتبره");
-      return;
-    }
-
-    const now = Date.now();
-    if (now < refreshAt) {
-      const remain = Math.floor((refreshAt - now) / 1000);
-      store.setPlanMessage(plan.id, `رفرش تا ${remain} ثانیه دیگر`);
-      return;
-    }
-    if (now - refreshAt > MAX_LATE_MS) {
-      log(`⏭ از زمان رفرش (${plan.autoRefreshAt}) گذشته — کنسل`, "err");
-      store.setPlanState(plan.id, { lastRefreshDate: today });
-      return;
-    }
-
-    store.setPlanMessage(plan.id, "در حال رفرش قیمت‌ها...");
-    log(`🔄 رفرش قیمت نمادها`, "info");
-
-    const validToken =
-      useAccountsStore
-        .getState()
-        .accounts.find((a) => a.token?.trim())?.token ?? "";
-    if (!validToken) {
-      store.setPlanMessage(plan.id, "توکن معتبری نیست");
-      return;
-    }
-    const uniqueIsins = Array.from(
-      new Set(plan.orders.map((o) => o.symbolIsin).filter((x) => !!x)),
-    );
-    const ensureInfo = useSymbolInfoStore.getState().ensureInfo;
-    let ok = 0;
-    for (const isin of uniqueIsins) {
-      const info = await ensureInfo(isin, validToken, true);
-      if (info) ok++;
-    }
-    log(
-      `✅ ${ok}/${uniqueIsins.length} نماد بروزرسانی شد`,
-      ok > 0 ? "ok" : "err",
-    );
-
-    /* ─── ساخت Payload ─── */
-    const built = await rebuildPrepared(plan, today);
-    log(
-      `📦 ${built.length}/${plan.orders.length} سفارش آماده شلیک`,
-      built.length > 0 ? "ok" : "err",
-    );
-
-    store.setPlanState(plan.id, { lastRefreshDate: today });
-    store.setPlanMessage(plan.id, `${built.length} سفارش آماده`);
-    return;
-  }
-
-  /* ═══ ۳. شلیک ═══ */
-  /* ✅ safety net: اگه prepared خالی بود (مثلاً بعد از reload)، همین‌جا بازسازی کن */
-  let prepared = preparedByPlan.get(plan.id);
-  if (!prepared || prepared.length === 0) {
-    const hasPending = plan.orders.some(
-      (o) => !planState.firedOrderIds.includes(o.id),
-    );
-    if (!hasPending) {
-      store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
-      return;
-    }
-    log("📦 prepared خالی بود — بازسازی می‌کنم...", "info");
-    const rebuilt = await rebuildPrepared(plan, today);
-    if (rebuilt.length === 0) {
-      store.setPlanMessage(plan.id, "بازسازی ناموفق");
-      return;
-    }
-    prepared = rebuilt;
-  }
-
-  /* از اینجا prepared قطعاً آرایه‌ی غیرخالیه */
-  planState = store.getPlanState(plan.id);
-  const pending = prepared
-    .filter((p) => !planState.firedOrderIds.includes(p.orderId))
-    .sort((a, b) => a.target - b.target);
-
-  if (pending.length === 0) {
-    store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
-    return;
-  }
-
-  /* ─── گروه‌بندی بر اساس زمان هدف ─── */
-  const groups: { target: number; items: PreparedOrder[] }[] = [];
-  for (const p of pending) {
-    const last = groups[groups.length - 1];
-    if (last && Math.abs(p.target - last.target) <= GROUP_TOLERANCE_MS) {
-      last.items.push(p);
-    } else {
-      groups.push({ target: p.target, items: [p] });
-    }
-  }
-
-  const group = groups[0];
-  if (!group) {
-    store.setPlanMessage(plan.id, "گروهی برای شلیک نیست");
-    return;
-  }
-
-  const now = Date.now();
-
-  /* خیلی دیر شده → کنسل کل گروه */
-  if (now - group.target > MAX_LATE_MS) {
-    for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
-    log(
-      `⏭ گروه کنسل — از ${logTimestamp(new Date(group.target))} بیش از حد گذشته`,
-      "err",
-    );
-    return;
-  }
-
-  const diff = clock.info.diff || 0;
-  const clientFire = group.target - diff;
-  const remainToFire = clientFire - now;
-
-  /* ─── در انتظار شلیک ─── */
-  if (remainToFire > 5) {
-    /* سینک یک‌باره ۳ ثانیه قبل از هر گروه */
-    if (remainToFire < PRE_SYNC_MS && !syncedTargets.has(group.target)) {
-      log(
-        `⏰ سینک متراکم (${group.items.length} سفارش — target=${logTimestamp(new Date(group.target))})`,
-        "info",
-      );
-      await clock.sync(5);
-      syncedTargets.add(group.target);
-      return; // tick بعدی با diff تازه
-    }
-
-    store.setPlanMessage(
-      plan.id,
-      `شلیک ${group.items.length} سفارش — تا ${(remainToFire / 1000).toFixed(1)}s`,
-    );
-
-    /* نزدیک شلیک → preciseWait */
-    if (remainToFire < 2000) {
-      const freshClientFire = group.target - (clock.info.diff || 0);
-      if (freshClientFire > Date.now()) {
-        await preciseWait(freshClientFire);
-      }
-      /* بعد از preciseWait، ادامه بده تا شلیک شه */
-    } else {
-      return;
-    }
-  }
-
-  /* ─── شلیک همزمان کل گروه ─── */
-  const fireAt = logTimestamp(new Date());
-  store.setPlanMessage(
-    plan.id,
-    `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`,
-  );
-
-  for (const p of group.items) {
-    store.markOrderFired(plan.id, p.orderId);
-  }
-
-  await Promise.all(
-    group.items.map((p) =>
-      fireOrder({
-        token: p.token,
-        symbol: p.symbol,
-        price: p.price,
-        quantity: p.quantity,
-        accountName: p.accountName,
-        onLog: log,
-      }),
-    ),
-  );
+/* ══════════════════════════════════════════════ */
+export function invalidatePrepared(planId: string) {
+  preparedByPlan.delete(planId);
 }
