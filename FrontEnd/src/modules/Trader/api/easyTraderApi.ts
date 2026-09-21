@@ -85,13 +85,14 @@ export async function activateToken(token: string): Promise<void> {
 /* ═══════ سینک ساعت سرور ═══════ */
 export async function fetchServerTime(
   token: string,
+  signal?: AbortSignal,
 ): Promise<Omit<ServerClockSample, "ts">> {
   const clientTs = Date.now();
   const t0 = performance.now();
 
   const data = await fetchJson<{ diff: number; serverTimestamp: number }>(
     `${EASYTRADER_BASE}/easy/api/account/server-time/${clientTs}`,
-    { method: "GET", token, credentials: "include" },
+    { method: "GET", token, credentials: "include", signal },
   );
 
   const rtt = performance.now() - t0;

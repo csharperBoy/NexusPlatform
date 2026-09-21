@@ -4,14 +4,16 @@ import { useAccountsStore, getTokenStatus } from "../stores/useAccountsStore";
 import { useSymbolInfoStore } from "../stores/useSymbolInfoStore";
 import { useSymbolsStore } from "../stores/useSymbolsStore";
 import { useLoginStore } from "../stores/useLoginStore";
+import { useServerClockStore } from "../stores/useServerClockStore";
 import { fireOrder } from "../utils/fireOrder";
+import { buildOrderPayload } from "../utils/buildOrderPayload";
 import {
   parseTargetTime,
   preciseWait,
   todayDateKey,
   logTimestamp,
 } from "../utils";
-import type { SchedulePlan, Symbol } from "../models";
+import type { SchedulePlan, Symbol, OrderPayload } from "../models";
 import type { UseServerClockResult } from "./useServerClock";
 
 /* ══════════════════════════════════════════════
@@ -19,10 +21,7 @@ import type { UseServerClockResult } from "./useServerClock";
    ══════════════════════════════════════════════ */
 const TICK_MS = 1000;
 const MAX_LATE_MS = 5 * 1000;
-const PRE_SYNC_MS = 5000;
 const GROUP_TOLERANCE_MS = 5;
-/** اگه از آخرین سینک کمتر از این مدت گذشته باشه، سینک دوباره انجام نمیشه */
-const SYNC_COOLDOWN_MS = 60_000;
 
 /* ══════════════════════════════════════════════
    state مشترک (in-memory)
@@ -36,18 +35,15 @@ interface PreparedOrder {
   price: number;
   quantity: number;
   target: number;
+  payload: OrderPayload;
 }
 
 const preparedByPlan = new Map<string, PreparedOrder[]>();
 const runningPlans = new Set<string>();
 
-/** آخرین باری که سینک متراکم انجام شد (ms) */
-let lastSyncAt = 0;
-
 function clearAllState() {
   preparedByPlan.clear();
   runningPlans.clear();
-  lastSyncAt = 0;
 }
 
 /* ══════════════════════════════════════════════
@@ -102,15 +98,20 @@ async function rebuildPrepared(
       errors.push(`نماد ${symbol.symbolName}: زمان نامعتبر (${o.time})`);
       continue;
     }
+
+    const symbolWithSide: Symbol = { ...symbol, side: o.side };
+    const payload = buildOrderPayload(symbolWithSide, price, quantity);
+
     prepared.push({
       orderId: o.id,
       accountId: account.id,
       accountName: account.name,
       token: account.token,
-      symbol: { ...symbol, side: o.side },
+      symbol: symbolWithSide,
       price,
       quantity,
       target,
+      payload,
     });
   }
 
@@ -286,7 +287,7 @@ async function runPlan(
 
   log(`🎯 ${groups.length} گروه زمانی`, "info");
 
-  /* ─── ۵. حلقه‌ی fire ─── */
+  /* ─── ۵. حلقه‌ی fire (بدون Await سینک شبکه که باعث بلاک شدن شود) ─── */
   for (let gi = 0; gi < groups.length; gi++) {
     const group = groups[gi];
     const now = Date.now();
@@ -300,48 +301,31 @@ async function runPlan(
       continue;
     }
 
-    let diff = clock.info.diff || 0;
-    let clientFire = group.target - diff;
-    let remainToFire = clientFire - now;
+    /* محاسبه زمان دقیق ارسال کلاینت با توجه به offset، latency شبکه و پیش‌افتادگی دستی */
+    const clockStore = useServerClockStore.getState();
+    const clientFire = clockStore.getClientFireTime(group.target);
+    let remainToFire = clientFire - Date.now();
 
-    /* ✅ سینک ۵ ثانیه قبل — ولی فقط اگه از سینک قبلی به‌اندازه‌ی کافی گذشته باشه */
-    if (remainToFire > 0 && remainToFire < PRE_SYNC_MS) {
-      const sinceLastSync = Date.now() - lastSyncAt;
-
-      if (lastSyncAt > 0 && sinceLastSync < SYNC_COOLDOWN_MS) {
-        /* سینک تازه انجام شده — استفاده مجدد */
-        log(
-          `⏭ سینک لازم نیست — ${Math.round(sinceLastSync / 1000)}s پیش سینک شد (diff=${Math.round(diff)}ms)`,
-          "info",
-        );
-      } else {
-        log(
-          `⏰ سینک متراکم (گروه ${gi + 1}/${groups.length} — ${group.items.length} سفارش)`,
-          "info",
-        );
-        const freshDiff = await clock.sync(5);
-        lastSyncAt = Date.now();
-        if (typeof freshDiff === "number" && Number.isFinite(freshDiff)) {
-          diff = freshDiff;
-          log(`✅ diff تازه: ${Math.round(freshDiff)}ms`, "info");
-        } else {
-          log(`⚠️ سینک ناموفق — diff قدیمی (${Math.round(diff)}ms)`, "err");
-        }
-        clientFire = group.target - diff;
-        remainToFire = clientFire - Date.now();
-      }
+    /* اگر بیش از ۱۰ ثانیه تا شلیک باقی مانده، یک سینک غیربلاک‌کننده در پس‌زمینه بزن */
+    if (remainToFire > 10_000) {
+      clock.sync(1).catch(() => {});
     }
+
+    log(
+      `⏱ گروه ${gi + 1}/${groups.length} (${group.items.length} سفارش): هدف سرور ${logTimestamp(new Date(group.target))} | Offset: ${clockStore.offset}ms | تاخیر شبکه: ${clockStore.oneWayLatency}ms | پیش‌افتادگی کل: ${clockStore.getTotalLeadTimeMs()}ms`,
+      "info",
+    );
 
     if (remainToFire > 0) {
       store.setPlanMessage(
         plan.id,
-        `گروه ${gi + 1}/${groups.length} — شلیک ${group.items.length} تا ${(remainToFire / 1000).toFixed(1)}s`,
+        `گروه ${gi + 1}/${groups.length} — شلیک ${group.items.length} سفارش تا ${(remainToFire / 1000).toFixed(1)}s`,
       );
       await preciseWait(clientFire);
     } else if (remainToFire < -MAX_LATE_MS) {
       for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
       log(
-        `⏭ گروه ${gi + 1} کنسل — بعد از سینک دیر شد (${Math.round(-remainToFire)}ms)`,
+        `⏭ گروه ${gi + 1} کنسل — زمان از دست رفت (${Math.round(-remainToFire)}ms)`,
         "err",
       );
       continue;
@@ -350,14 +334,15 @@ async function runPlan(
     const fireAt = logTimestamp();
     store.setPlanMessage(
       plan.id,
-      `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`,
+      `🔥 شلیک همزمان ${group.items.length} سفارش در ${fireAt}`,
     );
 
     for (const p of group.items) {
       store.markOrderFired(plan.id, p.orderId);
     }
 
-    for (const p of group.items) {
+    /* ارسال همزمان (Parallel/Concurrent) تمامی سفارش‌های گروه */
+    const firePromises = group.items.map((p) =>
       fireOrder({
         token: p.token,
         symbol: p.symbol,
@@ -370,8 +355,10 @@ async function runPlan(
           `💥 ${p.symbol.symbolName} — ${e instanceof Error ? e.message : "خطا"}`,
           "err",
         ),
-      );
-    }
+      ),
+    );
+
+    await Promise.all(firePromises);
   }
 
   store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");

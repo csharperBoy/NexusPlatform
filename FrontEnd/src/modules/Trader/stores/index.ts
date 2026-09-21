@@ -11,3 +11,4 @@ export { useSymbolInfoStore } from "./useSymbolInfoStore";
 export { useLogStore } from "./useLogStore";
 export type { LogEntry as PageLogEntry, LogType as PageLogType } from "./useLogStore";
 export { useScheduleStore } from "./useScheduleStore";
+export { useServerClockStore } from "./useServerClockStore";
