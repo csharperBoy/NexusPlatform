@@ -1,22 +1,19 @@
- // src/apps/Trader/Shotgun/App.tsx
- import { useRoutes, Navigate, Outlet } from "react-router-dom";
- import { useActiveModules } from "@/core/context/ModuleContext";
- import { TraderShotgunPublicRoutes  } from "@/modules/Trader";
+import { useRoutes, Navigate } from "react-router-dom";
+import { useActiveModules } from "@/core/context/ModuleContext";
+import { TraderShotgunPublicRoutes } from "@/modules/Trader";
 
- export default function App() {
+export default function App() {
+  const { loading } = useActiveModules();
 
-   const { activeModules, loading } = useActiveModules();
-
-   if (loading) {
+  if (loading) {
     return <div>در حال بارگذاری تنظیمات…</div>;
-   }
+  }
 
-   const routes = useRoutes([
-   ...TraderShotgunPublicRoutes, 
+  const routes = useRoutes([
+    ...TraderShotgunPublicRoutes,
+    /* fallback */
+    { path: "*", element: <Navigate to="/schedule-plans" replace /> },
+  ]);
 
-     /* مسیر پیش‌فرض */
-     { path: "*", element: <Navigate to="/" replace /> },
-   ]);
-
-   return routes;
- }
+  return routes;
+}
