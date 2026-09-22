@@ -11,6 +11,7 @@ import {
   todayDateKey,
   logTimestamp,
 } from "../utils";
+import { serverClockRef } from "./useServerClock";
 import type { SchedulePlan, Symbol } from "../models";
 import type { UseServerClockResult } from "./useServerClock";
 
@@ -19,10 +20,11 @@ import type { UseServerClockResult } from "./useServerClock";
    ══════════════════════════════════════════════ */
 const TICK_MS = 1000;
 const MAX_LATE_MS = 5 * 1000;
-const PRE_SYNC_MS = 5000;
 const GROUP_TOLERANCE_MS = 5;
-/** اگه از آخرین سینک کمتر از این مدت گذشته باشه، سینک دوباره انجام نمیشه */
-const SYNC_COOLDOWN_MS = 60_000;
+/** پنجره‌ی presync: از این مدت قبل از شلیک، presync شروع میشه */
+const PRESYNC_AT_MS = 2500;
+/** حداقل فاصله بین دو presync متوالی */
+const PRESYNC_COOLDOWN_MS = 3000;
 
 /* ══════════════════════════════════════════════
    state مشترک (in-memory)
@@ -40,14 +42,13 @@ interface PreparedOrder {
 
 const preparedByPlan = new Map<string, PreparedOrder[]>();
 const runningPlans = new Set<string>();
-
-/** آخرین باری که سینک متراکم انجام شد (ms) */
-let lastSyncAt = 0;
+/** timestamp آخرین presync (module-level، مشترک بین همه‌ی پلن‌ها) */
+let lastPresyncAt = 0;
 
 function clearAllState() {
   preparedByPlan.clear();
   runningPlans.clear();
-  lastSyncAt = 0;
+  lastPresyncAt = 0;
 }
 
 /* ══════════════════════════════════════════════
@@ -194,7 +195,7 @@ async function runPlan(
     planState = store.getPlanState(plan.id);
   }
 
-  /* ─── ۲. رفرش ─── */
+  /* ─── ۲. رفرش + ساخت payload ─── */
   if (planState.lastRefreshDate !== today) {
     const refreshAt = parseTargetTime(plan.autoRefreshAt, today);
     if (refreshAt === null) {
@@ -286,11 +287,12 @@ async function runPlan(
 
   log(`🎯 ${groups.length} گروه زمانی`, "info");
 
-  /* ─── ۵. حلقه‌ی fire ─── */
+  /* ─── ۵. حلقه‌ی fire — با presync غیربلاک ─── */
   for (let gi = 0; gi < groups.length; gi++) {
     const group = groups[gi];
     const now = Date.now();
 
+    /* خیلی دیر شده → کنسل گروه */
     if (now - group.target > MAX_LATE_MS) {
       for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
       log(
@@ -300,35 +302,51 @@ async function runPlan(
       continue;
     }
 
-    let diff = clock.info.diff || 0;
-    let clientFire = group.target - diff;
-    let remainToFire = clientFire - now;
+    /* ✅ snapshot از diff فعلی — هر بار از ref تازه خونده میشه */
+    const diff = serverClockRef.diff;
+    const clientFire = group.target - diff;
+    const remainToFire = clientFire - Date.now();
 
-     /* ✅ توی این مرحله، هیچ sync انجام نمیشه — از diff قبلی استفاده می‌کنیم */
-    log(
-      `⏱ گروه ${gi + 1}/${groups.length} — diff=${Math.round(diff)}ms | شلیک=${logTimestamp(new Date(clientFire))} | Δ=${Math.round(remainToFire)}ms`,
-      "info",
-    );
+    /* ═══ presync غیربلاک ۲.۵ ثانیه قبل ═══ */
+    /* اگه نزدیک شلیکیم و از آخرین presync بیش از ۳ ثانیه گذشته، یه presync
+       جدید شروع کن — ولی منتظرش نمون. مقدار جدید برای گروه‌های بعدی استفاده میشه */
+    if (remainToFire > 0 && remainToFire < PRESYNC_AT_MS) {
+      const sinceLast = Date.now() - lastPresyncAt;
+      if (sinceLast > PRESYNC_COOLDOWN_MS) {
+        lastPresyncAt = Date.now();
+        log(
+          `⏰ presync غیربلاک (قبل از گروه ${gi + 1} — برای گروه‌های بعدی)`,
+          "info",
+        );
+        /* fire-and-forget — بدون await */
+        void clock.sync(3).catch(() => {
+          /* خطا رو نادیده بگیر — مقدار قبلی همچنان معتبره */
+        });
+      }
+    }
 
-    if (remainToFire > 0) {
+    /* ═══ preciseWait با snapshot ═══ */
+    if (clientFire > Date.now()) {
       store.setPlanMessage(
         plan.id,
-        `گروه ${gi + 1}/${groups.length} — شلیک ${group.items.length} تا ${(remainToFire / 1000).toFixed(1)}s`,
+        `گروه ${gi + 1}/${groups.length} — ${group.items.length} سفارش تا ${((clientFire - Date.now()) / 1000).toFixed(2)}s (diff=${Math.round(diff)}ms)`,
       );
       await preciseWait(clientFire);
-    } else if (remainToFire < -MAX_LATE_MS) {
+    }
+
+    if (clientFire < Date.now() - MAX_LATE_MS) {
       for (const p of group.items) store.markOrderFired(plan.id, p.orderId);
       log(
-        `⏭ گروه ${gi + 1} کنسل — بعد از سینک دیر شد (${Math.round(-remainToFire)}ms)`,
+        `⏭ گروه ${gi + 1} کنسل — بیش از حد دیر شد`,
         "err",
       );
       continue;
     }
-    /* ✅ ۱) همه‌ی fetch ها فوراً — بدون await، بدون setState */
-    const sendWallMs = Date.now();
-    const logTs = logTimestamp(new Date(sendWallMs));
 
-    /* fire-and-forget */
+    /* ═══ fire فوری — قبل از هر log/setState ═══ */
+    const sendWallMs = Date.now();
+    const fireLogStr = logTimestamp(new Date(sendWallMs));
+
     for (const p of group.items) {
       void fireOrder({
         token: p.token,
@@ -340,9 +358,9 @@ async function runPlan(
       });
     }
 
-    /* ✅ ۲) حالا log و state — fetch در پروازه */
+    /* حالا log و state (fetch در پروازه) */
     log(
-      `🔥 گروه ${gi + 1}/${groups.length}: ${group.items.length} سفارش در ${logTs}`,
+      `🔥 گروه ${gi + 1}/${groups.length}: ${group.items.length} سفارش در ${fireLogStr}`,
       "send",
     );
     for (const p of group.items) {
@@ -350,7 +368,7 @@ async function runPlan(
     }
     store.setPlanMessage(
       plan.id,
-      `🔥 شلیک ${group.items.length} سفارش در ${logTs}`,
+      `🔥 شلیک ${group.items.length} سفارش در ${fireLogStr}`,
     );
   }
 

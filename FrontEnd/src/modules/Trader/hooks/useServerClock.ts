@@ -39,6 +39,17 @@ export interface UseServerClockResult {
 }
 
 /**
+ * ✅ access از هر جا بدون React — مقدار آخرین offset/diff محاسبه‌شده
+ * این object همیشه live آپدیت میشه، هر جا import کنی می‌تونی بخونی
+ */
+export const serverClockRef = {
+  diff: 0,          // diff نهایی (برای محاسبه‌ی شلیک)
+  offset: 0,        // offset خالص
+  oneWayLatency: 0, // rtt/2
+  lastUpdatedAt: 0, // ms timestamp
+};
+
+/**
  * سینک ساعت با سرور EasyTrader
  * - سینک خودکار هر ۳۰ ثانیه (اگه توکن داشته باشیم)
  * - سینک اولیه بعد از ۱ ثانیه توقف تایپ (debounce)
@@ -102,6 +113,12 @@ export function useServerClock(token: string): UseServerClockResult {
 
       const { medianOffset, medianDiff, count: n, min, max } =
         computeStats(samplesRef);
+
+            /* ✅ آپدیت ref سراسری — قابل خواندن از هر جا (حتی بدون React) */
+      serverClockRef.diff = Math.round(medianDiff);
+      serverClockRef.offset = Math.round(medianOffset);
+      serverClockRef.oneWayLatency = 0; // اگه rtt رو جدا نگه نمیداری
+      serverClockRef.lastUpdatedAt = Date.now();
 
       if (mountedRef.current) {
         setOffset(medianOffset);
