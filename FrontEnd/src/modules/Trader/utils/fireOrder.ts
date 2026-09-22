@@ -21,19 +21,24 @@ export async function fireOrder(
   params: FireOrderParams,
   attempt = 1,
 ): Promise<OrderResponse | null> {
-  const { token, symbol, price, quantity, accountName, onLog, shouldCancel } =
-    params;
+  const { token, symbol, price, quantity, accountName, onLog, shouldCancel } = params;
+
   const payload = buildOrderPayload(symbol, price, quantity);
   const t0 = performance.now();
   const sendWallMs = Date.now();
 
-  onLog(
-    `🚀 fetch(${attempt}) در ${logTimestamp(new Date(sendWallMs))} — [${accountName}] ${symbol.symbolName} ${price} × ${quantity}`,
-    "send",
-  );
-
   try {
-    const data = await sendOrder(token, payload);
+    /* ✅ ۱) fetch فوراً — قبل از log */
+    const fetchPromise = sendOrder(token, payload);
+
+    /* ۲) حالا log */
+    onLog(
+      `🚀 fetch(${attempt}) در ${logTimestamp(new Date(sendWallMs))} — [${accountName}] ${symbol.symbolName} ${price} × ${quantity}`,
+      "send",
+    );
+
+    /* ۳) منتظر پاسخ */
+    const data = await fetchPromise;
     const dt = (performance.now() - t0).toFixed(1);
     const recvWallMs = Date.now();
 

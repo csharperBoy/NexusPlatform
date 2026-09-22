@@ -65,18 +65,39 @@ export function preciseWait(
   targetMs: number,
   onTick?: (remainingMs: number) => void,
 ): Promise<void> {
+  let lastReported = Infinity;
   return new Promise((resolve) => {
     const tick = () => {
       const remaining = targetMs - Date.now();
-      onTick?.(remaining);
-      if (remaining <= 0) return resolve();
-      if (remaining > 100) setTimeout(tick, remaining - 50);
-      else if (remaining > 15) setTimeout(tick, 1);
-      else {
+
+      /* throttle گزارش به React */
+      if (onTick && Math.abs(remaining - lastReported) >= 100) {
+        lastReported = remaining;
+        onTick(remaining);
+      }
+
+      if (remaining <= 0) {
+        onTick?.(0);
+        return resolve();
+      }
+
+      /* ✅ تایمرهای تدریجی کوتاه‌تر — مقاوم به throttling */
+      if (remaining > 60000) {
+        setTimeout(tick, 30000); // > ۱ دقیقه: هر ۳۰s چک
+      } else if (remaining > 10000) {
+        setTimeout(tick, 5000); // > ۱۰s: هر ۵s
+      } else if (remaining > 1000) {
+        setTimeout(tick, 500); // > ۱s: هر ۵۰۰ms
+      } else if (remaining > 100) {
+        setTimeout(tick, 50); // > ۱۰۰ms: هر ۵۰ms
+      } else if (remaining > 15) {
+        setTimeout(tick, 1); // > ۱۵ms: هر ۱ms
+      } else {
+        /* busy-wait برای آخرین ۱۵ms — دقیق‌ترین */
         while (Date.now() < targetMs) {
-          /* busy-wait */
+          /* spin */
         }
-        resolve();
+        return resolve();
       }
     };
     tick();

@@ -304,33 +304,11 @@ async function runPlan(
     let clientFire = group.target - diff;
     let remainToFire = clientFire - now;
 
-    /* ✅ سینک ۵ ثانیه قبل — ولی فقط اگه از سینک قبلی به‌اندازه‌ی کافی گذشته باشه */
-    if (remainToFire > 0 && remainToFire < PRE_SYNC_MS) {
-      const sinceLastSync = Date.now() - lastSyncAt;
-
-      if (lastSyncAt > 0 && sinceLastSync < SYNC_COOLDOWN_MS) {
-        /* سینک تازه انجام شده — استفاده مجدد */
-        log(
-          `⏭ سینک لازم نیست — ${Math.round(sinceLastSync / 1000)}s پیش سینک شد (diff=${Math.round(diff)}ms)`,
-          "info",
-        );
-      } else {
-        log(
-          `⏰ سینک متراکم (گروه ${gi + 1}/${groups.length} — ${group.items.length} سفارش)`,
-          "info",
-        );
-        const freshDiff = await clock.sync(5);
-        lastSyncAt = Date.now();
-        if (typeof freshDiff === "number" && Number.isFinite(freshDiff)) {
-          diff = freshDiff;
-          log(`✅ diff تازه: ${Math.round(freshDiff)}ms`, "info");
-        } else {
-          log(`⚠️ سینک ناموفق — diff قدیمی (${Math.round(diff)}ms)`, "err");
-        }
-        clientFire = group.target - diff;
-        remainToFire = clientFire - Date.now();
-      }
-    }
+     /* ✅ توی این مرحله، هیچ sync انجام نمیشه — از diff قبلی استفاده می‌کنیم */
+    log(
+      `⏱ گروه ${gi + 1}/${groups.length} — diff=${Math.round(diff)}ms | شلیک=${logTimestamp(new Date(clientFire))} | Δ=${Math.round(remainToFire)}ms`,
+      "info",
+    );
 
     if (remainToFire > 0) {
       store.setPlanMessage(
@@ -346,32 +324,34 @@ async function runPlan(
       );
       continue;
     }
+    /* ✅ ۱) همه‌ی fetch ها فوراً — بدون await، بدون setState */
+    const sendWallMs = Date.now();
+    const logTs = logTimestamp(new Date(sendWallMs));
 
-    const fireAt = logTimestamp();
-    store.setPlanMessage(
-      plan.id,
-      `🔥 شلیک ${group.items.length} سفارش در ${fireAt}`,
-    );
-
+    /* fire-and-forget */
     for (const p of group.items) {
-      store.markOrderFired(plan.id, p.orderId);
-    }
-
-    for (const p of group.items) {
-      fireOrder({
+      void fireOrder({
         token: p.token,
         symbol: p.symbol,
         price: p.price,
         quantity: p.quantity,
         accountName: p.accountName,
         onLog: log,
-      }).catch((e) =>
-        log(
-          `💥 ${p.symbol.symbolName} — ${e instanceof Error ? e.message : "خطا"}`,
-          "err",
-        ),
-      );
+      });
     }
+
+    /* ✅ ۲) حالا log و state — fetch در پروازه */
+    log(
+      `🔥 گروه ${gi + 1}/${groups.length}: ${group.items.length} سفارش در ${logTs}`,
+      "send",
+    );
+    for (const p of group.items) {
+      store.markOrderFired(plan.id, p.orderId);
+    }
+    store.setPlanMessage(
+      plan.id,
+      `🔥 شلیک ${group.items.length} سفارش در ${logTs}`,
+    );
   }
 
   store.setPlanMessage(plan.id, "تمام — همه سفارش‌ها ارسال شد");
