@@ -40,10 +40,6 @@ namespace Audit.Infrastructure.DependencyInjection
             var registration = services.BuildServiceProvider()
                                        .GetRequiredService<IOutboxProcessorRegistration>();
 
-            //services.AddSingleton<AuditResourceDefinitionProvider>();
-            //services.AddSingleton<IResourceDefinitionProvider>(sp =>
-            //sp.GetRequiredService<AuditResourceDefinitionProvider>());
-
             registration.AddOutboxProcessor<AuditDbContext>(services);
             return services;
         }
