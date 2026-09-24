@@ -1,6 +1,4 @@
-﻿using Core.Application.Dtos;   // ← فرض: SelectionListDto اینجاست (مطابق HR)
-using Core.Application.Results;
-using Core.Shared.DTOs;
+﻿using Core.Shared.DTOs;
 using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;

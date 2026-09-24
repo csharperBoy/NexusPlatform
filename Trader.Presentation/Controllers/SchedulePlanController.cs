@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Trader.Application.Commands.SchedulePlan;
+using Trader.Application.Queries.SchedulePlan;
 
 namespace Trader.Presentation.Controller
 {

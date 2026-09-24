@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Trader.Application.Commands.Account;
+using Trader.Application.Queries.Account;
 namespace Trader.Presentation.Controller
 {
     [ApiController]

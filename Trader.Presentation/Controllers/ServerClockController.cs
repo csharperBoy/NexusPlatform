@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 using Trader.Application.Commands.ServerClock;
+using Trader.Application.Queries.ServerClock;
 
 namespace Trader.Presentation.Controller
 {

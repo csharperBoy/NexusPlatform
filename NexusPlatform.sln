@@ -262,6 +262,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Application", "Trade
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Infrastructure", "Trader.Infrastructure\Trader.Infrastructure.csproj", "{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.WebApi", "Trader.WebApi\Trader.WebApi.csproj", "{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -632,6 +634,10 @@ Global
 		{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -757,6 +763,7 @@ Global
 		{17976D35-5246-4BBA-BBE5-B54ACF538A7C} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 		{AAAB97CE-1254-491C-8C1E-7AFDF05803C6} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 		{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
+		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1} = {CD5173EF-052F-4585-9273-5733A56CAA85}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}

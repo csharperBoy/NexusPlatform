@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Trader.Application.Commands.Symbol;
+using Trader.Application.Queries.Symbol;
 
 
 namespace Trader.Presentation.Controller

@@ -1,5 +1,4 @@
-﻿using Core.Application.Results;
-using Core.Shared.Results;
+﻿using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
