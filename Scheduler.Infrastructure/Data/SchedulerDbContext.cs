@@ -28,7 +28,7 @@ namespace Scheduler.Infrastructure.Data
         }
         public override void EnsureViews(CancellationToken cancellationToken = default)
         {
-            //EnsureView("Contact.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "contact");
+            //EnsureView("Contact.Infrastructure.SqlScript", "CreatePhoneBookInfoViewScript.sql", "PhoneBook_Info_View", "scheduler");
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,7 +36,7 @@ namespace Scheduler.Infrastructure.Data
             
             modelBuilder.HasDefaultSchema("scheduler");
 
-            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("contact"));
+            modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("scheduler"));
             modelBuilder.ApplyConfiguration(new ScheduledJobConfiguration());
 
         }

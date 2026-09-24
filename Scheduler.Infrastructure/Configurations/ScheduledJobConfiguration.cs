@@ -16,7 +16,7 @@ namespace Scheduler.Infrastructure.Configurations
 
 
 
-                builder.Property(x => x.JobType).IsRequired().HasMaxLength(200);
+            builder.Property(x => x.JobType).IsRequired().HasMaxLength(200);
             builder.Property(x => x.HangfireJobId).IsRequired().HasMaxLength(100);
             builder.Property(x => x.PayloadJson).IsRequired();
             builder.Property(x => x.Error).HasMaxLength(2000);

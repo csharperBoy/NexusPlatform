@@ -16,10 +16,10 @@
         Task<bool> DeleteAccountAsync(Guid id);
 
         /// <summary>لاگین به کارگزاری و ذخیره‌ی توکن رمزنگاری‌شده.</summary>
-        Task<bool> LoginAsync(Guid id);
+        Task LoginAsync(Guid id);
 
         /// <summary>فعال‌سازی مجدد توکن (same-login).</summary>
-        Task<bool> ActivateAsync(Guid id);
+        Task ActivateAsync(Guid id);
 
         Task SaveAsync();
     }
