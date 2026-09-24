@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
 using Core.Application.Models;
 using Core.Infrastructure.Database;
@@ -134,6 +135,7 @@ namespace Core.Infrastructure.DependencyInjection
             services.AddSingleton<IHostedService, ApplicationLifetimeTracker>();
             services.AddSingleton<ApplicationLifetimeTracker>();
 
+            services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
             services.AddResiliencePolicies(configuration);
             services.AddMediatR(cfg =>
                 cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
