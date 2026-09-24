@@ -1,8 +1,11 @@
-﻿namespace Trader.Application.Abstractions
+﻿using Trader.Domain.Enums;
+
+namespace Trader.Application.Abstractions
 {
     public interface IAccountCommandService
     {
         Task<Guid> CreateAccountAsync(
+            BrokerType broker,
             string name,
             string username,
             string password);
@@ -15,12 +18,7 @@
 
         Task<bool> DeleteAccountAsync(Guid id);
 
-        /// <summary>لاگین به کارگزاری و ذخیره‌ی توکن رمزنگاری‌شده.</summary>
         Task LoginAsync(Guid id);
-
-        /// <summary>فعال‌سازی مجدد توکن (same-login).</summary>
-        Task ActivateAsync(Guid id);
-
         Task SaveAsync();
     }
 }

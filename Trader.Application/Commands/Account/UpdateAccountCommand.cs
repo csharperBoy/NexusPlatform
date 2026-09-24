@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Application.Results;
+using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
@@ -42,9 +43,6 @@ namespace Trader.Application.Commands.Account
                     request.Password);
 
                 await _accountService.SaveAsync();
-
-                _logger.LogInformation(
-                    "TraderAccount updated: {Id}", id);
 
                 return Result<Guid>.Ok(id);
             }

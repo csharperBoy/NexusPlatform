@@ -1,22 +1,23 @@
-﻿using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Xml;
+using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions;
-using Trader.Application.EasyTrader.Exceptions;
-using Trader.Application.EasyTrader.Models;
+using Trader.Application.Brokers;
+using Trader.Application.Dtos;
+using Trader.Domain.Enums;
+using Trader.Infrastructure.Brokers.EasyTrader.Internal;
 
-namespace Trader.Infrastructure.EasyTrader
+namespace Trader.Infrastructure.Brokers.EasyTrader
 {
-    public class EasyTraderClient : IEasyTraderClient
+    public class EasyTraderBrokerClient : IBrokerClient
     {
         private readonly EasyTraderOptions _options;
-        private readonly ILogger<EasyTraderClient> _logger;
+        private readonly ILogger<EasyTraderBrokerClient> _logger;
 
         private static readonly JsonSerializerOptions JsonOpts = new()
         {
@@ -24,18 +25,42 @@ namespace Trader.Infrastructure.EasyTrader
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
-        public EasyTraderClient(
+        public EasyTraderBrokerClient(
             IOptions<EasyTraderOptions> options,
-            ILogger<EasyTraderClient> logger)
+            ILogger<EasyTraderBrokerClient> logger)
         {
             _options = options.Value;
             _logger = logger;
         }
 
+        public BrokerType BrokerType => BrokerType.EasyTrader;
+
         /* ══════════════════════════════════════════════════
-           LOGIN — OIDC + PKCE + Activation
+           SESSION
            ══════════════════════════════════════════════════ */
-        public async Task<LoginResult> LoginAsync(
+        public string SerializeSession(BrokerSession session)
+        {
+            if (session is not EasyTraderSession et)
+                throw new ArgumentException(
+                    $"Expected {nameof(EasyTraderSession)}", nameof(session));
+            return JsonSerializer.Serialize(et, JsonOpts);
+        }
+
+        public BrokerSession DeserializeSession(string json)
+        {
+            var session = JsonSerializer.Deserialize<EasyTraderSession>(json, JsonOpts)
+                ?? throw new InvalidOperationException("Session deserialization returned null");
+            return session;
+        }
+
+        private static EasyTraderSession AsSession(BrokerSession s)
+            => s as EasyTraderSession
+               ?? throw new ArgumentException("Session is not EasyTraderSession");
+
+        /* ══════════════════════════════════════════════════
+           LOGIN (OIDC + PKCE + Activation)
+           ══════════════════════════════════════════════════ */
+        public async Task<BrokerSession> LoginAsync(
             string username,
             string password,
             CancellationToken ct = default)
@@ -43,11 +68,10 @@ namespace Trader.Infrastructure.EasyTrader
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
                 throw new EasyTraderException("Username/Password cannot be empty");
 
-            var verifier = PkceGenerator.GenerateVerifier();
-            var challenge = PkceGenerator.GenerateChallenge(verifier);
-            var state = PkceGenerator.GenerateState();
+            var verifier = EasyTraderPkce.GenerateVerifier();
+            var challenge = EasyTraderPkce.GenerateChallenge(verifier);
+            var state = EasyTraderPkce.GenerateState();
 
-            // CookieContainer محلی برای این login
             var cookieJar = new CookieContainer();
             using var handler = new HttpClientHandler
             {
@@ -64,7 +88,7 @@ namespace Trader.Infrastructure.EasyTrader
 
             /* ─── ۱. GET /connect/authorize ─── */
             var authorizeUrl = BuildAuthorizeUrl(challenge, state);
-            _logger.LogDebug("OIDC step 1: GET authorize");
+            _logger.LogDebug("EasyTrader OIDC step 1: authorize");
 
             using var authorizeRes = await client.GetAsync(authorizeUrl, ct);
             if ((int)authorizeRes.StatusCode is not (302 or 303))
@@ -72,12 +96,11 @@ namespace Trader.Infrastructure.EasyTrader
                     $"Authorize expected 302/303, got {(int)authorizeRes.StatusCode}",
                     (int)authorizeRes.StatusCode);
 
-            /* ─── ۲. GET /Login (صفحه‌ی لاگین) ─── */
+            /* ─── ۲. GET /Login ─── */
             var loginPath = authorizeRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Authorize response has no Location header");
-            var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
+                ?? throw new EasyTraderException("Authorize response has no Location");
 
-            _logger.LogDebug("OIDC step 2: GET login page");
+            var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
 
             using var loginPageRes = await client.GetAsync(loginUrl, ct);
             if (!loginPageRes.IsSuccessStatusCode)
@@ -87,12 +110,9 @@ namespace Trader.Infrastructure.EasyTrader
 
             var loginHtml = await loginPageRes.Content.ReadAsStringAsync(ct);
             var verificationToken = ExtractAntiForgeryToken(loginHtml)
-                ?? throw new EasyTraderException(
-                    "__RequestVerificationToken not found in login page");
+                ?? throw new EasyTraderException("__RequestVerificationToken not found");
 
-            /* ─── ۳. POST /Login با credentials ─── */
-            _logger.LogDebug("OIDC step 3: POST login credentials");
-
+            /* ─── ۳. POST /Login ─── */
             using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["Username"] = username,
@@ -105,44 +125,37 @@ namespace Trader.Infrastructure.EasyTrader
             {
                 var body = await SafeReadBody(loginRes, ct);
                 throw new EasyTraderException(
-                    $"Login POST expected 302/303, got {(int)loginRes.StatusCode}. " +
+                    $"Login expected 302/303, got {(int)loginRes.StatusCode}. " +
                     $"Body: {Truncate(body, 200)}",
-                    (int)loginRes.StatusCode,
-                    body);
+                    (int)loginRes.StatusCode, body);
             }
 
             /* ─── ۴. GET /connect/authorize/callback ─── */
             var callbackPath = loginRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Login response has no Location header");
+                ?? throw new EasyTraderException("Login response has no Location");
             var callbackUrl = MakeAbsolute(_options.OidcBaseUrl, callbackPath);
-
-            _logger.LogDebug("OIDC step 4: GET authorize callback");
 
             using var callbackRes = await client.GetAsync(callbackUrl, ct);
             if ((int)callbackRes.StatusCode is not (302 or 303))
                 throw new EasyTraderException(
-                    $"Authorize callback expected 302/303, got {(int)callbackRes.StatusCode}",
+                    $"Callback expected 302/303, got {(int)callbackRes.StatusCode}",
                     (int)callbackRes.StatusCode);
 
-            /* ─── ۵. استخراج code از redirect نهایی ─── */
+            /* ─── ۵. Extract code ─── */
             var finalLocation = callbackRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Callback response has no Location header");
+                ?? throw new EasyTraderException("Callback response has no Location");
 
             var codeParams = ParseQueryString(new Uri(finalLocation).Query);
             codeParams.TryGetValue("code", out var code);
             codeParams.TryGetValue("state", out var returnedState);
 
             if (string.IsNullOrEmpty(code))
-                throw new EasyTraderException("No 'code' in final callback URL");
+                throw new EasyTraderException("No 'code' in callback URL");
 
             if (returnedState != state)
                 throw new EasyTraderException("State mismatch — possible CSRF");
 
-            _logger.LogDebug("OIDC step 5: got authorization code");
-
             /* ─── ۶. POST /connect/token ─── */
-            _logger.LogDebug("OIDC step 6: POST token exchange");
-
             using var tokenContent = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["grant_type"] = "authorization_code",
@@ -159,55 +172,33 @@ namespace Trader.Infrastructure.EasyTrader
             {
                 var body = await SafeReadBody(tokenRes, ct);
                 throw new EasyTraderException(
-                    $"Token exchange failed {(int)tokenRes.StatusCode}. Body: {Truncate(body, 300)}",
-                    (int)tokenRes.StatusCode,
-                    body);
+                    $"Token exchange failed {(int)tokenRes.StatusCode}. " +
+                    $"Body: {Truncate(body, 300)}",
+                    (int)tokenRes.StatusCode, body);
             }
 
             var tokenJson = await tokenRes.Content.ReadAsStringAsync(ct);
-            using var tokenDoc = JsonDocument.Parse(tokenJson);
-            var root = tokenDoc.RootElement;
+            var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(tokenJson, JsonOpts)
+                ?? throw new EasyTraderException("Token response deserialization failed");
 
-            var accessToken = root.GetProperty("access_token").GetString()
-                ?? throw new EasyTraderException("access_token missing in token response");
-            var idToken = root.TryGetProperty("id_token", out var idEl)
-                ? idEl.GetString() : null;
-            var expiresIn = root.TryGetProperty("expires_in", out var expEl)
-                ? expEl.GetInt32() : 43200;
-            var scope = root.TryGetProperty("scope", out var scopeEl)
-                ? scopeEl.GetString() ?? "" : "";
+            if (string.IsNullOrEmpty(tokenResponse.AccessToken))
+                throw new EasyTraderException("access_token missing in response");
 
             _logger.LogInformation(
-                "OIDC login successful, expiresIn={Expires}s", expiresIn);
+                "EasyTrader login successful, expiresIn={Expires}s",
+                tokenResponse.ExpiresIn);
 
-            /* ─── ۷. Activate token (same-login) ─── */
-            await ActivateTokenInternalAsync(client, accessToken, ct);
+            /* ─── ۷. Activation (same-login) ─── */
+            await ActivateTokenAsync(client, tokenResponse.AccessToken, ct);
 
-            return new LoginResult(accessToken, idToken, expiresIn, scope);
+            var exp = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+            return new EasyTraderSession(tokenResponse.AccessToken, exp);
         }
 
         /* ══════════════════════════════════════════════════
-           ACTIVATE TOKEN — same-login
+           ACTIVATION (internal — part of login flow)
            ══════════════════════════════════════════════════ */
-        public async Task ActivateTokenAsync(
-            string accessToken,
-            CancellationToken ct = default)
-        {
-            using var handler = new HttpClientHandler
-            {
-                CookieContainer = new CookieContainer(),
-                UseCookies = true,
-            };
-            using var client = new HttpClient(handler)
-            {
-                Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds),
-            };
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
-
-            await ActivateTokenInternalAsync(client, accessToken, ct);
-        }
-
-        private async Task ActivateTokenInternalAsync(
+        private async Task ActivateTokenAsync(
             HttpClient client,
             string accessToken,
             CancellationToken ct)
@@ -237,73 +228,73 @@ namespace Trader.Infrastructure.EasyTrader
 
             if (res.IsSuccessStatusCode)
             {
-                _logger.LogDebug("Token activated successfully");
+                _logger.LogDebug("EasyTrader token activated");
                 return;
             }
 
-            // 400 با پیام "already logged in" → قبلاً فعال شده
             if ((int)res.StatusCode == 400 &&
                 resBody.Contains("already logged in", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("Token already active, skipping activation");
+                _logger.LogDebug("EasyTrader token already active");
                 return;
             }
 
             throw new EasyTraderException(
-                $"Token activation failed {(int)res.StatusCode}. Body: {Truncate(resBody, 300)}",
-                (int)res.StatusCode,
-                resBody);
+                $"Token activation failed {(int)res.StatusCode}. " +
+                $"Body: {Truncate(resBody, 300)}",
+                (int)res.StatusCode, resBody);
         }
 
         /* ══════════════════════════════════════════════════
-           SERVER TIME
+           MEASURE LATENCY
            ══════════════════════════════════════════════════ */
-        public async Task<ServerTimeResult> GetServerTimeAsync(
-            string accessToken,
+        public async Task<long> MeasureLatencyAsync(
+            BrokerSession session,
             CancellationToken ct = default)
         {
+            var s = AsSession(session);
             var clientTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
             var path = string.Format(EasyTraderEndpoints.ServerTime, clientTs);
             var url = _options.BaseUrl + path;
 
-            using var client = CreateAuthorizedClient(accessToken);
+            using var client = CreateAuthorizedClient(s.AccessToken);
             var res = await client.GetAsync(url, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
             sw.Stop();
 
             if (!res.IsSuccessStatusCode)
                 throw new EasyTraderException(
-                    $"Server-time failed {(int)res.StatusCode}. Body: {Truncate(body, 200)}",
+                    $"Server-time failed {(int)res.StatusCode}. " +
+                    $"Body: {Truncate(body, 200)}",
                     (int)res.StatusCode, body);
 
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
-            var diff = root.GetProperty("diff").GetInt64();
-            var serverTs = root.GetProperty("serverTimestamp").GetInt64();
+            var response = JsonSerializer.Deserialize<ServerTimeResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Server-time deserialization failed");
 
-            return new ServerTimeResult(
-                ClientTimestamp: clientTs,
-                ServerTimestamp: serverTs,
-                Diff: diff,
-                Rtt: sw.ElapsedMilliseconds);
+            // diff = serverTs - clientTs. RTT/2 تخمین یک‌طرفه.
+            return sw.ElapsedMilliseconds / 2;
         }
 
         /* ══════════════════════════════════════════════════
            SYMBOL INFO
            ══════════════════════════════════════════════════ */
-        public async Task<MarketSymbolInfoResult> GetSymbolInfoAsync(
-            string accessToken,
-            string symbolIsin,
+        public async Task<SymbolMarketDataDto> GetSymbolInfoAsync(
+            BrokerSession session,
+            string symbolName,
             CancellationToken ct = default)
         {
+            // توجه: در EasyTrader، GetSymbolInfo نیاز به ISIN داره نه name.
+            // چون قرارداد عمومی با name کار می‌کنه، اینجا از name به isin map می‌کنیم.
+            // این mapping باید از DB یا یه سرویس بیرونی بیاد. فعلاً فرض: name == isin.
+            var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.SymbolInfo;
 
-            using var client = CreateAuthorizedClient(accessToken);
+            using var client = CreateAuthorizedClient(s.AccessToken);
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Content = new StringContent(
-                JsonSerializer.Serialize(new { isin = symbolIsin }),
+                JsonSerializer.Serialize(new { isin = symbolName }, JsonOpts),
                 Encoding.UTF8, "application/json");
 
             using var res = await client.SendAsync(req, ct);
@@ -311,34 +302,78 @@ namespace Trader.Infrastructure.EasyTrader
 
             if (!res.IsSuccessStatusCode)
                 throw new EasyTraderException(
-                    $"Symbol info failed {(int)res.StatusCode}. Body: {Truncate(body, 200)}",
+                    $"Symbol info failed {(int)res.StatusCode}. " +
+                    $"Body: {Truncate(body, 200)}",
                     (int)res.StatusCode, body);
 
-            using var doc = JsonDocument.Parse(body);
-            var root = doc.RootElement;
+            var wire = JsonSerializer.Deserialize<SymbolInfoResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Symbol info deserialization failed");
 
-            return new MarketSymbolInfoResult(
-                SymbolIsin: GetStringOrNull(root, "symbolISIN") ?? symbolIsin,
-                HighAllowedPrice: GetLongOrNull(root, "highAllowedPrice"),
-                LowAllowedPrice: GetLongOrNull(root, "lowAllowedPrice"),
-                LastTradedPrice: GetLongOrNull(root, "lastTradedPrice"),
-                ClosingPrice: GetLongOrNull(root, "closingPrice"),
-                FirstTradedPrice: GetLongOrNull(root, "firstTradedPrice"),
-                TradeDate: GetStringOrNull(root, "tradeDate"),
-                FetchedAt: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            return new SymbolMarketDataDto
+            {
+                SymbolName = symbolName,
+                HighAllowedPrice = wire.HighAllowedPrice,
+                LowAllowedPrice = wire.LowAllowedPrice,
+                LastTradedPrice = wire.LastTradedPrice,
+                ClosingPrice = wire.ClosingPrice,
+                FirstTradedPrice = wire.FirstTradedPrice,
+                TradeDate = wire.TradeDate,
+                FetchedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            };
         }
 
         /* ══════════════════════════════════════════════════
-           SEND ORDER
+           SEND BUY / SELL ORDER
            ══════════════════════════════════════════════════ */
-        public async Task<OrderResult> SendOrderAsync(
-            string accessToken,
-            OrderPayload payload,
+        public Task<BrokerOrderResultDto> SendBuyOrderAsync(
+            BrokerSession session, string symbolName, long price, long quantity,
             CancellationToken ct = default)
+            => SendOrderInternalAsync(session, symbolName, price, quantity, side: 0, ct);
+
+        public Task<BrokerOrderResultDto> SendSellOrderAsync(
+            BrokerSession session, string symbolName, long price, long quantity,
+            CancellationToken ct = default)
+            => SendOrderInternalAsync(session, symbolName, price, quantity, side: 1, ct);
+
+        private async Task<BrokerOrderResultDto> SendOrderInternalAsync(
+            BrokerSession session,
+            string symbolName,
+            long price,
+            long quantity,
+            int side,
+            CancellationToken ct)
         {
+            var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.Order;
 
-            using var client = CreateAuthorizedClient(accessToken);
+            // این‌ها از تنظیمات پیش‌فرض EasyTrader میان.
+            // در آینده می‌تونن per-symbol از DB بیان.
+            const decimal commission = 0.003712m;
+            const int validityType = 0;
+            const int orderModelType = 1;
+            const int orderFrom = 34;
+
+            var totalValue = (long)Math.Round(price * quantity * (1 + (double)commission));
+
+            var payload = new EasyTraderOrderRequest
+            {
+                Order = new EasyTraderOrder
+                {
+                    Price = price,
+                    Quantity = quantity,
+                    Side = side,
+                    ValidityType = validityType,
+                    CreateDateTime = FormatEasyTraderDateTime(DateTime.Now),
+                    Commission = commission,
+                    SymbolIsin = symbolName,   // فرض: name == isin
+                    SymbolName = symbolName,
+                    OrderModelType = orderModelType,
+                    TotalValue = totalValue,
+                    OrderFrom = orderFrom,
+                }
+            };
+
+            using var client = CreateAuthorizedClient(s.AccessToken);
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Content = new StringContent(
                 JsonSerializer.Serialize(payload, JsonOpts),
@@ -347,54 +382,41 @@ namespace Trader.Infrastructure.EasyTrader
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
 
+            // بعضی وقتا خطاهای منطقی هم با 200 میان
+            if (TryParseOrderResponse(body, out var parsed))
+                return parsed;
+
             if (!res.IsSuccessStatusCode)
-            {
-                // بعضی وقتا خطاها هم به شکل OrderResult میان
-                if (TryParseOrderResult(body, out var parsedError))
-                    return parsedError;
-
                 throw new EasyTraderException(
-                    $"Order failed {(int)res.StatusCode}. Body: {Truncate(body, 400)}",
-                    (int)res.StatusCode, body);
-            }
-
-            if (!TryParseOrderResult(body, out var parsed))
-                throw new EasyTraderException(
-                    $"Unexpected order response: {Truncate(body, 400)}",
+                    $"Order failed {(int)res.StatusCode}. " +
+                    $"Body: {Truncate(body, 400)}",
                     (int)res.StatusCode, body);
 
-            return parsed;
+            throw new EasyTraderException(
+                $"Unexpected order response: {Truncate(body, 400)}",
+                (int)res.StatusCode, body);
         }
 
-        private static bool TryParseOrderResult(string body, out OrderResult result)
+        private static bool TryParseOrderResponse(string body, out BrokerOrderResultDto result)
         {
             result = default!;
             if (string.IsNullOrWhiteSpace(body)) return false;
 
             try
             {
-                using var doc = JsonDocument.Parse(body);
-                var root = doc.RootElement;
+                var resp = JsonSerializer.Deserialize<OrderResponse>(body, JsonOpts);
+                if (resp is null) return false;
 
-                var isSuccessful = root.TryGetProperty("isSuccessful", out var okEl)
-                    && okEl.ValueKind == JsonValueKind.True;
+                var err = resp.OmsError?.FirstOrDefault();
 
-                var orderId = GetStringOrNull(root, "id");
-                var message = GetStringOrNull(root, "message");
-
-                OmsError? omsError = null;
-                if (root.TryGetProperty("omsError", out var errEl) &&
-                    errEl.ValueKind == JsonValueKind.Array &&
-                    errEl.GetArrayLength() > 0)
+                result = new BrokerOrderResultDto
                 {
-                    var first = errEl[0];
-                    omsError = new OmsError(
-                        Code: GetIntOrNull(first, "code") ?? 0,
-                        Name: GetStringOrNull(first, "name") ?? "",
-                        Message: GetStringOrNull(first, "error") ?? "");
-                }
-
-                result = new OrderResult(isSuccessful, orderId, message, omsError);
+                    IsSuccessful = resp.IsSuccessful,
+                    OrderId = resp.Id,
+                    Message = resp.Message,
+                    ErrorCode = err?.Code,
+                    ErrorName = err?.Name,
+                };
                 return true;
             }
             catch
@@ -439,7 +461,7 @@ namespace Trader.Infrastructure.EasyTrader
             return $"{_options.OidcBaseUrl}{EasyTraderEndpoints.OidcAuthorize}?{query}";
         }
 
-        private static string ExtractAntiForgeryToken(string html)
+        private static string? ExtractAntiForgeryToken(string html)
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -447,7 +469,7 @@ namespace Trader.Infrastructure.EasyTrader
             var node = doc.DocumentNode
                 .SelectSingleNode("//input[@name='__RequestVerificationToken']");
 
-            return node?.GetAttributeValue("value", string.Empty) ?? string.Empty;
+            return node?.GetAttributeValue("value", string.Empty);
         }
 
         private static string MakeAbsolute(string baseUrl, string pathOrUrl)
@@ -484,26 +506,12 @@ namespace Trader.Infrastructure.EasyTrader
         private static string Truncate(string s, int max)
             => s.Length <= max ? s : s[..max] + "...";
 
-        private static string? GetStringOrNull(JsonElement el, string name)
-            => el.TryGetProperty(name, out var v) && v.ValueKind != JsonValueKind.Null
-                ? v.GetString() : null;
-
-        private static long? GetLongOrNull(JsonElement el, string name)
+        private static string FormatEasyTraderDateTime(DateTime d)
         {
-            if (!el.TryGetProperty(name, out var v)) return null;
-            if (v.ValueKind == JsonValueKind.Null) return null;
-            if (v.ValueKind == JsonValueKind.Number) return v.GetInt64();
-            if (v.ValueKind == JsonValueKind.String &&
-                long.TryParse(v.GetString(), out var parsed)) return parsed;
-            return null;
-        }
-
-        private static int? GetIntOrNull(JsonElement el, string name)
-        {
-            if (!el.TryGetProperty(name, out var v)) return null;
-            if (v.ValueKind == JsonValueKind.Null) return null;
-            if (v.ValueKind == JsonValueKind.Number) return v.GetInt32();
-            return null;
+            var h24 = d.Hour;
+            var h12 = h24 % 12 == 0 ? 12 : h24 % 12;
+            var ampm = h24 < 12 ? "AM" : "PM";
+            return $"{d.Month}/{d.Day}/{d.Year}, {h12}:{d.Minute:D2}:{d.Second:D2} {ampm}";
         }
     }
 }

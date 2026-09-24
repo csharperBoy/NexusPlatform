@@ -1,41 +1,37 @@
 ﻿using Core.Domain.Common.EntityProperties;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Trader.Domain.Enums;
 
 namespace Trader.Domain.Entities
 {
-   
     public class TraderAccount : BaseEntity
     {
-
+        public BrokerType Broker { get; private set; }
         public string Name { get; private set; } = default!;
         public string Username { get; private set; } = default!;
 
-        /// <summary>رمز عبور رمزنگاری‌شده (توسط ISecretProtector)</summary>
+        /// <summary>رمز عبور رمزنگاری‌شده</summary>
         public string EncryptedPassword { get; private set; } = default!;
 
-        /// <summary>توکن Bearer رمزنگاری‌شده</summary>
-        public string? EncryptedToken { get; private set; }
+        /// <summary>Session رمزنگاری‌شده (JSON serialized + encrypted)</summary>
+        public string? EncryptedSession { get; private set; }
 
-        /// <summary>زمان انقضای توکن (UTC)</summary>
-        public DateTimeOffset? TokenExp { get; private set; }
+        /// <summary>زمان انقضای session</summary>
+        public DateTimeOffset? SessionExp { get; private set; }
 
         public DateTimeOffset CreatedAt { get; private set; }
         public DateTimeOffset? UpdatedAt { get; private set; }
 
-        private TraderAccount() { } // EF Core
+        private TraderAccount() { }
 
         public static TraderAccount Create(
+            BrokerType broker,
             string name,
             string username,
             string encryptedPassword)
         {
             return new TraderAccount
             {
+                Broker = broker,
                 Name = name,
                 Username = username,
                 EncryptedPassword = encryptedPassword,
@@ -43,7 +39,7 @@ namespace Trader.Domain.Entities
             };
         }
 
-        public void UpdateInfo(string name, string username, string? encryptedPassword)
+        public void SetInfo(string name, string username, string? encryptedPassword)
         {
             Name = name;
             Username = username;
@@ -52,26 +48,26 @@ namespace Trader.Domain.Entities
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        public void SetToken(string encryptedToken, DateTimeOffset? tokenExp)
+        public void SetSession(string encryptedSession, DateTimeOffset? sessionExp)
         {
-            EncryptedToken = encryptedToken;
-            TokenExp = tokenExp;
+            EncryptedSession = encryptedSession;
+            SessionExp = sessionExp;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        public void ClearToken()
+        public void ClearSession()
         {
-            EncryptedToken = null;
-            TokenExp = null;
+            EncryptedSession = null;
+            SessionExp = null;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 
-        public TokenStatus GetTokenStatus()
+        public SessionStatus GetSessionStatus()
         {
-            if (string.IsNullOrEmpty(EncryptedToken)) return TokenStatus.Empty;
-            if (TokenExp is null) return TokenStatus.Invalid;
-            if (TokenExp <= DateTimeOffset.UtcNow) return TokenStatus.Expired;
-            return TokenStatus.Valid;
+            if (string.IsNullOrEmpty(EncryptedSession)) return SessionStatus.Empty;
+            if (SessionExp is null) return SessionStatus.Invalid;
+            if (SessionExp <= DateTimeOffset.UtcNow) return SessionStatus.Expired;
+            return SessionStatus.Valid;
         }
     }
 }

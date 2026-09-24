@@ -1,11 +1,10 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace Trader.Infrastructure.EasyTrader
+namespace Trader.Infrastructure.Brokers.EasyTrader
 {
-    internal static class PkceGenerator
+    internal static class EasyTraderPkce
     {
-        /// <summary>Verifier تصادفی 43 کاراکتری (base64url).</summary>
         public static string GenerateVerifier()
         {
             Span<byte> bytes = stackalloc byte[32];
@@ -13,7 +12,6 @@ namespace Trader.Infrastructure.EasyTrader
             return Base64UrlEncode(bytes);
         }
 
-        /// <summary>challenge = base64url(SHA256(verifier))</summary>
         public static string GenerateChallenge(string verifier)
         {
             var hash = SHA256.HashData(Encoding.UTF8.GetBytes(verifier));

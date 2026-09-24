@@ -3,12 +3,13 @@
     public class AccountInfoView
     {
         public Guid Id { get; set; }
+        public int Broker { get; set; }
         public string Name { get; set; } = default!;
         public string Username { get; set; } = default!;
 
         /// <summary>"empty" | "valid" | "expired" | "invalid"</summary>
-        public string TokenStatus { get; set; } = "empty";
+        public string SessionStatus { get; set; } = "empty";
 
-        public long? TokenExp { get; set; }   // ISO 8601
+        public long? SessionExp { get; set; }
     }
 }

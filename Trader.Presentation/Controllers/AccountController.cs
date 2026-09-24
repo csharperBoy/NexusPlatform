@@ -66,12 +66,5 @@ namespace Trader.Presentation.Controller
             return HandleResult(result);
         }
 
-        [HttpPost("Activate")]
-        [AuthorizeResource("trader.account", "Edit")]
-        public async Task<IActionResult> Activate([FromBody] ActivateAccountCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return HandleResult(result);
-        }
     }
 }

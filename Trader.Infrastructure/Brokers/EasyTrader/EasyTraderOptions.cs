@@ -1,8 +1,8 @@
-﻿namespace Trader.Infrastructure.EasyTrader
+﻿namespace Trader.Infrastructure.Brokers.EasyTrader
 {
     public class EasyTraderOptions
     {
-        public const string SectionName = "EasyTrader";
+        public const string SectionName = "Brokers:EasyTrader";
 
         public string BaseUrl { get; set; } = "https://api-mts.orbis.easytrader.ir";
         public string OidcBaseUrl { get; set; } = "https://login.emofid.com";

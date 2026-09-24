@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Trader.Application.Abstractions;
+using Trader.Infrastructure.Brokers;
+using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
-using Trader.Infrastructure.EasyTrader;
 
 namespace Trader.Infrastructure.DependencyInjection
 {
@@ -21,34 +22,29 @@ namespace Trader.Infrastructure.DependencyInjection
 
             /* ─── DbContext ─── */
             var migrationsAssembly = typeof(TraderDbContext).Assembly.GetName().Name;
-
-            services.AddDbContext<TraderDbContext>((sp, options) =>
+            services.AddDbContext<TraderDbContext>((sp, opts) =>
             {
-                options.UseSqlServer(conn, b =>
+                opts.UseSqlServer(conn, b =>
                 {
                     b.MigrationsAssembly(migrationsAssembly);
                     b.MigrationsHistoryTable("__TraderMigrationsHistory", "trader");
                 });
             });
 
-            /* ─── EasyTrader Client ─── */
-            services.Configure<EasyTraderOptions>(
-                configuration.GetSection(EasyTraderOptions.SectionName));
-
-            services.AddScoped<IEasyTraderClient, EasyTraderClient>();
-
             /* ─── Security ─── */
             services.AddDataProtection()
                 .SetApplicationName("NexusPlatform.Trader");
+            services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
 
+            /* ─── Broker Clients ─── */
+            services.Configure<EasyTraderOptions>(
+                configuration.GetSection(EasyTraderOptions.SectionName));
 
-            /* ─── UnitOfWork و Repositories ─── */
-            // (فاز ۳)
+            // Singleton چون stateless هستن (session پارامتره)
+            services.AddSingleton<IBrokerClient, EasyTraderBrokerClient>();
+            services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();
 
-            /* ─── Query Services ─── */
-            // (فاز ۳)
-
-            /* ─── Command Services ─── */
+            /* ─── Command + Query Services ─── */
             // (فاز ۳)
 
             return services;

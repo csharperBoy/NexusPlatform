@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Application.Results;
+using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
@@ -30,13 +31,7 @@ namespace Trader.Application.Commands.Account
                 _logger.LogInformation(
                     "Logging in TraderAccount: {Id}", request.Id);
 
-                var ok = await _accountService.LoginAsync(request.Id);
-
-                if (!ok)
-                    return Result<bool>.Fail("Login failed.");
-
-                _logger.LogInformation(
-                    "TraderAccount logged in: {Id}", request.Id);
+                await _accountService.LoginAsync(request.Id);
 
                 return Result<bool>.Ok(true);
             }

@@ -1,11 +1,14 @@
-﻿using MediatR;
+﻿using Core.Application.Results;
+using Core.Shared.Results;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
-using Core.Shared.Results;
+using Trader.Domain.Enums;
 
 namespace Trader.Application.Commands.Account
 {
     public record CreateAccountCommand(
+        int Broker,
         string Name,
         string Username,
         string Password
@@ -31,10 +34,14 @@ namespace Trader.Application.Commands.Account
         {
             try
             {
+                var broker = (BrokerType)request.Broker;
+
                 _logger.LogInformation(
-                    "Creating TraderAccount: {Name}", request.Name);
+                    "Creating TraderAccount: {Name} broker={Broker}",
+                    request.Name, broker);
 
                 var id = await _accountService.CreateAccountAsync(
+                    broker,
                     request.Name,
                     request.Username,
                     request.Password);

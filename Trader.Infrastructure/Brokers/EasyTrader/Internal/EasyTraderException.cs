@@ -1,15 +1,12 @@
-﻿namespace Trader.Application.EasyTrader.Exceptions
+﻿namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
 {
-    public class EasyTraderException : Exception
+    internal class EasyTraderException : Exception
     {
         public int? HttpStatus { get; }
         public string? ResponseBody { get; }
 
         public EasyTraderException(string message)
             : base(message) { }
-
-        public EasyTraderException(string message, Exception inner)
-            : base(message, inner) { }
 
         public EasyTraderException(
             string message,
