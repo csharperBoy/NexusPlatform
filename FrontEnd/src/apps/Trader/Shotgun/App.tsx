@@ -1,19 +1,91 @@
-import { useRoutes, Navigate } from "react-router-dom";
+//src/apps/Trader/Shotgun/App.tsx
+import { useRoutes, Navigate, Outlet } from "react-router-dom";
+import { ProtectedRoute } from "@/modules/Identity";
+import { identityPublicRoutes, identityPanelRoutes } from "@/modules/Identity";
+import { authorizationPanelRoutes } from "@/modules/Authorization";
+import { MainLayout } from "@/modules/DashboardCore";
 import { useActiveModules } from "@/core/context/ModuleContext";
-import { TraderShotgunPublicRoutes } from "@/modules/Trader";
+import { MenuProvider } from "@/core/context/MenuContext";
+import {  TraderShotgunRoutes } from "@/modules/Trader";
 
 export default function App() {
-  const { loading } = useActiveModules();
+  
+    console.info('start:');
+    console.warn('start=');
+  const { activeModules, loading } = useActiveModules();
 
   if (loading) {
+    // می‌توانید یک اسلایدر یا spinner سفارشی قرار دهید
     return <div>در حال بارگذاری تنظیمات…</div>;
   }
 
   const routes = useRoutes([
-    ...TraderShotgunPublicRoutes,
-    /* fallback */
-    { path: "*", element: <Navigate to="/schedule-plans" replace /> },
+    ...(activeModules.has("Identity")
+      ? identityPublicRoutes
+      : []),
+      
+
+    /* مسیرهای محافظت‌شده با Layout */
+    {
+      element: (
+        <MenuProvider>
+        <ProtectedRoute>
+          <MainLayout>
+            <Outlet />
+          </MainLayout>
+        </ProtectedRoute>
+        </MenuProvider>
+      ),
+      children: [
+
+        /* مسیرهای خصوصی Identity */
+        ...(activeModules.has("Identity") ? identityPanelRoutes : []),
+
+        /* مسیرهای خصوصی Authorization */
+        ...(activeModules.has("Authorization") ? authorizationPanelRoutes : []),
+
+        
+        /* مسیرهای خصوصی Scheduler */
+        // ...(activeModules.has("Scheduler") ? schedulerPanelRoutes : []),
+
+        /* مسیرهای خصوصی Trader */
+        ...(activeModules.has("Trader") ? TraderShotgunRoutes : []),
+        
+     
+      ],
+    },
+
+    /* مسیر پیش‌فرض */
+    { path: "*", element: <Navigate to="/" replace /> },
   ]);
 
   return routes;
 }
+
+// import { useRoutes, Navigate } from "react-router-dom";
+// import { useActiveModules } from "@/core/context/ModuleContext";
+// import { TraderShotgunPublicRoutes } from "@/modules/Trader";
+// import { identityPublicRoutes, LoginPage } from "@/modules/Identity";
+// export default function App() {
+
+//   const { activeModules, loading } = useActiveModules();
+//   if (loading) {
+//     return <div>در حال بارگذاری تنظیمات…</div>;
+//   }
+
+//   const routes = useRoutes([
+//     /* مسیر لاگین اختصاصی */
+//     // { path: "/login", element: <LoginPage /> },
+
+//     /* مسیرهای عمومی ماژول Identity (مثل /register) فقط اگر Identity فعال باشد */
+//     ...(activeModules.has("Identity")
+//       ? identityPublicRoutes//.filter((r) => r.path !== "/login") // حذف login duplicate
+//       : []),
+
+//     ...TraderShotgunPublicRoutes,
+//     /* fallback */
+//     { path: "*", element: <Navigate to="/schedule-plans" replace /> },
+//   ]);
+
+//   return routes;
+// }

@@ -63,30 +63,48 @@ namespace Trader.Infrastructure.Data
                     {
                         new()
                         {
-                            Key = "hr.post",
-                            Name = "Trader Posts",
+                            Key = "trader.account",
+                            Name = "Trader Account",
                             Type =ResourceType.Data,
                             Category =ResourceCategory.System,
-                            Description = "Post management",
+                            Description = "Trader Account management",
                             DisplayOrder = 3001,
                             Icon = "list",
                         },new()
                         {
-                            Key = "trader.employment",
-                            Name = "Trader employments",
+                            Key = "trader.symbol",
+                            Name = "Trader Symbol",
                             Type =ResourceType.Data,
                             Category =ResourceCategory.System,
-                            Description = "employment management",
+                            Description = "Trader Symbol management",
                             DisplayOrder = 3002,
                             Icon = "list",
                         },new()
                         {
-                            Key = "trader.location",
-                            Name = "Trader locations",
+                            Key = "trader.scheduleplan",
+                            Name = "SchedulePlan",
                             Type =ResourceType.Data,
                             Category =ResourceCategory.System,
-                            Description = "location management",
+                            Description = "SchedulePlan management",
                             DisplayOrder = 3003,
+                            Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.scheduledorder",
+                            Name = "ScheduledOrder",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "ScheduledOrder management",
+                            DisplayOrder = 3004,
+                            Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.executionlog",
+                            Name = "ExecutionLog",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "ExecutionLog management",
+                            DisplayOrder = 3004,
                             Icon = "list",
                         }
                     }
@@ -101,7 +119,7 @@ namespace Trader.Infrastructure.Data
             {
                new()
                {
-                   ResourceKey = "trader.post",
+                   ResourceKey = "trader.account",
                    Action = PermissionAction.Full,
                    Scopes = new List<ScopeDto>()
                    {
@@ -114,11 +132,11 @@ namespace Trader.Infrastructure.Data
                    AssigneeType= AssigneeType.Role,
                    AssigneeId = roleId,
 
-                   Description = "Full access to trader post"
+                   Description = "Full access to trader account"
                },
                new()
                {
-                   ResourceKey = "trader.employment",
+                   ResourceKey = "trader.symbol",
                    Action = PermissionAction.Full,
                    Scopes = new List<ScopeDto>()
                    {
@@ -131,11 +149,11 @@ namespace Trader.Infrastructure.Data
                    AssigneeType= AssigneeType.Role,
                    AssigneeId = roleId,
 
-                   Description = "Full access to trader employment"
+                   Description = "Full access to trader symbol"
                },
                new()
                {
-                   ResourceKey = "trader.location",
+                   ResourceKey = "trader.scheduleplan",
                    Action = PermissionAction.Full,
                    Scopes = new List<ScopeDto>()
                    {
@@ -148,7 +166,41 @@ namespace Trader.Infrastructure.Data
                    AssigneeType= AssigneeType.Role,
                    AssigneeId = roleId,
 
-                   Description = "Full access to trader location"
+                   Description = "Full access to trader scheduleplan"
+               },
+               new()
+               {
+                   ResourceKey = "trader.scheduledorder",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to trader scheduledorder"
+               },
+               new()
+               {
+                   ResourceKey = "trader.executionlog",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to trader executionlog"
                }
             };
         }
@@ -197,8 +249,8 @@ namespace Trader.Infrastructure.Data
             {
                 new()
                 {
-                    Title = "مدیریت منابع انسانی",
-                    Description = "مدیریت منابع انسانی",
+                    Title = "مدیریت معاملات",
+                    Description = "مدیریت معاملات",
                     Icon = Icon.Folder.GetIconString(),
                     Order = 100,
                     Key = "Trader",
@@ -208,33 +260,43 @@ namespace Trader.Infrastructure.Data
                     {
                         new()
                         {
-                            Title = "مدیریت پست های سازمانی",
-                            Description = "مدیریت پست های سازمانی",
+                            Title = "مدیریت حساب های معاملاتی",
+                            Description = "مدیریت حساب های معاملاتی",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 101,
-                            Key = "trader.post",
+                            Key = "trader.account",
                             ParentKey = "trader",
-                            Path = "/trader/post"
+                            Path = "/trader/accounts"
                         },
                         new()
                         {
-                            Title = "مدیریت کارمندان",
-                            Description = "مدیریت کارمندان",
+                            Title = "مدیریت نمادها",
+                            Description = "مدیریت نمادها",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 102,
-                            Key = "trader.employment",
+                            Key = "trader.symbol",
                             ParentKey = "trader",
-                            Path = "/trader/employment"
+                            Path = "/trader/symbols"
                         },
                         new()
                         {
-                            Title = "مدیریت مکان ها",
-                            Description = "مدیریت مکان ها",
+                            Title = "مدیریت پلن های زمانبندی شده",
+                            Description = "مدیریت پلن های زمانبندی شده",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 103,
-                            Key = "trader.location",
+                            Key = "trader.scheduleplan",
                             ParentKey = "trader",
-                            Path = "/trader/location"
+                            Path = "/trader/schedule-plans"
+                        },
+                        new()
+                        {
+                            Title = "مدیریت تاخیر زمان سرور",
+                            Description = "مدیریت پلن های زمانبندی شده",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 104,
+                            Key = "trader.serverclock",
+                            ParentKey = "trader",
+                            Path = "/trader/server-clock"
                         }
                     }
                 }

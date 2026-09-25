@@ -1,29 +1,18 @@
-import { Navigate, type RouteObject } from "react-router-dom";
-import { TraderLayout } from "./components/TraderLayout";
+import type { RouteObject } from "react-router-dom";
 import { AccountsManagementPage } from "./pages/Accounts/AccountsManagementPage";
 import { SymbolsManagementPage } from "./pages/Symbols/SymbolsManagementPage";
 import { SchedulePlansManagementPage } from "./pages/SchedulePlans/SchedulePlansManagementPage";
 import { ServerClockPage } from "./pages/ServerClock/ServerClockPage";
 
-/* ─── برای استفاده در پنل ادمین (flat) ─── */
-export const traderPanelRoutes: RouteObject[] = [
+/* ─── استفاده در TraderShotgun app (داخل MainLayout پلتفرم) ─── */
+export const TraderShotgunRoutes: RouteObject[] = [
+  { path: "trader/accounts",       element: <AccountsManagementPage /> },
+  { path: "trader/symbols",        element: <SymbolsManagementPage /> },
   { path: "trader/schedule-plans", element: <SchedulePlansManagementPage /> },
-  { path: "trader/accounts", element: <AccountsManagementPage /> },
-  { path: "trader/symbols", element: <SymbolsManagementPage /> },
-  { path: "trader/server-clock", element: <ServerClockPage /> },
+  { path: "trader/server-clock",   element: <ServerClockPage /> },
 ];
 
-/* ─── برای Shotgun app (با Layout) ─── */
-export const TraderShotgunPublicRoutes: RouteObject[] = [
-  {
-    path: "/",
-    element: <TraderLayout />,
-    children: [
-      { index: true, element: <Navigate to="/schedule-plans" replace /> },
-      { path: "schedule-plans", element: <SchedulePlansManagementPage /> },
-      { path: "accounts", element: <AccountsManagementPage /> },
-      { path: "symbols", element: <SymbolsManagementPage /> },
-      { path: "server-clock", element: <ServerClockPage /> },
-    ],
-  },
+/* ─── برای پنل ادمین پلتفرم (flat) ─── */
+export const traderPanelRoutes: RouteObject[] = [
+  ...TraderShotgunRoutes,
 ];

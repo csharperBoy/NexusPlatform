@@ -18,6 +18,7 @@ const MOCK_KEY = "mock:trader:accounts";
 
 interface MockAccount {
   id: string;
+   broker: number; 
   name: string;
   username: string;
   password: string;
@@ -26,7 +27,7 @@ interface MockAccount {
 }
 
 function toView(a: MockAccount): AccountInfoView {
-  let tokenStatus: AccountInfoView["tokenStatus"] = "empty";
+  let tokenStatus: AccountInfoView["sessionStatus"] = "empty";
   if (a.token) {
     if (!a.tokenExp) tokenStatus = "invalid";
     else if (a.tokenExp < Date.now()) tokenStatus = "expired";
@@ -34,10 +35,12 @@ function toView(a: MockAccount): AccountInfoView {
   }
   return {
     id: a.id,
+     broker: a.broker,
     name: a.name,
     username: a.username,
-    tokenStatus,
-    tokenExp: a.tokenExp ? new Date(a.tokenExp).toISOString() : null,
+  
+    sessionStatus: tokenStatus, // ← rename از tokenStatus
+    sessionExp: a.tokenExp ? new Date(a.tokenExp).toISOString() : null,
   };
 }
 
@@ -81,6 +84,7 @@ export const accountApi = {
       const items = mockLoad<MockAccount[]>(MOCK_KEY, []);
       const acc: MockAccount = {
         id: mockUid(),
+        broker: data.broker,   
         name: data.name,
         username: data.username,
         password: data.password,

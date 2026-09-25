@@ -8,26 +8,21 @@ import type {
   UpdateAccountCommand,
 } from "../../models";
 import { TokenStatusBadge } from "../SchedulePlans/components/TokenStatusBadge";
-
 const columns: GenericColumnDef<AccountInfoView>[] = [
+  { key: "name", label: "نام حساب", type: "text", required: true },
+  { key: "username", label: "نام کاربری (کد ملی)", type: "text", dir: "ltr", required: true },
   {
-    key: "name",
-    label: "نام حساب",
+    key: "password",
+    label: "رمز عبور",
     type: "text",
     required: true,
+    render: () => "••••••", // ← توی جدول نمایش داده نشه
   },
   {
-    key: "username",
-    label: "نام کاربری (کد ملی)",
-    type: "text",
-    dir: "ltr",
-    required: true,
-  },
-  {
-    key: "tokenStatus",
-    label: "وضعیت توکن",
+    key: "sessionStatus",
+    label: "وضعیت نشست",
     editable: false,
-    render: (_v, item) => <TokenStatusBadge status={item.tokenStatus} />,
+    render: (_v, item) => <TokenStatusBadge status={item.sessionStatus} />,
   },
 ];
 
@@ -51,6 +46,7 @@ export const AccountsManagementPage: React.FC = () => {
           password: undefined,
         }),
         mapToCreateCommand: (formData) => ({
+            broker: 1,   
           name: formData.name,
           username: formData.username,
           password: formData.password ?? "",
