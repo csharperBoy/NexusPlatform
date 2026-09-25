@@ -23,9 +23,8 @@ namespace Trader.Application.Abstractions
 
         Task<bool> DeleteSchedulePlanAsync(Guid id);
 
-        Task<bool> EnableAsync(Guid id);
-
-        Task<bool> DisableAsync(Guid id);
+        Task EnableAsync(Guid id);
+        Task DisableAsync(Guid id);
 
         Task SaveAsync();
     }

@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Core.Infrastructure\Core.Infrastructure.csproj" />
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
+    <ProjectReference Include="..\Scheduler.Infrastructure\Scheduler.Infrastructure.csproj" />
     <ProjectReference Include="..\Trader.Application\Trader.Application.csproj" />
     <ProjectReference Include="..\Trader.Domain\Trader.Domain.csproj" />
   </ItemGroup>

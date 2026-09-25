@@ -15,10 +15,11 @@ namespace Core.Application.Abstractions.Contact
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection PhoneBook_NullServiceInject(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection Contact_NullServiceInject(this IServiceCollection services, IConfiguration configuration)
         {
 
             services.AddScoped<IPhoneBookPublicService, NullPhoneBookServices>();
+            services.AddScoped<IContactPublicService, NullContactPublicServices>();
             return services;
         }
     }
@@ -26,7 +27,7 @@ namespace Core.Application.Abstractions.Contact
     {
        
     }
-    public class NullHrContactPublicServices : IContactPublicService
+    public class NullContactPublicServices : IContactPublicService
     {
         public Task CreateContact(ContactTypeEnum type, List<string>? value, Guid profileId)
         {

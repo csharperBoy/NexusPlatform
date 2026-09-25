@@ -1,9 +1,4 @@
 ﻿using Core.Domain.Common.EntityProperties;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Trader.Domain.Enums;
 
 namespace Trader.Domain.Entities
@@ -27,7 +22,6 @@ namespace Trader.Domain.Entities
         private TraderSymbol() { }
 
         public static TraderSymbol Create(
-
             string symbolName,
             string symbolIsin,
             long price,
@@ -53,7 +47,7 @@ namespace Trader.Domain.Entities
             };
         }
 
-        public void Update(
+        public void SetInfo(
             string symbolName,
             string symbolIsin,
             long price,

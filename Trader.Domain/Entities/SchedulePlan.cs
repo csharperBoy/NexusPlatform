@@ -1,14 +1,8 @@
 ﻿using Core.Domain.Common.EntityProperties;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Trader.Domain.Enums;
 
 namespace Trader.Domain.Entities
 {
-   
     public class SchedulePlan : BaseEntity
     {
         public string Name { get; private set; } = default!;
@@ -47,7 +41,7 @@ namespace Trader.Domain.Entities
             };
         }
 
-        public void Update(
+        public void SetInfo(
             string name,
             DateOnly date,
             bool enabled,
@@ -90,20 +84,17 @@ namespace Trader.Domain.Entities
             long totalValue,
             TimeOnly time)
         {
-            var order = ScheduledOrder.Create(Id, accountId, symbolIsin, side, mode, quantity, totalValue, time);
+            var order = ScheduledOrder.Create(
+                Id, accountId, symbolIsin,
+                side, mode, quantity, totalValue, time);
             _orders.Add(order);
             return order;
         }
 
         public void RemoveOrder(Guid orderId)
-        {
-            _orders.RemoveAll(o => o.Id == orderId);
-        }
+            => _orders.RemoveAll(o => o.Id == orderId);
 
-        public void ClearOrders()
-        {
-            _orders.Clear();
-        }
+        public void ClearOrders() => _orders.Clear();
 
         public void ReplaceOrders(IEnumerable<ScheduledOrder> orders)
         {

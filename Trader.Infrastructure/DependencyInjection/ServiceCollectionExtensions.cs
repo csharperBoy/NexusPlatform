@@ -3,11 +3,15 @@ using Core.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Scheduler.Application.DependencyInjection;
 using Trader.Application.Abstractions;
+using Trader.Application.Scheduler;
+using Trader.Application.Scheduler.Services;
 using Trader.Domain.Entities;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
+using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
 
 namespace Trader.Infrastructure.DependencyInjection
@@ -33,41 +37,26 @@ namespace Trader.Infrastructure.DependencyInjection
             });
 
             /* ═══════════ Repositories ═══════════ */
-            services.AddScoped<
-                IRepository<TraderDbContext, TraderAccount, Guid>,
+            services.AddScoped<IRepository<TraderDbContext, TraderAccount, Guid>,
                 EfRepository<TraderDbContext, TraderAccount, Guid>>();
-
-            services.AddScoped<
-                IRepository<TraderDbContext, TraderSymbol, Guid>,
+            services.AddScoped<IRepository<TraderDbContext, TraderSymbol, Guid>,
                 EfRepository<TraderDbContext, TraderSymbol, Guid>>();
-
-            services.AddScoped<
-                IRepository<TraderDbContext, SchedulePlan, Guid>,
+            services.AddScoped<IRepository<TraderDbContext, SchedulePlan, Guid>,
                 EfRepository<TraderDbContext, SchedulePlan, Guid>>();
-
-            services.AddScoped<
-                IRepository<TraderDbContext, ScheduledOrder, Guid>,
+            services.AddScoped<IRepository<TraderDbContext, ScheduledOrder, Guid>,
                 EfRepository<TraderDbContext, ScheduledOrder, Guid>>();
-
-            services.AddScoped<
-                IRepository<TraderDbContext, ExecutionLog, Guid>,
+            services.AddScoped<IRepository<TraderDbContext, ExecutionLog, Guid>,
                 EfRepository<TraderDbContext, ExecutionLog, Guid>>();
 
-            /* ═══════════ Specification Repositories ═══════════ */
-            services.AddScoped<
-                ISpecificationRepository<TraderAccount, Guid>,
+            services.AddScoped<ISpecificationRepository<TraderAccount, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderAccount, Guid>>();
-
-            services.AddScoped<
-                ISpecificationRepository<TraderSymbol, Guid>,
+            services.AddScoped<ISpecificationRepository<TraderSymbol, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderSymbol, Guid>>();
-
-            services.AddScoped<
-                ISpecificationRepository<SchedulePlan, Guid>,
+            services.AddScoped<ISpecificationRepository<SchedulePlan, Guid>,
                 EfSpecificationRepository<TraderDbContext, SchedulePlan, Guid>>();
 
-            /* ═══════════ Unit of Work ═══════════ */
-            services.AddScoped<IUnitOfWork<TraderDbContext>, EfUnitOfWork<TraderDbContext>>();
+            services.AddScoped<IUnitOfWork<TraderDbContext>,
+                EfUnitOfWork<TraderDbContext>>();
 
             /* ═══════════ Broker Clients ═══════════ */
             services.Configure<EasyTraderOptions>(
@@ -76,7 +65,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddSingleton<EasyTraderBrokerClient>();
             services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();
 
-            /* ═══════════ Command + Query Services ═══════════ */
+            /* ═══════════ Services ═══════════ */
 
             // Account
             services.AddScoped<AccountService>();
@@ -91,6 +80,26 @@ namespace Trader.Infrastructure.DependencyInjection
                 sp => sp.GetRequiredService<SymbolService>());
             services.AddScoped<ISymbolQueryService>(
                 sp => sp.GetRequiredService<SymbolService>());
+
+            // SchedulePlan
+            services.AddScoped<SchedulePlanService>();
+            services.AddScoped<ISchedulePlanCommandService>(
+                sp => sp.GetRequiredService<SchedulePlanService>());
+            services.AddScoped<ISchedulePlanQueryService>(
+                sp => sp.GetRequiredService<SchedulePlanService>());
+
+            // ServerClock (Singleton — چون diff رو نگه‌می‌داره و از scope factory استفاده می‌کنه)
+            services.AddSingleton<ServerClockService>();
+            services.AddSingleton<IServerClockCommandService>(
+                sp => sp.GetRequiredService<ServerClockService>());
+            services.AddSingleton<IServerClockQueryService>(
+                sp => sp.GetRequiredService<ServerClockService>());
+
+            // PlanExecutor
+            services.AddScoped<IPlanExecutor, PlanExecutor>();
+
+            /* ═══════════ Scheduler Job Handler ═══════════ */
+            services.AddScheduledJobHandler<PlanExecutionPayload, PlanExecutionJobHandler>();
 
             return services;
         }

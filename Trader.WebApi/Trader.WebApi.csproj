@@ -47,9 +47,6 @@
     <ProjectReference Include="..\Navigation.Application\Navigation.Application.csproj" />
     <ProjectReference Include="..\Navigation.Infrastructure\Navigation.Infrastructure.csproj" />
     <ProjectReference Include="..\Navigation.Presentation\Navigation.Presentation.csproj" />
-    <ProjectReference Include="..\People.Application\People.Application.csproj" />
-    <ProjectReference Include="..\People.Infrastructure\People.Infrastructure.csproj" />
-    <ProjectReference Include="..\People.Presentation\People.Presentation.csproj" />
     <ProjectReference Include="..\Scheduler.Application\Scheduler.Application.csproj" />
     <ProjectReference Include="..\Scheduler.Infrastructure\Scheduler.Infrastructure.csproj" />
     <ProjectReference Include="..\Scheduler.Presentation\Scheduler.Presentation.csproj" />
