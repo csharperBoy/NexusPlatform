@@ -18,12 +18,12 @@ namespace Scheduler.Application.Models
         /// چقدر قبل از fireAt واقعی، Hangfire trigger بشه.
         /// داخل job با PreciseDelay به fireAt واقعی می‌رسیم.
         /// </summary>
-        public TimeSpan DefaultPreFireBuffer { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan DefaultPreFireBuffer { get; set; } = TimeSpan.FromSeconds(15);
 
         /// <summary>Hangfire polling interval برای صف delayed</summary>
         public int SchedulePollIntervalSeconds { get; set; } = 5;
 
         /// <summary>تعداد worker برای صف scheduler</summary>
-        public int WorkerCount { get; set; } = 0; // 0 = auto
+        public int WorkerCount { get; set; } = 50; // 0 = auto
     }
 }
