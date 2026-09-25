@@ -1,10 +1,8 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Security;
-using Core.Infrastructure.Repositories;      // IRepository, IUnitOfWork — namespace رو تطبیق بده
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos;
-using Trader.Application.EasyTrader.Exceptions;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -15,20 +13,20 @@ namespace Trader.Infrastructure.Services
     {
         private readonly IRepository<TraderDbContext, TraderAccount, Guid> _accountRepository;
         private readonly IUnitOfWork<TraderDbContext> _uow;
-        private readonly IEasyTraderClient _easyTrader;
+        private readonly IBrokerClientFactory _brokerFactory;
         private readonly ISecretProtector _protector;
         private readonly ILogger<AccountService> _logger;
 
         public AccountService(
             IRepository<TraderDbContext, TraderAccount, Guid> accountRepository,
             IUnitOfWork<TraderDbContext> uow,
-            IEasyTraderClient easyTrader,
+            IBrokerClientFactory brokerFactory,
             ISecretProtector protector,
             ILogger<AccountService> logger)
         {
             _accountRepository = accountRepository;
             _uow = uow;
-            _easyTrader = easyTrader;
+            _brokerFactory = brokerFactory;
             _protector = protector;
             _logger = logger;
         }
@@ -36,26 +34,47 @@ namespace Trader.Infrastructure.Services
         /* ═══════════════════ Commands ═══════════════════ */
 
         public async Task<Guid> CreateAccountAsync(
-            string name, string username, string password)
+            BrokerType broker,
+            string name,
+            string username,
+            string password)
         {
             var encrypted = _protector.Protect(password);
-            var account = TraderAccount.Create(name, username, encrypted);
+
+            var account = TraderAccount.Create(
+                broker,
+                name,
+                username,
+                encrypted);
+
             await _accountRepository.AddAsync(account);
+
+            _logger.LogInformation(
+                "Created TraderAccount {Id} broker={Broker} name={Name}",
+                account.Id, broker, name);
+
             return account.Id;
         }
 
         public async Task<Guid> UpdateAccountAsync(
-            Guid id, string name, string username, string? password)
+            Guid id,
+            string name,
+            string username,
+            string? password)
         {
             var account = await _accountRepository.GetByIdAsync(id)
                 ?? throw new Exception($"Account {id} not found");
 
-            var encrypted = password is not null
+            var encryptedPassword = password is not null
                 ? _protector.Protect(password)
                 : null;
 
-            account.SetInfo(name, username, encrypted);
+            account.SetInfo(name, username, encryptedPassword);
+
             await _accountRepository.UpdateAsync(account);
+
+            _logger.LogInformation("Updated TraderAccount {Id}", id);
+
             return account.Id;
         }
 
@@ -65,6 +84,9 @@ namespace Trader.Infrastructure.Services
                 ?? throw new Exception($"Account {id} not found");
 
             await _accountRepository.DeleteAsync(account);
+
+            _logger.LogInformation("Deleted TraderAccount {Id}", id);
+
             return true;
         }
 
@@ -73,35 +95,27 @@ namespace Trader.Infrastructure.Services
             var account = await _accountRepository.GetByIdAsync(id)
                 ?? throw new Exception($"Account {id} not found");
 
+            var brokerClient = _brokerFactory.GetClient(account.Broker);
             var password = _protector.Unprotect(account.EncryptedPassword);
 
             _logger.LogInformation(
-                "Logging in TraderAccount {Id} ({Username})",
-                id, account.Username);
+                "Logging in TraderAccount {Id} ({Username}) broker={Broker}",
+                id, account.Username, account.Broker);
 
-            var loginResult = await _easyTrader.LoginAsync(account.Username, password);
+            /* ─── Login via broker (تمام مراحل OIDC/activation داخلش) ─── */
+            var session = await brokerClient.LoginAsync(account.Username, password);
 
-            var exp = DateTimeOffset.UtcNow.AddSeconds(loginResult.ExpiresIn);
-            var encryptedToken = _protector.Protect(loginResult.AccessToken);
+            /* ─── Serialize + Encrypt session ─── */
+            var sessionJson = brokerClient.SerializeSession(session);
+            var encryptedSession = _protector.Protect(sessionJson);
 
-            account.SetToken(encryptedToken, exp);
+            account.SetSession(encryptedSession, session.ExpiresAt);
+
             await _accountRepository.UpdateAsync(account);
-        }
-
-        public async Task ActivateAsync(Guid id)
-        {
-            var account = await _accountRepository.GetByIdAsync(id)
-                ?? throw new Exception($"Account {id} not found");
-
-            if (string.IsNullOrEmpty(account.EncryptedToken))
-                throw new Exception("Account has no token");
-
-            var token = _protector.Unprotect(account.EncryptedToken);
 
             _logger.LogInformation(
-                "Activating token for TraderAccount {Id}", id);
-
-            await _easyTrader.ActivateTokenAsync(token);
+                "TraderAccount {Id} session updated, expiresAt={Exp}",
+                id, session.ExpiresAt);
         }
 
         public async Task SaveAsync()
@@ -120,10 +134,13 @@ namespace Trader.Infrastructure.Services
                 .Select(a => new AccountInfoView
                 {
                     Id = a.Id,
+                    Broker = (int)a.Broker,
                     Name = a.Name,
                     Username = a.Username,
-                    TokenStatus = a.GetTokenStatus().ToString().ToLowerInvariant(),
-                    TokenExp = a.TokenExp?.ToUnixTimeMilliseconds(),
+                    SessionStatus = a.GetSessionStatus()
+                        .ToString()
+                        .ToLowerInvariant(),
+                    SessionExp = a.SessionExp?.ToUnixTimeMilliseconds(),
                 })
                 .ToList();
         }

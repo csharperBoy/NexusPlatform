@@ -1,8 +1,8 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Security;
-using Core.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -15,7 +15,7 @@ namespace Trader.Infrastructure.Services
         private readonly IRepository<TraderDbContext, TraderSymbol, Guid> _symbolRepository;
         private readonly IRepository<TraderDbContext, TraderAccount, Guid> _accountRepository;
         private readonly IUnitOfWork<TraderDbContext> _uow;
-        private readonly IEasyTraderClient _easyTrader;
+        private readonly IBrokerClientFactory _brokerFactory;
         private readonly ISecretProtector _protector;
         private readonly ILogger<SymbolService> _logger;
 
@@ -23,14 +23,14 @@ namespace Trader.Infrastructure.Services
             IRepository<TraderDbContext, TraderSymbol, Guid> symbolRepository,
             IRepository<TraderDbContext, TraderAccount, Guid> accountRepository,
             IUnitOfWork<TraderDbContext> uow,
-            IEasyTraderClient easyTrader,
+            IBrokerClientFactory brokerFactory,
             ISecretProtector protector,
             ILogger<SymbolService> logger)
         {
             _symbolRepository = symbolRepository;
             _accountRepository = accountRepository;
             _uow = uow;
-            _easyTrader = easyTrader;
+            _brokerFactory = brokerFactory;
             _protector = protector;
             _logger = logger;
         }
@@ -38,38 +38,66 @@ namespace Trader.Infrastructure.Services
         /* ═══════════════════ Commands ═══════════════════ */
 
         public async Task<Guid> CreateSymbolAsync(
-            string symbolName, string symbolIsin,
-            long price, long quantity,
-            int side, int validityType,
-            decimal commission, int orderModelType, int orderFrom)
+            string symbolName,
+            string symbolIsin,
+            long price,
+            long quantity,
+            int side,
+            int validityType,
+            decimal commission,
+            int orderModelType,
+            int orderFrom)
         {
             var symbol = TraderSymbol.Create(
-                symbolName, symbolIsin,
-                price, quantity,
-                (OrderSide)side, validityType,
-                commission, orderModelType, orderFrom);
+                symbolName,
+                symbolIsin,
+                price,
+                quantity,
+                (OrderSide)side,
+                validityType,
+                commission,
+                orderModelType,
+                orderFrom);
 
             await _symbolRepository.AddAsync(symbol);
+
+            _logger.LogInformation(
+                "Created TraderSymbol {Id} ({SymbolName})",
+                symbol.Id, symbolName);
+
             return symbol.Id;
         }
 
         public async Task<Guid> UpdateSymbolAsync(
             Guid id,
-            string symbolName, string symbolIsin,
-            long price, long quantity,
-            int side, int validityType,
-            decimal commission, int orderModelType, int orderFrom)
+            string symbolName,
+            string symbolIsin,
+            long price,
+            long quantity,
+            int side,
+            int validityType,
+            decimal commission,
+            int orderModelType,
+            int orderFrom)
         {
             var symbol = await _symbolRepository.GetByIdAsync(id)
                 ?? throw new Exception($"Symbol {id} not found");
 
             symbol.SetInfo(
-                symbolName, symbolIsin,
-                price, quantity,
-                (OrderSide)side, validityType,
-                commission, orderModelType, orderFrom);
+                symbolName,
+                symbolIsin,
+                price,
+                quantity,
+                (OrderSide)side,
+                validityType,
+                commission,
+                orderModelType,
+                orderFrom);
 
             await _symbolRepository.UpdateAsync(symbol);
+
+            _logger.LogInformation("Updated TraderSymbol {Id}", id);
+
             return symbol.Id;
         }
 
@@ -79,10 +107,16 @@ namespace Trader.Infrastructure.Services
                 ?? throw new Exception($"Symbol {id} not found");
 
             await _symbolRepository.DeleteAsync(symbol);
+
+            _logger.LogInformation("Deleted TraderSymbol {Id}", id);
+
             return true;
         }
 
-        public async Task SaveAsync() => await _uow.SaveChangesAsync();
+        public async Task SaveAsync()
+        {
+            await _uow.SaveChangesAsync();
+        }
 
         /* ═══════════════════ Queries ═══════════════════ */
 
@@ -108,33 +142,38 @@ namespace Trader.Infrastructure.Services
                 .ToList();
         }
 
-        public async Task<MarketSymbolInfoView> GetMarketInfoAsync(string symbolIsin)
+        public async Task<SymbolMarketDataDto> GetMarketInfoAsync(string symbolName)
         {
-            // پیدا کردن اولین حساب با توکن معتبر
-            var accounts = await _accountRepository.GetAllAsync();
-            var account = accounts.FirstOrDefault(
-                a => a.GetTokenStatus() == TokenStatus.Valid)
-                ?? throw new Exception("No account with valid token available");
-
-            var token = _protector.Unprotect(account.EncryptedToken!);
+            var (brokerClient, session) = await GetDefaultSessionAsync();
 
             _logger.LogDebug(
-                "Fetching market info for {Isin} using account {AccountId}",
-                symbolIsin, account.Id);
+                "Fetching market info for {Symbol} via {Broker}",
+                symbolName, brokerClient.BrokerType);
 
-            var result = await _easyTrader.GetSymbolInfoAsync(token, symbolIsin);
+            return await brokerClient.GetSymbolInfoAsync(session, symbolName);
+        }
 
-            return new MarketSymbolInfoView
-            {
-                SymbolIsin = result.SymbolIsin,
-                HighAllowedPrice = result.HighAllowedPrice,
-                LowAllowedPrice = result.LowAllowedPrice,
-                LastTradedPrice = result.LastTradedPrice,
-                ClosingPrice = result.ClosingPrice,
-                FirstTradedPrice = result.FirstTradedPrice,
-                TradeDate = result.TradeDate,
-                FetchedAt = result.FetchedAt,
-            };
+        /* ═══════════════════ Helpers ═══════════════════ */
+
+        /// <summary>
+        /// اولین حساب با session معتبر رو پیدا می‌کنه و session رو decrypt می‌کنه.
+        /// </summary>
+        private async Task<(IBrokerClient Client, BrokerSession Session)> GetDefaultSessionAsync()
+        {
+            var accounts = await _accountRepository.GetAllAsync();
+
+            var account = accounts
+                .Where(a => a.GetSessionStatus() == SessionStatus.Valid)
+                .OrderBy(a => a.Name)
+                .FirstOrDefault()
+                ?? throw new Exception(
+                    "No account with valid session available. Please login first.");
+
+            var brokerClient = _brokerFactory.GetClient(account.Broker);
+            var sessionJson = _protector.Unprotect(account.EncryptedSession!);
+            var session = brokerClient.DeserializeSession(sessionJson);
+
+            return (brokerClient, session);
         }
     }
 }

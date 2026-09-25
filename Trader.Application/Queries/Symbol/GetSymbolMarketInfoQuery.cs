@@ -7,10 +7,10 @@ using Trader.Application.Dtos;
 namespace Trader.Application.Queries.Symbol
 {
     public record GetSymbolMarketInfoQuery(string SymbolIsin)
-        : IRequest<Result<MarketSymbolInfoView>>;
+        : IRequest<Result<SymbolMarketDataDto>>;
 
     public class GetSymbolMarketInfoQueryHandler
-        : IRequestHandler<GetSymbolMarketInfoQuery, Result<MarketSymbolInfoView>>
+        : IRequestHandler<GetSymbolMarketInfoQuery, Result<SymbolMarketDataDto>>
     {
         private readonly ISymbolQueryService _symbolQueryService;
         private readonly ILogger<GetSymbolMarketInfoQueryHandler> _logger;
@@ -23,7 +23,7 @@ namespace Trader.Application.Queries.Symbol
             _logger = logger;
         }
 
-        public async Task<Result<MarketSymbolInfoView>> Handle(
+        public async Task<Result<SymbolMarketDataDto>> Handle(
             GetSymbolMarketInfoQuery request,
             CancellationToken cancellationToken)
         {
@@ -33,13 +33,13 @@ namespace Trader.Application.Queries.Symbol
                     "Getting Market Info for symbol {Isin}", request.SymbolIsin);
 
                 var info = await _symbolQueryService.GetMarketInfoAsync(request.SymbolIsin);
-                return Result<MarketSymbolInfoView>.Ok(info);
+                return Result<SymbolMarketDataDto>.Ok(info);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Failed to get Market Info for {Isin}", request.SymbolIsin);
-                return Result<MarketSymbolInfoView>.Fail(ex.Message);
+                return Result<SymbolMarketDataDto>.Fail(ex.Message);
             }
         }
     }

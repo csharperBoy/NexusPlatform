@@ -10,7 +10,7 @@ namespace Core.Infrastructure.Security
 
             public DataProtectionSecretProtector(IDataProtectionProvider provider)
             {
-                _protector = provider.CreateProtector("MaharPlatform.Secrets.v1");
+                _protector = provider.CreateProtector("NexusPlatform.Secrets.v1");
             }
 
             public string Protect(string plain)

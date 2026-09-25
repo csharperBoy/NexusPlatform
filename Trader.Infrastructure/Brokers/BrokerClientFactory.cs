@@ -13,23 +13,15 @@ namespace Trader.Infrastructure.Brokers
 
         public IBrokerClient GetClient(BrokerType brokerType)
         {
-            //return brokerType switch
-            //{
-            //    BrokerType.EasyTrader => _sp.GetRequiredService<IBrokerClient>(),
-            //    _ => throw new NotSupportedException(
-            //        $"Broker '{brokerType}' is not supported.")
-            //};
-
             return brokerType switch
             {
                 BrokerType.EasyTrader => _sp.GetRequiredService<EasyTraderBrokerClient>(),
-                //BrokerType.Agah => _sp.GetRequiredService<AgahBrokerClient>(),
-            _ => throw new NotSupportedException(
-                $"Broker '{brokerType}' is not supported.")
-
+                _ => throw new NotSupportedException(
+                    $"Broker '{brokerType}' is not supported.")
             };
         }
     }
 }
+
 
 

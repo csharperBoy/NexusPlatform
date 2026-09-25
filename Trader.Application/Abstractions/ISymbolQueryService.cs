@@ -6,6 +6,6 @@ namespace Trader.Application.Abstractions
     {
         Task<IReadOnlyList<SymbolInfoView>> GetSymbolListAsync();
 
-        Task<MarketSymbolInfoView> GetMarketInfoAsync(string symbolIsin);
+        Task<SymbolMarketDataDto> GetMarketInfoAsync(string symbolIsin);
     }
 }
