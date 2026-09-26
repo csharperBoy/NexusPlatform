@@ -101,6 +101,10 @@ namespace Trader.Infrastructure.DependencyInjection
             /* ═══════════ Scheduler Job Handler ═══════════ */
             services.AddScheduledJobHandler<PlanExecutionPayload, PlanExecutionJobHandler>();
 
+
+            // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
+            services.AddHostedService<ModuleInitializer>();
+
             return services;
         }
     }

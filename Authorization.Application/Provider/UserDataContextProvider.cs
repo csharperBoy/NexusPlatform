@@ -3,6 +3,7 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.People;
 using Core.Application.Context;
+using Core.Application.Helper;
 using Core.Application.Provider;
 using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +20,7 @@ namespace Authorization.Application.Provider
         private readonly IEmploymentPublicService _employmentService;
 
         private readonly IPostPublicService _positionService;
-       private readonly IPermissionInternalService _permissionService;
+        private readonly IPermissionInternalService _permissionService;
         private readonly IHttpContextAccessor _httpContext;
         private readonly UserDataContext _userDataContext;
 
@@ -38,7 +39,7 @@ namespace Authorization.Application.Provider
         {
             _httpContext = httpContext;
             _userDataContext = userDataContext;
-           _userService = userService;
+            _userService = userService;
             _personService = personService;
 
             _roleService = roleService;
@@ -58,45 +59,55 @@ namespace Authorization.Application.Provider
                 return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
             Guid userPermissionAssigneeId = await _userService.GetUserPermissionAssigneeIdAsync(userId);
 
+            Guid? PartyId = null;
+            Guid? personId = null;
+            Guid? partyPermissionAssigneeId = null;
+            Guid? EmploymentId = null;
+            List<Guid>? PostId =null;
+            List<Guid>? PostPermissionAssigneeId =null;
 
-
-            Guid? PartyId = await _userService.GetPartyId(userId);
-            Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
-            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
-            
-            Guid? EmploymentId = await _employmentService.GetEmploymentId(personId);
-            
-            List<Guid>? PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
-            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
-
+           
+            List<Guid?>? OrgIds = null;
+            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.People))
+            {
+                 PartyId = await _userService.GetPartyId(userId);
+                personId = await _personService.GetNaturalPersonIdAsync(PartyId);
+               partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+            }
+            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.HR))
+            {
+                EmploymentId = await _employmentService.GetEmploymentId(personId);
+                PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
+                PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
+                OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
+            }
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
-            
-            List<Guid?>? OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
+
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
 
 
             return new UserDataContext
             {
-                
+
                 UserId = userId,
                 UserPermissionAssigneeId = userPermissionAssigneeId,
-                
+
                 PartyId = PartyId,
                 PartyPermissionAssigneeId = partyPermissionAssigneeId,
-                
+
                 PostIds = PostId?.ToHashSet(),
                 PostPermissionAssigneeIds = PostPermissionAssigneeId?.ToHashSet(),
-                
-                
+
+
                 RoleIds = RoleIds.ToHashSet(),
                 RolePermissionAssigneeIds = RolePermissionAssigneeIds.ToHashSet(),
-              
+
                 OrganizationUnitIds = OrgIds?.ToHashSet(),
                 Permissions = allPermission.ToHashSet(),
 
-                
+
 
 
             };

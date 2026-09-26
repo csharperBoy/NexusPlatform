@@ -7,6 +7,8 @@ import { MainLayout } from "@/modules/DashboardCore";
 import { useActiveModules } from "@/core/context/ModuleContext";
 import { MenuProvider } from "@/core/context/MenuContext";
 import {  TraderShotgunRoutes } from "@/modules/Trader";
+import LoginPage from "./Pages/LoginPage";
+import DashboardPage from "./Pages/DashboardPage";
 
 export default function App() {
   
@@ -20,8 +22,13 @@ export default function App() {
   }
 
   const routes = useRoutes([
+    
+    /* مسیر لاگین اختصاصی */
+    { path: "/login", element: <LoginPage /> },
+
+    /* مسیرهای عمومی ماژول Identity (مثل /register) فقط اگر Identity فعال باشد */
     ...(activeModules.has("Identity")
-      ? identityPublicRoutes
+      ? identityPublicRoutes.filter((r) => r.path !== "/login") // حذف login duplicate
       : []),
       
 
@@ -38,6 +45,7 @@ export default function App() {
       ),
       children: [
 
+        { path: "/dashboard", element: <DashboardPage /> },
         /* مسیرهای خصوصی Identity */
         ...(activeModules.has("Identity") ? identityPanelRoutes : []),
 
@@ -56,36 +64,33 @@ export default function App() {
     },
 
     /* مسیر پیش‌فرض */
-    { path: "*", element: <Navigate to="/" replace /> },
+    { path: "*", element: <Navigate to="/dashboard" replace /> },
   ]);
 
   return routes;
 }
+/* 
+import { useRoutes, Navigate } from "react-router-dom";
+import { useActiveModules } from "@/core/context/ModuleContext";
+import { TraderShotgunRoutes } from "@/modules/Trader";
+import { identityPublicRoutes, LoginPage } from "@/modules/Identity";
+export default function App() {
 
-// import { useRoutes, Navigate } from "react-router-dom";
-// import { useActiveModules } from "@/core/context/ModuleContext";
-// import { TraderShotgunPublicRoutes } from "@/modules/Trader";
-// import { identityPublicRoutes, LoginPage } from "@/modules/Identity";
-// export default function App() {
+  const { activeModules, loading } = useActiveModules();
+  if (loading) {
+    return <div>در حال بارگذاری تنظیمات…</div>;
+  }
 
-//   const { activeModules, loading } = useActiveModules();
-//   if (loading) {
-//     return <div>در حال بارگذاری تنظیمات…</div>;
-//   }
+  const routes = useRoutes([
+    // { path: "/login", element: <LoginPage /> },
 
-//   const routes = useRoutes([
-//     /* مسیر لاگین اختصاصی */
-//     // { path: "/login", element: <LoginPage /> },
+    ...(activeModules.has("Identity")
+      ? identityPublicRoutes//.filter((r) => r.path !== "/login") // حذف login duplicate
+      : []),
 
-//     /* مسیرهای عمومی ماژول Identity (مثل /register) فقط اگر Identity فعال باشد */
-//     ...(activeModules.has("Identity")
-//       ? identityPublicRoutes//.filter((r) => r.path !== "/login") // حذف login duplicate
-//       : []),
+    ...TraderShotgunRoutes,
+    { path: "*", element: <Navigate to="/schedule-plans" replace /> },
+  ]);
 
-//     ...TraderShotgunPublicRoutes,
-//     /* fallback */
-//     { path: "*", element: <Navigate to="/schedule-plans" replace /> },
-//   ]);
-
-//   return routes;
-// }
+  return routes;
+} */
