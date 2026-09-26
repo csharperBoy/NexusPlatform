@@ -48,8 +48,8 @@ namespace Trader.Infrastructure.Scheduler
 
         public async Task ExecuteAsync(Guid planId, CancellationToken ct = default)
         {
-            var plan = await _planRepository.GetByIdAsync(planId)
-                ?? throw new Exception($"Plan {planId} not found");
+            var plan = await _planRepository.GetByIdAsync(planId, p => p.Orders)
+                        ?? throw new Exception($"Plan {planId} not found");
 
             if (!plan.Enabled)
             {

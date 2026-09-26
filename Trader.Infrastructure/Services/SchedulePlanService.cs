@@ -1,4 +1,5 @@
 ﻿using Core.Application.Abstractions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Scheduler.Application.Abstractions;
@@ -75,7 +76,7 @@ namespace Trader.Infrastructure.Services
             string autoRefreshAt,
             List<ScheduledOrderItemDto> orders)
         {
-            var plan = await _planRepository.GetByIdAsync(id)
+            var plan = await _planRepository.GetByIdAsync(id , p=>p.Orders)
                 ?? throw new Exception($"SchedulePlan {id} not found");
 
             var wasEnabled = plan.Enabled;
@@ -104,7 +105,7 @@ namespace Trader.Infrastructure.Services
 
         public async Task<bool> DeleteSchedulePlanAsync(Guid id)
         {
-            var plan = await _planRepository.GetByIdAsync(id)
+            var plan = await _planRepository.GetByIdAsync(id, p => p.Orders)
                 ?? throw new Exception($"SchedulePlan {id} not found");
 
             if (plan.Enabled)
@@ -119,7 +120,7 @@ namespace Trader.Infrastructure.Services
 
         public async Task EnableAsync(Guid id)
         {
-            var plan = await _planRepository.GetByIdAsync(id)
+            var plan = await _planRepository.GetByIdAsync(id, p => p.Orders)
                 ?? throw new Exception($"SchedulePlan {id} not found");
 
             if (plan.Enabled)
@@ -139,7 +140,7 @@ namespace Trader.Infrastructure.Services
 
         public async Task DisableAsync(Guid id)
         {
-            var plan = await _planRepository.GetByIdAsync(id)
+            var plan = await _planRepository.GetByIdAsync(id, p => p.Orders)
                 ?? throw new Exception($"SchedulePlan {id} not found");
 
             if (!plan.Enabled)
@@ -166,7 +167,7 @@ namespace Trader.Infrastructure.Services
         public async Task<IReadOnlyList<SchedulePlanInfoView>> GetSchedulePlanListAsync()
         {
             var plans = await _planRepository.GetAllAsync(
-                queryOptions: q => q.OrderBy(p => p.Date).ThenBy(p => p.Name));
+                queryOptions: q => q.OrderBy(p => p.Date).ThenBy(p => p.Name).Include(p=>p.Orders));
 
             var accounts = (await _accountRepository.GetAllAsync())
                 .ToDictionary(a => a.Id, a => a.Name);
@@ -179,7 +180,7 @@ namespace Trader.Infrastructure.Services
 
         public async Task<SchedulePlanInfoView?> GetSchedulePlanByIdAsync(Guid id)
         {
-            var plan = await _planRepository.GetByIdAsync(id);
+            var plan = await _planRepository.GetByIdAsync(id , p => p.Orders);
             if (plan is null) return null;
 
             var accounts = (await _accountRepository.GetAllAsync())
@@ -282,8 +283,8 @@ namespace Trader.Infrastructure.Services
                 queue: "scheduler");
 
             _logger.LogInformation(
-                "Scheduled plan {PlanId} at {FireAt} (jobId={JobId})",
-                plan.Id, fireAt, jobId);
+                "Scheduled plan {PlanId} ({Name}) at {FireAt} with {OrderCount} orders (jobId={JobId})",
+                plan.Id, plan.Name, fireAt, plan.Orders.Count, jobId);
         }
 
         private async Task CancelScheduledJobAsync(Guid planId)

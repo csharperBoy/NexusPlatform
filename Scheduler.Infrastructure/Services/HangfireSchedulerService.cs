@@ -8,10 +8,6 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Scheduler.Application.Abstractions;
-using Scheduler.Application.Models;
-using Scheduler.Domain.Entities;
-using Scheduler.Infrastructure.Jobs;
 using System.Reflection;
 using System.Text.Json;
 
@@ -26,10 +22,6 @@ namespace Scheduler.Infrastructure.Services
         private readonly SchedulerOptions _options;
         private readonly ILogger<HangfireSchedulerService> _logger;
 
-        private static readonly JsonSerializerOptions JsonOpts = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
 
         public HangfireSchedulerService(
             IBackgroundJobClient jobs,
@@ -60,7 +52,7 @@ namespace Scheduler.Infrastructure.Services
             if (triggerAt <= DateTimeOffset.UtcNow)
                 triggerAt = DateTimeOffset.UtcNow.AddSeconds(1);
 
-            var payloadJson = JsonSerializer.Serialize(payload, JsonOpts);
+            var payloadJson = JsonSerializer.Serialize(payload, SchedulerJson.Options);
 
             // ۱) رکورد دامنه‌ای
             var domainJob = ScheduledJob.Create(

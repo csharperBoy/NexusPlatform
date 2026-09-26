@@ -54,9 +54,8 @@ namespace Scheduler.Infrastructure.Jobs
                     ?? throw new InvalidOperationException(
                         $"No payload type registered for key '{jobTypeKey}'");
 
-                var payload = JsonSerializer.Deserialize(payloadJson, payloadType)
-                    ?? throw new InvalidOperationException("Payload deserialization returned null");
-
+                var payload = JsonSerializer.Deserialize(payloadJson, payloadType, SchedulerJson.Options)
+                                    ?? throw new InvalidOperationException("Payload deserialization returned null");
                 // ⏱️ انتظار دقیق تا لحظه‌ی هدف
                 await PreciseDelay.UntilAsync(fireAtUnixMs, ct);
 
