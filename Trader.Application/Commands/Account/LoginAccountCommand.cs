@@ -31,7 +31,7 @@ namespace Trader.Application.Commands.Account
                     "Logging in TraderAccount: {Id}", request.Id);
 
                 await _accountService.LoginAsync(request.Id);
-
+                await _accountService.SaveAsync();
                 return Result<bool>.Ok(true);
             }
             catch (Exception ex)

@@ -106,6 +106,15 @@ namespace Trader.Infrastructure.Data
                             Description = "ExecutionLog management",
                             DisplayOrder = 3004,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.serverclock",
+                            Name = "server clock",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "server clock management",
+                            DisplayOrder = 3005,
+                            Icon = "list",
                         }
                     }
                 }
@@ -201,6 +210,23 @@ namespace Trader.Infrastructure.Data
                    AssigneeId = roleId,
 
                    Description = "Full access to trader executionlog"
+               },
+               new()
+               {
+                   ResourceKey = "trader.serverclock",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to trader server clock"
                }
             };
         }

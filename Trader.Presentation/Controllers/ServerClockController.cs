@@ -15,7 +15,7 @@ namespace Trader.Presentation.Controller
         /* ═══════════ Queries ═══════════ */
 
         [HttpGet("GetStatus")]
-        [AuthorizeResource("trader.serverclock", "View")]
+        //[AuthorizeResource("trader.serverclock", "View")]
         public async Task<IActionResult> GetStatus()
         {
             var query = new GetServerClockStatusQuery();

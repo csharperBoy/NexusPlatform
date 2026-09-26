@@ -19,9 +19,13 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
         private readonly EasyTraderOptions _options;
         private readonly ILogger<EasyTraderBrokerClient> _logger;
 
+        //private static readonly JsonSerializerOptions JsonOpts = new()
+        //{
+        //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        //    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        //};
         private static readonly JsonSerializerOptions JsonOpts = new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
