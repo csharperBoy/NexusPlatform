@@ -31,7 +31,7 @@ namespace Trader.Application.Abstractions
         /// </summary>
         Task<SymbolMarketDataDto> GetSymbolInfoAsync(
             BrokerSession session,
-            string symbolName,
+           string symbolIsin,
             CancellationToken ct = default);
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace Trader.Application.Abstractions
         /// </summary>
         Task<BrokerOrderResultDto> SendBuyOrderAsync(
             BrokerSession session,
-            string symbolName,
+            string symbolIsin,
             long price,
             long quantity,
             CancellationToken ct = default);
@@ -49,7 +49,7 @@ namespace Trader.Application.Abstractions
         /// </summary>
         Task<BrokerOrderResultDto> SendSellOrderAsync(
             BrokerSession session,
-            string symbolName,
+            string symbolIsin,
             long price,
             long quantity,
             CancellationToken ct = default);

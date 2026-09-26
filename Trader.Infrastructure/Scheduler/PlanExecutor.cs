@@ -96,10 +96,6 @@ namespace Trader.Infrastructure.Scheduler
                 /* ═══ Stage 4: PREPARE ALL GROUPS (Phase 1) — قبل از هر PreciseDelay ═══ */
                 /* این تضمین می‌کنه که سر لحظه‌ی fire، هیچ DB read ای نداریم */
 
-                // یک‌بار همه‌ی symbolها رو بگیر
-                var allSymbols = (await _symbolRepository.GetAllAsync())
-                    .ToDictionary(s => s.SymbolIsin, s => s.SymbolName);
-
                 // یک‌بار همه‌ی accountهای لازم رو بگیر
                 var accountIds = plan.Orders.Select(o => o.AccountId).Distinct().ToList();
                 var allAccounts = (await _accountRepository.GetAllAsync())
@@ -111,7 +107,7 @@ namespace Trader.Infrastructure.Scheduler
                     foreach (var order in group.Orders)
                     {
                         var item = await PrepareFireItemAsync(
-                            plan, order, allAccounts, allSymbols, ct);
+                            plan, order, allAccounts, ct);
                         if (item is not null)
                             group.Prepared.Add(item);
                     }
@@ -200,11 +196,10 @@ namespace Trader.Infrastructure.Scheduler
            Phase 1 — Prepare (سری، با parent DbContext)
            ══════════════════════════════════════════════ */
         private async Task<PreparedFireItem?> PrepareFireItemAsync(
-                                                    SchedulePlan plan,
-                                                    ScheduledOrder order,
-                                                    Dictionary<Guid, TraderAccount> allAccounts,
-                                                    Dictionary<string, string> allSymbols,
-                                                    CancellationToken ct)
+     SchedulePlan plan,
+     ScheduledOrder order,
+     Dictionary<Guid, TraderAccount> allAccounts,
+     CancellationToken ct)
         {
             if (!allAccounts.TryGetValue(order.AccountId, out var account))
             {
@@ -226,21 +221,20 @@ namespace Trader.Infrastructure.Scheduler
             var sessionJson = _protector.Unprotect(account.EncryptedSession!);
             var session = brokerClient.DeserializeSession(sessionJson);
 
-            var symbolName = allSymbols.GetValueOrDefault(order.SymbolIsin, order.SymbolIsin);
-
             return await Task.FromResult(new PreparedFireItem
             {
                 Order = order,
                 Account = account,
                 BrokerClient = brokerClient,
                 Session = session,
-                SymbolName = symbolName,
+                SymbolIsin = order.SymbolIsin,   // ← ISIN، نه نام
             });
         }
 
         /* ══════════════════════════════════════════════
            Phase 2 — Fire (موازی، بدون DB)
            ══════════════════════════════════════════════ */
+
         private async Task<FireResult> FireHttpAsync(
             PreparedFireItem item,
             CancellationToken ct)
@@ -248,14 +242,14 @@ namespace Trader.Infrastructure.Scheduler
             try
             {
                 var marketData = await item.BrokerClient.GetSymbolInfoAsync(
-                    item.Session, item.SymbolName, ct);
+                    item.Session, item.SymbolIsin, ct);
 
                 var price = item.Order.Side == OrderSide.Buy
                     ? marketData.HighAllowedPrice
                     : marketData.LowAllowedPrice;
 
                 if (price is null || price <= 0)
-                    throw new Exception($"No valid allowed price for {item.SymbolName}");
+                    throw new Exception($"No valid allowed price for {item.SymbolIsin}");
 
                 long quantity;
                 if (item.Order.Mode == OrderMode.Quantity)
@@ -274,9 +268,9 @@ namespace Trader.Infrastructure.Scheduler
 
                 var result = item.Order.Side == OrderSide.Buy
                     ? await item.BrokerClient.SendBuyOrderAsync(
-                        item.Session, item.SymbolName, price.Value, quantity, ct)
+                        item.Session, item.SymbolIsin, price.Value, quantity, ct)
                     : await item.BrokerClient.SendSellOrderAsync(
-                        item.Session, item.SymbolName, price.Value, quantity, ct);
+                        item.Session, item.SymbolIsin, price.Value, quantity, ct);
 
                 return new FireResult
                 {
@@ -396,7 +390,7 @@ namespace Trader.Infrastructure.Scheduler
             public TraderAccount Account { get; set; } = default!;
             public IBrokerClient BrokerClient { get; set; } = default!;
             public BrokerSession Session { get; set; } = default!;
-            public string SymbolName { get; set; } = default!;
+            public string SymbolIsin { get; set; } = default!;
         }
 
         private class FireResult

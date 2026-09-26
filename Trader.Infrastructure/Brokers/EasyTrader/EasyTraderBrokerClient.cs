@@ -285,20 +285,17 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
            SYMBOL INFO
            ══════════════════════════════════════════════════ */
         public async Task<SymbolMarketDataDto> GetSymbolInfoAsync(
-            BrokerSession session,
-            string symbolName,
-            CancellationToken ct = default)
+    BrokerSession session,
+    string symbolIsin,
+    CancellationToken ct = default)
         {
-            // توجه: در EasyTrader، GetSymbolInfo نیاز به ISIN داره نه name.
-            // چون قرارداد عمومی با name کار می‌کنه، اینجا از name به isin map می‌کنیم.
-            // این mapping باید از DB یا یه سرویس بیرونی بیاد. فعلاً فرض: name == isin.
             var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.SymbolInfo;
 
             using var client = CreateAuthorizedClient(s.AccessToken);
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Content = new StringContent(
-                JsonSerializer.Serialize(new { isin = symbolName }, JsonOpts),
+                JsonSerializer.Serialize(new { isin = symbolIsin }, JsonOpts),
                 Encoding.UTF8, "application/json");
 
             using var res = await client.SendAsync(req, ct);
@@ -306,16 +303,24 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
 
             if (!res.IsSuccessStatusCode)
                 throw new EasyTraderException(
-                    $"Symbol info failed {(int)res.StatusCode}. " +
-                    $"Body: {Truncate(body, 200)}",
+                    $"Symbol info failed {(int)res.StatusCode} for isin={symbolIsin}. " +
+                    $"Body: {Truncate(body, 300)}",
                     (int)res.StatusCode, body);
 
+            /* ✅ چک body خالی — مهم برای تشخیص زودتر */
+            if (string.IsNullOrWhiteSpace(body))
+                throw new EasyTraderException(
+                    $"Symbol info returned empty body for isin={symbolIsin}. " +
+                    $"این معمولاً یعنی ISIN ناشناخته است.",
+                    (int)res.StatusCode);
+
             var wire = JsonSerializer.Deserialize<SymbolInfoResponse>(body, JsonOpts)
-                ?? throw new EasyTraderException("Symbol info deserialization failed");
+                ?? throw new EasyTraderException(
+                    $"Symbol info deserialization failed for isin={symbolIsin}");
 
             return new SymbolMarketDataDto
             {
-                SymbolName = symbolName,
+                SymbolName = symbolIsin,
                 HighAllowedPrice = wire.HighAllowedPrice,
                 LowAllowedPrice = wire.LowAllowedPrice,
                 LastTradedPrice = wire.LastTradedPrice,
@@ -330,18 +335,18 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
            SEND BUY / SELL ORDER
            ══════════════════════════════════════════════════ */
         public Task<BrokerOrderResultDto> SendBuyOrderAsync(
-            BrokerSession session, string symbolName, long price, long quantity,
-            CancellationToken ct = default)
-            => SendOrderInternalAsync(session, symbolName, price, quantity, side: 0, ct);
+    BrokerSession session, string symbolIsin, long price, long quantity,
+    CancellationToken ct = default)
+    => SendOrderInternalAsync(session, symbolIsin, price, quantity, side: 0, ct);
 
         public Task<BrokerOrderResultDto> SendSellOrderAsync(
-            BrokerSession session, string symbolName, long price, long quantity,
+            BrokerSession session, string symbolIsin, long price, long quantity,
             CancellationToken ct = default)
-            => SendOrderInternalAsync(session, symbolName, price, quantity, side: 1, ct);
+            => SendOrderInternalAsync(session, symbolIsin, price, quantity, side: 1, ct);
 
         private async Task<BrokerOrderResultDto> SendOrderInternalAsync(
             BrokerSession session,
-            string symbolName,
+            string symbolIsin,
             long price,
             long quantity,
             int side,
@@ -350,8 +355,6 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.Order;
 
-            // این‌ها از تنظیمات پیش‌فرض EasyTrader میان.
-            // در آینده می‌تونن per-symbol از DB بیان.
             const decimal commission = 0.003712m;
             const int validityType = 0;
             const int orderModelType = 1;
@@ -369,8 +372,8 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                     ValidityType = validityType,
                     CreateDateTime = FormatEasyTraderDateTime(DateTime.Now),
                     Commission = commission,
-                    SymbolIsin = symbolName,   // فرض: name == isin
-                    SymbolName = symbolName,
+                    SymbolIsin = symbolIsin,
+                    SymbolName = symbolIsin,   // ⚠️ فعلاً isin، چون name lookup نداریم
                     OrderModelType = orderModelType,
                     TotalValue = totalValue,
                     OrderFrom = orderFrom,
@@ -386,14 +389,18 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
 
-            // بعضی وقتا خطاهای منطقی هم با 200 میان
+            /* ✅ چک body خالی */
+            if (string.IsNullOrWhiteSpace(body))
+                throw new EasyTraderException(
+                    $"Order returned empty body for isin={symbolIsin}, status={(int)res.StatusCode}",
+                    (int)res.StatusCode);
+
             if (TryParseOrderResponse(body, out var parsed))
                 return parsed;
 
             if (!res.IsSuccessStatusCode)
                 throw new EasyTraderException(
-                    $"Order failed {(int)res.StatusCode}. " +
-                    $"Body: {Truncate(body, 400)}",
+                    $"Order failed {(int)res.StatusCode}. Body: {Truncate(body, 400)}",
                     (int)res.StatusCode, body);
 
             throw new EasyTraderException(
