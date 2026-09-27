@@ -8,6 +8,7 @@ using Trader.Application.Dtos;
 using Trader.Application.Scheduler.Services;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
+using Trader.Infrastructure.Brokers.EasyTrader.Internal;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Scheduler
@@ -35,7 +36,7 @@ namespace Trader.Infrastructure.Scheduler
             IUnitOfWork<TraderDbContext> uow,
             IBrokerClientFactory brokerFactory,
             ISecretProtector protector,
-    IServerClockQueryService clock,
+            IServerClockQueryService clock,
             ILogger<PlanExecutor> logger)
         {
             _planRepository = planRepository;
@@ -54,11 +55,7 @@ namespace Trader.Infrastructure.Scheduler
             var plan = await _planRepository.GetByIdAsync(planId, p => p.Orders)
                 ?? throw new Exception($"Plan {planId} not found");
 
-            if (!plan.Enabled)
-            {
-                _logger.LogWarning("Plan {PlanId} is disabled, skipping", planId);
-                return;
-            }
+            if (!plan.Enabled) return;
 
             var planDate = plan.Date;
             var loginAt = new DateTimeOffset(
@@ -66,16 +63,13 @@ namespace Trader.Infrastructure.Scheduler
             var refreshAt = new DateTimeOffset(
                 planDate.ToDateTime(plan.AutoRefreshAt), IranOffset);
 
-            _logger.LogInformation(
-                "Plan {PlanId} ({Name}) starting pipeline: login={Login} refresh={Refresh} orders={Count}",
-                planId, plan.Name, loginAt, refreshAt, plan.Orders.Count);
+            var pendingLogs = new List<PendingLog>();
 
             try
             {
-                /* ─── diff تازه از سرور کارگزاری ─── */
+                /* ─── diff تازه از سرور ─── */
                 var clockInfo = await _clock.GetStatusAsync();
 
-                /* ─── لیست زمان‌بندی سفارش‌ها (به ترتیب زمان) ─── */
                 var orderTargets = plan.Orders
                     .OrderBy(o => o.Time)
                     .Select(o => o.Time.ToString("HH:mm:ss.fff"))
@@ -86,21 +80,16 @@ namespace Trader.Infrastructure.Scheduler
                     : "—";
 
                 await LogAsync(plan.Id, ExecutionLogLevel.Info,
-                    $"Pipeline start | " +
-                    $"login={loginAt:HH:mm:ss} | " +
-                    $"refresh={refreshAt:HH:mm:ss} | " +
-                    $"orders=[{ordersLine}] | " +
-                    $"diff={clockInfo.Diff}ms | " +
-                    $"latency={clockInfo.OneWayLatency}ms | " +
-                    $"clockAge={(clockInfo.LastUpdatedAt > 0 ? (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - clockInfo.LastUpdatedAt) : -1)}ms",
+                    $"Pipeline start | login={loginAt:HH:mm:ss} | refresh={refreshAt:HH:mm:ss} | " +
+                    $"orders=[{ordersLine}] | diff={clockInfo.Diff}ms | " +
+                    $"latency={clockInfo.OneWayLatency}ms",
                     ct: ct);
 
-                /* ═══ Stage 1: Login check ═══ */
-                await EnsureAllAccountsLoggedInAsync(plan, ct);
+                /* ═══ Stage 1: Login check — errors buffered ═══ */
+                await EnsureAllAccountsLoggedInAsync(plan, pendingLogs, ct);
 
-                /* ═══ Stage 2: Wait until refresh time, then refresh ═══ */
+                /* ═══ Stage 2: Refresh ═══ */
                 await PreciseDelay.UntilAsync(refreshAt, ct);
-                await RefreshSymbolsAsync(plan, ct);
 
                 /* ═══ Stage 3: Build groups ═══ */
                 var groups = plan.Orders
@@ -115,47 +104,53 @@ namespace Trader.Infrastructure.Scheduler
                     })
                     .ToList();
 
-                /* ═══ Stage 4: PREPARE ALL GROUPS (Phase 1) — قبل از هر PreciseDelay ═══ */
-                /* این تضمین می‌کنه که سر لحظه‌ی fire، هیچ DB read ای نداریم */
+                /* ═══ Stage 4: PREPARE (Phase 1) — سری، بدون لاگ ═══ */
+                var accountIds = plan.Orders
+                    .Select(o => o.AccountId).Distinct().ToList();
 
-                // یک‌بار همه‌ی accountهای لازم رو بگیر
-                var accountIds = plan.Orders.Select(o => o.AccountId).Distinct().ToList();
                 var allAccounts = (await _accountRepository.GetAllAsync())
                     .Where(a => accountIds.Contains(a.Id))
                     .ToDictionary(a => a.Id, a => a);
+
+                var allResults = new List<FireResult>();
 
                 foreach (var group in groups)
                 {
                     foreach (var order in group.Orders)
                     {
                         var item = await PrepareFireItemAsync(
-                            plan, order, allAccounts, ct);
+                            plan, order, allAccounts, pendingLogs, ct);
+
                         if (item is not null)
+                        {
                             group.Prepared.Add(item);
+                        }
+                        else
+                        {
+                            allResults.Add(new FireResult
+                            {
+                                Order = order,
+                                SymbolIsin = order.SymbolIsin,
+                                TargetUnixMs = group.TargetTime.ToUnixTimeMilliseconds(),
+                                PrepareError = "prepare failed",
+                            });
+                        }
                     }
                 }
 
-                _logger.LogInformation(
-                    "Plan {PlanId}: prepared {Ready}/{Total} orders",
-                    planId,
-                    groups.Sum(g => g.Prepared.Count),
-                    plan.Orders.Count);
-
-                /* ═══ Stage 5: FIRE — فقط PreciseDelay + HTTP (بدون DB) ═══ */
-                var allResults = new List<FireResult>();
-
+                /* ═══ Stage 5: FIRE (Phase 2) — فقط PreciseDelay + HTTP ═══ */
                 foreach (var group in groups)
                 {
                     if (ct.IsCancellationRequested) break;
                     if (group.Prepared.Count == 0) continue;
 
-                    /* ═══ Diff تازه از سرور — قبل از هر fire ═══ */
                     clockInfo = await _clock.GetStatusAsync();
-                    var adjustedTarget = group.TargetTime.AddMilliseconds(-clockInfo.Diff);
+                    var adjustedTarget = group.TargetTime
+                        .AddMilliseconds(-clockInfo.Diff);
 
-                    var lateByMs = (DateTimeOffset.UtcNow - adjustedTarget).TotalMilliseconds;
+                    var lateByMs = (DateTimeOffset.UtcNow - adjustedTarget)
+                        .TotalMilliseconds;
 
-                    /* خیلی دیر شده → کنسل */
                     if (lateByMs > MAX_LATE_MS)
                     {
                         foreach (var p in group.Prepared)
@@ -164,56 +159,53 @@ namespace Trader.Infrastructure.Scheduler
                             {
                                 Order = p.Order,
                                 Account = p.Account,
+                                SymbolIsin = p.SymbolIsin,
+                                Price = p.Price,
+                                Quantity = p.Quantity,
+                                TargetUnixMs = group.TargetTime.ToUnixTimeMilliseconds(),
                                 Exception = new Exception(
-                                    $"Cancelled — {lateByMs:F0}ms past target {group.TargetTime:HH:mm:ss.fff}"),
+                                    $"Cancelled: {lateByMs:F0}ms late"),
                             });
                         }
                         continue;
                     }
 
-                    if (lateByMs > 0)
+                    if (lateByMs <= 0)
                     {
-                        /* کمی دیر شده ولی در تحمل ۵ ثانیه — فوری fire کن */
-                        await LogAsync(plan.Id, ExecutionLogLevel.Warning,
-                            $"⏰ {lateByMs:F0}ms late — firing immediately (target={group.TargetTime:HH:mm:ss.fff}, diff={clockInfo.Diff}ms)",
-                            ct: ct);
-                    }
-                    else
-                    {
-                        /* سر وقت — PreciseDelay */
                         await PreciseDelay.UntilAsync(adjustedTarget, ct);
                     }
 
-                    /* Fire موازی — HTTP only */
+                    /* ✅ Fire موازی — بدون لاگ */
                     var tasks = group.Prepared
-                        .Select(p => FireHttpAsync(p, ct))
-                        .ToList();
+     .Select(p => FireHttpAsync(p, group.TargetTime, clockInfo.Diff, ct))
+     .ToList();
 
                     var results = await Task.WhenAll(tasks);
                     allResults.AddRange(results);
                 }
 
-                /* ═══ Stage 6: SAVE ALL RESULTS (Phase 3) — یک‌جا در آخر ═══ */
+                /* ═══ Stage 6: SAVE + LOG (Phase 3) — همه‌چیز یک‌جا ═══ */
+                foreach (var log in pendingLogs)
+                {
+                    await LogAsync(plan.Id, log.Level, log.Message,
+                        log.OrderId, log.Code, ct);
+                }
+
                 foreach (var r in allResults)
                 {
                     if (ct.IsCancellationRequested) break;
-                    await SaveFireResultAsync(plan, r, ct);
+                    await SaveAndLogFireResultAsync(plan, r, ct);
                 }
 
                 plan.SetStatus(SchedulePlanStatus.Done, "All orders fired");
                 await _planRepository.UpdateAsync(plan);
                 await _uow.SaveChangesAsync(ct);
-
-                _logger.LogInformation(
-                    "Plan {PlanId} completed. Fired {Count} orders",
-                    planId, plan.Orders.Count(o => o.Fired));
             }
             catch (OperationCanceledException)
             {
                 plan.SetStatus(SchedulePlanStatus.Cancelled, "Cancelled");
                 await _planRepository.UpdateAsync(plan);
                 await _uow.SaveChangesAsync(CancellationToken.None);
-                _logger.LogWarning("Plan {PlanId} cancelled", planId);
             }
             catch (Exception ex)
             {
@@ -224,33 +216,35 @@ namespace Trader.Infrastructure.Scheduler
                 await LogAsync(plan.Id, ExecutionLogLevel.Error,
                     $"Pipeline error: {ex.Message}", ct: CancellationToken.None);
 
-                _logger.LogError(ex, "Plan {PlanId} failed", planId);
                 throw;
             }
         }
 
         /* ══════════════════════════════════════════════
-           Phase 1 — Prepare (سری، با parent DbContext)
+           Phase 1 — Prepare (سری، بدون لاگ DB)
            ══════════════════════════════════════════════ */
         private async Task<PreparedFireItem?> PrepareFireItemAsync(
-     SchedulePlan plan,
-     ScheduledOrder order,
-     Dictionary<Guid, TraderAccount> allAccounts,
-     CancellationToken ct)
+            SchedulePlan plan,
+            ScheduledOrder order,
+            Dictionary<Guid, TraderAccount> allAccounts,
+            List<PendingLog> pendingLogs,
+            CancellationToken ct)
         {
             if (!allAccounts.TryGetValue(order.AccountId, out var account))
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Error,
                     $"Account {order.AccountId} not found",
-                    orderId: order.Id, ct: ct);
+                    order.Id));
                 return null;
             }
 
             if (account.GetSessionStatus() != SessionStatus.Valid)
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Error,
                     $"[{account.Name}] {order.SymbolIsin}: session invalid",
-                    orderId: order.Id, ct: ct);
+                    order.Id));
                 return null;
             }
 
@@ -258,7 +252,6 @@ namespace Trader.Infrastructure.Scheduler
             var sessionJson = _protector.Unprotect(account.EncryptedSession!);
             var session = brokerClient.DeserializeSession(sessionJson);
 
-            /* ═══ GetSymbolInfo از Phase 2 منتقل شد به Phase 1 ═══ */
             SymbolMarketDataDto marketData;
             try
             {
@@ -267,9 +260,10 @@ namespace Trader.Infrastructure.Scheduler
             }
             catch (Exception ex)
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Error,
                     $"[{account.Name}] {order.SymbolIsin}: symbol info failed: {ex.Message}",
-                    orderId: order.Id, ct: ct);
+                    order.Id));
                 return null;
             }
 
@@ -279,9 +273,10 @@ namespace Trader.Infrastructure.Scheduler
 
             if (price is null || price <= 0)
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Error,
                     $"[{account.Name}] {order.SymbolIsin}: no valid allowed price",
-                    orderId: order.Id, ct: ct);
+                    order.Id));
                 return null;
             }
 
@@ -299,18 +294,19 @@ namespace Trader.Infrastructure.Scheduler
 
             if (quantity <= 0)
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Error,
                     $"[{account.Name}] {order.SymbolIsin}: invalid quantity ({quantity})",
-                    orderId: order.Id, ct: ct);
+                    order.Id));
                 return null;
             }
-            /* ✅ آماده‌سازی HTTP request الان — نه توی PreciseDelay */
+
             var httpRequest = brokerClient.BuildOrderRequest(
-     session,
-     order.SymbolIsin,
-     price.Value,
-     quantity,
-     order.Side == OrderSide.Buy ? 0 : 1);
+                session,
+                order.SymbolIsin,
+                price.Value,
+                quantity,
+                order.Side == OrderSide.Buy ? 0 : 1);
 
             return new PreparedFireItem
             {
@@ -326,29 +322,48 @@ namespace Trader.Infrastructure.Scheduler
         }
 
         /* ══════════════════════════════════════════════
-           Phase 2 — Fire (موازی، بدون DB)
+           Phase 2 — Fire (موازی، بدون لاگ)
            ══════════════════════════════════════════════ */
-
         private async Task<FireResult> FireHttpAsync(
     PreparedFireItem item,
+    DateTimeOffset target,
+    long clockDiffUsed,
     CancellationToken ct)
         {
             try
             {
-                /* ═══ فقط SendAsync — بدون ساختن client/request ═══ */
                 var result = await item.BrokerClient.SendOrderWithRequestAsync(
-     item.Session,
-     item.HttpRequest,
-     item.SymbolIsin,
-     ct);
+                    item.Session,
+                    item.HttpRequest,
+                    item.SymbolIsin,
+                    ct);
 
                 return new FireResult
                 {
                     Order = item.Order,
                     Account = item.Account,
-                    Result = result,
+                    SymbolIsin = item.SymbolIsin,
                     Price = item.Price,
                     Quantity = item.Quantity,
+                    TargetUnixMs = target.ToUnixTimeMilliseconds(),
+                    ClockDiffUsed = clockDiffUsed,
+                    Result = result,
+                };
+            }
+            catch (EasyTraderOrderException ex)
+            {
+                return new FireResult
+                {
+                    Order = item.Order,
+                    Account = item.Account,
+                    SymbolIsin = item.SymbolIsin,
+                    Price = item.Price,
+                    Quantity = item.Quantity,
+                    TargetUnixMs = target.ToUnixTimeMilliseconds(),
+                    ClockDiffUsed = clockDiffUsed,
+                    Exception = ex,
+                    FireAtUnixMs = ex.FireAtUnixMs,
+                    ReceivedAtUnixMs = ex.ReceivedAtUnixMs,
                 };
             }
             catch (Exception ex)
@@ -357,53 +372,116 @@ namespace Trader.Infrastructure.Scheduler
                 {
                     Order = item.Order,
                     Account = item.Account,
+                    SymbolIsin = item.SymbolIsin,
+                    Price = item.Price,
+                    Quantity = item.Quantity,
+                    TargetUnixMs = target.ToUnixTimeMilliseconds(),
+                    ClockDiffUsed = clockDiffUsed,
                     Exception = ex,
                 };
             }
         }
 
         /* ══════════════════════════════════════════════
-           Phase 3 — Save (سری، با parent DbContext)
-           ══════════════════════════════════════════════ */
-        private async Task SaveFireResultAsync(
+        Phase 3 — Save + Log (یک‌جا)
+        ══════════════════════════════════════════════ */
+
+        private async Task SaveAndLogFireResultAsync(
             SchedulePlan plan,
             FireResult r,
             CancellationToken ct)
         {
-            var symName = r.Order.SymbolIsin;
+            /* ─── prepare failure ─── */
+            if (r.PrepareError is not null)
+            {
+                r.Order.MarkFired(r.PrepareError);
+                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                    $"❌ {r.SymbolIsin} | {r.PrepareError}",
+                    orderId: r.Order.Id, ct: ct);
+                await _planRepository.UpdateAsync(plan);
+                await _uow.SaveChangesAsync(ct);
+                return;
+            }
 
+            /* ─── fire error (با timings) ─── */
             if (r.Exception is not null)
             {
-                await LogAsync(plan.Id, ExecutionLogLevel.Error,
-                    $"Fire error {symName}: {r.Exception.Message}",
-                    orderId: r.Order.Id, ct: ct);
+                var delta = r.FireAtUnixMs > 0
+                    ? r.FireAtUnixMs - r.TargetUnixMs
+                    : (long?)null;
+
                 r.Order.MarkFired($"ERROR: {r.Exception.Message}");
+
+                var deltaStr = delta.HasValue
+                    ? $"Δ={delta.Value:+#;-#;0}ms | "
+                    : "";
+
+                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                    $"❌ [{r.Account?.Name}] {r.SymbolIsin} | " +
+                    $"target={FmtUnix(r.TargetUnixMs)} ({r.TargetUnixMs}) | " +
+                    deltaStr +
+                    r.Exception.Message,
+                    orderId: r.Order.Id, ct: ct);
+
+                await _planRepository.UpdateAsync(plan);
+                await _uow.SaveChangesAsync(ct);
+                return;
             }
-            else if (r.Result!.IsSuccessful)
+
+            /* ─── success یا خطای منطقی ─── */
+            var res = r.Result!;
+            var deltaMs = res.FireAtUnixMs - r.TargetUnixMs;
+            var rttMs = res.ReceivedAtUnixMs - res.FireAtUnixMs;
+
+            if (res.IsSuccessful)
             {
-                r.Order.MarkFired(r.Result.OrderId);
+                r.Order.MarkFired(res.OrderId);
                 await LogAsync(plan.Id, ExecutionLogLevel.Success,
-                    $"[{r.Account.Name}] {symName} {r.Price}×{r.Quantity} fired (id={r.Result.OrderId})",
+                    $"✅ [{r.Account!.Name}] {r.SymbolIsin} {r.Price}×{r.Quantity} | " +
+                   $"target={FmtUnix(r.TargetUnixMs)} ({r.TargetUnixMs}) | " +
+                    $"fire={FmtUnix(res.FireAtUnixMs)} ({res.FireAtUnixMs}) | " +
+                    $"Δ={deltaMs:+#;-#;0}ms | " +
+                    $"diff={r.ClockDiffUsed}ms | " +
+                    $"rtt={rttMs}ms | " +
+                    $"id={res.OrderId}",
                     orderId: r.Order.Id, ct: ct);
             }
             else
             {
-                r.Order.MarkFired(r.Result.Message);
+                r.Order.MarkFired(res.Message);
                 await LogAsync(plan.Id, ExecutionLogLevel.Error,
-                    $"[{r.Account.Name}] {symName} failed: {r.Result.ErrorCode} {r.Result.Message}",
-                    orderId: r.Order.Id, code: r.Result.ErrorCode, ct: ct);
+                    $"❌ [{r.Account!.Name}] {r.SymbolIsin} | " +
+                    $"target={FmtUnix(r.TargetUnixMs)} ({r.TargetUnixMs}) | " +
+                    $"fire={FmtUnix(res.FireAtUnixMs)} ({res.FireAtUnixMs}) | " +
+                    $"Δ={deltaMs:+#;-#;0}ms | " +
+                    $"rtt={rttMs}ms | " +
+                    $"code={res.ErrorCode} | " +
+                    $"{res.Message}",
+                    orderId: r.Order.Id, code: res.ErrorCode, ct: ct);
             }
 
             await _planRepository.UpdateAsync(plan);
             await _uow.SaveChangesAsync(ct);
         }
+        /// <summary>Unix ms → "HH:mm:ss.fff" به وقت ایران</summary>
+        private static string FmtUnix(long unixMs)
+        {
+            if (unixMs <= 0) return "—";
+            var dt = DateTimeOffset.FromUnixTimeMilliseconds(unixMs)
+                .ToOffset(IranOffset);
+            return dt.ToString("HH:mm:ss.fff");
+        }
 
         /* ═══════════════════ Other Stages ═══════════════════ */
 
         private async Task EnsureAllAccountsLoggedInAsync(
-            SchedulePlan plan, CancellationToken ct)
+            SchedulePlan plan,
+            List<PendingLog> pendingLogs,
+            CancellationToken ct)
         {
-            var accountIds = plan.Orders.Select(o => o.AccountId).Distinct().ToList();
+            var accountIds = plan.Orders
+                .Select(o => o.AccountId).Distinct().ToList();
+
             var accounts = (await _accountRepository.GetAllAsync())
                 .Where(a => accountIds.Contains(a.Id))
                 .ToList();
@@ -412,17 +490,12 @@ namespace Trader.Infrastructure.Scheduler
             {
                 if (account.GetSessionStatus() == SessionStatus.Valid) continue;
 
-                await LogAsync(plan.Id, ExecutionLogLevel.Warning,
-                    $"Account {account.Name}: session invalid, requires manual login",
-                    ct: ct);
+                pendingLogs.Add(new PendingLog(
+                    ExecutionLogLevel.Warning,
+                    $"Account {account.Name}: session invalid",
+                    null));
             }
-        }
 
-        private async Task RefreshSymbolsAsync(SchedulePlan plan, CancellationToken ct)
-        {
-            var isins = plan.Orders.Select(o => o.SymbolIsin).Distinct().ToList();
-            await LogAsync(plan.Id, ExecutionLogLevel.Info,
-                $"Refreshing {isins.Count} symbols", ct: ct);
             await Task.CompletedTask;
         }
 
@@ -437,13 +510,6 @@ namespace Trader.Infrastructure.Scheduler
             var log = ExecutionLog.Create(planId, level, message, orderId, code);
             await _logRepository.AddAsync(log);
             await _uow.SaveChangesAsync(ct);
-
-            _logger.Log(
-                level == ExecutionLogLevel.Error ? LogLevel.Error :
-                level == ExecutionLogLevel.Warning ? LogLevel.Warning :
-                LogLevel.Information,
-                "Plan {PlanId} [{Level}] {Message}",
-                planId, level, message);
         }
 
         /* ═══ Helper types ═══ */
@@ -469,11 +535,23 @@ namespace Trader.Infrastructure.Scheduler
         private class FireResult
         {
             public ScheduledOrder Order { get; set; } = default!;
-            public TraderAccount Account { get; set; } = default!;
-            public BrokerOrderResultDto? Result { get; set; }
-            public Exception? Exception { get; set; }
+            public TraderAccount? Account { get; set; }
+            public string SymbolIsin { get; set; } = default!;
             public long Price { get; set; }
             public long Quantity { get; set; }
+            public long TargetUnixMs { get; set; }
+            public long ClockDiffUsed { get; set; }
+            public BrokerOrderResultDto? Result { get; set; }
+            public Exception? Exception { get; set; }
+            public string? PrepareError { get; set; }
+            public long FireAtUnixMs { get; set; }
+            public long ReceivedAtUnixMs { get; set; }
         }
+
+        private record PendingLog(
+            ExecutionLogLevel Level,
+            string Message,
+            Guid? OrderId,
+            int? Code = null);
     }
 }

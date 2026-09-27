@@ -371,115 +371,55 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             return await SendOrderWithRequestAsync(session, request, symbolIsin, ct);
         }
         public async Task<BrokerOrderResultDto> SendOrderWithRequestAsync(
-    BrokerSession session,
-    HttpRequestMessage request,
-    string symbolIsin,
-    CancellationToken ct = default)
+     BrokerSession session,
+     HttpRequestMessage request,
+     string symbolIsin,
+     CancellationToken ct = default)
         {
             using (request)
             {
-                /* ✅ لاگ زمان دقیق شروع HTTP */
-                var fireAtUtc = DateTimeOffset.UtcNow;
-                _logger.LogInformation(
-                    "FIRE ORDER isin={Isin} at={At:HH:mm:ss.fff} (unix={Unix})",
-                    symbolIsin,
-                    fireAtUtc,
-                    fireAtUtc.ToUnixTimeMilliseconds());
+                /* ═══ بدون هیچ لاگی — حداکثر سرعت ═══ */
+                var fireAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
                 var client = CreateSharedClient();
                 using var res = await client.SendAsync(request, ct);
                 var body = await res.Content.ReadAsStringAsync(ct);
 
+                var receivedAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+                /* ─── empty body ─── */
                 if (string.IsNullOrWhiteSpace(body))
-                    throw new EasyTraderException(
+                    throw new EasyTraderOrderException(
                         $"Order returned empty body for isin={symbolIsin}, status={(int)res.StatusCode}",
+                        fireAtUnixMs,
+                        receivedAtUnixMs,
                         (int)res.StatusCode);
 
+                /* ─── پارس موفق ─── */
                 if (TryParseOrderResponse(body, out var parsed))
+                {
+                    parsed.FireAtUnixMs = fireAtUnixMs;
+                    parsed.ReceivedAtUnixMs = receivedAtUnixMs;
                     return parsed;
+                }
 
+                /* ─── خطای HTTP ─── */
                 if (!res.IsSuccessStatusCode)
-                    throw new EasyTraderException(
+                    throw new EasyTraderOrderException(
                         $"Order failed {(int)res.StatusCode}. Body: {Truncate(body, 400)}",
-                        (int)res.StatusCode, body);
+                        fireAtUnixMs,
+                        receivedAtUnixMs,
+                        (int)res.StatusCode,
+                        body);
 
-                throw new EasyTraderException(
+                throw new EasyTraderOrderException(
                     $"Unexpected order response: {Truncate(body, 400)}",
-                    (int)res.StatusCode, body);
+                    fireAtUnixMs,
+                    receivedAtUnixMs,
+                    (int)res.StatusCode,
+                    body);
             }
         }
-        /*
-        private async Task<BrokerOrderResultDto> SendOrderInternalAsync(
-            BrokerSession session,
-            string symbolIsin,
-            long price,
-            long quantity,
-            int side,
-            CancellationToken ct)
-        {
-            var s = AsSession(session);
-            var url = _options.BaseUrl + EasyTraderEndpoints.Order;
-
-            const decimal commission = 0.003712m;
-            const int validityType = 0;
-            const int orderModelType = 1;
-            const int orderFrom = 34;
-
-            var totalValue = (long)Math.Round(price * quantity * (1 + (double)commission));
-
-            var payload = new EasyTraderOrderRequest
-            {
-                Order = new EasyTraderOrder
-                {
-                    Price = price,
-                    Quantity = quantity,
-                    Side = side,
-                    ValidityType = validityType,
-                    CreateDateTime = FormatEasyTraderDateTime(DateTime.Now),
-                    Commission = commission,
-                    SymbolIsin = symbolIsin,
-                    SymbolName = symbolIsin,   // ⚠️ فعلاً isin، چون name lookup نداریم
-                    OrderModelType = orderModelType,
-                    TotalValue = totalValue,
-                    OrderFrom = orderFrom,
-                }
-            };
-
-            using var client = CreateAuthorizedClient(s.AccessToken);
-            using var req = new HttpRequestMessage(HttpMethod.Post, url);
-            req.Content = new StringContent(
-                JsonSerializer.Serialize(payload, JsonOpts),
-                Encoding.UTF8, "application/json");
-
-
-            var fireAtUtc = DateTimeOffset.UtcNow;
-            var fireAtUnixMs = fireAtUtc.ToUnixTimeMilliseconds();
-            _logger.LogInformation(
-                "FIRE ORDER isin={Isin} price={Price} qty={Qty} at={FireAt:HH:mm:ss.fff} (unix={Unix})",
-                symbolIsin, price, quantity, fireAtUtc, fireAtUnixMs);
-
-
-            using var res = await client.SendAsync(req, ct);
-            var body = await res.Content.ReadAsStringAsync(ct);
-
-            if (string.IsNullOrWhiteSpace(body))
-                throw new EasyTraderException(
-                    $"Order returned empty body for isin={symbolIsin}, status={(int)res.StatusCode}",
-                    (int)res.StatusCode);
-
-            if (TryParseOrderResponse(body, out var parsed))
-                return parsed;
-
-            if (!res.IsSuccessStatusCode)
-                throw new EasyTraderException(
-                    $"Order failed {(int)res.StatusCode}. Body: {Truncate(body, 400)}",
-                    (int)res.StatusCode, body);
-
-            throw new EasyTraderException(
-                $"Unexpected order response: {Truncate(body, 400)}",
-                (int)res.StatusCode, body);
-        }
-        */
         private static bool TryParseOrderResponse(string body, out BrokerOrderResultDto result)
         {
             result = default!;
