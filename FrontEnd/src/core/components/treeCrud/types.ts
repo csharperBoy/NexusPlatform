@@ -93,6 +93,7 @@ export interface FlattenedTreeNode<T> {
   isSelected: boolean;
   isDragging: boolean;
   isDragOver: boolean;
+  isNew?: boolean;
   matchesSearch: boolean;   // آیا خودش مچ شده (برای bold کردن در سرچ)
 }
 

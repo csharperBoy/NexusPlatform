@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
 import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMultiSelect";
 import { BaseEntity } from "../../crud/types";
@@ -30,29 +30,24 @@ export function GenericTreeCrudPage<
     enableDragDrop = true,
     enableExpandCollapseAll = true,
     enableStatusColumn = true,
+    enableInlineAddChild = false, // ← NEW
   } = crudOptions.tableFeatures || {};
 
   const {
-    enableAdd = false,
-    enableAddAsRoot = false,
+    enableAddAsRoot = false, // ← NEW (مستقل از enableAdd)
   } = crudOptions.pageFeatures || {};
 
+  const showActionColumn = enableDelete || enableInlineAddChild;
   const colCount =
     columns.length +
     (enableDragDrop ? 1 : 0) +
     (enableStatusColumn ? 1 : 0) +
-    (enableDelete ? 1 : 0);
+    (showActionColumn ? 1 : 0);
 
-  const hasChanges = crud.modifiedIds.size > 0;
-
-  // فیلدهای نمایشی ستون‌ها برای رندر در سلول
   const renderCell = (
     col: TreeColumnDef<T>,
     node: T,
-    rowId: string,
-    depth: number,
-    hasChildren: boolean,
-    isExpanded: boolean
+    rowId: string
   ) => {
     const raw = node[col.key as keyof T];
     const options = col.selectionKey
@@ -105,7 +100,9 @@ export function GenericTreeCrudPage<
         type={col.type === "number" ? "number" : "text"}
         value={(raw as string) || ""}
         dir={col.dir || "rtl"}
-        onChange={(e) => crud.handleFieldChange(rowId, col.key, e.target.value)}
+        onChange={(e) =>
+          crud.handleFieldChange(rowId, col.key, e.target.value)
+        }
         className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
           col.className || ""
         }`}
@@ -121,15 +118,21 @@ export function GenericTreeCrudPage<
           <div>
             <h1 className="text-2xl font-bold text-gray-800 mb-1">{title}</h1>
             <p className="text-sm text-gray-500">
-              کل: <span className="font-semibold text-gray-700">{crud.items.length}</span>
+              کل:{" "}
+              <span className="font-semibold text-gray-700">
+                {crud.items.length}
+              </span>
               {crud.selectedIds.size > 0 && (
                 <span className="mr-3 text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 text-xs">
                   {crud.selectedIds.size} انتخاب‌شده
                 </span>
               )}
-              {hasChanges && (
+              {crud.hasChanges && (
                 <span className="mr-3 text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs">
-                  {crud.modifiedIds.size} تغییر ذخیره‌نشده
+                  {crud.newCount > 0 && `${crud.newCount} جدید`}
+                  {crud.newCount > 0 && crud.modifiedCount > 0 && "، "}
+                  {crud.modifiedCount > 0 &&
+                    `${crud.modifiedCount} تغییر`}
                 </span>
               )}
             </p>
@@ -154,15 +157,20 @@ export function GenericTreeCrudPage<
                 </button>
               </>
             )}
+
+            {/* ─── دکمه افزودن رکورد ریشه ─── */}
             {enableAddAsRoot && (
               <button
-                onClick={() => crud.handleCreate({}, null)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium"
+                onClick={() => crud.handleAddChild(null)}
+                disabled={crud.saving}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center gap-1.5"
               >
+                <span className="text-base leading-none">＋</span>
                 افزودن ریشه
               </button>
             )}
-            {hasChanges && (
+
+            {crud.hasChanges && (
               <button
                 onClick={crud.handleResetChanges}
                 disabled={crud.saving}
@@ -173,9 +181,9 @@ export function GenericTreeCrudPage<
             )}
             <button
               onClick={() => crud.handleSaveChanges()}
-              disabled={!hasChanges || crud.saving}
+              disabled={!crud.hasChanges || crud.saving}
               className={`px-5 py-2 rounded-lg text-sm font-medium shadow-sm ${
-                hasChanges
+                crud.hasChanges
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
@@ -229,7 +237,7 @@ export function GenericTreeCrudPage<
         )}
       </div>
 
-      {/* ─── منطقه رهاسازی ریشه ─── */}
+      {/* ─── منطقه رهاسازی ریشه (فقط اگر درگ فعال باشد) ─── */}
       {enableDragDrop && (
         <div
           onDragOver={(e) => {
@@ -262,7 +270,7 @@ export function GenericTreeCrudPage<
                 <th
                   key={String(col.key)}
                   className={`sticky top-[34px] z-20 bg-gray-100 py-2 h-[38px] px-4 border-b border-gray-200 ${
-                    idx === 0 ? "min-w-[180px]" : "min-w-[140px]"
+                    idx === 0 ? "min-w-[220px]" : "min-w-[140px]"
                   }`}
                 >
                   {col.label}
@@ -273,9 +281,9 @@ export function GenericTreeCrudPage<
                   وضعیت
                 </th>
               )}
-              {enableDelete && (
-                <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-12 text-center">
-                  حذف
+              {showActionColumn && (
+                <th className="sticky top-[34px] z-20 bg-gray-100 py-2 px-3 w-20 text-center">
+                  عملیات
                 </th>
               )}
             </tr>
@@ -307,7 +315,7 @@ export function GenericTreeCrudPage<
                 {enableStatusColumn && (
                   <th className="top-[38px] z-20 bg-gray-50 py-1.5 px-2" />
                 )}
-                {enableDelete && (
+                {showActionColumn && (
                   <th className="top-[38px] z-20 bg-gray-50 py-1.5 px-2" />
                 )}
               </tr>
@@ -330,42 +338,57 @@ export function GenericTreeCrudPage<
             ) : (
               crud.flattenedTree.map((row) => {
                 const rowId = String(row.node.id);
+                const isNewRow = crud.newItemIds.has(rowId); // ← NEW
+
                 return (
                   <tr
                     key={rowId}
                     onClick={(e) => crud.handleRowClick(e, rowId)}
-                    onDragOver={(e) => crud.handleDragOverRow(e, rowId)}
+                    onDragOver={(e) =>
+                      enableDragDrop && crud.handleDragOverRow(e, rowId)
+                    }
                     onDragLeave={() =>
                       crud.dragOverId === rowId && crud.handleDragOverId(null)
                     }
-                    onDrop={(e) => crud.handleDropOnRow(e, rowId)}
-                    className={`cursor-pointer transition-colors ${
-                      row.isSelected ? "bg-blue-100/70 font-medium" : ""
-                    } ${row.isDragging ? "opacity-30 bg-gray-200" : ""} ${
+                    onDrop={(e) =>
+                      enableDragDrop && crud.handleDropOnRow(e, rowId)
+                    }
+                    className={`transition-colors ${
+                      isNewRow ? "bg-emerald-50/60" : "cursor-pointer"
+                    } ${row.isSelected ? "bg-blue-100/70 font-medium" : ""} ${
+                      row.isDragging ? "opacity-30 bg-gray-200" : ""
+                    } ${
                       row.isDragOver
                         ? "bg-blue-200 border-y-2 border-blue-600"
-                        : "hover:bg-gray-50/80"
+                        : !isNewRow
+                        ? "hover:bg-gray-50/80"
+                        : ""
                     } ${
                       row.isModified && !row.isSelected ? "bg-amber-50/40" : ""
                     } ${!row.matchesSearch ? "opacity-60" : ""}`}
                   >
                     {enableDragDrop && (
                       <td className="py-2 px-2 text-center">
-                        <div
-                          draggable
-                          onDragStart={(e) => crud.handleDragStart(e, rowId)}
-                          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg inline-block p-1"
-                        >
-                          ☰
-                        </div>
+                        {!isNewRow && (
+                          <div
+                            draggable
+                            onDragStart={(e) => crud.handleDragStart(e, rowId)}
+                            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-700 text-lg inline-block p-1"
+                          >
+                            ☰
+                          </div>
+                        )}
                       </td>
                     )}
 
                     {columns.map((col, idx) => (
-                      <td key={String(col.key)} className="py-2 px-4 align-middle">
+                      <td
+                        key={String(col.key)}
+                        className="py-2 px-4 align-middle"
+                      >
                         {idx === 0 ? (
                           <div
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-1"
                             style={{ paddingRight: `${row.depth * 24}px` }}
                           >
                             {row.hasChildren ? (
@@ -380,33 +403,54 @@ export function GenericTreeCrudPage<
                                 {row.isExpanded ? "▼" : "◀"}
                               </button>
                             ) : (
-                              <span className="w-5 text-center text-gray-300">•</span>
+                              <span className="w-5 text-center text-gray-300">
+                                •
+                              </span>
                             )}
-                            {renderCell(
-                              col,
-                              row.node,
-                              rowId,
-                              row.depth,
-                              row.hasChildren,
-                              row.isExpanded
+
+                            {/* دکمه افزودن فرزند inline */}
+                            {enableInlineAddChild && !isNewRow && (
+                              <button
+                                type="button"
+                                title="افزودن فرزند"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  crud.handleAddChild(rowId);
+                                }}
+                                className="w-5 h-5 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 font-bold text-sm leading-none"
+                              >
+                                ＋
+                              </button>
                             )}
+                            {isNewRow && (
+                              <button
+                                type="button"
+                                title="حذف پیش‌نویس"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  crud.handleDiscardNew(rowId);
+                                }}
+                                className="w-5 h-5 flex items-center justify-center rounded text-red-600 hover:bg-red-100 font-bold text-sm leading-none"
+                              >
+                                ×
+                              </button>
+                            )}
+
+                            {renderCell(col, row.node, rowId)}
                           </div>
                         ) : (
-                          renderCell(
-                            col,
-                            row.node,
-                            rowId,
-                            row.depth,
-                            row.hasChildren,
-                            row.isExpanded
-                          )
+                          renderCell(col, row.node, rowId)
                         )}
                       </td>
                     ))}
 
                     {enableStatusColumn && (
                       <td className="py-2 px-4 text-center">
-                        {row.isModified ? (
+                        {isNewRow ? (
+                          <span className="inline-block text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
+                            جدید
+                          </span>
+                        ) : row.isModified ? (
                           <span className="inline-block text-[10px] bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full">
                             تغییر یافته
                           </span>
@@ -416,26 +460,29 @@ export function GenericTreeCrudPage<
                       </td>
                     )}
 
-                    {enableDelete && (
+                    {showActionColumn && (
                       <td className="py-2 px-3 text-center">
-                        <button
-                          onClick={() => crud.handleOpenDeleteModal(row.node)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        {enableDelete && !isNewRow && (
+                          <button
+                            onClick={() => crud.handleOpenDeleteModal(row.node)}
+                            title="حذف"
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.8}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.8}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        )}
                       </td>
                     )}
                   </tr>

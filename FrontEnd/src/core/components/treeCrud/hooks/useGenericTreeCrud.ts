@@ -31,12 +31,14 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   const enableDragDrop = tableFeatures?.enableDragDrop !== false;
   const enableMultiSelect = tableFeatures?.enableMultiSelect !== false;
   const showStatusColumn = tableFeatures?.enableStatusColumn !== false;
+  const enableInlineAddChild = tableFeatures?.enableInlineAddChild === true; // ← NEW (پیش‌فرض: خاموش)
 
   // ─── state ───
   const [items, setItems] = useState<T[]>([]);
   const [initialItems, setInitialItems] = useState<T[]>([]);
+  const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set()); // ← NEW
   const [selectionLists, setSelectionLists] = useState<
-    Record<string, (SelectionListDto)[]>
+    Record<string, SelectionListDto[]>
   >({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,12 +110,12 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
 
       setItems(processed);
       setInitialItems(JSON.parse(JSON.stringify(processed)));
+      setNewItemIds(new Set()); // ← NEW
 
       const selObj: Record<string, SelectionListDto[]> = {};
       selections.forEach((s: any) => (selObj[s.key] = s.data));
       setSelectionLists(selObj);
 
-      // expand والدها به‌صورت پیش‌فرض
       const parentIds = new Set<string>();
       processed.forEach((p) => {
         const pid = getParentId(p);
@@ -121,7 +123,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       });
       setExpandedIds(parentIds);
       setSelectedIds(new Set());
-      setModifiedIdsFromDiff(processed);
     } catch (err: any) {
       setError(err?.message || "خطا در دریافت اطلاعات");
     } finally {
@@ -142,16 +143,16 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     const ids = new Set<string>();
     items.forEach((item) => {
       const id = getItemId(item);
+      if (newItemIds.has(id)) return; // ← NEW: رکوردهای جدید جزو modified نیستن
       const init = initialItemsMap.get(id);
-      if (!init) return void ids.add(id);
+      if (!init) return;
       if (compareItems(item, init)) ids.add(id);
     });
     return ids;
-  }, [items, initialItemsMap, compareItems, getItemId]);
+  }, [items, initialItemsMap, compareItems, getItemId, newItemIds]);
 
-  const setModifiedIdsFromDiff = (_: T[]) => {
-    /* placeholder - modifiedIds به‌صورت derived محاسبه می‌شود */
-  };
+  const hasChanges = modifiedIds.size > 0 || newItemIds.size > 0; // ← NEW
+  const totalChanges = modifiedIds.size + newItemIds.size;        // ← NEW
 
   useEffect(() => {
     fetchData();
@@ -164,8 +165,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       if (col.getFilterValue) return col.getFilterValue(item) || "";
       const raw = item[col.key as keyof T];
       if (raw == null) return "";
-
-      // resolve با selectionList
       if (col.selectionKey && selectionLists[col.selectionKey]) {
         const list = selectionLists[col.selectionKey];
         if (Array.isArray(raw)) {
@@ -216,15 +215,12 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       if (!childrenMap.has(parentKey)) childrenMap.set(parentKey, []);
       childrenMap.get(parentKey)!.push(item);
     });
-    if (sortChildren) {
-      childrenMap.forEach((arr) => arr.sort(sortChildren));
-    }
+    if (sortChildren) childrenMap.forEach((arr) => arr.sort(sortChildren));
 
     const isSearching =
       globalSearch.trim() !== "" ||
       Object.values(columnFilters).some((v) => v.trim() !== "");
 
-    // اگر سرچ فعال است: فقط مچ‌ها + اجدادشان
     const visibleSet = new Set<string>();
     const matchedSet = new Set<string>();
     if (isSearching) {
@@ -233,7 +229,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
           const id = getItemId(it);
           matchedSet.add(id);
           visibleSet.add(id);
-          // بالا رفتن تا ریشه
           let cur: T | undefined = it;
           while (cur) {
             const pid = getParentId(cur);
@@ -256,6 +251,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         const hasChildren = grandChildren.length > 0;
         const isExpanded = expandedIds.has(id);
         const isModified = modifiedIds.has(id);
+        const isNew = newItemIds.has(id); // ← NEW
 
         result.push({
           node: child,
@@ -267,7 +263,8 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
           isDragging: draggedIds.includes(id),
           isDragOver: dragOverId === id,
           matchesSearch: !isSearching || matchedSet.has(id),
-        });
+          isNew, // ← NEW
+        } as FlattenedTreeNode<T> & { isNew?: boolean });
 
         if ((isExpanded || isSearching) && hasChildren) {
           traverse(id, depth + 1);
@@ -290,6 +287,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     getItemId,
     getParentId,
     sortChildren,
+    newItemIds, // ← NEW
   ]);
 
   // ─── edit ───
@@ -302,6 +300,59 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       );
     },
     [getItemId]
+  );
+
+  // ─── inline add child ─── (NEW)
+  const handleAddChild = useCallback(
+    (parentId: string | null): string => {
+      const tempId = `temp-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 9)}`;
+
+      // مقداردهی اولیه بر اساس نوع ستون‌ها
+      const draft: Record<string, any> = {
+        [idField]: tempId,
+        [parentIdField]: parentId,
+      };
+      columns.forEach((col) => {
+        if (col.type === "multi-select" || col.type === "taginput") {
+          draft[col.key as string] = [];
+        } else if (col.type === "boolean") {
+          draft[col.key as string] = false;
+        } else {
+          draft[col.key as string] = "";
+        }
+      });
+
+      setItems((prev) => [draft as unknown as T, ...prev]);
+      setNewItemIds((prev) => new Set(prev).add(tempId));
+      if (parentId) {
+        setExpandedIds((prev) => new Set(prev).add(parentId));
+      }
+      setSelectedIds(new Set([tempId]));
+      setLastSelectedId(tempId);
+      return tempId;
+    },
+    [idField, parentIdField, columns]
+  );
+
+  // ─── discard new (پیش‌نویس) ─── (NEW)
+  const handleDiscardNew = useCallback(
+    (id: string) => {
+      setItems((prev) => prev.filter((it) => getItemId(it) !== id));
+      setNewItemIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      if (lastSelectedId === id) setLastSelectedId(null);
+    },
+    [getItemId, lastSelectedId]
   );
 
   // ─── selection ───
@@ -419,15 +470,14 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
             : it
         )
       );
-      if (newParentId) {
-        setExpandedIds((prev) => new Set(prev).add(newParentId));
-      }
+      if (newParentId) setExpandedIds((prev) => new Set(prev).add(newParentId));
     },
     [getItemId, parentIdField]
   );
 
   const handleDropOnRow = useCallback(
     (e: React.DragEvent, targetParentId: string) => {
+      if (!enableDragDrop) return;
       e.preventDefault();
       setDragOverId(null);
       setIsOverRootZone(false);
@@ -451,16 +501,16 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         return node && getParentId(node) !== targetParentId;
       });
 
-      if (cyclic)
-        alert("امکان انتقال والد به زیرمجموعه‌های خودش وجود ندارد!");
+      if (cyclic) alert("امکان انتقال والد به زیرمجموعه‌های خودش وجود ندارد!");
       if (valid.length) updateNodesParent(valid, targetParentId);
       setDraggedIds([]);
     },
-    [draggedIds, isDescendant, itemsMap, getParentId, updateNodesParent]
+    [enableDragDrop, draggedIds, isDescendant, itemsMap, getParentId, updateNodesParent]
   );
 
   const handleDropOnRoot = useCallback(
     (e: React.DragEvent) => {
+      if (!enableDragDrop) return;
       e.preventDefault();
       setIsOverRootZone(false);
       setDragOverId(null);
@@ -479,32 +529,68 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       if (valid.length) updateNodesParent(valid, null);
       setDraggedIds([]);
     },
-    [draggedIds, itemsMap, getParentId, updateNodesParent]
+    [enableDragDrop, draggedIds, itemsMap, getParentId, updateNodesParent]
   );
 
-  // ─── save all ───
+  // ─── save all ─── (بازنویسی شده برای پشتیبانی از رکوردهای جدید)
   const handleSaveChanges = useCallback(
     async (options?: ApiOptions) => {
-      if (modifiedIds.size === 0) return;
+      if (!hasChanges) return;
       setSaving(true);
       setError(null);
       setSuccessMessage(null);
       try {
-        const cmds: TUpdateCmd[] = Array.from(modifiedIds).map((id) => {
+        const merged = { ...apiOptions, ...options };
+
+        // 1. ساخت دستورات به‌روزرسانی برای رکوردهای تغییریافته
+        const updateCmds: TUpdateCmd[] = Array.from(modifiedIds).map((id) => {
           const item = itemsMap.get(id)!;
           return mapToUpdateCommand
             ? mapToUpdateCommand(item)
             : (item as unknown as TUpdateCmd);
         });
-        const merged = { ...apiOptions, ...options };
-        const res = await api.batchUpdate(cmds, merged);
 
-        if (res && res._isOfflineQueued) {
+        // 2. ساخت دستورات ایجاد برای رکوردهای جدید
+        const createCmds: TCreateCmd[] = Array.from(newItemIds).map((id) => {
+          const item = itemsMap.get(id)!;
+          if (mapToCreateCommand) {
+            return mapToCreateCommand(
+              item as unknown as Record<string, any>,
+              getParentId(item)
+            );
+          }
+          return item as unknown as TCreateCmd;
+        });
+
+        // 3. اجرا
+        let offlineQueued = false;
+        let createdCount = 0;
+        let updatedCount = 0;
+
+        if (createCmds.length) {
+          const results = await Promise.all(
+            createCmds.map((cmd) => api.create(cmd, merged))
+          );
+          createdCount = results.length;
+          if (results.some((r: any) => r && r._isOfflineQueued))
+            offlineQueued = true;
+        }
+
+        if (updateCmds.length) {
+          const res = await api.batchUpdate(updateCmds, merged);
+          updatedCount = updateCmds.length;
+          if (res && (res as any)._isOfflineQueued) offlineQueued = true;
+        }
+
+        if (offlineQueued) {
           alert("ارتباط قطع است. تغییرات در صف ذخیره شد.");
           setInitialItems(JSON.parse(JSON.stringify(items)));
+          setNewItemIds(new Set());
         } else {
-          setSuccessMessage(`${cmds.length} تغییر با موفقیت ذخیره شد.`);
-          setInitialItems(JSON.parse(JSON.stringify(items)));
+          setSuccessMessage(
+            `${createdCount} رکورد جدید و ${updatedCount} تغییر با موفقیت ذخیره شد.`
+          );
+          await fetchData();
           setTimeout(() => setSuccessMessage(null), 4000);
         }
       } catch (err: any) {
@@ -513,60 +599,42 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         setSaving(false);
       }
     },
-    [modifiedIds, itemsMap, mapToUpdateCommand, api, apiOptions, items]
+    [
+      hasChanges,
+      modifiedIds,
+      newItemIds,
+      itemsMap,
+      mapToUpdateCommand,
+      mapToCreateCommand,
+      getParentId,
+      api,
+      apiOptions,
+      items,
+      fetchData,
+    ]
   );
 
-  // ─── create ───
-  const handleCreate = useCallback(
-    async (
-      formData: Record<string, any>,
-      parentId: string | null,
-      options?: ApiOptions
-    ) => {
-      setSaving(true);
-      try {
-        const cmd = mapToCreateCommand
-          ? mapToCreateCommand(formData, parentId)
-          : ({
-              ...formData,
-              [parentIdField]: parentId,
-            } as unknown as TCreateCmd);
-        const merged = { ...apiOptions, ...options };
-        const res = await api.create(cmd, merged);
-
-        if (res && res._isOfflineQueued) {
-          const tempId = `temp-${Date.now()}`;
-          const newItem = {
-            ...formData,
-            id: tempId,
-            [parentIdField]: parentId,
-          } as unknown as T;
-          setItems((prev) => [newItem, ...prev]);
-          setInitialItems((prev) => [newItem, ...prev]);
-          alert("رکورد در صف ثبت قرار گرفت.");
-        } else {
-          await fetchData();
-        }
-        if (parentId) setExpandedIds((prev) => new Set(prev).add(parentId));
-      } catch (err: any) {
-        setError(err?.message || "خطا در ایجاد رکورد");
-      } finally {
-        setSaving(false);
-      }
-    },
-    [mapToCreateCommand, parentIdField, api, apiOptions, fetchData]
-  );
+  // ─── reset ───
+  const handleResetChanges = useCallback(() => {
+    if (!window.confirm("آیا از لغو تمام تغییرات اعتماد دارید؟")) return;
+    setItems(JSON.parse(JSON.stringify(initialItems)));
+    setNewItemIds(new Set());
+    setSelectedIds(new Set());
+  }, [initialItems]);
 
   // ─── delete ───
   const handleOpenDeleteModal = useCallback(
     (item: T) => {
       const id = getItemId(item);
-      const title = getDisplayTitle
-        ? getDisplayTitle(item)
-        : `#${id}`;
+      // اگر رکورد جدید است، فقط discard کن
+      if (newItemIds.has(id)) {
+        handleDiscardNew(id);
+        return;
+      }
+      const title = getDisplayTitle ? getDisplayTitle(item) : `#${id}`;
       setDeleteTarget({ item, title, isModified: modifiedIds.has(id) });
     },
-    [getItemId, getDisplayTitle, modifiedIds]
+    [getItemId, getDisplayTitle, modifiedIds, newItemIds, handleDiscardNew]
   );
 
   const handleCloseDeleteModal = useCallback(() => {
@@ -585,7 +653,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
           merged
         );
         const id = getItemId(deleteTarget.item);
-        if (res && res._isOfflineQueued) {
+        if (res && (res as any)._isOfflineQueued) {
           setItems((prev) => prev.filter((i) => getItemId(i) !== id));
           setInitialItems((prev) => prev.filter((i) => getItemId(i) !== id));
           alert("حذف در صف قرار گرفت.");
@@ -605,14 +673,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     [deleteTarget, idField, getItemId, api, apiOptions, fetchData]
   );
 
-  // ─── reset ───
-  const handleResetChanges = useCallback(() => {
-    if (!window.confirm("آیا از لغو تمام تغییرات اعتماد دارید؟")) return;
-    setItems(JSON.parse(JSON.stringify(initialItems)));
-    setSelectedIds(new Set());
-  }, [initialItems]);
-
-  // ─── excel import ───
+  // ─── excel import ─── (بدون تغییر نسبت به نسخه‌ی قبل)
   const handleExcelImport = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -627,7 +688,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
             alert("فایل خالی است.");
             return;
           }
-
           let updated = 0;
           setItems((prev) => {
             const next = prev.map((p) => ({ ...p }));
@@ -638,11 +698,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                 if (v != null) byMatchKey.set(String(v).trim(), idx);
               });
             }
-
-            const findId = (
-              list: SelectionListDto[],
-              raw: string
-            ): string | null => {
+            const findId = (list: SelectionListDto[], raw: string) => {
               const t = String(raw).trim();
               const found = list.find(
                 (o) =>
@@ -652,10 +708,8 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
               );
               return found ? found.value : null;
             };
-
             rows.forEach((row) => {
               if (!excelMatchKey) return;
-              // پیدا کردن کلید تطبیق در اکسل
               const mkKey = Object.keys(row).find((k) => {
                 const kk = k.trim().toLowerCase();
                 const col = columns.find(
@@ -672,12 +726,10 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
               const matchVal = String(row[mkKey]).trim();
               const idx = byMatchKey.get(matchVal);
               if (idx == null) return;
-
               let changed = false;
               columns.forEach((col) => {
                 if (String(col.key) === String(excelMatchKey)) return;
                 if (col.editable === false) return;
-
                 const headers = [
                   col.label.toLowerCase(),
                   ...(col.excelHeaders || []).map((h) => h.toLowerCase()),
@@ -689,11 +741,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                 if (!key) return;
                 const raw = row[key];
                 if (raw == null) return;
-
                 const target = next[idx] as any;
                 const isMulti = col.type === "multi-select";
                 const isSelect = col.type === "select" || isMulti;
-
                 if (isSelect && col.selectionKey) {
                   const list = selectionLists[col.selectionKey] || [];
                   const sep = col.excelSeparator || /[،,;؛]/;
@@ -712,7 +762,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                       const curIds = cur
                         .map((x: any) => String(x.id ?? x))
                         .sort();
-                      if (JSON.stringify(curIds) !== JSON.stringify(ids.sort())) {
+                      if (
+                        JSON.stringify(curIds) !== JSON.stringify(ids.sort())
+                      ) {
                         target[col.key] = ids.map((id) => ({
                           id,
                           title:
@@ -739,10 +791,8 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                   }
                 }
               });
-
               if (changed) updated++;
             });
-
             if (updated > 0)
               setSuccessMessage(`${updated} رکورد از اکسل اعمال شد.`);
             else alert("رکورد منطبقی یافت نشد یا هیچ تغییری اعمال نشد.");
@@ -760,7 +810,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   );
 
   return {
-    // data
     items,
     flattenedTree,
     itemsMap,
@@ -771,7 +820,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     error,
     successMessage,
 
-    // search/filter
     globalSearch,
     setGlobalSearch,
     columnFilters,
@@ -779,16 +827,19 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     handleColumnFilterChange: (k: string, v: string) =>
       setColumnFilters((p) => ({ ...p, [k]: v })),
 
-    // tree state
     expandedIds,
     selectedIds,
     lastSelectedId,
     modifiedIds,
+    newItemIds, // ← NEW
+    hasChanges, // ← NEW
+    totalChanges, // ← NEW
+    modifiedCount: modifiedIds.size, // ← NEW
+    newCount: newItemIds.size, // ← NEW
     draggedIds,
     dragOverId,
     isOverRootZone,
 
-    // handlers
     toggleExpand,
     expandAll,
     collapseAll,
@@ -803,9 +854,11 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     handleDropOnRoot,
     updateNodesParent,
 
+    handleAddChild, // ← NEW
+    handleDiscardNew, // ← NEW
+
     handleSaveChanges,
     handleResetChanges,
-    handleCreate,
 
     deleteTarget,
     handleOpenDeleteModal,
