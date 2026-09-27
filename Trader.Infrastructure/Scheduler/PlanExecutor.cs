@@ -221,14 +221,63 @@ namespace Trader.Infrastructure.Scheduler
             var sessionJson = _protector.Unprotect(account.EncryptedSession!);
             var session = brokerClient.DeserializeSession(sessionJson);
 
-            return await Task.FromResult(new PreparedFireItem
+            /* ═══ GetSymbolInfo از Phase 2 منتقل شد به Phase 1 ═══ */
+            SymbolMarketDataDto marketData;
+            try
+            {
+                marketData = await brokerClient.GetSymbolInfoAsync(
+                    session, order.SymbolIsin, ct);
+            }
+            catch (Exception ex)
+            {
+                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                    $"[{account.Name}] {order.SymbolIsin}: symbol info failed: {ex.Message}",
+                    orderId: order.Id, ct: ct);
+                return null;
+            }
+
+            var price = order.Side == OrderSide.Buy
+                ? marketData.HighAllowedPrice
+                : marketData.LowAllowedPrice;
+
+            if (price is null || price <= 0)
+            {
+                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                    $"[{account.Name}] {order.SymbolIsin}: no valid allowed price",
+                    orderId: order.Id, ct: ct);
+                return null;
+            }
+
+            long quantity;
+            if (order.Mode == OrderMode.Quantity)
+            {
+                quantity = order.Quantity;
+            }
+            else
+            {
+                const double commission = 0.0037;
+                quantity = (long)Math.Floor(
+                    order.TotalValue / ((double)price.Value * (1 + commission)));
+            }
+
+            if (quantity <= 0)
+            {
+                await LogAsync(plan.Id, ExecutionLogLevel.Error,
+                    $"[{account.Name}] {order.SymbolIsin}: invalid quantity ({quantity})",
+                    orderId: order.Id, ct: ct);
+                return null;
+            }
+
+            return new PreparedFireItem
             {
                 Order = order,
                 Account = account,
                 BrokerClient = brokerClient,
                 Session = session,
-                SymbolIsin = order.SymbolIsin,   // ← ISIN، نه نام
-            });
+                SymbolIsin = order.SymbolIsin,
+                Price = price.Value,
+                Quantity = quantity,
+            };
         }
 
         /* ══════════════════════════════════════════════
@@ -236,49 +285,25 @@ namespace Trader.Infrastructure.Scheduler
            ══════════════════════════════════════════════ */
 
         private async Task<FireResult> FireHttpAsync(
-            PreparedFireItem item,
-            CancellationToken ct)
+    PreparedFireItem item,
+    CancellationToken ct)
         {
             try
             {
-                var marketData = await item.BrokerClient.GetSymbolInfoAsync(
-                    item.Session, item.SymbolIsin, ct);
-
-                var price = item.Order.Side == OrderSide.Buy
-                    ? marketData.HighAllowedPrice
-                    : marketData.LowAllowedPrice;
-
-                if (price is null || price <= 0)
-                    throw new Exception($"No valid allowed price for {item.SymbolIsin}");
-
-                long quantity;
-                if (item.Order.Mode == OrderMode.Quantity)
-                {
-                    quantity = item.Order.Quantity;
-                }
-                else
-                {
-                    const double commission = 0.0037;
-                    quantity = (long)Math.Floor(
-                        item.Order.TotalValue / ((double)price.Value * (1 + commission)));
-                }
-
-                if (quantity <= 0)
-                    throw new Exception($"Invalid quantity: {quantity}");
-
+                /* ═══ فقط یه HTTP call — SendOrder ═══ */
                 var result = item.Order.Side == OrderSide.Buy
                     ? await item.BrokerClient.SendBuyOrderAsync(
-                        item.Session, item.SymbolIsin, price.Value, quantity, ct)
+                        item.Session, item.SymbolIsin, item.Price, item.Quantity, ct)
                     : await item.BrokerClient.SendSellOrderAsync(
-                        item.Session, item.SymbolIsin, price.Value, quantity, ct);
+                        item.Session, item.SymbolIsin, item.Price, item.Quantity, ct);
 
                 return new FireResult
                 {
                     Order = item.Order,
                     Account = item.Account,
                     Result = result,
-                    Price = price.Value,
-                    Quantity = quantity,
+                    Price = item.Price,
+                    Quantity = item.Quantity,
                 };
             }
             catch (Exception ex)
@@ -391,6 +416,8 @@ namespace Trader.Infrastructure.Scheduler
             public IBrokerClient BrokerClient { get; set; } = default!;
             public BrokerSession Session { get; set; } = default!;
             public string SymbolIsin { get; set; } = default!;
+            public long Price { get; set; }         // ← جدید
+            public long Quantity { get; set; }      // ← جدید
         }
 
         private class FireResult

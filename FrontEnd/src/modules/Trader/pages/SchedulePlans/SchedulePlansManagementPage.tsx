@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSchedulePlansPage } from "../../hooks/useSchedulePlansPage";
-import { accountApi } from "../../api";
-import { symbolApi } from "../../api";
+import { accountApi } from "../../api/accountApi";
+import { symbolApi } from "../../api/symbolApi";
 import { SchedulePlanCard } from "./components/SchedulePlanCard";
 import { SchedulePlanForm } from "./components/SchedulePlanForm";
+import { useSelectionList } from "@/core/hooks/useSelectionList";
 import type {
   CreateSchedulePlanCommand,
   UpdateSchedulePlanCommand,
@@ -23,33 +24,11 @@ export function SchedulePlansManagementPage() {
     disablePlan,
   } = useSchedulePlansPage();
 
-  const [accounts, setAccounts] = useState<{ id: string; name: string }[]>([]);
-  const [symbols, setSymbols] = useState<
-    { symbolIsin: string; symbolName: string }[]
-  >([]);
+  /* ─── لیست‌های انتخابی از GetSelectionList ─── */
+  const accounts = useSelectionList(() => accountApi.GetSelectionList());
+  const symbols = useSelectionList(() => symbolApi.GetSelectionList());
+
   const [showAddForm, setShowAddForm] = useState(false);
-
-  /* ─── لود حساب‌ها و نمادها برای dropdown ─── */
-  useEffect(() => {
-    void accountApi
-      .GetSelectionList()
-      .then((list) =>
-        setAccounts(list.map((x) => ({ id: x.value, name: x.label }))),
-      )
-      .catch(() => setAccounts([]));
-
-    void symbolApi
-      .GetList()
-      .then((list) =>
-        setSymbols(
-          list.map((x) => ({
-            symbolIsin: x.symbolIsin,
-            symbolName: x.symbolName,
-          })),
-        ),
-      )
-      .catch(() => setSymbols([]));
-  }, []);
 
   const handleCreate = async (cmd: CreateSchedulePlanCommand) => {
     const ok = await createPlan(cmd);
@@ -64,6 +43,13 @@ export function SchedulePlansManagementPage() {
     a.date.localeCompare(b.date),
   );
 
+  /* ─── چک آماده بودن لیست‌های انتخابی ─── */
+  const selectionsReady =
+    !accounts.loading &&
+    !symbols.loading &&
+    accounts.items.length > 0 &&
+    symbols.items.length > 0;
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -75,11 +61,28 @@ export function SchedulePlansManagementPage() {
           type="button"
           className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
           onClick={() => setShowAddForm(true)}
-          disabled={saving}
+          disabled={saving || !selectionsReady}
+          title={
+            !selectionsReady
+              ? "اول باید حساب و نماد تعریف شده باشه"
+              : undefined
+          }
         >
           + پلن جدید
         </button>
       </div>
+
+      {/* اگه لیست‌های پایه خالی هستن */}
+      {!accounts.loading && accounts.items.length === 0 && (
+        <div className="rounded-lg bg-amber-950/30 p-3 text-xs text-amber-300">
+          ⚠️ هیچ حساب کاربری تعریف نشده. اول از «مدیریت حساب‌ها» اضافه کن.
+        </div>
+      )}
+      {!symbols.loading && symbols.items.length === 0 && (
+        <div className="rounded-lg bg-amber-950/30 p-3 text-xs text-amber-300">
+          ⚠️ هیچ نمادی تعریف نشده. اول از «مدیریت نمادها» اضافه کن.
+        </div>
+      )}
 
       {/* Feedback */}
       {error && (
@@ -128,8 +131,8 @@ export function SchedulePlansManagementPage() {
         <SchedulePlanCard
           key={plan.id}
           plan={plan}
-          accounts={accounts}
-          symbols={symbols}
+          accounts={accounts.items}
+          symbols={symbols.items}
           saving={saving}
           onSave={handleSave}
           onDelete={(id) => {

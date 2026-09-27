@@ -5,11 +5,12 @@ import type {
   ScheduledOrderInfoView,
   OrderMode,
 } from "../../../models";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 
 interface Props {
   plan: SchedulePlanInfoView;
-  accounts: { id: string; name: string }[];
-  symbols: { symbolIsin: string; symbolName: string }[];
+  accounts: SelectionListDto[];
+  symbols: SelectionListDto[];
   saving: boolean;
   onSave: (cmd: UpdateSchedulePlanCommand) => void;
   onDelete: (id: string) => void;
@@ -69,8 +70,8 @@ export function SchedulePlanCard({
     if (accounts.length === 0 || symbols.length === 0) return;
     const newOrder: ScheduledOrderInfoView = {
       id: `temp-${Date.now()}`,
-      accountId: accounts[0].id,
-      symbolIsin: symbols[0].symbolIsin,
+      accountId: accounts[0].value,
+      symbolIsin: symbols[0].value,
       side: 0,
       mode: "quantity",
       quantity: "100",
@@ -285,8 +286,8 @@ export function SchedulePlanCard({
 interface OrderRowProps {
   order: ScheduledOrderInfoView;
   index: number;
-  accounts: { id: string; name: string }[];
-  symbols: { symbolIsin: string; symbolName: string }[];
+  accounts: SelectionListDto[];
+  symbols: SelectionListDto[];
   onChange: (patch: Partial<ScheduledOrderInfoView>) => void;
   onRemove: () => void;
 }
@@ -299,8 +300,8 @@ function OrderRow({
   onChange,
   onRemove,
 }: OrderRowProps) {
-  const sym = symbols.find((s) => s.symbolIsin === order.symbolIsin);
-  const acc = accounts.find((a) => a.id === order.accountId);
+  const sym = symbols.find((s) => s.value === order.symbolIsin);
+  const acc = accounts.find((a) => a.value === order.accountId);
 
   return (
     <div
@@ -318,7 +319,7 @@ function OrderRow({
           )}
         </span>
         <span className="font-semibold text-blue-300">
-          {sym?.symbolName ?? "—"} — {acc?.name ?? "—"}
+          {sym?.label ?? order.symbolIsin} — {acc?.label ?? "—"}
         </span>
         <button
           type="button"
@@ -337,8 +338,8 @@ function OrderRow({
         >
           <option value="">— حساب —</option>
           {accounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
+            <option key={a.value} value={a.value}>
+              {a.display || a.label}
             </option>
           ))}
         </select>
@@ -350,8 +351,8 @@ function OrderRow({
         >
           <option value="">— نماد —</option>
           {symbols.map((s) => (
-            <option key={s.symbolIsin} value={s.symbolIsin}>
-              {s.symbolName}
+            <option key={s.value} value={s.value}>
+              {s.display || s.label}
             </option>
           ))}
         </select>
