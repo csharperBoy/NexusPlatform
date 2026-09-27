@@ -111,6 +111,11 @@ namespace Trader.Infrastructure.DependencyInjection
             // PlanExecutor
             services.AddScoped<IPlanExecutor, PlanExecutor>();
 
+            // ExecutionLog
+            services.AddScoped<ExecutionLogService>();
+            services.AddScoped<IExecutionLogQueryService>(
+                sp => sp.GetRequiredService<ExecutionLogService>());
+
             /* ═══════════ Scheduler Job Handler ═══════════ */
             services.AddScheduledJobHandler<PlanExecutionPayload, PlanExecutionJobHandler>();
 

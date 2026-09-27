@@ -115,6 +115,15 @@ namespace Trader.Infrastructure.Data
                             Description = "server clock management",
                             DisplayOrder = 3005,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.executionlog",
+                            Name = "ExecutionLog",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "ExecutionLog management",
+                            DisplayOrder = 3006,
+                            Icon = "list",
                         }
                     }
                 }
@@ -227,7 +236,17 @@ namespace Trader.Infrastructure.Data
                    AssigneeId = roleId,
 
                    Description = "Full access to trader server clock"
-               }
+               },
+               new()
+                {
+                    ResourceKey = "trader.executionlog",
+                    Action = PermissionAction.Full,
+                    Scopes = new List<ScopeDto> { new() { scope = ScopeType.All } },
+                    Effect = PermissionEffect.allow,
+                    AssigneeType = AssigneeType.Role,
+                    AssigneeId = roleId,
+                    Description = "View execution logs"
+                }
             };
         }
         public static async Task SeedTraderForAuthorizationAsync(
@@ -323,7 +342,17 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.serverclock",
                             ParentKey = "trader",
                             Path = "/trader/server-clock"
-                        }
+                        },
+                        new()
+                            {
+                                Title = "لاگ اجرای پلن‌ها",
+                                Description = "مشاهده لاگ‌های اجرای زمان‌بند",
+                                Icon = Icon.Folder.GetIconString(),
+                                Order = 105,
+                                Key = "trader.executionlog",
+                                ParentKey = "trader",
+                                Path = "/trader/logs"
+                            }
                     }
                 }
             };

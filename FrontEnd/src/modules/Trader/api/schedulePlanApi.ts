@@ -11,6 +11,7 @@ import {
   mockDelay,
   mockUid,
 } from "./_mockStorage";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
 
 const API_MODULE = "trader";
 const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
@@ -30,6 +31,22 @@ export const schedulePlanApi = {
     return response.data;
   },
 
+  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return mockLoad<SchedulePlanInfoView[]>(MOCK_KEY, []).map((s) => ({
+        value: s.id,
+        label: s.name,
+        display: `${s.name}`,
+      }));
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/Trader/SchedulePlan/GetSelectionList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
   GetById: async (id: string): Promise<SchedulePlanInfoView> => {
     if (USE_MOCK) {
       await mockDelay(150);
@@ -57,6 +74,7 @@ export const schedulePlanApi = {
         enabled: data.enabled,
         autoLoginAt: data.autoLoginAt,
         autoRefreshAt: data.autoRefreshAt,
+        fireLeadMs: data.fireLeadMs,
         orders: data.orders.map<ScheduledOrderInfoView>((o) => ({
           id: mockUid(),
           ...o,

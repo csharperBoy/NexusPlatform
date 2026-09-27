@@ -31,3 +31,8 @@ export type {
   ServerClockInfoView,
   SyncServerClockCommand,
 } from "./ServerClockInfoView";
+
+export type {
+  ExecutionLogInfoView,
+  ExecutionLogQueryResult,
+} from "./ExecutionLogInfoView";
