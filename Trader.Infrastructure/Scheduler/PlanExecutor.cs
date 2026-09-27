@@ -21,6 +21,7 @@ namespace Trader.Infrastructure.Scheduler
         private readonly IUnitOfWork<TraderDbContext> _uow;
         private readonly IBrokerClientFactory _brokerFactory;
         private readonly ISecretProtector _protector;
+        private readonly IServerClockQueryService _clock;
         private readonly ILogger<PlanExecutor> _logger;
 
         private static readonly TimeSpan IranOffset = TimeSpan.FromHours(3.5);
@@ -34,6 +35,7 @@ namespace Trader.Infrastructure.Scheduler
             IUnitOfWork<TraderDbContext> uow,
             IBrokerClientFactory brokerFactory,
             ISecretProtector protector,
+    IServerClockQueryService clock,
             ILogger<PlanExecutor> logger)
         {
             _planRepository = planRepository;
@@ -43,6 +45,7 @@ namespace Trader.Infrastructure.Scheduler
             _uow = uow;
             _brokerFactory = brokerFactory;
             _protector = protector;
+            _clock = clock;
             _logger = logger;
         }
 
@@ -69,8 +72,27 @@ namespace Trader.Infrastructure.Scheduler
 
             try
             {
+                /* ─── diff تازه از سرور کارگزاری ─── */
+                var clockInfo = await _clock.GetStatusAsync();
+
+                /* ─── لیست زمان‌بندی سفارش‌ها (به ترتیب زمان) ─── */
+                var orderTargets = plan.Orders
+                    .OrderBy(o => o.Time)
+                    .Select(o => o.Time.ToString("HH:mm:ss.fff"))
+                    .ToList();
+
+                var ordersLine = orderTargets.Count > 0
+                    ? string.Join(", ", orderTargets)
+                    : "—";
+
                 await LogAsync(plan.Id, ExecutionLogLevel.Info,
-                    $"Pipeline start (login={loginAt:HH:mm:ss}, refresh={refreshAt:HH:mm:ss})",
+                    $"Pipeline start | " +
+                    $"login={loginAt:HH:mm:ss} | " +
+                    $"refresh={refreshAt:HH:mm:ss} | " +
+                    $"orders=[{ordersLine}] | " +
+                    $"diff={clockInfo.Diff}ms | " +
+                    $"latency={clockInfo.OneWayLatency}ms | " +
+                    $"clockAge={(clockInfo.LastUpdatedAt > 0 ? (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - clockInfo.LastUpdatedAt) : -1)}ms",
                     ct: ct);
 
                 /* ═══ Stage 1: Login check ═══ */
@@ -127,9 +149,14 @@ namespace Trader.Infrastructure.Scheduler
                     if (ct.IsCancellationRequested) break;
                     if (group.Prepared.Count == 0) continue;
 
-                    /* دیر شده؟ */
-                    var lateBy = DateTimeOffset.UtcNow - group.TargetTime;
-                    if (lateBy > TimeSpan.FromMilliseconds(MAX_LATE_MS))
+                    /* ═══ Diff تازه از سرور — قبل از هر fire ═══ */
+                    clockInfo = await _clock.GetStatusAsync();
+                    var adjustedTarget = group.TargetTime.AddMilliseconds(-clockInfo.Diff);
+
+                    var lateByMs = (DateTimeOffset.UtcNow - adjustedTarget).TotalMilliseconds;
+
+                    /* خیلی دیر شده → کنسل */
+                    if (lateByMs > MAX_LATE_MS)
                     {
                         foreach (var p in group.Prepared)
                         {
@@ -138,14 +165,24 @@ namespace Trader.Infrastructure.Scheduler
                                 Order = p.Order,
                                 Account = p.Account,
                                 Exception = new Exception(
-                                    $"Cancelled — past {group.TargetTime:HH:mm:ss.fff}"),
+                                    $"Cancelled — {lateByMs:F0}ms past target {group.TargetTime:HH:mm:ss.fff}"),
                             });
                         }
                         continue;
                     }
 
-                    /* PreciseDelay دقیقاً سر لحظه‌ی هدف */
-                    await PreciseDelay.UntilAsync(group.TargetTime, ct);
+                    if (lateByMs > 0)
+                    {
+                        /* کمی دیر شده ولی در تحمل ۵ ثانیه — فوری fire کن */
+                        await LogAsync(plan.Id, ExecutionLogLevel.Warning,
+                            $"⏰ {lateByMs:F0}ms late — firing immediately (target={group.TargetTime:HH:mm:ss.fff}, diff={clockInfo.Diff}ms)",
+                            ct: ct);
+                    }
+                    else
+                    {
+                        /* سر وقت — PreciseDelay */
+                        await PreciseDelay.UntilAsync(adjustedTarget, ct);
+                    }
 
                     /* Fire موازی — HTTP only */
                     var tasks = group.Prepared

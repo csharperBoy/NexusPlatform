@@ -44,23 +44,23 @@ namespace Trader.Infrastructure.Services
             try
             {
                 var (brokerClient, session) = await GetDefaultSessionAsync();
-
-                var results = new List<long>();
+                var diffs = new List<long>();
+                var oneWays = new List<long>();
                 for (int i = 0; i < samples; i++)
                 {
                     try
                     {
-                        var latency = await brokerClient.MeasureLatencyAsync(session);
-                        results.Add(latency);
+                        var m = await brokerClient.MeasureLatencyAsync(session);
+                        diffs.Add(m.Diff);
+                        oneWays.Add(m.OneWayLatencyMs);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex,
-                            "Sample {Index}/{Total} failed", i + 1, samples);
+                        _logger.LogWarning(ex, "Sample {I}/{N} failed", i + 1, samples);
                     }
                 }
 
-                if (results.Count == 0)
+                if (diffs.Count == 0)
                 {
                     lock (_lock) { _lastError = "All samples failed"; }
                     return GetStatusSnapshot();
@@ -76,21 +76,18 @@ namespace Trader.Infrastructure.Services
                         _samples.Dequeue();
                     }
 
-                    foreach (var latency in results)
+                    for (int i = 0; i < diffs.Count; i++)
                     {
-                        _samples.Enqueue(new LatencySample(latency, now));
+                        _samples.Enqueue(new LatencySample(diffs[i], oneWays[i], now));
                         while (_samples.Count > MAX_SAMPLES)
                             _samples.Dequeue();
                     }
 
-                    var values = _samples
-                        .Select(s => s.LatencyMs)
-                        .OrderBy(x => x)
-                        .ToList();
-                    var median = ComputeMedian(values);
+                    var sortedDiffs = _samples.Select(s => s.Diff).OrderBy(x => x).ToList();
+                    var sortedOneWays = _samples.Select(s => s.OneWay).OrderBy(x => x).ToList();
 
-                    _oneWayLatency = median;
-                    _diff = median;
+                    _diff = ComputeMedian(sortedDiffs);
+                    _oneWayLatency = ComputeMedian(sortedOneWays);
                     _lastUpdatedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     _samplesCount = _samples.Count;
                     _lastError = null;
@@ -163,6 +160,6 @@ namespace Trader.Infrastructure.Services
                 : sorted[mid];
         }
 
-        private record LatencySample(long LatencyMs, long Timestamp);
+        private record LatencySample(long Diff, long OneWay, long Timestamp);
     }
 }

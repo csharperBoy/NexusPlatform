@@ -252,9 +252,9 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
         /* ══════════════════════════════════════════════════
            MEASURE LATENCY
            ══════════════════════════════════════════════════ */
-        public async Task<long> MeasureLatencyAsync(
-            BrokerSession session,
-            CancellationToken ct = default)
+        public async Task<BrokerTimeMeasurement> MeasureLatencyAsync(
+                                                        BrokerSession session,
+                                                        CancellationToken ct = default)
         {
             var s = AsSession(session);
             var clientTs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -270,15 +270,18 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
 
             if (!res.IsSuccessStatusCode)
                 throw new EasyTraderException(
-                    $"Server-time failed {(int)res.StatusCode}. " +
-                    $"Body: {Truncate(body, 200)}",
+                    $"Server-time failed {(int)res.StatusCode}. Body: {Truncate(body, 200)}",
                     (int)res.StatusCode, body);
 
             var response = JsonSerializer.Deserialize<ServerTimeResponse>(body, JsonOpts)
                 ?? throw new EasyTraderException("Server-time deserialization failed");
 
-            // diff = serverTs - clientTs. RTT/2 تخمین یک‌طرفه.
-            return sw.ElapsedMilliseconds / 2;
+            var rtt = sw.ElapsedMilliseconds;
+
+            return new BrokerTimeMeasurement(
+                Diff: response.Diff,
+                OneWayLatencyMs: rtt / 2,
+                RttMs: rtt);
         }
 
         /* ══════════════════════════════════════════════════
@@ -385,6 +388,15 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             req.Content = new StringContent(
                 JsonSerializer.Serialize(payload, JsonOpts),
                 Encoding.UTF8, "application/json");
+
+
+            /* ✅ این خط جدید — زمان دیواری دقیق قبل از HTTP */
+            var fireAtUtc = DateTimeOffset.UtcNow;
+            var fireAtUnixMs = fireAtUtc.ToUnixTimeMilliseconds();
+            _logger.LogInformation(
+                "FIRE ORDER isin={Isin} price={Price} qty={Qty} at={FireAt:HH:mm:ss.fff} (unix={Unix})",
+                symbolIsin, price, quantity, fireAtUtc, fireAtUnixMs);
+
 
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);

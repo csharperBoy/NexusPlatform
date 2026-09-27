@@ -22,10 +22,9 @@ namespace Trader.Application.Abstractions
         /// <summary>
         /// اندازه‌گیری تاخیر یک‌طرفه به سرور کارگزاری (میلی‌ثانیه).
         /// </summary>
-        Task<long> MeasureLatencyAsync(
-            BrokerSession session,
-            CancellationToken ct = default);
-
+        Task<BrokerTimeMeasurement> MeasureLatencyAsync(
+                         BrokerSession session,
+                         CancellationToken ct = default);
         /// <summary>
         /// اطلاعات لحظه‌ای نماد.
         /// </summary>

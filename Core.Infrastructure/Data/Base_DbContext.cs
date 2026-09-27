@@ -203,8 +203,8 @@ namespace Core.Infrastructure.Data
 
             // دریافت ICurrentUserService به صورت lazy
             var currentUserContext = _serviceProvider.GetService<UserDataContext>();
-            var currentUserId = currentUserContext.UserId;
-            var currentUserName = currentUserContext.UserName;
+            var currentUserId = currentUserContext?.UserId;
+            var currentUserName = currentUserContext?.UserName;
 
             foreach (var entry in entries)
             {

@@ -102,9 +102,16 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScheduledJobHandler<PlanExecutionPayload, PlanExecutionJobHandler>();
 
 
+            /* ═══════════ Background Worker For Sync Clock ═══════════ */
+            services.Configure<ClockSyncOptions>(
+                configuration.GetSection(ClockSyncOptions.SectionName));
+
+            services.AddHostedService<ClockSyncBackgroundService>();
+
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();
 
+           
             return services;
         }
     }

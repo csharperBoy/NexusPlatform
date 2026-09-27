@@ -3,8 +3,6 @@ using global::Scheduler.Infrastructure.Data;
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Scheduler.Application.Abstractions;
-using Scheduler.Domain.Enums;
 using System.Text.Json;
 
 
