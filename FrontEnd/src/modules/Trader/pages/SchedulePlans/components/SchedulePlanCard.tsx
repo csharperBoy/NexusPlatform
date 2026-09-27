@@ -96,7 +96,8 @@ export function SchedulePlanCard({
       date: draft.date,
       enabled: draft.enabled,
       autoLoginAt: draft.autoLoginAt,
-      autoRefreshAt: draft.autoRefreshAt,
+      autoRefreshAt: draft.autoRefreshAt,      
+    fireLeadMs: Number(draft.fireLeadMs) || 0,
       orders: draft.orders.map((o) => ({
         accountId: o.accountId,
         symbolIsin: o.symbolIsin,
@@ -211,18 +212,37 @@ export function SchedulePlanCard({
             onChange={(e) => update("autoLoginAt", e.target.value)}
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-400">
-            ساعت رفرش قیمت
-          </label>
-          <input
-            type="text"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-sm text-slate-100"
-            value={draft.autoRefreshAt}
-            onChange={(e) => update("autoRefreshAt", e.target.value)}
-          />
-        </div>
-      </div>
+       <div>
+  <label className="mb-1 block text-xs text-slate-400">
+    ساعت رفرش قیمت
+  </label>
+  <input
+    type="text"
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-sm text-slate-100"
+    value={draft.autoRefreshAt}
+    onChange={(e) => update("autoRefreshAt", e.target.value)}
+  />
+</div>
+</div>
+
+{/* ✅ FireLeadMs */}
+<div className="rounded-lg bg-slate-950 p-3">
+  <label className="mb-1 block text-xs text-slate-400">
+    پیش‌افتادگی اضافی (ms)
+  </label>
+  <input
+    type="number"
+    min={0}
+    max={5000}
+    step={5}
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-sm text-slate-100"
+    value={draft.fireLeadMs ?? 0}
+    onChange={(e) => update("fireLeadMs", Number(e.target.value) || 0)}
+  />
+  <div className="mt-1 text-[10px] text-slate-500">
+    عدد مثبت = ارسال زودتر از زمان محاسبه‌شده (برای روزهای شلوغ کارگزاری)
+  </div>
+</div>
 
       {/* Orders */}
       <div className="flex items-center justify-between text-xs text-slate-400">

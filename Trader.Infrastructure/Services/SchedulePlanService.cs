@@ -43,18 +43,19 @@ namespace Trader.Infrastructure.Services
         /* ═══════════════════ Commands ═══════════════════ */
 
         public async Task<Guid> CreateSchedulePlanAsync(
-            string name,
-            string date,
-            bool enabled,
-            string autoLoginAt,
-            string autoRefreshAt,
-            List<ScheduledOrderItemDto> orders)
+     string name,
+     string date,
+     bool enabled,
+     string autoLoginAt,
+     string autoRefreshAt,
+     int fireLeadMs,
+     List<ScheduledOrderItemDto> orders)
         {
             var (planDate, loginTime, refreshTime) = ParsePlanInputs(
                 date, autoLoginAt, autoRefreshAt);
 
             var plan = SchedulePlan.Create(
-                name, planDate, enabled, loginTime, refreshTime);
+                name, planDate, enabled, loginTime, refreshTime, fireLeadMs);
 
             await ApplyOrdersAsync(plan, orders);
 
@@ -68,15 +69,16 @@ namespace Trader.Infrastructure.Services
         }
 
         public async Task<Guid> UpdateSchedulePlanAsync(
-            Guid id,
-            string name,
-            string date,
-            bool enabled,
-            string autoLoginAt,
-            string autoRefreshAt,
-            List<ScheduledOrderItemDto> orders)
+    Guid id,
+    string name,
+    string date,
+    bool enabled,
+    string autoLoginAt,
+    string autoRefreshAt,
+    int fireLeadMs,
+    List<ScheduledOrderItemDto> orders)
         {
-            var plan = await _planRepository.GetByIdAsync(id , p=>p.Orders)
+            var plan = await _planRepository.GetByIdAsync(id, p => p.Orders)
                 ?? throw new Exception($"SchedulePlan {id} not found");
 
             var wasEnabled = plan.Enabled;
@@ -84,7 +86,7 @@ namespace Trader.Infrastructure.Services
             var (planDate, loginTime, refreshTime) = ParsePlanInputs(
                 date, autoLoginAt, autoRefreshAt);
 
-            plan.SetInfo(name, planDate, enabled, loginTime, refreshTime);
+            plan.SetInfo(name, planDate, enabled, loginTime, refreshTime, fireLeadMs);
 
             await ApplyOrdersAsync(plan, orders, replace: true);
 
@@ -327,6 +329,7 @@ namespace Trader.Infrastructure.Services
                 Enabled = plan.Enabled,
                 AutoLoginAt = plan.AutoLoginAt.ToString("HH:mm:ss"),
                 AutoRefreshAt = plan.AutoRefreshAt.ToString("HH:mm:ss"),
+                FireLeadMs = plan.FireLeadMs,
                 Status = plan.Status.ToString().ToLowerInvariant(),
                 Message = plan.LastMessage,
                 Orders = plan.Orders.Select(o => new ScheduledOrderInfoView

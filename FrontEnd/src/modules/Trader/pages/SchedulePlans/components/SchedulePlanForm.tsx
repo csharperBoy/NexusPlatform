@@ -16,6 +16,7 @@ export function SchedulePlanForm({ onCancel, onSubmit, saving }: Props) {
   const [date, setDate] = useState(todayDateKey());
   const [autoLoginAt, setAutoLoginAt] = useState("08:30:00");
   const [autoRefreshAt, setAutoRefreshAt] = useState("08:44:00");
+const [fireLeadMs, setFireLeadMs] = useState("0");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +26,7 @@ export function SchedulePlanForm({ onCancel, onSubmit, saving }: Props) {
       enabled: false,
       autoLoginAt,
       autoRefreshAt,
+    fireLeadMs: Number(fireLeadMs) || 0,
       orders: [],
     });
   };
@@ -82,18 +84,38 @@ export function SchedulePlanForm({ onCancel, onSubmit, saving }: Props) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-slate-400">
-            ساعت رفرش قیمت
-          </label>
-          <input
-            type="text"
-            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100"
-            value={autoRefreshAt}
-            onChange={(e) => setAutoRefreshAt(e.target.value)}
-            placeholder="08:44:00"
-          />
-        </div>
-      </div>
+  <label className="mb-1 block text-xs text-slate-400">
+    ساعت رفرش قیمت
+  </label>
+  <input
+    type="text"
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100"
+    value={autoRefreshAt}
+    onChange={(e) => setAutoRefreshAt(e.target.value)}
+    placeholder="08:44:00"
+  />
+</div>
+</div>
+
+{/* ✅ FireLeadMs */}
+<div>
+  <label className="mb-1 block text-xs text-slate-400">
+    پیش‌افتادگی اضافی (ms)
+  </label>
+  <input
+    type="number"
+    min={0}
+    max={5000}
+    step={5}
+    className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-sm text-slate-100"
+    value={fireLeadMs}
+    onChange={(e) => setFireLeadMs(e.target.value)}
+    placeholder="0"
+  />
+  <div className="mt-1 text-[10px] text-slate-500">
+    عدد مثبت = ارسال زودتر از زمان محاسبه‌شده
+  </div>
+</div>
 
       <div className="flex justify-end gap-2 border-t border-slate-700 pt-3">
         <button

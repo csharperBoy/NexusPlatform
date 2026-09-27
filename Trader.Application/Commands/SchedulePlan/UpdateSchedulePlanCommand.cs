@@ -7,14 +7,15 @@ using Trader.Application.Dtos;
 namespace Trader.Application.Commands.SchedulePlan
 {
     public record UpdateSchedulePlanCommand(
-        Guid Id,
-        string Name,
-        string Date,
-        bool Enabled,
-        string AutoLoginAt,
-        string AutoRefreshAt,
-        List<ScheduledOrderItemDto> Orders
-    ) : IRequest<Result<Guid>>;
+    Guid Id,
+    string Name,
+    string Date,
+    bool Enabled,
+    string AutoLoginAt,
+    string AutoRefreshAt,
+    int FireLeadMs,
+    List<ScheduledOrderItemDto> Orders
+) : IRequest<Result<Guid>>;
 
     public class UpdateSchedulePlanCommandHandler
         : IRequestHandler<UpdateSchedulePlanCommand, Result<Guid>>
@@ -40,13 +41,14 @@ namespace Trader.Application.Commands.SchedulePlan
                     "Updating SchedulePlan: {Id}", request.Id);
 
                 var id = await _planService.UpdateSchedulePlanAsync(
-                    request.Id,
-                    request.Name,
-                    request.Date,
-                    request.Enabled,
-                    request.AutoLoginAt,
-                    request.AutoRefreshAt,
-                    request.Orders ?? new());
+                             request.Id,
+                             request.Name,
+                             request.Date,
+                             request.Enabled,
+                             request.AutoLoginAt,
+                             request.AutoRefreshAt,
+                             request.FireLeadMs,
+                             request.Orders ?? new());
 
                 await _planService.SaveAsync();
 

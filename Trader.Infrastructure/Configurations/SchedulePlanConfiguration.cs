@@ -20,7 +20,7 @@ namespace Trader.Infrastructure.Configurations
             builder.Property(x => x.Enabled).IsRequired();
             builder.Property(x => x.AutoLoginAt).IsRequired();
             builder.Property(x => x.AutoRefreshAt).IsRequired();
-
+            builder.Property(x => x.FireLeadMs).IsRequired().HasDefaultValue(0);
             builder.Property(x => x.Status)
                 .HasConversion<int>()
                 .IsRequired();

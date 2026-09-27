@@ -146,7 +146,8 @@ namespace Trader.Infrastructure.Scheduler
 
                     clockInfo = await _clock.GetStatusAsync();
                     var adjustedTarget = group.TargetTime
-                        .AddMilliseconds(-clockInfo.Diff);
+                        .AddMilliseconds(-clockInfo.Diff)
+                        .AddMilliseconds(-plan.FireLeadMs);
 
                     var lateByMs = (DateTimeOffset.UtcNow - adjustedTarget)
                         .TotalMilliseconds;

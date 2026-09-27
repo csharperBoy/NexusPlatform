@@ -5,12 +5,13 @@ namespace Trader.Application.Abstractions
     public interface ISchedulePlanCommandService
     {
         Task<Guid> CreateSchedulePlanAsync(
-            string name,
-            string date,
-            bool enabled,
-            string autoLoginAt,
-            string autoRefreshAt,
-            List<ScheduledOrderItemDto> orders);
+     string name,
+     string date,
+     bool enabled,
+     string autoLoginAt,
+     string autoRefreshAt,
+     int fireLeadMs,
+     List<ScheduledOrderItemDto> orders);
 
         Task<Guid> UpdateSchedulePlanAsync(
             Guid id,
@@ -19,6 +20,7 @@ namespace Trader.Application.Abstractions
             bool enabled,
             string autoLoginAt,
             string autoRefreshAt,
+            int fireLeadMs,
             List<ScheduledOrderItemDto> orders);
 
         Task<bool> DeleteSchedulePlanAsync(Guid id);

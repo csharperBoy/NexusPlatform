@@ -33,6 +33,7 @@ export interface SchedulePlanInfoView {
   enabled: boolean;
   autoLoginAt: string;
   autoRefreshAt: string;
+   fireLeadMs: number;   
   orders: ScheduledOrderInfoView[];
   status: SchedulePlanStatus;
   message?: string | null;

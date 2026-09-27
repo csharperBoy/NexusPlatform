@@ -20,6 +20,7 @@ export interface CreateSchedulePlanCommand {
   /** "HH:MM:SS" */
   autoLoginAt: string;
   autoRefreshAt: string;
+    fireLeadMs: number;
   orders: ScheduledOrderCommand[];
 }
 

@@ -11,6 +11,11 @@ namespace Trader.Domain.Entities
         public TimeOnly AutoLoginAt { get; private set; }
         public TimeOnly AutoRefreshAt { get; private set; }
 
+        /// <summary>
+        /// پیش‌افتادگی اضافی (ms) — چقدر زودتر از زمان محاسبه‌شده fire کنیم.
+        /// پیش‌فرض 0.
+        /// </summary>
+        public int FireLeadMs { get; private set; }
         public SchedulePlanStatus Status { get; private set; }
         public string? LastMessage { get; private set; }
 
@@ -23,11 +28,12 @@ namespace Trader.Domain.Entities
         private SchedulePlan() { }
 
         public static SchedulePlan Create(
-            string name,
-            DateOnly date,
-            bool enabled,
-            TimeOnly autoLoginAt,
-            TimeOnly autoRefreshAt)
+     string name,
+     DateOnly date,
+     bool enabled,
+     TimeOnly autoLoginAt,
+     TimeOnly autoRefreshAt,
+     int fireLeadMs = 0)
         {
             return new SchedulePlan
             {
@@ -36,23 +42,26 @@ namespace Trader.Domain.Entities
                 Enabled = enabled,
                 AutoLoginAt = autoLoginAt,
                 AutoRefreshAt = autoRefreshAt,
+                FireLeadMs = fireLeadMs < 0 ? 0 : fireLeadMs,
                 Status = SchedulePlanStatus.Idle,
                 CreatedAt = DateTimeOffset.UtcNow,
             };
         }
 
         public void SetInfo(
-            string name,
-            DateOnly date,
-            bool enabled,
-            TimeOnly autoLoginAt,
-            TimeOnly autoRefreshAt)
+      string name,
+      DateOnly date,
+      bool enabled,
+      TimeOnly autoLoginAt,
+      TimeOnly autoRefreshAt,
+      int fireLeadMs = 0)
         {
             Name = name;
             Date = date;
             Enabled = enabled;
             AutoLoginAt = autoLoginAt;
             AutoRefreshAt = autoRefreshAt;
+            FireLeadMs = fireLeadMs < 0 ? 0 : fireLeadMs;
             UpdatedAt = DateTimeOffset.UtcNow;
         }
 

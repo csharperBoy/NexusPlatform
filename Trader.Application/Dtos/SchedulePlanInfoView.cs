@@ -9,6 +9,8 @@
         public string AutoLoginAt { get; set; } = default!;  // "HH:MM:SS"
         public string AutoRefreshAt { get; set; } = default!;
 
+        /// <summary>پیش‌افتادگی اضافی (ms) — پیش‌فرض 0</summary>
+        public int FireLeadMs { get; set; }
         public List<ScheduledOrderInfoView> Orders { get; set; } = new();
 
         public string Status { get; set; } = "idle";
