@@ -69,28 +69,17 @@ namespace Core.Infrastructure.Repositories
         protected readonly DbSet<TEntity> _dbSet;
         protected readonly IRowLevelSecurityProcessor<TEntity> _authorizationProcessor;
 
-        //private readonly ApplicationLifetimeTracker _lifetimeTracker;
         public EfRepository(
             TDbContext dbContext,
             IRowLevelSecurityProcessor<TEntity> authorizationProcessor
-            //,             ApplicationLifetimeTracker lifetimeTracker
-            )
+             )
         {
             _dbContext = dbContext;
             _dbSet = dbContext.Set<TEntity>();
             _authorizationProcessor = authorizationProcessor;
-            //_lifetimeTracker = lifetimeTracker;
-        }
+             }
 
-        // ... (متدهای GetByIdAsync, GetAllAsync, CountAsync, ExistsAsync بدون تغییر) ...
-        // فقط دقت کنید در متد GetByIdAsync و ... از _scopeProcessor استفاده کرده‌اید که عالی است
-        // اما حواستان باشد خود ScopeProcessor هم باید برای Permission چک نشود (که در پاسخ قبلی حل کردیم)
-
-        //public virtual async Task<TEntity?> GetByIdAsync(TKey id)
-        //{
-        //    var query = await _authorizationProcessor.ApplyFilter(_dbSet.AsQueryable());
-        //    return await query.FirstOrDefaultAsync(e => EF.Property<TKey>(e, "Id").Equals(id));
-        //}
+       
         public virtual async Task<TEntity?> GetByIdAsync(TKey id,
                                                          params Expression<Func<TEntity, object>>[] includes)
         {

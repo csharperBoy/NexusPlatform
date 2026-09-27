@@ -3,6 +3,7 @@ using Core.Application.Abstractions.HR;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.People;
 using Core.Application.Context;
+using Core.Application.Helper;
 using Core.Application.Provider;
 using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -58,19 +59,30 @@ namespace Identity.Application.Provider
 
 
 
-            Guid? PartyId = await _userService.GetPartyId(userId);
-            Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
-            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+            Guid? PartyId = null;
+            Guid? personId = null;
+            Guid? partyPermissionAssigneeId = null;
+            Guid? EmploymentId = null;
+            List<Guid>? PostId = null;
+            List<Guid>? PostPermissionAssigneeId = null;
 
-            Guid? EmploymentId = await _employmentService.GetEmploymentId(personId);
 
-            List<Guid>? PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
-            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
-
+            List<Guid?>? OrgIds = null;
+            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.People))
+            {
+                PartyId = await _userService.GetPartyId(userId);
+                personId = await _personService.GetNaturalPersonIdAsync(PartyId);
+                partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+            }
+            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.HR))
+            {
+                EmploymentId = await _employmentService.GetEmploymentId(personId);
+                PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
+                PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
+                OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
+            }
             List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
             List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
-
-            List<Guid?>? OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
             var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
 

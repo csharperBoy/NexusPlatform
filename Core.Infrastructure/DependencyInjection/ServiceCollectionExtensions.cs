@@ -1,6 +1,7 @@
 ﻿using Core.Application.Abstractions;
 using Core.Application.Abstractions.Caching;
 using Core.Application.Abstractions.Events;
+using Core.Application.Abstractions.Security;
 using Core.Application.Behaviors;
 using Core.Application.Models;
 using Core.Infrastructure.Database;
@@ -13,6 +14,7 @@ using Core.Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors; // اضافه کردن این using
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -133,6 +135,11 @@ namespace Core.Infrastructure.DependencyInjection
 
             services.AddSingleton<IHostedService, ApplicationLifetimeTracker>();
             services.AddSingleton<ApplicationLifetimeTracker>();
+            /* ─── Data Protection (سراسری پلتفرم) ─── */
+            services.AddDataProtection()
+                .SetApplicationName("NexusPlatform");   // ← نه "NexusPlatform.Trader"
+
+            services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
 
             services.AddResiliencePolicies(configuration);
             services.AddMediatR(cfg =>

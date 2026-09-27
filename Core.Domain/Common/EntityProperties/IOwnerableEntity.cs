@@ -28,7 +28,9 @@ namespace Core.Domain.Common.EntityProperties
         void SetPositionOwner(Guid positiontId);
         void SetOrganizationUnitOwner(Guid orgUnitId);
 
-        /* impelement
+        /*
+         #region impelement IOwnerableEntity
+
         public Guid? OwnerOrganizationUnitId { get; protected set; }
         public Guid? OwnerPositionId { get; protected set; }
         public Guid? OwnerPersonId { get; protected set; }
@@ -58,6 +60,7 @@ namespace Core.Domain.Common.EntityProperties
             OwnerOrganizationUnitId = orgUnitId;
         }
         
+#endregion
          */
 
     }

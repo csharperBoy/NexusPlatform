@@ -1,24 +1,20 @@
-import { Navigate, type RouteObject } from "react-router-dom";
-import { TraderLayout } from "./components";
-import {
-  SingleOrderPage,
-  ScheduledOrdersPage,
-  BaseInfoPage,
-  GroupOrderPage,
-  MultiGroupOrderPage,
-} from "./pages";
+import type { RouteObject } from "react-router-dom";
+import { AccountsManagementPage } from "./pages/Accounts/AccountsManagementPage";
+import { SymbolsManagementPage } from "./pages/Symbols/SymbolsManagementPage";
+import { SchedulePlansManagementPage } from "./pages/SchedulePlans/SchedulePlansManagementPage";
+import { ServerClockPage } from "./pages/ServerClock/ServerClockPage";
+import { LogViewerPage } from "./pages/Logs/LogViewerPage";
 
-export const TraderShotgunPublicRoutes: RouteObject[] = [
-  {
-    path: "/",
-    element: <TraderLayout />,
-    children: [
-      { index: true, element: <Navigate to="/base" replace /> },
-      { path: "base", element: <BaseInfoPage /> },
-      { path: "single", element: <SingleOrderPage /> },
-      { path: "group", element: <GroupOrderPage /> },
-      { path: "multi", element: <MultiGroupOrderPage /> },
-      { path: "scheduler", element: <ScheduledOrdersPage /> },
-    ],
-  },
+/* ─── استفاده در TraderShotgun app (داخل MainLayout پلتفرم) ─── */
+export const TraderShotgunRoutes: RouteObject[] = [
+  { path: "trader/accounts",       element: <AccountsManagementPage /> },
+  { path: "trader/symbols",        element: <SymbolsManagementPage /> },
+  { path: "trader/schedule-plans", element: <SchedulePlansManagementPage /> },
+  { path: "trader/server-clock",   element: <ServerClockPage /> },
+    { path: "trader/logs",           element: <LogViewerPage /> },
+];
+
+/* ─── برای پنل ادمین پلتفرم (flat) ─── */
+export const traderPanelRoutes: RouteObject[] = [
+  ...TraderShotgunRoutes,
 ];

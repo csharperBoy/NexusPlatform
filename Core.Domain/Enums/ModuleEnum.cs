@@ -21,6 +21,8 @@ namespace Core.Domain.Enums
         WebScrapper = 10,
         Navigation = 11,
         Contact = 12,
-        StreamBus=13
+        StreamBus=13,
+        Scheduler= 14,
+        Trader= 15
     }
 }

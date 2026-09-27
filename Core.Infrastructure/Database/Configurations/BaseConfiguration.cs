@@ -45,12 +45,6 @@ namespace Core.Infrastructure.Database.Configurations
                 .HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).ParentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-
-            //builder.HasMany(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).Children)
-            //.WithOne(ou => ((IHierarchicalStructureEntity<TEntity, Guid>)ou).Parent)
-            //.HasForeignKey(p => ((IHierarchicalStructureEntity<TEntity, Guid>)p).ParentId)
-            //.OnDelete(DeleteBehavior.Cascade);
-
             builder.HasIndex("ParentId").HasDatabaseName($"IX_{typeof(TEntity).Name}_ParentId");
         }
 

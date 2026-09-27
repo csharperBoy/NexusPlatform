@@ -1,0 +1,33 @@
+﻿using Trader.Application.Dtos;
+
+namespace Trader.Application.Abstractions
+{
+    public interface ISchedulePlanCommandService
+    {
+        Task<Guid> CreateSchedulePlanAsync(
+     string name,
+     string date,
+     bool enabled,
+     string autoLoginAt,
+     string autoRefreshAt,
+     int fireLeadMs,
+     List<ScheduledOrderItemDto> orders);
+
+        Task<Guid> UpdateSchedulePlanAsync(
+            Guid id,
+            string name,
+            string date,
+            bool enabled,
+            string autoLoginAt,
+            string autoRefreshAt,
+            int fireLeadMs,
+            List<ScheduledOrderItemDto> orders);
+
+        Task<bool> DeleteSchedulePlanAsync(Guid id);
+
+        Task EnableAsync(Guid id);
+        Task DisableAsync(Guid id);
+
+        Task SaveAsync();
+    }
+}
