@@ -28,4 +28,4 @@ scaffold-dbcontext "Server = 192.168.6.65; Database = PMIS; User Id = devlogin; 
   "assigneeType": 1,
   "effectiveFrom": "2026-07-01",
   "effectiveTo": "2026-07-01"
-}
+} 
