@@ -346,7 +346,45 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             BrokerSession session, string symbolIsin, long price, long quantity,
             CancellationToken ct = default)
             => SendOrderInternalAsync(session, symbolIsin, price, quantity, side: 1, ct);
+        public async Task<BrokerOrderResultDto> SendOrderWithRequestAsync(
+    BrokerSession session,
+    HttpClient client,
+    HttpRequestMessage request,
+    string symbolIsin,
+    CancellationToken ct = default)
+        {
+            using (client)
+            using (request)
+            {
+                /* ✅ لاگ زمان دقیق شروع HTTP — این گم شده بود */
+                var fireAtUtc = DateTimeOffset.UtcNow;
+                _logger.LogInformation(
+                    "FIRE ORDER isin={Isin} at={At:HH:mm:ss.fff} (unix={Unix})",
+                    symbolIsin,
+                    fireAtUtc,
+                    fireAtUtc.ToUnixTimeMilliseconds());
 
+                using var res = await client.SendAsync(request, ct);
+                var body = await res.Content.ReadAsStringAsync(ct);
+
+                if (string.IsNullOrWhiteSpace(body))
+                    throw new EasyTraderException(
+                        $"Order returned empty body for isin={symbolIsin}, status={(int)res.StatusCode}",
+                        (int)res.StatusCode);
+
+                if (TryParseOrderResponse(body, out var parsed))
+                    return parsed;
+
+                if (!res.IsSuccessStatusCode)
+                    throw new EasyTraderException(
+                        $"Order failed {(int)res.StatusCode}. Body: {Truncate(body, 400)}",
+                        (int)res.StatusCode, body);
+
+                throw new EasyTraderException(
+                    $"Unexpected order response: {Truncate(body, 400)}",
+                    (int)res.StatusCode, body);
+            }
+        }
         private async Task<BrokerOrderResultDto> SendOrderInternalAsync(
             BrokerSession session,
             string symbolIsin,
@@ -448,6 +486,56 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             }
         }
 
+        /// <summary>
+        /// آماده‌سازی HttpRequestMessage و HttpClient برای fire سریع.
+        /// این متد sync هست — فقط ساختار داده می‌سازه.
+        /// </summary>
+        public (HttpClient Client, HttpRequestMessage Request) BuildOrderRequest(
+            BrokerSession session,
+            string symbolIsin,
+            long price,
+            long quantity,
+            int side)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.Order;
+
+            const decimal commission = 0.003712m;
+            const int validityType = 0;
+            const int orderModelType = 1;
+            const int orderFrom = 34;
+
+            var totalValue = (long)Math.Round(price * quantity * (1 + (double)commission));
+
+            var payload = new EasyTraderOrderRequest
+            {
+                Order = new EasyTraderOrder
+                {
+                    Price = price,
+                    Quantity = quantity,
+                    Side = side,
+                    ValidityType = validityType,
+                    CreateDateTime = FormatEasyTraderDateTime(DateTime.Now),
+                    Commission = commission,
+                    SymbolIsin = symbolIsin,
+                    SymbolName = symbolIsin,
+                    OrderModelType = orderModelType,
+                    TotalValue = totalValue,
+                    OrderFrom = orderFrom,
+                }
+            };
+
+            var client = CreateAuthorizedClient(s.AccessToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(payload, JsonOpts),
+                    Encoding.UTF8,
+                    "application/json"),
+            };
+
+            return (client, request);
+        }
         /* ══════════════════════════════════════════════════
            HELPERS
            ══════════════════════════════════════════════════ */

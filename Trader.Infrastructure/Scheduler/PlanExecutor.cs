@@ -304,6 +304,13 @@ namespace Trader.Infrastructure.Scheduler
                     orderId: order.Id, ct: ct);
                 return null;
             }
+            /* ✅ آماده‌سازی HTTP request الان — نه توی PreciseDelay */
+            var (httpClient, httpRequest) = brokerClient.BuildOrderRequest(
+                session,
+                order.SymbolIsin,
+                price.Value,
+                quantity,
+                order.Side == OrderSide.Buy ? 0 : 1);
 
             return new PreparedFireItem
             {
@@ -314,6 +321,8 @@ namespace Trader.Infrastructure.Scheduler
                 SymbolIsin = order.SymbolIsin,
                 Price = price.Value,
                 Quantity = quantity,
+                HttpClient = httpClient,
+                HttpRequest = httpRequest,
             };
         }
 
@@ -327,12 +336,13 @@ namespace Trader.Infrastructure.Scheduler
         {
             try
             {
-                /* ═══ فقط یه HTTP call — SendOrder ═══ */
-                var result = item.Order.Side == OrderSide.Buy
-                    ? await item.BrokerClient.SendBuyOrderAsync(
-                        item.Session, item.SymbolIsin, item.Price, item.Quantity, ct)
-                    : await item.BrokerClient.SendSellOrderAsync(
-                        item.Session, item.SymbolIsin, item.Price, item.Quantity, ct);
+                /* ═══ فقط SendAsync — بدون ساختن client/request ═══ */
+                var result = await item.BrokerClient.SendOrderWithRequestAsync(
+                    item.Session,
+                    item.HttpClient,
+                    item.HttpRequest,
+                    item.SymbolIsin,
+                    ct);
 
                 return new FireResult
                 {
@@ -453,8 +463,11 @@ namespace Trader.Infrastructure.Scheduler
             public IBrokerClient BrokerClient { get; set; } = default!;
             public BrokerSession Session { get; set; } = default!;
             public string SymbolIsin { get; set; } = default!;
-            public long Price { get; set; }         // ← جدید
-            public long Quantity { get; set; }      // ← جدید
+            public long Price { get; set; }      
+            public long Quantity { get; set; }   
+
+            public HttpClient HttpClient { get; set; } = default!;        
+            public HttpRequestMessage HttpRequest { get; set; } = default!; 
         }
 
         private class FireResult

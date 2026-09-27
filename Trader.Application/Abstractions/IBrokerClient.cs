@@ -53,6 +53,18 @@ namespace Trader.Application.Abstractions
             long quantity,
             CancellationToken ct = default);
 
+        Task<BrokerOrderResultDto> SendOrderWithRequestAsync(
+    BrokerSession session,
+    HttpClient client,
+    HttpRequestMessage request,
+    string symbolIsin,
+    CancellationToken ct = default);
+        (HttpClient Client, HttpRequestMessage Request) BuildOrderRequest(
+    BrokerSession session,
+    string symbolIsin,
+    long price,
+    long quantity,
+    int side);
         /// <summary>
         /// Serialize کردن session برای ذخیره در DB.
         /// </summary>
