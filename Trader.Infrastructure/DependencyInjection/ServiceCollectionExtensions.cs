@@ -62,6 +62,19 @@ namespace Trader.Infrastructure.DependencyInjection
             services.Configure<EasyTraderOptions>(
                 configuration.GetSection(EasyTraderOptions.SectionName));
 
+            /* ✅ HttpClient مشترک برای همه‌ی درخواست‌های EasyTrader (به‌جز login) */
+            services.AddHttpClient("EasyTrader", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+                MaxConnectionsPerServer = 20,
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
+            });
+
             services.AddSingleton<EasyTraderBrokerClient>();
             services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();
 

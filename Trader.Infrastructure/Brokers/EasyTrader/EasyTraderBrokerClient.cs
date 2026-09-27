@@ -17,6 +17,8 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
     public class EasyTraderBrokerClient : IBrokerClient
     {
         private readonly EasyTraderOptions _options;
+
+        private readonly IHttpClientFactory _httpFactory;
         private readonly ILogger<EasyTraderBrokerClient> _logger;
 
         //private static readonly JsonSerializerOptions JsonOpts = new()
@@ -24,16 +26,20 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
         //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         //    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         //};
+
         private static readonly JsonSerializerOptions JsonOpts = new()
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
+
         public EasyTraderBrokerClient(
             IOptions<EasyTraderOptions> options,
+            IHttpClientFactory httpFactory,
             ILogger<EasyTraderBrokerClient> logger)
         {
             _options = options.Value;
+            _httpFactory = httpFactory;
             _logger = logger;
         }
 
@@ -263,8 +269,10 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             var path = string.Format(EasyTraderEndpoints.ServerTime, clientTs);
             var url = _options.BaseUrl + path;
 
-            using var client = CreateAuthorizedClient(s.AccessToken);
-            var res = await client.GetAsync(url, ct);
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+            using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
             sw.Stop();
 
@@ -295,11 +303,12 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.SymbolInfo;
 
-            using var client = CreateAuthorizedClient(s.AccessToken);
+            var client = CreateSharedClient();
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Content = new StringContent(
                 JsonSerializer.Serialize(new { isin = symbolIsin }, JsonOpts),
                 Encoding.UTF8, "application/json");
+            AttachAuth(req, s.AccessToken);
 
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
@@ -337,26 +346,39 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
         /* ══════════════════════════════════════════════════
            SEND BUY / SELL ORDER
            ══════════════════════════════════════════════════ */
+
         public Task<BrokerOrderResultDto> SendBuyOrderAsync(
-    BrokerSession session, string symbolIsin, long price, long quantity,
-    CancellationToken ct = default)
-    => SendOrderInternalAsync(session, symbolIsin, price, quantity, side: 0, ct);
+            BrokerSession session, string symbolIsin, long price, long quantity,
+            CancellationToken ct = default)
+            => SendOrderLegacyAsync(session, symbolIsin, price, quantity, side: 0, ct);
 
         public Task<BrokerOrderResultDto> SendSellOrderAsync(
             BrokerSession session, string symbolIsin, long price, long quantity,
             CancellationToken ct = default)
-            => SendOrderInternalAsync(session, symbolIsin, price, quantity, side: 1, ct);
+            => SendOrderLegacyAsync(session, symbolIsin, price, quantity, side: 1, ct);
+
+
+        /* برای سازگاری با API قدیمی — PlanExecutor از این استفاده نمی‌کنه */
+        private async Task<BrokerOrderResultDto> SendOrderLegacyAsync(
+            BrokerSession session,
+            string symbolIsin,
+            long price,
+            long quantity,
+            int side,
+            CancellationToken ct)
+        {
+            var request = BuildOrderRequest(session, symbolIsin, price, quantity, side);
+            return await SendOrderWithRequestAsync(session, request, symbolIsin, ct);
+        }
         public async Task<BrokerOrderResultDto> SendOrderWithRequestAsync(
     BrokerSession session,
-    HttpClient client,
     HttpRequestMessage request,
     string symbolIsin,
     CancellationToken ct = default)
         {
-            using (client)
             using (request)
             {
-                /* ✅ لاگ زمان دقیق شروع HTTP — این گم شده بود */
+                /* ✅ لاگ زمان دقیق شروع HTTP */
                 var fireAtUtc = DateTimeOffset.UtcNow;
                 _logger.LogInformation(
                     "FIRE ORDER isin={Isin} at={At:HH:mm:ss.fff} (unix={Unix})",
@@ -364,6 +386,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                     fireAtUtc,
                     fireAtUtc.ToUnixTimeMilliseconds());
 
+                var client = CreateSharedClient();
                 using var res = await client.SendAsync(request, ct);
                 var body = await res.Content.ReadAsStringAsync(ct);
 
@@ -385,6 +408,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                     (int)res.StatusCode, body);
             }
         }
+        /*
         private async Task<BrokerOrderResultDto> SendOrderInternalAsync(
             BrokerSession session,
             string symbolIsin,
@@ -428,7 +452,6 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                 Encoding.UTF8, "application/json");
 
 
-            /* ✅ این خط جدید — زمان دیواری دقیق قبل از HTTP */
             var fireAtUtc = DateTimeOffset.UtcNow;
             var fireAtUnixMs = fireAtUtc.ToUnixTimeMilliseconds();
             _logger.LogInformation(
@@ -439,7 +462,6 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
 
-            /* ✅ چک body خالی */
             if (string.IsNullOrWhiteSpace(body))
                 throw new EasyTraderException(
                     $"Order returned empty body for isin={symbolIsin}, status={(int)res.StatusCode}",
@@ -457,7 +479,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                 $"Unexpected order response: {Truncate(body, 400)}",
                 (int)res.StatusCode, body);
         }
-
+        */
         private static bool TryParseOrderResponse(string body, out BrokerOrderResultDto result)
         {
             result = default!;
@@ -490,12 +512,12 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
         /// آماده‌سازی HttpRequestMessage و HttpClient برای fire سریع.
         /// این متد sync هست — فقط ساختار داده می‌سازه.
         /// </summary>
-        public (HttpClient Client, HttpRequestMessage Request) BuildOrderRequest(
-            BrokerSession session,
-            string symbolIsin,
-            long price,
-            long quantity,
-            int side)
+        public HttpRequestMessage BuildOrderRequest(
+    BrokerSession session,
+    string symbolIsin,
+    long price,
+    long quantity,
+    int side)
         {
             var s = AsSession(session);
             var url = _options.BaseUrl + EasyTraderEndpoints.Order;
@@ -525,7 +547,6 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                 }
             };
 
-            var client = CreateAuthorizedClient(s.AccessToken);
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(
@@ -533,24 +554,31 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                     Encoding.UTF8,
                     "application/json"),
             };
+            AttachAuth(request, s.AccessToken);
 
-            return (client, request);
+            return request;
         }
         /* ══════════════════════════════════════════════════
            HELPERS
            ══════════════════════════════════════════════════ */
-        private HttpClient CreateAuthorizedClient(string accessToken)
+        /// <summary>
+        /// یه HttpClient مشترک از factory می‌گیره.
+        /// Authorization header رو روی خود request می‌ذاریم — نه روی client.
+        /// </summary>
+        private HttpClient CreateSharedClient()
         {
-            var client = new HttpClient
-            {
-                Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds),
-            };
-            client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessToken);
+            var client = _httpFactory.CreateClient("EasyTrader");
             client.DefaultRequestHeaders.Accept.ParseAdd("application/json, text/plain, */*");
             client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "fa");
             client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
             return client;
+        }
+
+        /// <summary>اضافه کردن Authorization به HttpRequestMessage.</summary>
+        private static void AttachAuth(HttpRequestMessage request, string accessToken)
+        {
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", accessToken);
         }
 
         private string BuildAuthorizeUrl(string challenge, string state)
