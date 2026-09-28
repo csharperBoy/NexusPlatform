@@ -5,6 +5,5 @@ import { BaseEntity } from "./BaseEntity";
 //  منطبق با IHierarchicalStructureEntity در بک‌اند.
 // ─────────────────────────────────────────────────────────────────────
 export interface HierarchicalEntity extends BaseEntity {
-  id: string;
-  parentId?: string | null;
+  parentId: string | null;
 }

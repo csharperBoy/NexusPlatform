@@ -13,7 +13,6 @@ import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 // ─────────────────────────────────────────────────────────────────────
 //  Helpers: طبق قرارداد HierarchicalEntity، فیلدها همیشه id و parentId هستن.
 // ─────────────────────────────────────────────────────────────────────
-const toId = (v: unknown): string => String(v);
 
 const normalizeParentId = (v: unknown): string | null =>
   v == null || v === "" ? null : String(v);
@@ -75,8 +74,8 @@ export function useGenericTreeCrud<
   draggedIdsRef.current = draggedIds;
 
   // ─── helpers ───
-  const getItemId = useCallback((item: T): string => toId(item.id), []);
-
+ const getItemId = useCallback((item: T): string => item.id, []);
+ 
   const getParentId = useCallback(
     (item: T): string | null => normalizeParentId(item.parentId),
     []

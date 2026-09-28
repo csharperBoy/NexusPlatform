@@ -1,4 +1,4 @@
 
 export interface BaseEntity {
-  id: string | number;
+  id: string;
 }
