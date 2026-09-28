@@ -2,16 +2,10 @@ import React from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
 import { ApiOptions } from "@/core/api/apiOptions";
-import { BaseEntity, GenericColumnDef } from "../crud/types";
+import {  GenericColumnDef } from "../crud/types";
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 
-// ─────────────────────────────────────────────────────────────────────
-//  قرارداد پایه: هر موجودیت درختی باید این فیلدها رو داشته باشه.
-//  منطبق با IHierarchicalStructureEntity در بک‌اند.
-// ─────────────────────────────────────────────────────────────────────
-export interface HierarchicalEntity extends BaseEntity {
-  id: string;
-  parentId?: string | null;
-}
+
 
 // ─── قابلیت‌های جدول درختی ───
 export interface TreeTableFeatures {

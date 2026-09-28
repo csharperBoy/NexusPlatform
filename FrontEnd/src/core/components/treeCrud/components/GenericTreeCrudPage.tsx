@@ -1,11 +1,12 @@
 import React from "react";
 import { SearchableSelect } from "@/core/components/Selection/SearchableSelect";
 import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMultiSelect";
-import { BaseEntity } from "../../crud/types";
+import { BaseEntity } from "@/core/models/BaseEntity";
 import { TreeColumnDef } from "../types";
 import { useGenericTreeCrud } from "../hooks/useGenericTreeCrud";
-import type { HierarchicalEntity, UseGenericTreeCrudOptions } from "../types";
+import type {  UseGenericTreeCrudOptions } from "../types";
 import { TagInput } from "@/core/components/Input/TagInput";
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 
 interface Props<T extends HierarchicalEntity, TCreateCmd, TUpdateCmd> {
   title: string;

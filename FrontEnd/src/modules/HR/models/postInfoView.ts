@@ -1,6 +1,6 @@
 // models/postInfoView.ts
 
-import { HierarchicalEntity } from "@/core/components/treeCrud";
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 
 export interface PostInfoView extends HierarchicalEntity{
   // id: string;

@@ -2,10 +2,8 @@
 import React from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { ApiOptions } from "@/core/api/apiOptions";
+import { BaseEntity } from "@/core/models/BaseEntity";
 
-export interface BaseEntity {
-  id: string | number;
-}
 
 export type ColumnType =
   | "text"

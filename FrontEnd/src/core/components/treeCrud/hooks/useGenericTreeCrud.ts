@@ -4,11 +4,11 @@ import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { ApiOptions } from "@/core/api/apiOptions";
 import {
   FlattenedTreeNode,
-  HierarchicalEntity,
   TreeColumnDef,
   TreeDeleteTarget,
   UseGenericTreeCrudOptions,
 } from "../types";
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 
 // ─────────────────────────────────────────────────────────────────────
 //  Helpers: طبق قرارداد HierarchicalEntity، فیلدها همیشه id و parentId هستن.

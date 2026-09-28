@@ -1,6 +1,6 @@
 // src/modules/HR/models/postInfoDto.ts
 
-import { HierarchicalEntity } from "@/core/components/treeCrud";
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
 import { LocationInfoView as Location } from "./LocationInfoView";
 export interface PostInfoDto extends HierarchicalEntity {
   // id: string;
