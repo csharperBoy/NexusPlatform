@@ -21,7 +21,7 @@ export const postContactApi = {
   },
    
   // به‌روزرسانی گروهی
-  batchUpdatePostsContact: async (commands: UpdatePostContactCommand[]): Promise<string[]> => {
+  batchUpdate: async (commands: UpdatePostContactCommand[]): Promise<string[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<string[]>(
       `/api/Contact/PostContact/batch`,
@@ -42,7 +42,7 @@ export const postContactApi = {
   },
   
 // ویرایش منبع (PUT)
-  updatePostContact: async (data: UpdatePostContactCommand): Promise<boolean> => {
+  update: async (data: UpdatePostContactCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/Contact/PostContact/${data.id}`, data,

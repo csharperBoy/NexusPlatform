@@ -5,6 +5,7 @@ import { BaseEntity } from "../../crud/types";
 import { TreeColumnDef } from "../types";
 import { useGenericTreeCrud } from "../hooks/useGenericTreeCrud";
 import type { UseGenericTreeCrudOptions } from "../types";
+import { TagInput } from "@/core/components/Input/TagInput";
 
 interface Props<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
@@ -44,71 +45,98 @@ export function GenericTreeCrudPage<
     (enableStatusColumn ? 1 : 0) +
     (showActionColumn ? 1 : 0);
 
-  const renderCell = (
-    col: TreeColumnDef<T>,
-    node: T,
-    rowId: string
-  ) => {
-    const raw = node[col.key as keyof T];
-    const options = col.selectionKey
-      ? crud.selectionLists[col.selectionKey] || []
-      : [];
+  
+const renderCell = (
+  col: TreeColumnDef<T>,
+  node: T,
+  rowId: string
+) => {
+  const raw = node[col.key as keyof T];
+  const options = col.selectionKey
+    ? crud.selectionLists[col.selectionKey] || []
+    : [];
 
+  // ستون‌های فقط‌خواندنی: render سفارشی یا نمایش متن
+  if (col.editable === false) {
     if (col.render) return col.render(raw, node);
-
-    if (col.type === "select") {
-      return (
-        <SearchableSelect
-          options={options}
-          value={(raw as string) || ""}
-          onChange={(sel) =>
-            crud.handleFieldChange(rowId, col.key, sel?.value ?? null)
-          }
-          placeholder={col.label}
-        />
-      );
-    }
-    if (col.type === "multi-select") {
-      const ids = Array.isArray(raw)
-        ? (raw as any[]).map((x) =>
-            typeof x === "object" && x != null ? String(x.id) : String(x)
-          )
-        : [];
-      return (
-        <SearchableMultiSelect
-          options={options}
-          value={ids}
-          onChange={(ids) => crud.handleFieldChange(rowId, col.key, ids)}
-          placeholder={col.label}
-        />
-      );
-    }
-    if (col.type === "boolean") {
-      return (
-        <input
-          type="checkbox"
-          checked={!!raw}
-          onChange={(e) =>
-            crud.handleFieldChange(rowId, col.key, e.target.checked)
-          }
-          className="h-4 w-4 rounded border-gray-300 text-blue-600"
-        />
-      );
-    }
     return (
-      <input
-        type={col.type === "number" ? "number" : "text"}
+      <span dir={col.dir || "rtl"} className={col.className}>
+        {String(raw ?? "")}
+      </span>
+    );
+  }
+
+  // اگر editable صریحاً true نبود ولی render داشت، render رو ترجیح بده
+  if (col.render && col.type == null) {
+    return col.render(raw, node);
+  }
+
+  if (col.type === "select") {
+    return (
+      <SearchableSelect
+        options={options}
         value={(raw as string) || ""}
-        dir={col.dir || "rtl"}
-        onChange={(e) =>
-          crud.handleFieldChange(rowId, col.key, e.target.value)
+        onChange={(sel) =>
+          crud.handleFieldChange(rowId, col.key, sel?.value ?? null)
         }
-        className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
-          col.className || ""
-        }`}
+        placeholder={col.label}
       />
     );
-  };
+  }
+
+  if (col.type === "multi-select") {
+    const ids = Array.isArray(raw)
+      ? (raw as any[]).map((x) =>
+          typeof x === "object" && x != null ? String(x.id) : String(x)
+        )
+      : [];
+    return (
+      <SearchableMultiSelect
+        options={options}
+        value={ids}
+        onChange={(ids) => crud.handleFieldChange(rowId, col.key, ids)}
+        placeholder={col.label}
+      />
+    );
+  }
+
+  if (col.type === "taginput") {
+    return (
+      <TagInput
+        value={(raw as string[]) || []}
+        onChange={(vals) => crud.handleFieldChange(rowId, col.key, vals)}
+        placeholder={col.label}
+      />
+    );
+  }
+
+  if (col.type === "boolean") {
+    return (
+      <input
+        type="checkbox"
+        checked={!!raw}
+        onChange={(e) =>
+          crud.handleFieldChange(rowId, col.key, e.target.checked)
+        }
+        className="h-4 w-4 rounded border-gray-300 text-blue-600"
+      />
+    );
+  }
+
+  return (
+    <input
+      type={col.type === "number" ? "number" : "text"}
+      value={(raw as string) || ""}
+      dir={col.dir || "rtl"}
+      onChange={(e) =>
+        crud.handleFieldChange(rowId, col.key, e.target.value)
+      }
+      className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
+        col.className || ""
+      }`}
+    />
+  );
+};
 
   return (
     <div className="p-6 dir-rtl text-right bg-gray-50/50 min-h-screen">

@@ -788,14 +788,26 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                       changed = true;
                     }
                   }
+                } else if (col.type === "taginput") {
+                  const sep = col.excelSeparator || /[،,;؛]/;
+                  const arr = String(raw)
+                    .split(sep)
+                    .map((s) => s.trim())
+                    .filter(Boolean);
+                  const current = Array.isArray(target[col.key]) ? target[col.key] : [];
+                  if (JSON.stringify(current) !== JSON.stringify(arr)) {
+                    target[col.key] = arr;
+                    changed = true;
+                  }
                 } else {
-                  const v =
-                    col.type === "number" ? Number(raw) : String(raw).trim();
+                  // همین else قبلی
+                  const v = col.type === "number" ? Number(raw) : String(raw).trim();
                   if (target[col.key] !== v) {
                     target[col.key] = v;
                     changed = true;
                   }
                 }
+              
               });
               if (changed) updated++;
             });
