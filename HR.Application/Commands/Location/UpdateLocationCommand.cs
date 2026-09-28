@@ -15,11 +15,8 @@ namespace HR.Application.Commands.Location
     
     public record UpdateLocationCommand(
            Guid Id,
-   Optional<string?> Title
-     
-    
-
-
+   Optional<string?> Title,
+   Optional<Guid?> ParentId
 ) : IRequest<Result<Guid>>;
 
 
@@ -47,6 +44,7 @@ namespace HR.Application.Commands.Location
               bool hasChange =  await _locationService.UpdateLocationAsync(
                     request.Id,
                     request.Title,
+                    request.ParentId,
                     Optional<List<string>?>.Undefined,
                     Optional<List<string>?>.Undefined,
                     Optional<List<string>?>.Undefined

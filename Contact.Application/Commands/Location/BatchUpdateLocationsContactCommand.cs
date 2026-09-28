@@ -37,6 +37,7 @@ namespace Contact.Application.Commands.Location
                    command.Id,
 
                     Optional<string?>.Undefined,
+                    Optional<Guid?>.Undefined,
                    command.OfficePhone,
                    command.OrgEmail,
                    command.OrgMobile

@@ -10,6 +10,7 @@ namespace Core.Shared.DTOs.HR
     {
         public Guid Id { get; set; }
 
+        public Guid? ParentId { get; set; }
         public Guid ProfileId { get; set; }
         public string Title { get; set; }
     }

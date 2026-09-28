@@ -1,60 +1,88 @@
-//src/modules/HR/pages/Location/LocationManagementPage.tsx
+// src/modules/HR/pages/Location/LocationManagementPage.tsx
 import React from "react";
-import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
-import { GenericColumnDef, UseGenericCrudOptions } from "@/core/components/crud/types";
+import {
+  GenericTreeCrudPage,
+  TreeColumnDef,
+  UseGenericTreeCrudOptions,
+} from "@/core/components/treeCrud";
 import { locationApi } from "../../api/LocationApi";
 import { LocationInfoView } from "../../models/LocationInfoView";
-import { CreateLocationCommand, UpdateLocationCommand } from "../../models/LocationCommand";
+import {
+  CreateLocationCommand,
+  UpdateLocationCommand,
+} from "../../models/LocationCommand";
 
-// ۱. تعریف ستون‌ها مطابق با GenericColumnDef
-const columns: GenericColumnDef<LocationInfoView>[] = [
+// ─── ستون‌ها ───
+const columns: TreeColumnDef<LocationInfoView>[] = [
   {
     key: "title",
-    label: "عنوان",
+    label: "عنوان مکان",
     type: "text",
     required: true,
     editable: true,
+    excelHeaders: ["عنوان", "عنوان مکان", "title", "نام", "مکان"],
   },
 ];
 
-// ۲. تنظیمات CRUD همگام با استراتژی جدید آفلاین
-const crudOptions: UseGenericCrudOptions<
+// ─── تنظیمات CRUD ───
+const crudOptions: UseGenericTreeCrudOptions<
   LocationInfoView,
   CreateLocationCommand,
   UpdateLocationCommand
 > = {
   api: locationApi,
-  // 👈 فعال‌سازی استراتژی ذخیره در صف آفلاین و کش‌سازی برای این صفحه
+
+  // 👈 حفظ استراتژی آفلاین قبلی
   apiOptions: {
-    offlineStrategy: "queueOffline"
+    offlineStrategy: "queueOffline",
   },
-  columns: columns,
-  mapToUpdateCommand: (entity) => ({
+
+  columns,
+
+  // ─── مپینگ ───
+  mapToUpdateCommand: (entity): UpdateLocationCommand => ({
     id: entity.id,
     title: entity.title || null,
+    parentId: entity.parentId ?? null,     // ← ترجمه‌ی parentId به Command
   }),
 
-  mapToCreateCommand: (formData) => ({
+  mapToCreateCommand: (formData, parentId): CreateLocationCommand => ({
     title: formData.title || "",
+    parentId,                              // ← از هوک میاد (null = ریشه)
   }),
 
-  pageFeatures: {
-    enableAdd: true,
-  },
+  // ─── عنوان نمایشی برای مودال حذف ───
+  getDisplayTitle: (loc) => loc.title || `مکان #${loc.id}`,
 
+  // ─── مچ اکسل بر اساس عنوان ───
+  excelMatchKey: "title",
+
+  // ─── قابلیت‌ها ───
   tableFeatures: {
     enableSearch: true,
     enableColumnFilter: true,
     enableExcelImport: true,
     enableExcelExport: true,
     enableDelete: true,
+    enableDragDrop: true,          // ← جابه‌جایی با درگ
+    enableInlineAddChild: true,    // ← + داخل هر سطر
+    enableMultiSelect: true,
+    enableExpandCollapseAll: true,
+    enableStatusColumn: true,
+  },
+  pageFeatures: {
+    enableAddAsRoot: true,         // ← دکمه افزودن ریشه در هدر
   },
 };
 
 export const LocationManagementPage: React.FC = () => {
   return (
-    <GenericCrudPage<LocationInfoView, CreateLocationCommand, UpdateLocationCommand>
-      title="مدیریت اطلاعات ارتباطی مکان‌ها"
+    <GenericTreeCrudPage<
+      LocationInfoView,
+      CreateLocationCommand,
+      UpdateLocationCommand
+    >
+      title="مدیریت ساختار مکان‌ها"
       columns={columns}
       crudOptions={crudOptions}
     />

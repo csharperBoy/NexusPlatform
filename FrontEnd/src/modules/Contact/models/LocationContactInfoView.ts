@@ -1,6 +1,8 @@
+import { HierarchicalEntity } from "@/core/models/HierarchicalEntity";
+
  //src/modules/HR/models/LocationContactInfoView.ts
- export interface LocationContactInfoView {
-  id: string; // Guid
+ export interface LocationContactInfoView extends HierarchicalEntity {
+  
   title: string;
   
   orgMobile?: string[] | null;

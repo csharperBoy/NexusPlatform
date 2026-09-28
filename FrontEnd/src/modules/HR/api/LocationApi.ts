@@ -4,13 +4,14 @@ import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { LocationInfoView } from "../models/LocationInfoView";
 import {  CreateLocationCommand, UpdateLocationCommand } from "../models/LocationCommand";
 import { ApiOptions, DEFAULT_OPTIONS } from "@/core/api/apiOptions";
+import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
 const API_MODULE = "hr";
 
 export const locationApi = {
     // دریافت لیست جهت نمایش در dropdown ها
-getSelectionList: async (): Promise<SelectionListDto[]> => {
+getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
+    const response = await api.get<TreeSelectionListDto[]>(
       "/api/hr/Location/GetSelectionList",
       {  withCredentials: true }
     );

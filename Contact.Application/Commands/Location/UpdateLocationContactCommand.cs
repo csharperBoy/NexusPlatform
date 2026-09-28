@@ -48,6 +48,7 @@ namespace Contact.Application.Commands.Location
                 bool hasChange = await _locationService.UpdateLocationAsync(
                     request.Id,
                     Optional<string?>.Undefined,
+                    Optional<Guid?>.Undefined,
                     request.OfficePhone,
                     request.OrgEmail,
                     request.OrgMobile

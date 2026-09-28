@@ -20,12 +20,12 @@ namespace HR.Application.Interfaces
         //Task AssignLocationsToLocation(Guid LocationId, List<Guid> locationsId);
         Task<Guid> CreateLocationAsync(
            string _title,
-
+           Guid? parentId = null,
          List<string>? _orgPhone = null,
          List<string>? _orgEmail = null,
          List<string>? _orgMobile = null
              );
-        Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile);
+        Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<Guid?> parentId, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile);
       
         Task<IReadOnlyList<LocationInfoDto>> GetLocationListAsync();
         Task DeleteAsync(Guid id);

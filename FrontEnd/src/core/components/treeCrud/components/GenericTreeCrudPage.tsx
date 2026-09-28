@@ -441,12 +441,17 @@ const renderCell = (
                             {enableInlineAddChild && !isNewRow && (
                               <button
                                 type="button"
-                                title="افزودن فرزند"
+                                title={row.canAddChild ? "افزودن فرزند" : "حداکثر سطح مجاز پر شده است"}
+                                disabled={!row.canAddChild}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  crud.handleAddChild(rowId);
+                                  if (row.canAddChild) crud.handleAddChild(rowId);
                                 }}
-                                className="w-5 h-5 flex items-center justify-center rounded text-emerald-600 hover:bg-emerald-100 font-bold text-sm leading-none"
+                                className={`w-5 h-5 flex items-center justify-center rounded font-bold text-sm leading-none transition-colors ${
+                                  row.canAddChild
+                                    ? "text-emerald-600 hover:bg-emerald-100 cursor-pointer"
+                                    : "text-gray-300 cursor-not-allowed"
+                                }`}
                               >
                                 ＋
                               </button>

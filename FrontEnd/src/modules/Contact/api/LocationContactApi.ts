@@ -3,12 +3,13 @@ import getAPI from "@/core/api/axiosClient";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { LocationContactInfoView } from "../models/LocationContactInfoView";
 import {  UpdateLocationContactCommand } from "../models/LocationContactCommand";
+import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
 const API_MODULE = "contact";
 
 export const locationContactApi = {
 
  // دریافت پست ها (GET)
-  GetList: async (): Promise<LocationContactInfoView[]> => {
+  getList: async (): Promise<LocationContactInfoView[]> => {
     
     const api = getAPI(API_MODULE);
     
@@ -31,9 +32,9 @@ export const locationContactApi = {
     return response.data; // آرایه‌ای از GUIDهای به‌روز شده
   },
   
-  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+  getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
+    const response = await api.get<TreeSelectionListDto[]>(
       "/api/Contact/LocationContact/GetSelectionList",
       {  withCredentials: true }
     );

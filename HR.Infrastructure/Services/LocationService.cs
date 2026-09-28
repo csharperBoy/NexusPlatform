@@ -63,7 +63,7 @@ namespace HR.Infrastructure.Services
 
         public async Task<Guid> CreateLocationAsync(
           string _title,
-
+           Guid? _parentId = null,
         List<string>? _orgPhone = null,
         List<string>? _orgEmail = null,
         List<string>? _orgMobile = null
@@ -71,7 +71,7 @@ namespace HR.Infrastructure.Services
         {
 
             Guid contactProfileId = await _contactService.CreateContactProfileAsync($"Location - {_title}", ContactProfileTypeEnum.Location);
-            Location loc = new Location(_title, contactProfileId);
+            Location loc = new Location(_title, _parentId, contactProfileId);
             await _LocationRepository.AddAsync(loc);
 
             await _contactService.SyncProfileContacts(ContactTypeEnum.OrganizationMobile, _orgMobile, loc.FkContactProfileId);
@@ -87,14 +87,14 @@ namespace HR.Infrastructure.Services
         
 
 
-        public async Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile)
+        public async Task<bool> UpdateLocationAsync(Guid id, Optional<string?> title, Optional<Guid?> parentId, Optional<List<string>?> officePhone, Optional<List<string>?> orgEmail, Optional<List<string>?> orgMobile)
         {
             bool hasChange = false;
             Location? loc = await _LocationRepository.GetByIdAsync(id);
             if (loc == null)
                 throw new Exception("can not found Location!!!");
 
-            hasChange = loc.ApplyChange(title);
+            hasChange = loc.ApplyChange(title,parentId);
             if (hasChange)
             {
                 await _LocationRepository.UpdateAsync(loc);
@@ -136,6 +136,7 @@ namespace HR.Infrastructure.Services
              {
                  Id = s.Id,
                  Title = s.Title,
+                 ParentId = s.ParentId,
                  ProfileId = s.FkContactProfileId
 
              }).ToList();
@@ -180,6 +181,7 @@ namespace HR.Infrastructure.Services
             {
                 Id = r.Id,
                 ProfileId = r.FkContactProfileId,
+                ParentId =r.ParentId,
                 Title = r.Title
             }).ToList();
             return result;

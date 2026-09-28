@@ -18,6 +18,9 @@ namespace HR.Application.Commands.Location
 {
     public record CreateLocationCommand(
    string Title,
+
+
+         Guid? ParentId ,
     List<string>? OfficePhone,
            List<string>? OrgEmail,
            List<string>? OrgMobile
@@ -50,7 +53,7 @@ namespace HR.Application.Commands.Location
                     request.Title);
 
                 Guid locationId = await _locationService.CreateLocationAsync(
-                       request.Title, request.OfficePhone, request.OrgEmail, request.OrgMobile
+                       request.Title,request.ParentId, request.OfficePhone, request.OrgEmail, request.OrgMobile
                     );
               
 

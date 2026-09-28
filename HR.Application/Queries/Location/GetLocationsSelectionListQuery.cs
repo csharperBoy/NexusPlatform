@@ -11,9 +11,9 @@ using System.Threading.Tasks;
 namespace HR.Application.Queries.Location
 {
     
-    public record GetLocationsSelectionListQuery() : IRequest<Result<IList<SelectionListDto>>>;
+    public record GetLocationsSelectionListQuery() : IRequest<Result<IList<TreeSelectionListDto>>>;
 
-    public class GetLocationsSelectionListQueryHandler : IRequestHandler<GetLocationsSelectionListQuery, Result<IList<SelectionListDto>>>
+    public class GetLocationsSelectionListQueryHandler : IRequestHandler<GetLocationsSelectionListQuery, Result<IList<TreeSelectionListDto>>>
     {
         private readonly ILocationInternalService _service;
         public GetLocationsSelectionListQueryHandler(ILocationInternalService service)
@@ -21,11 +21,11 @@ namespace HR.Application.Queries.Location
             _service = service;
         }
 
-        public async Task<Result<IList<SelectionListDto>>> Handle(GetLocationsSelectionListQuery request, CancellationToken ct)
+        public async Task<Result<IList<TreeSelectionListDto>>> Handle(GetLocationsSelectionListQuery request, CancellationToken ct)
         {
             var resources = await _service.GetLocationListAsync();
-            var result = resources.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.Title}"));
-            return Result<IList<SelectionListDto>>.Ok(result.ToList());
+            var result = resources.Select(x => new TreeSelectionListDto(x.Id.ToString(), $"{x.Title}" , x.ParentId.ToString()));
+            return Result<IList<TreeSelectionListDto>>.Ok(result.ToList());
         }
     }
 }

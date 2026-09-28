@@ -37,6 +37,7 @@ namespace HR.Application.Commands.Location
                   bool hasChange = await _locationService.UpdateLocationAsync(
                    command.Id,
                    command.Title,
+                   command.ParentId,
                     Optional<List<string>?>.Undefined,
                     Optional<List<string>?>.Undefined,
                     Optional<List<string>?>.Undefined

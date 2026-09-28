@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace HR.Application.Queries.Post
 {
-    public record GetPostsSelectionListQuery() : IRequest<Result<IList<SelectionListDto>>>;
+    public record GetPostsSelectionListQuery() : IRequest<Result<IList<TreeSelectionListDto>>>;
 
-    public class GetPostsSelectionListQueryHandler : IRequestHandler<GetPostsSelectionListQuery, Result<IList<SelectionListDto>>>
+    public class GetPostsSelectionListQueryHandler : IRequestHandler<GetPostsSelectionListQuery, Result<IList<TreeSelectionListDto>>>
     {
         private readonly IPostInternalService _service;
         public GetPostsSelectionListQueryHandler(IPostInternalService service)
@@ -20,11 +20,11 @@ namespace HR.Application.Queries.Post
             _service = service;
         }
 
-        public async Task<Result<IList<SelectionListDto>>> Handle(GetPostsSelectionListQuery request, CancellationToken ct)
+        public async Task<Result<IList<TreeSelectionListDto>>> Handle(GetPostsSelectionListQuery request, CancellationToken ct)
         {
             var resources = await _service.GetPostListAsync();
-            var result = resources.Select(x => new SelectionListDto(x.Id.ToString(), $"{x.FkJobTitleId}"));
-            return Result<IList<SelectionListDto>>.Ok(result.ToList());
+            var result = resources.Select(x => new TreeSelectionListDto(x.Id.ToString(), $"{x.FkJobTitleId}" , x.ParentId.ToString()));
+            return Result<IList<TreeSelectionListDto>>.Ok(result.ToList());
         }
     }
 }

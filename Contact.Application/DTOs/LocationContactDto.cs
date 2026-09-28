@@ -13,6 +13,7 @@ namespace Contact.Application.DTOs
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
+        public Guid? ParentId { get; set; }
         public List<string>? orgMobile { get; set; }
         public List<string>? orgPhone { get; set; }
 

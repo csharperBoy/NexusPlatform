@@ -34,6 +34,7 @@ export function useGenericTreeCrud<
   getDisplayTitle,
   isItemModified,
   sortChildren,
+  maxDepth,    
   tableFeatures,
   pageFeatures,
 }: UseGenericTreeCrudOptions<T, TCreateCmd, TUpdateCmd>) {
@@ -92,6 +93,67 @@ export function useGenericTreeCrud<
     initialItems.forEach((it) => m.set(getItemId(it), it));
     return m;
   }, [initialItems, getItemId]);
+
+// ─── depth info: فقط وقتی maxDepth ست شده ───
+// null یعنی محدودیتی نیست؛ در این حالت هیچ هزینه‌ای پرداخت نمی‌شود.
+const depthInfo = useMemo(() => {
+  if (maxDepth == null) return null;
+
+  const childrenMap = new Map<string | null, T[]>();
+  items.forEach((it) => {
+    const pid = getParentId(it);
+    const key = pid && itemsMap.has(pid) ? pid : null;
+    if (!childrenMap.has(key)) childrenMap.set(key, []);
+    childrenMap.get(key)!.push(it);
+  });
+
+  const depth = new Map<string, number>();
+  const height = new Map<string, number>(); // ارتفاع زیردرخت (0 برای برگ)
+
+  const visit = (item: T, d: number): number => {
+    const id = getItemId(item);
+    depth.set(id, d);
+    const kids = childrenMap.get(id) || [];
+    let h = 0;
+    for (const k of kids) {
+      const kh = visit(k, d + 1);
+      if (kh + 1 > h) h = kh + 1;
+    }
+    height.set(id, h);
+    return h;
+  };
+
+  const roots = childrenMap.get(null) || [];
+  roots.forEach((r) => visit(r, 0));
+  return { depth, height };
+}, [items, itemsMap, getItemId, getParentId, maxDepth]);
+
+/** آیا این گره می‌تواند فرزند بگیرد؟ */
+const canNodeHaveChild = useCallback(
+  (nodeId: string): boolean => {
+    if (maxDepth == null || !depthInfo) return true;
+    const d = depthInfo.depth.get(nodeId);
+    if (d == null) return true;
+    return d + 1 < maxDepth;
+  },
+  [maxDepth, depthInfo]
+);
+
+/** آیا زیردرختِ movedIds می‌تواند زیر targetId برود؟ */
+const canDropSubtreeOn = useCallback(
+  (movedIds: string[], targetId: string): boolean => {
+    if (maxDepth == null || !depthInfo) return true;
+    const dt = depthInfo.depth.get(targetId);
+    if (dt == null) return true;
+    for (const mid of movedIds) {
+      const h = depthInfo.height.get(mid) ?? 0;
+      // پس از انتقال، گره در depth dt+1 قرار می‌گیرد؛ عمیق‌ترین فرزندش در dt+1+h
+      if (dt + 1 + h >= maxDepth) return false;
+    }
+    return true;
+  },
+  [maxDepth, depthInfo]
+);
 
   // ─── fetch ───
   const fetchData = useCallback(async () => {
@@ -257,6 +319,8 @@ export function useGenericTreeCrud<
         const grandChildren = childrenMap.get(id) || [];
         const hasChildren = grandChildren.length > 0;
         const isExpanded = expandedIds.has(id);
+        const canAddChild =
+          maxDepth == null || (depthInfo?.depth.get(id) ?? 0) + 1 < maxDepth;
 
         result.push({
           node: child,
@@ -269,6 +333,7 @@ export function useGenericTreeCrud<
           isDragOver: dragOverId === id,
           isNew: newItemIds.has(id),
           matchesSearch: !isSearching || matchedSet.has(id),
+          canAddChild,                          // ← NEW
         });
 
         if ((isExpanded || isSearching) && hasChildren) {
@@ -293,6 +358,8 @@ export function useGenericTreeCrud<
     getParentId,
     sortChildren,
     newItemIds,
+  depthInfo,          // ← NEW
+  maxDepth           // ← NEW
   ]);
 
   // ─── edit ───
@@ -307,9 +374,15 @@ export function useGenericTreeCrud<
     [getItemId]
   );
 
+  
   // ─── inline add child ───
-  const handleAddChild = useCallback(
-    (parentId: string | null): string => {
+    
+const handleAddChild = useCallback(
+  (parentId: string | null): string | null => {
+    // ← NEW: اگر والد عمق مجاز رو پر کرده، اجازه نده
+    if (parentId != null && !canNodeHaveChild(parentId)) {
+      return null;
+    }
       const tempId = `temp-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2, 9)}`;
@@ -342,7 +415,7 @@ export function useGenericTreeCrud<
       setLastSelectedId(tempId);
       return tempId;
     },
-    [columns, getCreateDefaults]
+  [columns, getCreateDefaults, canNodeHaveChild]  
   );
 
   // ─── discard new ───
@@ -465,10 +538,15 @@ export function useGenericTreeCrud<
         e.dataTransfer.dropEffect = "none";
         return;
       }
+      // ← NEW: چک محدودیت عمق
+      if (!canDropSubtreeOn(cur, targetId)) {
+        e.dataTransfer.dropEffect = "none";
+        return;
+      }
       e.dataTransfer.dropEffect = "move";
       if (dragOverId !== targetId) setDragOverId(targetId);
     },
-    [enableDragDrop, isDescendant, dragOverId]
+    [enableDragDrop, isDescendant, dragOverId,canDropSubtreeOn]
   );
 
   const updateNodesParent = useCallback(
@@ -503,18 +581,27 @@ export function useGenericTreeCrud<
       }
       if (!idsToMove.length) return;
 
-      let cyclic = false;
+      let cyclic = false;      
+      let depthBlocked = false;
       const valid = idsToMove.filter((id) => {
         if (id === targetParentId) return false;
         if (isDescendant(targetParentId, id)) {
           cyclic = true;
           return false;
         }
-        const node = itemsMap.get(id);
-        return node && getParentId(node) !== targetParentId;
-      });
-
+          // ← NEW: چک عمق
+          if (!canDropSubtreeOn([id], targetParentId)) {
+            depthBlocked = true;
+            return false;
+          }
+          const node = itemsMap.get(id);
+          return node && getParentId(node) !== targetParentId;
+        });
+        
       if (cyclic) alert("امکان انتقال والد به زیرمجموعه‌های خودش وجود ندارد!");
+      // ← NEW
+      if (depthBlocked) alert(`حداکثر ${maxDepth} سطح مجاز است!`);
+
       if (valid.length) updateNodesParent(valid, targetParentId);
       setDraggedIds([]);
     },

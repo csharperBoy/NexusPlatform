@@ -87,6 +87,15 @@ export interface UseGenericTreeCrudOptions<
 
   tableFeatures?: TreeTableFeatures;
   pageFeatures?: TreePageFeatures;
+  
+  /**
+   * حداکثر تعداد سطح درخت.
+   * - undefined → بدون محدودیت (پیش‌فرض)
+   * - 1 → فقط ریشه
+   * - 2 → ریشه + فرزندانش
+   * - 3 → ریشه + فرزندان + نوه‌ها
+   */
+  maxDepth?: number;   // ← NEW
 }
 
 // ─── آیتم flatten شده ───
@@ -101,6 +110,8 @@ export interface FlattenedTreeNode<T> {
   isDragOver: boolean;
   isNew: boolean;
   matchesSearch: boolean;
+  
+  canAddChild: boolean;   // ← NEW: آیا مجاز است فرزند بگیرد؟
 }
 
 export interface TreeDeleteTarget<T> {

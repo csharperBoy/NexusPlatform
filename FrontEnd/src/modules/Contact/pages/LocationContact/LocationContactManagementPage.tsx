@@ -6,64 +6,129 @@ import { GenericColumnDef, GenericCrudApi } from "@/core/components/crud/types";
 import { locationContactApi } from "../../api/LocationContactApi";
 import { LocationContactInfoView } from "../../models/LocationContactInfoView";
 import { UpdateLocationContactCommand } from "../../models/LocationContactCommand";
+import { GenericTreeCrudApi, GenericTreeCrudPage, TreeColumnDef, UseGenericTreeCrudOptions } from "@/core/components/treeCrud";
 
-// ۱. تعریف ستون‌های جدول
-const columns: GenericColumnDef<LocationContactInfoView>[] = [
+// ─── ستون‌ها ───
+const columns: TreeColumnDef<LocationContactInfoView>[] = [
   {
     key: "title",
-    label: "عنوان واحد",
-    editable: false, // عنوان فقط خواندنی است
+    label: "عنوان مکان",
+    type: "text",
+    required: true,
+    editable: false,
+    excelHeaders: ["عنوان", "عنوان مکان", "title", "نام", "مکان"],
   },
   {
-    key: "orgPhone",
-    label: "شماره‌های تلفن ثابت",
+    key: "officePhone",
+    label: "تلفن‌های داخلی",
     type: "taginput",
-    editable: true,
+    excelHeaders: [
+      "تلفن داخلی",
+      "تلفن‌های داخلی",
+      "officephone",
+      "internalphone",
+    ],
   },
   {
     key: "orgMobile",
-    label: "شماره‌های همراه",
+    label: "موبایل‌های سازمانی",
     type: "taginput",
-    editable: true,
+    excelHeaders: [
+      "موبایل سازمانی",
+      "موبایل‌های سازمانی",
+      "orgmobile",
+      "mobile",
+    ],
   },
 ];
 
-// ۲. آداپتور API برای تطبیق متدهای اختصاصی با GenericCrudApi
-const crudApiAdapter: GenericCrudApi<
+// ═══════════════════════════════════════════════════════════════════
+//  آداپتور: تطبیق postContactApi با اینترفیس GenericTreeCrudApi
+//  نکته: چون این فرم افزودن نداره، create فقط یه no-op هست.
+// ═══════════════════════════════════════════════════════════════════
+const treeApi: GenericTreeCrudApi<
   LocationContactInfoView,
-  void,
+  never,                     // ← هیچ CreateCommand نداریم
   UpdateLocationContactCommand
 > = {
-  getList: locationContactApi.GetList,
-  batchUpdate: locationContactApi.batchUpdate,
-  create: async () => Promise.reject("امکان ایجاد واحد جدید در این صفحه وجود ندارد."),
-  delete: async () => Promise.reject("امکان حذف واحد در این صفحه وجود ندارد."),
+  getList: async () => {
+    const data = await locationContactApi.getList();
+    // نرمال‌سازی null → []
+    return (data as LocationContactInfoView[]).map((p) => ({
+      ...p,
+      officePhone: p.orgPhone ?? [],
+      orgMobile: p.orgMobile ?? [],
+    }));
+  },
+
+  // اگر UI هیچ‌وقت create صدا نزنه، این هیچ‌وقت اجرا نمی‌شه
+  create: async () => {
+    throw new Error("Create is not supported for PostContact entity");
+  },
+
+  batchUpdate: (cmds) => locationContactApi.batchUpdate(cmds),
+
+  delete: async () => {
+    throw new Error("Delete is not supported for PostContact entity");
+  },
+};
+// ─── تنظیمات CRUD ───
+const crudOptions: UseGenericTreeCrudOptions<
+  LocationContactInfoView,
+   never,
+  UpdateLocationContactCommand
+> = {
+  api: treeApi,
+
+  // 👈 حفظ استراتژی آفلاین قبلی
+  apiOptions: {
+    offlineStrategy: "queueOffline",
+  },
+
+  columns,
+
+  // ─── مپینگ ───
+  
+    mapToUpdateCommand: (post): UpdateLocationContactCommand => ({
+      id: post.id,
+      officePhone: post.orgPhone ?? [],
+      orgMobile: post.orgMobile ?? [],
+    }),
+
+  // ─── عنوان نمایشی برای مودال حذف ───
+  getDisplayTitle: (loc) => loc.title || `مکان #${loc.id}`,
+
+  // ─── مچ اکسل بر اساس عنوان ───
+  excelMatchKey: "title",
+
+  // ─── قابلیت‌ها ───
+  tableFeatures: {
+    enableSearch: true,
+    enableColumnFilter: true,
+    enableExcelImport: true,
+    enableExcelExport: true,
+    enableDelete: false,
+    enableDragDrop: false,          // ← جابه‌جایی با درگ
+    enableInlineAddChild: false,    // ← + داخل هر سطر
+    enableMultiSelect: false,
+    enableExpandCollapseAll: true,
+    enableStatusColumn: true,
+  },
+  pageFeatures: {
+    enableAddAsRoot: false,         // ← دکمه افزودن ریشه در هدر
+  },
 };
 
 export const LocationContactManagementPage: React.FC = () => {
-  return (
-    <GenericCrudPage<LocationContactInfoView, void, UpdateLocationContactCommand>
-      title="مدیریت شماره‌های تماس واحدها"
-      columns={columns}
-      crudOptions={{
-        api: crudApiAdapter,
-        columns: columns,
-        // تبدیل مدل UI به Command مورد نیاز برای API (نگاشت orgPhone به officePhone)
-        mapToUpdateCommand: (entity) => ({
-          id: entity.id,
-          officePhone: entity.orgPhone ?? [],
-          orgMobile: entity.orgMobile ?? [],
-        }),
-          pageFeatures:{
-          enableAdd:false
-
-        },
-        tableFeatures: {
-          enableDelete: false,
-          enableSearch: true,
-          enableColumnFilter: false,
-        },
-      }}
-    />
-  );
+   return (
+      <GenericTreeCrudPage<
+        LocationContactInfoView,
+        never,
+        UpdateLocationContactCommand
+      >
+        title="مدیریت اطلاعات تماس مکان‌ها"
+        columns={columns}
+        crudOptions={crudOptions}
+      />
+    );
 };
