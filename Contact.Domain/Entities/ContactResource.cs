@@ -1,4 +1,5 @@
 ﻿using Contact.Domain.Enums;
+using Core.Domain.Common;
 using Core.Domain.Common.EntityProperties;
 using Core.Shared.Enums.Contact;
 using Core.Shared.Enums.HR;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity , IHierarchicalStructureEntity<ContactResource,Guid?>
+    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity , IHierarchicalStructureEntity<ContactResource,Guid?> , ISoftRemovable
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -53,6 +54,16 @@ namespace Contact.Domain.Entities
 
         #endregion
 
+        #region ISoftRemovable Impelement
+        public bool IsRemove { get; private set; } = false;
+
+        public async Task SetIsRemove(bool value)
+        {
+            IsRemove = value;
+            Touch();
+            await Task.CompletedTask;
+        }
+        #endregion
 
         #region IHierarchicalStructureEntity Impelement
         public Guid? ParentId { get; private set; }
@@ -69,7 +80,64 @@ namespace Contact.Domain.Entities
             // ارسال ایونت وقتی ساختار سلسله مراتب تغییر می‌کند
             //AddDomainEvent(new MenuHierarchyChangedEvent(Id));
         }
+
         #endregion
+
+        public bool ApplyChange(
+            Optional<string> _value,
+            Optional<string?> _label,
+            Optional<ContactTypeEnum> _contactType,
+            Optional<bool> _isPrimary,
+            Optional<int?> _sortOrder,
+            Optional<ContactRelationTypeEnum?> _relationType,
+            Optional<Guid?> _parentId)
+        {
+            bool hasChange = false;
+
+            if (_value.IsSet && _value.Value?.Trim() != Value.Trim())
+            {
+                Value = _value.Value;
+                hasChange = true;
+            }
+
+            if (_label.IsSet && _label.Value?.Trim() != Label.Trim())
+            {
+                Label = _label.Value;
+                hasChange = true;
+            }
+
+            if (_contactType.IsSet && _contactType.Value != ContactType)
+            {
+                ContactType = _contactType.Value;
+                hasChange = true;
+            }
+            if (_isPrimary.IsSet && _isPrimary.Value != IsPrimary)
+            {
+                this.IsPrimary = _isPrimary.Value;
+                hasChange = true;
+            }
+            if (_sortOrder.IsSet && _sortOrder.Value != this.SortOrder)
+            {
+                this.SortOrder = _sortOrder.Value;
+                hasChange = true;
+            }
+            if (_relationType.IsSet && _relationType.Value != this.RelationType)
+            {
+                this.RelationType = _relationType.Value;
+                hasChange = true;
+            }
+            if (_parentId.IsSet && _parentId.Value != this.ParentId)
+            {
+                this.ParentId = _parentId.Value;
+                hasChange = true;
+            }
+
+            if (hasChange)
+            {
+                Touch();
+            }
+            return hasChange;
+        }
         public ContactTypeEnum ContactType { get; private set; }
         /// <summary>
         /// مقدار راه ارتباطی (شماره تلفن، آدرس ایمیل، آیدی اینستاگرام، لینک و...)
@@ -92,7 +160,6 @@ namespace Contact.Domain.Entities
         public ContactResource
             (ContactTypeEnum _ContactType,
             string _Value,
-            DateTime? _EffectiveFrom = null,
             string? _Label = null , 
             bool _IsPrimary = true, 
             int? _SortOrder = null, 

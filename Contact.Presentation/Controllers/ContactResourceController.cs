@@ -1,14 +1,17 @@
-﻿using Contact.Application.Commands.Employment;
+﻿using Contact.Application.Commands.ContactResource;
+using Contact.Application.Commands.Employment;
 using Contact.Application.Queries;
 using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
+using HR.Application.Commands.ContactResource;
+using HR.Application.Queries.ContactResource;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Tcontacteading.Tasks;
 
 namespace Contact.Presentation.Controllers
 {
@@ -18,31 +21,53 @@ namespace Contact.Presentation.Controllers
     public class ContactResourceController : BaseController
     {
 
-        //[HttpPut("{id:guid}")]
-        //[AuthorizeResource("contact.contactresource", "Edit")]
-        //public async Task<IActionResult> UpdateEmployment(Guid id, [FromBody] UpdateContactResourceCommand command)
-        //{
-        //    // اطمینان از تطابق ID در route با command
-        //    var updatedCommand = command with { Id = id };
-        //    var result = await Mediator.Send(updatedCommand);
-        //    return HandleResult(result);
-        //}
-        //[HttpPut("batch")]
-        //[AuthorizeResource("contact.contactresource", "Edit")]
-        //public async Task<IActionResult> BatchUpdate([FromBody] BatchUpdateContactResourceCommand command)
-        //{
-        //    var result = await Mediator.Send(command);
-        //    return HandleResult(result);
-        //}
-        //[HttpGet("GetList")]
-        //[AuthorizeResource("contact.contactresource", "View")]
-        //public async Task<IActionResult> GetList([FromQuery] GetContactResourceListQuery request)
-        //{
+        [HttpPost("Create")]
+        //[AuthorizeResource("contact.contactResource", "Create")]
+        public async Task<IActionResult> CreateContactResource([FromBody] CreateContactResourceCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        [HttpPut("{id:guid}")]
+        [AuthorizeResource("contact.contactResource", "Edit")]
+        public async Task<IActionResult> UpdateContactResource(Guid id, [FromBody] UpdateContactResourceCommand command)
+        {
+            // اطمینان از تطابق ID در route با command
+            var updatedCommand = command with { Id = id };
+            var result = await Mediator.Send(updatedCommand);
+            return HandleResult(result);
+        }
+        [HttpPut("batch")]
+        [AuthorizeResource("contact.contactResource", "Edit")]
+        public async Task<IActionResult> BatchUpdatecontactResources([FromBody] BatchUpdateContactResourcesCommand command)
+        {
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
+        [HttpGet("GetList")]
+        [AuthorizeResource("contact.contactResource", "View")]
+        public async Task<IActionResult> GetList([FromQuery] GetContactResourceListQuery request)
+        {
 
 
-        //    var result = await Mediator.Send(request);
-        //    return HandleResult(result);
-        //}
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpGet("GetSelectionList")]
+        [AuthorizeResource("contact.contactResource", "View")]
+        public async Task<IActionResult> GetSelectionList([FromQuery] GetContactResourcesSelectionListQuery? request = null)
+        {
+            var result = await Mediator.Send(request);
+            return HandleResult(result);
+        }
+        [HttpDelete("{id:guid}")]
+        [AuthorizeResource("contact.contactResource", "Delete")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var command = new DeleteContactResourceCommand(id);
+            var result = await Mediator.Send(command);
+            return HandleResult(result);
+        }
 
     }
 }
