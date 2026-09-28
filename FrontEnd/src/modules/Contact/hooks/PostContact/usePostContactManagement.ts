@@ -84,7 +84,7 @@ export const usePostContactManagement = () => {
 
       const parentIds = new Set<string>();
       list.forEach((p) => {
-        if (p.fkParentId) parentIds.add(p.fkParentId);
+        if (p.parentId) parentIds.add(p.parentId);
       });
       setExpandedIds(parentIds);
       setModifiedIds(new Set());
@@ -234,7 +234,7 @@ export const usePostContactManagement = () => {
     postContacts.forEach((p) => map.set(p.id, p));
 
     postContacts.forEach((p) => {
-      const parentId = p.fkParentId && map.has(p.fkParentId) ? p.fkParentId : null;
+      const parentId = p.parentId && map.has(p.parentId) ? p.parentId : null;
       if (!childrenMap.has(parentId)) {
         childrenMap.set(parentId, []);
       }
@@ -361,7 +361,7 @@ export const usePostContactManagement = () => {
   const expandAll = () => {
     const allParentIds = new Set<string>();
     postContacts.forEach((p) => {
-      if (postContacts.some((child) => child.fkParentId === p.id)) {
+      if (postContacts.some((child) => child.parentId === p.id)) {
         allParentIds.add(p.id);
       }
     });
@@ -393,7 +393,7 @@ export const usePostContactManagement = () => {
         return {
           id: postContact.id,
         //   code: postContact.postCode,
-        //   reportsToPostContactId: postContact.fkParentId,
+        //   reportsToPostContactId: postContact.parentId,
           officePhone: postContact.officePhone || [],
         //   orgEmail: postContact.orgEmail,
           orgMobile: postContact.orgMobile || [],

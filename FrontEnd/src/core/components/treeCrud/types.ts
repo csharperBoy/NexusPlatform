@@ -61,7 +61,7 @@ export interface UseGenericTreeCrudOptions<
     string,
     (options?: ApiOptions) => Promise<(SelectionListDto | TreeSelectionListDto)[]>
   >;
-
+getCreateDefaults?: () => Record<string, any>; 
   mapToUpdateCommand?: (entity: T) => TUpdateCmd;
   mapToCreateCommand?: (
     formData: Record<string, any>,

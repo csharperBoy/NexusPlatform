@@ -4,7 +4,7 @@ export interface PostInfoView {
   id: string;
   postCode: string;
   // parentId?: string | null;
-  fkParentId?: string | null;
+  parentId?: string | null;
   fkJobTitleId?: string | null;
   fkOrganizationUnitId?: string | null;
   fkJobLevelId?: string | null;

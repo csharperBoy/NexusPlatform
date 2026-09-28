@@ -15,7 +15,7 @@ TreeAdapter<PostInfoView> = {
 
   getParentId(item) {
 
-    return item.fkParentId ?? null;
+    return item.parentId ?? null;
 
   },
 
@@ -27,7 +27,7 @@ TreeAdapter<PostInfoView> = {
 
     return {
       ...item,
-      fkParentId: parentId
+      parentId: parentId
     };
 
   },

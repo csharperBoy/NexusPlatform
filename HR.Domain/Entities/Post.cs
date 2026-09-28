@@ -127,7 +127,7 @@ namespace HR.Domain.Entities
                  Optional<Guid?> _FkGradeId ,
                  Optional<Guid?> _FkCostCenterId ,
                  Optional<bool?> _IsActive ,
-            Optional<Guid?> _FkParentId
+            Optional<Guid?> _ParentId
 
            )
         {
@@ -138,9 +138,9 @@ namespace HR.Domain.Entities
                 this.Code = _Code.Value;
                 hasChange = true;
             }
-            if (  _FkParentId.IsSet && _FkParentId.Value != this.ParentId)
+            if (  _ParentId.IsSet && _ParentId.Value != this.ParentId)
             {
-                this.ChangeParent(_FkParentId.Value);
+                this.ChangeParent(_ParentId.Value);
                 hasChange = true;
             }
 

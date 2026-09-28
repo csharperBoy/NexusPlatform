@@ -1,45 +1,30 @@
 # HR OrgChart Integration
 
-
 ## Entity
-
 
 PostInfoView
 
-
 Backend relation:
-
 
 id
 
-fkParentId
-
-
+parentId
 
 ## Adapter
 
-
 postTreeAdapter
 
-
 Mapping:
-
 
 getId()
 
 => item.id
 
-
-
 getParentId()
 
-=> item.fkParentId
-
-
+=> item.parentId
 
 ## Update Flow
-
-
 
 User Drag
 

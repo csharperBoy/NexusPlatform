@@ -5,7 +5,7 @@ export interface PostInfoDto {
   id: string;
   postCode: string;
   parentId?: string | null;
-  fkParentId?: string | null;
+  parentId?: string | null;
   fkJobTitleId: string;
   fkOrganizationUnitId?: string | null;
   fkJobLevelId?: string | null;

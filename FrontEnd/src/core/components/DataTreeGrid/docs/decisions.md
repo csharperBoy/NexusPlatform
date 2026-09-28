@@ -1,12 +1,10 @@
 # Architecture Decisions
 
-
 ## ADR-001
 
 Decision:
 
 Tree Engine is framework independent.
-
 
 Reason:
 
@@ -16,7 +14,6 @@ Allow future support for:
 - AG Grid
 - MUI DataGrid
 - Custom renderer
-
 
 ---
 
@@ -32,7 +29,7 @@ Different modules have different parent structures.
 
 Example:
 
-fkParentId
+parentId
 
 parentId
 

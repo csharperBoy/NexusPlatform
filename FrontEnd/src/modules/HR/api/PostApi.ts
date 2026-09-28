@@ -4,6 +4,7 @@ import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { PostInfoView } from "../models/postInfoView";
 import { CreatePostCommand, UpdatePostCommand } from "../models/postCommand";
 import { BatchResult, BatchResultWithoutData } from "@/core/models/apiResults";
+import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
 const API_MODULE = "hr";
 
 export const postApi = {
@@ -17,9 +18,9 @@ GetJobTitleSelectionList: async (): Promise<SelectionListDto[]> => {
     console.log(response)
     return response.data;
   },
-  GetGradeSelectionList: async (): Promise<SelectionListDto[]> => {
+  GetGradeSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
-    const response = await api.get<SelectionListDto[]>(
+    const response = await api.get<TreeSelectionListDto[]>(
       "/api/hr/OrgChart/Grade/GetSelectionList",
       {  withCredentials: true }
     );
@@ -45,7 +46,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
     return response.data;
   },
  // دریافت پست ها (GET)
-  gtList: async (): Promise<PostInfoView[]> => {
+  getList: async (): Promise<PostInfoView[]> => {
     console.log('get list post:')
     const api = getAPI(API_MODULE);
     
@@ -79,7 +80,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
   },
   
 // ویرایش منبع (PUT)
-  updatePost: async (data: UpdatePostCommand): Promise<boolean> => {
+  update: async (data: UpdatePostCommand): Promise<boolean> => {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/hr/OrgChart/${data.id}`, data,
@@ -89,7 +90,7 @@ GetJobLevelSelectionList: async (): Promise<SelectionListDto[]> => {
     return response.data;
   },
   
- createPost: async (data: CreatePostCommand): Promise<string> => {
+ create: async (data: CreatePostCommand): Promise<string> => {
    const api = getAPI(API_MODULE);
    console.info("data= " , data);
    const response = await api.post<string>(

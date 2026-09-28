@@ -116,7 +116,7 @@ export const usePostManagement = () => {
 
       const parentIds = new Set<string>();
       list.forEach((p) => {
-        if (p.fkParentId) parentIds.add(p.fkParentId);
+        if (p.parentId) parentIds.add(p.parentId);
       });
       setExpandedIds(parentIds);
       setModifiedIds(new Set());
@@ -163,7 +163,7 @@ export const usePostManagement = () => {
 
     posts.forEach((p) => map.set(p.id, p));
     posts.forEach((p) => {
-      const parentId = p.fkParentId && map.has(p.fkParentId) ? p.fkParentId : null;
+      const parentId = p.parentId && map.has(p.parentId) ? p.parentId : null;
       if (!childrenMap.has(parentId)) {
         childrenMap.set(parentId, []);
       }
@@ -317,7 +317,7 @@ export const usePostManagement = () => {
   const expandAll = () => {
     const allParentIds = new Set<string>();
     posts.forEach((p) => {
-      if (posts.some((child) => child.fkParentId === p.id)) {
+      if (posts.some((child) => child.parentId === p.id)) {
         allParentIds.add(p.id);
       }
     });
@@ -332,7 +332,7 @@ export const usePostManagement = () => {
     while (currentId) {
       if (currentId === ancestorId) return true;
       const node = postsMap.get(currentId);
-      currentId = node?.fkParentId;
+      currentId = node?.parentId;
     }
     return false;
   };
@@ -385,7 +385,7 @@ export const usePostManagement = () => {
         return false;
       }
       const node = postsMap.get(id);
-      if (!node || node.fkParentId === targetParentId) return false;
+      if (!node || node.parentId === targetParentId) return false;
       return true;
     });
 
@@ -409,7 +409,7 @@ export const usePostManagement = () => {
 
     const validIdsToMove = idsToMove.filter((id) => {
       const node = postsMap.get(id);
-      return node && node.fkParentId !== null;
+      return node && node.parentId !== null;
     });
     if (validIdsToMove.length > 0) updateNodesParent(validIdsToMove, null);
     setDraggedIds([]);
@@ -420,7 +420,7 @@ export const usePostManagement = () => {
     setPosts((prev) =>
       prev.map((item) => {
         if (idSet.has(item.id)) {
-          return { ...item, fkParentId: newParentId };
+          return { ...item, parentId: newParentId };
         }
         return item;
       })
@@ -625,7 +625,7 @@ export const usePostManagement = () => {
           jobLevelId: post.fkJobLevelId,
           gradeId: post.fkGradeId,
           costCenterId: post.fkCostCenterId,
-          reportsToPostId: post.fkParentId,
+          reportsToPostId: post.parentId,
           officePhone: post.officePhone,
           orgEmail: post.orgEmail,
           orgMobile: post.orgMobile,

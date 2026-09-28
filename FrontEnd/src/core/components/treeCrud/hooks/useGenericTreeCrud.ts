@@ -17,6 +17,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   parentIdField = "parentId",
   idField = "id",
   selectionApis,
+  getCreateDefaults,
   mapToUpdateCommand,
   mapToCreateCommand,
   transformApiData,
@@ -324,6 +325,11 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         }
       });
 
+    // مقادیر پیش‌فرض مصرف‌کننده
+    if (getCreateDefaults) {
+      Object.assign(draft, getCreateDefaults());
+    }
+
       setItems((prev) => [draft as unknown as T, ...prev]);
       setNewItemIds((prev) => new Set(prev).add(tempId));
       if (parentId) {
@@ -333,7 +339,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       setLastSelectedId(tempId);
       return tempId;
     },
-    [idField, parentIdField, columns]
+    [idField, parentIdField, columns, getCreateDefaults]
   );
 
   // ─── discard new (پیش‌نویس) ─── (NEW)
