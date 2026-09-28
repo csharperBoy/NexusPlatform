@@ -1,10 +1,11 @@
 // models/postInfoView.ts
 
-export interface PostInfoView {
-  id: string;
-  postCode: string;
+import { HierarchicalEntity } from "@/core/components/treeCrud";
+
+export interface PostInfoView extends HierarchicalEntity{
+  // id: string;
   // parentId?: string | null;
-  parentId?: string | null;
+  postCode: string;  
   fkJobTitleId?: string | null;
   fkOrganizationUnitId?: string | null;
   fkJobLevelId?: string | null;

@@ -1,9 +1,17 @@
-//src/core/components/treeCrud/types.ts
 import React from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
 import { ApiOptions } from "@/core/api/apiOptions";
 import { BaseEntity, GenericColumnDef } from "../crud/types";
+
+// ─────────────────────────────────────────────────────────────────────
+//  قرارداد پایه: هر موجودیت درختی باید این فیلدها رو داشته باشه.
+//  منطبق با IHierarchicalStructureEntity در بک‌اند.
+// ─────────────────────────────────────────────────────────────────────
+export interface HierarchicalEntity extends BaseEntity {
+  id: string;
+  parentId?: string | null;
+}
 
 // ─── قابلیت‌های جدول درختی ───
 export interface TreeTableFeatures {
@@ -12,31 +20,35 @@ export interface TreeTableFeatures {
   enableSearch?: boolean;
   enableColumnFilter?: boolean;
   enableDelete?: boolean;
-  enableDragDrop?: boolean;         // پیش‌فرض: true
-  enableMultiSelect?: boolean;      // پیش‌فرض: true
-  enableExpandCollapseAll?: boolean;// پیش‌فرض: true
-  enableStatusColumn?: boolean;     // ستون "تغییر یافته"  
-  enableInlineAddChild?: boolean;
+  enableDragDrop?: boolean;          // پیش‌فرض: true
+  enableMultiSelect?: boolean;       // پیش‌فرض: true
+  enableExpandCollapseAll?: boolean; // پیش‌فرض: true
+  enableStatusColumn?: boolean;      // پیش‌فرض: true
+  enableInlineAddChild?: boolean;    // پیش‌فرض: false
 }
 
 export interface TreePageFeatures {
-  enableAdd?: boolean;              // پیش‌فرض: false (چون درخت معمولاً افزودن فرزندیه)
-  enableAddAsRoot?: boolean;        // افزودن گره ریشه
-  enableResetAll?: boolean;         // پیش‌فرض: true
+  enableAdd?: boolean;
+  enableAddAsRoot?: boolean;         // پیش‌فرض: false
+  enableResetAll?: boolean;
 }
 
-// ─── ستون مخصوص درخت (ارث‌بری از GenericColumnDef) ───
+// ─── ستون مخصوص درخت ───
 export interface TreeColumnDef<T> extends GenericColumnDef<T> {
   /** عناوین احتمالی این ستون در فایل اکسل (اگر خالی باشد از label استفاده می‌شود) */
   excelHeaders?: string[];
   /** برای ستون‌های select/multi-select در ایمپورت اکسل */
-  excelMatchByDisplay?: boolean;    // پیش‌فرض: true
-  /** جداکننده برای multi-select در اکسل */
-  excelSeparator?: string;          // پیش‌فرض: /[،,;؛]/
+  excelMatchByDisplay?: boolean;     // پیش‌فرض: true
+  /** جداکننده برای multi-select/taginput در اکسل */
+  excelSeparator?: RegExp;           // پیش‌فرض: /[،,;؛]/
 }
 
 // ─── API مخصوص ساختار درختی ───
-export interface GenericTreeCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
+export interface GenericTreeCrudApi<
+  T extends HierarchicalEntity,
+  TCreateCmd,
+  TUpdateCmd
+> {
   getList: (options?: ApiOptions) => Promise<T[]>;
   getSelectionList?: (options?: ApiOptions) => Promise<TreeSelectionListDto[]>;
   create: (cmd: TCreateCmd, options?: ApiOptions) => Promise<any>;
@@ -46,7 +58,7 @@ export interface GenericTreeCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd
 
 // ─── تنظیمات هوک ───
 export interface UseGenericTreeCrudOptions<
-  T extends BaseEntity,
+  T extends HierarchicalEntity,
   TCreateCmd,
   TUpdateCmd
 > {
@@ -54,19 +66,19 @@ export interface UseGenericTreeCrudOptions<
   apiOptions?: ApiOptions;
   columns: TreeColumnDef<T>[];
 
-  parentIdField?: keyof T | string;   // پیش‌فرض: "parentId"
-  idField?: keyof T | string;         // پیش‌فرض: "id"
-
   selectionApis?: Record<
     string,
     (options?: ApiOptions) => Promise<(SelectionListDto | TreeSelectionListDto)[]>
   >;
-getCreateDefaults?: () => Record<string, any>; 
+
+  getCreateDefaults?: () => Record<string, any>;
+
   mapToUpdateCommand?: (entity: T) => TUpdateCmd;
   mapToCreateCommand?: (
     formData: Record<string, any>,
     parentId: string | null
   ) => TCreateCmd;
+
   transformApiData?: (data: T[]) => T[];
   excelMatchKey?: keyof T;
 
@@ -93,8 +105,8 @@ export interface FlattenedTreeNode<T> {
   isSelected: boolean;
   isDragging: boolean;
   isDragOver: boolean;
-  isNew?: boolean;
-  matchesSearch: boolean;   // آیا خودش مچ شده (برای bold کردن در سرچ)
+  isNew: boolean;
+  matchesSearch: boolean;
 }
 
 export interface TreeDeleteTarget<T> {

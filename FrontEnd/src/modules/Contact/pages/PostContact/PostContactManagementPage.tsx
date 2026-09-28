@@ -141,10 +141,6 @@ const crudOptions: UseGenericTreeCrudOptions<
 > = {
   api: treeApi,
   columns,
-  parentIdField: "parentId",       // طبق قرارداد IHierarchicalStructureEntity
-
-  // این فرم selection list نداره — پس selectionApis رو نمی‌ذاریم
-
   excelMatchKey: "postCode",       // ⚠️ اگه کد پرسنلی ملاک مچ‌شدنه، این رو عوض کن
 
   mapToUpdateCommand: (post): UpdatePostContactCommand => ({

@@ -4,17 +4,17 @@ import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMul
 import { BaseEntity } from "../../crud/types";
 import { TreeColumnDef } from "../types";
 import { useGenericTreeCrud } from "../hooks/useGenericTreeCrud";
-import type { UseGenericTreeCrudOptions } from "../types";
+import type { HierarchicalEntity, UseGenericTreeCrudOptions } from "../types";
 import { TagInput } from "@/core/components/Input/TagInput";
 
-interface Props<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
+interface Props<T extends HierarchicalEntity, TCreateCmd, TUpdateCmd> {
   title: string;
   columns: TreeColumnDef<T>[];
   crudOptions: UseGenericTreeCrudOptions<T, TCreateCmd, TUpdateCmd>;
 }
 
 export function GenericTreeCrudPage<
-  T extends BaseEntity,
+   T extends HierarchicalEntity,  
   TCreateCmd,
   TUpdateCmd
 >({ title, columns, crudOptions }: Props<T, TCreateCmd, TUpdateCmd>) {

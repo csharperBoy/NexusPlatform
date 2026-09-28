@@ -88,7 +88,6 @@ const crudOptions: UseGenericTreeCrudOptions<
 > = {
   api: treeApi,                 // ← آداپتور
   columns,
-  parentIdField: "parentId",
 
   selectionApis: {
     locations: locationApi.getSelectionList,

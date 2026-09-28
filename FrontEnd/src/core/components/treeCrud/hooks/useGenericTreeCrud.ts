@@ -2,20 +2,30 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import { ApiOptions } from "@/core/api/apiOptions";
-import { BaseEntity } from "../../crud/types";
 import {
   FlattenedTreeNode,
+  HierarchicalEntity,
   TreeColumnDef,
   TreeDeleteTarget,
   UseGenericTreeCrudOptions,
 } from "../types";
 
-export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
+// ─────────────────────────────────────────────────────────────────────
+//  Helpers: طبق قرارداد HierarchicalEntity، فیلدها همیشه id و parentId هستن.
+// ─────────────────────────────────────────────────────────────────────
+const toId = (v: unknown): string => String(v);
+
+const normalizeParentId = (v: unknown): string | null =>
+  v == null || v === "" ? null : String(v);
+
+export function useGenericTreeCrud<
+  T extends HierarchicalEntity,
+  TCreateCmd,
+  TUpdateCmd
+>({
   api,
   apiOptions,
   columns,
-  parentIdField = "parentId",
-  idField = "id",
   selectionApis,
   getCreateDefaults,
   mapToUpdateCommand,
@@ -32,12 +42,12 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   const enableDragDrop = tableFeatures?.enableDragDrop !== false;
   const enableMultiSelect = tableFeatures?.enableMultiSelect !== false;
   const showStatusColumn = tableFeatures?.enableStatusColumn !== false;
-  const enableInlineAddChild = tableFeatures?.enableInlineAddChild === true; // ← NEW (پیش‌فرض: خاموش)
+  const enableInlineAddChild = tableFeatures?.enableInlineAddChild === true;
 
   // ─── state ───
   const [items, setItems] = useState<T[]>([]);
   const [initialItems, setInitialItems] = useState<T[]>([]);
-  const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set()); // ← NEW
+  const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set());
   const [selectionLists, setSelectionLists] = useState<
     Record<string, SelectionListDto[]>
   >({});
@@ -46,7 +56,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [deleteTarget, setDeleteTarget] = useState<TreeDeleteTarget<T> | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<TreeDeleteTarget<T> | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [globalSearch, setGlobalSearch] = useState("");
@@ -63,16 +75,11 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   draggedIdsRef.current = draggedIds;
 
   // ─── helpers ───
-  const getItemId = useCallback(
-    (item: T): string => String(item[idField as keyof T]),
-    [idField]
-  );
+  const getItemId = useCallback((item: T): string => toId(item.id), []);
+
   const getParentId = useCallback(
-    (item: T): string | null => {
-      const pid = item[parentIdField as keyof T];
-      return pid == null || pid === "" ? null : String(pid);
-    },
-    [parentIdField]
+    (item: T): string | null => normalizeParentId(item.parentId),
+    []
   );
 
   const itemsMap = useMemo(() => {
@@ -111,7 +118,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
 
       setItems(processed);
       setInitialItems(JSON.parse(JSON.stringify(processed)));
-      setNewItemIds(new Set()); // ← NEW
+      setNewItemIds(new Set());
 
       const selObj: Record<string, SelectionListDto[]> = {};
       selections.forEach((s: any) => (selObj[s.key] = s.data));
@@ -144,7 +151,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     const ids = new Set<string>();
     items.forEach((item) => {
       const id = getItemId(item);
-      if (newItemIds.has(id)) return; // ← NEW: رکوردهای جدید جزو modified نیستن
+      if (newItemIds.has(id)) return;
       const init = initialItemsMap.get(id);
       if (!init) return;
       if (compareItems(item, init)) ids.add(id);
@@ -152,8 +159,8 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     return ids;
   }, [items, initialItemsMap, compareItems, getItemId, newItemIds]);
 
-  const hasChanges = modifiedIds.size > 0 || newItemIds.size > 0; // ← NEW
-  const totalChanges = modifiedIds.size + newItemIds.size;        // ← NEW
+  const hasChanges = modifiedIds.size > 0 || newItemIds.size > 0;
+  const totalChanges = modifiedIds.size + newItemIds.size;
 
   useEffect(() => {
     fetchData();
@@ -251,21 +258,19 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         const grandChildren = childrenMap.get(id) || [];
         const hasChildren = grandChildren.length > 0;
         const isExpanded = expandedIds.has(id);
-        const isModified = modifiedIds.has(id);
-        const isNew = newItemIds.has(id); // ← NEW
 
         result.push({
           node: child,
           depth,
           hasChildren,
           isExpanded,
-          isModified,
+          isModified: modifiedIds.has(id),
           isSelected: selectedIds.has(id),
           isDragging: draggedIds.includes(id),
           isDragOver: dragOverId === id,
+          isNew: newItemIds.has(id),
           matchesSearch: !isSearching || matchedSet.has(id),
-          isNew, // ← NEW
-        } as FlattenedTreeNode<T> & { isNew?: boolean });
+        });
 
         if ((isExpanded || isSearching) && hasChildren) {
           traverse(id, depth + 1);
@@ -288,7 +293,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     getItemId,
     getParentId,
     sortChildren,
-    newItemIds, // ← NEW
+    newItemIds,
   ]);
 
   // ─── edit ───
@@ -303,18 +308,18 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     [getItemId]
   );
 
-  // ─── inline add child ─── (NEW)
+  // ─── inline add child ───
   const handleAddChild = useCallback(
     (parentId: string | null): string => {
       const tempId = `temp-${Date.now()}-${Math.random()
         .toString(36)
         .slice(2, 9)}`;
 
-      // مقداردهی اولیه بر اساس نوع ستون‌ها
       const draft: Record<string, any> = {
-        [idField]: tempId,
-        [parentIdField]: parentId,
+        id: tempId,
+        parentId: parentId,
       };
+
       columns.forEach((col) => {
         if (col.type === "multi-select" || col.type === "taginput") {
           draft[col.key as string] = [];
@@ -325,10 +330,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         }
       });
 
-    // مقادیر پیش‌فرض مصرف‌کننده
-    if (getCreateDefaults) {
-      Object.assign(draft, getCreateDefaults());
-    }
+      if (getCreateDefaults) {
+        Object.assign(draft, getCreateDefaults());
+      }
 
       setItems((prev) => [draft as unknown as T, ...prev]);
       setNewItemIds((prev) => new Set(prev).add(tempId));
@@ -339,10 +343,10 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       setLastSelectedId(tempId);
       return tempId;
     },
-    [idField, parentIdField, columns, getCreateDefaults]
+    [columns, getCreateDefaults]
   );
 
-  // ─── discard new (پیش‌نویس) ─── (NEW)
+  // ─── discard new ───
   const handleDiscardNew = useCallback(
     (id: string) => {
       setItems((prev) => prev.filter((it) => getItemId(it) !== id));
@@ -356,9 +360,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         next.delete(id);
         return next;
       });
-      if (lastSelectedId === id) setLastSelectedId(null);
+      setLastSelectedId((prev) => (prev === id ? null : prev));
     },
-    [getItemId, lastSelectedId]
+    [getItemId]
   );
 
   // ─── selection ───
@@ -366,11 +370,13 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     (e: React.MouseEvent, id: string) => {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "BUTTON" || tag === "SELECT") return;
+
       if (!enableMultiSelect) {
         setSelectedIds(new Set([id]));
         setLastSelectedId(id);
         return;
       }
+
       if (e.ctrlKey || e.metaKey) {
         setSelectedIds((prev) => {
           const next = new Set(prev);
@@ -472,13 +478,15 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       setItems((prev) =>
         prev.map((it) =>
           set.has(getItemId(it))
-            ? ({ ...it, [parentIdField]: newParentId } as T)
+            ? ({ ...it, parentId: newParentId } as T)
             : it
         )
       );
-      if (newParentId) setExpandedIds((prev) => new Set(prev).add(newParentId));
+      if (newParentId) {
+        setExpandedIds((prev) => new Set(prev).add(newParentId));
+      }
     },
-    [getItemId, parentIdField]
+    [getItemId]
   );
 
   const handleDropOnRow = useCallback(
@@ -538,7 +546,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     [enableDragDrop, draggedIds, itemsMap, getParentId, updateNodesParent]
   );
 
-  // ─── save all ─── (بازنویسی شده برای پشتیبانی از رکوردهای جدید)
+  // ─── save all ───
   const handleSaveChanges = useCallback(
     async (options?: ApiOptions) => {
       if (!hasChanges) return;
@@ -548,7 +556,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       try {
         const merged = { ...apiOptions, ...options };
 
-        // 1. ساخت دستورات به‌روزرسانی برای رکوردهای تغییریافته
         const updateCmds: TUpdateCmd[] = Array.from(modifiedIds).map((id) => {
           const item = itemsMap.get(id)!;
           return mapToUpdateCommand
@@ -556,7 +563,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
             : (item as unknown as TUpdateCmd);
         });
 
-        // 2. ساخت دستورات ایجاد برای رکوردهای جدید
         const createCmds: TCreateCmd[] = Array.from(newItemIds).map((id) => {
           const item = itemsMap.get(id)!;
           if (mapToCreateCommand) {
@@ -568,7 +574,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
           return item as unknown as TCreateCmd;
         });
 
-        // 3. اجرا
         let offlineQueued = false;
         let createdCount = 0;
         let updatedCount = 0;
@@ -632,7 +637,6 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
   const handleOpenDeleteModal = useCallback(
     (item: T) => {
       const id = getItemId(item);
-      // اگر رکورد جدید است، فقط discard کن
       if (newItemIds.has(id)) {
         handleDiscardNew(id);
         return;
@@ -654,11 +658,9 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
       setIsDeleting(true);
       try {
         const merged = { ...apiOptions, ...options };
-        const res = await api.delete(
-          deleteTarget.item[idField as keyof T] as any,
-          merged
-        );
+        const res = await api.delete(deleteTarget.item.id, merged);
         const id = getItemId(deleteTarget.item);
+
         if (res && (res as any)._isOfflineQueued) {
           setItems((prev) => prev.filter((i) => getItemId(i) !== id));
           setInitialItems((prev) => prev.filter((i) => getItemId(i) !== id));
@@ -676,10 +678,10 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
         setIsDeleting(false);
       }
     },
-    [deleteTarget, idField, getItemId, api, apiOptions, fetchData]
+    [deleteTarget, getItemId, api, apiOptions, fetchData]
   );
 
-  // ─── excel import ─── (بدون تغییر نسبت به نسخه‌ی قبل)
+  // ─── excel import ───
   const handleExcelImport = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -694,6 +696,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
             alert("فایل خالی است.");
             return;
           }
+
           let updated = 0;
           setItems((prev) => {
             const next = prev.map((p) => ({ ...p }));
@@ -704,6 +707,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                 if (v != null) byMatchKey.set(String(v).trim(), idx);
               });
             }
+
             const findId = (list: SelectionListDto[], raw: string) => {
               const t = String(raw).trim();
               const found = list.find(
@@ -714,6 +718,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
               );
               return found ? found.value : null;
             };
+
             rows.forEach((row) => {
               if (!excelMatchKey) return;
               const mkKey = Object.keys(row).find((k) => {
@@ -732,10 +737,12 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
               const matchVal = String(row[mkKey]).trim();
               const idx = byMatchKey.get(matchVal);
               if (idx == null) return;
+
               let changed = false;
               columns.forEach((col) => {
                 if (String(col.key) === String(excelMatchKey)) return;
                 if (col.editable === false) return;
+
                 const headers = [
                   col.label.toLowerCase(),
                   ...(col.excelHeaders || []).map((h) => h.toLowerCase()),
@@ -747,12 +754,14 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                 if (!key) return;
                 const raw = row[key];
                 if (raw == null) return;
+
                 const target = next[idx] as any;
                 const isMulti = col.type === "multi-select";
                 const isSelect = col.type === "select" || isMulti;
+                const sep = col.excelSeparator || /[،,;؛]/;
+
                 if (isSelect && col.selectionKey) {
                   const list = selectionLists[col.selectionKey] || [];
-                  const sep = col.excelSeparator || /[،,;؛]/;
                   if (isMulti) {
                     const parts = String(raw)
                       .split(sep)
@@ -768,9 +777,7 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                       const curIds = cur
                         .map((x: any) => String(x.id ?? x))
                         .sort();
-                      if (
-                        JSON.stringify(curIds) !== JSON.stringify(ids.sort())
-                      ) {
+                      if (JSON.stringify(curIds) !== JSON.stringify(ids.sort())) {
                         target[col.key] = ids.map((id) => ({
                           id,
                           title:
@@ -789,28 +796,29 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
                     }
                   }
                 } else if (col.type === "taginput") {
-                  const sep = col.excelSeparator || /[،,;؛]/;
                   const arr = String(raw)
                     .split(sep)
                     .map((s) => s.trim())
                     .filter(Boolean);
-                  const current = Array.isArray(target[col.key]) ? target[col.key] : [];
+                  const current = Array.isArray(target[col.key])
+                    ? target[col.key]
+                    : [];
                   if (JSON.stringify(current) !== JSON.stringify(arr)) {
                     target[col.key] = arr;
                     changed = true;
                   }
                 } else {
-                  // همین else قبلی
-                  const v = col.type === "number" ? Number(raw) : String(raw).trim();
+                  const v =
+                    col.type === "number" ? Number(raw) : String(raw).trim();
                   if (target[col.key] !== v) {
                     target[col.key] = v;
                     changed = true;
                   }
                 }
-              
               });
               if (changed) updated++;
             });
+
             if (updated > 0)
               setSuccessMessage(`${updated} رکورد از اکسل اعمال شد.`);
             else alert("رکورد منطبقی یافت نشد یا هیچ تغییری اعمال نشد.");
@@ -849,11 +857,11 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     selectedIds,
     lastSelectedId,
     modifiedIds,
-    newItemIds, // ← NEW
-    hasChanges, // ← NEW
-    totalChanges, // ← NEW
-    modifiedCount: modifiedIds.size, // ← NEW
-    newCount: newItemIds.size, // ← NEW
+    newItemIds,
+    hasChanges,
+    totalChanges,
+    modifiedCount: modifiedIds.size,
+    newCount: newItemIds.size,
     draggedIds,
     dragOverId,
     isOverRootZone,
@@ -872,8 +880,8 @@ export function useGenericTreeCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>
     handleDropOnRoot,
     updateNodesParent,
 
-    handleAddChild, // ← NEW
-    handleDiscardNew, // ← NEW
+    handleAddChild,
+    handleDiscardNew,
 
     handleSaveChanges,
     handleResetChanges,

@@ -1,11 +1,11 @@
 // src/modules/HR/models/postInfoDto.ts
 
+import { HierarchicalEntity } from "@/core/components/treeCrud";
 import { LocationInfoView as Location } from "./LocationInfoView";
-export interface PostInfoDto {
-  id: string;
+export interface PostInfoDto extends HierarchicalEntity {
+  // id: string;
+  // parentId?: string | null;
   postCode: string;
-  parentId?: string | null;
-  parentId?: string | null;
   fkJobTitleId: string;
   fkOrganizationUnitId?: string | null;
   fkJobLevelId?: string | null;
