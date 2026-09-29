@@ -45,6 +45,12 @@ namespace Contact.Infrastructure.DependencyInjection
             services.AddScoped<IContactInternalService>(sp => sp.GetRequiredService<ContactService>());
             services.AddScoped<IContactInternalService, ContactService>();
             
+            services.AddScoped<ContactResourceService>();
+            services.AddScoped<IContactResourceQueryService>(sp => sp.GetRequiredService<ContactResourceService>());
+            services.AddScoped<IContactResourceCommandService>(sp => sp.GetRequiredService<ContactResourceService>());
+            services.AddScoped<IContactResourceQueryService, ContactResourceService>();
+            services.AddScoped<IContactResourceCommandService, ContactResourceService>();
+            
             services.AddScoped<IUnitOfWork<ContactDbContext>, EfUnitOfWork<ContactDbContext>>();
             // 📌 رجیستر Repository مبتنی بر Specification
             services.AddScoped<ISpecificationRepository<PhoneBookInfoView, Guid>, EfSpecificationRepository<ContactDbContext, PhoneBookInfoView, Guid>>();

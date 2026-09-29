@@ -88,6 +88,15 @@ namespace Contact.Infrastructure.Data
                             Description = "location management",
                             DisplayOrder = 3003,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "contact.contactresource",
+                            Name = "Contact contact resource",
+                            Type =ResourceType.Data,
+                            Category =ResourceCategory.System,
+                            Description = "contact resource management",
+                            DisplayOrder = 3004,
+                            Icon = "list",
                         }
                     }
                 }
@@ -149,6 +158,23 @@ namespace Contact.Infrastructure.Data
                    AssigneeId = roleId,
 
                    Description = "Full access to contact location"
+               },
+               new()
+               {
+                   ResourceKey = "contact.contactresource",
+                   Action = PermissionAction.Full,
+                   Scopes = new List<ScopeDto>()
+                   {
+                       new()
+                       {
+                           scope =ScopeType.All
+                       }
+                   },
+                   Effect = PermissionEffect.allow,
+                   AssigneeType= AssigneeType.Role,
+                   AssigneeId = roleId,
+
+                   Description = "Full access to contact resource"
                }
             };
         }
@@ -235,6 +261,16 @@ namespace Contact.Infrastructure.Data
                             Key = "contact.location",
                             ParentKey = "contact",
                             Path = "/contact/location"
+                        },
+                        new()
+                        {
+                            Title = "اطلاعات تماس",
+                            Description = "مدیریت اطلاعات تماس ",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 104,
+                            Key = "contact.contactresource",
+                            ParentKey = "contact",
+                            Path = "/contact/contactresource"
                         }
                     }
                 }
