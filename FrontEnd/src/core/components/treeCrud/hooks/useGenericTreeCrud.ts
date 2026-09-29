@@ -230,28 +230,35 @@ const canDropSubtreeOn = useCallback(
 
   // ─── searchable text ───
   const getColumnSearchText = useCallback(
-    (item: T, col: TreeColumnDef<T>): string => {
-      if (col.getFilterValue) return col.getFilterValue(item) || "";
-      const raw = item[col.key as keyof T];
-      if (raw == null) return "";
-      if (col.selectionKey && selectionLists[col.selectionKey]) {
-        const list = selectionLists[col.selectionKey];
-        if (Array.isArray(raw)) {
-          return (raw as any[])
-            .map((v) => {
-              const opt = list.find((o) => String(o.value) === String(v));
-              return opt ? opt.display || opt.label || "" : String(v);
-            })
-            .join(" ");
-        }
-        const opt = list.find((o) => String(o.value) === String(raw));
-        return opt ? opt.display || opt.label || "" : String(raw);
+  (item: T, col: TreeColumnDef<T>): string => {
+    if (col.getFilterValue) return col.getFilterValue(item) || "";
+    const raw = item[col.key as keyof T];
+    if (raw == null) return "";
+
+    // ← NEW: staticOptions اول، سپس selectionLists
+    const list = col.staticOptions
+      ? col.staticOptions
+      : col.selectionKey
+        ? selectionLists[col.selectionKey]
+        : null;
+
+    if (list) {
+      if (Array.isArray(raw)) {
+        return (raw as any[])
+          .map((v) => {
+            const opt = list.find((o) => String(o.value) === String(v));
+            return opt ? opt.display || opt.label || "" : String(v);
+          })
+          .join(" ");
       }
-      if (Array.isArray(raw)) return (raw as any[]).join(" ");
-      return String(raw);
-    },
-    [selectionLists]
-  );
+      const opt = list.find((o) => String(o.value) === String(raw));
+      return opt ? opt.display || opt.label || "" : String(raw);
+    }
+    if (Array.isArray(raw)) return (raw as any[]).join(" ");
+    return String(raw);
+  },
+  [selectionLists]
+);
 
   const matchesFilters = useCallback(
     (item: T): boolean => {
@@ -844,10 +851,18 @@ const handleAddChild = useCallback(
                 const target = next[idx] as any;
                 const isMulti = col.type === "multi-select";
                 const isSelect = col.type === "select" || isMulti;
-                const sep = col.excelSeparator || /[،,;؛]/;
 
-                if (isSelect && col.selectionKey) {
-                  const list = selectionLists[col.selectionKey] || [];
+                // ← NEW: first staticOptions, then selectionLists
+                const selectList = col.staticOptions
+                  ? col.staticOptions
+                  : col.selectionKey
+                    ? selectionLists[col.selectionKey] || []
+                    : [];
+
+                const sep = col.excelSeparator || /[،,;؛]/;
+                if (isSelect && selectList.length) {
+                  const list = selectList;
+
                   if (isMulti) {
                     const parts = String(raw)
                       .split(sep)

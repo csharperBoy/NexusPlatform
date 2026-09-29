@@ -19,6 +19,10 @@ export interface GenericColumnDef<T> {
   label: string;
   type?: ColumnType;
   selectionKey?: string;
+  
+  /** گزینه‌های ثابت (enumها) که از سرور نمیان */
+  staticOptions?: SelectionListDto[];   // ← NEW
+
   editable?: boolean;
   required?: boolean;
   dir?: "ltr" | "rtl";

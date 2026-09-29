@@ -46,16 +46,16 @@ export function GenericTreeCrudPage<
     (enableStatusColumn ? 1 : 0) +
     (showActionColumn ? 1 : 0);
 
-  
-const renderCell = (
-  col: TreeColumnDef<T>,
-  node: T,
-  rowId: string
-) => {
+  const renderCell = (col: TreeColumnDef<T>, node: T, rowId: string) => {
   const raw = node[col.key as keyof T];
-  const options = col.selectionKey
-    ? crud.selectionLists[col.selectionKey] || []
-    : [];
+
+  // ← NEW: اول staticOptions، بعد selectionLists
+  const options = col.staticOptions
+    ? col.staticOptions
+    : col.selectionKey
+      ? crud.selectionLists[col.selectionKey] || []
+      : [];
+
 
   // ستون‌های فقط‌خواندنی: render سفارشی یا نمایش متن
   if (col.editable === false) {
