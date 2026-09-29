@@ -25,6 +25,10 @@ namespace Core.Infrastructure.Database.Configurations
             {
                 ConfigureDataScoped(builder);
             }
+            if (typeof(ISoftRemovable).IsAssignableFrom(typeof(TEntity)))
+            {
+                ConfigureSoftRemovable(builder);
+            }
 
             if (typeof(BaseEntity).IsAssignableFrom(typeof(TEntity)))
             {
@@ -35,6 +39,14 @@ namespace Core.Infrastructure.Database.Configurations
             {
                 ConfigureHierarchicalStructureEntity(builder);
             }
+        }
+
+        private void ConfigureSoftRemovable(EntityTypeBuilder<TEntity> builder)
+        {
+            builder.Property("IsRemove")
+                .IsRequired(true).HasDefaultValue(false);
+
+            builder.HasIndex("IsRemove").HasDatabaseName($"IX_{typeof(TEntity).Name}_IsRemove");
         }
 
         private void ConfigureHierarchicalStructureEntity(EntityTypeBuilder<TEntity> builder)

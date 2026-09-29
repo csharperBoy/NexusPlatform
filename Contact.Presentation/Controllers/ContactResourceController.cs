@@ -3,15 +3,7 @@ using Contact.Application.Commands.Employment;
 using Contact.Application.Queries;
 using Core.Presentation.Controllers;
 using Core.Presentation.Filters;
-using HR.Application.Commands.ContactResource;
-using HR.Application.Queries.ContactResource;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Tcontacteading.Tasks;
 
 namespace Contact.Presentation.Controllers
 {
