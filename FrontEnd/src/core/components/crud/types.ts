@@ -23,6 +23,16 @@ export interface GenericColumnDef<T> {
   /** گزینه‌های ثابت (enumها) که از سرور نمیان */
   staticOptions?: SelectionListDto[];   // ← NEW
 
+  /**
+   * نوع داده‌ای که این ستون باید در draft ذخیره کنه.
+   * - "string"  (پیش‌فرض) → بدون تغییر
+   * - "number"  → تبدیل به Number؛ خالی/null → null
+   * - "boolean" → تبدیل به Boolean
+   *
+   * معمولاً برای enumها و فیلدهای عددی که با select/input مقدار رشته‌ای می‌گیرن لازمه.
+   */
+  valueType?: "string" | "number" | "boolean";   // ← NEW
+
   editable?: boolean;
   required?: boolean;
   dir?: "ltr" | "rtl";

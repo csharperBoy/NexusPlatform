@@ -1,10 +1,10 @@
-//src/core/components/crud/components/GenericCrudPage.tsx
 import React from "react";
-import { BaseEntity, GenericColumnDef, UseGenericCrudOptions } from "../types";
+import { GenericColumnDef, UseGenericCrudOptions } from "../types";
 import { useGenericCrud } from "../hooks/useGenericCrud";
 import { GenericAddModal } from "./GenericAddModal";
 import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
 import { TagInput } from "../../Input/TagInput";
+import { BaseEntity } from "@/core/models/BaseEntity";
 
 interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
@@ -22,17 +22,20 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     columns,
   });
 
-  const { tableFeatures,pageFeatures } = crudOptions;
+  const { tableFeatures, pageFeatures } = crudOptions;
   const showSearch = tableFeatures?.enableSearch !== false;
   const showColumnFilter = tableFeatures?.enableColumnFilter !== false;
   const showDeleteAction = tableFeatures?.enableDelete !== false;
   const showAddButton = pageFeatures?.enableAdd !== false;
   const showActionColumn = tableFeatures?.enableDelete !== false;
+
   return (
     <div className="space-y-4 p-6">
       {/* Header & Action Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          {title}
+        </h1>
 
         <div className="flex flex-wrap items-center gap-2">
           {crud.hasChanges && (
@@ -48,14 +51,15 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
           >
             {crud.saving ? "در حال ذخیره..." : "ذخیره تغییرات"}
           </button>
- {showAddButton && (
-          <button
-            onClick={() => crud.setIsAddModalOpen(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            افزودن جدید
-          </button>
- )}
+
+          {showAddButton && (
+            <button
+              onClick={() => crud.setIsAddModalOpen(true)}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              افزودن جدید
+            </button>
+          )}
         </div>
       </div>
 
@@ -98,11 +102,12 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                   </div>
                 </th>
               ))}
-               {showActionColumn && (
-              <th className="p-3 text-center">عملیات</th>
-               )}
+              {showActionColumn && (
+                <th className="p-3 text-center">عملیات</th>
+              )}
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {crud.loading ? (
               <tr>
@@ -118,22 +123,34 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
               </tr>
             ) : (
               crud.items.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                <tr
+                  key={item.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                >
                   {columns.map((col) => {
                     const key = col.key as keyof T;
                     const value = item[key];
-                    const options = col.selectionKey
-                      ? crud.selectionLists[col.selectionKey] || []
-                      : [];
+
+                    // ← NEW: staticOptions اول، سپس selectionLists
+                    const options = col.staticOptions
+                      ? col.staticOptions
+                      : col.selectionKey
+                        ? crud.selectionLists[col.selectionKey] || []
+                        : [];
 
                     return (
                       <td key={String(key)} className="p-2">
                         {col.editable !== false ? (
                           col.type === "select" ? (
                             <select
-                              value={(value as string) || ""}
+                              // ← NEW: تبدیل امن عدد/null به string برای نمایش
+                              value={value == null ? "" : String(value)}
                               onChange={(e) =>
-                                crud.handleFieldChange(item.id, key, e.target.value)
+                                crud.handleFieldChange(
+                                  item.id,
+                                  key,
+                                  e.target.value
+                                )
                               }
                               className="w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             >
@@ -147,7 +164,18 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                           ) : col.type === "multi-select" ? (
                             <SearchableMultiSelect
                               options={options}
-                              value={(value as string[]) || []}
+                              // ← NEW: تبدیل ایمن هر عضو آرایه به string
+                              value={
+                                Array.isArray(value)
+                                  ? (value as any[]).map((x) =>
+                                      String(
+                                        typeof x === "object" && x != null
+                                          ? x.id
+                                          : x
+                                      )
+                                    )
+                                  : []
+                              }
                               onChange={(selected) =>
                                 crud.handleFieldChange(item.id, key, selected)
                               }
@@ -158,23 +186,34 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                               onChange={(selected) =>
                                 crud.handleFieldChange(item.id, key, selected)
                               }
-                            />                            
+                            />
                           ) : col.type === "boolean" ? (
                             <input
                               type="checkbox"
                               checked={!!value}
                               onChange={(e) =>
-                                crud.handleFieldChange(item.id, key, e.target.checked)
+                                crud.handleFieldChange(
+                                  item.id,
+                                  key,
+                                  e.target.checked
+                                )
                               }
                               className="h-4 w-4 rounded border-gray-300 text-blue-600"
                             />
                           ) : (
                             <input
-                              type={col.type === "number" ? "number" : "text"}
-                              value={(value as string) || ""}
+                              type={
+                                col.type === "number" ? "number" : "text"
+                              }
+                              // ← NEW: استفاده از ?? به جای || تا مقدار صفر حفظ بشه
+                              value={value == null ? "" : String(value)}
                               dir={col.dir || "rtl"}
                               onChange={(e) =>
-                                crud.handleFieldChange(item.id, key, e.target.value)
+                                crud.handleFieldChange(
+                                  item.id,
+                                  key,
+                                  e.target.value
+                                )
                               }
                               className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
                                 col.className || ""
@@ -184,24 +223,28 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
                         ) : col.render ? (
                           col.render(value, item)
                         ) : (
-                          <span dir={col.dir || "rtl"} className={col.className}>
+                          <span
+                            dir={col.dir || "rtl"}
+                            className={col.className}
+                          >
                             {String(value ?? "")}
                           </span>
                         )}
                       </td>
                     );
                   })}
+
                   {showActionColumn && (
-                  <td className="p-2 text-center">
-                     {showDeleteAction && (
-                    <button
-                      onClick={() => crud.prepareDelete(item)}
-                      className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                    >
-                      حذف
-                    </button>
-                     )}
-                  </td>
+                    <td className="p-2 text-center">
+                      {showDeleteAction && (
+                        <button
+                          onClick={() => crud.prepareDelete(item)}
+                          className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                        >
+                          حذف
+                        </button>
+                      )}
+                    </td>
                   )}
                 </tr>
               ))
@@ -233,7 +276,8 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
 
             {crud.deleteTarget.isModified && (
               <div className="mb-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                ⚠️ این رکورد دارای تغییرات ذخیره‌نشده است. با حذف آن، تغییرات نیز از دست خواهند رفت.
+                ⚠️ این رکورد دارای تغییرات ذخیره‌نشده است. با حذف آن،
+                تغییرات نیز از دست خواهند رفت.
               </div>
             )}
 

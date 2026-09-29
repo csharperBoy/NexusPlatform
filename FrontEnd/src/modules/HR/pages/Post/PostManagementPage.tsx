@@ -138,7 +138,7 @@ const crudOptions: UseGenericTreeCrudOptions<
   getDisplayTitle: (post) => `پست ${post.postCode || post.id}`,
 
   tableFeatures: {
-    enableExcelImport: true,
+    enableExcelImport: false,
     enableDragDrop: true,
     enableInlineAddChild: false,
     enableMultiSelect: true,

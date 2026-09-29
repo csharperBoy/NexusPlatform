@@ -76,7 +76,7 @@ export function GenericTreeCrudPage<
     return (
       <SearchableSelect
         options={options}
-        value={(raw as string) || ""}
+        value={raw == null ? "" : String(raw)}  
         onChange={(sel) =>
           crud.handleFieldChange(rowId, col.key, sel?.value ?? null)
         }
@@ -85,21 +85,19 @@ export function GenericTreeCrudPage<
     );
   }
 
-  if (col.type === "multi-select") {
-    const ids = Array.isArray(raw)
-      ? (raw as any[]).map((x) =>
-          typeof x === "object" && x != null ? String(x.id) : String(x)
-        )
-      : [];
-    return (
-      <SearchableMultiSelect
-        options={options}
-        value={ids}
-        onChange={(ids) => crud.handleFieldChange(rowId, col.key, ids)}
-        placeholder={col.label}
-      />
-    );
-  }
+ if (col.type === "multi-select") {
+  const ids = Array.isArray(raw)
+    ? (raw as any[]).map((x) => String(typeof x === "object" && x != null ? x.id : x))
+    : [];
+  return (
+    <SearchableMultiSelect
+      options={options}
+      value={ids}
+      onChange={(ids) => crud.handleFieldChange(rowId, col.key, ids)}
+      placeholder={col.label}
+    />
+  );
+}
 
   if (col.type === "taginput") {
     return (

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Contact.Domain.Entities
 {
-    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity , IHierarchicalStructureEntity<ContactResource,Guid?> , ISoftRemovable
+    public class ContactResource : BaseEntity, IAuditableEntity, IOwnerableEntity, IHierarchicalStructureEntity<ContactResource, Guid?>, ISoftRemovable
     {
         #region IAuditableEntity Impelement
         public void Touch() => ModifiedAt = DateTime.UtcNow;
@@ -94,13 +94,12 @@ namespace Contact.Domain.Entities
         {
             bool hasChange = false;
 
-            if (_value.IsSet && _value.Value?.Trim() != Value.Trim())
+            if (_value.IsSet && !string.Equals(_value.Value?.Trim(), Value?.Trim(), StringComparison.Ordinal))
             {
                 Value = _value.Value;
                 hasChange = true;
             }
-
-            if (_label.IsSet && _label.Value?.Trim() != Label.Trim())
+            if (_label.IsSet && !string.Equals(_label.Value?.Trim(), Label?.Trim(), StringComparison.Ordinal))
             {
                 Label = _label.Value;
                 hasChange = true;
@@ -160,16 +159,16 @@ namespace Contact.Domain.Entities
         public ContactResource
             (ContactTypeEnum _ContactType,
             string _Value,
-            string? _Label = null , 
-            bool _IsPrimary = true, 
-            int? _SortOrder = null, 
-            Guid? _ParentContactResourceId = null, 
+            string? _Label = null,
+            bool _IsPrimary = true,
+            int? _SortOrder = null,
+            Guid? _ParentContactResourceId = null,
             ContactRelationTypeEnum? _RelationType = null
             )
         {
             ContactType = _ContactType;
             Value = _Value;
-            Label= _Label;
+            Label = _Label;
             IsPrimary = _IsPrimary;
             SortOrder = _SortOrder;
             ParentId = _ParentContactResourceId;

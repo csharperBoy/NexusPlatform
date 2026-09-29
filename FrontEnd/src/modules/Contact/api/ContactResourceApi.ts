@@ -5,14 +5,14 @@ import { ContactResourceInfoView } from "../models/ContactResourceInfoView";
 import {  CreateContactResourceCommand, UpdateContactResourceCommand } from "../models/ContactResourceCommand";
 import { ApiOptions, DEFAULT_OPTIONS } from "@/core/api/apiOptions";
 import { TreeSelectionListDto } from "@/core/models/TreeSelectionListDto";
-const API_MODULE = "hr";
+const API_MODULE = "contact";
 
 export const ContactResourceApi = {
     // دریافت لیست جهت نمایش در dropdown ها
 getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const response = await api.get<TreeSelectionListDto[]>(
-      "/api/hr/ContactResource/GetSelectionList",
+      "/api/contact/ContactResource/GetSelectionList",
       {  withCredentials: true }
     );
     console.log(response)
@@ -25,7 +25,7 @@ getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     
     const response = await api.get<ContactResourceInfoView[]>(
-      "/api/HR/ContactResource/GetList",
+      "/api/Contact/ContactResource/GetList",
       {  withCredentials: true }
     );
     console.log(response)
@@ -38,7 +38,7 @@ getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const { offlineStrategy } = { ...DEFAULT_OPTIONS, ...options };
       console.info("data= " , data);
       const response = await api.post<string | any>(
-        "/api/hr/ContactResource/create",
+        "/api/contact/ContactResource/create",
         data,
         { withCredentials: true,
         offlineStrategy,
@@ -53,7 +53,7 @@ getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const { offlineStrategy } = { ...DEFAULT_OPTIONS, ...options };
     const response = await api.put<string[] | any>(
-      `/api/hr/ContactResource/batch`,
+      `/api/contact/ContactResource/batch`,
       { ContactResources: commands },
       { withCredentials: true ,
         offlineStrategy,
@@ -70,7 +70,7 @@ getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const { offlineStrategy } = { ...DEFAULT_OPTIONS, ...options };
     
     const response = await api.put<boolean | any>(
-      `/api/hr/ContactResource/${data.id}`, data,
+      `/api/contact/ContactResource/${data.id}`, data,
       {  withCredentials: true ,
         offlineStrategy,
         moduleName: API_MODULE}
@@ -85,7 +85,7 @@ getSelectionList: async (): Promise<TreeSelectionListDto[]> => {
     const api = getAPI(API_MODULE);
     const { offlineStrategy } = { ...DEFAULT_OPTIONS, ...options };
     const response = await api.delete<boolean | any>(
-      `/api/hr/ContactResource/${Id}`,
+      `/api/contact/ContactResource/${Id}`,
       {  withCredentials: true ,
         offlineStrategy,
         moduleName: API_MODULE

@@ -3,10 +3,10 @@ export interface UpdateContactResourceCommand {
   id: string; // Guid
   value?: string| null;
   label?: string | null;
-  ContactType?: ContactTypeEnum| null;
-  IsPrimary?: boolean| null;
-  SortOrder?: number | null;
-  RelationType?: ContactRelationTypeEnum | null;
+  contactType?: ContactTypeEnum| null;
+  isPrimary?: boolean| null;
+  sortOrder?: number | null;
+  relationType?: ContactRelationTypeEnum | null;
   parentId?:string | null;
 }
 
@@ -16,10 +16,10 @@ export interface UpdateContactResourceCommand {
 export interface CreateContactResourceCommand {
   value: string;
   label?: string | null;
-  ContactType: ContactTypeEnum;
-  IsPrimary: boolean;
-  SortOrder?: number | null;
-  RelationType?: ContactRelationTypeEnum | null;
+  contactType: ContactTypeEnum;
+  isPrimary: boolean;
+  sortOrder?: number | null;
+  relationType?: ContactRelationTypeEnum | null;
   parentId?:string | null;
 }
 

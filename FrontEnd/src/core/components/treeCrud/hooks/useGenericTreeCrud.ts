@@ -370,16 +370,31 @@ const canDropSubtreeOn = useCallback(
   ]);
 
   // ─── edit ───
-  const handleFieldChange = useCallback(
-    (id: string, field: keyof T | string, value: any) => {
-      setItems((prev) =>
-        prev.map((it) =>
-          getItemId(it) === id ? ({ ...it, [field]: value } as T) : it
-        )
-      );
-    },
-    [getItemId]
-  );
+ // ─── edit ───
+const handleFieldChange = useCallback(
+  (id: string, field: keyof T | string, value: any) => {
+    // ─── تبدیل بر اساس valueType ستون ───
+    const col = columns.find((c) => String(c.key) === String(field));
+    let normalized = value;
+
+    if (col?.valueType === "number") {
+      normalized =
+        value === "" || value == null || value === "null"
+          ? null
+          : Number(value);
+      if (typeof normalized === "number" && isNaN(normalized)) normalized = null;
+    } else if (col?.valueType === "boolean") {
+      normalized = !!value;
+    }
+
+    setItems((prev) =>
+      prev.map((it) =>
+        getItemId(it) === id ? ({ ...it, [field]: normalized } as T) : it
+      )
+    );
+  },
+  [getItemId, columns]
+);
 
   
   // ─── inline add child ───

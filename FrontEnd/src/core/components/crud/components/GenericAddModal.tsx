@@ -1,4 +1,3 @@
-//src/core/components/crud/components/GenericAddModal.tsx
 import React, { useState, useEffect } from "react";
 import { GenericColumnDef } from "../types";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
@@ -14,6 +13,17 @@ interface GenericAddModalProps<T> {
   saving: boolean;
 }
 
+// ← NEW: نرمال‌سازی مقدار بر اساس valueType ستون
+function normalizeValue(col: GenericColumnDef<any>, value: any): any {
+  if (col.valueType === "number") {
+    if (value === "" || value == null || value === "null") return null;
+    const n = Number(value);
+    return isNaN(n) ? null : n;
+  }
+  if (col.valueType === "boolean") return !!value;
+  return value;
+}
+
 export function GenericAddModal<T>({
   isOpen,
   onClose,
@@ -24,16 +34,20 @@ export function GenericAddModal<T>({
 }: GenericAddModalProps<T>) {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
+  // ← NEW: مقدار اولیه هوشمند بر اساس valueType
   useEffect(() => {
     if (isOpen) {
       const initial: Record<string, any> = {};
       columns.forEach((col) => {
-        if (col.type === "multi-select") {
-          initial[col.key as string] = [];
-        } else if (col.type === "boolean") {
-          initial[col.key as string] = false;
+        const key = String(col.key);
+        if (col.type === "multi-select" || col.type === "taginput") {
+          initial[key] = [];
+        } else if (col.type === "boolean" || col.valueType === "boolean") {
+          initial[key] = false;
+        } else if (col.valueType === "number") {
+          initial[key] = null;
         } else {
-          initial[col.key as string] = "";
+          initial[key] = "";
         }
       });
       setFormData(initial);
@@ -46,12 +60,20 @@ export function GenericAddModal<T>({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const editableColumns = columns.filter((col) => col.editable !== false);
+
+  // ← NEW: نرمال‌سازی قبل از ارسال به onSubmit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const normalized: Record<string, any> = { ...formData };
+    editableColumns.forEach((col) => {
+      const key = String(col.key);
+      if (key in normalized) {
+        normalized[key] = normalizeValue(col, normalized[key]);
+      }
+    });
+    onSubmit(normalized);
   };
-
-  const editableColumns = columns.filter((col) => col.editable !== false);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -62,18 +84,28 @@ export function GenericAddModal<T>({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="max-h-[60vh] overflow-y-auto space-y-3 px-1">
             {editableColumns.map((col) => {
-              const key = col.key as string;
-              const options = col.selectionKey ? selectionLists[col.selectionKey] || [] : [];
+              const key = String(col.key);
+
+              // ← NEW: staticOptions اول، سپس selectionLists
+              const options = col.staticOptions
+                ? col.staticOptions
+                : col.selectionKey
+                  ? selectionLists[col.selectionKey] || []
+                  : [];
+
+              const rawValue = formData[key];
 
               return (
                 <div key={key} className="flex flex-col gap-1">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {col.label} {col.required && <span className="text-red-500">*</span>}
+                    {col.label}{" "}
+                    {col.required && <span className="text-red-500">*</span>}
                   </label>
 
                   {col.type === "select" ? (
                     <select
-                      value={formData[key] || ""}
+                      // ← NEW: نمایش ایمن مقدار عددی/null
+                      value={rawValue == null ? "" : String(rawValue)}
                       required={col.required}
                       onChange={(e) => handleChange(key, e.target.value)}
                       className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -88,25 +120,40 @@ export function GenericAddModal<T>({
                   ) : col.type === "multi-select" ? (
                     <SearchableMultiSelect
                       options={options}
-                      value={formData[key] || []}
+                      value={
+                        Array.isArray(rawValue)
+                          ? (rawValue as any[]).map((x) =>
+                              String(
+                                typeof x === "object" && x != null ? x.id : x
+                              )
+                            )
+                          : []
+                      }
                       onChange={(selected) => handleChange(key, selected)}
                     />
                   ) : col.type === "taginput" ? (
                     <TagInput
-                      value={formData[key] || []}
+                      value={rawValue || []}
                       onChange={(selected) => handleChange(key, selected)}
-                    />  
+                    />
                   ) : col.type === "boolean" ? (
                     <input
                       type="checkbox"
-                      checked={!!formData[key]}
+                      checked={!!rawValue}
                       onChange={(e) => handleChange(key, e.target.checked)}
                       className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                   ) : (
                     <input
-                      type={col.type === "number" ? "number" : col.type === "date" ? "date" : "text"}
-                      value={formData[key] || ""}
+                      type={
+                        col.type === "number"
+                          ? "number"
+                          : col.type === "date"
+                            ? "date"
+                            : "text"
+                      }
+                      // ← NEW: استفاده از ?? به جای || برای حفظ مقدار صفر
+                      value={rawValue == null ? "" : String(rawValue)}
                       required={col.required}
                       dir={col.dir || "rtl"}
                       onChange={(e) => handleChange(key, e.target.value)}

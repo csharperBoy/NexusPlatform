@@ -4,6 +4,7 @@ import PhoneBookPage from "./pages/PhoneBook/PhoneBookPage";
 import EmploymentContactManagementPage from "./pages/EmploymentContact/EmploymentContactManagementPage";
 import PostContactManagementPage from "./pages/PostContact/PostContactManagementPage";
 import { LocationContactManagementPage } from "./pages/LocationContact/LocationContactManagementPage";
+import ContactResourceManagementPage from "./pages/ContactResource/ContactResourceManagementPage";
 
 export const ContactPublicRoutes: RouteObject[] = [
   
@@ -17,4 +18,7 @@ export const ContactPanelRoutes: RouteObject[] = [
   { path: "contact/Post", element: <PostContactManagementPage /> },
   
   { path: "contact/Location", element: <LocationContactManagementPage /> },
+
+  
+  { path: "contact/ContactResource", element: <ContactResourceManagementPage /> },
 ];

@@ -95,8 +95,8 @@ pageFeatures:{
 enableAdd: true,
 },
   tableFeatures: {
-    enableExcelImport: true,
-    enableExcelExport: true,
+    enableExcelImport: false,
+    enableExcelExport: false,
     enableSearch: true,
     enableColumnFilter: true,
     enableDelete:true,

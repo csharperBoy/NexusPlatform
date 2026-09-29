@@ -69,6 +69,7 @@ const columns: TreeColumnDef<ContactResourceInfoView>[] = [
     type: "select",
     required: true,
     staticOptions: contactTypeOptions,
+    valueType: "number",        // ← NEW
     excelHeaders: ["نوع", "نوع تماس", "contacttype", "type"],
   },
   {
@@ -86,25 +87,28 @@ const columns: TreeColumnDef<ContactResourceInfoView>[] = [
     type: "text",
     excelHeaders: ["برچسب", "label", "عنوان"],
   },
-  {
-    key: "isPrimary",
-    label: "اصلی",
-    type: "boolean",
-    excelHeaders: ["اصلی", "isprimary", "primary"],
-  },
+  // {
+  //   key: "isPrimary",
+  //   label: "اصلی",
+  //   type: "boolean",
+  //   valueType: "boolean",       // ← NEW (برای اطمینان)
+  //   excelHeaders: ["اصلی", "isprimary", "primary"],
+  // },
   {
     key: "sortOrder",
     label: "ترتیب",
     type: "number",
+    valueType: "number",        // ← NEW
     excelHeaders: ["ترتیب", "sortorder", "order"],
   },
-  {
-    key: "relationType",
-    label: "نوع ارتباط",
-    type: "select",
-    staticOptions: relationTypeOptions,
-    excelHeaders: ["نوع ارتباط", "relationtype", "relation"],
-  },
+  // {
+  //   key: "relationType",
+  //   label: "نوع ارتباط",
+  //   type: "select",
+  //   staticOptions: relationTypeOptions,
+  //   valueType: "number",        // ← NEW
+  //   excelHeaders: ["نوع ارتباط", "relationtype", "relation"],
+  // },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -127,26 +131,30 @@ const crudOptions: UseGenericTreeCrudOptions<
   maxDepth: 2,
 
   // ─── مپینگ ───
+  
+  // ─── Update: مقادیر مشتق ───
   mapToUpdateCommand: (item): UpdateContactResourceCommand => ({
     id: item.id,
     value: item.value,
     label: item.label ?? null,
-    ContactType: item.contactType,
-    IsPrimary: item.isPrimary,
-    SortOrder: item.sortOrder ?? null,
-    RelationType: item.relationType ?? null,
+    contactType: item.contactType,
+    isPrimary: item.parentId == null,   // ← مشتق: ریشه true، فرزند false
+    sortOrder: item.sortOrder ?? null,
+    relationType: null,                  // ← همیشه null
     parentId: item.parentId ?? null,
   }),
 
+  // ─── Create: مقادیر مشتق ───
   mapToCreateCommand: (formData, parentId): CreateContactResourceCommand => ({
     value: formData.value || "",
     label: formData.label || null,
-    ContactType: formData.contactType ?? ContactTypeEnum.Phone,
-    IsPrimary: formData.isPrimary ?? false,
-    SortOrder: formData.sortOrder ?? null,
-    RelationType: formData.relationType ?? null,
+    contactType: formData.contactType ?? ContactTypeEnum.Phone,
+    isPrimary: parentId == null,         // ← مشتق از parentId
+    sortOrder: formData.sortOrder ?? null,
+    relationType: null,                  // ← همیشه null
     parentId,
   }),
+
 
   // ─── مقادیر پیش‌فرض رکورد جدید ───
   getCreateDefaults: () => ({
@@ -168,8 +176,8 @@ const crudOptions: UseGenericTreeCrudOptions<
   tableFeatures: {
     enableSearch: true,
     enableColumnFilter: true,
-    enableExcelImport: true,
-    enableExcelExport: true,
+    enableExcelImport: false,
+    enableExcelExport: false,
     enableDelete: true,
     enableDragDrop: true,
     enableInlineAddChild: true,

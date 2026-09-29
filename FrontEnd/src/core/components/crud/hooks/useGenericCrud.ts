@@ -1,13 +1,12 @@
-//src/core/components/crud/hooks/useGenericCrud.ts
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { SelectionListDto } from "@/core/models/SelectionListDto";
 import {
-  BaseEntity,
   GenericColumnDef,
   UseGenericCrudOptions,
   DeleteTarget,
 } from "../types";
 import { ApiOptions } from "@/core/api/apiOptions";
+import { BaseEntity } from "@/core/models/BaseEntity";
 
 export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   api,
@@ -19,21 +18,33 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   transformApiData,
   excelMatchKey,
 }: UseGenericCrudOptions<T, TCreateCmd, TUpdateCmd>) {
-  
   const [globalSearch, setGlobalSearch] = useState<string>("");
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
   const [items, setItems] = useState<T[]>([]);
   const [initialItems, setInitialItems] = useState<T[]>([]);
-  const [selectionLists, setSelectionLists] = useState<Record<string, SelectionListDto[]>>({});
+  const [selectionLists, setSelectionLists] = useState<
+    Record<string, SelectionListDto[]>
+  >({});
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
-
 
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget<T> | null>(null);
 
-  // 1. Fetch Initial Data & Selection Lists
+  // ─── helper: گرفتن گزینه‌های یک ستون (static یا dynamic) ───
+  // ← NEW
+  const getColOptions = useCallback(
+    (col: GenericColumnDef<T>): SelectionListDto[] | null => {
+      if (col.staticOptions) return col.staticOptions;
+      if (col.selectionKey && selectionLists[col.selectionKey])
+        return selectionLists[col.selectionKey];
+      return null;
+    },
+    [selectionLists]
+  );
+
+  // ─── Fetch ───
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -73,14 +84,33 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     fetchData();
   }, [fetchData]);
 
-  // 2. Handle Inline Cell Editing
-  const handleFieldChange = useCallback((id: string | number, field: keyof T, value: any) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-    );
-  }, []);
+  // ─── Inline Cell Editing با نرمال‌سازی valueType ───
+  const handleFieldChange = useCallback(
+    (id: string | number, field: keyof T, value: any) => {
+      const col = columns.find((c) => String(c.key) === String(field));
+      let normalized = value;
 
-  // 3. Track Modified Items
+      if (col?.valueType === "number") {
+        normalized =
+          value === "" || value == null || value === "null"
+            ? null
+            : Number(value);
+        if (typeof normalized === "number" && isNaN(normalized))
+          normalized = null;
+      } else if (col?.valueType === "boolean") {
+        normalized = !!value;
+      }
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, [field]: normalized } : item
+        )
+      );
+    },
+    [columns]
+  );
+
+  // ─── Track Modified Items ───
   const modifiedItems = useMemo(() => {
     return items.filter((item) => {
       const init = initialItems.find((x) => x.id === item.id);
@@ -91,54 +121,68 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
 
   const hasChanges = modifiedItems.length > 0;
 
-  // 4. Save All Modified Items (Bulk Update)
- const handleSaveAll = useCallback(async (options?: ApiOptions) => { // 👈 ۲. پارامتر اختیاری
-    if (!hasChanges) return;
-    setSaving(true);
-    try {
-      const updateCmds: TUpdateCmd[] = modifiedItems.map((item) =>
-        mapToUpdateCommand ? mapToUpdateCommand(item) : (item as unknown as TUpdateCmd)
-      );
-      
-      // ترکیب تنظیمات هوک با تنظیمات ورودی تابع
-      const mergedOptions = { ...apiOptions, ...options };
-      const res = await api.batchUpdate(updateCmds, mergedOptions);
-      
-      if (res && res._isOfflineQueued) {
-         alert("ارتباط با اینترنت قطع است. تغییرات شما در صف ذخیره شد.");
-         setInitialItems(JSON.parse(JSON.stringify(items)));
-      } else {
-         await fetchData();
-      }
-    } catch (error) {
-      console.error("Failed to save changes:", error);
-    } finally {
-      setSaving(false);
-    }
-  }, [hasChanges, modifiedItems, mapToUpdateCommand, api, apiOptions, fetchData, items]);
-
-  // ۵. ایجاد رکورد جدید
-  const handleCreate = useCallback(
-    async (formData: Record<string, any>, options?: ApiOptions) => { // 👈 پارامتر اختیاری
+  // ─── Save All ───
+  const handleSaveAll = useCallback(
+    async (options?: ApiOptions) => {
+      if (!hasChanges) return;
       setSaving(true);
       try {
+        const updateCmds: TUpdateCmd[] = modifiedItems.map((item) =>
+          mapToUpdateCommand
+            ? mapToUpdateCommand(item)
+            : (item as unknown as TUpdateCmd)
+        );
+
+        const mergedOptions = { ...apiOptions, ...options };
+        const res = await api.batchUpdate(updateCmds, mergedOptions);
+
+        if (res && res._isOfflineQueued) {
+          alert("ارتباط با اینترنت قطع است. تغییرات شما در صف ذخیره شد.");
+          setInitialItems(JSON.parse(JSON.stringify(items)));
+        } else {
+          await fetchData();
+        }
+      } catch (error) {
+        console.error("Failed to save changes:", error);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [
+      hasChanges,
+      modifiedItems,
+      mapToUpdateCommand,
+      api,
+      apiOptions,
+      fetchData,
+      items,
+    ]
+  );
+
+  // ─── Create ───
+  const handleCreate = useCallback(
+    async (formData: Record<string, any>, options?: ApiOptions) => {
+      setSaving(true);
+      try {
+        // نکته: نرمال‌سازی valueType در GenericAddModal انجام می‌شود،
+        // پس اینجا formData از قبل تمیز است.
         const createCmd = mapToCreateCommand
           ? mapToCreateCommand(formData)
           : (formData as TCreateCmd);
-          
+
         const mergedOptions = { ...apiOptions, ...options };
         const res = await api.create(createCmd, mergedOptions);
-        
+
         if (res && res._isOfflineQueued) {
-            const tempId = `temp-${Date.now()}`;
-            const newItem = { id: tempId, ...formData } as unknown as T;
-            setItems((prev) => [newItem, ...prev]);
-            setInitialItems((prev) => [newItem, ...prev]);
-            alert("ارتباط با اینترنت قطع است. رکورد در صف ثبت قرار گرفت.");
+          const tempId = `temp-${Date.now()}`;
+          const newItem = { id: tempId, ...formData } as unknown as T;
+          setItems((prev) => [newItem, ...prev]);
+          setInitialItems((prev) => [newItem, ...prev]);
+          alert("ارتباط با اینترنت قطع است. رکورد در صف ثبت قرار گرفت.");
         } else {
-            await fetchData();
+          await fetchData();
         }
-        
+
         setIsAddModalOpen(false);
       } catch (error) {
         console.error("Failed to create record:", error);
@@ -149,31 +193,37 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     [mapToCreateCommand, api, apiOptions, fetchData]
   );
 
-  // ۶. حذف رکورد
-  const confirmDelete = useCallback(async (options?: ApiOptions) => { // 👈 پارامتر اختیاری
-    if (!deleteTarget) return;
-    setSaving(true);
-    try {
-      const mergedOptions = { ...apiOptions, ...options };
-      const res = await api.delete(deleteTarget.item.id, mergedOptions);
-      
-      if (res && res._isOfflineQueued) {
-         setItems((prev) => prev.filter((i) => i.id !== deleteTarget.item.id));
-         setInitialItems((prev) => prev.filter((i) => i.id !== deleteTarget.item.id));
-         alert("ارتباط با اینترنت قطع است. رکورد برای حذف در صف قرار گرفت.");
-      } else {
-         await fetchData();
-      }
-      
-      setDeleteTarget(null);
-    } catch (error) {
-      console.error("Failed to delete record:", error);
-    } finally {
-      setSaving(false);
-    }
-  }, [deleteTarget, api, apiOptions, fetchData]);
+  // ─── Delete ───
+  const confirmDelete = useCallback(
+    async (options?: ApiOptions) => {
+      if (!deleteTarget) return;
+      setSaving(true);
+      try {
+        const mergedOptions = { ...apiOptions, ...options };
+        const res = await api.delete(deleteTarget.item.id, mergedOptions);
 
-  // 6. Delete Management
+        if (res && res._isOfflineQueued) {
+          setItems((prev) =>
+            prev.filter((i) => i.id !== deleteTarget.item.id)
+          );
+          setInitialItems((prev) =>
+            prev.filter((i) => i.id !== deleteTarget.item.id)
+          );
+          alert("ارتباط با اینترنت قطع است. رکورد برای حذف در صف قرار گرفت.");
+        } else {
+          await fetchData();
+        }
+
+        setDeleteTarget(null);
+      } catch (error) {
+        console.error("Failed to delete record:", error);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [deleteTarget, api, apiOptions, fetchData]
+  );
+
   const prepareDelete = useCallback(
     (item: T) => {
       const initialItem = initialItems.find((x) => x.id === item.id);
@@ -186,7 +236,7 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     [initialItems]
   );
 
-  // 7. Excel Import & Merge Logic
+  // ─── Excel Import ───
   const handleExcelImport = useCallback(
     (importedData: Partial<T>[]) => {
       setItems((prev) => {
@@ -203,7 +253,9 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
             next[existingIndex] = { ...next[existingIndex], ...row };
           } else {
             next.push({
-              id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `temp-${Date.now()}-${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
               ...row,
             } as unknown as T);
           }
@@ -214,7 +266,7 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
     [excelMatchKey]
   );
 
-  // 8. Search & Filtering using SelectionListDto (value, label, display)
+  // ─── Search & Filtering (با پشتیبانی staticOptions) ───
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       // Global Search
@@ -228,11 +280,13 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
           const val = item[col.key as keyof T];
           if (val == null) return false;
 
+          // ← NEW: استفاده از getColOptions (static یا dynamic)
+          const opts = getColOptions(col);
+
           // Multi-Select / Array Search
-          if (Array.isArray(val) && col.selectionKey && selectionLists[col.selectionKey]) {
-            const options = selectionLists[col.selectionKey];
+          if (Array.isArray(val) && opts) {
             return val.some((v) => {
-              const opt = options.find((o) => String(o.value) === String(v));
+              const opt = opts.find((o) => String(o.value) === String(v));
               if (!opt) return false;
               return (
                 opt.label?.toLowerCase().includes(query) ||
@@ -242,10 +296,8 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
           }
 
           // Single Select Search
-          if (col.selectionKey && selectionLists[col.selectionKey]) {
-            const opt = selectionLists[col.selectionKey].find(
-              (o) => String(o.value) === String(val)
-            );
+          if (opts) {
+            const opt = opts.find((o) => String(o.value) === String(val));
             if (
               opt?.label?.toLowerCase().includes(query) ||
               opt?.display?.toLowerCase().includes(query)
@@ -265,30 +317,31 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
         if (!filterVal) continue;
 
         const colDef = columns.find((c) => String(c.key) === colKey);
-        
+
         if (colDef?.getFilterValue) {
-          const customVal = colDef.getFilterValue(item)?.toLowerCase() || "";
+          const customVal =
+            colDef.getFilterValue(item)?.toLowerCase() || "";
           if (!customVal.includes(filterVal)) return false;
-          continue; // اگر مچ شد یا نشد، کار این ستون تمام است و به سراغ منطق زیرین نرود
+          continue;
         }
-        
+
         const val = item[colKey as keyof T];
         if (val == null) return false;
 
-        if (Array.isArray(val) && colDef?.selectionKey && selectionLists[colDef.selectionKey]) {
-          const options = selectionLists[colDef.selectionKey];
+        // ← NEW: استفاده از getColOptions
+        const opts = colDef ? getColOptions(colDef) : null;
+
+        if (Array.isArray(val) && opts) {
           const matchInArray = val.some((v) => {
-            const opt = options.find((o) => String(o.value) === String(v));
+            const opt = opts.find((o) => String(o.value) === String(v));
             return (
               opt?.label?.toLowerCase().includes(filterVal) ||
               opt?.display?.toLowerCase().includes(filterVal)
             );
           });
           if (!matchInArray) return false;
-        } else if (colDef?.selectionKey && selectionLists[colDef.selectionKey]) {
-          const opt = selectionLists[colDef.selectionKey].find(
-            (o) => String(o.value) === String(val)
-          );
+        } else if (opts) {
+          const opt = opts.find((o) => String(o.value) === String(val));
           const matched =
             opt?.label?.toLowerCase().includes(filterVal) ||
             opt?.display?.toLowerCase().includes(filterVal);
@@ -300,7 +353,14 @@ export function useGenericCrud<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
 
       return true;
     });
-  }, [items, globalSearch, columnFilters, columns, selectionLists]);
+  }, [
+    items,
+    globalSearch,
+    columnFilters,
+    columns,
+    selectionLists,
+    getColOptions,
+  ]);
 
   return {
     items: filteredItems,

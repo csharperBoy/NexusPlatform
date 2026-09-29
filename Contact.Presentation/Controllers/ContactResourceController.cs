@@ -14,14 +14,14 @@ namespace Contact.Presentation.Controllers
     {
 
         [HttpPost("Create")]
-        //[AuthorizeResource("contact.contactResource", "Create")]
+        //[AuthorizeResource("contact.contactresource", "Create")]
         public async Task<IActionResult> CreateContactResource([FromBody] CreateContactResourceCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
         [HttpPut("{id:guid}")]
-        [AuthorizeResource("contact.contactResource", "Edit")]
+        [AuthorizeResource("contact.contactresource", "Edit")]
         public async Task<IActionResult> UpdateContactResource(Guid id, [FromBody] UpdateContactResourceCommand command)
         {
             // اطمینان از تطابق ID در route با command
@@ -30,14 +30,14 @@ namespace Contact.Presentation.Controllers
             return HandleResult(result);
         }
         [HttpPut("batch")]
-        [AuthorizeResource("contact.contactResource", "Edit")]
+        [AuthorizeResource("contact.contactresource", "Edit")]
         public async Task<IActionResult> BatchUpdatecontactResources([FromBody] BatchUpdateContactResourcesCommand command)
         {
             var result = await Mediator.Send(command);
             return HandleResult(result);
         }
         [HttpGet("GetList")]
-        [AuthorizeResource("contact.contactResource", "View")]
+        [AuthorizeResource("contact.contactresource", "View")]
         public async Task<IActionResult> GetList([FromQuery] GetContactResourceListQuery request)
         {
 
@@ -46,14 +46,14 @@ namespace Contact.Presentation.Controllers
             return HandleResult(result);
         }
         [HttpGet("GetSelectionList")]
-        [AuthorizeResource("contact.contactResource", "View")]
+        [AuthorizeResource("contact.contactresource", "View")]
         public async Task<IActionResult> GetSelectionList([FromQuery] GetContactResourcesSelectionListQuery? request = null)
         {
             var result = await Mediator.Send(request);
             return HandleResult(result);
         }
         [HttpDelete("{id:guid}")]
-        [AuthorizeResource("contact.contactResource", "Delete")]
+        [AuthorizeResource("contact.contactresource", "Delete")]
         public async Task<IActionResult> Delete(Guid id)
         {
             var command = new DeleteContactResourceCommand(id);
