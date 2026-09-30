@@ -1,14 +1,15 @@
-﻿using System.Net;
+﻿using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using HtmlAgilityPack;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
+using Trader.Application.Dtos.MarketData;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Brokers.EasyTrader.Internal;
 
@@ -499,6 +500,295 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             return request;
         }
         /* ══════════════════════════════════════════════════
+   CANDLES
+   ══════════════════════════════════════════════════ */
+        public async Task<List<CandleDto>> GetCandlesAsync(
+            BrokerSession session,
+            string symbolIsin,
+            int days = 1,
+            int intervalMinutes = 1,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.ChartHistory
+                + $"?symbol={Uri.EscapeDataString(symbolIsin)}:{intervalMinutes}&days={days}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Chart history failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            if (string.IsNullOrWhiteSpace(body))
+                throw new EasyTraderException(
+                    $"Chart history returned empty body for isin={symbolIsin}");
+
+            var wire = JsonSerializer.Deserialize<CandleHistoryResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Chart history deserialization failed");
+
+            return wire.Data.Select(d => new CandleDto
+            {
+                T = d.T,
+                O = d.O,
+                H = d.H,
+                L = d.L,
+                C = d.C,
+                V = d.V,
+            }).ToList();
+        }
+
+        /* ══════════════════════════════════════════════════
+           RETURN CHART
+           ══════════════════════════════════════════════════ */
+        public async Task<ReturnChartDto> GetReturnChartAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.ReturnChartData;
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(new { isin = symbolIsin }, JsonOpts),
+                Encoding.UTF8, "application/json");
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Return chart failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var wire = JsonSerializer.Deserialize<ReturnChartResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Return chart deserialization failed");
+
+            return new ReturnChartDto
+            {
+                LastTradedPrice = wire.LastTradedPrice,
+                E30 = wire.E30,
+                E90 = wire.E90,
+                E360 = wire.E360,
+                MaturityDay = wire.MaturityDay,
+                DaysToMaturity = wire.DaysToMaturity,
+                ReturnToMaturity = wire.ReturnToMaturity,
+            };
+        }
+
+        /* ══════════════════════════════════════════════════
+           TECHNICAL ANALYSIS
+           ══════════════════════════════════════════════════ */
+        public async Task<TechnicalAnalysisDto> GetTechnicalAnalysisAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.TechnicalAnalysis
+                + $"?isin={Uri.EscapeDataString(symbolIsin)}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Technical analysis failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var wire = JsonSerializer.Deserialize<TechnicalAnalysisResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Technical analysis deserialization failed");
+
+            return new TechnicalAnalysisDto
+            {
+                TotalScore = new TechnicalScoreDto
+                {
+                    Cat = wire.TotalScore?.Cat ?? "totalscore",
+                    Value = wire.TotalScore?.Value ?? 0,
+                    State = wire.TotalScore?.State ?? "Neutral",
+                },
+                CategoryScore = (wire.CategoryScore ?? new()).Select(c => new TechnicalCategoryScoreDto
+                {
+                    Cat = c.Cat ?? "",
+                    CatFa = c.CatFa ?? "",
+                    State = c.State ?? "Neutral",
+                }).ToList(),
+            };
+        }
+
+        /* ══════════════════════════════════════════════════
+           IND/INST TRADE
+           ══════════════════════════════════════════════════ */
+        public async Task<IndInstTradeDto> GetIndInstTradeAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.IndInstTrade;
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(new { isin = symbolIsin }, JsonOpts),
+                Encoding.UTF8, "application/json");
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"IndInst trade failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var wire = JsonSerializer.Deserialize<IndInstTradeResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("IndInst trade deserialization failed");
+
+            return new IndInstTradeDto
+            {
+                SymbolIsin = wire.SymbolISIN,
+                IndBuyVolume = ParseLong(wire.IndBuyVolume),
+                IndBuyNumber = ParseLong(wire.IndBuyNumber),
+                IndSellVolume = ParseLong(wire.IndSellVolume),
+                IndSellNumber = ParseLong(wire.IndSellNumber),
+                InsBuyVolume = ParseLong(wire.InsBuyVolume),
+                InsBuyNumber = ParseLong(wire.InsBuyNumber),
+                InsSellVolume = ParseLong(wire.InsSellVolume),
+                InsSellNumber = ParseLong(wire.InsSellNumber),
+                Date = wire.Date,
+            };
+        }
+
+        /* ══════════════════════════════════════════════════
+           IND/INST ANALYSIS
+           ══════════════════════════════════════════════════ */
+        public async Task<IndInstAnalysisDto> GetIndInstAnalysisAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.IndInstAnalysis
+                + $"?isin={Uri.EscapeDataString(symbolIsin)}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"IndInst analysis failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var list = JsonSerializer.Deserialize<List<IndInstAnalysisResponse>>(body, JsonOpts);
+            var wire = list?.FirstOrDefault();
+
+            if (wire is null)
+                throw new EasyTraderException(
+                    $"IndInst analysis returned empty for isin={symbolIsin}");
+
+            return new IndInstAnalysisDto
+            {
+                IndBuyVol = wire.IndBuyVol,
+                IndBuyPow = wire.IndBuyPow,
+                IndSellVol = wire.IndSellVol,
+                InsSellVol = wire.InsSellVol,
+                InsBuyVol = wire.InsBuyVol,
+                BidPres = wire.BidPres,
+                NetInd = wire.NetInd,
+                BuyPerInd = wire.BuyPerInd,
+                SellPerInd = wire.SellPerInd,
+                DiffValInd = wire.DiffValInd,
+            };
+        }
+
+        /* ══════════════════════════════════════════════════
+           IND TRADING TREND
+           ══════════════════════════════════════════════════ */
+        public async Task<List<IndTradingTrendDto>> GetIndTradingTrendAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.IndTradingTrend
+                + $"?isin={Uri.EscapeDataString(symbolIsin)}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Ind trading trend failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var list = JsonSerializer.Deserialize<List<IndTradingTrendItem>>(body, JsonOpts)
+                ?? new();
+
+            return list.Select(x => new IndTradingTrendDto
+            {
+                Type = x.Type ?? "",
+                Date = x.Date ?? "",
+                Val = x.Val,
+            }).ToList();
+        }
+
+        /* ══════════════════════════════════════════════════
+           MARKET SHEET SUM
+           ══════════════════════════════════════════════════ */
+        public async Task<MarketSheetSumDto> GetMarketSheetSumAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl
+                + string.Format(EasyTraderEndpoints.MarketSheetSum, symbolIsin);
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Market sheet failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var wire = JsonSerializer.Deserialize<MarketSheetSumResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Market sheet deserialization failed");
+
+            return new MarketSheetSumDto
+            {
+                BuyVolume = wire.BuyVolume,
+                BuyCount = wire.BuyCount,
+                SellVolume = wire.SellVolume,
+                SellCount = wire.SellCount,
+            };
+        }
+        /* ══════════════════════════════════════════════════
            HELPERS
            ══════════════════════════════════════════════════ */
         /// <summary>
@@ -591,6 +881,23 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             var h12 = h24 % 12 == 0 ? 12 : h24 % 12;
             var ampm = h24 < 12 ? "AM" : "PM";
             return $"{d.Month}/{d.Day}/{d.Year}, {h12}:{d.Minute:D2}:{d.Second:D2} {ampm}";
+        }
+        /* helper برای پارس اعداد علمی مثل "1.05358e+008" */
+        private static long ParseLong(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return 0;
+
+            if (long.TryParse(value, out var l)) return l;
+
+            if (double.TryParse(value,
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var d))
+            {
+                return (long)Math.Round(d);
+            }
+
+            return 0;
         }
     }
 }

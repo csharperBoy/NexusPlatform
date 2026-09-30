@@ -1,5 +1,6 @@
 ﻿using Trader.Application.Brokers;
 using Trader.Application.Dtos;
+using Trader.Application.Dtos.MarketData;
 using Trader.Domain.Enums;
 
 namespace Trader.Application.Abstractions
@@ -11,6 +12,7 @@ namespace Trader.Application.Abstractions
     {
         BrokerType BrokerType { get; }
 
+        /* ═══════════ AUTH ═══════════ */
         /// <summary>
         /// لاگین کامل به سامانه. تمام مراحل (OIDC, activation, ...) داخل همین متد.
         /// </summary>
@@ -25,14 +27,24 @@ namespace Trader.Application.Abstractions
         Task<BrokerTimeMeasurement> MeasureLatencyAsync(
                          BrokerSession session,
                          CancellationToken ct = default);
-        /// <summary>
-        /// اطلاعات لحظه‌ای نماد.
-        /// </summary>
-        Task<SymbolMarketDataDto> GetSymbolInfoAsync(
-            BrokerSession session,
-           string symbolIsin,
-            CancellationToken ct = default);
 
+        /// <summary>
+        /// Serialize کردن session برای ذخیره در DB.
+        /// </summary>
+        string SerializeSession(BrokerSession session);
+
+        /// <summary>
+        /// Deserialize کردن session از DB.
+        /// </summary>
+        BrokerSession DeserializeSession(string json);
+
+        /* ═══════════ ORDER ═══════════ */
+        HttpRequestMessage BuildOrderRequest(
+            BrokerSession session,
+            string symbolIsin,
+            long price,
+            long quantity,
+            int side);
         /// <summary>
         /// ارسال سفارش خرید.
         /// </summary>
@@ -59,21 +71,42 @@ namespace Trader.Application.Abstractions
     string symbolIsin,
     CancellationToken ct = default);
 
-        HttpRequestMessage BuildOrderRequest(
+        /* ═══════════ SYMBOL ═══════════ */
+        /// <summary>
+        /// اطلاعات لحظه‌ای نماد.
+        /// </summary>
+        Task<SymbolMarketDataDto> GetSymbolInfoAsync(
+            BrokerSession session,
+           string symbolIsin,
+            CancellationToken ct = default);
+
+        Task<ReturnChartDto> GetReturnChartAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+
+        /* ═══════════ CANDLES ═══════════ */
+        Task<List<CandleDto>> GetCandlesAsync(
             BrokerSession session,
             string symbolIsin,
-            long price,
-            long quantity,
-            int side);
+            int days = 1,
+            int intervalMinutes = 1,
+            CancellationToken ct = default);
 
-        /// <summary>
-        /// Serialize کردن session برای ذخیره در DB.
-        /// </summary>
-        string SerializeSession(BrokerSession session);
+        /* ═══════════ ANALYSIS ═══════════ */
+        Task<TechnicalAnalysisDto> GetTechnicalAnalysisAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
 
-        /// <summary>
-        /// Deserialize کردن session از DB.
-        /// </summary>
-        BrokerSession DeserializeSession(string json);
+        Task<IndInstTradeDto> GetIndInstTradeAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+
+        Task<IndInstAnalysisDto> GetIndInstAnalysisAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+
+        Task<List<IndTradingTrendDto>> GetIndTradingTrendAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+
+        /* ═══════════ MARKET SHEET ═══════════ */
+        Task<MarketSheetSumDto> GetMarketSheetSumAsync(
+            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+
     }
 }
