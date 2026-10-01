@@ -1,6 +1,8 @@
 ﻿using Trader.Application.Brokers;
 using Trader.Application.Dtos;
+using Trader.Application.Dtos.Account;
 using Trader.Application.Dtos.MarketData;
+using Trader.Application.Dtos.Order;
 using Trader.Domain.Enums;
 
 namespace Trader.Application.Abstractions
@@ -37,6 +39,15 @@ namespace Trader.Application.Abstractions
         /// Deserialize کردن session از DB.
         /// </summary>
         BrokerSession DeserializeSession(string json);
+
+        /* ═══════════ ACCOUNT ═══════════ */
+        Task<MoneyDto> GetCashBalanceAsync(BrokerSession session, CancellationToken ct = default);
+        Task<List<PortfolioPerformanceDto>> GetPortfolioPerformanceAsync(BrokerSession session, CancellationToken ct = default);
+        Task<ClientAppSettingDto> GetClientAppSettingAsync(BrokerSession session, CancellationToken ct = default);
+        Task<bool> IsCreditCustomerAsync(BrokerSession session, CancellationToken ct = default);
+
+        /* ═══════════ MARKET ═══════════ */
+        Task<List<TradingTimeDto>> GetTradingTimesAsync(BrokerSession session, CancellationToken ct = default);
 
         /* ═══════════ ORDER ═══════════ */
         HttpRequestMessage BuildOrderRequest(
@@ -107,6 +118,37 @@ namespace Trader.Application.Abstractions
         /* ═══════════ MARKET SHEET ═══════════ */
         Task<MarketSheetSumDto> GetMarketSheetSumAsync(
             BrokerSession session, string symbolIsin, CancellationToken ct = default);
+        /* ═══════════ MARKET LIVE ═══════════ */
+        Task<List<IndustryPositiveNegativeDto>> GetIndustryPositiveNegativeAsync(
+            BrokerSession session, CancellationToken ct = default);
 
+        Task<List<TseIndexDto>> GetTseIndexAsync(
+            BrokerSession session, CancellationToken ct = default);
+
+        Task<List<MarketWatchCategoryDto>> GetMarketWatchAsync(
+            BrokerSession session, CancellationToken ct = default);
+
+
+        /* ═══════════ BATCH MARKET DATA ═══════════ */
+        Task<List<BatchMarketDataItemDto>> GetBatchMarketDataAsync(
+            BrokerSession session,
+            IReadOnlyList<string> symbolIsins,
+            CancellationToken ct = default);
+
+        /* ═══════════ ORDER HISTORY ═══════════ */
+        Task<PagedResult<OrderHistoryItemDto>> GetOrderHistoryAsync(
+            BrokerSession session,
+            OrderHistoryQuery query,
+            CancellationToken ct = default);
+
+        /* ═══════════ ORDER TRADES ═══════════ */
+        /// <summary>
+        /// لیست fillهای یک سفارش خاص.
+        /// اگه سفارش اصلاً پر نشده باشه، لیست خالی برمی‌گرده.
+        /// </summary>
+        Task<List<OrderTradeDto>> GetOrderTradesAsync(
+            BrokerSession session,
+            string orderId,
+            CancellationToken ct = default);
     }
 }

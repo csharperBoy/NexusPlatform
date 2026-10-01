@@ -242,7 +242,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contact.Infrastructure", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contact.Presentation", "Contact.Presentation\Contact.Presentation.csproj", "{2ABF885D-F2BE-4B09-83CC-27DF77A1AA89}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scheduler", "Scheduler", "{B5322981-F9F4-4D0E-9D72-19BFC6A13809}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "", "", "{B5322981-F9F4-4D0E-9D72-19BFC6A13809}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scheduler.Domain", "Scheduler.Domain\Scheduler.Domain.csproj", "{0708E5CA-28CE-468E-B6C5-8424FAC0AAE6}"
 EndProject
@@ -252,7 +252,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scheduler.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scheduler.Application", "Scheduler.Application\Scheduler.Application.csproj", "{FC332949-905C-4771-82B8-BDC808C7B94F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Trader", "Trader", "{466A7369-AC41-4C61-9F23-E8995A6875F1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "", "", "{466A7369-AC41-4C61-9F23-E8995A6875F1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Domain", "Trader.Domain\Trader.Domain.csproj", "{3B808C72-A88C-4282-A17E-8DA3821A5F92}"
 EndProject
@@ -263,6 +263,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Infrastructure", "Trader.Infrastructure\Trader.Infrastructure.csproj", "{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.WebApi", "Trader.WebApi\Trader.WebApi.csproj", "{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{93E86E81-5D93-4F96-AAB1-B97CB3287288}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "future", "future", "{D948ABA0-7A92-401E-8664-026B2BAB4725}"
+	ProjectSection(SolutionItems) = preProject
+		lightstreamer.md = lightstreamer.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -764,6 +771,8 @@ Global
 		{AAAB97CE-1254-491C-8C1E-7AFDF05803C6} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 		{2A7674FE-38CE-42E2-BC50-9BA9D2DE90CC} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 		{1983F32F-CD16-47C8-AE41-B7D711F6ECB1} = {CD5173EF-052F-4585-9273-5733A56CAA85}
+		{93E86E81-5D93-4F96-AAB1-B97CB3287288} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
+		{D948ABA0-7A92-401E-8664-026B2BAB4725} = {93E86E81-5D93-4F96-AAB1-B97CB3287288}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}
