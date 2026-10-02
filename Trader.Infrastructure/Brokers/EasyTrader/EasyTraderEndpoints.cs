@@ -52,5 +52,9 @@
 
         /* ═══ Order Trades ═══ */
         public const string OrderTrades = "/easy/api/orderHistory/trades/";
+
+        /* ═══ Finance ═══ */
+        public const string Payments = "/finance/api/payments";
+        public const string PaymentAccountBalances = "/finance/api/payment-account-balances";
     }
 }

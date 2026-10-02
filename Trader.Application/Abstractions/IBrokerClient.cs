@@ -1,6 +1,7 @@
 ﻿using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Application.Dtos.Account;
+using Trader.Application.Dtos.Finance;
 using Trader.Application.Dtos.MarketData;
 using Trader.Application.Dtos.Order;
 using Trader.Domain.Enums;
@@ -149,6 +150,23 @@ namespace Trader.Application.Abstractions
         Task<List<OrderTradeDto>> GetOrderTradesAsync(
             BrokerSession session,
             string orderId,
+            CancellationToken ct = default);
+
+        /* ═══════════ FINANCE ═══════════ */
+        /// <summary>
+        /// لیست حساب‌های بانکی + موجودی قابل برداشت به تفکیک تاریخ و بانک.
+        /// </summary>
+        Task<PaymentAccountBalancesDto> GetPaymentAccountBalancesAsync(
+            BrokerSession session,
+            CancellationToken ct = default);
+
+        /// <summary>
+        /// درخواست برداشت وجه.
+        /// ⚠️ عملیات غیرقابل برگشت — قبل از ارسال، از <see cref="ValidateWithdrawal"/> استفاده کن.
+        /// </summary>
+        Task<WithdrawalResultDto> RequestWithdrawalAsync(
+            BrokerSession session,
+            WithdrawalRequestDto request,
             CancellationToken ct = default);
     }
 }

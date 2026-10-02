@@ -699,4 +699,60 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("createDateTime")] public string? CreateDateTime { get; set; }
         [JsonPropertyName("id")] public string? Id { get; set; }
     }
+    /* ═══ Payment Account Balances ═══ */
+    internal class PaymentAccountBalancesResponse
+    {
+        [JsonPropertyName("totalBalance")] public long TotalBalance { get; set; }
+        [JsonPropertyName("isCustomerConstraintRestricted")] public bool IsCustomerConstraintRestricted { get; set; }
+        [JsonPropertyName("bankAccounts")] public List<BankAccountItem>? BankAccounts { get; set; }
+        [JsonPropertyName("accountBalancePerDate")] public List<AccountBalancePerDateItem>? AccountBalancePerDate { get; set; }
+    }
+
+    internal class BankAccountItem
+    {
+        [JsonPropertyName("id")] public long Id { get; set; }
+        [JsonPropertyName("accountNumber")] public string? AccountNumber { get; set; }
+        [JsonPropertyName("shebaNumber")] public string? ShebaNumber { get; set; }
+        [JsonPropertyName("cardNumber")] public string? CardNumber { get; set; }
+        [JsonPropertyName("bankName")] public string? BankName { get; set; }
+        [JsonPropertyName("bankCode")] public string? BankCode { get; set; }
+        [JsonPropertyName("bankTitle")] public string? BankTitle { get; set; }
+        [JsonPropertyName("isActive")] public bool IsActive { get; set; }
+        [JsonPropertyName("isPending")] public bool? IsPending { get; set; }
+        [JsonPropertyName("shebaInquiry")] public bool? ShebaInquiry { get; set; }
+        [JsonPropertyName("status")] public string? Status { get; set; }
+    }
+
+    internal class AccountBalancePerDateItem
+    {
+        [JsonPropertyName("effectiveDate")] public int EffectiveDate { get; set; }
+        [JsonPropertyName("performDate")] public string? PerformDate { get; set; }
+        [JsonPropertyName("availableBalance")] public long AvailableBalance { get; set; }
+        [JsonPropertyName("maxSingleRequestAmount")] public long MaxSingleRequestAmount { get; set; }
+        [JsonPropertyName("maxTotalRequestAmount")] public long MaxTotalRequestAmount { get; set; }
+        [JsonPropertyName("maxTotalRequestCount")] public int? MaxTotalRequestCount { get; set; }
+        [JsonPropertyName("hasImeWallet")] public bool HasImeWallet { get; set; }
+        [JsonPropertyName("accountBalancePerBank")] public List<AccountBalancePerBankItem>? AccountBalancePerBank { get; set; }
+    }
+
+    internal class AccountBalancePerBankItem
+    {
+        [JsonPropertyName("bankAccountId")] public long BankAccountId { get; set; }
+        [JsonPropertyName("isBankAvailable")] public bool IsBankAvailable { get; set; }
+        [JsonPropertyName("isRequestConstraintRestricted")] public bool IsRequestConstraintRestricted { get; set; }
+        [JsonPropertyName("requestRestrictionDetail")] public string? RequestRestrictionDetail { get; set; }
+        [JsonPropertyName("singleRequestAmount")] public long SingleRequestAmount { get; set; }
+        [JsonPropertyName("totalRequestAmount")] public long TotalRequestAmount { get; set; }
+        [JsonPropertyName("totalRequestCount")] public int? TotalRequestCount { get; set; }
+    }
+
+    /* ═══ Payments (Withdrawal Request) ═══ */
+    internal class WithdrawalRequestPayload
+    {
+        [JsonPropertyName("bankAccountId")] public long BankAccountId { get; set; }
+        [JsonPropertyName("iban")] public string Iban { get; set; } = "";
+        [JsonPropertyName("amount")] public long Amount { get; set; }
+        [JsonPropertyName("performDate")] public string PerformDate { get; set; } = "";
+        [JsonPropertyName("isImeRequest")] public bool IsImeRequest { get; set; }
+    }
 }

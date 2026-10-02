@@ -10,6 +10,7 @@ using Trader.Application.Abstractions;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Application.Dtos.Account;
+using Trader.Application.Dtos.Finance;
 using Trader.Application.Dtos.MarketData;
 using Trader.Application.Dtos.Order;
 using Trader.Domain.Enums;
@@ -1137,37 +1138,37 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             }).ToList();
         }
 
-        /* ══════════════════════════════════════════════════
-           START SESSION
-           ══════════════════════════════════════════════════ */
-        public async Task<StartSessionDto> GetStartSessionAsync(
-            BrokerSession session,
-            CancellationToken ct = default)
-        {
-            var s = AsSession(session);
-            var url = _options.BaseUrl + EasyTraderEndpoints.StartSession;
+        ///* ══════════════════════════════════════════════════
+        //   START SESSION
+        //   ══════════════════════════════════════════════════ */
+        //public async Task<StartSessionDto> GetStartSessionAsync(
+        //    BrokerSession session,
+        //    CancellationToken ct = default)
+        //{
+        //    var s = AsSession(session);
+        //    var url = _options.BaseUrl + EasyTraderEndpoints.StartSession;
 
-            var client = CreateSharedClient();
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            AttachAuth(req, s.AccessToken);
+        //    var client = CreateSharedClient();
+        //    using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        //    AttachAuth(req, s.AccessToken);
 
-            using var res = await client.SendAsync(req, ct);
-            var body = await res.Content.ReadAsStringAsync(ct);
+        //    using var res = await client.SendAsync(req, ct);
+        //    var body = await res.Content.ReadAsStringAsync(ct);
 
-            if (!res.IsSuccessStatusCode)
-                throw new EasyTraderException(
-                    $"StartSession failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
-                    (int)res.StatusCode, body);
+        //    if (!res.IsSuccessStatusCode)
+        //        throw new EasyTraderException(
+        //            $"StartSession failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+        //            (int)res.StatusCode, body);
 
-            var wire = JsonSerializer.Deserialize<StartSessionResponse>(body, JsonOpts)
-                ?? throw new EasyTraderException("StartSession deserialization failed");
+        //    var wire = JsonSerializer.Deserialize<StartSessionResponse>(body, JsonOpts)
+        //        ?? throw new EasyTraderException("StartSession deserialization failed");
 
-            return new StartSessionDto
-            {
-                ServerTime = DateTimeOffset.TryParse(wire.ServerTime, out var st) ? st : default,
-                StartSessionTimeStamp = DateTimeOffset.TryParse(wire.StartSessionTimeStamp, out var ss) ? ss : default,
-            };
-        }
+        //    return new StartSessionDto
+        //    {
+        //        ServerTime = DateTimeOffset.TryParse(wire.ServerTime, out var st) ? st : default,
+        //        StartSessionTimeStamp = DateTimeOffset.TryParse(wire.StartSessionTimeStamp, out var ss) ? ss : default,
+        //    };
+        //}
 
         /* ══════════════════════════════════════════════════
            BATCH MARKET DATA (GraphQL)
@@ -1385,6 +1386,115 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                 ConsumerIndex = x.ConsumerIndex,
                 Origin = x.Origin,
             }).ToList();
+        }
+        /* ══════════════════════════════════════════════════
+   PAYMENT ACCOUNT BALANCES
+   ══════════════════════════════════════════════════ */
+        public async Task<PaymentAccountBalancesDto> GetPaymentAccountBalancesAsync(
+            BrokerSession session,
+            CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.PaymentAccountBalances;
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Payment balances failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            var wire = JsonSerializer.Deserialize<PaymentAccountBalancesResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException("Payment balances deserialization failed");
+
+            return new PaymentAccountBalancesDto
+            {
+                TotalBalanceRial = wire.TotalBalance,
+                IsCustomerConstraintRestricted = wire.IsCustomerConstraintRestricted,
+                BankAccounts = (wire.BankAccounts ?? new()).Select(b => new BankAccountDto
+                {
+                    Id = b.Id,
+                    AccountNumber = b.AccountNumber ?? "",
+                    ShebaNumber = b.ShebaNumber ?? "",
+                    CardNumber = b.CardNumber,
+                    BankName = b.BankName ?? "",
+                    BankCode = b.BankCode ?? "",
+                    BankTitle = b.BankTitle ?? "",
+                    IsActive = b.IsActive,
+                    IsPending = b.IsPending,
+                    ShebaInquiry = b.ShebaInquiry,
+                    Status = b.Status ?? "",
+                }).ToList(),
+                BalancesPerDate = (wire.AccountBalancePerDate ?? new()).Select(d => new AccountBalancePerDateDto
+                {
+                    EffectiveDate = d.EffectiveDate,
+                    PerformDate = DateOnly.TryParse(d.PerformDate, out var pd) ? pd : default,
+                    AvailableBalanceRial = d.AvailableBalance,
+                    MaxSingleRequestAmountRial = d.MaxSingleRequestAmount,
+                    MaxTotalRequestAmountRial = d.MaxTotalRequestAmount,
+                    MaxTotalRequestCount = d.MaxTotalRequestCount,
+                    HasImeWallet = d.HasImeWallet,
+                    PerBank = (d.AccountBalancePerBank ?? new()).Select(pb => new AccountBalancePerBankDto
+                    {
+                        BankAccountId = pb.BankAccountId,
+                        IsBankAvailable = pb.IsBankAvailable,
+                        IsRequestConstraintRestricted = pb.IsRequestConstraintRestricted,
+                        RequestRestrictionDetail = pb.RequestRestrictionDetail,
+                        SingleRequestAmountRial = pb.SingleRequestAmount,
+                        TotalRequestAmountRial = pb.TotalRequestAmount,
+                        TotalRequestCount = pb.TotalRequestCount,
+                    }).ToList(),
+                }).ToList(),
+            };
+        }
+
+        /* ══════════════════════════════════════════════════
+           WITHDRAWAL REQUEST
+           ══════════════════════════════════════════════════ */
+        public async Task<WithdrawalResultDto> RequestWithdrawalAsync(
+    BrokerSession session,
+    WithdrawalRequestDto request,
+    CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.Payments;
+
+            var payload = new WithdrawalRequestPayload
+            {
+                BankAccountId = request.BankAccountId,
+                Iban = request.Iban,
+                Amount = request.AmountRial,
+                PerformDate = request.PerformDate.ToString("yyyy-MM-dd"),
+                IsImeRequest = request.IsImeRequest,
+            };
+
+            var fireAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(payload, JsonOpts),
+                Encoding.UTF8, "application/json");
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            var receivedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            return new WithdrawalResultDto
+            {
+                IsSuccessful = res.IsSuccessStatusCode,
+                StatusCode = (int)res.StatusCode,
+                ErrorBody = string.IsNullOrWhiteSpace(body) ? null : Truncate(body, 400),
+                FireAtUnixMs = fireAt,
+                ReceivedAtUnixMs = receivedAt,
+            };
         }
         /* ══════════════════════════════════════════════════
            HELPERS
