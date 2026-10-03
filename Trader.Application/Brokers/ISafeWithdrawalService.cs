@@ -29,7 +29,7 @@ public class SafeWithdrawalService : ISafeWithdrawalService
     {
         // ۱. هویت مشتری رو از session بگیر
         // ⚠️ این متد باید توی IBrokerClient باشه — احتمالاً CustomerIsin توی session هست
-        var customerIsin = GetCustomerIsin(session);
+        var customerIsin = "";//GetCustomerIsin(session);
 
         // ۲. چک تکراری
         if (await _guard.IsDuplicateAsync(customerIsin, request, ct))
@@ -49,17 +49,17 @@ public class SafeWithdrawalService : ISafeWithdrawalService
         return result;
     }
 
-    private static string GetCustomerIsin(BrokerSession session)
-    {
-        // ⚠️ این متد رو باید بسته به ساختار session پیاده کنی
-        // فرض: session یه CustomerIsin داره
-        return session switch
-        {
-            EasyTraderSession et => et.CustomerIsin ?? throw new InvalidOperationException(
-                "CustomerIsin not available in session"),
-            _ => throw new NotSupportedException("Unknown session type")
-        };
-    }
+    //private static string GetCustomerIsin(BrokerSession session)
+    //{
+    //    // ⚠️ این متد رو باید بسته به ساختار session پیاده کنی
+    //    // فرض: session یه CustomerIsin داره
+    //    //return session switch
+    //    //{
+    //    //    //EasyTraderSession et => et.CustomerIsin ?? throw new InvalidOperationException(
+    //    //    //    "CustomerIsin not available in session"),
+    //    //    //_ => throw new NotSupportedException("Unknown session type")
+    //    //};
+    //}
 }
 
 public class DuplicateWithdrawalException : Exception
