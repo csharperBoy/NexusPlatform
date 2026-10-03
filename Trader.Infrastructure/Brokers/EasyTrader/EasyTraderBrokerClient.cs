@@ -1496,6 +1496,78 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                 ReceivedAtUnixMs = receivedAt,
             };
         }
+        public async Task<PaymentCancelResultDto> CancelPaymentAsync(
+    BrokerSession session,
+    long paymentId,
+    CancellationToken ct = default)
+        {
+            if (paymentId <= 0)
+                throw new EasyTraderException("paymentId must be positive");
+
+            var s = AsSession(session);
+            var url = _options.BaseUrl
+                + string.Format(EasyTraderEndpoints.PaymentCancel, paymentId);
+
+            var fireAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            var receivedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            return new PaymentCancelResultDto
+            {
+                PaymentId = paymentId,
+                IsSuccessful = res.IsSuccessStatusCode,
+                StatusCode = (int)res.StatusCode,
+                ErrorBody = string.IsNullOrWhiteSpace(body) ? null : Truncate(body, 400),
+                FireAtUnixMs = fireAt,
+                ReceivedAtUnixMs = receivedAt,
+            };
+        }
+        public async Task<FundamentalAnalysisDto> GetFundamentalAnalysisAsync(
+    BrokerSession session,
+    string symbolIsin,
+    CancellationToken ct = default)
+        {
+            var s = AsSession(session);
+            var url = _options.BaseUrl + EasyTraderEndpoints.FundamentalAnalysis
+                + $"?isin={Uri.EscapeDataString(symbolIsin)}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, s.AccessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Fundamental analysis failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    (int)res.StatusCode, body);
+
+            if (string.IsNullOrWhiteSpace(body))
+                throw new EasyTraderException(
+                    $"Fundamental analysis returned empty body for isin={symbolIsin}");
+
+            var wire = JsonSerializer.Deserialize<FundamentalAnalysisResponse>(body, JsonOpts)
+                ?? throw new EasyTraderException(
+                    $"Fundamental analysis deserialization failed for isin={symbolIsin}");
+
+            return new FundamentalAnalysisDto
+            {
+                TotalScore = wire.Total?.Score ?? 0,
+                Categories = (wire.Item ?? new()).Select(x => new FundamentalCategoryScoreDto
+                {
+                    Title = x.Title ?? "",
+                    Score = x.Score,
+                }).ToList(),
+            };
+        }
         /* ══════════════════════════════════════════════════
            HELPERS
            ══════════════════════════════════════════════════ */

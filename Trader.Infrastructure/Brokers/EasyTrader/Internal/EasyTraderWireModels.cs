@@ -755,4 +755,21 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("performDate")] public string PerformDate { get; set; } = "";
         [JsonPropertyName("isImeRequest")] public bool IsImeRequest { get; set; }
     }
+    /* ═══ Fundamental Analysis ═══ */
+    internal class FundamentalAnalysisResponse
+    {
+        [JsonPropertyName("total")] public FundamentalTotal? Total { get; set; }
+        [JsonPropertyName("item")] public List<FundamentalItem>? Item { get; set; }
+    }
+
+    internal class FundamentalTotal
+    {
+        [JsonPropertyName("score")] public double Score { get; set; }
+    }
+
+    internal class FundamentalItem
+    {
+        [JsonPropertyName("title")] public string? Title { get; set; }
+        [JsonPropertyName("score")] public double Score { get; set; }
+    }
 }

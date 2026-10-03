@@ -168,5 +168,23 @@ namespace Trader.Application.Abstractions
             BrokerSession session,
             WithdrawalRequestDto request,
             CancellationToken ct = default);
+
+        /* ═══════════ PAYMENT CANCEL ═══════════ */
+        /// <summary>
+        /// کنسل کردن یک درخواست برداشت.
+        /// ⚠️ فقط درخواست‌هایی که <see cref="PaymentRequestDto.Cancellable"/> = true هستن کنسل می‌شن.
+        ///
+        /// ⚠️ response خالیه — بعد از این متد، با GetPaymentHistoryAsync تأیید کن
+        /// که state به PaymentStateKind.CancelledByCustomer تغییر کرده.
+        /// </summary>
+        Task<PaymentCancelResultDto> CancelPaymentAsync(
+            BrokerSession session,
+            long paymentId,
+            CancellationToken ct = default);
+        /* ═══════════ ANALYSIS ═══════════ */
+        Task<FundamentalAnalysisDto> GetFundamentalAnalysisAsync(
+            BrokerSession session,
+            string symbolIsin,
+            CancellationToken ct = default);
     }
 }

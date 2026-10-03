@@ -31,6 +31,7 @@
         public const string IndInstAnalysis = "/easy/api/symbol-analysis/ind-inst";
         public const string TechnicalAnalysis = "/easy/api/symbol-analysis/technical-analysis";
         public const string IndTradingTrend = "/easy/api/symbol-analysis/ind-trading-trend";
+        public const string FundamentalAnalysis = "/easy/api/symbol-analysis/fundamental-analysis";
 
         /* ═══ Market Sheet ═══ */
         public const string MarketSheetSum = "/ms/api/MarketSheet/sum/{0}";
@@ -56,5 +57,6 @@
         /* ═══ Finance ═══ */
         public const string Payments = "/finance/api/payments";
         public const string PaymentAccountBalances = "/finance/api/payment-account-balances";
+        public const string PaymentCancel = "/finance/api/payments/{0}/cancel";
     }
 }
