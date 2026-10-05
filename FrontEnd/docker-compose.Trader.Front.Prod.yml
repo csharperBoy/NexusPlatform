@@ -1,0 +1,18 @@
+services:
+  trader:
+    image: m2931374/trader:latest
+    container_name: trader
+    ports:
+      - "3002:80"
+    restart: always
+    networks:
+      - trader-network
+
+networks:
+  trader-network:
+    external: true
+# ۱. دریافت آخرین نسخه ایمیج‌ها از داکر هاب
+# docker compose -f docker-compose.Trader.Front.Prod.yml pull
+
+# ۲. اجرای کانتینرها
+# docker compose -f docker-compose.Trader.Front.Prod.yml up -d

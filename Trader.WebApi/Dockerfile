@@ -36,15 +36,16 @@ COPY ["Identity.Presentation/Identity.Presentation.csproj", "Identity.Presentati
 COPY ["Navigation.Application/Navigation.Application.csproj", "Navigation.Application/"]
 COPY ["Navigation.Infrastructure/Navigation.Infrastructure.csproj", "Navigation.Infrastructure/"]
 COPY ["Navigation.Presentation/Navigation.Presentation.csproj", "Navigation.Presentation/"]
-COPY ["People.Application/People.Application.csproj", "People.Application/"]
-COPY ["People.Infrastructure/People.Infrastructure.csproj", "People.Infrastructure/"]
-COPY ["People.Presentation/People.Presentation.csproj", "People.Presentation/"]
+
 COPY ["Scheduler.Application/Scheduler.Application.csproj", "Scheduler.Application/"]
 COPY ["Scheduler.Infrastructure/Scheduler.Infrastructure.csproj", "Scheduler.Infrastructure/"]
 COPY ["Scheduler.Presentation/Scheduler.Presentation.csproj", "Scheduler.Presentation/"]
 COPY ["StreamBus.Application/StreamBus.Application.csproj", "StreamBus.Application/"]
 COPY ["StreamBus.Infrastructure/StreamBus.Infrastructure.csproj", "StreamBus.Infrastructure/"]
 COPY ["StreamBus.Presentation/StreamBus.Presentation.csproj", "StreamBus.Presentation/"]
+COPY ["Trader.Application/Trader.Application.csproj", "Trader.Application/"]
+COPY ["Trader.Infrastructure/Trader.Infrastructure.csproj", "Trader.Infrastructure/"]
+COPY ["Trader.Presentation/Trader.Presentation.csproj", "Trader.Presentation/"]
 
 # بازیابی پکیج‌ها
 RUN dotnet restore "Trader.WebApi/Trader.WebApi.csproj"

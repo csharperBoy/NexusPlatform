@@ -1,0 +1,26 @@
+services:
+  trader:
+    image: m2931374/trader:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.trader
+    ports:
+      - "3002:80"
+    container_name: trader
+    restart: always
+    networks:
+      - trader-network
+
+networks:
+  trader-network:
+    external: true
+
+    # for create
+    # docker login
+
+    # cd D:\Project\NexusPlatform\FrontEnd
+    # docker compose -f docker-compose.Trader.Front.Dev.yml build trader
+    # docker compose -f docker-compose.Trader.Front.Dev.yml push trader
+
+    # cd D:\Project\NexusPlatform\FrontEnd
+    # docker compose -f docker-compose.Trader.Front.Dev.yml  up --build --no-cache
