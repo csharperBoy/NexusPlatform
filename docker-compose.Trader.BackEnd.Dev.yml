@@ -1,5 +1,5 @@
 services:
-  aksteel-sqlserver:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2025-latest
     container_name: sqlserver
     user: root
@@ -20,7 +20,7 @@ services:
     networks:
       - dev-network
 
-  aksteel-redis:
+  redis:
     image: redis:alpine
     container_name: redis
     ports:
@@ -28,8 +28,8 @@ services:
     networks:
       - dev-network
 
-  aksteel-webapi:
-    image: m2931374/aksteel-webapi:latest
+  trader-webapi:
+    image: m2931374/trader-webapi:latest
     container_name: trader_webapi_dev
     build:
       context: .
@@ -41,9 +41,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      aksteel-sqlserver:
+      sqlserver:
         condition: service_healthy
-      aksteel-redis:
+      redis:
         condition: service_started
     networks:
       - dev-network

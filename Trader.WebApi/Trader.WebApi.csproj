@@ -19,10 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Audit.Application\Audit.Application.csproj" />
     <ProjectReference Include="..\Audit.Infrastructure\Audit.Infrastructure.csproj" />
     <ProjectReference Include="..\Audit.Presentation\Audit.Presentation.csproj" />
@@ -56,6 +52,10 @@
     <ProjectReference Include="..\Trader.Application\Trader.Application.csproj" />
     <ProjectReference Include="..\Trader.Infrastructure\Trader.Infrastructure.csproj" />
     <ProjectReference Include="..\Trader.Presentation\Trader.Presentation.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
 </Project>
