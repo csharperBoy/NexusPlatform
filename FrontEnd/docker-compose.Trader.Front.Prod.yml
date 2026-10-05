@@ -6,10 +6,10 @@ services:
       - "3002:80"
     restart: always
     networks:
-      - trader-network
+      - prod-network
 
 networks:
-  trader-network:
+  prod-network:
     external: true
 # ۱. دریافت آخرین نسخه ایمیج‌ها از داکر هاب
 # docker compose -f docker-compose.Trader.Front.Prod.yml pull

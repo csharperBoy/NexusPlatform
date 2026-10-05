@@ -15,7 +15,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 
 # ساخت اپلیکیشن admin
-RUN pnpm build:trader.admin
+RUN pnpm build:trader
 
 # -------------------- مرحله دوم: اجرا (nginx) --------------------
 FROM nginx:alpine
@@ -24,7 +24,7 @@ FROM nginx:alpine
 COPY trader-nginx.conf /etc/nginx/conf.d/default.conf
 
 # کپی فایل‌های ساخته شده به Nginx
-COPY --from=builder /app/dist/traderAdmin /usr/share/nginx/html
+COPY --from=builder /app/dist/trader /usr/share/nginx/html
 
 EXPOSE 80
 

@@ -9,10 +9,10 @@ services:
     container_name: trader
     restart: always
     networks:
-      - trader-network
+      - dev-network
 
 networks:
-  trader-network:
+  dev-network:
     external: true
 
     # for create
