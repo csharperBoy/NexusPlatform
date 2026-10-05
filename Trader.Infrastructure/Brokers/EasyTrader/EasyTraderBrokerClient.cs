@@ -14,6 +14,7 @@ using Trader.Application.Dtos.Finance;
 using Trader.Application.Dtos.MarketData;
 using Trader.Application.Dtos.Order;
 using Trader.Domain.Enums;
+using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers.EasyTrader.Internal;
 
 namespace Trader.Infrastructure.Brokers.EasyTrader
@@ -21,6 +22,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
     public class EasyTraderBrokerClient : IBrokerClient
     {
         private readonly EasyTraderOptions _options;
+        //private readonly EasyTraderApiClient _api;
 
         private readonly IHttpClientFactory _httpFactory;
         private readonly ILogger<EasyTraderBrokerClient> _logger;
@@ -39,10 +41,12 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
 
         public EasyTraderBrokerClient(
             IOptions<EasyTraderOptions> options,
+            //EasyTraderApiClient api,
             IHttpClientFactory httpFactory,
             ILogger<EasyTraderBrokerClient> logger)
         {
             _options = options.Value;
+            //_api = api;
             _httpFactory = httpFactory;
             _logger = logger;
         }
@@ -113,7 +117,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             /* ─── ۲. GET /Login ─── */
             var loginPath = authorizeRes.Headers.Location?.ToString()
                 ?? throw new EasyTraderException("Authorize response has no Location");
-
+            //var loginPath = await _api.GET_connect_authorize();
             var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
 
             using var loginPageRes = await client.GetAsync(loginUrl, ct);

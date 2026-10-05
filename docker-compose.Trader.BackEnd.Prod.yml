@@ -1,0 +1,72 @@
+services:
+  aksteel-redis:
+    image: redis:alpine
+    container_name: redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - prod-network
+
+  aksteel-webapi:
+    image: m2931374/trader-webapi:latest
+    container_name: trader_webapi
+    restart: always
+    # پورت باز به بیرون ندارد
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=${DB_SERVER_IP},1433;Database=TraderDb;User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True;MultipleActiveResultSets=true
+      - ConnectionStrings__Redis=aksteel-redis:6379,abortConnect=false
+    depends_on:
+      aksteel-redis:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2048M
+    networks:
+      - prod-network
+
+  aksteel-nginx:
+    image: nginx:alpine
+    container_name: trader_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.Trader.Backend.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+    depends_on:
+      - prod-webapi
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - prod-network
+
+networks:
+  prod-network:
+    driver: bridge
+  
+
+
+# docker login
+# docker compose -f docker-compose.Trader.BackEnd.Prod.yml pull trader-webapi
+# docker compose -f docker-compose.Trader.BackEnd.Prod.yml up -d
