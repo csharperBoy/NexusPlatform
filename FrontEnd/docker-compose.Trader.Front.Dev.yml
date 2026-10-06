@@ -14,6 +14,7 @@ services:
 networks:
   dev-network:
     external: true
+    name: dev-network
 
     # for create
     # docker login
