@@ -1,4 +1,4 @@
-//src/apps/Trader/Shotgun/App.tsx
+//src/apps/Trader/App.tsx
 import { useRoutes, Navigate, Outlet } from "react-router-dom";
 import { ProtectedRoute } from "@/modules/Identity";
 import { identityPublicRoutes, identityPanelRoutes } from "@/modules/Identity";
@@ -69,28 +69,3 @@ export default function App() {
 
   return routes;
 }
-/* 
-import { useRoutes, Navigate } from "react-router-dom";
-import { useActiveModules } from "@/core/context/ModuleContext";
-import { TraderShotgunRoutes } from "@/modules/Trader";
-import { identityPublicRoutes, LoginPage } from "@/modules/Identity";
-export default function App() {
-
-  const { activeModules, loading } = useActiveModules();
-  if (loading) {
-    return <div>در حال بارگذاری تنظیمات…</div>;
-  }
-
-  const routes = useRoutes([
-    // { path: "/login", element: <LoginPage /> },
-
-    ...(activeModules.has("Identity")
-      ? identityPublicRoutes//.filter((r) => r.path !== "/login") // حذف login duplicate
-      : []),
-
-    ...TraderShotgunRoutes,
-    { path: "*", element: <Navigate to="/schedule-plans" replace /> },
-  ]);
-
-  return routes;
-} */

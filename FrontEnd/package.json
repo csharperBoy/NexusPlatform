@@ -15,9 +15,13 @@
  
     "dev:trader.auth-server": "pnpm --filter trader-auth-server run dev",
 
-     "dev:trader.shotgun": "pnpm --filter trader-shotgun run dev",
+    "dev:trader.shotgun": "pnpm --filter trader-shotgun run dev",
     "build:trader.shotgun": "pnpm --filter trader-shotgun run build",
     "preview:trader.shotgun": "pnpm --filter trader-shotgun run preview",
+
+    "dev:trader": "pnpm --filter trader run dev",
+    "build:trader": "pnpm --filter trader run build",
+    "preview:trader": "pnpm --filter trader run preview",
 
     "dev:mahar.admin": "pnpm --filter mahar-adminpanel run dev",
     "build:mahar.admin": "pnpm --filter mahar-adminpanel run build",

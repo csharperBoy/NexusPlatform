@@ -9,11 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, resolve(__dirname, "src/apps/Trader/Shotgun"));
+  const env = loadEnv(mode, resolve(__dirname, "src/apps/Trader"));
   const isDev = mode.includes("development");
 
   return {
-    root: resolve(__dirname, "src/apps/Trader/Shotgun"),
+    root: resolve(__dirname, "src/apps/Trader"),
     plugins: [
       tailwindcss(),
       react(),
@@ -45,10 +45,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir: resolve(__dirname, "dist/TraderShotgun"),
+      outDir: resolve(__dirname, "dist/Trader"),
       emptyOutDir: true,
       rollupOptions: {
-        input: resolve(__dirname, "src/apps/Trader/Shotgun/index.html"),
+        input: resolve(__dirname, "src/apps/Trader/index.html"),
       },
     },
     define: {
