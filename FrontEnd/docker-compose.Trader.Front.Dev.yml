@@ -17,10 +17,11 @@ networks:
 
     # for create
     # docker login
-
+    # docker network create dev-network
     # cd D:\Project\NexusPlatform\FrontEnd
     # docker compose -f docker-compose.Trader.Front.Dev.yml build trader
     # docker compose -f docker-compose.Trader.Front.Dev.yml push trader
 
     # cd D:\Project\NexusPlatform\FrontEnd
+    # docker compose -f docker-compose.Trader.Front.Dev.yml up -d
     # docker compose -f docker-compose.Trader.Front.Dev.yml  up --build --no-cache

@@ -115,15 +115,6 @@ namespace Trader.Infrastructure.Data
                             Description = "server clock management",
                             DisplayOrder = 3005,
                             Icon = "list",
-                        },new()
-                        {
-                            Key = "trader.executionlog",
-                            Name = "ExecutionLog",
-                            Type = ResourceType.Data,
-                            Category = ResourceCategory.System,
-                            Description = "ExecutionLog management",
-                            DisplayOrder = 3006,
-                            Icon = "list",
                         }
                     }
                 }

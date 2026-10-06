@@ -30,7 +30,7 @@ services:
 
   trader-webapi:
     image: m2931374/trader-webapi:latest
-    container_name: trader_webapi_dev
+    container_name: trader_webapi
     build:
       context: .
       dockerfile: Trader.WebApi/Dockerfile
@@ -65,3 +65,5 @@ volumes:
 
 # ۳. ارسال به داکر هاب
 # docker push m2931374/trader-webapi:latest
+
+# docker compose -f docker-compose.Trader.BackEnd.Dev.yml up -d
