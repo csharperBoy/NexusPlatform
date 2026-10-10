@@ -230,7 +230,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
                     $"EasyTrader login timed out after {_options.TimeoutSeconds}s", ex);
             }
         }
-       
+        
         /* ══════════════════════════════════════════════════
            ACTIVATION (internal — part of login flow)
            ══════════════════════════════════════════════════ */
