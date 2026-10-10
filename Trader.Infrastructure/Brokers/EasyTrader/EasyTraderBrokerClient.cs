@@ -1,8 +1,10 @@
 ﻿using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -79,9 +81,9 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
            LOGIN (OIDC + PKCE + Activation)
            ══════════════════════════════════════════════════ */
         public async Task<BrokerSession> LoginAsync(
-            string username,
-            string password,
-            CancellationToken ct = default)
+     string username,
+     string password,
+     CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
                 throw new EasyTraderException("Username/Password cannot be empty");
@@ -102,117 +104,133 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             {
                 Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds),
             };
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
 
-            /* ─── ۱. GET /connect/authorize ─── */
-            var authorizeUrl = BuildAuthorizeUrl(challenge, state);
-            _logger.LogDebug("EasyTrader OIDC step 1: authorize");
+            if (!string.IsNullOrWhiteSpace(_options.UserAgent))
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
 
-            using var authorizeRes = await client.GetAsync(authorizeUrl, ct);
-            if ((int)authorizeRes.StatusCode is not (302 or 303))
-                throw new EasyTraderException(
-                    $"Authorize expected 302/303, got {(int)authorizeRes.StatusCode}",
-                    (int)authorizeRes.StatusCode);
-
-            /* ─── ۲. GET /Login ─── */
-            var loginPath = authorizeRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Authorize response has no Location");
-            //var loginPath = await _api.GET_connect_authorize();
-            var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
-
-            using var loginPageRes = await client.GetAsync(loginUrl, ct);
-            if (!loginPageRes.IsSuccessStatusCode)
-                throw new EasyTraderException(
-                    $"Login page returned {(int)loginPageRes.StatusCode}",
-                    (int)loginPageRes.StatusCode);
-
-            var loginHtml = await loginPageRes.Content.ReadAsStringAsync(ct);
-            var verificationToken = ExtractAntiForgeryToken(loginHtml)
-                ?? throw new EasyTraderException("__RequestVerificationToken not found");
-
-            /* ─── ۳. POST /Login ─── */
-            using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
+            try
             {
-                ["Username"] = username,
-                ["Password"] = password,
-                ["__RequestVerificationToken"] = verificationToken,
-            });
+                /* ─── ۱. GET /connect/authorize ─── */
+                var authorizeUrl = BuildAuthorizeUrl(challenge, state);
 
-            using var loginRes = await client.PostAsync(loginUrl, formContent, ct);
-            if ((int)loginRes.StatusCode is not (302 or 303))
-            {
-                var body = await SafeReadBody(loginRes, ct);
-                throw new EasyTraderException(
-                    $"Login expected 302/303, got {(int)loginRes.StatusCode}. " +
-                    $"Body: {Truncate(body, 200)}",
-                    (int)loginRes.StatusCode, body);
+                using var authorizeRes = await client.GetAsync(authorizeUrl, ct);
+                if ((int)authorizeRes.StatusCode is not (302 or 303))
+                    throw new EasyTraderException(
+                        $"Authorize expected 302/303, got {(int)authorizeRes.StatusCode}",
+                        (int)authorizeRes.StatusCode);
+
+                /* ─── ۲. GET /Login ─── */
+                var loginPath = authorizeRes.Headers.Location?.ToString()
+                    ?? throw new EasyTraderException("Authorize response has no Location");
+                var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
+
+                using var loginPageRes = await client.GetAsync(loginUrl, ct);
+                if (!loginPageRes.IsSuccessStatusCode)
+                    throw new EasyTraderException(
+                        $"Login page returned {(int)loginPageRes.StatusCode}",
+                        (int)loginPageRes.StatusCode);
+
+                var loginHtml = await loginPageRes.Content.ReadAsStringAsync(ct);
+                var verificationToken = ExtractAntiForgeryToken(loginHtml)
+                    ?? throw new EasyTraderException("__RequestVerificationToken not found");
+
+                /* ─── ۳. POST /Login ─── */
+                using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["Username"] = username,
+                    ["Password"] = password,
+                    ["__RequestVerificationToken"] = verificationToken,
+                });
+
+                using var loginRes = await client.PostAsync(loginUrl, formContent, ct);
+                if ((int)loginRes.StatusCode is not (302 or 303))
+                {
+                    var body = await SafeReadBody(loginRes, ct);
+                    throw new EasyTraderException(
+                        $"Login expected 302/303, got {(int)loginRes.StatusCode}. " +
+                        $"Body: {Truncate(body, 200)}",
+                        (int)loginRes.StatusCode, body);
+                }
+
+                /* ─── ۴. GET /connect/authorize/callback ─── */
+                var callbackPath = loginRes.Headers.Location?.ToString()
+                    ?? throw new EasyTraderException("Login response has no Location");
+                var callbackUrl = MakeAbsolute(_options.OidcBaseUrl, callbackPath);
+
+                using var callbackRes = await client.GetAsync(callbackUrl, ct);
+                if ((int)callbackRes.StatusCode is not (302 or 303))
+                    throw new EasyTraderException(
+                        $"Callback expected 302/303, got {(int)callbackRes.StatusCode}",
+                        (int)callbackRes.StatusCode);
+
+                /* ─── ۵. Extract code ─── */
+                var finalLocation = callbackRes.Headers.Location?.ToString()
+                    ?? throw new EasyTraderException("Callback response has no Location");
+
+                var codeParams = ParseQueryString(new Uri(finalLocation).Query);
+                codeParams.TryGetValue("code", out var code);
+                codeParams.TryGetValue("state", out var returnedState);
+
+                if (string.IsNullOrEmpty(code))
+                    throw new EasyTraderException("No 'code' in callback URL");
+
+                if (returnedState != state)
+                    throw new EasyTraderException("State mismatch — possible CSRF");
+
+                /* ─── ۶. POST /connect/token ─── */
+                using var tokenContent = new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["grant_type"] = "authorization_code",
+                    ["redirect_uri"] = _options.RedirectUri,
+                    ["code"] = code,
+                    ["code_verifier"] = verifier,
+                    ["client_id"] = _options.ClientId,
+                });
+
+                var tokenUrl = _options.OidcBaseUrl + EasyTraderEndpoints.OidcToken;
+                using var tokenRes = await client.PostAsync(tokenUrl, tokenContent, ct);
+
+                if (!tokenRes.IsSuccessStatusCode)
+                {
+                    var body = await SafeReadBody(tokenRes, ct);
+                    throw new EasyTraderException(
+                        $"Token exchange failed {(int)tokenRes.StatusCode}. " +
+                        $"Body: {Truncate(body, 300)}",
+                        (int)tokenRes.StatusCode, body);
+                }
+
+                var tokenJson = await tokenRes.Content.ReadAsStringAsync(ct);
+                var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(tokenJson, JsonOpts)
+                    ?? throw new EasyTraderException("Token response deserialization failed");
+
+                if (string.IsNullOrEmpty(tokenResponse.AccessToken))
+                    throw new EasyTraderException("access_token missing in response");
+
+                _logger.LogInformation(
+                    "EasyTrader login successful, expiresIn={Expires}s",
+                    tokenResponse.ExpiresIn);
+
+                /* ─── ۷. Activation (same-login) ─── */
+                await ActivateTokenAsync(client, tokenResponse.AccessToken, ct);
+
+                var exp = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
+                return new EasyTraderSession(tokenResponse.AccessToken, exp);
             }
-
-            /* ─── ۴. GET /connect/authorize/callback ─── */
-            var callbackPath = loginRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Login response has no Location");
-            var callbackUrl = MakeAbsolute(_options.OidcBaseUrl, callbackPath);
-
-            using var callbackRes = await client.GetAsync(callbackUrl, ct);
-            if ((int)callbackRes.StatusCode is not (302 or 303))
-                throw new EasyTraderException(
-                    $"Callback expected 302/303, got {(int)callbackRes.StatusCode}",
-                    (int)callbackRes.StatusCode);
-
-            /* ─── ۵. Extract code ─── */
-            var finalLocation = callbackRes.Headers.Location?.ToString()
-                ?? throw new EasyTraderException("Callback response has no Location");
-
-            var codeParams = ParseQueryString(new Uri(finalLocation).Query);
-            codeParams.TryGetValue("code", out var code);
-            codeParams.TryGetValue("state", out var returnedState);
-
-            if (string.IsNullOrEmpty(code))
-                throw new EasyTraderException("No 'code' in callback URL");
-
-            if (returnedState != state)
-                throw new EasyTraderException("State mismatch — possible CSRF");
-
-            /* ─── ۶. POST /connect/token ─── */
-            using var tokenContent = new FormUrlEncodedContent(new Dictionary<string, string>
+            catch (HttpRequestException ex)
             {
-                ["grant_type"] = "authorization_code",
-                ["redirect_uri"] = _options.RedirectUri,
-                ["code"] = code,
-                ["code_verifier"] = verifier,
-                ["client_id"] = _options.ClientId,
-            });
-
-            var tokenUrl = _options.OidcBaseUrl + EasyTraderEndpoints.OidcToken;
-            using var tokenRes = await client.PostAsync(tokenUrl, tokenContent, ct);
-
-            if (!tokenRes.IsSuccessStatusCode)
-            {
-                var body = await SafeReadBody(tokenRes, ct);
-                throw new EasyTraderException(
-                    $"Token exchange failed {(int)tokenRes.StatusCode}. " +
-                    $"Body: {Truncate(body, 300)}",
-                    (int)tokenRes.StatusCode, body);
+                _logger.LogError(ex, "EasyTrader login failed: network/SSL error");
+                throw;
             }
-
-            var tokenJson = await tokenRes.Content.ReadAsStringAsync(ct);
-            var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(tokenJson, JsonOpts)
-                ?? throw new EasyTraderException("Token response deserialization failed");
-
-            if (string.IsNullOrEmpty(tokenResponse.AccessToken))
-                throw new EasyTraderException("access_token missing in response");
-
-            _logger.LogInformation(
-                "EasyTrader login successful, expiresIn={Expires}s",
-                tokenResponse.ExpiresIn);
-
-            /* ─── ۷. Activation (same-login) ─── */
-            await ActivateTokenAsync(client, tokenResponse.AccessToken, ct);
-
-            var exp = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
-            return new EasyTraderSession(tokenResponse.AccessToken, exp);
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                _logger.LogError(ex,
+                    "EasyTrader login timed out after {Timeout}s",
+                    _options.TimeoutSeconds);
+                throw new EasyTraderException(
+                    $"EasyTrader login timed out after {_options.TimeoutSeconds}s", ex);
+            }
         }
-
+       
         /* ══════════════════════════════════════════════════
            ACTIVATION (internal — part of login flow)
            ══════════════════════════════════════════════════ */
@@ -1625,12 +1643,33 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             return node?.GetAttributeValue("value", string.Empty);
         }
 
-        private static string MakeAbsolute(string baseUrl, string pathOrUrl)
-        {
-            if (Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var abs))
-                return abs.ToString();
 
-            return baseUrl.TrimEnd('/') + "/" + pathOrUrl.TrimStart('/');
+        private static string MakeAbsolute(string baseUrl, string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new EasyTraderException("URL path is empty");
+
+            // اگه خود path یه URL کامل http/https باشه، همون رو برگردون
+            if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return path;
+            }
+
+            // base باید http/https باشه
+            if (!baseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !baseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new EasyTraderException(
+                    $"Invalid OidcBaseUrl: '{baseUrl}'. Expected http/https.");
+            }
+
+            // string concat خالص — بدون Uri parsing
+            // تا روی Linux علامت ? و %XX دست‌نخورده باقی بمونن
+            var baseClean = baseUrl.TrimEnd('/');
+            var pathClean = path.StartsWith('/') ? path : "/" + path;
+
+            return baseClean + pathClean;
         }
 
         private static Dictionary<string, string> ParseQueryString(string query)
@@ -1656,9 +1695,11 @@ namespace Trader.Infrastructure.Brokers.EasyTrader
             catch { return "<unreadable>"; }
         }
 
-        private static string Truncate(string s, int max)
-            => s.Length <= max ? s : s[..max] + "...";
-
+        private static string Truncate(string? s, int max)
+        {
+            if (string.IsNullOrEmpty(s)) return s ?? string.Empty;
+            return s.Length <= max ? s : s[..max] + "...";
+        }
         private static string FormatEasyTraderDateTime(DateTime d)
         {
             var h24 = d.Hour;

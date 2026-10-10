@@ -15,6 +15,8 @@ using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors; // اضافه کردن این using
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.DataProtection.StackExchangeRedis;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +26,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using Serilog;
+using StackExchange.Redis;
 using System.ComponentModel.Design;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -140,6 +142,18 @@ namespace Core.Infrastructure.DependencyInjection
                 .SetApplicationName("NexusPlatform");   // ← نه "NexusPlatform.Trader"
 
             services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
+
+            // ثبت repository با استفاده از IConnectionMultiplexer از DI
+            services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(sp =>
+            {
+                var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+                return new ConfigureOptions<KeyManagementOptions>(options =>
+                {
+                    options.XmlRepository = new RedisXmlRepository(
+                        () => redis.GetDatabase(),
+                        "NexusPlatform:DataProtection-Keys");
+                });
+            });
 
             services.AddResiliencePolicies(configuration);
             services.AddMediatR(cfg =>

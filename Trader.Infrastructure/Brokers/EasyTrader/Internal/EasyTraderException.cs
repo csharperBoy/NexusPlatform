@@ -8,9 +8,12 @@
         public EasyTraderException(string message)
             : base(message) { }
 
+        public EasyTraderException(string message, Exception innerException)
+            : base(message, innerException) { }
+
         public EasyTraderException(
             string message,
-            int? httpStatus = null,
+            int? httpStatus,
             string? responseBody = null)
             : base(message)
         {
