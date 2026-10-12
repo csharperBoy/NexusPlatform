@@ -1,4 +1,5 @@
 ﻿using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Dtos.Finance;
 using Trader.ExternalApiClient;
 

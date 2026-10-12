@@ -2,6 +2,7 @@
 using Core.Application.Abstractions.Security;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;

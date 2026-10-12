@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Security;
 using Microsoft.Extensions.Logging;
 using Scheduler.Infrastructure.Jobs;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Application.Scheduler.Services;

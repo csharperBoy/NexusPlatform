@@ -5,16 +5,20 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Scheduler.Application.DependencyInjection;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Commands;
+using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
 using Trader.Domain.Entities;
+using Trader.Domain.Enums;
+using Trader.ExternalApiClient.DependencyInjection;
 using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
-using Trader.ExternalApiClient.DependencyInjection;
 namespace Trader.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
@@ -62,7 +66,11 @@ namespace Trader.Infrastructure.DependencyInjection
             /* ═══════════ Broker Clients ═══════════ */
             services.Trader_ExternalApiClient_DependencyInjection(configuration);
 
-            services.AddSingleton<EasyTraderBrokerClient>();
+            services.AddScoped<EasyTraderBrokerClient>();
+
+            services.AddBroker<EasyTraderBrokerClient>(BrokerType.EasyTrader);
+            //services.AddBroker<AgahBrokerClient>(BrokerType.Agah);
+
             services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();
 
             /* ═══════════ Services ═══════════ */

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Application.Dtos.Account;
