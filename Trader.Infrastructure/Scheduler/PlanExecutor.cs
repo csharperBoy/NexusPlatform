@@ -8,7 +8,8 @@ using Trader.Application.Dtos;
 using Trader.Application.Scheduler.Services;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
-using Trader.Infrastructure.Brokers.EasyTrader.Internal;
+using Trader.ExternalApiClient;
+using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Scheduler
@@ -526,7 +527,7 @@ namespace Trader.Infrastructure.Scheduler
             public ScheduledOrder Order { get; set; } = default!;
             public TraderAccount Account { get; set; } = default!;
             public IBrokerClient BrokerClient { get; set; } = default!;
-            public BrokerSession Session { get; set; } = default!;
+            public ExternalSystemSession Session { get; set; } = default!;
             public string SymbolIsin { get; set; } = default!;
             public long Price { get; set; }
             public long Quantity { get; set; }

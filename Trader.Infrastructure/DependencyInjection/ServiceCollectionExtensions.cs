@@ -8,12 +8,13 @@ using Trader.Application.Abstractions;
 using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
 using Trader.Domain.Entities;
+using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
-
+using Trader.ExternalApiClient.DependencyInjection;
 namespace Trader.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
@@ -59,21 +60,7 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfUnitOfWork<TraderDbContext>>();
 
             /* ═══════════ Broker Clients ═══════════ */
-            services.Configure<EasyTraderOptions>(
-                configuration.GetSection(EasyTraderOptions.SectionName));
-
-            /* ✅ HttpClient مشترک برای همه‌ی درخواست‌های EasyTrader (به‌جز login) */
-            services.AddHttpClient("EasyTrader", client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(30);
-            })
-            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-            {
-                PooledConnectionLifetime = TimeSpan.FromMinutes(5),
-                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-                MaxConnectionsPerServer = 20,
-                AutomaticDecompression = System.Net.DecompressionMethods.All,
-            });
+            services.Trader_ExternalApiClient_DependencyInjection(configuration);
 
             services.AddSingleton<EasyTraderBrokerClient>();
             services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();

@@ -6,6 +6,7 @@ using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
+using Trader.ExternalApiClient;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Services
@@ -158,7 +159,7 @@ namespace Trader.Infrastructure.Services
         /// <summary>
         /// اولین حساب با session معتبر رو پیدا می‌کنه و session رو decrypt می‌کنه.
         /// </summary>
-        private async Task<(IBrokerClient Client, BrokerSession Session)> GetDefaultSessionAsync()
+        private async Task<(IBrokerClient Client, ExternalSystemSession Session)> GetDefaultSessionAsync()
         {
             var accounts = await _accountRepository.GetAllAsync();
 

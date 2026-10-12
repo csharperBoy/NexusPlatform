@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core.Domain\Core.Domain.csproj" />
+    <ProjectReference Include="..\Trader.ExternalApiClient\Trader.ExternalApiClient.csproj" />
   </ItemGroup>
 
 </Project>

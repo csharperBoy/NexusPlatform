@@ -1,6 +1,6 @@
 ﻿namespace Trader.ExternalApiClient.EasyTrader
 {
-    internal class EasyTraderOptions
+    public class EasyTraderOptions
     {
         public const string SectionName = "Brokers:EasyTrader";
 

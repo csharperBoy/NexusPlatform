@@ -1,4 +1,5 @@
 ﻿using Trader.Application.Abstractions;
+using Trader.ExternalApiClient;
 
 namespace Trader.Application.Brokers;
 
@@ -10,7 +11,7 @@ public static class BrokerPaymentExtensions
     /// </summary>
     public static async Task<bool> CancelAndConfirmAsync(
         this IBrokerClient broker,
-        BrokerSession session,
+        ExternalSystemSession session,
         long paymentId,
         CancellationToken ct = default)
     {

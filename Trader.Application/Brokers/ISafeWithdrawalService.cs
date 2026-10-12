@@ -1,5 +1,6 @@
 ﻿using Trader.Application.Abstractions;
 using Trader.Application.Dtos.Finance;
+using Trader.ExternalApiClient;
 
 namespace Trader.Application.Brokers;
 
@@ -7,7 +8,7 @@ public interface ISafeWithdrawalService
 {
     Task<WithdrawalResultDto> WithdrawAsync(
         IBrokerClient broker,
-        BrokerSession session,
+        ExternalSystemSession session,
         WithdrawalRequestDto request,
         CancellationToken ct = default);
 }
@@ -23,7 +24,7 @@ public class SafeWithdrawalService : ISafeWithdrawalService
 
     public async Task<WithdrawalResultDto> WithdrawAsync(
         IBrokerClient broker,
-        BrokerSession session,
+        ExternalSystemSession session,
         WithdrawalRequestDto request,
         CancellationToken ct = default)
     {
@@ -49,7 +50,7 @@ public class SafeWithdrawalService : ISafeWithdrawalService
         return result;
     }
 
-    //private static string GetCustomerIsin(BrokerSession session)
+    //private static string GetCustomerIsin(ExternalSystemSession session)
     //{
     //    // ⚠️ این متد رو باید بسته به ساختار session پیاده کنی
     //    // فرض: session یه CustomerIsin داره

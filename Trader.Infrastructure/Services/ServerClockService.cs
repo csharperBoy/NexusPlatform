@@ -8,6 +8,7 @@ using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
+using Trader.ExternalApiClient;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Services
@@ -126,7 +127,7 @@ namespace Trader.Infrastructure.Services
             }
         }
 
-        private async Task<(IBrokerClient Client, BrokerSession Session)>
+        private async Task<(IBrokerClient Client, ExternalSystemSession Session)>
             GetDefaultSessionAsync()
         {
             using var scope = _scopeFactory.CreateScope();

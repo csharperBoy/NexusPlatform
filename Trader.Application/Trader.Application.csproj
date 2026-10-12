@@ -11,6 +11,7 @@
     <ProjectReference Include="..\Core.Shared\Core.Shared.csproj" />
     <ProjectReference Include="..\Scheduler.Application\Scheduler.Application.csproj" />
     <ProjectReference Include="..\Trader.Domain\Trader.Domain.csproj" />
+    <ProjectReference Include="..\Trader.ExternalApiClient\Trader.ExternalApiClient.csproj" />
   </ItemGroup>
 
 </Project>

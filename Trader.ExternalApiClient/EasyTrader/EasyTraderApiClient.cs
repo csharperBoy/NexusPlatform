@@ -6,30 +6,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Trader.Infrastructure.Brokers.EasyTrader;
-using Trader.Infrastructure.Brokers.EasyTrader.Internal;
 
 namespace Trader.ExternalApiClient.EasyTrader
 {
-    /* ═══ نتیجه‌ی ارسال سفارش همراه با timings ═══ */
-    public sealed record OrderSendResult(
-        OrderResponse Response,
-        long FireAtUnixMs,
-        long ReceivedAtUnixMs);
+    /* ══════════════════════════════════════════════════
+       API CLIENT — یک متد، یک API
+       ══════════════════════════════════════════════════ */
 
-    /* ═══ نتیجه‌ی خام HTTP (برای withdrawal/cancel) ═══ */
-    public readonly record struct RawHttpResult(
-        bool IsSuccessful,
-        int StatusCode,
-        string? Body,
-        long FireAtUnixMs,
-        long ReceivedAtUnixMs);
-
-    /// <summary>
-    /// کلاینت خام EasyTrader.
-    /// تمام فراخوانی‌های HTTP، ساخت request و deserialize اینجا انجام می‌شه.
-    /// فقط در سطح wire DTO کار می‌کنه و هیچ اطلاعی از Application DTOها نداره.
-    /// </summary>
     public class EasyTraderApiClient
     {
         private const string HttpClientName = "EasyTrader";
@@ -54,162 +37,148 @@ namespace Trader.ExternalApiClient.EasyTrader
         }
 
         /* ══════════════════════════════════════════════════
-           AUTH (OIDC + PKCE + Activation)
+           LOGIN FLOW — هر متد معادل یک API
            ══════════════════════════════════════════════════ */
-        public async Task<OidcTokenResponse> LoginAsync(
-            string username,
-            string password,
-            CancellationToken ct = default)
+
+        /// <summary>
+        /// ساخت یک Login Session مشترک.
+        /// Broker این رو یه بار می‌گیره و به همه‌ی متدهاش پاس می‌ده.
+        /// </summary>
+        public LoginHttpSession CreateLoginSession()
         {
-            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrEmpty(password))
-                throw new EasyTraderException("Username/Password cannot be empty");
-
-            var verifier = EasyTraderPkce.GenerateVerifier();
-            var challenge = EasyTraderPkce.GenerateChallenge(verifier);
-            var state = EasyTraderPkce.GenerateState();
-
             var cookieJar = new CookieContainer();
-            using var handler = new HttpClientHandler
+            var handler = new HttpClientHandler
             {
                 CookieContainer = cookieJar,
                 AllowAutoRedirect = false,
                 UseCookies = true,
                 AutomaticDecompression = DecompressionMethods.All,
             };
-            using var client = new HttpClient(handler)
+            var client = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds),
             };
-
             if (!string.IsNullOrWhiteSpace(_options.UserAgent))
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
 
-            try
-            {
-                /* ─── ۱. GET /connect/authorize ─── */
-                var authorizeUrl = BuildAuthorizeUrl(challenge, state);
-
-                using var authorizeRes = await client.GetAsync(authorizeUrl, ct);
-                if ((int)authorizeRes.StatusCode is not (302 or 303))
-                    throw new EasyTraderException(
-                        $"Authorize expected 302/303, got {(int)authorizeRes.StatusCode}",
-                        (int)authorizeRes.StatusCode);
-
-                /* ─── ۲. GET /Login ─── */
-                var loginPath = authorizeRes.Headers.Location?.ToString()
-                    ?? throw new EasyTraderException("Authorize response has no Location");
-                var loginUrl = MakeAbsolute(_options.OidcBaseUrl, loginPath);
-
-                using var loginPageRes = await client.GetAsync(loginUrl, ct);
-                if (!loginPageRes.IsSuccessStatusCode)
-                    throw new EasyTraderException(
-                        $"Login page returned {(int)loginPageRes.StatusCode}",
-                        (int)loginPageRes.StatusCode);
-
-                var loginHtml = await loginPageRes.Content.ReadAsStringAsync(ct);
-                var verificationToken = ExtractAntiForgeryToken(loginHtml)
-                    ?? throw new EasyTraderException("__RequestVerificationToken not found");
-
-                /* ─── ۳. POST /Login ─── */
-                using var formContent = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["Username"] = username,
-                    ["Password"] = password,
-                    ["__RequestVerificationToken"] = verificationToken,
-                });
-
-                using var loginRes = await client.PostAsync(loginUrl, formContent, ct);
-                if ((int)loginRes.StatusCode is not (302 or 303))
-                {
-                    var body = await SafeReadBody(loginRes, ct);
-                    throw new EasyTraderException(
-                        $"Login expected 302/303, got {(int)loginRes.StatusCode}. " +
-                        $"Body: {Truncate(body, 200)}",
-                        (int)loginRes.StatusCode, body);
-                }
-
-                /* ─── ۴. GET /connect/authorize/callback ─── */
-                var callbackPath = loginRes.Headers.Location?.ToString()
-                    ?? throw new EasyTraderException("Login response has no Location");
-                var callbackUrl = MakeAbsolute(_options.OidcBaseUrl, callbackPath);
-
-                using var callbackRes = await client.GetAsync(callbackUrl, ct);
-                if ((int)callbackRes.StatusCode is not (302 or 303))
-                    throw new EasyTraderException(
-                        $"Callback expected 302/303, got {(int)callbackRes.StatusCode}",
-                        (int)callbackRes.StatusCode);
-
-                /* ─── ۵. Extract code ─── */
-                var finalLocation = callbackRes.Headers.Location?.ToString()
-                    ?? throw new EasyTraderException("Callback response has no Location");
-
-                var codeParams = ParseQueryString(new Uri(finalLocation).Query);
-                codeParams.TryGetValue("code", out var code);
-                codeParams.TryGetValue("state", out var returnedState);
-
-                if (string.IsNullOrEmpty(code))
-                    throw new EasyTraderException("No 'code' in callback URL");
-
-                if (returnedState != state)
-                    throw new EasyTraderException("State mismatch — possible CSRF");
-
-                /* ─── ۶. POST /connect/token ─── */
-                using var tokenContent = new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["grant_type"] = "authorization_code",
-                    ["redirect_uri"] = _options.RedirectUri,
-                    ["code"] = code,
-                    ["code_verifier"] = verifier,
-                    ["client_id"] = _options.ClientId,
-                });
-
-                var tokenUrl = _options.OidcBaseUrl + EasyTraderEndpoints.OidcToken;
-                using var tokenRes = await client.PostAsync(tokenUrl, tokenContent, ct);
-
-                if (!tokenRes.IsSuccessStatusCode)
-                {
-                    var body = await SafeReadBody(tokenRes, ct);
-                    throw new EasyTraderException(
-                        $"Token exchange failed {(int)tokenRes.StatusCode}. " +
-                        $"Body: {Truncate(body, 300)}",
-                        (int)tokenRes.StatusCode, body);
-                }
-
-                var tokenJson = await tokenRes.Content.ReadAsStringAsync(ct);
-                var tokenResponse = JsonSerializer.Deserialize<OidcTokenResponse>(tokenJson, JsonOpts)
-                    ?? throw new EasyTraderException("Token response deserialization failed");
-
-                if (string.IsNullOrEmpty(tokenResponse.AccessToken))
-                    throw new EasyTraderException("access_token missing in response");
-
-                _logger.LogInformation(
-                    "EasyTrader login successful, expiresIn={Expires}s",
-                    tokenResponse.ExpiresIn);
-
-                /* ─── ۷. Activation (same-login) ─── */
-                await ActivateTokenAsync(client, tokenResponse.AccessToken, ct);
-
-                return tokenResponse;
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "EasyTrader login failed: network/SSL error");
-                throw;
-            }
-            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-            {
-                _logger.LogError(ex,
-                    "EasyTrader login timed out after {Timeout}s",
-                    _options.TimeoutSeconds);
-                throw new EasyTraderException(
-                    $"EasyTrader login timed out after {_options.TimeoutSeconds}s", ex);
-            }
+            return new LoginHttpSession(client);
         }
 
-        private async Task ActivateTokenAsync(
-            HttpClient client,
+        /// <summary>GET /connect/authorize</summary>
+        public async Task<RedirectResult> AuthorizeAsync(
+            LoginHttpSession session,
+            string codeChallenge,
+            string state,
+            CancellationToken ct = default)
+        {
+            var url = BuildAuthorizeUrl(codeChallenge, state);
+            using var res = await session.Client.GetAsync(url, ct);
+            return await ToRedirectResultAsync(res, ct);
+        }
+
+        /// <summary>GET /Login</summary>
+        public async Task<LoginPageResult> GetLoginPageAsync(
+            LoginHttpSession session,
+            string locationPath,
+            CancellationToken ct = default)
+        {
+            var loginUrl = MakeAbsolute(_options.OidcBaseUrl, locationPath);
+
+            using var res = await session.Client.GetAsync(loginUrl, ct);
+            if (!res.IsSuccessStatusCode)
+                throw new EasyTraderException(
+                    $"Login page returned {(int)res.StatusCode}",
+                    (int)res.StatusCode);
+
+            var html = await res.Content.ReadAsStringAsync(ct);
+            return new LoginPageResult(loginUrl, html);
+        }
+
+        /// <summary>POST /Login</summary>
+        public async Task<RedirectResult> PostLoginAsync(
+            LoginHttpSession session,
+            string loginUrl,
+            string username,
+            string password,
+            string antiForgeryToken,
+            CancellationToken ct = default)
+        {
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["Username"] = username,
+                ["Password"] = password,
+                ["__RequestVerificationToken"] = antiForgeryToken,
+            });
+
+            using var res = await session.Client.PostAsync(loginUrl, content, ct);
+            return await ToRedirectResultAsync(res, ct);
+        }
+
+        /// <summary>GET /connect/authorize/callback</summary>
+        public async Task<OidcCallbackResult> CallbackAsync(
+            LoginHttpSession session,
+            string locationPath,
+            CancellationToken ct = default)
+        {
+            var callbackUrl = MakeAbsolute(_options.OidcBaseUrl, locationPath);
+
+            using var res = await session.Client.GetAsync(callbackUrl, ct);
+
+            var statusCode = (int)res.StatusCode;
+            var location = res.Headers.Location?.ToString();
+
+            string? code = null;
+            string? state = null;
+
+            if (!string.IsNullOrEmpty(location))
+            {
+                var queryIdx = location.IndexOf('?');
+                var query = queryIdx >= 0 ? location[(queryIdx + 1)..] : string.Empty;
+                var q = ParseQueryString(query);
+                q.TryGetValue("code", out code);
+                q.TryGetValue("state", out state);
+            }
+
+            return new OidcCallbackResult(statusCode, location, code, state);
+        }
+
+        /// <summary>POST /connect/token</summary>
+        public async Task<OidcTokenResponse> ExchangeTokenAsync(
+            LoginHttpSession session,
+            string code,
+            string codeVerifier,
+            CancellationToken ct = default)
+        {
+            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["grant_type"] = "authorization_code",
+                ["redirect_uri"] = _options.RedirectUri,
+                ["code"] = code,
+                ["code_verifier"] = codeVerifier,
+                ["client_id"] = _options.ClientId,
+            });
+
+            var tokenUrl = _options.OidcBaseUrl + EasyTraderEndpoints.OidcToken;
+            using var res = await session.Client.PostAsync(tokenUrl, content, ct);
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var errBody = await SafeReadBody(res, ct);
+                throw new EasyTraderException(
+                    $"Token exchange failed {(int)res.StatusCode}. " +
+                    $"Body: {Truncate(errBody, 300)}",
+                    (int)res.StatusCode, errBody);
+            }
+
+            var json = await res.Content.ReadAsStringAsync(ct);
+            return JsonSerializer.Deserialize<OidcTokenResponse>(json, JsonOpts)
+                ?? throw new EasyTraderException("Token response deserialization failed");
+        }
+
+        /// <summary>POST /easy/api/account/same-login (activation)</summary>
+        public async Task SameLoginAsync(
             string accessToken,
-            CancellationToken ct)
+            CancellationToken ct = default)
         {
             var url = _options.BaseUrl + EasyTraderEndpoints.SameLogin;
 
@@ -223,10 +192,9 @@ namespace Trader.ExternalApiClient.EasyTrader
                 platformInfo = _options.UserAgent,
             };
 
+            var client = CreateSharedClient();
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            req.Headers.Accept.ParseAdd("application/json, text/plain, */*");
-            req.Headers.TryAddWithoutValidation("Accept-Language", "fa");
             req.Content = new StringContent(
                 JsonSerializer.Serialize(body, JsonOpts),
                 Encoding.UTF8, "application/json");
@@ -234,11 +202,7 @@ namespace Trader.ExternalApiClient.EasyTrader
             using var res = await client.SendAsync(req, ct);
             var resBody = await res.Content.ReadAsStringAsync(ct);
 
-            if (res.IsSuccessStatusCode)
-            {
-                _logger.LogDebug("EasyTrader token activated");
-                return;
-            }
+            if (res.IsSuccessStatusCode) return;
 
             if ((int)res.StatusCode == 400 &&
                 resBody.Contains("already logged in", StringComparison.OrdinalIgnoreCase))
@@ -253,9 +217,22 @@ namespace Trader.ExternalApiClient.EasyTrader
                 (int)res.StatusCode, resBody);
         }
 
+        /// <summary>Helper: استخراج anti-forgery token از HTML صفحه‌ی لاگین.</summary>
+        public static string? ExtractAntiForgeryToken(string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+
+            return doc.DocumentNode
+                .SelectSingleNode("//input[@name='__RequestVerificationToken']")
+                ?.GetAttributeValue("value", string.Empty);
+        }
+
         /* ══════════════════════════════════════════════════
            ACCOUNT
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /easy/api/account/server-time/{ts}</summary>
         public async Task<ServerTimeResponse> GetServerTimeAsync(
             string accessToken,
             long clientTimestampMs,
@@ -280,6 +257,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Server-time deserialization failed");
         }
 
+        /// <summary>GET /easy/api/money</summary>
         public async Task<MoneyResponse> GetMoneyAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -302,6 +280,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Money deserialization failed");
         }
 
+        /// <summary>GET /easy/api/clientAppSetting</summary>
         public async Task<ClientAppSettingResponse> GetClientAppSettingAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -327,6 +306,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            PORTFOLIO
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /assetmodule/api/performance</summary>
         public async Task<PerformanceResponse> GetPerformanceAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -352,9 +333,10 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            ORDER
            ══════════════════════════════════════════════════ */
-        /// <summary>
-        /// ساخت HttpRequestMessage آماده برای fire سریع. sync است.
-        /// </summary>
+
+        
+
+        /// <summary>ساخت درخواست سفارش — sync، بدون I/O.</summary>
         public HttpRequestMessage BuildOrderRequest(
             string accessToken,
             string symbolIsin,
@@ -401,10 +383,7 @@ namespace Trader.ExternalApiClient.EasyTrader
             return request;
         }
 
-        /// <summary>
-        /// ارسال request آماده‌شده. بدون لاگ — حداکثر سرعت.
-        /// در صورت خطا EasyTraderOrderException با timings پرتاب می‌شه.
-        /// </summary>
+        /// <summary>POST /core/api/v2/order — ارسال درخواست آماده‌شده.</summary>
         public async Task<OrderSendResult> SendOrderAsync(
             HttpRequestMessage request,
             string symbolIsin,
@@ -447,26 +426,11 @@ namespace Trader.ExternalApiClient.EasyTrader
             }
         }
 
-        private static bool TryParseOrderResponse(string body, out OrderResponse result)
-        {
-            result = default!;
-            if (string.IsNullOrWhiteSpace(body)) return false;
-            try
-            {
-                var resp = JsonSerializer.Deserialize<OrderResponse>(body, JsonOpts);
-                if (resp is null) return false;
-                result = resp;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         /* ══════════════════════════════════════════════════
            SYMBOL
            ══════════════════════════════════════════════════ */
+
+        /// <summary>POST /symbols/api/MarketData/symbol-info-data</summary>
         public async Task<SymbolInfoResponse> GetSymbolInfoAsync(
             string accessToken,
             string symbolIsin,
@@ -501,7 +465,8 @@ namespace Trader.ExternalApiClient.EasyTrader
                     $"Symbol info deserialization failed for isin={symbolIsin}");
         }
 
-        public async Task<ReturnChartResponse> GetReturnChartAsync(
+        /// <summary>POST /symbols/api/MarketData/return-chart-data</summary>
+        public async Task<ReturnChartResponse> GetReturnChartDataAsync(
             string accessToken,
             string symbolIsin,
             CancellationToken ct = default)
@@ -527,6 +492,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Return chart deserialization failed");
         }
 
+        /// <summary>POST /symbols/api/MarketData/indInstTrade</summary>
         public async Task<IndInstTradeResponse> GetIndInstTradeAsync(
             string accessToken,
             string symbolIsin,
@@ -553,7 +519,8 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("IndInst trade deserialization failed");
         }
 
-        public async Task<TradingTimeResponse> GetTradingTimesAsync(
+        /// <summary>GET /symbols/api/TradingTime</summary>
+        public async Task<TradingTimeResponse> GetTradingTimeAsync(
             string accessToken,
             CancellationToken ct = default)
         {
@@ -578,6 +545,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            CHART
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /chart/api/v2/datafeed/miniChart/history</summary>
         public async Task<CandleHistoryResponse> GetChartHistoryAsync(
             string accessToken,
             string symbolIsin,
@@ -611,6 +580,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            ANALYSIS
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /easy/api/symbol-analysis/technical-analysis</summary>
         public async Task<TechnicalAnalysisResponse> GetTechnicalAnalysisAsync(
             string accessToken,
             string symbolIsin,
@@ -635,6 +606,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Technical analysis deserialization failed");
         }
 
+        /// <summary>GET /easy/api/symbol-analysis/ind-inst</summary>
         public async Task<IndInstAnalysisResponse?> GetIndInstAnalysisAsync(
             string accessToken,
             string symbolIsin,
@@ -659,6 +631,7 @@ namespace Trader.ExternalApiClient.EasyTrader
             return list?.FirstOrDefault();
         }
 
+        /// <summary>GET /easy/api/symbol-analysis/ind-trading-trend</summary>
         public async Task<List<IndTradingTrendItem>> GetIndTradingTrendAsync(
             string accessToken,
             string symbolIsin,
@@ -682,6 +655,7 @@ namespace Trader.ExternalApiClient.EasyTrader
             return JsonSerializer.Deserialize<List<IndTradingTrendItem>>(body, JsonOpts) ?? new();
         }
 
+        /// <summary>GET /easy/api/symbol-analysis/fundamental-analysis</summary>
         public async Task<FundamentalAnalysisResponse> GetFundamentalAnalysisAsync(
             string accessToken,
             string symbolIsin,
@@ -714,6 +688,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            MARKET SHEET
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /ms/api/MarketSheet/sum/{isin}</summary>
         public async Task<MarketSheetSumResponse> GetMarketSheetSumAsync(
             string accessToken,
             string symbolIsin,
@@ -741,6 +717,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            CREDIT
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /credit/api/isCreditCustomer</summary>
         public async Task<bool> IsCreditCustomerAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -765,7 +743,9 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            MARKET LIVE
            ══════════════════════════════════════════════════ */
-        public async Task<List<IndustryPositiveNegativeResponse>> GetIndustryPositiveNegativeAsync(
+
+        /// <summary>GET /easy/api/market-live/industries/positive-negative-symbols</summary>
+        public async Task<List<IndustryPositiveNegativeResponse>> GetPositiveNegativeSymbolsAsync(
             string accessToken,
             CancellationToken ct = default)
         {
@@ -787,6 +767,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? new();
         }
 
+        /// <summary>GET /symbols/api/MarketData/tse-index</summary>
         public async Task<List<TseIndexResponse>> GetTseIndexAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -808,6 +789,7 @@ namespace Trader.ExternalApiClient.EasyTrader
             return JsonSerializer.Deserialize<List<TseIndexResponse>>(body, JsonOpts) ?? new();
         }
 
+        /// <summary>GET /easy/api/MarketWatch</summary>
         public async Task<List<MarketWatchResponse>> GetMarketWatchAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -830,16 +812,11 @@ namespace Trader.ExternalApiClient.EasyTrader
         }
 
         /* ══════════════════════════════════════════════════
-           BATCH MARKET DATA (GraphQL)
+           MARKET DATA (GraphQL)
            ══════════════════════════════════════════════════ */
-        private const string MarketDataGraphQLFields =
-            "symbolIsin stateCode lastTradedPrice closingPrice totalTradeValue " +
-            "totalNumberOfTrades feeOfPreviousDaysClosingPrice priceVar buyRatio sellRatio " +
-            "highPrice lowPrice bestBuyPrice bestBuyQuantity bestSellPrice bestSellQuantity " +
-            "firstTradedPrice lowAllowedPrice highAllowedPrice totalNumberOfSharesTraded " +
-            "minValidBuyVolume maxValidBuyVolume minValidSellVolume maxValidSellVolume priceTickSize";
 
-        public async Task<List<MarketDataGraphQLItem>> GetBatchMarketDataAsync(
+        /// <summary>POST /symbols/api/marketdata (GraphQL batch)</summary>
+        public async Task<List<MarketDataGraphQLItem>> GetMarketDataGraphQLAsync(
             string accessToken,
             IReadOnlyList<string> symbolIsins,
             CancellationToken ct = default)
@@ -847,19 +824,22 @@ namespace Trader.ExternalApiClient.EasyTrader
             if (symbolIsins is null || symbolIsins.Count == 0)
                 return new();
 
+            const string fields =
+                "symbolIsin stateCode lastTradedPrice closingPrice totalTradeValue " +
+                "totalNumberOfTrades feeOfPreviousDaysClosingPrice priceVar buyRatio sellRatio " +
+                "highPrice lowPrice bestBuyPrice bestBuyQuantity bestSellPrice bestSellQuantity " +
+                "firstTradedPrice lowAllowedPrice highAllowedPrice totalNumberOfSharesTraded " +
+                "minValidBuyVolume maxValidBuyVolume minValidSellVolume maxValidSellVolume priceTickSize";
+
             var url = _options.BaseUrl + EasyTraderEndpoints.MarketDataGraphQL;
 
             var isinsPart = string.Join(",", symbolIsins.Select(i => $"\"{i}\""));
-            var query =
-                $"query {{marketData(request: {{ isins: [{isinsPart}] }}) " +
-                $"{{ {MarketDataGraphQLFields} }} }}";
-
-            var payload = new { query };
+            var query = $"query {{marketData(request: {{ isins: [{isinsPart}] }}) {{ {fields} }} }}";
 
             var client = CreateSharedClient();
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
             req.Content = new StringContent(
-                JsonSerializer.Serialize(payload, JsonOpts),
+                JsonSerializer.Serialize(new { query }, JsonOpts),
                 Encoding.UTF8, "application/json");
             AttachAuth(req, accessToken);
 
@@ -878,6 +858,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            ORDER HISTORY
            ══════════════════════════════════════════════════ */
+
+        /// <summary>POST /easy/api/orderHistory/orderReport</summary>
         public async Task<OrderReportResponse> GetOrderReportAsync(
             string accessToken,
             OrderReportRequest payload,
@@ -904,6 +886,7 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Order report deserialization failed");
         }
 
+        /// <summary>GET /easy/api/orderHistory/trades/ (order-id در header)</summary>
         public async Task<List<OrderTradeItem>> GetOrderTradesAsync(
             string accessToken,
             string orderId,
@@ -939,6 +922,8 @@ namespace Trader.ExternalApiClient.EasyTrader
         /* ══════════════════════════════════════════════════
            FINANCE
            ══════════════════════════════════════════════════ */
+
+        /// <summary>GET /finance/api/payment-account-balances</summary>
         public async Task<PaymentAccountBalancesResponse> GetPaymentAccountBalancesAsync(
             string accessToken,
             CancellationToken ct = default)
@@ -961,7 +946,8 @@ namespace Trader.ExternalApiClient.EasyTrader
                 ?? throw new EasyTraderException("Payment balances deserialization failed");
         }
 
-        public async Task<RawHttpResult> RequestWithdrawalAsync(
+        /// <summary>POST /finance/api/payments (withdrawal)</summary>
+        public async Task<RawHttpResult> PostPaymentsAsync(
             string accessToken,
             WithdrawalRequestPayload payload,
             CancellationToken ct = default)
@@ -990,7 +976,8 @@ namespace Trader.ExternalApiClient.EasyTrader
                 receivedAt);
         }
 
-        public async Task<RawHttpResult> CancelPaymentAsync(
+        /// <summary>POST /finance/api/payments/{id}/cancel</summary>
+        public async Task<RawHttpResult> PostPaymentCancelAsync(
             string accessToken,
             long paymentId,
             CancellationToken ct = default)
@@ -1021,8 +1008,9 @@ namespace Trader.ExternalApiClient.EasyTrader
         }
 
         /* ══════════════════════════════════════════════════
-           HELPERS
+           PRIVATE HELPERS
            ══════════════════════════════════════════════════ */
+
         private HttpClient CreateSharedClient()
         {
             var client = _httpFactory.CreateClient(HttpClientName);
@@ -1057,15 +1045,38 @@ namespace Trader.ExternalApiClient.EasyTrader
             return $"{_options.OidcBaseUrl}{EasyTraderEndpoints.OidcAuthorize}?{query}";
         }
 
-        private static string? ExtractAntiForgeryToken(string html)
+        private static async Task<RedirectResult> ToRedirectResultAsync(
+            HttpResponseMessage res, CancellationToken ct)
         {
-            var doc = new HtmlDocument();
-            doc.LoadHtml(html);
+            var statusCode = (int)res.StatusCode;
 
-            var node = doc.DocumentNode
-                .SelectSingleNode("//input[@name='__RequestVerificationToken']");
+            if (statusCode is >= 300 and < 400)
+            {
+                return new RedirectResult(
+                    statusCode,
+                    res.Headers.Location?.ToString(),
+                    null);
+            }
 
-            return node?.GetAttributeValue("value", string.Empty);
+            var body = await SafeReadBody(res, ct);
+            return new RedirectResult(statusCode, null, body);
+        }
+
+        private static bool TryParseOrderResponse(string body, out OrderResponse result)
+        {
+            result = default!;
+            if (string.IsNullOrWhiteSpace(body)) return false;
+            try
+            {
+                var resp = JsonSerializer.Deserialize<OrderResponse>(body, JsonOpts);
+                if (resp is null) return false;
+                result = resp;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static string MakeAbsolute(string baseUrl, string path)

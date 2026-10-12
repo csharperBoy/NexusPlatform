@@ -5,8 +5,8 @@ namespace Trader.ExternalApiClient.EasyTrader
     /// <summary>Session مخصوص EasyTrader.</summary>
     public record EasyTraderSession(
         string AccessToken,
-        DateTimeOffset TokenExp) //: BrokerSession
+        DateTimeOffset TokenExp) : ExternalSystemSession
     {
-       // public override DateTimeOffset? ExpiresAt => TokenExp;
+        public override DateTimeOffset? ExpiresAt => TokenExp;
     }
 }

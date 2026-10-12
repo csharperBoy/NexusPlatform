@@ -5,6 +5,7 @@ using Trader.Application.Dtos.Finance;
 using Trader.Application.Dtos.MarketData;
 using Trader.Application.Dtos.Order;
 using Trader.Domain.Enums;
+using Trader.ExternalApiClient;
 
 namespace Trader.Application.Abstractions
 {
@@ -19,7 +20,7 @@ namespace Trader.Application.Abstractions
         /// <summary>
         /// لاگین کامل به سامانه. تمام مراحل (OIDC, activation, ...) داخل همین متد.
         /// </summary>
-        Task<BrokerSession> LoginAsync(
+        Task<ExternalSystemSession> LoginAsync(
             string username,
             string password,
             CancellationToken ct = default);
@@ -28,31 +29,31 @@ namespace Trader.Application.Abstractions
         /// اندازه‌گیری تاخیر یک‌طرفه به سرور کارگزاری (میلی‌ثانیه).
         /// </summary>
         Task<BrokerTimeMeasurement> MeasureLatencyAsync(
-                         BrokerSession session,
+                         ExternalSystemSession session,
                          CancellationToken ct = default);
 
         /// <summary>
         /// Serialize کردن session برای ذخیره در DB.
         /// </summary>
-        string SerializeSession(BrokerSession session);
+        string SerializeSession(ExternalSystemSession session);
 
         /// <summary>
         /// Deserialize کردن session از DB.
         /// </summary>
-        BrokerSession DeserializeSession(string json);
+        ExternalSystemSession DeserializeSession(string json);
 
         /* ═══════════ ACCOUNT ═══════════ */
-        Task<MoneyDto> GetCashBalanceAsync(BrokerSession session, CancellationToken ct = default);
-        Task<List<PortfolioPerformanceDto>> GetPortfolioPerformanceAsync(BrokerSession session, CancellationToken ct = default);
-        Task<ClientAppSettingDto> GetClientAppSettingAsync(BrokerSession session, CancellationToken ct = default);
-        Task<bool> IsCreditCustomerAsync(BrokerSession session, CancellationToken ct = default);
+        Task<MoneyDto> GetCashBalanceAsync(ExternalSystemSession session, CancellationToken ct = default);
+        Task<List<PortfolioPerformanceDto>> GetPortfolioPerformanceAsync(ExternalSystemSession session, CancellationToken ct = default);
+        Task<ClientAppSettingDto> GetClientAppSettingAsync(ExternalSystemSession session, CancellationToken ct = default);
+        Task<bool> IsCreditCustomerAsync(ExternalSystemSession session, CancellationToken ct = default);
 
         /* ═══════════ MARKET ═══════════ */
-        Task<List<TradingTimeDto>> GetTradingTimesAsync(BrokerSession session, CancellationToken ct = default);
+        Task<List<TradingTimeDto>> GetTradingTimesAsync(ExternalSystemSession session, CancellationToken ct = default);
 
         /* ═══════════ ORDER ═══════════ */
         HttpRequestMessage BuildOrderRequest(
-            BrokerSession session,
+            ExternalSystemSession session,
             string symbolIsin,
             long price,
             long quantity,
@@ -61,7 +62,7 @@ namespace Trader.Application.Abstractions
         /// ارسال سفارش خرید.
         /// </summary>
         Task<BrokerOrderResultDto> SendBuyOrderAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             string symbolIsin,
             long price,
             long quantity,
@@ -71,14 +72,14 @@ namespace Trader.Application.Abstractions
         /// ارسال سفارش فروش.
         /// </summary>
         Task<BrokerOrderResultDto> SendSellOrderAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             string symbolIsin,
             long price,
             long quantity,
             CancellationToken ct = default);
 
         Task<BrokerOrderResultDto> SendOrderWithRequestAsync(
-    BrokerSession session,
+    ExternalSystemSession session,
     HttpRequestMessage request,
     string symbolIsin,
     CancellationToken ct = default);
@@ -88,16 +89,16 @@ namespace Trader.Application.Abstractions
         /// اطلاعات لحظه‌ای نماد.
         /// </summary>
         Task<SymbolMarketDataDto> GetSymbolInfoAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
            string symbolIsin,
             CancellationToken ct = default);
 
         Task<ReturnChartDto> GetReturnChartAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
         /* ═══════════ CANDLES ═══════════ */
         Task<List<CandleDto>> GetCandlesAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             string symbolIsin,
             int days = 1,
             int intervalMinutes = 1,
@@ -105,40 +106,40 @@ namespace Trader.Application.Abstractions
 
         /* ═══════════ ANALYSIS ═══════════ */
         Task<TechnicalAnalysisDto> GetTechnicalAnalysisAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
         Task<IndInstTradeDto> GetIndInstTradeAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
         Task<IndInstAnalysisDto> GetIndInstAnalysisAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
         Task<List<IndTradingTrendDto>> GetIndTradingTrendAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
         /* ═══════════ MARKET SHEET ═══════════ */
         Task<MarketSheetSumDto> GetMarketSheetSumAsync(
-            BrokerSession session, string symbolIsin, CancellationToken ct = default);
+            ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
         /* ═══════════ MARKET LIVE ═══════════ */
         Task<List<IndustryPositiveNegativeDto>> GetIndustryPositiveNegativeAsync(
-            BrokerSession session, CancellationToken ct = default);
+            ExternalSystemSession session, CancellationToken ct = default);
 
         Task<List<TseIndexDto>> GetTseIndexAsync(
-            BrokerSession session, CancellationToken ct = default);
+            ExternalSystemSession session, CancellationToken ct = default);
 
         Task<List<MarketWatchCategoryDto>> GetMarketWatchAsync(
-            BrokerSession session, CancellationToken ct = default);
+            ExternalSystemSession session, CancellationToken ct = default);
 
 
         /* ═══════════ BATCH MARKET DATA ═══════════ */
         Task<List<BatchMarketDataItemDto>> GetBatchMarketDataAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             IReadOnlyList<string> symbolIsins,
             CancellationToken ct = default);
 
         /* ═══════════ ORDER HISTORY ═══════════ */
         Task<PagedResult<OrderHistoryItemDto>> GetOrderHistoryAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             OrderHistoryQuery query,
             CancellationToken ct = default);
 
@@ -148,7 +149,7 @@ namespace Trader.Application.Abstractions
         /// اگه سفارش اصلاً پر نشده باشه، لیست خالی برمی‌گرده.
         /// </summary>
         Task<List<OrderTradeDto>> GetOrderTradesAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             string orderId,
             CancellationToken ct = default);
 
@@ -157,7 +158,7 @@ namespace Trader.Application.Abstractions
         /// لیست حساب‌های بانکی + موجودی قابل برداشت به تفکیک تاریخ و بانک.
         /// </summary>
         Task<PaymentAccountBalancesDto> GetPaymentAccountBalancesAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             CancellationToken ct = default);
 
         /// <summary>
@@ -165,7 +166,7 @@ namespace Trader.Application.Abstractions
         /// ⚠️ عملیات غیرقابل برگشت — قبل از ارسال، از <see cref="ValidateWithdrawal"/> استفاده کن.
         /// </summary>
         Task<WithdrawalResultDto> RequestWithdrawalAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             WithdrawalRequestDto request,
             CancellationToken ct = default);
 
@@ -178,12 +179,12 @@ namespace Trader.Application.Abstractions
         /// که state به PaymentStateKind.CancelledByCustomer تغییر کرده.
         /// </summary>
         Task<PaymentCancelResultDto> CancelPaymentAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             long paymentId,
             CancellationToken ct = default);
         /* ═══════════ ANALYSIS ═══════════ */
         Task<FundamentalAnalysisDto> GetFundamentalAnalysisAsync(
-            BrokerSession session,
+            ExternalSystemSession session,
             string symbolIsin,
             CancellationToken ct = default);
     }

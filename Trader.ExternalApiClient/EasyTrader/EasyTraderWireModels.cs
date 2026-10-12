@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
-using Trader.Domain.Enums;
 
-namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
+namespace Trader.ExternalApiClient.EasyTrader
 {
     /* ═══ OIDC Token Response (snake_case طبق استاندارد OAuth2) ═══ */
-    internal class OidcTokenResponse
+    public class OidcTokenResponse
     {
         [JsonPropertyName("access_token")]
         public string AccessToken { get; set; } = default!;
@@ -23,7 +22,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Server Time Response (camelCase) ═══ */
-    internal class ServerTimeResponse
+    public class ServerTimeResponse
     {
         [JsonPropertyName("diff")]
         public long Diff { get; set; }
@@ -33,7 +32,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Symbol Info Response (camelCase) ═══ */
-    internal class SymbolInfoResponse
+    public class SymbolInfoResponse
     {
         [JsonPropertyName("symbolISIN")]
         public string? SymbolISIN { get; set; }
@@ -58,13 +57,13 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Order Request (camelCase — این رو ما می‌فرستیم) ═══ */
-    internal class EasyTraderOrderRequest
+    public class EasyTraderOrderRequest
     {
         [JsonPropertyName("order")]
         public EasyTraderOrder Order { get; set; } = new();
     }
 
-    internal class EasyTraderOrder
+    public class EasyTraderOrder
     {
         [JsonPropertyName("price")]
         public long Price { get; set; }
@@ -101,7 +100,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Order Response (camelCase) ═══ */
-    internal class OrderResponse
+    public class OrderResponse
     {
         [JsonPropertyName("isSuccessful")]
         public bool IsSuccessful { get; set; }
@@ -116,7 +115,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public List<OmsErrorItem>? OmsError { get; set; }
     }
 
-    internal class OmsErrorItem
+    public class OmsErrorItem
     {
         [JsonPropertyName("code")]
         public int Code { get; set; }
@@ -128,7 +127,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public string? Error { get; set; }
     }
     /* ═══ Chart ═══ */
-    internal class CandleHistoryResponse
+    public class CandleHistoryResponse
     {
         [JsonPropertyName("data")]
         public List<CandleItem> Data { get; set; } = new();
@@ -137,7 +136,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public string? S { get; set; }
     }
 
-    internal class CandleItem
+    public class CandleItem
     {
         [JsonPropertyName("t")]
         public long T { get; set; }
@@ -159,7 +158,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Return Chart ═══ */
-    internal class ReturnChartResponse
+    public class ReturnChartResponse
     {
         [JsonPropertyName("lastTradedPrice")]
         public long LastTradedPrice { get; set; }
@@ -184,7 +183,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Ind/Inst Trade ═══ */
-    internal class IndInstTradeResponse
+    public class IndInstTradeResponse
     {
         [JsonPropertyName("symbolISIN")]
         public string? SymbolISIN { get; set; }
@@ -218,7 +217,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Ind/Inst Analysis ═══ */
-    internal class IndInstAnalysisResponse
+    public class IndInstAnalysisResponse
     {
         [JsonPropertyName("indBuyVol")]
         public long IndBuyVol { get; set; }
@@ -252,7 +251,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Technical Analysis ═══ */
-    internal class TechnicalAnalysisResponse
+    public class TechnicalAnalysisResponse
     {
         [JsonPropertyName("totalScore")]
         public TechnicalScoreItem? TotalScore { get; set; }
@@ -261,7 +260,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public List<TechnicalCategoryScoreItem>? CategoryScore { get; set; }
     }
 
-    internal class TechnicalScoreItem
+    public class TechnicalScoreItem
     {
         [JsonPropertyName("cat")]
         public string? Cat { get; set; }
@@ -273,7 +272,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public string? State { get; set; }
     }
 
-    internal class TechnicalCategoryScoreItem
+    public class TechnicalCategoryScoreItem
     {
         [JsonPropertyName("cat")]
         public string? Cat { get; set; }
@@ -286,7 +285,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Ind Trading Trend ═══ */
-    internal class IndTradingTrendItem
+    public class IndTradingTrendItem
     {
         [JsonPropertyName("type")]
         public string? Type { get; set; }
@@ -299,7 +298,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Market Sheet Sum ═══ */
-    internal class MarketSheetSumResponse
+    public class MarketSheetSumResponse
     {
         [JsonPropertyName("buyVolume")]
         public long BuyVolume { get; set; }
@@ -314,7 +313,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         public long SellCount { get; set; }
     }
     /* ═══ Money ═══ */
-    internal class MoneyResponse
+    public class MoneyResponse
     {
         [JsonPropertyName("t0")] public long T0 { get; set; }
         [JsonPropertyName("t1")] public long T1 { get; set; }
@@ -334,13 +333,13 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Portfolio Performance ═══ */
-    internal class PerformanceResponse
+    public class PerformanceResponse
     {
         [JsonPropertyName("items")]
         public List<PerformanceItem> Items { get; set; } = new();
     }
 
-    internal class PerformanceItem
+    public class PerformanceItem
     {
         [JsonPropertyName("symbolIsin")] public string? SymbolIsin { get; set; }
         [JsonPropertyName("symbolName")] public string? SymbolName { get; set; }
@@ -383,13 +382,13 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Trading Time ═══ */
-    internal class TradingTimeResponse
+    public class TradingTimeResponse
     {
         [JsonPropertyName("items")]
         public List<TradingTimeItem> Items { get; set; } = new();
     }
 
-    internal class TradingTimeItem
+    public class TradingTimeItem
     {
         [JsonPropertyName("title")] public List<string>? Title { get; set; }
         [JsonPropertyName("days")] public List<int>? Days { get; set; }
@@ -403,7 +402,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Client App Setting ═══ */
-    internal class ClientAppSettingResponse
+    public class ClientAppSettingResponse
     {
         [JsonPropertyName("lightTheme")] public bool LightTheme { get; set; }
         [JsonPropertyName("buyQuantity")] public long BuyQuantity { get; set; }
@@ -438,7 +437,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("showAsLastPeriodAsset")] public bool ShowAsLastPeriodAsset { get; set; }
     }
 
-    internal class IndustryPositiveNegativeResponse
+    public class IndustryPositiveNegativeResponse
     {
         [JsonPropertyName("industryCode")] public string? IndustryCode { get; set; }
         [JsonPropertyName("industryName")] public string? IndustryName { get; set; }
@@ -446,7 +445,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("zeroCount")] public long ZeroCount { get; set; }
         [JsonPropertyName("positiveCount")] public long PositiveCount { get; set; }
     }
-    internal class TseIndexResponse
+    public class TseIndexResponse
     {
         [JsonPropertyName("dayOfEvent")] public string? DayOfEvent { get; set; }
         [JsonPropertyName("indexChanges")] public long IndexChanges { get; set; }
@@ -455,7 +454,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("symbolIsin")] public string? SymbolIsin { get; set; }
         [JsonPropertyName("symbolTitle")] public string? SymbolTitle { get; set; }
     }
-    internal class MarketWatchResponse
+    public class MarketWatchResponse
     {
         [JsonPropertyName("id")] public string? Id { get; set; }
         [JsonPropertyName("name")] public string? Name { get; set; }
@@ -466,21 +465,21 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("watchCategorySymbols")] public List<WatchSymbol>? WatchCategorySymbols { get; set; }
     }
 
-    internal class WatchSymbol
+    public class WatchSymbol
     {
         [JsonPropertyName("symbolIsin")] public string? SymbolIsin { get; set; }
     }
-    internal class MarketDataGraphQLResponse
+    public class MarketDataGraphQLResponse
     {
         [JsonPropertyName("data")] public MarketDataGraphQLData? Data { get; set; }
     }
 
-    internal class MarketDataGraphQLData
+    public class MarketDataGraphQLData
     {
         [JsonPropertyName("marketData")] public List<MarketDataGraphQLItem>? MarketData { get; set; }
     }
 
-    internal class MarketDataGraphQLItem
+    public class MarketDataGraphQLItem
     {
         [JsonPropertyName("symbolIsin")] public string? SymbolIsin { get; set; }
         [JsonPropertyName("stateCode")] public string? StateCode { get; set; }
@@ -510,19 +509,19 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Order Report (Sieve paged) ═══ */
-    internal class OrderReportResponse
+    public class OrderReportResponse
     {
         [JsonPropertyName("records")] public List<OrderReportRecord>? Records { get; set; }
         [JsonPropertyName("totalRecords")] public int TotalRecords { get; set; }
     }
 
-    internal class OrderReportRecord
+    public class OrderReportRecord
     {
         [JsonPropertyName("orderReport")] public OrderReportItem? OrderReport { get; set; }
         [JsonPropertyName("orderSources")] public List<OrderSourceItem>? OrderSources { get; set; }
     }
 
-    internal class OrderReportItem
+    public class OrderReportItem
     {
         [JsonPropertyName("createDateTime")] public string? CreateDateTime { get; set; }
         [JsonPropertyName("orderId")] public string? OrderId { get; set; }
@@ -550,7 +549,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("id")] public string? Id { get; set; }
     }
 
-    internal class OrderSourceItem
+    public class OrderSourceItem
     {
         [JsonPropertyName("actionType")] public int ActionType { get; set; }
         [JsonPropertyName("createDateTime")] public string? CreateDateTime { get; set; }
@@ -559,7 +558,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Sieve Request ═══ */
-    internal class SieveRequest
+    public class SieveRequest
     {
         [JsonPropertyName("page")] public int Page { get; set; }
         [JsonPropertyName("pageSize")] public int PageSize { get; set; }
@@ -567,20 +566,20 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("sort")] public SieveSort? Sort { get; set; }
     }
 
-    internal class SieveFilter
+    public class SieveFilter
     {
         [JsonPropertyName("column")] public string Column { get; set; } = "";
         [JsonPropertyName("operator")] public int Operator { get; set; }
         [JsonPropertyName("value")] public object Value { get; set; } = default!;
     }
 
-    internal class SieveSort
+    public class SieveSort
     {
         [JsonPropertyName("column")] public string Column { get; set; } = "";
         [JsonPropertyName("dir")] public int Dir { get; set; }
     }
 
-    internal class OrderReportRequest
+    public class OrderReportRequest
     {
         [JsonPropertyName("sieveModel")] public SieveRequest SieveModel { get; set; } = new();
         [JsonPropertyName("searchTadbir")] public bool SearchTadbir { get; set; } = true;
@@ -614,7 +613,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     ///   • 18 → canceled, no fill (0/30000)  ⚠️ توی هیچ فیلتری نیست
     ///   • 20 → full fill (1000/1000)
     /// </summary>
-    internal static class EasyTraderOrderStateMap
+    public static class EasyTraderOrderStateMap
     {
         /* ═══════════ SETS (طبق فیلترهای UI) ═══════════ */
 
@@ -657,27 +656,27 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         /// فقط برای stateهایی که با اطمینان می‌شناسیم مقدار برمی‌گردونه؛
         /// بقیه Unknown می‌مونن. برای دسته‌بندی دقیق‌تر از predicateها استفاده کن.
         /// </summary>
-        public static OrderStateKind ToKind(int state) => state switch
+        public static EasyTraderOrderStateKind ToKind(int state) => state switch
         {
             // ── خطاها (تأییدشده از فیلتر «خطا») ──
-            2 or 10 or 25 => OrderStateKind.Rejected,
-            11 => OrderStateKind.Rejected,  // ⚠️ هم توی active هم error
+            2 or 10 or 25 => EasyTraderOrderStateKind.Rejected,
+            11 => EasyTraderOrderStateKind.Rejected,  // ⚠️ هم توی active هم error
 
             // ── نیمه‌خورده (response sample: 533/1800) ──
-            14 => OrderStateKind.PartiallyExecuted,
+            14 => EasyTraderOrderStateKind.PartiallyExecuted,
 
             // ── کامل خورده (response sample: 1000/1000) ──
-            20 => OrderStateKind.FullyExecuted,
+            20 => EasyTraderOrderStateKind.FullyExecuted,
 
             // ── کنسل (response sample: 0/30000) ──
             // ⚠️ توی فیلتر «حذف شده» نیست — احتمالاً کنسلی از نوع دیگه
-            18 => OrderStateKind.Canceled,
+            18 => EasyTraderOrderStateKind.Canceled,
 
             // ── بقیه: بدون مستندات، حدس نمی‌زنیم ──
-            _ => OrderStateKind.Unknown,
+            _ => EasyTraderOrderStateKind.Unknown,
         };
     }
-    internal class OrderTradeItem
+    public class OrderTradeItem
     {
         [JsonPropertyName("isr")] public string? Isr { get; set; }
         [JsonPropertyName("tradeNumber")] public long TradeNumber { get; set; }
@@ -700,7 +699,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("id")] public string? Id { get; set; }
     }
     /* ═══ Payment Account Balances ═══ */
-    internal class PaymentAccountBalancesResponse
+    public class PaymentAccountBalancesResponse
     {
         [JsonPropertyName("totalBalance")] public long TotalBalance { get; set; }
         [JsonPropertyName("isCustomerConstraintRestricted")] public bool IsCustomerConstraintRestricted { get; set; }
@@ -708,7 +707,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("accountBalancePerDate")] public List<AccountBalancePerDateItem>? AccountBalancePerDate { get; set; }
     }
 
-    internal class BankAccountItem
+    public class BankAccountItem
     {
         [JsonPropertyName("id")] public long Id { get; set; }
         [JsonPropertyName("accountNumber")] public string? AccountNumber { get; set; }
@@ -723,7 +722,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("status")] public string? Status { get; set; }
     }
 
-    internal class AccountBalancePerDateItem
+    public class AccountBalancePerDateItem
     {
         [JsonPropertyName("effectiveDate")] public int EffectiveDate { get; set; }
         [JsonPropertyName("performDate")] public string? PerformDate { get; set; }
@@ -735,7 +734,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("accountBalancePerBank")] public List<AccountBalancePerBankItem>? AccountBalancePerBank { get; set; }
     }
 
-    internal class AccountBalancePerBankItem
+    public class AccountBalancePerBankItem
     {
         [JsonPropertyName("bankAccountId")] public long BankAccountId { get; set; }
         [JsonPropertyName("isBankAvailable")] public bool IsBankAvailable { get; set; }
@@ -747,7 +746,7 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
     }
 
     /* ═══ Payments (Withdrawal Request) ═══ */
-    internal class WithdrawalRequestPayload
+    public class WithdrawalRequestPayload
     {
         [JsonPropertyName("bankAccountId")] public long BankAccountId { get; set; }
         [JsonPropertyName("iban")] public string Iban { get; set; } = "";
@@ -756,18 +755,18 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
         [JsonPropertyName("isImeRequest")] public bool IsImeRequest { get; set; }
     }
     /* ═══ Fundamental Analysis ═══ */
-    internal class FundamentalAnalysisResponse
+    public class FundamentalAnalysisResponse
     {
         [JsonPropertyName("total")] public FundamentalTotal? Total { get; set; }
         [JsonPropertyName("item")] public List<FundamentalItem>? Item { get; set; }
     }
 
-    internal class FundamentalTotal
+    public class FundamentalTotal
     {
         [JsonPropertyName("score")] public double Score { get; set; }
     }
 
-    internal class FundamentalItem
+    public class FundamentalItem
     {
         [JsonPropertyName("title")] public string? Title { get; set; }
         [JsonPropertyName("score")] public double Score { get; set; }

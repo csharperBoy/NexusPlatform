@@ -1,9 +1,9 @@
-﻿namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
+﻿namespace Trader.ExternalApiClient.EasyTrader
 {
     /// <summary>
     /// استثنای سفارش که timings رو حمل می‌کنه تا در PlanExecutor قابل استفاده باشه.
     /// </summary>
-    internal class EasyTraderOrderException : EasyTraderException
+    public class EasyTraderOrderException : EasyTraderException
     {
         public long FireAtUnixMs { get; }
         public long ReceivedAtUnixMs { get; }

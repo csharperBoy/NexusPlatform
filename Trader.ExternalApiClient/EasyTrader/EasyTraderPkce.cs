@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Trader.ExternalApiClient.EasyTrader
 {
-    internal static class EasyTraderPkce
+    public static class EasyTraderPkce
     {
         public static string GenerateVerifier()
         {

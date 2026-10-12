@@ -1,6 +1,6 @@
-﻿namespace Trader.Infrastructure.Brokers.EasyTrader.Internal
+﻿namespace Trader.ExternalApiClient.EasyTrader
 {
-    internal class EasyTraderException : Exception
+    public class EasyTraderException : Exception
     {
         public int? HttpStatus { get; }
         public string? ResponseBody { get; }
