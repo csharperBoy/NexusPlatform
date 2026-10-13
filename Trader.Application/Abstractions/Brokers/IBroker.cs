@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Trader.Domain.Enums;
+﻿using Trader.Domain.Enums;
 
 namespace Trader.Application.Abstractions.Brokers
 {

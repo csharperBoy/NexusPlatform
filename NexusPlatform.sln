@@ -291,6 +291,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AkSteel", "AkSteel", "{AE11
 		nginx.Aksteel.Backend.conf = nginx.Aksteel.Backend.conf
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Codes", "Codes", "{7871AA8B-6FF5-443C-8159-C9A2C3857D8B}"
+	ProjectSection(SolutionItems) = preProject
+		Code.md = Code.md
+		OthersModuleCodes.md = OthersModuleCodes.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -802,6 +808,7 @@ Global
 		{85B8E4EC-89B5-4130-B696-0D60A1BD686A} = {770C0E81-5990-4A8A-AD18-30C8E7D01643}
 		{770C0E81-5990-4A8A-AD18-30C8E7D01643} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 		{AE115F48-F773-4E27-9C21-D5C8E2C51CA7} = {770C0E81-5990-4A8A-AD18-30C8E7D01643}
+		{7871AA8B-6FF5-443C-8159-C9A2C3857D8B} = {93E86E81-5D93-4F96-AAB1-B97CB3287288}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}

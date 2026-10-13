@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Trader.Application.Dtos.Account;
-using Trader.Application.Dtos.Finance;
+﻿using Trader.Application.Dtos.Account;
 using Trader.ExternalApiClient;
 
 namespace Trader.Application.Abstractions.Brokers.Queries

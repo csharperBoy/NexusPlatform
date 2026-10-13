@@ -8,7 +8,7 @@
 #Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned # دائم
 
 param (
-    [string]$RootPath = "D:\868\Projects\NexusPlatform",
+    [string]$RootPath = "D:\Project\NexusPlatform",
     [string]$OutputPath = "$RootPath\DirectoryTree.txt"
 )
 
