@@ -1,5 +1,6 @@
 ﻿using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Dtos.Finance;
 using Trader.ExternalApiClient;
 
@@ -8,7 +9,7 @@ namespace Trader.Application.Brokers;
 public interface ISafeWithdrawalService
 {
     Task<WithdrawalResultDto> WithdrawAsync(
-        IBrokerClient broker,
+        IBrokerFinanceCommands broker,
         ExternalSystemSession session,
         WithdrawalRequestDto request,
         CancellationToken ct = default);
@@ -24,7 +25,7 @@ public class SafeWithdrawalService : ISafeWithdrawalService
     }
 
     public async Task<WithdrawalResultDto> WithdrawAsync(
-        IBrokerClient broker,
+        IBrokerFinanceCommands broker,
         ExternalSystemSession session,
         WithdrawalRequestDto request,
         CancellationToken ct = default)

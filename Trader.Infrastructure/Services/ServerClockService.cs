@@ -17,7 +17,6 @@ namespace Trader.Infrastructure.Services
     public class ServerClockService : IServerClockCommandService, IServerClockQueryService
     {
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IBrokerClientFactory _brokerFactory;
         private readonly ILogger<ServerClockService> _logger;
 
         private readonly object _lock = new();
@@ -33,11 +32,9 @@ namespace Trader.Infrastructure.Services
 
         public ServerClockService(
             IServiceScopeFactory scopeFactory,
-            IBrokerClientFactory brokerFactory,
             ILogger<ServerClockService> logger)
         {
             _scopeFactory = scopeFactory;
-            _brokerFactory = brokerFactory;
             _logger = logger;
         }
 
@@ -128,12 +125,14 @@ namespace Trader.Infrastructure.Services
             }
         }
 
-        private async Task<(IBrokerClient Client, ExternalSystemSession Session)>
+        private async Task<(IBrokerSessionManager Client, ExternalSystemSession Session)>
             GetDefaultSessionAsync()
         {
             using var scope = _scopeFactory.CreateScope();
             var accountRepo = scope.ServiceProvider
                 .GetRequiredService<IRepository<TraderDbContext, TraderAccount, Guid>>();
+            var _brokerFactory = scope.ServiceProvider
+                .GetRequiredService<IBrokerClientFactory>();
             var protector = scope.ServiceProvider
                 .GetRequiredService<ISecretProtector>();
 
@@ -146,11 +145,11 @@ namespace Trader.Infrastructure.Services
                 ?? throw new Exception(
                     "No account with valid session available.");
 
-            var brokerClient = _brokerFactory.GetClient(account.Broker);
+            var brokerSessionManager = _brokerFactory.Get<IBrokerSessionManager>(account.Broker);
             var sessionJson = protector.Unprotect(account.EncryptedSession!);
-            var session = brokerClient.DeserializeSession(sessionJson);
+            var session = brokerSessionManager.DeserializeSession(sessionJson);
 
-            return (brokerClient, session);
+            return (brokerSessionManager, session);
         }
 
         private static long ComputeMedian(List<long> sorted)

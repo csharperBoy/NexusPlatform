@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Scheduler.Infrastructure.Jobs;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Commands;
+using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Application.Scheduler.Services;
@@ -251,14 +253,16 @@ namespace Trader.Infrastructure.Scheduler
                 return null;
             }
 
-            var brokerClient = _brokerFactory.GetClient(account.Broker);
+            var brokerTradingClient = _brokerFactory.Get<IBrokerTradingCommands>(account.Broker);
+            var brokerSessionManager = _brokerFactory.Get<IBrokerSessionManager>(account.Broker);
+            var brokerMarketDataReader = _brokerFactory.Get<IBrokerMarketDataReader>(account.Broker);
             var sessionJson = _protector.Unprotect(account.EncryptedSession!);
-            var session = brokerClient.DeserializeSession(sessionJson);
+            var session = brokerSessionManager.DeserializeSession(sessionJson);
 
             SymbolMarketDataDto marketData;
             try
             {
-                marketData = await brokerClient.GetSymbolInfoAsync(
+                marketData = await brokerMarketDataReader.GetSymbolInfoAsync(
                     session, order.SymbolIsin, ct);
             }
             catch (Exception ex)
@@ -304,7 +308,7 @@ namespace Trader.Infrastructure.Scheduler
                 return null;
             }
 
-            var httpRequest = brokerClient.BuildOrderRequest(
+            var httpRequest = brokerTradingClient.BuildOrderRequest(
                 session,
                 order.SymbolIsin,
                 price.Value,
@@ -315,7 +319,7 @@ namespace Trader.Infrastructure.Scheduler
             {
                 Order = order,
                 Account = account,
-                BrokerClient = brokerClient,
+                BrokerClient = brokerTradingClient,
                 Session = session,
                 SymbolIsin = order.SymbolIsin,
                 Price = price.Value,
@@ -527,7 +531,7 @@ namespace Trader.Infrastructure.Scheduler
         {
             public ScheduledOrder Order { get; set; } = default!;
             public TraderAccount Account { get; set; } = default!;
-            public IBrokerClient BrokerClient { get; set; } = default!;
+            public IBrokerTradingCommands BrokerClient { get; set; } = default!;
             public ExternalSystemSession Session { get; set; } = default!;
             public string SymbolIsin { get; set; } = default!;
             public long Price { get; set; }

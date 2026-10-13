@@ -66,12 +66,12 @@ namespace Trader.Infrastructure.DependencyInjection
             /* ═══════════ Broker Clients ═══════════ */
             services.Trader_ExternalApiClient_DependencyInjection(configuration);
 
-            services.AddScoped<EasyTraderBrokerClient>();
+            //services.AddScoped<EasyTraderBrokerClient>();
 
-            services.AddBroker<EasyTraderBrokerClient>(BrokerType.EasyTrader);
+            services.AddEasyTraderBroker();
             //services.AddBroker<AgahBrokerClient>(BrokerType.Agah);
 
-            services.AddSingleton<IBrokerClientFactory, BrokerClientFactory>();
+            services.AddScoped<IBrokerClientFactory, BrokerClientFactory>();
 
             /* ═══════════ Services ═══════════ */
 

@@ -14,3 +14,16 @@ public class FundamentalCategoryScoreDto
     /// <summary>امتیاز ۰ تا ۱۰.</summary>
     public double Score { get; set; }
 }
+
+public static class FundamentalCategories
+{
+    public const string Profitability = "سودآوری";
+    public const string RelativeValuation = "ارزش گذاری نسبی";
+    public const string FinancialRisk = "ریسک مالی";
+    public const string Efficiency = "کارایی";
+    public const string MonthlySales = "فروش ماهانه";
+    public const string MarketRisk = "ریسک بازار";
+    public const string Momentum = "مومنتوم";
+    public const string ShareholdersPerformance = "عملکرد سهامداران";
+    public const string Liquidity = "نقد شوندگی";
+}

@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Security;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -96,7 +97,7 @@ namespace Trader.Infrastructure.Services
             var account = await _accountRepository.GetByIdAsync(id)
                 ?? throw new Exception($"Account {id} not found");
 
-            var brokerClient = _brokerFactory.GetClient(account.Broker);
+            var brokerSessionClient = _brokerFactory.Get<IBrokerSessionManager>(account.Broker);
             var password = _protector.Unprotect(account.EncryptedPassword);
 
             _logger.LogInformation(
@@ -104,10 +105,10 @@ namespace Trader.Infrastructure.Services
                 id, account.Username, account.Broker);
 
             /* ─── Login via broker (تمام مراحل OIDC/activation داخلش) ─── */
-            var session = await brokerClient.LoginAsync(account.Username, password);
+            var session = await brokerSessionClient.LoginAsync(account.Username, password);
 
             /* ─── Serialize + Encrypt session ─── */
-            var sessionJson = brokerClient.SerializeSession(session);
+            var sessionJson = brokerSessionClient.SerializeSession(session);
             var encryptedSession = _protector.Protect(sessionJson);
 
             account.SetSession(encryptedSession, session.ExpiresAt);

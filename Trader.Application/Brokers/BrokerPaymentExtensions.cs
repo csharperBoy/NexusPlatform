@@ -1,5 +1,6 @@
 ﻿using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.ExternalApiClient;
 
 namespace Trader.Application.Brokers;
@@ -11,7 +12,7 @@ public static class BrokerPaymentExtensions
     /// ⚠️ یه درخواست اضافی HTTP می‌زنه — فقط وقتی که واقعاً نیاز به تأیید داری استفاده کن.
     /// </summary>
     public static async Task<bool> CancelAndConfirmAsync(
-        this IBrokerClient broker,
+        this IBrokerFinanceCommands broker,
         ExternalSystemSession session,
         long paymentId,
         CancellationToken ct = default)

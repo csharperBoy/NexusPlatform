@@ -2,9 +2,11 @@
 
 namespace Trader.Application.Abstractions.Brokers
 {
+    /// <summary>
+    /// Resolve یک capability بروکر بر اساس نوع بروکر در زمان اجرا.
+    /// </summary>
     public interface IBrokerClientFactory
     {
-        IBrokerClient GetClient(BrokerType brokerType);
         T Get<T>(BrokerType brokerType) where T : class, IBroker;
     }
 }

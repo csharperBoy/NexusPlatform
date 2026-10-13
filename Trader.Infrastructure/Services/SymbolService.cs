@@ -3,6 +3,7 @@ using Core.Application.Abstractions.Security;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
+using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Brokers;
 using Trader.Application.Dtos;
 using Trader.Domain.Entities;
@@ -146,13 +147,14 @@ namespace Trader.Infrastructure.Services
 
         public async Task<SymbolMarketDataDto> GetMarketInfoAsync(string symbolName)
         {
-            var (brokerClient, session) = await GetDefaultSessionAsync();
+            var(account, session) = await GetDefaultSessionAsync();
 
+            var brokerMarketClient = _brokerFactory.Get<IBrokerMarketDataReader>(account.Broker);
             _logger.LogDebug(
                 "Fetching market info for {Symbol} via {Broker}",
-                symbolName, brokerClient.BrokerType);
+                symbolName, brokerMarketClient.BrokerType);
 
-            return await brokerClient.GetSymbolInfoAsync(session, symbolName);
+            return await brokerMarketClient.GetSymbolInfoAsync(session, symbolName);
         }
 
         /* ═══════════════════ Helpers ═══════════════════ */
@@ -160,7 +162,7 @@ namespace Trader.Infrastructure.Services
         /// <summary>
         /// اولین حساب با session معتبر رو پیدا می‌کنه و session رو decrypt می‌کنه.
         /// </summary>
-        private async Task<(IBrokerClient Client, ExternalSystemSession Session)> GetDefaultSessionAsync()
+        private async Task<(TraderAccount account, ExternalSystemSession session)> GetDefaultSessionAsync()
         {
             var accounts = await _accountRepository.GetAllAsync();
 
@@ -171,11 +173,11 @@ namespace Trader.Infrastructure.Services
                 ?? throw new Exception(
                     "No account with valid session available. Please login first.");
 
-            var brokerClient = _brokerFactory.GetClient(account.Broker);
+            var brokerSessionManager = _brokerFactory.Get<IBrokerSessionManager>(account.Broker);
             var sessionJson = _protector.Unprotect(account.EncryptedSession!);
-            var session = brokerClient.DeserializeSession(sessionJson);
+            var session = brokerSessionManager.DeserializeSession(sessionJson);
 
-            return (brokerClient, session);
+            return (account, session);
         }
     }
 }
