@@ -8,6 +8,8 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
+using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Scheduler;
@@ -22,7 +24,9 @@ using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
+using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Runtime;
+using Trader.Infrastructure.Runtime.Stages;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
 namespace Trader.Infrastructure.DependencyInjection
@@ -70,6 +74,21 @@ namespace Trader.Infrastructure.DependencyInjection
             
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
+
+            // ─── Session Cache (Singleton) ───
+            // TODO: When moving to multi-instance, replace with RedisBrokerSessionCache.
+            services.AddSingleton<IBrokerSessionCache, InMemoryBrokerSessionCache>();
+
+            // ─── Session Provider (Scoped چون ISecretProtector و UoW Scoped هستند) ───
+            services.AddScoped<IBrokerSessionProvider, BrokerSessionProvider>();
+
+            // ─── Market Data (existing) ───
+            services.AddSingleton<IMarketSnapshotStore, InMemoryMarketSnapshotStore>();
+            services.AddScoped<IMarketDataProvider, BrokerMarketDataProvider>();
+            services.AddScoped<IMarketDataProviderResolver, MarketDataProviderResolver>();
+
+            // ─── Runtime Stages ───
+            services.AddScoped<IMarketDataIngestionStage, MarketDataIngestionStage>();
             // ─── Runtime Singleton ───
             services.AddSingleton<IRunExecutionContextCache, RunExecutionContextCache>();
 

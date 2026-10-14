@@ -1,39 +1,49 @@
 ﻿namespace Trader.Application.Runtime;
 
 /// <summary>
-/// نمای لحظه‌ای یک Instrument برای Strategy.
-/// Immutable، مستقل از DTO کارگزاری. Stage 1 آن را می‌سازد.
+/// نمای لحظه‌ای یک Instrument برای Strategy. Immutable.
+/// Stage 1 آن را از DTO کارگزاری می‌سازد.
 /// </summary>
 public sealed record MarketSnapshot(
-    /// <summary>ISIN نماد — کلید اصلی در Cache.</summary>
+    // ─── Identity ───
     string Isin,
+    string? SymbolName,
 
-    /// <summary>نام نماد — برای Display در Logs.</summary>
-    string SymbolName,
+    // ─── Market State ───
+    /// <summary>کد وضعیت نماد (EasyTrader StateCode).</summary>
+    string StateCode,
 
-    /// <summary>آخرین قیمت معامله‌شده.</summary>
-    long LastPrice,
-
-    /// <summary>قیمت پایانی روز قبل.</summary>
-    long ClosePrice,
-
-    /// <summary>اولین قیمت معامله‌شده امروز.</summary>
-    long FirstPrice,
-
-    /// <summary>حداکثر قیمت مجاز امروز.</summary>
+    // ─── Price ───
+    long LastTradedPrice,
+    long ClosingPrice,
+    long PreviousDayClosingPrice,
+    double PriceVar,                  // درصد تغییر
+    long FirstTradedPrice,
+    long HighPrice,
+    long LowPrice,
     long HighAllowedPrice,
-
-    /// <summary>حداقل قیمت مجاز امروز.</summary>
     long LowAllowedPrice,
+    long PriceTickSize,
 
-    /// <summary>حجم معاملات امروز (اگر موجود).</summary>
-    long Volume,
+    // ─── Order Book (Top of Book) ───
+    long BestBuyPrice,
+    long BestBuyQuantity,
+    long BestSellPrice,
+    long BestSellQuantity,
 
-    /// <summary>زمان Snapshot در سرور ما (UTC).</summary>
+    // ─── Pressure ───
+    decimal BuyRatio,
+    decimal SellRatio,
+    long MinValidBuyVolume,
+    long MaxValidBuyVolume,
+    long MinValidSellVolume,
+    long MaxValidSellVolume,
+
+    // ─── Trade Stats ───
+    long TotalTradeValue,
+    long TotalNumberOfTrades,
+    long TotalNumberOfSharesTraded,
+
+    // ─── Meta ───
     DateTime CapturedAt,
-
-    /// <summary>منبع داده — BrokerType یا نام Provider.</summary>
-    string Source,
-
-    /// <summary>فیلدهای اضافی مخصوص هر Broker — برای Strategyهای خاص.</summary>
-    IReadOnlyDictionary<string, object?>? Extra = null);
+    string Source);
