@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Dtos.TradingRuns;
 using Trader.Application.Specifications.TradingRuns;
 using Trader.Domain.Entities;
@@ -12,13 +13,16 @@ namespace Trader.Infrastructure.Services;
 public class TradingRunService : ITradingRunCommandService, ITradingRunQueryService
 {
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
+    private readonly ITradingRunManager _runManager;
     private readonly ILogger<TradingRunService> _logger;
 
     public TradingRunService(
         ITraderUnitOfWork<TraderDbContext> uow,
+        ITradingRunManager runManager,
         ILogger<TradingRunService> logger)
     {
         _uow = uow;
+        _runManager = runManager;
         _logger = logger;
     }
 
@@ -26,26 +30,20 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
 
     public async Task<Guid> CreateAsync(CreateTradingRunModel model)
     {
-        var capitalAllocation = BuildCapitalAllocation(model.Settings);
-        var stopLoss = BuildStopLoss(model.Settings);
-        var takeProfit = BuildTakeProfit(model.Settings);
-
-        var symbols = model.Symbols.Select(s =>
-            (s.Isin, new SymbolAllocation(s.AllocationPercentage)));
-
         var run = TradingRun.Create(
             model.Name,
-            ownerPersonId: Guid.Empty, // توسط IRowLevelSecurityProcessor.SetOwnerDefaults پر می‌شود
+            ownerPersonId: Guid.Empty,
             strategyKey: model.StrategyKey,
             strategyConfigJson: model.StrategyConfigJson,
             timeFrame: (TimeFrame)model.PrimaryTimeFrame,
-            capitalAllocation: capitalAllocation,
-            stopLoss: stopLoss,
-            takeProfit: takeProfit,
+            capitalAllocation: BuildCapitalAllocation(model.Settings),
+            stopLoss: BuildStopLoss(model.Settings),
+            takeProfit: BuildTakeProfit(model.Settings),
             defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
             onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
             onStop: (StopRunBehavior)model.Settings.OnStop,
-            symbols: symbols,
+            symbols: model.Symbols.Select(s =>
+                (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
             accountIds: model.AccountIds);
 
         await _uow.TradingRuns.AddAsync(run);
@@ -76,7 +74,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
             (MarketCloseBehavior)model.Settings.OnMarketClose,
             (StopRunBehavior)model.Settings.OnStop);
 
-        // ─── Sync Symbols ───
+        // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
         foreach (var existing in run.Symbols.ToList())
         {
@@ -92,7 +90,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
                 run.UpdateSymbolAllocation(s.Isin, new SymbolAllocation(s.AllocationPercentage));
         }
 
-        // ─── Sync Accounts ───
+        // Sync Accounts
         var incomingAccountIds = model.AccountIds.ToHashSet();
         foreach (var existing in run.Accounts.ToList())
         {
@@ -104,6 +102,12 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
 
         await _uow.TradingRuns.UpdateAsync(run);
         await _uow.SaveChangesAsync();
+
+        // اگر Run فعال است، Context را Refresh کن
+        if (_runManager.IsRunning(id))
+        {
+            await _runManager.StartAsync(id); // Idempotent → Refresh
+        }
 
         _logger.LogInformation("Updated TradingRun {Id}", id);
     }
@@ -128,16 +132,35 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
         var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec)
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 
-        run.Start();
+        run.Start(); // State → Running + DomainEvent
 
         await _uow.TradingRuns.UpdateAsync(run);
-        await _uow.SaveChangesAsync();
+        await _uow.SaveChangesAsync(); // DB Commit + Outbox
+
+        try
+        {
+            await _runManager.StartAsync(id); // Runtime Activate — Idempotent
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Runtime activation failed for TradingRun {Id}", id);
+
+            run.MarkFaulted($"Runtime activation failed: {ex.Message}");
+            await _uow.TradingRuns.UpdateAsync(run);
+            await _uow.SaveChangesAsync();
+
+            throw;
+        }
 
         _logger.LogInformation("Started TradingRun {Id}", id);
     }
 
     public async Task StopAsync(Guid id, StopRunBehavior behavior)
     {
+        // ۱. Runtime را متوقف کن تا دیگر Tick نزند
+        await _runManager.StopAsync(id, behavior);
+
+        // ۲. DB را به‌روز کن
         var run = await _uow.TradingRuns.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 

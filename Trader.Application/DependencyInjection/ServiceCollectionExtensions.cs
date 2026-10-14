@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using Trader.Application.Abstractions.Strategies;
+using Trader.Application.Strategies;
 
 namespace Trader.Application.DependencyInjection
 {

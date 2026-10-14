@@ -1,10 +1,14 @@
-﻿namespace Trader.Domain.ValueObjects;
+﻿using Core.Domain.Common;
 
-/// <summary>مبلغ پول با ارز. readonly record struct برای Performance در محاسبات.</summary>
-public readonly record struct Money
+namespace Trader.Domain.ValueObjects;
+
+/// <summary>مبلغ پول با ارز. Class است چون EF Core OwnsOne روی struct کار نمی‌کند.</summary>
+public sealed class Money : ValueObject
 {
-    public decimal Amount { get; }
-    public string Currency { get; }
+    public decimal Amount { get; private set; }
+    public string Currency { get; private set; } = "IRR";
+
+    private Money() { } // EF
 
     public Money(decimal amount, string currency = "IRR")
     {
@@ -44,6 +48,12 @@ public readonly record struct Money
         if (Currency != other.Currency)
             throw new InvalidOperationException(
                 $"Currency mismatch: {Currency} vs {other.Currency}");
+    }
+
+    protected override IEnumerable<object?> GetEqualityComponents()
+    {
+        yield return Amount;
+        yield return Currency;
     }
 
     public override string ToString() => $"{Amount:N0} {Currency}";

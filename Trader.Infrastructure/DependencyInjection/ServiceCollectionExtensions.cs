@@ -9,9 +9,12 @@ using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Strategies;
+using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
 using Trader.Application.Services;
+using Trader.Application.Strategies;
+using Trader.Application.Strategies.Rsi;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.ExternalApiClient.DependencyInjection;
@@ -19,6 +22,7 @@ using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
+using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
 namespace Trader.Infrastructure.DependencyInjection
@@ -66,6 +70,16 @@ namespace Trader.Infrastructure.DependencyInjection
             
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
+            // ─── Runtime Singleton ───
+            services.AddSingleton<IRunExecutionContextCache, RunExecutionContextCache>();
+
+            // ─── Runtime Scoped ───
+            services.AddScoped<ITradingRunManager, TradingRunManager>();
+
+            // ─── Strategy Factory ───
+            services.AddSingleton<IStrategyFactory, StrategyFactory>();
+            services.AddSingleton<IStrategyRegistration, RsiStrategyRegistration>();
+            // هر Strategy جدید: services.AddSingleton<IStrategyRegistration, XxxStrategyRegistration>();
 
             // ─── Application Services ───
             services.AddScoped<IInstrumentCommandService, InstrumentService>();
@@ -76,11 +90,11 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ISignalQueryService, SignalQueryService>();
             services.AddScoped<IPositionQueryService, PositionQueryService>();
             services.AddScoped<IStrategyQueryService, StrategyQueryService>();
-           
+
             // ─── Unit of Work ───
             services.AddScoped<ITraderUnitOfWork<TraderDbContext>, TraderUnitOfWork>();
 
-            // ─── Repositories (Direct) ───
+            // ─── Repositories ───
             services.AddScoped<IRepository<TraderDbContext, Instrument, Guid>, EfRepository<TraderDbContext, Instrument, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, InstrumentOrderPreset, Guid>, EfRepository<TraderDbContext, InstrumentOrderPreset, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, TradingRun, Guid>, EfRepository<TraderDbContext, TradingRun, Guid>>();
@@ -97,7 +111,6 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ISpecificationRepository<OrderIntent, Guid>, EfSpecificationRepository<TraderDbContext, OrderIntent, Guid>>();
             services.AddScoped<ISpecificationRepository<BrokerOrder, Guid>, EfSpecificationRepository<TraderDbContext, BrokerOrder, Guid>>();
             services.AddScoped<ISpecificationRepository<Position, Guid>, EfSpecificationRepository<TraderDbContext, Position, Guid>>();
-         
             /* ═══════════ Broker Clients ═══════════ */
             services.Trader_ExternalApiClient_DependencyInjection(configuration);
 
