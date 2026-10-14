@@ -52,6 +52,14 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, ScheduledOrder, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, ExecutionLog, Guid>,
                 EfRepository<TraderDbContext, ExecutionLog, Guid>>();
+            // Direct Repos
+            services.AddScoped<IRepository<TraderDbContext, TradingRun, Guid>, EfRepository<TraderDbContext, TradingRun, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, Signal, Guid>, EfRepository<TraderDbContext, Signal, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, OrderIntent, Guid>, EfRepository<TraderDbContext, OrderIntent, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, BrokerOrder, Guid>, EfRepository<TraderDbContext, BrokerOrder, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, Position, Guid>, EfRepository<TraderDbContext, Position, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, Instrument, Guid>, EfRepository<TraderDbContext, Instrument, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, InstrumentOrderPreset, Guid>, EfRepository<TraderDbContext, InstrumentOrderPreset, Guid>>();
 
             services.AddScoped<ISpecificationRepository<TraderAccount, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderAccount, Guid>>();
@@ -60,9 +68,21 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ISpecificationRepository<SchedulePlan, Guid>,
                 EfSpecificationRepository<TraderDbContext, SchedulePlan, Guid>>();
 
+
+            
+            // Spec Repos
+            services.AddScoped<ISpecificationRepository<TradingRun, Guid>, EfSpecificationRepository<TraderDbContext, TradingRun, Guid>>();
+            services.AddScoped<ISpecificationRepository<Signal, Guid>, EfSpecificationRepository<TraderDbContext, Signal, Guid>>();
+            services.AddScoped<ISpecificationRepository<OrderIntent, Guid>, EfSpecificationRepository<TraderDbContext, OrderIntent, Guid>>();
+            services.AddScoped<ISpecificationRepository<BrokerOrder, Guid>, EfSpecificationRepository<TraderDbContext, BrokerOrder, Guid>>();
+            services.AddScoped<ISpecificationRepository<Position, Guid>, EfSpecificationRepository<TraderDbContext, Position, Guid>>();
+            services.AddScoped<ISpecificationRepository<ExecutionLog, Guid>, EfSpecificationRepository<TraderDbContext, ExecutionLog, Guid>>();
+
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
 
+            // ثبت UnitOfWork
+            services.AddScoped<ITraderUnitOfWork<TraderDbContext>, TraderUnitOfWork>();
             /* ═══════════ Broker Clients ═══════════ */
             services.Trader_ExternalApiClient_DependencyInjection(configuration);
 

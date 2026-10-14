@@ -1,0 +1,78 @@
+﻿using Core.Application.Abstractions;
+using Core.Application.Abstractions.Events;
+using Core.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Trader.Application.Abstractions;
+using Trader.Domain.Entities;
+using Trader.Infrastructure.Data;
+
+namespace Trader.Infrastructure.Data;
+
+public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork<TraderDbContext>
+{
+    public TraderUnitOfWork(
+        IRepository<TraderDbContext, TraderAccount, Guid> accounts,
+        IRepository<TraderDbContext, Instrument, Guid> instruments,
+        IRepository<TraderDbContext, InstrumentOrderPreset, Guid> instrumentOrderPresets,
+        IRepository<TraderDbContext, TradingRun, Guid> tradingRuns,
+        IRepository<TraderDbContext, Signal, Guid> signals,
+        IRepository<TraderDbContext, OrderIntent, Guid> orderIntents,
+        IRepository<TraderDbContext, BrokerOrder, Guid> brokerOrders,
+        IRepository<TraderDbContext, Position, Guid> positions,
+        IRepository<TraderDbContext, SchedulePlan, Guid> schedulePlans,
+        IRepository<TraderDbContext, ScheduledOrder, Guid> scheduledOrders,
+        IRepository<TraderDbContext, ExecutionLog, Guid> executionLogs,
+        ISpecificationRepository<TradingRun, Guid> tradingRunSpecs,
+        ISpecificationRepository<Signal, Guid> signalSpecs,
+        ISpecificationRepository<OrderIntent, Guid> orderIntentSpecs,
+        ISpecificationRepository<BrokerOrder, Guid> brokerOrderSpecs,
+        ISpecificationRepository<Position, Guid> positionSpecs,
+        ISpecificationRepository<TraderAccount, Guid> accountSpecs,
+        ISpecificationRepository<ExecutionLog, Guid> executionLogSpecs,
+        TraderDbContext dbContext,
+        IOutboxService<TraderDbContext> outboxService,
+        ILogger<EfUnitOfWork<TraderDbContext>> logger)
+        : base(dbContext, outboxService, logger)
+    {
+        Accounts = accounts;
+        Instruments = instruments;
+        InstrumentOrderPresets = instrumentOrderPresets;
+        TradingRuns = tradingRuns;
+        Signals = signals;
+        OrderIntents = orderIntents;
+        BrokerOrders = brokerOrders;
+        Positions = positions;
+        SchedulePlans = schedulePlans;
+        ScheduledOrders = scheduledOrders;
+        ExecutionLogs = executionLogs;
+
+        TradingRunSpecs = tradingRunSpecs;
+        SignalSpecs = signalSpecs;
+        OrderIntentSpecs = orderIntentSpecs;
+        BrokerOrderSpecs = brokerOrderSpecs;
+        PositionSpecs = positionSpecs;
+        AccountSpecs = accountSpecs;
+        ExecutionLogSpecs = executionLogSpecs;
+    }
+
+    public IRepository<TraderDbContext, TraderAccount, Guid> Accounts { get; }
+    public IRepository<TraderDbContext, Instrument, Guid> Instruments { get; }
+    public IRepository<TraderDbContext, InstrumentOrderPreset, Guid> InstrumentOrderPresets { get; }
+    public IRepository<TraderDbContext, TradingRun, Guid> TradingRuns { get; }
+    public IRepository<TraderDbContext, Signal, Guid> Signals { get; }
+    public IRepository<TraderDbContext, OrderIntent, Guid> OrderIntents { get; }
+    public IRepository<TraderDbContext, BrokerOrder, Guid> BrokerOrders { get; }
+    public IRepository<TraderDbContext, Position, Guid> Positions { get; }
+    public IRepository<TraderDbContext, SchedulePlan, Guid> SchedulePlans { get; }
+    public IRepository<TraderDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
+    public IRepository<TraderDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
+
+    public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
+    public ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
+    public ISpecificationRepository<OrderIntent, Guid> OrderIntentSpecs { get; }
+    public ISpecificationRepository<BrokerOrder, Guid> BrokerOrderSpecs { get; }
+    public ISpecificationRepository<Position, Guid> PositionSpecs { get; }
+    public ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
+    public ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
+}
