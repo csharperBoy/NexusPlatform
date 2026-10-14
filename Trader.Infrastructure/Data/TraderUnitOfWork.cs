@@ -27,7 +27,9 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         ISpecificationRepository<Signal, Guid> signalSpecs,
         ISpecificationRepository<OrderIntent, Guid> orderIntentSpecs,
         ISpecificationRepository<BrokerOrder, Guid> brokerOrderSpecs,
-        ISpecificationRepository<Position, Guid> positionSpecs,
+        ISpecificationRepository<Position, Guid> positionSpecs, 
+        ISpecificationRepository<Instrument, Guid> instrumentSpecs,
+        ISpecificationRepository<InstrumentOrderPreset, Guid> instrumentOrderPresetSpecs,
         ISpecificationRepository<TraderAccount, Guid> accountSpecs,
         ISpecificationRepository<ExecutionLog, Guid> executionLogSpecs,
         TraderDbContext dbContext,
@@ -51,6 +53,8 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         SignalSpecs = signalSpecs;
         OrderIntentSpecs = orderIntentSpecs;
         BrokerOrderSpecs = brokerOrderSpecs;
+        InstrumentSpecs = instrumentSpecs;
+        InstrumentOrderPresetSpecs = instrumentOrderPresetSpecs;
         PositionSpecs = positionSpecs;
         AccountSpecs = accountSpecs;
         ExecutionLogSpecs = executionLogSpecs;
@@ -73,6 +77,8 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
     public ISpecificationRepository<OrderIntent, Guid> OrderIntentSpecs { get; }
     public ISpecificationRepository<BrokerOrder, Guid> BrokerOrderSpecs { get; }
     public ISpecificationRepository<Position, Guid> PositionSpecs { get; }
+    public ISpecificationRepository<Instrument, Guid> InstrumentSpecs { get; }
+    public ISpecificationRepository<InstrumentOrderPreset, Guid> InstrumentOrderPresetSpecs { get; }
     public ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
     public ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
 }

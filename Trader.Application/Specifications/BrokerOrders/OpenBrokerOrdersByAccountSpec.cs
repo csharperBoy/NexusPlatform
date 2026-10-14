@@ -1,15 +1,17 @@
 ﻿using Core.Domain.Specifications;
 using Trader.Domain.Entities;
+using Trader.Domain.Enums;
 
 namespace Trader.Application.Specifications.BrokerOrders;
 
 public sealed class OpenBrokerOrdersByAccountSpec : BaseSpecification<BrokerOrder>
 {
     public OpenBrokerOrdersByAccountSpec(Guid accountId)
-        : base(o => o.TraderAccountId == accountId)
+        : base(o => o.TraderAccountId == accountId
+                 && (o.State == OrderStateKind.Pending
+                  || o.State == OrderStateKind.Open
+                  || o.State == OrderStateKind.PartiallyExecuted))
     {
-        // فیلتر State در Service Layer اعمال می‌شود، چون OrderStateKind در پلتفرم شما
-        // مقادیر دقیقش متفاوت است. اینجا فقط Account فیلتر می‌کنیم.
         ApplyOrderByDescending(o => o.SubmittedAt);
     }
 }
