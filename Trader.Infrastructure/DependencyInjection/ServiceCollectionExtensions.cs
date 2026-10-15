@@ -77,6 +77,8 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
 
+            // ─── User Context Cache (Singleton) ───
+            services.AddSingleton<IUserContextCache, UserContextCache>();
             // ─── Signal Channel (Singleton) ───
             services.AddSingleton<ISignalChannel, SignalChannel>();
 

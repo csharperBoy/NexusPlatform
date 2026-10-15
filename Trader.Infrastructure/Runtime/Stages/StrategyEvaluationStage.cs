@@ -22,6 +22,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly UserDataContext _userContext;
     private readonly ILogger<StrategyEvaluationStage> _logger;
+    private readonly IUserContextCache _userContextCache;
 
     public StrategyEvaluationStage(
         IRunExecutionContextCache runCache,
@@ -50,11 +51,20 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         foreach (var ctx in contexts)
         {
-            // ─── تنظیم هویت کاربر برای این Run ───
-            // چون UserDataContext Scoped است و UserId پیش‌فرض Guid.Empty،
-            // باید قبل از هر عملیات DB با OwnerUserId آن Run پر شود.
-            _userContext.SetUser(ctx.OwnerUserId, null);
-
+            // ─── لود کامل User Context از Cache ───
+            try
+            {
+                var userCtx = await _userContextCache.GetOrLoadAsync(
+             ctx.OwnerUserId, ct);
+                _userContext.ApplyFrom(userCtx);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to load user context for run {RunId} owner={OwnerId}. Skipping run.",
+                    ctx.RunId, ctx.OwnerUserId);
+                continue;
+            }
             foreach (var symbol in ctx.Symbols)
             {
                 try

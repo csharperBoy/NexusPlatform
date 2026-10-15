@@ -5,6 +5,7 @@ using Core.Application.Abstractions.People;
 using Core.Application.Context;
 using Core.Application.Helper;
 using Core.Application.Provider;
+using Core.Domain.Enums;
 using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
 using System;
@@ -16,142 +17,129 @@ using System.Threading.Tasks;
 
 namespace Identity.Application.Provider
 {
+
     public class UserDataContextProvider : IUserDataContextProvider
     {
-        private readonly IPermissionPublicService _permissionService;
-        private readonly IHttpContextAccessor _httpContext;
         private readonly IUserPublicService _userService;
-        private readonly IPostPublicService _positionService;
-        private readonly IRolePublicService _roleService;
         private readonly IPersonPublicService _personService;
-        private readonly UserDataContext _userDataContext;
+        private readonly IRolePublicService _roleService;
         private readonly IEmploymentPublicService _employmentService;
+        private readonly IPostPublicService _positionService;
+        private readonly IHttpContextAccessor _httpContext;
+        private readonly UserDataContext _userDataContext;
 
         public UserDataContextProvider(
-            IPermissionPublicService permissionService,
             UserDataContext userDataContext,
             IHttpContextAccessor httpContext,
             IUserPublicService userService,
-       IPersonPublicService personService,
-        IPostPublicService positionService,
+            IPersonPublicService personService,
             IRolePublicService roleService,
-             IEmploymentPublicService employmentService
-            )
+            IEmploymentPublicService employmentService,
+            IPostPublicService positionService)
         {
-            _permissionService = permissionService;
             _httpContext = httpContext;
-            _userService = userService;
-            _positionService = positionService;
-            _roleService = roleService;
             _userDataContext = userDataContext;
-            _employmentService = employmentService;
+            _userService = userService;
             _personService = personService;
+            _roleService = roleService;
+            _employmentService = employmentService;
+            _positionService = positionService;
         }
+        /// <summary>
+        /// Snapshot کامل کاربر جاری از HttpContext.
+        /// برای استفاده در Command/Query Handlerها.
+        /// </summary>
         public async Task<UserDataContext> GetAsync(CancellationToken ct)
         {
-            var userIdstr = _httpContext.HttpContext?.User?
-                       .FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            Guid userId = string.IsNullOrEmpty(userIdstr) ? Guid.Empty : Guid.Parse(userIdstr);
-            if (userId == Guid.Empty)
-                return new UserDataContext { Permissions = new HashSet<PermissionDto> { } };
-
-            Guid userPermissionAssigneeId = await _userService.GetUserPermissionAssigneeIdAsync(userId);
-
-
-
-            Guid? PartyId = null;
-            Guid? personId = null;
-            Guid? partyPermissionAssigneeId = null;
-            Guid? EmploymentId = null;
-            List<Guid>? PostId = null;
-            List<Guid>? PostPermissionAssigneeId = null;
-
-
-            List<Guid?>? OrgIds = null;
-            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.People))
-            {
-                PartyId = await _userService.GetPartyId(userId);
-                personId = await _personService.GetNaturalPersonIdAsync(PartyId);
-                partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
-            }
-            if (ModuleHelper.IsActive(Core.Domain.Enums.ModuleEnum.HR))
-            {
-                EmploymentId = await _employmentService.GetEmploymentId(personId);
-                PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
-                PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
-                OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
-            }
-            List<Guid> RoleIds = await _roleService.GetAllUserRolesId(userId);
-            List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
-
-
-
-            return new UserDataContext
-            {
-                UserId = userId,
-                UserPermissionAssigneeId = userPermissionAssigneeId,
-
-                PartyId = PartyId,
-                PartyPermissionAssigneeId = partyPermissionAssigneeId,
-
-                PostIds = PostId?.ToHashSet(),
-                PostPermissionAssigneeIds = PostPermissionAssigneeId?.ToHashSet(),
-
-
-                RoleIds = RoleIds.ToHashSet(),
-                RolePermissionAssigneeIds = RolePermissionAssigneeIds.ToHashSet(),
-
-                OrganizationUnitIds = OrgIds?.ToHashSet(),
-                Permissions = allPermission.ToHashSet(),
-            };
+            var userId = ExtractUserIdFromHttpContext();
+            return await BuildAsync(userId, ct);
         }
+        /* ═══════════════════ HTTP Flow ═══════════════════ */
 
         public async Task SetUserData(CancellationToken ct)
         {
-            var ctx = await GetAsync(ct);
+            var userId = ExtractUserIdFromHttpContext();
+            if (userId == Guid.Empty)
+            {
+                _userDataContext.ApplyFrom(UserDataContext.Empty());
+                return;
+            }
 
-            // مقداردهی Scoped Instance
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.UserId))!
-                .SetValue(_userDataContext, ctx.UserId);
+            await SetUserData(userId, ct);
+        }
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.UserPermissionAssigneeId))!
-                .SetValue(_userDataContext, ctx.UserPermissionAssigneeId);
+        /* ═══════════════════ Background Flow ═══════════════════ */
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PartyId))!
-                .SetValue(_userDataContext, ctx.PartyId);
+        public async Task SetUserData(Guid userId, CancellationToken ct)
+        {
+            var snapshot = await BuildAsync(userId, ct);
+            _userDataContext.ApplyFrom(snapshot);
+        }
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PartyPermissionAssigneeId))!
-                .SetValue(_userDataContext, ctx.PartyPermissionAssigneeId);
+        /* ═══════════════════ Snapshot Builder ═══════════════════ */
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.OrganizationUnitIds))!
-                .SetValue(_userDataContext, ctx.OrganizationUnitIds);
+        public async Task<UserDataContext> BuildAsync(Guid userId, CancellationToken ct)
+        {
+            if (userId == Guid.Empty)
+                return UserDataContext.Empty();
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PostIds))!
-                .SetValue(_userDataContext, ctx.PostIds);
+            var userPermissionAssigneeId =
+                await _userService.GetUserPermissionAssigneeIdAsync(userId);
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.PostPermissionAssigneeIds))!
-                .SetValue(_userDataContext, ctx.PostPermissionAssigneeIds);
+            Guid? partyId = null;
+            Guid? personId = null;
+            Guid? partyPermissionAssigneeId = null;
+            Guid? employmentId = null;
+            List<Guid>? postIds = null;
+            List<Guid>? postPermissionAssigneeIds = null;
+            List<Guid?>? orgIds = null;
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.RoleIds))!
-                .SetValue(_userDataContext, ctx.RoleIds);
+            if (ModuleHelper.IsActive(ModuleEnum.People))
+            {
+                partyId = await _userService.GetPartyId(userId);
+                personId = await _personService.GetNaturalPersonIdAsync(partyId);
+                partyPermissionAssigneeId =
+                    await _personService.GetPartyPermissionAssigneeIdAsync(partyId);
+            }
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.RolePermissionAssigneeIds))!
-                .SetValue(_userDataContext, ctx.RolePermissionAssigneeIds);
+            if (ModuleHelper.IsActive(ModuleEnum.HR))
+            {
+                employmentId = await _employmentService.GetEmploymentId(personId);
+                postIds = await _positionService.GetEmploymentPostsId(employmentId);
+                postPermissionAssigneeIds =
+                    await _positionService.GetEmploymentPostsPermissionAssigneeId(employmentId);
+                orgIds = await _positionService.GetEmploymentOrganizeId(employmentId);
+            }
 
-            typeof(UserDataContext)
-                .GetProperty(nameof(UserDataContext.Permissions))!
-                .SetValue(_userDataContext, ctx.Permissions);
+            var roleIds = await _roleService.GetAllUserRolesId(userId);
+            var rolePermissionAssigneeIds =
+                await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
+
+            var allPermissions = new List<PermissionDto>();
+
+            return UserDataContext.Create(
+                userId: userId,
+                userPermissionAssigneeId: userPermissionAssigneeId,
+                userName: null, // از Identity در صورت نیاز پر شود
+                partyId: partyId,
+                partyPermissionAssigneeId: partyPermissionAssigneeId,
+                organizationUnitIds: orgIds,
+                postIds: postIds,
+                postPermissionAssigneeIds: postPermissionAssigneeIds,
+                roleIds: roleIds,
+                rolePermissionAssigneeIds: rolePermissionAssigneeIds,
+                permissions: allPermissions);
+        }
+
+        /* ═══════════════════ Helpers ═══════════════════ */
+
+        private Guid ExtractUserIdFromHttpContext()
+        {
+            var userIdStr = _httpContext.HttpContext?.User?
+                .FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(userIdStr)) return Guid.Empty;
+            return Guid.TryParse(userIdStr, out var id) ? id : Guid.Empty;
         }
     }
-
 }

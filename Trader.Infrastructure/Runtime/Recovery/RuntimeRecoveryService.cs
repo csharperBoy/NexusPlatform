@@ -27,14 +27,14 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
         var spec = new RunningTradingRunsSpec();
         var runs = await _uow.TradingRunSpecs.ListBySpecAsync(spec);
 
-        if (runs.Count == 0)
+        if (runs.Count() == 0)
         {
             _logger.LogInformation("Runtime recovery: no running runs to restore.");
             return;
         }
 
         _logger.LogInformation(
-            "Runtime recovery: restoring {Count} running runs.", runs.Count);
+            "Runtime recovery: restoring {Count} running runs.", runs.Count());
 
         foreach (var run in runs)
         {

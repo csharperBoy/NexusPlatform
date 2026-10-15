@@ -11,7 +11,7 @@ namespace Core.Application.Abstractions.Identity.PublicService
     {
         Task<Guid?> GetPartyId(Guid userId);
         Task<Guid> GetUserId(string userName);
-        Task<UserDataContext> GetInitializerUserContext();
+        //Task<UserDataContext> GetInitializerUserContext();
         Task<string?> GetUserName(Guid userId);
         Task<Guid> GetUserPermissionAssigneeIdAsync(Guid userId);
     }

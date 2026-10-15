@@ -125,43 +125,43 @@ namespace Identity.Infrastructure.Services
             return result;
         }
 
-        public async Task<UserDataContext> GetInitializerUserContext()
-        {
-            var user = await _userManager.FindByNameAsync("intitializer");
+        //public async Task<UserDataContext> GetInitializerUserContext()
+        //{
+        //    var user = await _userManager.FindByNameAsync("intitializer");
 
-            if (user == null)
-            {
-                throw new Exception($"user with name intitializer not found.");
-            }
+        //    if (user == null)
+        //    {
+        //        throw new Exception($"user with name intitializer not found.");
+        //    }
             
 
-            Guid? PartyId = await GetPartyId(user.Id);
-            Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
-            Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
-            Guid userPermissionAssigneeId = await GetUserPermissionAssigneeIdAsync(user.Id);
-            Guid? EmploymentId = await _employmentService.GetEmploymentId(personId);
-            //List<Guid>? PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
-            List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
-            List<Guid?>? OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
+        //    Guid? PartyId = await GetPartyId(user.Id);
+        //    Guid? partyPermissionAssigneeId = await _personService.GetPartyPermissionAssigneeIdAsync(PartyId);
+        //    Guid? personId = await _personService.GetNaturalPersonIdAsync(PartyId);
+        //    Guid userPermissionAssigneeId = await GetUserPermissionAssigneeIdAsync(user.Id);
+        //    Guid? EmploymentId = await _employmentService.GetEmploymentId(personId);
+        //    //List<Guid>? PostId = await _positionService.GetEmploymentPostsId(EmploymentId);
+        //    List<Guid>? PostPermissionAssigneeId = await _positionService.GetEmploymentPostsPermissionAssigneeId(EmploymentId);
+        //    List<Guid?>? OrgIds = await _positionService.GetEmploymentOrganizeId(EmploymentId);
 
-            List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(user.Id);
-            var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
+        //    List<Guid> RolePermissionAssigneeIds = await _roleService.GetAllUserRolesPermissionAssigneeId(user.Id);
+        //    var allPermission = await _permissionService.GetUserAllPermissionsAsync(userPermissionAssigneeId, partyPermissionAssigneeId, PostPermissionAssigneeId, RolePermissionAssigneeIds);
 
-            return new UserDataContext
-            {
-                UserId = user.Id,
-                PartyId = partyPermissionAssigneeId,
-                PostIds = PostPermissionAssigneeId?.ToHashSet(),
-                OrganizationUnitIds = OrgIds?.ToHashSet(),
-                RoleIds = RolePermissionAssigneeIds.ToHashSet(),
-                Permissions = allPermission.ToHashSet(),
-                //userPermissions = userPermissions.ToHashSet(),
-                //rolePermissions = rolePermissions.ToHashSet(),
-                //personPermissions = personPermissions.ToHashSet(),
-                //positionPermissions = positionPermissions.ToHashSet(),
-            };
+        //    return new UserDataContext
+        //    {
+        //        UserId = user.Id,
+        //        PartyId = partyPermissionAssigneeId,
+        //        PostIds = PostPermissionAssigneeId?.ToHashSet(),
+        //        OrganizationUnitIds = OrgIds?.ToHashSet(),
+        //        RoleIds = RolePermissionAssigneeIds.ToHashSet(),
+        //        Permissions = allPermission.ToHashSet(),
+        //        //userPermissions = userPermissions.ToHashSet(),
+        //        //rolePermissions = rolePermissions.ToHashSet(),
+        //        //personPermissions = personPermissions.ToHashSet(),
+        //        //positionPermissions = positionPermissions.ToHashSet(),
+        //    };
 
-        }
+        //}
 
         public async Task<Guid> GetUserPermissionAssigneeIdAsync(Guid userId)
         {
