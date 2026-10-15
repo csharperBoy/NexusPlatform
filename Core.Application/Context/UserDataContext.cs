@@ -1,16 +1,9 @@
-﻿using Core.Application.Abstractions.Authorization;
-using Core.Domain.Enums;
-using Core.Shared.DTOs.Authorization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using Core.Shared.DTOs.Authorization;
 namespace Core.Application.Context
 {
     public sealed class UserDataContext
     {
+
         public Guid UserId { get; init; }
         public Guid UserPermissionAssigneeId { get; init; }
         public string UserName { get; init; }
@@ -22,12 +15,7 @@ namespace Core.Application.Context
         public IReadOnlySet<Guid>? RoleIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<Guid>? RolePermissionAssigneeIds { get; init; } = new HashSet<Guid>();
         public IReadOnlySet<PermissionDto> Permissions { get; init; } = new HashSet<PermissionDto>();
-        //public IReadOnlySet<PermissionDto> userPermissions { get; init; } = new HashSet<PermissionDto>();
-        //public IReadOnlySet<PermissionDto> rolePermissions { get; init; } = new HashSet<PermissionDto>();
-        //public IReadOnlySet<PermissionDto> personPermissions { get; init; } = new HashSet<PermissionDto>();
-        //public IReadOnlySet<PermissionDto> positionPermissions { get; init; } = new HashSet<PermissionDto>();
-
-    }
+           }
 
 
 }

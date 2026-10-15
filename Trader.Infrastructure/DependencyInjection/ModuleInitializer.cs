@@ -48,6 +48,7 @@ namespace Trader.Infrastructure.Data
             _serviceProvider = serviceProvider;
             _configuration = configuration;
             _logger = logger;
+
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)

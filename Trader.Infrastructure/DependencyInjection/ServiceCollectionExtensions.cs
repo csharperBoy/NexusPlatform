@@ -12,6 +12,7 @@ using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
+using Trader.Application.Runtime;
 using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
 using Trader.Application.Services;
@@ -26,6 +27,7 @@ using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Runtime;
+using Trader.Infrastructure.Runtime.Recovery;
 using Trader.Infrastructure.Runtime.Stages;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
@@ -75,6 +77,18 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
 
+            // ─── Signal Channel (Singleton) ───
+            services.AddSingleton<ISignalChannel, SignalChannel>();
+
+            // ─── Candle Cache (Singleton) ───
+            services.AddSingleton<ICandleCache, InMemoryCandleCache>();
+
+            // ─── Runtime Stages ───
+            services.AddScoped<IStrategyEvaluationStage, StrategyEvaluationStage>();
+            // ─── Options ───
+            services.Configure<TradingRuntimeOptions>(
+                configuration.GetSection(TradingRuntimeOptions.SectionName));
+
             // ─── Session Cache (Singleton) ───
             // TODO: When moving to multi-instance, replace with RedisBrokerSessionCache.
             services.AddSingleton<IBrokerSessionCache, InMemoryBrokerSessionCache>();
@@ -89,6 +103,11 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Runtime Stages ───
             services.AddScoped<IMarketDataIngestionStage, MarketDataIngestionStage>();
+            // ─── Runtime Recovery ───
+            services.AddScoped<IRuntimeRecoveryService, RuntimeRecoveryService>();
+
+            // ─── Runtime Worker (HostedService) ───
+            services.AddHostedService<TradingRuntimeWorker>();
             // ─── Runtime Singleton ───
             services.AddSingleton<IRunExecutionContextCache, RunExecutionContextCache>();
 

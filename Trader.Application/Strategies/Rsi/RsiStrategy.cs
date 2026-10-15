@@ -9,7 +9,7 @@ public sealed class RsiStrategy : IStrategy
     private readonly RsiStrategyConfig _config;
 
     public RsiStrategy(RsiStrategyConfig config) => _config = config;
-
+    public int RequiredCandleCount => _config.Period + 50;
     public string Key => RsiStrategyRegistration.KeyName;
     public string DisplayName => RsiStrategyRegistration.DisplayNameValue;
 
