@@ -207,15 +207,13 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
     }
 
     // ─────────────── Lifecycle ───────────────
-
     public void Start()
     {
         if (State == TradingRunState.Running)
             throw new InvalidOperationException("Run is already running.");
 
         if (State != TradingRunState.Ready && State != TradingRunState.Stopped)
-            throw new InvalidOperationException(
-                $"Cannot start run in state {State}.");
+            throw new InvalidOperationException($"Cannot start run in state {State}.");
 
         State = TradingRunState.Running;
         StartedAt = DateTime.UtcNow;

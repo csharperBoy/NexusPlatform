@@ -12,6 +12,7 @@ public sealed record RunRuntimeContext(
     Guid RunId,
     string Name,
     Guid OwnerPersonId,
+    Guid OwnerUserId,              // ← غیرnullable، در Start اعتبارسنجی شده
     string StrategyKey,
     IStrategy Strategy,
     StrategyConfig StrategyConfig,

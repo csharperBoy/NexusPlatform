@@ -27,34 +27,28 @@ public sealed class TradingRunManager : ITradingRunManager
         _strategyFactory = strategyFactory;
         _logger = logger;
     }
-
     public async Task StartAsync(Guid runId, CancellationToken ct = default)
     {
-        // Idempotent: اگر در Cache هست، Refresh کن
         if (_cache.Contains(runId))
-        {
             _logger.LogInformation(
                 "Run {RunId} already active; refreshing context.", runId);
-        }
 
         var spec = new TradingRunByIdWithChildrenSpec(runId);
-        var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec);
-
-        if (run is null)
-            throw new InvalidOperationException($"TradingRun {runId} not found.");
+        var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec)
+            ?? throw new InvalidOperationException($"TradingRun {runId} not found.");
 
         if (run.State != TradingRunState.Running)
             throw new InvalidOperationException(
                 $"Cannot activate run {runId}: state is {run.State}.");
 
-        // Deserialize Strategy Config
+        if (run.OwnerUserId is null || run.OwnerUserId == Guid.Empty)
+            throw new InvalidOperationException(
+                $"TradingRun {runId} has no OwnerUserId.");
+
         var config = _strategyFactory.DeserializeConfig(
             run.StrategyKey, run.StrategyConfigJson);
-
-        // Build Strategy instance
         var strategy = _strategyFactory.Create(run.StrategyKey, config);
 
-        // Build Symbol contexts
         var symbols = run.Symbols
             .Select(s => new RunSymbolContext(s.Isin, s.Allocation))
             .ToList();
@@ -67,6 +61,7 @@ public sealed class TradingRunManager : ITradingRunManager
             RunId: run.Id,
             Name: run.Name,
             OwnerPersonId: run.OwnerPersonId ?? Guid.Empty,
+            OwnerUserId: run.OwnerUserId.Value,
             StrategyKey: run.StrategyKey,
             Strategy: strategy,
             StrategyConfig: config,
@@ -83,8 +78,8 @@ public sealed class TradingRunManager : ITradingRunManager
         _cache.Set(context);
 
         _logger.LogInformation(
-            "TradingRun activated: {RunId} strategy={Strategy}",
-            runId, run.StrategyKey);
+            "TradingRun activated: {RunId} owner={Owner} strategy={Strategy}",
+            runId, run.OwnerUserId, run.StrategyKey);
     }
 
     public Task StopAsync(Guid runId, StopRunBehavior behavior, CancellationToken ct = default)

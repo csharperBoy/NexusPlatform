@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Core.Application.Context;
+using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Dtos.TradingRuns;
@@ -26,6 +27,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
         _logger = logger;
     }
 
+    
     /* ═══════════════════ Commands ═══════════════════ */
 
     public async Task<Guid> CreateAsync(CreateTradingRunModel model)
@@ -125,35 +127,38 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
 
         _logger.LogInformation("Deleted TradingRun {Id}", id);
     }
-
     public async Task StartAsync(Guid id)
     {
         var spec = new TradingRunByIdWithChildrenSpec(id);
         var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec)
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 
-        run.Start(); // State → Running + DomainEvent
+        // ─── اطمینان از وجود OwnerUserId ───
+        if (run.OwnerUserId is null || run.OwnerUserId == Guid.Empty)
+            throw new InvalidOperationException(
+                $"TradingRun {id} has no OwnerUserId; cannot start.");
 
+        run.Start();
         await _uow.TradingRuns.UpdateAsync(run);
-        await _uow.SaveChangesAsync(); // DB Commit + Outbox
+        await _uow.SaveChangesAsync();
 
         try
         {
-            await _runManager.StartAsync(id); // Runtime Activate — Idempotent
+            await _runManager.StartAsync(id);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Runtime activation failed for TradingRun {Id}", id);
-
             run.MarkFaulted($"Runtime activation failed: {ex.Message}");
             await _uow.TradingRuns.UpdateAsync(run);
             await _uow.SaveChangesAsync();
-
             throw;
         }
 
-        _logger.LogInformation("Started TradingRun {Id}", id);
+        _logger.LogInformation(
+            "Started TradingRun {Id} owner={OwnerId}", id, run.OwnerUserId);
     }
+
 
     public async Task StopAsync(Guid id, StopRunBehavior behavior)
     {

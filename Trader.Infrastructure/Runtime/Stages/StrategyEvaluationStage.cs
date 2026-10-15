@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Core.Application.Context;
+using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
@@ -19,6 +20,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
     private readonly ICandleCache _candleCache;
     private readonly ISignalChannel _signalChannel;
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
+    private readonly UserDataContext _userContext;
     private readonly ILogger<StrategyEvaluationStage> _logger;
 
     public StrategyEvaluationStage(
@@ -27,6 +29,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         ICandleCache candleCache,
         ISignalChannel signalChannel,
         ITraderUnitOfWork<TraderDbContext> uow,
+        UserDataContext userContext,
         ILogger<StrategyEvaluationStage> logger)
     {
         _runCache = runCache;
@@ -34,25 +37,30 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         _candleCache = candleCache;
         _signalChannel = signalChannel;
         _uow = uow;
+        _userContext = userContext;
         _logger = logger;
     }
-
     public async Task RunOnceAsync(CancellationToken ct = default)
     {
         var contexts = _runCache.GetAllActive();
         if (contexts.Count == 0) return;
 
         var now = DateTime.UtcNow;
-        var totalSignals = 0;
+        var pendingEnvelopes = new List<SignalEnvelope>();
 
         foreach (var ctx in contexts)
         {
+            // ─── تنظیم هویت کاربر برای این Run ───
+            // چون UserDataContext Scoped است و UserId پیش‌فرض Guid.Empty،
+            // باید قبل از هر عملیات DB با OwnerUserId آن Run پر شود.
+            _userContext.SetUser(ctx.OwnerUserId, null);
+
             foreach (var symbol in ctx.Symbols)
             {
                 try
                 {
-                    var produced = await EvaluateAndEmitAsync(ctx, symbol, now, ct);
-                    totalSignals += produced;
+                    var envs = await EvaluateOnlyAsync(ctx, symbol, now, ct);
+                    pendingEnvelopes.AddRange(envs);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
                 {
@@ -60,7 +68,6 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 }
                 catch (Exception ex)
                 {
-                    // خطای یک Symbol بقیه را متوقف نمی‌کند
                     _logger.LogError(ex,
                         "Evaluation failed: run={RunId} isin={Isin}",
                         ctx.RunId, symbol.Isin);
@@ -68,31 +75,57 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             }
         }
 
-        if (totalSignals > 0)
+        if (pendingEnvelopes.Count == 0) return;
+
+        try
         {
-            _logger.LogInformation(
-                "Stage 2: {SignalCount} signals produced across {RunCount} runs.",
-                totalSignals, contexts.Count);
+            await _uow.SaveChangesAsync(ct);
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to persist {Count} signals.", pendingEnvelopes.Count);
+            return;
+        }
+
+        foreach (var envelope in pendingEnvelopes)
+        {
+            try
+            {
+                await _signalChannel.WriteAsync(envelope, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to push signal {SignalId} to channel. " +
+                    "Signal remains in DB; Recovery will pick it up.",
+                    envelope.Signal.Id);
+            }
+        }
+
+        _logger.LogInformation(
+            "Stage 2: {SignalCount} signals emitted across {RunCount} runs.",
+            pendingEnvelopes.Count, contexts.Count);
     }
+    /* ═══════════════════ Core (بدون Save) ═══════════════════ */
 
-    /* ═══════════════════ Core ═══════════════════ */
-
-    private async Task<int> EvaluateAndEmitAsync(
+    private async Task<List<SignalEnvelope>> EvaluateOnlyAsync(
         RunRuntimeContext ctx,
         RunSymbolContext symbol,
         DateTime now,
         CancellationToken ct)
     {
+        var result = new List<SignalEnvelope>();
+
         var snapshot = _snapshotStore.GetLatest(symbol.Isin);
         if (snapshot is null)
         {
             _logger.LogDebug(
-                "No snapshot for {Isin}; skipping evaluation.", symbol.Isin);
-            return 0;
+                "No snapshot for {Isin}; skipping.", symbol.Isin);
+            return result;
         }
 
-        // ─── Candles (اگر Strategy نیاز داشته باشد) ───
+        // Candles اگر Strategy نیاز دارد
         IReadOnlyList<Candle> candles = Array.Empty<Candle>();
         if (ctx.Strategy.RequiredCandleCount > 0)
         {
@@ -103,7 +136,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 ct);
         }
 
-        // ─── Evaluate ───
+        // Evaluate
         var input = new StrategyInput(
             Isin: symbol.Isin,
             LatestSnapshot: snapshot,
@@ -112,23 +145,21 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             TimeFrame: ctx.PrimaryTimeFrame,
             EvaluatedAt: now);
 
-        var result = ctx.Strategy.Evaluate(input);
-        if (result.Signals.Count == 0) return 0;
+        var evaluation = ctx.Strategy.Evaluate(input);
+        if (evaluation.Signals.Count == 0) return result;
 
-        // ─── Persist Signals ───
-        var pendingEnvelopes = new List<SignalEnvelope>(result.Signals.Count);
-
-        foreach (var strategySignal in result.Signals)
+        // Persist در Change Tracker (بدون Save)
+        foreach (var s in evaluation.Signals)
         {
-            if (strategySignal.Action == SignalAction.Hold) continue;
+            if (s.Action == SignalAction.Hold) continue;
 
             var signal = Signal.Create(
                 runId: ctx.RunId,
-                isin: strategySignal.Isin,
+                isin: s.Isin,
                 strategyKey: ctx.StrategyKey,
-                action: strategySignal.Action,
-                strength: strategySignal.Strength,
-                metadataJson: strategySignal.MetadataJson);
+                action: s.Action,
+                strength: s.Strength,
+                metadataJson: s.MetadataJson);
 
             signal.AddDomainEvent(new SignalGeneratedEvent(
                 signal.Id,
@@ -139,26 +170,9 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 signal.ProducedAt));
 
             await _uow.Signals.AddAsync(signal);
-            pendingEnvelopes.Add(new SignalEnvelope(ctx.RunId, signal, now));
+            result.Add(new SignalEnvelope(ctx.RunId, signal, now));
         }
 
-        if (pendingEnvelopes.Count == 0) return 0;
-
-        // ─── Save اول، Push بعد ───
-        // اگر Process بین Save و Push بمیرد، Signal در DB هست ولی Stage 3 آن را ندیده.
-        // این حالت با Recovery در Startup قابل جبران است (Signalهای Consumed‌نشده).
-        await _uow.SaveChangesAsync(ct);
-
-        foreach (var envelope in pendingEnvelopes)
-        {
-            await _signalChannel.WriteAsync(envelope, ct);
-        }
-
-        _logger.LogInformation(
-            "Signal(s) emitted: run={RunId} isin={Isin} count={Count} actions=[{Actions}]",
-            ctx.RunId, symbol.Isin, pendingEnvelopes.Count,
-            string.Join(",", pendingEnvelopes.Select(e => e.Signal.Action)));
-
-        return pendingEnvelopes.Count;
+        return result;
     }
 }
