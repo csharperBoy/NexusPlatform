@@ -8,6 +8,7 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
+using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
@@ -25,6 +26,7 @@ using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
+using Trader.Infrastructure.Execution;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Runtime.Recovery;
@@ -76,7 +78,19 @@ namespace Trader.Infrastructure.DependencyInjection
             
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
+            // ─── Capital Allocators ───
+            services.AddScoped<FixedCapitalAllocator>();
+            services.AddScoped<DynamicCapitalAllocator>();
+            services.AddScoped<ICapitalAllocator, CompositeCapitalAllocator>();
 
+            // ─── Execution ───
+            services.AddScoped<IPositionSizer, PercentPositionSizer>();
+            services.AddScoped<IOrderIntentBuilder, OrderIntentBuilder>();
+            services.AddScoped<IBrokerOrderDispatcher, BrokerOrderDispatcher>();
+            services.AddScoped<IExecutionCoordinator, ExecutionCoordinator>();
+
+            // ─── Stages ───
+            services.AddScoped<IExecutionStage, ExecutionStage>();
             // ─── User Context Cache (Singleton) ───
             services.AddSingleton<IUserContextCache, UserContextCache>();
             // ─── Signal Channel (Singleton) ───
