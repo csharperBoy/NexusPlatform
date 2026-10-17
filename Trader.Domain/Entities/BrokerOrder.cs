@@ -22,6 +22,7 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
 
     public OrderStateKind State { get; private set; }
     public DateTime SubmittedAt { get; private set; }
+    public DateTime? LastSyncedAt { get; private set; }
 
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
@@ -67,8 +68,15 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
     {
         State = newState;
         FilledQuantity = filledQuantity;
+        LastSyncedAt = DateTime.UtcNow;
         Touch();
     }
+
+    public bool IsTerminal => State is
+        OrderStateKind.FullyExecuted or
+        OrderStateKind.Canceled or
+        OrderStateKind.Rejected or
+        OrderStateKind.Expired;
 
     public decimal FilledRatio =>
         Quantity.IsZero ? 0m : (decimal)FilledQuantity.Value / Quantity.Value;

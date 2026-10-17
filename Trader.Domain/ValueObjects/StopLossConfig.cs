@@ -2,33 +2,27 @@
 
 namespace Trader.Domain.ValueObjects;
 
-/// <summary>حد ضرر: درصدی از قیمت ورود، یا قیمت مطلق.</summary>
 public sealed class StopLossConfig : ValueObject
 {
-    public decimal? Percentage { get; }
-    public Price? AbsolutePrice { get; }
+    public decimal? Percentage { get; private set; }
+    public Price? AbsolutePrice { get; private set; }
 
-    private StopLossConfig(decimal? percentage, Price? absolutePrice)
-    {
-        Percentage = percentage;
-        AbsolutePrice = absolutePrice;
-    }
+    private StopLossConfig() { } // EF
 
     public static StopLossConfig FromPercentage(decimal percentage)
     {
         if (percentage <= 0m)
             throw new ArgumentOutOfRangeException(nameof(percentage));
-        return new StopLossConfig(percentage, null);
+        return new() { Percentage = percentage };
     }
 
     public static StopLossConfig FromPrice(Price price)
     {
         if (price.Value <= 0m)
             throw new ArgumentOutOfRangeException(nameof(price));
-        return new StopLossConfig(null, price);
+        return new() { AbsolutePrice = price };
     }
 
-    /// <summary>قیمت حد ضرر بر اساس قیمت ورود.</summary>
     public Price ResolveForEntry(Price entryPrice)
     {
         if (AbsolutePrice.HasValue) return AbsolutePrice.Value;

@@ -50,18 +50,20 @@ public sealed class BrokerOrderDispatcher : IBrokerOrderDispatcher
             intent.MarkDispatched();
 
             var result = intent.Side == OrderSide.Buy
-                ? await commands.SendBuyOrderAsync(
-                    session, intent.Isin, (long)intent.Price.Value, intent.Quantity.Value, ct)
-                : await commands.SendSellOrderAsync(
-                    session, intent.Isin, (long)intent.Price.Value, intent.Quantity.Value, ct);
+    ? await commands.SendBuyOrderAsync(
+        session, intent.Isin, (long)intent.Price.Value, intent.Quantity.Value, ct)
+    : await commands.SendSellOrderAsync(
+        session, intent.Isin, (long)intent.Price.Value, intent.Quantity.Value, ct);
 
-            if (string.IsNullOrWhiteSpace(result?.OrderId))
+            if (!result.IsSuccessful || string.IsNullOrWhiteSpace(result.OrderId))
             {
                 brokerOrder.ApplyStateUpdate(OrderStateKind.Rejected, Quantity.Zero);
-                intent.MarkRejected("Broker did not return an order id.");
+                intent.MarkRejected(
+                    result.Message ?? result.ErrorName ?? "Broker rejected the order.");
+
                 _logger.LogWarning(
-                    "Broker rejected order: run={RunId} isin={Isin}",
-                    intent.RunId, intent.Isin);
+                    "Broker rejected order: run={RunId} isin={Isin} code={Code} msg={Message}",
+                    intent.RunId, intent.Isin, result.ErrorCode, result.Message);
             }
             else
             {

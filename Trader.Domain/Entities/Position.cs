@@ -115,4 +115,42 @@ public class Position : BaseEntity, IAuditableEntity
         => State != PositionState.Closed
            && TakeProfitPrice.HasValue
            && currentPrice.Value >= TakeProfitPrice.Value.Value;
+
+    /// <summary>
+    /// کنسلی یک Fill خرید — Quantity را کاهش می‌دهد بدون ثبت PnL.
+    /// اگر Position خالی شد، Closed.
+    /// </summary>
+    public void ApplyBuyCancel(Quantity qty, Price price)
+    {
+        if (qty.Value > Quantity.Value)
+            throw new InvalidOperationException("Cancel quantity exceeds position quantity.");
+
+        var remaining = Quantity.Value - qty.Value;
+        Quantity = new Quantity(remaining);
+
+        if (remaining == 0)
+        {
+            State = PositionState.Closed;
+            ClosedAt = DateTime.UtcNow;
+        }
+
+        Touch();
+    }
+
+    /// <summary>
+    /// کنسلی یک Fill فروش — Quantity را افزایش می‌دهد و PnL ثبت‌شده را برمی‌گرداند.
+    /// </summary>
+    public void ApplySellCancel(Quantity qty, Price price)
+    {
+        // PnL که در ApplySellFill ثبت شده بود، برگردانده می‌شود
+        var realizedToReverse = (price.Value - AverageEntryPrice.Value) * qty.Value;
+        RealizedPnL = RealizedPnL.Subtract(new Money(realizedToReverse));
+
+        Quantity = new Quantity(Quantity.Value + qty.Value);
+
+        if (State == PositionState.Closed)
+            State = PositionState.Open;
+
+        Touch();
+    }
 }

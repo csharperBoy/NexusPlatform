@@ -3,23 +3,18 @@ using Trader.Domain.Enums;
 
 namespace Trader.Domain.ValueObjects;
 
-/// <summary>تخصیص سرمایه برای یک TradingRun: Fixed یا Dynamic.</summary>
 public sealed class CapitalAllocation : ValueObject
 {
-    public CapitalAllocationMode Mode { get; }
-    public Money? FixedAmount { get; }
+    public CapitalAllocationMode Mode { get; private set; }
+    public Money? FixedAmount { get; private set; }
 
-    private CapitalAllocation(CapitalAllocationMode mode, Money? fixedAmount)
-    {
-        Mode = mode;
-        FixedAmount = fixedAmount;
-    }
+    private CapitalAllocation() { } // EF
 
     public static CapitalAllocation Fixed(Money amount)
-        => new(CapitalAllocationMode.Fixed, amount);
+        => new() { Mode = CapitalAllocationMode.Fixed, FixedAmount = amount };
 
     public static CapitalAllocation Dynamic()
-        => new(CapitalAllocationMode.Dynamic, null);
+        => new() { Mode = CapitalAllocationMode.Dynamic, FixedAmount = null };
 
     public bool IsFixed => Mode == CapitalAllocationMode.Fixed;
     public bool IsDynamic => Mode == CapitalAllocationMode.Dynamic;

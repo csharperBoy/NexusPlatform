@@ -3,15 +3,16 @@ using Trader.Domain.Enums;
 
 namespace Trader.Domain.ValueObjects;
 
-/// <summary>قرارداد اختیار معامله. برای Instrumentهای Option.</summary>
 public sealed class OptionContract : ValueObject
 {
-    public OptionType Type { get; }
-    public Price StrikePrice { get; }
-    public DateOnly ExpirationDate { get; }
-    public string UnderlyingIsin { get; }
+    public OptionType Type { get; private set; }
+    public Price StrikePrice { get; private set; }
+    public DateOnly ExpirationDate { get; private set; }
+    public string UnderlyingIsin { get; private set; } = default!;
 
-    private OptionContract(
+    private OptionContract() { } // EF
+
+    public static OptionContract Create(
         OptionType type,
         Price strikePrice,
         DateOnly expirationDate,
@@ -19,18 +20,15 @@ public sealed class OptionContract : ValueObject
     {
         if (string.IsNullOrWhiteSpace(underlyingIsin))
             throw new ArgumentException("Underlying ISIN is required.", nameof(underlyingIsin));
-        Type = type;
-        StrikePrice = strikePrice;
-        ExpirationDate = expirationDate;
-        UnderlyingIsin = underlyingIsin;
-    }
 
-    public static OptionContract Create(
-        OptionType type,
-        Price strikePrice,
-        DateOnly expirationDate,
-        string underlyingIsin)
-        => new(type, strikePrice, expirationDate, underlyingIsin);
+        return new()
+        {
+            Type = type,
+            StrikePrice = strikePrice,
+            ExpirationDate = expirationDate,
+            UnderlyingIsin = underlyingIsin
+        };
+    }
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {

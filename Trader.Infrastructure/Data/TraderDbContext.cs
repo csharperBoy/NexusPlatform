@@ -21,15 +21,14 @@ public class TraderDbContext : Base_DbContext
     {
     }
 
-    /* ═══════════ DbSets ═══════════ */
-
-    // Existing
+    /* ═══════════ Existing ═══════════ */
     public virtual DbSet<TraderAccount> Accounts { get; set; }
+    public virtual DbSet<TraderSymbol> Symbols { get; set; }          // Legacy — Refactor to Instrument pending
     public virtual DbSet<SchedulePlan> SchedulePlans { get; set; }
     public virtual DbSet<ScheduledOrder> ScheduledOrders { get; set; }
     public virtual DbSet<ExecutionLog> ExecutionLogs { get; set; }
 
-    // New
+    /* ═══════════ New — Trading System ═══════════ */
     public virtual DbSet<Instrument> Instruments { get; set; }
     public virtual DbSet<InstrumentOrderPreset> InstrumentOrderPresets { get; set; }
     public virtual DbSet<TradingRun> TradingRuns { get; set; }
@@ -38,19 +37,11 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<Signal> Signals { get; set; }
     public virtual DbSet<OrderIntent> OrderIntents { get; set; }
     public virtual DbSet<BrokerOrder> BrokerOrders { get; set; }
+    public virtual DbSet<OrderTrade> OrderTrades { get; set; }
     public virtual DbSet<Position> Positions { get; set; }
 
-    /* ═══════════ Views / Triggers ═══════════ */
-
-    public override void EnsureViews(CancellationToken cancellationToken = default)
-    {
-        // فعلاً viewی نداریم
-    }
-
-    public override void EnsureTriggers(CancellationToken cancellationToken = default)
-    {
-        // فعلاً triggerی نداریم
-    }
+    public override void EnsureViews(CancellationToken cancellationToken = default) { }
+    public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
     /* ═══════════ Model Creating ═══════════ */
 
@@ -64,6 +55,7 @@ public class TraderDbContext : Base_DbContext
 
         // Existing
         modelBuilder.ApplyConfiguration(new TraderAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new TraderSymbolConfiguration());
         modelBuilder.ApplyConfiguration(new SchedulePlanConfiguration());
         modelBuilder.ApplyConfiguration(new ScheduledOrderConfiguration());
         modelBuilder.ApplyConfiguration(new ExecutionLogConfiguration());
@@ -77,6 +69,7 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new SignalConfiguration());
         modelBuilder.ApplyConfiguration(new OrderIntentConfiguration());
         modelBuilder.ApplyConfiguration(new BrokerOrderConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderTradeConfiguration());
         modelBuilder.ApplyConfiguration(new PositionConfiguration());
     }
 }

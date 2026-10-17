@@ -19,7 +19,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, SchedulePlan, Guid> SchedulePlans { get; }
     IRepository<TDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
     IRepository<TDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
-
+    IRepository<TDbContext, OrderTrade, Guid> OrderTrades { get; }
     // Spec Repositories
     ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
@@ -30,4 +30,5 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     ISpecificationRepository<InstrumentOrderPreset, Guid> InstrumentOrderPresetSpecs { get; }
     ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
     ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
+    ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
 }

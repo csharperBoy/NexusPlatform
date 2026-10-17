@@ -28,16 +28,18 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
                 .HasColumnName("CapitalAllocationMode")
                 .IsRequired();
 
-            // Money? — Money حالا class است، پس OwnsOne مجاز است
             cb.OwnsOne(p => p.FixedAmount, mb =>
             {
                 mb.Property(m => m.Amount)
                     .HasColumnName("FixedCapitalAmount")
-                    .HasPrecision(18, 4);
+                    .HasPrecision(18, 4)
+                    .IsRequired(false);
                 mb.Property(m => m.Currency)
                     .HasColumnName("FixedCapitalCurrency")
-                    .HasMaxLength(10);
+                    .HasMaxLength(10)
+                    .IsRequired(false);
             });
+            cb.Navigation(p => p.FixedAmount).IsRequired(false);
         });
 
         // ─── StopLoss (Owned) ───

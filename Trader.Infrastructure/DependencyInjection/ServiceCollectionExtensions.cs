@@ -10,6 +10,7 @@ using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
@@ -28,6 +29,7 @@ using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Execution;
 using Trader.Infrastructure.MarketData;
+using Trader.Infrastructure.Positions;
 using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Runtime.Recovery;
 using Trader.Infrastructure.Runtime.Stages;
@@ -66,18 +68,25 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, ScheduledOrder, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, ExecutionLog, Guid>,
                 EfRepository<TraderDbContext, ExecutionLog, Guid>>();
-           
+            services.AddScoped<IRepository<TraderDbContext, OrderTrade, Guid>, EfRepository<TraderDbContext, OrderTrade, Guid>>();
+
             services.AddScoped<ISpecificationRepository<TraderAccount, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderAccount, Guid>>();
             services.AddScoped<ISpecificationRepository<TraderSymbol, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderSymbol, Guid>>();
             services.AddScoped<ISpecificationRepository<SchedulePlan, Guid>,
                 EfSpecificationRepository<TraderDbContext, SchedulePlan, Guid>>();
+            services.AddScoped<ISpecificationRepository<OrderTrade, Guid>, EfSpecificationRepository<TraderDbContext, OrderTrade, Guid>>();
 
 
-            
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
+            services.AddSingleton<IAccountBalanceCache, AccountBalanceCache>();
+            // ─── Position Manager ───
+            services.AddScoped<IPositionManager, PositionManager>();
+
+            // ─── Stages ───
+            services.AddScoped<IOrderLifecycleStage, OrderLifecycleStage>();
             // ─── Capital Allocators ───
             services.AddScoped<FixedCapitalAllocator>();
             services.AddScoped<DynamicCapitalAllocator>();

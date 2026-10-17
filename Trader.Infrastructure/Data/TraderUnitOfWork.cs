@@ -34,6 +34,9 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         ISpecificationRepository<ExecutionLog, Guid> executionLogSpecs,
         TraderDbContext dbContext,
         IOutboxService<TraderDbContext> outboxService,
+        IRepository<TraderDbContext, OrderTrade, Guid> orderTrades,
+    ISpecificationRepository<OrderTrade, Guid> orderTradeSpecs,
+
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -58,8 +61,13 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         PositionSpecs = positionSpecs;
         AccountSpecs = accountSpecs;
         ExecutionLogSpecs = executionLogSpecs;
-    }
 
+        OrderTrades = orderTrades;
+        OrderTradeSpecs = orderTradeSpecs;
+
+    }
+public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
+    public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     public IRepository<TraderDbContext, TraderAccount, Guid> Accounts { get; }
     public IRepository<TraderDbContext, Instrument, Guid> Instruments { get; }
     public IRepository<TraderDbContext, InstrumentOrderPreset, Guid> InstrumentOrderPresets { get; }

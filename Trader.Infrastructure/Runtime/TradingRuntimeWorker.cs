@@ -93,17 +93,17 @@ public sealed class TradingRuntimeWorker : BackgroundService
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        // Stage 1: Market Data
-        var stage1 = sp.GetRequiredService<IMarketDataIngestionStage>();
-        await stage1.RunOnceAsync(ct);
+        // Stage 1
+        await sp.GetRequiredService<IMarketDataIngestionStage>().RunOnceAsync(ct);
 
-        // Stage 2: Strategy Evaluation
-        var stage2 = sp.GetRequiredService<IStrategyEvaluationStage>();
-        await stage2.RunOnceAsync(ct);
+        // Stage 2
+        await sp.GetRequiredService<IStrategyEvaluationStage>().RunOnceAsync(ct);
 
-        // Stage 3: Execution
-        var stage3 = sp.GetRequiredService<IExecutionStage>();
-        await stage3.RunOnceAsync(ct);
+        // Stage 3
+        await sp.GetRequiredService<IExecutionStage>().RunOnceAsync(ct);
+
+        // Stage 4 (با interval داخلی خودش)
+        await sp.GetRequiredService<IOrderLifecycleStage>().RunOnceAsync(ct);
 
         stopwatch.Stop();
         if (stopwatch.ElapsedMilliseconds > 1000)
