@@ -8,6 +8,8 @@ or
 Add-Migration Initial_Trader -Project Trader.Infrastructure -Context TraderDbContext -Start "Trader Application"
 Add-Migration Edit_1_Trader -Project Trader.Infrastructure -Context TraderDbContext -Start "Trader.WebApi"
 
+Update-Database -Project Trader.Infrastructure -Context TraderDbContext -StartupProject Trader.WebApi
+
 Remove-Migration -Project Trader.Infrastructure -Context TraderDbContext -Start "Trader.WebApi"
 
 3- for update database execute this command in developer powershell or package manager console 

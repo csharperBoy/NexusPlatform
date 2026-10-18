@@ -27,21 +27,20 @@ public class PositionConfiguration : BaseConfiguration<Position>
             .HasPrecision(18, 4)
             .IsRequired();
 
-        // ─── RealizedPnL (Money — class) ───
-        builder.OwnsOne(x => x.UnrealizedPnL, ub =>
+        // ─── RealizedPnL (non-nullable) ───
+        builder.OwnsOne(x => x.RealizedPnL, rb =>
         {
-            ub.Property(m => m.Amount)
-                .HasColumnName("UnrealizedPnLAmount")
+            rb.Property(m => m.Amount)
+                .HasColumnName("RealizedPnLAmount")
                 .HasPrecision(18, 4)
-                .IsRequired(false);
-            ub.Property(m => m.Currency)
-                .HasColumnName("UnrealizedPnLCurrency")
+                .IsRequired();
+            rb.Property(m => m.Currency)
+                .HasColumnName("RealizedPnLCurrency")
                 .HasMaxLength(10)
-                .IsRequired(false);
+                .IsRequired();
         });
-        builder.Navigation(x => x.UnrealizedPnL).IsRequired(false);
 
-        // ─── UnrealizedPnL (Money? — nullable reference) ───
+        // ─── UnrealizedPnL (nullable) ───
         builder.OwnsOne(x => x.UnrealizedPnL, ub =>
         {
             ub.Property(m => m.Amount)

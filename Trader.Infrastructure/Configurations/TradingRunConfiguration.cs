@@ -28,17 +28,18 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
                 .HasColumnName("CapitalAllocationMode")
                 .IsRequired();
 
+            // FixedAmount (Money?) — columns داخل این block
             cb.OwnsOne(p => p.FixedAmount, mb =>
             {
                 mb.Property(m => m.Amount)
                     .HasColumnName("FixedCapitalAmount")
-                    .HasPrecision(18, 4)
-                    .IsRequired(false);
+                    .HasPrecision(18, 4);
                 mb.Property(m => m.Currency)
                     .HasColumnName("FixedCapitalCurrency")
-                    .HasMaxLength(10)
-                    .IsRequired(false);
+                    .HasMaxLength(10);
             });
+
+            // FixedAmount کل اختیاری است — نه Propertyها
             cb.Navigation(p => p.FixedAmount).IsRequired(false);
         });
 
@@ -49,7 +50,6 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
                 .HasColumnName("StopLossPercentage")
                 .HasPrecision(9, 4);
 
-            // Price? — struct nullable، HasConversion بزن
             sb.Property(p => p.AbsolutePrice)
                 .HasConversion(
                     p => p.HasValue ? p.Value.Value : (decimal?)null,
@@ -57,6 +57,7 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
                 .HasColumnName("StopLossPrice")
                 .HasPrecision(18, 4);
         });
+        builder.Navigation(x => x.StopLoss).IsRequired(false);
 
         // ─── TakeProfit (Owned) ───
         builder.OwnsOne(x => x.TakeProfit, tb =>
@@ -72,7 +73,7 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
                 .HasColumnName("TakeProfitPrice")
                 .HasPrecision(18, 4);
         });
-
+        builder.Navigation(x => x.TakeProfit).IsRequired(false);
         builder.Property(x => x.DefaultOrderMode).HasConversion<int>().IsRequired();
         builder.Property(x => x.OnMarketClose).HasConversion<int>().IsRequired();
         builder.Property(x => x.OnStop).HasConversion<int>().IsRequired();

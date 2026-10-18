@@ -19,4 +19,8 @@
     <ProjectReference Include="..\Trader.ExternalApiClient\Trader.ExternalApiClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>
