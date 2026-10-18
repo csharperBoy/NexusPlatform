@@ -15,7 +15,7 @@ public class OrderIntentConfiguration : BaseConfiguration<OrderIntent>
         builder.Property(x => x.RunId).IsRequired();
         builder.Property(x => x.TraderAccountId).IsRequired();
         builder.Property(x => x.SourceSignalId).IsRequired(false);
-
+       
         builder.Property(x => x.Isin).IsRequired().HasMaxLength(20);
         builder.Property(x => x.Side).HasConversion<int>().IsRequired();
         builder.Property(x => x.OrderMode).HasConversion<int>().IsRequired();
@@ -33,7 +33,8 @@ public class OrderIntentConfiguration : BaseConfiguration<OrderIntent>
 
         builder.Property(x => x.DispatchedAt).IsRequired(false);
         builder.Property(x => x.CompletedAt).IsRequired(false);
-
+         builder.HasIndex(x => x.SourceSignalId)
+    .HasDatabaseName("IX_OrderIntent_SourceSignalId");
         builder.HasIndex(x => new { x.RunId, x.State })
             .HasDatabaseName("IX_OrderIntent_Run_State");
         builder.HasIndex(x => new { x.TraderAccountId, x.Isin })

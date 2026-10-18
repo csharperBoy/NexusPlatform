@@ -140,9 +140,8 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ITradingRunManager, TradingRunManager>();
 
             // ─── Strategy Factory ───
+            services.AddTraderStrategies();
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
-            services.AddSingleton<IStrategyRegistration, RsiStrategyRegistration>();
-            // هر Strategy جدید: services.AddSingleton<IStrategyRegistration, XxxStrategyRegistration>();
 
             // ─── Application Services ───
             services.AddScoped<IInstrumentCommandService, InstrumentService>();
