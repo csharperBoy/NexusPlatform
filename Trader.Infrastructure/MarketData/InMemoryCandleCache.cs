@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Runtime;
@@ -14,14 +15,14 @@ public sealed class InMemoryCandleCache : ICandleCache
         DateTime FetchedAt);
 
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
-    private readonly IMarketDataProviderResolver _providerResolver;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<InMemoryCandleCache> _logger;
 
     public InMemoryCandleCache(
-        IMarketDataProviderResolver providerResolver,
+        IServiceScopeFactory scopeFactory,
         ILogger<InMemoryCandleCache> logger)
     {
-        _providerResolver = providerResolver;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -37,9 +38,6 @@ public sealed class InMemoryCandleCache : ICandleCache
 
         if (_cache.TryGetValue(key, out var entry))
         {
-            // Cache معتبر است اگر: 
-            // ۱. تعداد کافی داشته باشیم
-            // ۲. کندل جدیدی بسته نشده باشد
             var elapsedSinceLastCandle = now - entry.LastClosedCandleTime;
 
             if (entry.Candles.Count >= requiredCount
@@ -49,15 +47,34 @@ public sealed class InMemoryCandleCache : ICandleCache
             }
         }
 
-        // ─── Fetch از Provider ───
-        var provider = _providerResolver.Resolve(MarketType.IranStock);
-        if (provider is null)
+        // ─── Fetch از Provider در یک Scope جدید ───
+        IReadOnlyList<Candle> candles;
+
+        try
         {
-            _logger.LogWarning("No provider for IranStock; returning empty candles.");
+            using var scope = _scopeFactory.CreateScope();
+            var providerResolver = scope.ServiceProvider
+                .GetRequiredService<IMarketDataProviderResolver>();
+
+            var provider = providerResolver.Resolve(MarketType.IranStock);
+            if (provider is null)
+            {
+                _logger.LogWarning(
+                    "No provider for IranStock; returning empty candles.");
+                return Array.Empty<Candle>();
+            }
+
+            candles = await provider.GetCandlesAsync(
+                isin, timeFrame, requiredCount, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to fetch candles for {Isin} tf={TimeFrame}.",
+                isin, timeFrame);
             return Array.Empty<Candle>();
         }
 
-        var candles = await provider.GetCandlesAsync(isin, timeFrame, requiredCount, ct);
         if (candles.Count == 0) return Array.Empty<Candle>();
 
         var lastClosed = candles[^1].OpenTime + tfDuration;
@@ -77,5 +94,6 @@ public sealed class InMemoryCandleCache : ICandleCache
 
     public void InvalidateAll() => _cache.Clear();
 
-    private static string BuildKey(string isin, TimeFrame tf) => $"{isin}:{(int)tf}";
+    private static string BuildKey(string isin, TimeFrame tf)
+        => $"{isin}:{(int)tf}";
 }

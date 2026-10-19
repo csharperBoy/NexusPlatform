@@ -1,5 +1,4 @@
-﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization.PublicService;
+﻿using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.Navigation.PublicService;
 using Core.Application.Helper;
@@ -9,43 +8,14 @@ using Core.Shared.DTOs.Navigation;
 using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.Navigation;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Trader.Infrastructure.Data
 {
-    /*
-     📌 SampleSeedData
-     -----------------
-     این کلاس مسئول درج داده‌های اولیه (Seed Data) در دیتابیس ماژول Sample است.
-     Seed Data معمولاً برای تست، دمو یا مقداردهی اولیه سیستم استفاده می‌شود.
-
-     ✅ نکات کلیدی:
-     - از Repository و UnitOfWork استفاده می‌کنیم تا عملیات درج داده‌ها مطابق با معماری لایه‌ای انجام شود.
-     - قبل از درج داده، بررسی می‌کنیم که آیا داده‌ی مورد نظر از قبل وجود دارد یا نه (ExistsAsync).
-     - اگر داده وجود نداشت، داده‌های اولیه ساخته و درج می‌شوند.
-     - در نهایت تغییرات با UnitOfWork ذخیره و Commit می‌شوند.
-     - لاگ‌ها برای اطلاع از موفقیت یا وجود داده قبلی ثبت می‌شوند.
-
-     🛠 جریان کار:
-     1. بررسی وجود داده با مقدار property1 = "SeededValue1".
-     2. اگر داده وجود نداشت:
-        - ایجاد لیست SampleEntity با مقادیر اولیه.
-        - درج داده‌ها با Repository.
-        - ذخیره تغییرات با UnitOfWork.
-        - ثبت لاگ موفقیت.
-     3. اگر داده وجود داشت:
-        - ثبت لاگ و صرف‌نظر از درج مجدد.
-
-     📌 نتیجه:
-     این کلاس نشان می‌دهد چطور می‌توان داده‌های اولیه را به صورت ایمن و استاندارد
-     با استفاده از Repository + UnitOfWork درج کرد، بدون اینکه داده‌های تکراری ایجاد شوند.
-    */
-
     public static class TraderSeedData
     {
-        // تعریف ساختار درختی منابع ماژول Trader
+        /* ═══════════════════ Resources ═══════════════════ */
+
         private static List<ResourceDto> GetTraderResourceDefinitions()
         {
             return new List<ResourceDto>
@@ -54,231 +24,220 @@ namespace Trader.Infrastructure.Data
                 {
                     Key = "trader",
                     Name = "Trader",
-                    Type =ResourceType.Module,
+                    Type = ResourceType.Module,
                     Category = ResourceCategory.System,
                     Description = "Trader management module",
                     DisplayOrder = 3000,
                     Icon = "shield",
                     Children = new List<ResourceDto>
                     {
+                        /* ─── Existing ─── */
                         new()
                         {
                             Key = "trader.account",
                             Name = "Trader Account",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
                             Description = "Trader Account management",
                             DisplayOrder = 3001,
                             Icon = "list",
-                        },new()
+                        },
+                        new()
                         {
+                            // Legacy — باقی می‌ماند برای backward compat
                             Key = "trader.symbol",
                             Name = "Trader Symbol",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
-                            Description = "Trader Symbol management",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Trader Symbol management (legacy)",
                             DisplayOrder = 3002,
                             Icon = "list",
-                        },new()
+                        },
+                        new()
                         {
                             Key = "trader.scheduleplan",
                             Name = "SchedulePlan",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
                             Description = "SchedulePlan management",
                             DisplayOrder = 3003,
                             Icon = "list",
-                        },new()
+                        },
+                        new()
                         {
                             Key = "trader.scheduledorder",
                             Name = "ScheduledOrder",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
                             Description = "ScheduledOrder management",
                             DisplayOrder = 3004,
                             Icon = "list",
-                        },new()
+                        },
+                        new()
+                        {
+                            Key = "trader.serverclock",
+                            Name = "Server Clock",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Server clock management",
+                            DisplayOrder = 3005,
+                            Icon = "list",
+                        },
+                        new()
                         {
                             Key = "trader.executionlog",
                             Name = "ExecutionLog",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
                             Description = "ExecutionLog management",
-                            DisplayOrder = 3004,
+                            DisplayOrder = 3006,
                             Icon = "list",
-                        },new()
+                        },
+
+                        /* ─── New: Trading System ─── */
+                        new()
                         {
-                            Key = "trader.serverclock",
-                            Name = "server clock",
-                            Type =ResourceType.Data,
-                            Category =ResourceCategory.System,
-                            Description = "server clock management",
-                            DisplayOrder = 3005,
+                            Key = "trader.instrument",
+                            Name = "Instrument",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Instrument management (Stocks, Options)",
+                            DisplayOrder = 3007,
                             Icon = "list",
-                        }
+                        },
+                        new()
+                        {
+                            Key = "trader.orderpreset",
+                            Name = "Order Preset",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Default order settings per instrument",
+                            DisplayOrder = 3008,
+                            Icon = "list",
+                        },
+                        new()
+                        {
+                            Key = "trader.strategy",
+                            Name = "Strategy",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Trading strategy registry",
+                            DisplayOrder = 3009,
+                            Icon = "activity",
+                        },
+                        new()
+                        {
+                            Key = "trader.tradingrun",
+                            Name = "Trading Run",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Algorithmic trading runs",
+                            DisplayOrder = 3010,
+                            Icon = "play",
+                        },
+                        new()
+                        {
+                            Key = "trader.position",
+                            Name = "Position",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Open positions and PnL",
+                            DisplayOrder = 3011,
+                            Icon = "bar-chart",
+                        },
+                        new()
+                        {
+                            Key = "trader.signal",
+                            Name = "Signal",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Generated trading signals",
+                            DisplayOrder = 3012,
+                            Icon = "zap",
+                        },
                     }
                 }
             };
         }
 
-        // تعریف پرمیشن‌های پیش‌فرض ماژول Trader
+        /* ═══════════════════ Permissions ═══════════════════ */
+
         private static List<PermissionDto> GetTraderPermissionDefinitions(Guid roleId)
         {
-            return new List<PermissionDto>
-            {
-               new()
-               {
-                   ResourceKey = "trader.account",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader account"
-               },
-               new()
-               {
-                   ResourceKey = "trader.symbol",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader symbol"
-               },
-               new()
-               {
-                   ResourceKey = "trader.scheduleplan",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader scheduleplan"
-               },
-               new()
-               {
-                   ResourceKey = "trader.scheduledorder",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader scheduledorder"
-               },
-               new()
-               {
-                   ResourceKey = "trader.executionlog",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader executionlog"
-               },
-               new()
-               {
-                   ResourceKey = "trader.serverclock",
-                   Action = PermissionAction.Full,
-                   Scopes = new List<ScopeDto>()
-                   {
-                       new()
-                       {
-                           scope =ScopeType.All
-                       }
-                   },
-                   Effect = PermissionEffect.allow,
-                   AssigneeType= AssigneeType.Role,
-                   AssigneeId = roleId,
-
-                   Description = "Full access to trader server clock"
-               },
-               new()
+            // Helper برای ساخت تکراری‌ها
+            static PermissionDto FullAccess(string resourceKey, Guid roleId, string description)
+                => new()
                 {
-                    ResourceKey = "trader.executionlog",
+                    ResourceKey = resourceKey,
                     Action = PermissionAction.Full,
                     Scopes = new List<ScopeDto> { new() { scope = ScopeType.All } },
                     Effect = PermissionEffect.allow,
                     AssigneeType = AssigneeType.Role,
                     AssigneeId = roleId,
-                    Description = "View execution logs"
-                }
+                    Description = description
+                };
+
+            return new List<PermissionDto>
+            {
+                // ─── Existing ───
+                FullAccess("trader.account", roleId, "Full access to Trader Account"),
+                FullAccess("trader.symbol", roleId, "Full access to Trader Symbol (legacy)"),
+                FullAccess("trader.scheduleplan", roleId, "Full access to SchedulePlan"),
+                FullAccess("trader.scheduledorder", roleId, "Full access to ScheduledOrder"),
+                FullAccess("trader.serverclock", roleId, "Full access to Server Clock"),
+                FullAccess("trader.executionlog", roleId, "Full access to Execution Log"),
+
+                // ─── New ───
+                FullAccess("trader.instrument", roleId, "Full access to Instrument"),
+                FullAccess("trader.orderpreset", roleId, "Full access to Order Preset"),
+                FullAccess("trader.strategy", roleId, "View strategies"),
+                FullAccess("trader.tradingrun", roleId, "Full access to Trading Run"),
+                FullAccess("trader.position", roleId, "View positions"),
+                FullAccess("trader.signal", roleId, "View signals"),
             };
         }
+
+        /* ═══════════════════ Seed: Authorization ═══════════════════ */
+
         public static async Task SeedTraderForAuthorizationAsync(
-          IResourcePublicService resourcePublicService,
-          IPermissionPublicService permissionPublicService,
-          IRolePublicService roleService,
-          ILogger logger,
-          CancellationToken cancellationToken = default)
+            IResourcePublicService resourcePublicService,
+            IPermissionPublicService permissionPublicService,
+            IRolePublicService roleService,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("🚀 Starting Trader module seeding...");
+            logger.LogInformation("🚀 Starting Trader module seeding (Authorization)...");
 
             try
             {
-                if (ModuleHelper.IsActive(ModuleEnum.Trader))
+                if (!ModuleHelper.IsActive(ModuleEnum.Trader))
                 {
-                    // 1. ثبت منابع (Resources)
-                    // منطق Flatten کردن و ذخیره در دیتابیس کاملاً به ماژول Authorization سپرده شده
-                    var resources = GetTraderResourceDefinitions();
-                    await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
-                    logger.LogInformation("✅ Trader resources synced successfully.");
-
-                    // 2. ثبت پرمیشن‌ها (Permissions)
-                    // ابتدا آیدی نقش ادمین را از سرویس Identity می‌گیریم
-                    //var adminRoleId = await roleService.GetAdminRoleIdAsync(cancellationToken);
-                    var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
-
-                    var permissions = GetTraderPermissionDefinitions(adminRoleId);
-                    await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
-                    logger.LogInformation("✅ Trader permissions seeded successfully.");
+                    logger.LogInformation(
+                        "Trader module is disabled; skipping authorization seed.");
+                    return;
                 }
+
+                // 1. Resources
+                var resources = GetTraderResourceDefinitions();
+                await resourcePublicService.SyncModuleResourcesAsync(resources, cancellationToken);
+                logger.LogInformation("✅ Trader resources synced.");
+
+                // 2. Permissions
+                var adminRoleId = await roleService.GetAdminRolePermissionAssigneeIdAsync(cancellationToken);
+
+                var permissions = GetTraderPermissionDefinitions(adminRoleId);
+                await permissionPublicService.SeedRolePermissionsAsync(permissions, cancellationToken);
+                logger.LogInformation("✅ Trader permissions seeded.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "❌ Error during Trader module seeding");
+                logger.LogError(ex, "❌ Error during Trader authorization seeding");
                 throw;
             }
         }
 
-        #region For Navigation
+        /* ═══════════════════ Menus ═══════════════════ */
 
-        // تعریف ساختار درختی منابع ماژول Trader
         private static List<MenuDto> GetTraderMenuDefinitions()
         {
             return new List<MenuDto>
@@ -286,7 +245,7 @@ namespace Trader.Infrastructure.Data
                 new()
                 {
                     Title = "مدیریت معاملات",
-                    Description = "مدیریت معاملات",
+                    Description = "مدیریت معاملات الگوریتمی",
                     Icon = Icon.Folder.GetIconString(),
                     Order = 100,
                     Key = "Trader",
@@ -296,8 +255,8 @@ namespace Trader.Infrastructure.Data
                     {
                         new()
                         {
-                            Title = "مدیریت حساب های معاملاتی",
-                            Description = "مدیریت حساب های معاملاتی",
+                            Title = "حساب‌های معاملاتی",
+                            Description = "مدیریت حساب‌های کارگزاری",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 101,
                             Key = "trader.account",
@@ -306,106 +265,124 @@ namespace Trader.Infrastructure.Data
                         },
                         new()
                         {
-                            Title = "مدیریت نمادها",
-                            Description = "مدیریت نمادها",
+                            Title = "نمادها",
+                            Description = "مدیریت نمادهای قابل معامله",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 102,
-                            Key = "trader.symbol",
+                            Key = "trader.instrument",
                             ParentKey = "trader",
-                            Path = "/trader/symbols"
+                            Path = "/trader/instruments"
                         },
                         new()
                         {
-                            Title = "مدیریت پلن های زمانبندی شده",
-                            Description = "مدیریت پلن های زمانبندی شده",
+                            Title = "تنظیمات پیش‌فرض سفارش",
+                            Description = "پیش‌فرض‌های سفارش هر نماد",
                             Icon = Icon.Folder.GetIconString(),
                             Order = 103,
+                            Key = "trader.orderpreset",
+                            ParentKey = "trader",
+                            Path = "/trader/order-presets"
+                        },
+                        new()
+                        {
+                            Title = "استراتژی‌ها",
+                            Description = "لیست استراتژی‌های قابل استفاده",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 104,
+                            Key = "trader.strategy",
+                            ParentKey = "trader",
+                            Path = "/trader/strategies"
+                        },
+                        new()
+                        {
+                            Title = "پلن‌های معاملاتی",
+                            Description = "Trading Runs — اجرای استراتژی",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 105,
+                            Key = "trader.tradingrun",
+                            ParentKey = "trader",
+                            Path = "/trader/trading-runs"
+                        },
+                        new()
+                        {
+                            Title = "موقعیت‌های باز",
+                            Description = "Positionهای باز و PnL",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 106,
+                            Key = "trader.position",
+                            ParentKey = "trader",
+                            Path = "/trader/positions"
+                        },
+                        new()
+                        {
+                            Title = "سیگنال‌ها",
+                            Description = "سیگنال‌های تولیدشده",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 107,
+                            Key = "trader.signal",
+                            ParentKey = "trader",
+                            Path = "/trader/signals"
+                        },
+                        new()
+                        {
+                            Title = "پلن‌های زمان‌بندی‌شده",
+                            Description = "سرخطی و سفارش‌های زمان‌بندی‌شده",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 108,
                             Key = "trader.scheduleplan",
                             ParentKey = "trader",
                             Path = "/trader/schedule-plans"
                         },
                         new()
                         {
-                            Title = "مدیریت تاخیر زمان سرور",
-                            Description = "مدیریت پلن های زمانبندی شده",
+                            Title = "زمان سرور",
+                            Description = "همگام‌سازی زمان با سرور کارگزاری",
                             Icon = Icon.Folder.GetIconString(),
-                            Order = 104,
+                            Order = 109,
                             Key = "trader.serverclock",
                             ParentKey = "trader",
                             Path = "/trader/server-clock"
                         },
                         new()
-                            {
-                                Title = "لاگ اجرای پلن‌ها",
-                                Description = "مشاهده لاگ‌های اجرای زمان‌بند",
-                                Icon = Icon.Folder.GetIconString(),
-                                Order = 105,
-                                Key = "trader.executionlog",
-                                ParentKey = "trader",
-                                Path = "/trader/logs"
-                            }
+                        {
+                            Title = "لاگ اجرا",
+                            Description = "لاگ‌های اجرای پلن‌ها و خطاها",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 110,
+                            Key = "trader.executionlog",
+                            ParentKey = "trader",
+                            Path = "/trader/logs"
+                        }
                     }
                 }
             };
         }
 
-
-        // متد اصلی Seed که توسط اپلیکیشن صدا زده می‌شود
         public static async Task SeedTradersForNavigationAsync(
             IMenuPublicService menuPublicService,
             ILogger logger,
             CancellationToken cancellationToken = default)
         {
-            logger.LogInformation("🚀 Starting Trader module Fot Navigation seeding...");
+            logger.LogInformation("🚀 Starting Trader module seeding (Navigation)...");
 
             try
             {
+                if (!ModuleHelper.IsActive(ModuleEnum.Trader))
+                {
+                    logger.LogInformation(
+                        "Trader module is disabled; skipping navigation seed.");
+                    return;
+                }
 
-                // 1. ثبت منو (Menus)
                 var menus = GetTraderMenuDefinitions();
                 await menuPublicService.SyncModuleMenusAsync(menus, cancellationToken);
-                logger.LogInformation("✅ Trader Menu synced successfully.");
-
+                logger.LogInformation("✅ Trader menus synced.");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "❌ Error during Trader module seeding");
+                logger.LogError(ex, "❌ Error during Trader navigation seeding");
                 throw;
             }
         }
-        #endregion
-
-        /* public static async Task SeedTraderAsync(
-             IUnitOfWork<TraderDbContext> unitOfWork,
-             IConfiguration config,
-             ILogger logger)
-         {
-             // 📌 بررسی وجود داده‌ی اولیه
-             var exists = await repository.ExistsAsync(e => e.property1 == "SeededValue1");
-
-             if (!exists)
-             {
-                 // 📌 ایجاد داده‌های اولیه
-                 var samples = new List<SampleEntity>
-                 {
-                     new SampleEntity { property1 = "SeededValue1" },
-                     new SampleEntity { property1 = "SeededValue2" }
-                 };
-
-                 // 📌 درج داده‌ها با Repository
-                 await repository.AddRangeAsync(samples);
-
-                 // 📌 ذخیره تغییرات با UnitOfWork
-                 await unitOfWork.SaveChangesAsync();
-
-                 // 📌 ثبت لاگ موفقیت
-                 logger.LogInformation("✅ Sample seed data inserted successfully via Repository + UnitOfWork.");
-             }
-             else
-             {
-                 // 📌 اگر داده وجود داشت، صرف‌نظر از درج مجدد
-                 logger.LogInformation("ℹ️ Sample seed data already exists, skipping.");
-             }
-         }*/
     }
 }

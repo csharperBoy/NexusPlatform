@@ -431,6 +431,14 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("State")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("StopLossPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("TakeProfitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<Guid>("TraderAccountId")
                         .HasColumnType("uniqueidentifier");
 
@@ -451,6 +459,9 @@ namespace Trader.Infrastructure.Migrations
 
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_OrderIntent_ModifiedBy");
+
+                    b.HasIndex("SourceSignalId")
+                        .HasDatabaseName("IX_OrderIntent_SourceSignalId");
 
                     b.HasIndex("RunId", "State")
                         .HasDatabaseName("IX_OrderIntent_Run_State");

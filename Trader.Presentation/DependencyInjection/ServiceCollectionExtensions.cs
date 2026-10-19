@@ -1,51 +1,44 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using Trader.Presentation.Controller;
 
-namespace Trader.Presentation.DependencyInjection
+namespace Trader.Presentation.DependencyInjection;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection Trader_AddPresentation(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        public static IServiceCollection Trader_AddPresentation(this IServiceCollection services, IConfiguration configuration)
+        // ─── Controllers ───
+        // همه‌ی Controllers در یک Assembly هستند، یک بار کافی است.
+        services.AddControllers()
+            .AddApplicationPart(typeof(AccountController).Assembly)
+            .AddControllersAsServices();
+
+        // ─── MediatR ───
+        // Command/Query Handlerها در Trader.Application هستند.
+        // ولی اگر در Presentation یا Infrastructure هم Handler داشته باشیم،
+        // باید آن Assembly هم Register شود.
+        services.AddMediatR(cfg =>
         {
-            // 📌 رجیستر کنترلرهای API
-            services.AddControllers()
-                .AddApplicationPart(typeof(AccountController).Assembly) // اسمبلی کنترلرهای PhoneBook
-                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
-        
+            cfg.RegisterServicesFromAssembly(
+                Assembly.Load("Trader.Application"));
 
-            // 📌 رجیستر MediatR برای مدیریت Command/Queryها
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(AccountController).Assembly));
-            // 📌 رجیستر کنترلرهای API
-            services.AddControllers()
-                .AddApplicationPart(typeof(SchedulePlanController).Assembly) // اسمبلی کنترلرهای PhoneBook
-                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
-        
+            // اگر Handler در Presentation هم داری (که نباید داشته باشی):
+            // cfg.RegisterServicesFromAssembly(typeof(AccountController).Assembly);
+        });
 
-            // 📌 رجیستر MediatR برای مدیریت Command/Queryها
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(SchedulePlanController).Assembly));
-            // 📌 رجیستر کنترلرهای API
-            services.AddControllers()
-                .AddApplicationPart(typeof(ServerClockController).Assembly) // اسمبلی کنترلرهای PhoneBook
-                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
-        
+        // ─── Pipeline Behaviors (اگر هنوز Register نشده) ───
+        // اگر SetUserDataBehavior و سایر Behaviorها را در Core Register کرده‌ای،
+        // اینجا لازم نیست. اگر نکرده‌ای، اینجا Register کن:
+        //
+        // services.AddTransient(typeof(IPipelineBehavior<,>), typeof(SetUserDataBehavior<,>));
+        //
+        // ⚠️ فقط یک بار در کل برنامه باید Register شود.
+        // اگر در Core یا جای دیگری Register شده، این را حذف کن.
 
-            // 📌 رجیستر MediatR برای مدیریت Command/Queryها
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(ServerClockController).Assembly));
-            // 📌 رجیستر کنترلرهای API
-            services.AddControllers()
-                .AddApplicationPart(typeof(SymbolController).Assembly) // اسمبلی کنترلرهای PhoneBook
-                .AddControllersAsServices(); // کنترلرها به عنوان سرویس در DI
-        
-
-            // 📌 رجیستر MediatR برای مدیریت Command/Queryها
-            services.AddMediatR(cfg =>
-                cfg.RegisterServicesFromAssembly(typeof(SymbolController).Assembly));
-            
-            return services;
-        }
+        return services;
     }
 }

@@ -17,8 +17,7 @@ public sealed class UserDataContext
     public IReadOnlySet<PermissionDto> Permissions { get; private set; }
         = new HashSet<PermissionDto>();
 
-    private UserDataContext() { }
-
+    public UserDataContext() { }
     /// <summary>
     /// ساخت یک Instance جدید کامل. برای BuildAsync و Seed.
     /// </summary>
