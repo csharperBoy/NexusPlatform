@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
@@ -15,16 +16,19 @@ public sealed class TradingRunManager : ITradingRunManager
     private readonly IRunExecutionContextCache _cache;
     private readonly IStrategyFactory _strategyFactory;
     private readonly ILogger<TradingRunManager> _logger;
+    private readonly IPositionCloser _positionCloser;
 
     public TradingRunManager(
         ITraderUnitOfWork<TraderDbContext> uow,
         IRunExecutionContextCache cache,
-        IStrategyFactory strategyFactory,
+        IStrategyFactory strategyFactory, 
+        IPositionCloser positionCloser,
         ILogger<TradingRunManager> logger)
     {
         _uow = uow;
         _cache = cache;
         _strategyFactory = strategyFactory;
+        _positionCloser = positionCloser;
         _logger = logger;
     }
     public async Task StartAsync(Guid runId, CancellationToken ct = default)
@@ -82,31 +86,33 @@ public sealed class TradingRunManager : ITradingRunManager
             runId, run.OwnerUserId, run.StrategyKey);
     }
 
-    public Task StopAsync(Guid runId, StopRunBehavior behavior, CancellationToken ct = default)
+    public async Task StopAsync(Guid runId, StopRunBehavior behavior, CancellationToken ct = default)
     {
         if (!_cache.Contains(runId))
         {
             _logger.LogInformation(
                 "Stop requested for inactive run {RunId}; no-op.", runId);
-            return Task.CompletedTask;
+            return;
+        }
+
+        // ─── ClosePositions قبل از Remove از Cache ───
+
+        if (behavior == StopRunBehavior.ClosePositions)
+        {
+            try
+            {
+                await _positionCloser.CloseRunPositionsAsync(
+                    runId, "Run stopped with ClosePositions", ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to close positions for run {RunId}.", runId);
+            }
         }
 
         _cache.Remove(runId);
-
         _logger.LogInformation(
-            "TradingRun deactivated: {RunId} behavior={Behavior}",
-            runId, behavior);
-
-        // ClosePositions: در فاز بعد که ExecutionCoordinator پیاده شد،
-        // اینجا صدا زده می‌شود.
-        if (behavior == StopRunBehavior.ClosePositions)
-        {
-            _logger.LogWarning(
-                "ClosePositions requested for run {RunId}, but not yet implemented.",
-                runId);
-        }
-
-        return Task.CompletedTask;
+            "TradingRun deactivated: {RunId} behavior={Behavior}", runId, behavior);
     }
 
     public bool IsRunning(Guid runId) => _cache.Contains(runId);

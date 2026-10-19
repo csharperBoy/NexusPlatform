@@ -54,11 +54,11 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
         var spec = new RunningTradingRunsSpec();
         var runs = await _uow.TradingRunSpecs.ListBySpecAsync(spec);
 
-        if (runs.Count == 0)
+        if (runs.Count() == 0)
             return new HashSet<Guid>();
 
         _logger.LogInformation(
-            "Runtime recovery: {Count} runs in Running state.", runs.Count);
+            "Runtime recovery: {Count} runs in Running state.", runs.Count());
 
         var restored = new HashSet<Guid>();
 
@@ -104,14 +104,14 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
         var spec = new UnconsumedSignalsByRunsSpec(runningRunIds);
         var signals = await _uow.SignalSpecs.ListBySpecAsync(spec);
 
-        if (signals.Count == 0)
+        if (signals.Count() == 0)
         {
             _logger.LogDebug("Runtime recovery: no unconsumed signals.");
             return;
         }
 
         _logger.LogInformation(
-            "Runtime recovery: {Count} unconsumed signals found.", signals.Count);
+            "Runtime recovery: {Count} unconsumed signals found.", signals.Count());
 
         var repushedCount = 0;
         var skippedCount = 0;
@@ -124,7 +124,7 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
                 var intentSpec = new OrderIntentsBySignalSpec(signal.Id);
                 var existingIntents = await _uow.OrderIntentSpecs.ListBySpecAsync(intentSpec);
 
-                if (existingIntents.Count > 0)
+                if (existingIntents.Count() > 0)
                 {
                     // سناریو C/D: قبلاً OrderIntent ساخته شده — Skip
                     // پذیرش ریسک: اگر برای بعضی Accountها Intent نساخته باشد، آن‌ها Skip می‌شوند.
@@ -135,7 +135,7 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
                     _logger.LogWarning(
                         "Signal {SignalId} (run={RunId} isin={Isin}) has existing OrderIntents " +
                         "({Count}); marking as consumed to prevent duplicate execution.",
-                        signal.Id, signal.RunId, signal.Isin, existingIntents.Count);
+                        signal.Id, signal.RunId, signal.Isin, existingIntents.Count());
                 }
                 else
                 {

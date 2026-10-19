@@ -83,11 +83,19 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
             return null;
         }
 
-        // ─── Price (Limit) ───
+        // ─── Price + SL/TP ───
         var price = ResolvePrice(snapshot, signal.Action);
-
-        // ─── SL/TP ───
         var entryPrice = new Price(price);
+
+        // فقط برای BUY معنی دارد (Position باز می‌شود)
+        Price? stopLossPrice = null;
+        Price? takeProfitPrice = null;
+
+        if (signal.Action == SignalAction.Buy)
+        {
+            stopLossPrice = context.StopLoss?.ResolveForEntry(entryPrice);
+            takeProfitPrice = context.TakeProfit?.ResolveForEntry(entryPrice);
+        }
 
         var intent = OrderIntent.Create(
             runId: context.RunId,
@@ -98,13 +106,16 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
             price: entryPrice,
             quantity: new Quantity(quantity),
             orderMode: context.DefaultOrderMode,
-            reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}");
+            reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}",
+            stopLossPrice: stopLossPrice,
+            takeProfitPrice: takeProfitPrice);
 
         await _uow.OrderIntents.AddAsync(intent);
 
         _logger.LogInformation(
-            "OrderIntent built: run={RunId} account={AccountId} isin={Isin} side={Side} qty={Qty} price={Price}",
-            context.RunId, accountId, signal.Isin, intent.Side, quantity, price);
+            "OrderIntent built: run={RunId} account={AccountId} isin={Isin} side={Side} qty={Qty} price={Price} SL={SL} TP={TP}",
+            context.RunId, accountId, signal.Isin, intent.Side, quantity, price,
+            stopLossPrice?.Value, takeProfitPrice?.Value);
 
         return intent;
     }

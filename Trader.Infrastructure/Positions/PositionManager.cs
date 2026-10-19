@@ -30,25 +30,40 @@ public sealed class PositionManager : IPositionManager
 
         var position = await FindPositionAsync(order, ct);
 
-        if (trade.Side == OrderSide.Buy)
+
+        if (order.Side == OrderSide.Buy)
         {
             if (position is null)
             {
+                // ─── خواندن SL/TP از OrderIntent ───
+                Price? sl = null;
+                Price? tp = null;
+
+                if (order.OrderIntentId.HasValue)
+                {
+                    var intent = await _uow.OrderIntents.GetByIdAsync(
+                        order.OrderIntentId.Value);
+
+                    sl = intent?.StopLossPrice;
+                    tp = intent?.TakeProfitPrice;
+                }
+
                 position = Position.Open(
                     runId: order.RunId,
                     traderAccountId: order.TraderAccountId,
                     isin: trade.Isin,
                     quantity: trade.Quantity,
                     entryPrice: trade.Price,
-                    stopLossPrice: null,
-                    takeProfitPrice: null);
+                    stopLossPrice: sl,
+                    takeProfitPrice: tp);
 
                 await _uow.Positions.AddAsync(position);
 
                 _logger.LogInformation(
-                    "Position opened: run={RunId} account={AccountId} isin={Isin} qty={Qty} price={Price} trade={TradeNumber}",
+                    "Position opened: run={RunId} account={AccountId} isin={Isin} qty={Qty} price={Price} SL={SL} TP={TP} trade={TradeNumber}",
                     order.RunId, order.TraderAccountId, trade.Isin,
-                    trade.Quantity.Value, trade.Price.Value, trade.TradeNumber);
+                    trade.Quantity.Value, trade.Price.Value,
+                    sl?.Value, tp?.Value, trade.TradeNumber);
             }
             else
             {

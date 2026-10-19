@@ -1,16 +1,21 @@
 ﻿using Core.Application.Context;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Queries;
+using Trader.Application.Abstractions.Execution;
+using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Dtos.Order;
 using Trader.Application.Runtime;
 using Trader.Application.Specifications.BrokerOrders;
+using Trader.Application.Specifications.OrderIntents;
 using Trader.Application.Specifications.OrderTrades;
+using Trader.Application.Specifications.Positions;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
@@ -33,6 +38,8 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     private readonly IUserContextCache _userContextCache;
     private readonly UserDataContext _userContext;
     private readonly TradingRuntimeOptions _options;
+    private readonly IMarketSnapshotStore _snapshotStore;
+    private readonly IBrokerOrderDispatcher _dispatcher;
     private readonly ILogger<OrderLifecycleStage> _logger;
 
     public OrderLifecycleStage(
@@ -41,7 +48,10 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         IBrokerSessionProvider sessionProvider,
         IBrokerClientFactory brokerFactory,
         IPositionManager positionManager,
-        IUserContextCache userContextCache,
+        IMarketSnapshotStore snapshotStore,
+    IBrokerOrderDispatcher dispatcher,
+
+    IUserContextCache userContextCache,
         UserDataContext userContext,
         IOptions<TradingRuntimeOptions> options,
         ILogger<OrderLifecycleStage> logger)
@@ -54,6 +64,8 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         _userContextCache = userContextCache;
         _userContext = userContext;
         _options = options.Value;
+        _snapshotStore = snapshotStore;
+        _dispatcher = dispatcher;
         _logger = logger;
     }
 
@@ -162,9 +174,101 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
             _logger.LogInformation(
                 "Stage 4: {Count} orders updated for account {AccountId}.",
                 modifiedCount, accountId);
+
+            // ─── Monitoring SL/TP بعد از Sync ───
+            try
+            {
+                await CheckStopsAndCloseAsync(accountId, account, session, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "SL/TP monitoring failed for account {AccountId}.", accountId);
+            }
         }
     }
+    private async Task CheckStopsAndCloseAsync(
+    Guid accountId,
+    TraderAccount account,
+    Trader.ExternalApiClient.ExternalSystemSession session,
+    CancellationToken ct)
+    {
+        var positions = await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByAccountSpec(accountId));
 
+        if (positions.Count() == 0) return;
+
+        var dispatched = 0;
+
+        foreach (var pos in positions)
+        {
+            try
+            {
+                var snap = _snapshotStore.GetLatest(pos.Isin);
+                if (snap is null) continue;
+
+                var currentPrice = new Price(snap.LastTradedPrice);
+                if (currentPrice.Value <= 0m) continue;
+
+                var triggerSL = pos.ShouldTriggerStopLoss(currentPrice);
+                var triggerTP = pos.ShouldTriggerTakeProfit(currentPrice);
+
+                if (!triggerSL && !triggerTP) continue;
+
+                // ─── Skip اگر Sell باز داریم ───
+                var existing = await _uow.OrderIntentSpecs.ListBySpecAsync(
+                    new OpenSellIntentsByPositionSpec(
+                        pos.RunId, pos.TraderAccountId, pos.Isin));
+
+                if (existing.Count() > 0) continue;
+
+                // ─── قیمت فروش: Best Bid یا LastTraded ───
+                decimal sellPriceValue = snap.BestBuyPrice > 0
+                    ? snap.BestBuyPrice
+                    : snap.LastTradedPrice;
+
+                if (sellPriceValue <= 0m) continue;
+
+                var reason = triggerSL ? "StopLoss triggered" : "TakeProfit triggered";
+
+                var intent = OrderIntent.Create(
+                    runId: pos.RunId,
+                    traderAccountId: pos.TraderAccountId,
+                    sourceSignalId: null,
+                    isin: pos.Isin,
+                    side: OrderSide.Sell,
+                    price: new Price(sellPriceValue),
+                    quantity: pos.Quantity,
+                    orderMode: OrderMode.Quantity,
+                    reason: reason);
+
+                await _uow.OrderIntents.AddAsync(intent);
+
+                await _dispatcher.DispatchAsync(intent, account.Broker, session, ct);
+                dispatched++;
+
+                _logger.LogInformation(
+                    "SL/TP auto-close dispatched: run={RunId} isin={Isin} reason={Reason} " +
+                    "qty={Qty} price={Price} (SL={SLPrice} TP={TPPrice} current={Current})",
+                    pos.RunId, pos.Isin, reason, pos.Quantity.Value, sellPriceValue,
+                    pos.StopLossPrice?.Value, pos.TakeProfitPrice?.Value, currentPrice.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to auto-close position {PositionId} ({Isin}).",
+                    pos.Id, pos.Isin);
+            }
+        }
+
+        if (dispatched > 0)
+        {
+            await _uow.SaveChangesAsync(ct);
+            _logger.LogInformation(
+                "Stage 4 monitoring: {Count} auto-close orders dispatched for account {AccountId}.",
+                dispatched, accountId);
+        }
+    }
     /* ═══════════════════ Fetch History ═══════════════════ */
 
     private async Task<List<OrderHistoryItemDto>> FetchAllHistoryAsync(

@@ -142,7 +142,8 @@ namespace Trader.Infrastructure.DependencyInjection
             // ─── Strategy Factory ───
             services.AddTraderStrategies();
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
-
+            // Position Closer
+            services.AddSingleton<IPositionCloser, PositionCloser>();
             // ─── Application Services ───
             services.AddScoped<IInstrumentCommandService, InstrumentService>();
             services.AddScoped<IInstrumentQueryService, InstrumentService>();

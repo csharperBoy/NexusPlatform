@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trader.Domain.Entities;
+using Trader.Domain.ValueObjects;
 
 namespace Trader.Infrastructure.Configurations;
 
@@ -20,7 +21,17 @@ public class OrderIntentConfiguration : BaseConfiguration<OrderIntent>
         builder.Property(x => x.Side).HasConversion<int>().IsRequired();
         builder.Property(x => x.OrderMode).HasConversion<int>().IsRequired();
         builder.Property(x => x.State).HasConversion<int>().IsRequired();
+        builder.Property(x => x.StopLossPrice)
+    .HasConversion(
+        p => p.HasValue ? p.Value.Value : (decimal?)null,
+        v => v.HasValue ? new Price(v.Value) : (Price?)null)
+    .HasPrecision(18, 4);
 
+        builder.Property(x => x.TakeProfitPrice)
+            .HasConversion(
+                p => p.HasValue ? p.Value.Value : (decimal?)null,
+                v => v.HasValue ? new Price(v.Value) : (Price?)null)
+            .HasPrecision(18, 4);
         builder.Property(x => x.Price)
             .HasConversion(p => p.Value, v => new Trader.Domain.ValueObjects.Price(v))
             .HasPrecision(18, 4);
