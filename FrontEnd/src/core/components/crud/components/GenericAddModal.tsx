@@ -61,7 +61,11 @@ export function GenericAddModal<T>({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  const editableColumns = columns.filter((col) => col.editable !== false);
+ const editableColumns = columns.filter((col) => {
+  if (col.editableInAdd === false) return false;
+  if (col.editableInAdd === true) return true;
+  return col.editable !== false;
+});
 
   // ← NEW: نرمال‌سازی قبل از ارسال به onSubmit
   const handleSubmit = (e: React.FormEvent) => {

@@ -1,0 +1,147 @@
+import React from "react";
+import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
+import type { GenericColumnDef } from "@/core/components/crud/types";
+import { instrumentCrudApi } from "../../hooks/useInstrumentManagement";
+import type {
+  InstrumentInfoView,
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand,
+} from "../../models";
+import type { SelectionListDto } from "@/core/models/SelectionListDto";
+
+/* ─── Static Options ─── */
+const instrumentTypeOptions: SelectionListDto[] = [
+  { value: "0", label: "سهام", display: "سهام" },
+  { value: "2", label: "آتی", display: "آتی" },
+  { value: "3", label: "اوراق", display: "اوراق" },
+  { value: "4", label: "صندوق", display: "صندوق" },
+  { value: "5", label: "ارز", display: "ارز" },
+  { value: "6", label: "رمزارز", display: "رمزارز" },
+  // ⚠️ Option (1) در Phase 1 پشتیبانی نمی‌شود (نیاز به Modal سفارشی)
+];
+
+const marketTypeOptions: SelectionListDto[] = [
+  { value: "0", label: "بورس تهران", display: "بورس تهران" },
+  { value: "2", label: "بورس آتی", display: "بورس آتی" },
+  { value: "10", label: "فارکس", display: "فارکس" },
+  { value: "20", label: "کریپتو", display: "کریپتو" },
+];
+
+/* ─── Columns ─── */
+const columns: GenericColumnDef<InstrumentInfoView>[] = [
+  {
+    key: "isin",
+    label: "ISIN",
+    type: "text",
+    dir: "ltr",
+    required: true,
+    editable: false,        // بعد از ساخت قابل ویرایش نیست
+    editableInAdd: true,    // در Add Modal نشان داده شود
+  },
+  {
+    key: "symbolName",
+    label: "نام نماد",
+    type: "text",
+    required: true,
+  },
+  {
+    key: "displayName",
+    label: "نام نمایشی",
+    type: "text",
+    required: true,
+  },
+  {
+    key: "type",
+    label: "نوع",
+    type: "select",
+    required: true,
+    editable: false,        // در جدول read-only
+    editableInAdd: true,    // در Add Modal editable
+    staticOptions: instrumentTypeOptions,
+    valueType: "number",
+    render: (_v, item) => item.typeName,
+  },
+  {
+    key: "market",
+    label: "بازار",
+    type: "select",
+    required: true,
+    editable: false,
+    editableInAdd: true,
+    staticOptions: marketTypeOptions,
+    valueType: "number",
+    render: (_v, item) => item.marketName,
+  },
+  {
+    key: "boardCode",
+    label: "کد تابلو",
+    type: "text",
+    dir: "ltr",
+  },
+  {
+    key: "isActive",
+    label: "وضعیت",
+    editable: false,
+    render: (v: boolean) => (
+      <span
+        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+          v
+            ? "bg-emerald-900/40 text-emerald-300"
+            : "bg-red-900/40 text-red-300"
+        }`}
+      >
+        {v ? "فعال" : "غیرفعال"}
+      </span>
+    ),
+  },
+];
+
+/* ─── Page ─── */
+export const InstrumentsManagementPage: React.FC = () => {
+  return (
+    <div>
+      <GenericCrudPage<
+        InstrumentInfoView,
+        CreateInstrumentCommand,
+        UpdateInstrumentCommand
+      >
+        title="مدیریت نمادها"
+        columns={columns}
+        crudOptions={{
+          api: instrumentCrudApi,
+          columns,
+          mapToUpdateCommand: (item) => ({
+            id: item.id,
+            symbolName: item.symbolName,
+            displayName: item.displayName,
+            boardCode: item.boardCode ?? null,
+          }),
+          mapToCreateCommand: (formData) => ({
+            isin: String(formData.isin ?? "").trim(),
+            symbolName: String(formData.symbolName ?? "").trim(),
+            displayName: String(formData.displayName ?? "").trim(),
+            type: Number(formData.type ?? 0),
+            market: Number(formData.market ?? 0),
+            boardCode: formData.boardCode
+              ? String(formData.boardCode).trim()
+              : null,
+            optionContract: null, // ⚠️ Phase 1: Option via custom modal
+          }),
+          tableFeatures: {
+            enableSearch: true,
+            enableDelete: true,
+            enableColumnFilter: true,
+          },
+          pageFeatures: {
+            enableAdd: true,
+          },
+        }}
+      />
+
+      <div className="mx-6 mb-6 rounded-lg border border-amber-700 bg-amber-900/20 p-3 text-xs text-amber-300">
+        ⚠️ نمادهای <strong>اختیار معامله</strong> در این صفحه پشتیبانی
+        نمی‌شوند. برای ثبت آن‌ها از فرم سفارشی استفاده خواهد شد (Phase 2).
+      </div>
+    </div>
+  );
+};

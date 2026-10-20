@@ -34,6 +34,14 @@ export interface GenericColumnDef<T> {
   valueType?: "string" | "number" | "boolean";   // ← NEW
 
   editable?: boolean;
+  /**
+   * NEW: Override the default "includes in Add Modal" behavior.
+   * - undefined: follow `editable !== false`
+   * - true: always include in Add Modal (even if editable === false)
+   * - false: never include in Add Modal
+   */
+  editableInAdd?: boolean;
+
   required?: boolean;
   dir?: "ltr" | "rtl";
   className?: string;

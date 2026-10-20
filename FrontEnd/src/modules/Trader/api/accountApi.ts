@@ -41,7 +41,7 @@ function toView(a: MockAccount): AccountInfoView {
     username: a.username,
   
     sessionStatus: tokenStatus, // ← rename از tokenStatus
-    sessionExp: a.tokenExp ? new Date(a.tokenExp).toISOString() : null,
+    sessionExp: a.tokenExp,
   };
 }
 

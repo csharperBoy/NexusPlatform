@@ -7,6 +7,19 @@ export type {
 } from "./AccountCommand";
 export type { AccountInfoView, TokenStatus } from "./AccountInfoView";
 
+// ─── Instrument (NEW) ───
+export type {
+  InstrumentInfoView,
+} from "./InstrumentInfoView";
+export type {
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand,
+  OptionContractModel,
+} from "./InstrumentCommand";
+export { InstrumentType, MarketType, OPTION_TYPE_OPTIONS } from "./InstrumentType";
+export type { OptionTypeOption } from "./InstrumentType";
+
+// ─── Legacy Symbol (نگه‌داری برای سازگاری، حذف در Phase 2) ───
 export type {
   CreateSymbolCommand,
   UpdateSymbolCommand,
