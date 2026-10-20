@@ -1,11 +1,11 @@
-export type OrderMode = "quantity" | "totalValue";
+export type ScheduleOrderMode = "quantity" | "totalValue";
 
 export interface ScheduledOrderCommand {
   accountId: string;
   symbolIsin: string;
   /** 0 = خرید، 1 = فروش */
   side: number;
-  mode: OrderMode;
+  mode: ScheduleOrderMode;
   quantity: string;
   totalValue: string;
   /** "HH:MM:SS.mmm" */

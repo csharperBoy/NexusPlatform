@@ -28,7 +28,7 @@ export type {
 export type { SymbolInfoView, MarketSymbolInfoView } from "./SymbolInfoView";
 
 export type {
-  OrderMode,
+  ScheduleOrderMode,
   ScheduledOrderCommand,
   CreateSchedulePlanCommand,
   UpdateSchedulePlanCommand,
@@ -50,3 +50,38 @@ export type {
   ExecutionLogInfoView,
   ExecutionLogQueryResult,
 } from "./ExecutionLogInfoView";
+
+// ─── Strategy ───
+export type {
+  StrategyInfoView,
+  StrategyConfigFieldView,
+} from "./StrategyInfoView";
+
+// ─── TradingRun (NEW) ───
+export type {
+  TradingRunInfoView,
+  TradingRunDetailView,
+  TradingRunSettingsDto,
+  TradingRunSymbolDto,
+  TradingRunSettingsModel,
+  TradingRunSymbolModel,
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+  StopTradingRunCommand,
+} from "./TradingRun";
+
+export {
+  TradingRunState,
+  CapitalAllocationMode,
+  StopRunBehavior,
+  MarketCloseBehavior,
+  OrderMode,
+  TimeFrame,
+  TRADING_RUN_STATE_LABELS,
+  TRADING_RUN_STATE_COLORS,
+  CAPITAL_MODE_LABELS,
+  TIMEFRAME_LABELS,
+  STOP_BEHAVIOR_LABELS,
+  MARKET_CLOSE_LABELS,
+  ORDER_MODE_LABELS,
+} from "./TradingRunEnums";

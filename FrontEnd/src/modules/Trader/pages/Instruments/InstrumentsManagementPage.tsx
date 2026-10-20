@@ -1,7 +1,7 @@
 import React from "react";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
 import type { GenericColumnDef } from "@/core/components/crud/types";
-import { instrumentCrudApi } from "../../hooks/useInstrumentManagement";
+import { instrumentCrudApi } from "../../hooks";
 import type {
   InstrumentInfoView,
   CreateInstrumentCommand,

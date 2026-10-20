@@ -7,7 +7,13 @@ using Trader.Application.Dtos.TradingRuns;
 namespace Trader.Application.Commands.TradingRun;
 
 public record CreateTradingRunCommand(
-    CreateTradingRunModel Model
+    string Name,
+    string StrategyKey,
+    string StrategyConfigJson,
+    int PrimaryTimeFrame,
+    TradingRunSettingsModel Settings,
+    IReadOnlyList<TradingRunSymbolModel> Symbols,
+    IReadOnlyList<Guid> AccountIds
 ) : IRequest<Result<Guid>>;
 
 public class CreateTradingRunCommandHandler
@@ -30,19 +36,27 @@ public class CreateTradingRunCommandHandler
     {
         try
         {
+            var model = new CreateTradingRunModel(
+                request.Name,
+                request.StrategyKey,
+                request.StrategyConfigJson,
+                request.PrimaryTimeFrame,
+                request.Settings,
+                request.Symbols,
+                request.AccountIds);
+
+            var id = await _service.CreateAsync(model);
+
             _logger.LogInformation(
-                "Creating TradingRun {Name} strategy={Strategy}",
-                request.Model.Name, request.Model.StrategyKey);
+                "TradingRun created {Id} name={Name} strategy={Strategy}",
+                id, request.Name, request.StrategyKey);
 
-            var id = await _service.CreateAsync(request.Model);
-
-            _logger.LogInformation("TradingRun created {Id}", id);
             return Result<Guid>.Ok(id);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed to create TradingRun {Name}", request.Model.Name);
+                "Failed to create TradingRun {Name}", request.Name);
             return Result<Guid>.Fail(ex.Message);
         }
     }

@@ -1,10 +1,13 @@
 //src/modules/Trader/routes.tsx
 import type { RouteObject } from "react-router-dom";
-import { AccountsManagementPage } from "./pages/Accounts/AccountsManagementPage";
-import { InstrumentsManagementPage } from "./pages/Instruments/InstrumentsManagementPage";
-import { SchedulePlansManagementPage } from "./pages/SchedulePlans/SchedulePlansManagementPage";
-import { ServerClockPage } from "./pages/ServerClock/ServerClockPage";
-import { LogViewerPage } from "./pages/Logs/LogViewerPage";
+import { 
+  TradingRunsManagementPage , 
+  StrategiesListPage,
+  LogViewerPage,
+  ServerClockPage,
+  SchedulePlansManagementPage,
+  InstrumentsManagementPage,
+  AccountsManagementPage } from "./pages";
 
 /* ─── استفاده در TraderShotgun app (داخل MainLayout پلتفرم) ─── */
 export const TraderShotgunRoutes: RouteObject[] = [
@@ -12,7 +15,10 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/instruments",    element: <InstrumentsManagementPage /> },
   { path: "trader/schedule-plans", element: <SchedulePlansManagementPage /> },
   { path: "trader/server-clock",   element: <ServerClockPage /> },
-  { path: "trader/logs",           element: <LogViewerPage /> },
+  { path: "trader/logs",           element: <LogViewerPage /> },  
+{ path: "trader/strategies", element: <StrategiesListPage /> },
+
+  { path: "trader/trading-runs",   element: <TradingRunsManagementPage /> },
 ];
 
 /* ─── برای پنل ادمین پلتفرم (flat) ─── */

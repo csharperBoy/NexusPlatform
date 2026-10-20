@@ -8,7 +8,13 @@ namespace Trader.Application.Commands.TradingRun;
 
 public record UpdateTradingRunCommand(
     Guid Id,
-    UpdateTradingRunModel Model
+    string Name,
+    string StrategyKey,
+    string StrategyConfigJson,
+    int PrimaryTimeFrame,
+    TradingRunSettingsModel Settings,
+    IReadOnlyList<TradingRunSymbolModel> Symbols,
+    IReadOnlyList<Guid> AccountIds
 ) : IRequest<Result<bool>>;
 
 public class UpdateTradingRunCommandHandler
@@ -31,12 +37,22 @@ public class UpdateTradingRunCommandHandler
     {
         try
         {
-            await _service.UpdateAsync(request.Id, request.Model);
+            var model = new UpdateTradingRunModel(
+                request.Name,
+                request.StrategyKey,
+                request.StrategyConfigJson,
+                request.PrimaryTimeFrame,
+                request.Settings,
+                request.Symbols,
+                request.AccountIds);
+
+            await _service.UpdateAsync(request.Id, model);
             return Result<bool>.Ok(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update TradingRun {Id}", request.Id);
+            _logger.LogError(ex,
+                "Failed to update TradingRun {Id}", request.Id);
             return Result<bool>.Fail(ex.Message);
         }
     }

@@ -6,3 +6,5 @@ export { symbolApi } from "./symbolApi";           // Legacy — حذف در Pha
 export { schedulePlanApi } from "./schedulePlanApi";
 export { serverClockApi } from "./serverClockApi";
 export { executionLogApi } from "./executionLogApi";
+export { strategyApi } from "./strategyApi";       // ← NEW
+export { tradingRunApi } from "./tradingRunApi";   // ← NEW
