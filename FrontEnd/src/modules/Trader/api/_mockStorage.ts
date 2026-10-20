@@ -1,3 +1,4 @@
+//src/modules/Trader/api/_mockStorage.ts
 /* ─── helper برای mock با localStorage ─── */
 export function mockLoad<T>(key: string, fallback: T): T {
   try {

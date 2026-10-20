@@ -1,4 +1,4 @@
-//src/modules/HR/widgets/EmploymentStatsWidget.tsx
+//src/modules/Trader/widgets/SymbolStatsWidget.tsx
 
 import React from 'react';
 import Card from '@/core/components/Card';

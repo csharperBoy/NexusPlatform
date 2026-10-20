@@ -1,3 +1,4 @@
+//src/modules/Trader/routes.tsx
 import type { RouteObject } from "react-router-dom";
 import { AccountsManagementPage } from "./pages/Accounts/AccountsManagementPage";
 import { SymbolsManagementPage } from "./pages/Symbols/SymbolsManagementPage";

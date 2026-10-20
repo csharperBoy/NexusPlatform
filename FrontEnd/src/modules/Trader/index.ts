@@ -1,3 +1,4 @@
+//src/modules/Trader/index.ts
 export * from "./api";
 export * from "./models";
 export * from "./hooks";

@@ -1,3 +1,4 @@
+//src/modules/Trader/hooks/useAccountManagement.ts
 import { accountApi } from "../api/accountApi";
 import type {
   AccountInfoView,

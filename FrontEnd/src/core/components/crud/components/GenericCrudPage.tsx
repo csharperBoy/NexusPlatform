@@ -1,3 +1,4 @@
+//src/core/components/crud/components/GenericCrudPage.tsx
 import React from "react";
 import { GenericColumnDef, UseGenericCrudOptions } from "../types";
 import { useGenericCrud } from "../hooks/useGenericCrud";

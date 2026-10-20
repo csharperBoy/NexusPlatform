@@ -1,3 +1,4 @@
+//src/modules/Trader/models/index.ts
 export type {
   CreateAccountCommand,
   UpdateAccountCommand,

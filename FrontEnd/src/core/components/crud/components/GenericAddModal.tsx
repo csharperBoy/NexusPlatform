@@ -1,3 +1,4 @@
+//src/core/components/crud/components/GenericAddModal.tsx
 import React, { useState, useEffect } from "react";
 import { GenericColumnDef } from "../types";
 import { SelectionListDto } from "@/core/models/SelectionListDto";

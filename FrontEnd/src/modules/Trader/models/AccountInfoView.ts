@@ -1,3 +1,4 @@
+//src/modules/Trader/models/AccountInfoView.ts
 export type TokenStatus = "empty" | "invalid" | "expired" | "valid";
 
 export interface AccountInfoView {

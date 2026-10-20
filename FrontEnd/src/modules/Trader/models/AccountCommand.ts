@@ -1,3 +1,4 @@
+//src/modules/Trader/models/AccountCommand.ts
 export interface CreateAccountCommand {
   broker: number;      // ← جدید
   name: string;

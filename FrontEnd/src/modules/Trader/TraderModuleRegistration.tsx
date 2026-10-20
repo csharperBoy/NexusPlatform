@@ -1,4 +1,4 @@
-//src/
+//src/modules/Trader/TraderModuleRegistration.tsx
 import { useEffect } from 'react';
 import { useMenu, usePlugin } from '@/modules/DashboardCore';
 import { lazy } from 'react';
@@ -18,11 +18,11 @@ export const TraderModuleRegistration = () => {
     
     // ثبت ویجت
     registerWidget({
-      id: 'hr-employment-stats',
+      id: 'trader-symbol-stats',
       area: 'widgets',
       priority: 30,
       component: SymbolStatsWidget,
-      title: 'آمار کارمندان',
+      title: 'آمار تعداد نمادها',
     });
   }, []);
 
