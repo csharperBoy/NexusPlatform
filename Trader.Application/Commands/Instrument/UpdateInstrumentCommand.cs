@@ -6,8 +6,12 @@ using Trader.Application.Dtos.Instruments;
 
 namespace Trader.Application.Commands.Instrument;
 
-public record UpdateInstrumentCommand(Guid Id, UpdateInstrumentModel Model)
-    : IRequest<Result<bool>>;
+public record UpdateInstrumentCommand(
+    Guid Id,
+    string SymbolName,
+    string DisplayName,
+    string? BoardCode
+) : IRequest<Result<bool>>;
 
 public class UpdateInstrumentCommandHandler
     : IRequestHandler<UpdateInstrumentCommand, Result<bool>>
@@ -29,7 +33,12 @@ public class UpdateInstrumentCommandHandler
     {
         try
         {
-            await _service.UpdateAsync(request.Id, request.Model);
+            var model = new UpdateInstrumentModel(
+                request.SymbolName,
+                request.DisplayName,
+                request.BoardCode);
+
+            await _service.UpdateAsync(request.Id, model);
             return Result<bool>.Ok(true);
         }
         catch (Exception ex)

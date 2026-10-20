@@ -1,4 +1,5 @@
-﻿using Core.Shared.Results;
+﻿using Core.Shared.DTOs;
+using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
@@ -7,11 +8,11 @@ using Trader.Application.Dtos.Instruments;
 namespace Trader.Application.Queries.Instrument;
 
 public record GetInstrumentSelectionListQuery
-    : IRequest<Result<IReadOnlyList<InstrumentSelectionView>>>;
+    : IRequest<Result<IReadOnlyList<SelectionListDto>>>;
 
 public class GetInstrumentSelectionListQueryHandler
     : IRequestHandler<GetInstrumentSelectionListQuery,
-        Result<IReadOnlyList<InstrumentSelectionView>>>
+        Result<IReadOnlyList<SelectionListDto>>>
 {
     private readonly IInstrumentQueryService _service;
     private readonly ILogger<GetInstrumentSelectionListQueryHandler> _logger;
@@ -24,19 +25,19 @@ public class GetInstrumentSelectionListQueryHandler
         _logger = logger;
     }
 
-    public async Task<Result<IReadOnlyList<InstrumentSelectionView>>> Handle(
+    public async Task<Result<IReadOnlyList<SelectionListDto>>> Handle(
         GetInstrumentSelectionListQuery request,
         CancellationToken cancellationToken)
     {
         try
         {
             var list = await _service.GetSelectionListAsync();
-            return Result<IReadOnlyList<InstrumentSelectionView>>.Ok(list);
+            return Result<IReadOnlyList<SelectionListDto>>.Ok(list);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get Instrument selection list");
-            return Result<IReadOnlyList<InstrumentSelectionView>>.Fail(ex.Message);
+            return Result<IReadOnlyList<SelectionListDto>>.Fail(ex.Message);
         }
     }
 }

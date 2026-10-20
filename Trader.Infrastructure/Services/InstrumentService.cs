@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Core.Shared.DTOs;
+using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos.Instruments;
 using Trader.Application.Specifications.Instruments;
@@ -102,14 +103,14 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         return instrument is null ? null : MapToInfoView(instrument);
     }
 
-    public async Task<IReadOnlyList<InstrumentSelectionView>> GetSelectionListAsync()
+    public async Task<IReadOnlyList<SelectionListDto>> GetSelectionListAsync()
     {
         var spec = new ActiveInstrumentsSpec();
         var instruments = await _uow.InstrumentSpecs.ListBySpecAsync(spec);
 
         return instruments
-            .Select(i => new InstrumentSelectionView(
-                i.Id, i.Isin, i.SymbolName, i.DisplayName))
+            .Select(i => new SelectionListDto(
+                i.Isin, i.SymbolName, i.DisplayName))
             .ToList();
     }
 
