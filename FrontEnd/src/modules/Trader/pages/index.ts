@@ -7,3 +7,6 @@ export { LogViewerPage } from "./Logs/LogViewerPage";
 export { InstrumentsManagementPage } from "./Instruments/InstrumentsManagementPage";
 export { TradingRunsManagementPage } from "./TradingRuns/TradingRunsManagementPage";
 export { StrategiesListPage } from "./Strategies/StrategiesListPage";
+
+export { PositionsPage } from "./Positions/PositionsPage";
+export { SignalsPage } from "./Signals/SignalsPage";

@@ -22,17 +22,17 @@ public sealed class UserDataContext
     /// ساخت یک Instance جدید کامل. برای BuildAsync و Seed.
     /// </summary>
     public static UserDataContext Create(
-        Guid userId,
-        Guid userPermissionAssigneeId,
-        string? userName,
-        Guid? partyId,
-        Guid? partyPermissionAssigneeId,
-        IEnumerable<Guid?>? organizationUnitIds,
-        IEnumerable<Guid>? postIds,
-        IEnumerable<Guid>? postPermissionAssigneeIds,
-        IEnumerable<Guid>? roleIds,
-        IEnumerable<Guid>? rolePermissionAssigneeIds,
-        IEnumerable<PermissionDto> permissions)
+     Guid userId,
+     Guid userPermissionAssigneeId,
+     string? userName,
+     Guid? partyId,
+     Guid? partyPermissionAssigneeId,
+     IEnumerable<Guid?>? organizationUnitIds,
+     IEnumerable<Guid>? postIds,
+     IEnumerable<Guid>? postPermissionAssigneeIds,
+     IEnumerable<Guid>? roleIds,
+     IEnumerable<Guid>? rolePermissionAssigneeIds,
+     IEnumerable<PermissionDto>? permissions)   // ← nullable
     {
         return new UserDataContext
         {
@@ -46,7 +46,7 @@ public sealed class UserDataContext
             PostPermissionAssigneeIds = postPermissionAssigneeIds?.ToHashSet() ?? new HashSet<Guid>(),
             RoleIds = roleIds?.ToHashSet() ?? new HashSet<Guid>(),
             RolePermissionAssigneeIds = rolePermissionAssigneeIds?.ToHashSet() ?? new HashSet<Guid>(),
-            Permissions = permissions.ToHashSet()
+            Permissions = (permissions ?? Enumerable.Empty<PermissionDto>()).ToHashSet()   // ← null-safe
         };
     }
 

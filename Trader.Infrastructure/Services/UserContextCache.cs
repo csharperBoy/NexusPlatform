@@ -32,7 +32,7 @@ public sealed class UserContextCache : IUserContextCache
     }
 
     public async Task<UserDataContext> GetOrLoadAsync(
-        Guid userId, CancellationToken ct = default)
+     Guid userId, CancellationToken ct = default)
     {
         if (userId == Guid.Empty)
             return UserDataContext.Empty();
@@ -48,7 +48,6 @@ public sealed class UserContextCache : IUserContextCache
 
         try
         {
-            // Double-check
             if (_cache.TryGetValue(userId, out entry)
                 && DateTime.UtcNow - entry.LoadedAt < Ttl)
             {
@@ -59,13 +58,26 @@ public sealed class UserContextCache : IUserContextCache
             var provider = scope.ServiceProvider
                 .GetRequiredService<IUserDataContextProvider>();
 
-            var snapshot = await provider.BuildAsync(userId, ct);
+            UserDataContext snapshot;
+            try
+            {
+                snapshot = await provider.BuildAsync(userId, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "BuildAsync failed for userId={UserId}. Returning Empty() so pipeline continues.",
+                    userId);
+                snapshot = UserDataContext.Empty();
+            }
 
             _cache[userId] = new Entry(snapshot, DateTime.UtcNow);
 
             _logger.LogDebug(
                 "User context loaded: userId={UserId} permissions={Count} roles={RoleCount}",
-                userId, snapshot.Permissions.Count, snapshot.RoleIds?.Count ?? 0);
+                userId,
+                snapshot.Permissions?.Count ?? 0,
+                snapshot.RoleIds?.Count ?? 0);
 
             return snapshot;
         }

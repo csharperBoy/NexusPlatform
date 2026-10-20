@@ -817,13 +817,51 @@ namespace Trader.ExternalApiClient.EasyTrader
 
         /// <summary>POST /symbols/api/marketdata (GraphQL batch)</summary>
         public async Task<List<MarketDataGraphQLItem>> GetMarketDataGraphQLAsync(
-            string accessToken,
-            IReadOnlyList<string> symbolIsins,
-            CancellationToken ct = default)
+    string accessToken,
+    IReadOnlyList<string> symbolIsins,
+    CancellationToken ct = default)
         {
             if (symbolIsins is null || symbolIsins.Count == 0)
                 return new();
 
+            const int maxAttempts = 2;
+            Exception? lastEx = null;
+
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    return await GetMarketDataGraphQLInternalAsync(
+                        accessToken, symbolIsins, ct);
+                }
+                catch (HttpRequestException ex) when (attempt < maxAttempts)
+                {
+                    lastEx = ex;
+                    // یک Delay کوتاه — Connection مرده از Pool حذف می‌شود
+                    // و Retry با Connection تازه انجام می‌شود
+                    await Task.Delay(300, ct);
+                }
+                catch (System.IO.IOException ex) when (attempt < maxAttempts)
+                {
+                    lastEx = ex;
+                    await Task.Delay(300, ct);
+                }
+                catch (TaskCanceledException ex) when (attempt < maxAttempts && !ct.IsCancellationRequested)
+                {
+                    // Timeout — نه Cancel توسط کاربر
+                    lastEx = ex;
+                    await Task.Delay(300, ct);
+                }
+            }
+
+            throw lastEx ?? new InvalidOperationException("Retry exhausted");
+        }
+
+        private async Task<List<MarketDataGraphQLItem>> GetMarketDataGraphQLInternalAsync(
+            string accessToken,
+            IReadOnlyList<string> symbolIsins,
+            CancellationToken ct)
+        {
             const string fields =
                 "symbolIsin stateCode lastTradedPrice closingPrice totalTradeValue " +
                 "totalNumberOfTrades feeOfPreviousDaysClosingPrice priceVar buyRatio sellRatio " +

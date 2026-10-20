@@ -85,3 +85,19 @@ export {
   MARKET_CLOSE_LABELS,
   ORDER_MODE_LABELS,
 } from "./TradingRunEnums";
+
+// ─── Position (NEW) ───
+export type { PositionView } from "./PositionView";
+export {
+  PositionState,
+  POSITION_STATE_LABELS,
+  POSITION_STATE_COLORS,
+} from "./PositionView";
+
+// ─── Signal (NEW) ───
+export type { SignalView } from "./SignalView";
+export {
+  SignalAction,
+  SIGNAL_ACTION_LABELS,
+  SIGNAL_ACTION_COLORS,
+} from "./SignalView";

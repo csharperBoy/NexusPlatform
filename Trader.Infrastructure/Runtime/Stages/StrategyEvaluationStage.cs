@@ -31,7 +31,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         ISignalChannel signalChannel,
         ITraderUnitOfWork<TraderDbContext> uow,
         UserDataContext userContext,
-        ILogger<StrategyEvaluationStage> logger)
+ IUserContextCache userContextCache,
+    ILogger<StrategyEvaluationStage> logger)
     {
         _runCache = runCache;
         _snapshotStore = snapshotStore;
@@ -39,6 +40,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         _signalChannel = signalChannel;
         _uow = uow;
         _userContext = userContext;
+        _userContextCache = userContextCache;
         _logger = logger;
     }
     public async Task RunOnceAsync(CancellationToken ct = default)

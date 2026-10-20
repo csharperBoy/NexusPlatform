@@ -6,7 +6,9 @@ using Core.Application.Context;
 using Core.Application.Helper;
 using Core.Application.Provider;
 using Core.Domain.Enums;
+using Core.Shared.DTOs.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace Authorization.Application.Provider;
@@ -21,10 +23,12 @@ public class UserDataContextProvider : IUserDataContextProvider
     private readonly IPermissionInternalService _permissionService;
     private readonly IHttpContextAccessor _httpContext;
     private readonly UserDataContext _userDataContext;
+    private readonly ILogger<UserDataContextProvider> _logger;
 
     public UserDataContextProvider(
         UserDataContext userDataContext,
         IHttpContextAccessor httpContext,
+        ILogger<UserDataContextProvider> logger,
         IUserPublicService userService,
         IPersonPublicService personService,
         IRolePublicService roleService,
@@ -34,6 +38,7 @@ public class UserDataContextProvider : IUserDataContextProvider
     {
         _httpContext = httpContext;
         _userDataContext = userDataContext;
+        _logger = logger;
         _userService = userService;
         _personService = personService;
         _roleService = roleService;
@@ -71,6 +76,9 @@ public class UserDataContextProvider : IUserDataContextProvider
         if (userId == Guid.Empty)
             return UserDataContext.Empty();
 
+        _logger.LogInformation(
+            "BuildAsync: loading user context for userId={UserId}", userId);
+
         var userPermissionAssigneeId =
             await _userService.GetUserPermissionAssigneeIdAsync(userId);
 
@@ -82,37 +90,104 @@ public class UserDataContextProvider : IUserDataContextProvider
         List<Guid>? postPermissionAssigneeIds = null;
         List<Guid?>? orgIds = null;
 
+        /* ─── People ─── */
         if (ModuleHelper.IsActive(ModuleEnum.People))
         {
-            partyId = await _userService.GetPartyId(userId);
-            personId = await _personService.GetNaturalPersonIdAsync(partyId);
-            partyPermissionAssigneeId =
-                await _personService.GetPartyPermissionAssigneeIdAsync(partyId);
+            try
+            {
+                partyId = await _userService.GetPartyId(userId);
+                _logger.LogDebug("BuildAsync: partyId={PartyId}", partyId);
+
+                if (partyId.HasValue && partyId.Value != Guid.Empty)
+                {
+                    personId = await _personService.GetNaturalPersonIdAsync(partyId);
+                    partyPermissionAssigneeId =
+                        await _personService.GetPartyPermissionAssigneeIdAsync(partyId);
+
+                    _logger.LogDebug(
+                        "BuildAsync: personId={PersonId} partyPermAssigneeId={PermId}",
+                        personId, partyPermissionAssigneeId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "BuildAsync: failed to load People info for userId={UserId}. Continuing.",
+                    userId);
+            }
         }
 
-        if (ModuleHelper.IsActive(ModuleEnum.HR))
+        /* ─── HR ─── */
+        if (ModuleHelper.IsActive(ModuleEnum.HR)
+            && personId.HasValue && personId.Value != Guid.Empty)
         {
-            employmentId = await _employmentService.GetEmploymentId(personId);
-            postIds = await _positionService.GetEmploymentPostsId(employmentId);
-            postPermissionAssigneeIds =
-                await _positionService.GetEmploymentPostsPermissionAssigneeId(employmentId);
-            orgIds = await _positionService.GetEmploymentOrganizeId(employmentId);
+            try
+            {
+                employmentId = await _employmentService.GetEmploymentId(personId);
+                _logger.LogDebug("BuildAsync: employmentId={EmploymentId}", employmentId);
+
+                if (employmentId.HasValue && employmentId.Value != Guid.Empty)
+                {
+                    postIds = await _positionService.GetEmploymentPostsId(employmentId);
+                    postPermissionAssigneeIds =
+                        await _positionService.GetEmploymentPostsPermissionAssigneeId(employmentId);
+                    orgIds = await _positionService.GetEmploymentOrganizeId(employmentId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "BuildAsync: failed to load HR info for userId={UserId}. Continuing.",
+                    userId);
+            }
         }
 
-        var roleIds = await _roleService.GetAllUserRolesId(userId);
-        var rolePermissionAssigneeIds =
-            await _roleService.GetAllUserRolesPermissionAssigneeId(userId);
+        /* ─── Roles ─── */
+        List<Guid> roleIds = new();
+        List<Guid> rolePermissionAssigneeIds = new();
+        try
+        {
+            roleIds = await _roleService.GetAllUserRolesId(userId) ?? new List<Guid>();
+            rolePermissionAssigneeIds =
+                await _roleService.GetAllUserRolesPermissionAssigneeId(userId)
+                ?? new List<Guid>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "BuildAsync: failed to load roles for userId={UserId}. Continuing.",
+                userId);
+        }
 
-        var allPermissions = await _permissionService.GetUserAllPermissionsAsync(
-            userPermissionAssigneeId,
-            partyPermissionAssigneeId,
-            postPermissionAssigneeIds,
-            rolePermissionAssigneeIds);
+        /* ─── Permissions ─── */
+        IEnumerable<PermissionDto> allPermissions = Enumerable.Empty<PermissionDto>();
+        try
+        {
+            var fetched = await _permissionService.GetUserAllPermissionsAsync(
+                userPermissionAssigneeId,
+                partyPermissionAssigneeId,
+                postPermissionAssigneeIds,
+                rolePermissionAssigneeIds);
+
+            allPermissions = fetched ?? Enumerable.Empty<PermissionDto>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "BuildAsync: failed to load permissions for userId={UserId}. Using empty.",
+                userId);
+        }
+
+        _logger.LogInformation(
+            "BuildAsync: completed userId={UserId} permissions={PermCount} roles={RoleCount}",
+            userId,
+            allPermissions.Count(),
+            roleIds.Count);
 
         return UserDataContext.Create(
             userId: userId,
             userPermissionAssigneeId: userPermissionAssigneeId,
-            userName: null, // از Identity در صورت نیاز پر شود
+            userName: null,
             partyId: partyId,
             partyPermissionAssigneeId: partyPermissionAssigneeId,
             organizationUnitIds: orgIds,

@@ -55,7 +55,11 @@ namespace Trader.Infrastructure.DependencyInjection
                     b.MigrationsAssembly(migrationsAssembly);
                     b.MigrationsHistoryTable("__TraderMigrationsHistory", "trader");
                 });
+
+                // Split queries برای همه‌ی Queryها — ایمن برای TradingRun (چند Collection)
+                //opts.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
             });
+
             /* ═══════════ Repositories — Direct ═══════════ */
 
             // Legacy
