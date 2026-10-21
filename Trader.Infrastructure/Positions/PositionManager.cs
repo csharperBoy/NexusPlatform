@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Specifications.Positions;
@@ -30,22 +31,22 @@ public sealed class PositionManager : IPositionManager
 
         var position = await FindPositionAsync(order, ct);
 
-
-        if (order.Side == OrderSide.Buy)
+        if (trade.Side == OrderSide.Buy)
         {
             if (position is null)
             {
-                // ─── خواندن SL/TP از OrderIntent ───
+                // ─── بار اول: خواندن SL/TP و SourceEvaluationId از OrderIntent ───
                 Price? sl = null;
                 Price? tp = null;
+                Guid? sourceEvalId = null;
 
                 if (order.OrderIntentId.HasValue)
                 {
                     var intent = await _uow.OrderIntents.GetByIdAsync(
                         order.OrderIntentId.Value);
-
                     sl = intent?.StopLossPrice;
                     tp = intent?.TakeProfitPrice;
+                    sourceEvalId = intent?.SourceEvaluationId;
                 }
 
                 position = Position.Open(
@@ -55,25 +56,26 @@ public sealed class PositionManager : IPositionManager
                     quantity: trade.Quantity,
                     entryPrice: trade.Price,
                     stopLossPrice: sl,
-                    takeProfitPrice: tp);
+                    takeProfitPrice: tp,
+                    sourceEvaluationId: sourceEvalId);   // ← جدید
 
                 await _uow.Positions.AddAsync(position);
 
                 _logger.LogInformation(
-                    "Position opened: run={RunId} account={AccountId} isin={Isin} qty={Qty} price={Price} SL={SL} TP={TP} trade={TradeNumber}",
+                    "Position opened: run={RunId} account={AccountId} isin={Isin} " +
+                    "qty={Qty} price={Price} SL={SL} TP={TP} evalId={EvalId} trade={TradeNumber}",
                     order.RunId, order.TraderAccountId, trade.Isin,
                     trade.Quantity.Value, trade.Price.Value,
-                    sl?.Value, tp?.Value, trade.TradeNumber);
+                    sl?.Value, tp?.Value, sourceEvalId, trade.TradeNumber);
             }
             else
             {
                 position.ApplyBuyFill(trade.Quantity, trade.Price);
 
                 _logger.LogInformation(
-                    "Position increased: run={RunId} isin={Isin} +qty={Qty} price={Price} newAvg={Avg} trade={TradeNumber}",
+                    "Position increased: run={RunId} isin={Isin} +qty={Qty} price={Price} newAvg={Avg}",
                     order.RunId, trade.Isin, trade.Quantity.Value,
-                    trade.Price.Value, position.AverageEntryPrice.Value,
-                    trade.TradeNumber);
+                    trade.Price.Value, position.AverageEntryPrice.Value);
             }
         }
         else // Sell
@@ -81,8 +83,8 @@ public sealed class PositionManager : IPositionManager
             if (position is null)
             {
                 _logger.LogWarning(
-                    "Sell trade without open position: run={RunId} isin={Isin} qty={Qty} trade={TradeNumber}",
-                    order.RunId, trade.Isin, trade.Quantity.Value, trade.TradeNumber);
+                    "Sell trade without open position: run={RunId} isin={Isin} qty={Qty}",
+                    order.RunId, trade.Isin, trade.Quantity.Value);
                 return;
             }
 
@@ -93,16 +95,23 @@ public sealed class PositionManager : IPositionManager
             if (sellQty < trade.Quantity.Value)
             {
                 _logger.LogWarning(
-                    "Sell trade {TradeQty} exceeds position {PosQty} for {Isin}; clamping to {Clamped}.",
+                    "Sell trade {Qty} exceeds position {PosQty} for {Isin}; clamped to {Clamped}.",
                     trade.Quantity.Value, position.Quantity.Value, trade.Isin, sellQty);
             }
 
             position.ApplySellFill(new Quantity(sellQty), trade.Price);
 
             _logger.LogInformation(
-                "Position reduced: run={RunId} isin={Isin} -qty={Qty} price={Price} newState={State} trade={TradeNumber}",
+                "Position reduced: run={RunId} isin={Isin} -qty={Qty} price={Price} newState={State}",
                 order.RunId, trade.Isin, sellQty,
-                trade.Price.Value, position.State, trade.TradeNumber);
+                trade.Price.Value, position.State);
+
+            // ─── اگر Position بسته شد → Outcome ثبت کن ───
+            if (position.State == PositionState.Closed
+                && position.SourceEvaluationId.HasValue)
+            {
+                await UpdateEvaluationOutcomeAsync(position, order, trade, ct);
+            }
         }
 
         position.AddDomainEvent(new PositionChangedEvent(
@@ -120,52 +129,115 @@ public sealed class PositionManager : IPositionManager
         BrokerOrder order, OrderTrade trade, CancellationToken ct = default)
     {
         var position = await FindPositionAsync(order, ct);
-        if (position is null)
-        {
-            _logger.LogWarning(
-                "Trade canceled but no open position: run={RunId} isin={Isin} trade={TradeNumber}",
-                order.RunId, trade.Isin, trade.TradeNumber);
-            return;
-        }
+        if (position is null) return;
 
-        // کنسلی Trade = معکوس کردن اثر آن
         if (trade.Side == OrderSide.Buy)
         {
-            // Buy Cancel → کاهش Position
             var reduceQty = trade.Quantity.Value > position.Quantity.Value
                 ? position.Quantity.Value
                 : trade.Quantity.Value;
-
             if (reduceQty > 0)
-            {
-                // Cancel Buy یعنی این Buy اتفاق نیفتاده. پس Position باید برگردد.
-                // بهترین رویکرد: کاهش Quantity بدون PnL (چون فروش نبوده).
                 position.ApplyBuyCancel(new Quantity(reduceQty), trade.Price);
-
-                _logger.LogWarning(
-                    "Buy trade canceled: run={RunId} isin={Isin} -qty={Qty} trade={TradeNumber}",
-                    order.RunId, trade.Isin, reduceQty, trade.TradeNumber);
-            }
         }
         else
         {
-            // Sell Cancel → افزودن Position برمی‌گردد
             position.ApplySellCancel(trade.Quantity, trade.Price);
-
-            _logger.LogWarning(
-                "Sell trade canceled: run={RunId} isin={Isin} +qty={Qty} trade={TradeNumber}",
-                order.RunId, trade.Isin, trade.Quantity.Value, trade.TradeNumber);
         }
     }
+
+    /* ═══════════════════ Helpers ═══════════════════ */
 
     private async Task<Position?> FindPositionAsync(
         BrokerOrder order, CancellationToken ct)
     {
         var spec = new OpenPositionsByRunSpec(order.RunId);
-        var openPositions = await _uow.PositionSpecs.ListBySpecAsync(spec);
+        var positions = await _uow.PositionSpecs.ListBySpecAsync(spec);
 
-        return openPositions.FirstOrDefault(p =>
+        return positions.FirstOrDefault(p =>
             p.Isin == order.Isin
             && p.TraderAccountId == order.TraderAccountId);
+    }
+
+    private async Task UpdateEvaluationOutcomeAsync(
+        Position position,
+        BrokerOrder closingOrder,
+        OrderTrade closingTrade,
+        CancellationToken ct)
+    {
+        try
+        {
+            var eval = await _uow.StrategyEvaluations.GetByIdAsync(
+                position.SourceEvaluationId!.Value);
+            if (eval is null)
+            {
+                _logger.LogWarning(
+                    "StrategyEvaluation {EvalId} not found for closed position {PosId}.",
+                    position.SourceEvaluationId, position.Id);
+                return;
+            }
+
+            // ─── تشخیص Exit Reason ───
+            var exitReason = DetectExitReason(position, closingOrder);
+
+            var entryPrice = position.AverageEntryPrice.Value;
+            var exitPrice = closingTrade.Price.Value;
+            var returnPct = entryPrice > 0
+                ? (exitPrice - entryPrice) / entryPrice * 100m
+                : 0m;
+            var heldSeconds = (long)(DateTime.UtcNow - position.OpenedAt).TotalSeconds;
+
+            var outcome = new
+            {
+                entryPrice,
+                exitPrice,
+                closedQuantity = closingTrade.Quantity.Value,
+                realizedPnl = position.RealizedPnL.Amount,
+                returnPct = Math.Round(returnPct, 4),
+                exitReason,
+                heldSeconds,
+                openedAt = position.OpenedAt,
+                closedAt = DateTime.UtcNow,
+            };
+
+            var json = JsonSerializer.Serialize(outcome, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
+
+            eval.UpdateOutcome(json);
+            await _uow.StrategyEvaluations.UpdateAsync(eval);
+
+            _logger.LogInformation(
+                "Evaluation outcome recorded: evalId={EvalId} return={ReturnPct:0.##}% reason={Reason}",
+                eval.Id, returnPct, exitReason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Failed to record evaluation outcome for eval {EvalId}.",
+                position.SourceEvaluationId);
+        }
+    }
+
+    private static string DetectExitReason(
+        Position position, BrokerOrder closingOrder)
+    {
+        // اولویت ۱: قیمت خروج نسبت به SL/TP
+        if (position.StopLossPrice.HasValue
+            && closingOrder.Price.Value <= position.StopLossPrice.Value.Value)
+        {
+            return "StopLoss";
+        }
+
+        if (position.TakeProfitPrice.HasValue
+            && closingOrder.Price.Value >= position.TakeProfitPrice.Value.Value)
+        {
+            return "TakeProfit";
+        }
+
+        // اولویت ۲: از OrderIntent.Reason (اگر موجود)
+        // (OrderIntent در اینجا Load نشده، پس در مرحله ۲ اضافه می‌کنیم)
+
+        return "Manual";
     }
 }

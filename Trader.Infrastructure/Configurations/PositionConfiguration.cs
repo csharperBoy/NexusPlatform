@@ -64,7 +64,9 @@ public class PositionConfiguration : BaseConfiguration<Position>
                 p => p.HasValue ? p.Value.Value : (decimal?)null,
                 v => v.HasValue ? new Price(v.Value) : (Price?)null)
             .HasPrecision(18, 4);
-
+        builder.Property(x => x.SourceEvaluationId).IsRequired(false);
+        builder.HasIndex(x => x.SourceEvaluationId)
+            .HasDatabaseName("IX_Position_SourceEvaluationId");
         builder.Property(x => x.OpenedAt).IsRequired();
         builder.Property(x => x.ClosedAt).IsRequired(false);
 

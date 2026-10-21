@@ -36,6 +36,8 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         IOutboxService<TraderDbContext> outboxService,
         IRepository<TraderDbContext, OrderTrade, Guid> orderTrades,
     ISpecificationRepository<OrderTrade, Guid> orderTradeSpecs,
+    IRepository<TraderDbContext, StrategyEvaluation, Guid> strategyEvaluations,
+ISpecificationRepository<StrategyEvaluation, Guid> strategyEvaluationSpecs,
 
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
@@ -64,6 +66,8 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
 
         OrderTrades = orderTrades;
         OrderTradeSpecs = orderTradeSpecs;
+        StrategyEvaluations = strategyEvaluations;
+        StrategyEvaluationSpecs = strategyEvaluationSpecs;
 
     }
 public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
@@ -79,7 +83,8 @@ public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public IRepository<TraderDbContext, SchedulePlan, Guid> SchedulePlans { get; }
     public IRepository<TraderDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
     public IRepository<TraderDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
-
+    public IRepository<TraderDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
+    
     public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     public ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
     public ISpecificationRepository<OrderIntent, Guid> OrderIntentSpecs { get; }
@@ -89,4 +94,5 @@ public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<InstrumentOrderPreset, Guid> InstrumentOrderPresetSpecs { get; }
     public ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
     public ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
+    public ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
 }

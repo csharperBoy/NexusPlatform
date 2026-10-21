@@ -20,7 +20,9 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
     IRepository<TDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
     IRepository<TDbContext, OrderTrade, Guid> OrderTrades { get; }
+    IRepository<TDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
     // Spec Repositories
+    ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
     ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
     ISpecificationRepository<OrderIntent, Guid> OrderIntentSpecs { get; }

@@ -35,7 +35,7 @@ public class OrderIntentConfiguration : BaseConfiguration<OrderIntent>
         builder.Property(x => x.Price)
             .HasConversion(p => p.Value, v => new Trader.Domain.ValueObjects.Price(v))
             .HasPrecision(18, 4);
-
+        builder.Property(x => x.SourceEvaluationId).IsRequired(false);
         builder.Property(x => x.Quantity)
             .HasConversion(q => q.Value, v => new Trader.Domain.ValueObjects.Quantity(v));
 

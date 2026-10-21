@@ -18,16 +18,17 @@ public class Signal : BaseEntity
     public DateTime ProducedAt { get; private set; }
     public string? MetadataJson { get; private set; }
     public DateTime? ConsumedAt { get; private set; }
-
+    public Guid? SourceEvaluationId { get; private set; }
     private Signal() { } // EF
 
     public static Signal Create(
-        Guid runId,
-        string isin,
-        string strategyKey,
-        SignalAction action,
-        SignalStrength strength,
-        string? metadataJson = null)
+     Guid runId,
+     string isin,
+     string strategyKey,
+     SignalAction action,
+     SignalStrength strength,
+     string? metadataJson = null,
+     Guid? sourceEvaluationId = null)      // ← جدید
     {
         return new Signal
         {
@@ -37,7 +38,8 @@ public class Signal : BaseEntity
             Action = action,
             Strength = strength,
             ProducedAt = DateTime.UtcNow,
-            MetadataJson = metadataJson
+            MetadataJson = metadataJson,
+            SourceEvaluationId = sourceEvaluationId
         };
     }
 

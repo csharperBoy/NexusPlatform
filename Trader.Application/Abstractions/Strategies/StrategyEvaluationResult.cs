@@ -8,10 +8,13 @@ namespace Trader.Application.Abstractions.Strategies;
 /// لیست Signals به دلیل آماده‌بودن برای Ensemble آینده.
 /// </summary>
 public sealed record StrategyEvaluationResult(
-    IReadOnlyList<StrategySignal> Signals)
+    IReadOnlyList<StrategySignal> Signals,
+    IReadOnlyDictionary<string, object?>? Features = null)
 {
-    public static StrategyEvaluationResult Empty
-        => new(Array.Empty<StrategySignal>());
+    /// <summary>بدون Signal — یا با Features (Hold) یا null (Warmup).</summary>
+    public static StrategyEvaluationResult Empty(
+        IReadOnlyDictionary<string, object?>? features = null)
+        => new(Array.Empty<StrategySignal>(), features);
 }
 
 public sealed record StrategySignal(

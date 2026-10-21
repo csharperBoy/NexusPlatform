@@ -1,5 +1,6 @@
 ﻿using Core.Application.Context;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
@@ -15,14 +16,20 @@ namespace Trader.Infrastructure.Runtime.Stages;
 
 public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = false,
+    };
+
     private readonly IRunExecutionContextCache _runCache;
     private readonly IMarketSnapshotStore _snapshotStore;
     private readonly ICandleCache _candleCache;
     private readonly ISignalChannel _signalChannel;
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly UserDataContext _userContext;
-    private readonly ILogger<StrategyEvaluationStage> _logger;
     private readonly IUserContextCache _userContextCache;
+    private readonly ILogger<StrategyEvaluationStage> _logger;
 
     public StrategyEvaluationStage(
         IRunExecutionContextCache runCache,
@@ -31,8 +38,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         ISignalChannel signalChannel,
         ITraderUnitOfWork<TraderDbContext> uow,
         UserDataContext userContext,
- IUserContextCache userContextCache,
-    ILogger<StrategyEvaluationStage> logger)
+        IUserContextCache userContextCache,
+        ILogger<StrategyEvaluationStage> logger)
     {
         _runCache = runCache;
         _snapshotStore = snapshotStore;
@@ -43,6 +50,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         _userContextCache = userContextCache;
         _logger = logger;
     }
+
     public async Task RunOnceAsync(CancellationToken ct = default)
     {
         var contexts = _runCache.GetAllActive();
@@ -50,28 +58,34 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         var now = DateTime.UtcNow;
         var pendingEnvelopes = new List<SignalEnvelope>();
+        var evaluationCount = 0;
+        var signalCount = 0;
 
         foreach (var ctx in contexts)
         {
-            // ─── لود کامل User Context از Cache ───
             try
             {
                 var userCtx = await _userContextCache.GetOrLoadAsync(
-             ctx.OwnerUserId, ct);
+                    ctx.OwnerUserId, ct);
                 _userContext.ApplyFrom(userCtx);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Failed to load user context for run {RunId} owner={OwnerId}. Skipping run.",
-                    ctx.RunId, ctx.OwnerUserId);
+                    "Failed to load user context for run {RunId}. Skipping.",
+                    ctx.RunId);
                 continue;
             }
+
             foreach (var symbol in ctx.Symbols)
             {
                 try
                 {
-                    var envs = await EvaluateOnlyAsync(ctx, symbol, now, ct);
+                    var (envs, evalSaved) = await EvaluateOnlyAsync(
+                        ctx, symbol, now, ct);
+
+                    evaluationCount += evalSaved ? 1 : 0;
+                    signalCount += envs.Count;
                     pendingEnvelopes.AddRange(envs);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -87,8 +101,10 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             }
         }
 
-        if (pendingEnvelopes.Count == 0) return;
+        if (evaluationCount == 0 && pendingEnvelopes.Count == 0)
+            return;
 
+        // ─── یک Save برای همه (Evaluations + Signals) ───
         try
         {
             await _uow.SaveChangesAsync(ct);
@@ -96,10 +112,12 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed to persist {Count} signals.", pendingEnvelopes.Count);
+                "Failed to persist {EvalCount} evaluations and {SigCount} signals.",
+                evaluationCount, pendingEnvelopes.Count);
             return;
         }
 
+        // ─── Push Signals به Channel ───
         foreach (var envelope in pendingEnvelopes)
         {
             try
@@ -109,35 +127,34 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Failed to push signal {SignalId} to channel. " +
-                    "Signal remains in DB; Recovery will pick it up.",
+                    "Failed to push signal {SignalId} to channel.",
                     envelope.Signal.Id);
             }
         }
 
         _logger.LogInformation(
-            "Stage 2: {SignalCount} signals emitted across {RunCount} runs.",
-            pendingEnvelopes.Count, contexts.Count);
+            "Stage 2: {EvalCount} evaluations, {SignalCount} signals across {RunCount} runs.",
+            evaluationCount, signalCount, contexts.Count);
     }
-    /* ═══════════════════ Core (بدون Save) ═══════════════════ */
 
-    private async Task<List<SignalEnvelope>> EvaluateOnlyAsync(
-        RunRuntimeContext ctx,
-        RunSymbolContext symbol,
-        DateTime now,
-        CancellationToken ct)
+    /* ═══════════════════ Core ═══════════════════ */
+
+    private async Task<(List<SignalEnvelope> Envelopes, bool EvaluationSaved)>
+        EvaluateOnlyAsync(
+            RunRuntimeContext ctx,
+            RunSymbolContext symbol,
+            DateTime now,
+            CancellationToken ct)
     {
-        var result = new List<SignalEnvelope>();
+        var envelopes = new List<SignalEnvelope>();
 
         var snapshot = _snapshotStore.GetLatest(symbol.Isin);
         if (snapshot is null)
         {
-            _logger.LogDebug(
-                "No snapshot for {Isin}; skipping.", symbol.Isin);
-            return result;
+            _logger.LogDebug("No snapshot for {Isin}; skipping.", symbol.Isin);
+            return (envelopes, false);
         }
 
-        // Candles اگر Strategy نیاز دارد
         IReadOnlyList<Candle> candles = Array.Empty<Candle>();
         if (ctx.Strategy.RequiredCandleCount > 0)
         {
@@ -148,7 +165,6 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 ct);
         }
 
-        // Evaluate
         var input = new StrategyInput(
             Isin: symbol.Isin,
             LatestSnapshot: snapshot,
@@ -157,11 +173,36 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             TimeFrame: ctx.PrimaryTimeFrame,
             EvaluatedAt: now);
 
-        var evaluation = ctx.Strategy.Evaluate(input);
-        if (evaluation.Signals.Count == 0) return result;
+        var result = ctx.Strategy.Evaluate(input);
 
-        // Persist در Change Tracker (بدون Save)
-        foreach (var s in evaluation.Signals)
+        // ─── StrategyEvaluation (فقط اگر Features موجود باشد) ───
+        StrategyEvaluation? evalEntity = null;
+        if (result.Features != null)
+        {
+            var featuresJson = JsonSerializer.Serialize(result.Features, JsonOpts);
+
+            var primaryAction = result.Signals.Count > 0
+                ? result.Signals[0].Action
+                : SignalAction.Hold;
+            var primaryStrength = result.Signals.Count > 0
+                ? result.Signals[0].Strength.Value
+                : 0m;
+
+            evalEntity = StrategyEvaluation.Create(
+                runId: ctx.RunId,
+                isin: symbol.Isin,
+                strategyKey: ctx.StrategyKey,
+                evaluatedAt: now,
+                priceAtEval: snapshot.LastTradedPrice,
+                featuresJson: featuresJson,
+                action: primaryAction,
+                strength: primaryStrength);
+
+            await _uow.StrategyEvaluations.AddAsync(evalEntity);
+        }
+
+        // ─── Signals ───
+        foreach (var s in result.Signals)
         {
             if (s.Action == SignalAction.Hold) continue;
 
@@ -171,7 +212,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 strategyKey: ctx.StrategyKey,
                 action: s.Action,
                 strength: s.Strength,
-                metadataJson: s.MetadataJson);
+                metadataJson: s.MetadataJson,
+                sourceEvaluationId: evalEntity?.Id);
 
             signal.AddDomainEvent(new SignalGeneratedEvent(
                 signal.Id,
@@ -182,9 +224,20 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 signal.ProducedAt));
 
             await _uow.Signals.AddAsync(signal);
-            result.Add(new SignalEnvelope(ctx.RunId, signal, now));
+            envelopes.Add(new SignalEnvelope(ctx.RunId, signal, now));
+
+            // Link دوطرفه
+            evalEntity?.LinkSignal(signal.Id);
         }
 
-        return result;
+        if (evalEntity != null)
+        {
+            _logger.LogDebug(
+                "Eval recorded: run={RunId} isin={Isin} action={Action} strength={Strength:0.##} features={Features}",
+                ctx.RunId, symbol.Isin, evalEntity.Action,
+                evalEntity.Strength, evalEntity.FeaturesJson.Length);
+        }
+
+        return (envelopes, evalEntity != null);
     }
 }

@@ -16,7 +16,9 @@ public class SignalConfiguration : BaseConfiguration<Signal>
         builder.Property(x => x.Isin).IsRequired().HasMaxLength(20);
         builder.Property(x => x.Action).HasConversion<int>().IsRequired();
         builder.Property(x => x.StrategyKey).IsRequired().HasMaxLength(100);
-
+        builder.Property(x => x.SourceEvaluationId).IsRequired(false);
+        builder.HasIndex(x => x.SourceEvaluationId)
+            .HasDatabaseName("IX_Signal_SourceEvaluationId");
         builder.Property(x => x.Strength)
             .HasConversion(
                 s => s.Value,

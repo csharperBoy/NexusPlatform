@@ -92,6 +92,8 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, Position, Guid>,
                 EfRepository<TraderDbContext, Position, Guid>>();
 
+            services.AddScoped<IRepository<TraderDbContext, StrategyEvaluation, Guid>,
+                EfRepository<TraderDbContext, StrategyEvaluation, Guid>>();
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
@@ -121,6 +123,9 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, OrderTrade, Guid>>();
             services.AddScoped<ISpecificationRepository<Position, Guid>,
                 EfSpecificationRepository<TraderDbContext, Position, Guid>>();
+            services.AddScoped<ISpecificationRepository<StrategyEvaluation, Guid>,
+                EfSpecificationRepository<TraderDbContext, StrategyEvaluation, Guid>>();
+
 
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
@@ -187,6 +192,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
             // Position Closer
             services.AddSingleton<IPositionCloser, PositionCloser>();
+
             // ─── Application Services ───
             services.AddScoped<IInstrumentCommandService, InstrumentService>();
             services.AddScoped<IInstrumentQueryService, InstrumentService>();

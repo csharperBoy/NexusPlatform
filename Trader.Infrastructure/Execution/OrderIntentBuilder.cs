@@ -98,17 +98,18 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
         }
 
         var intent = OrderIntent.Create(
-            runId: context.RunId,
-            traderAccountId: accountId,
-            sourceSignalId: signal.Id,
-            isin: signal.Isin,
-            side: signal.Action == SignalAction.Buy ? OrderSide.Buy : OrderSide.Sell,
-            price: entryPrice,
-            quantity: new Quantity(quantity),
-            orderMode: context.DefaultOrderMode,
-            reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}",
-            stopLossPrice: stopLossPrice,
-            takeProfitPrice: takeProfitPrice);
+    runId: context.RunId,
+    traderAccountId: accountId,
+    sourceSignalId: signal.Id,
+    isin: signal.Isin,
+    side: signal.Action == SignalAction.Buy ? OrderSide.Buy : OrderSide.Sell,
+    price: entryPrice,
+    quantity: new Quantity(quantity),
+    orderMode: context.DefaultOrderMode,
+    reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}",
+    stopLossPrice: stopLossPrice,
+    takeProfitPrice: takeProfitPrice,
+    sourceEvaluationId: signal.SourceEvaluationId);   // ← جدید
 
         await _uow.OrderIntents.AddAsync(intent);
 

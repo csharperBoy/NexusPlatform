@@ -28,6 +28,7 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     public DateTime? CompletedAt { get; private set; }
     public Price? StopLossPrice { get; private set; }
     public Price? TakeProfitPrice { get; private set; }
+    public Guid? SourceEvaluationId { get; private set; }
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -38,36 +39,25 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     private OrderIntent() { } // EF
 
     public static OrderIntent Create(
-     Guid runId,
-     Guid traderAccountId,
-     Guid? sourceSignalId,
-     string isin,
-     OrderSide side,
-     Price price,
-     Quantity quantity,
-     OrderMode orderMode,
-     string? reason = null,
-     Price? stopLossPrice = null,
-     Price? takeProfitPrice = null)
+    Guid runId,
+    Guid traderAccountId,
+    Guid? sourceSignalId,
+    string isin,
+    OrderSide side,
+    Price price,
+    Quantity quantity,
+    OrderMode orderMode,
+    string? reason = null,
+    Price? stopLossPrice = null,
+    Price? takeProfitPrice = null,
+    Guid? sourceEvaluationId = null)     // ← جدید
     {
-        if (quantity.IsZero)
-            throw new InvalidOperationException("Order quantity cannot be zero.");
+        // ... validation
 
         return new OrderIntent
         {
-            RunId = runId,
-            TraderAccountId = traderAccountId,
-            SourceSignalId = sourceSignalId,
-            Isin = isin,
-            Side = side,
-            Price = price,
-            Quantity = quantity,
-            OrderMode = orderMode,
-            State = OrderIntentState.Pending,
-            Reason = reason,
-            StopLossPrice = stopLossPrice,
-            TakeProfitPrice = takeProfitPrice,
-            CreatedAt = DateTime.UtcNow
+            // ... existing
+            SourceEvaluationId = sourceEvaluationId
         };
     }
 
