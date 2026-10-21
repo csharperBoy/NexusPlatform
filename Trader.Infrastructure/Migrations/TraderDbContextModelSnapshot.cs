@@ -425,6 +425,9 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("Side")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("SourceEvaluationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("SourceSignalId")
                         .HasColumnType("uniqueidentifier");
 
@@ -570,6 +573,9 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid>("RunId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("SourceEvaluationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("State")
                         .HasColumnType("int");
 
@@ -601,6 +607,9 @@ namespace Trader.Infrastructure.Migrations
 
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_Position_ModifiedBy");
+
+                    b.HasIndex("SourceEvaluationId")
+                        .HasDatabaseName("IX_Position_SourceEvaluationId");
 
                     b.HasIndex("TraderAccountId", "Isin")
                         .HasDatabaseName("IX_Position_Account_Isin");
@@ -747,6 +756,9 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid>("RunId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("SourceEvaluationId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("StrategyKey")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -762,6 +774,9 @@ namespace Trader.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
+                    b.HasIndex("SourceEvaluationId")
+                        .HasDatabaseName("IX_Signal_SourceEvaluationId");
+
                     b.HasIndex("RunId", "Isin")
                         .HasDatabaseName("IX_Signal_Run_Isin");
 
@@ -769,6 +784,76 @@ namespace Trader.Infrastructure.Migrations
                         .HasDatabaseName("IX_Signal_Run_ProducedAt");
 
                     b.ToTable("Signals", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.StrategyEvaluation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EvaluatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FeaturesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OutcomeJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("OutcomeUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PriceAtEval")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SignalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("StrategyKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Strength")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_StrategyEvaluation");
+
+                    b.HasIndex("Action")
+                        .HasDatabaseName("IX_StrategyEval_NonHold")
+                        .HasFilter("[Action] <> 0");
+
+                    b.HasIndex("EvaluatedAt")
+                        .HasDatabaseName("IX_StrategyEval_EvaluatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("SignalId")
+                        .HasDatabaseName("IX_StrategyEval_SignalId");
+
+                    b.HasIndex("Isin", "EvaluatedAt")
+                        .HasDatabaseName("IX_StrategyEval_Isin_Time");
+
+                    b.HasIndex("RunId", "Isin", "EvaluatedAt")
+                        .HasDatabaseName("IX_StrategyEval_Run_Isin_Time");
+
+                    b.ToTable("StrategyEvaluations", "trader");
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.TraderAccount", b =>
