@@ -14,9 +14,10 @@ public class StrategyEvaluation : BaseEntity
     public string StrategyKey { get; private set; } = default!;
     public DateTime EvaluatedAt { get; private set; }
 
-    /// <summary>قیمت Snapshot در لحظه‌ی Evaluate (ریال).</summary>
-    public decimal PriceAtEval { get; private set; }
+    /// <summary>Snapshot بازار که در لحظه‌ی Evaluate استفاده شد.</summary>
+    public Guid? MarketSnapshotId { get; private set; }
 
+    public decimal PriceAtEval { get; private set; }
     /// <summary>Feature Vector به صورت JSON (rsi, period, macd, ...).</summary>
     public string FeaturesJson { get; private set; } = "{}";
 
@@ -43,7 +44,8 @@ public class StrategyEvaluation : BaseEntity
         decimal priceAtEval,
         string featuresJson,
         SignalAction action,
-        decimal strength)
+        decimal strength,
+        Guid? marketSnapshotId = null)   // ← جدید
     {
         return new StrategyEvaluation
         {
@@ -54,7 +56,8 @@ public class StrategyEvaluation : BaseEntity
             PriceAtEval = priceAtEval,
             FeaturesJson = string.IsNullOrWhiteSpace(featuresJson) ? "{}" : featuresJson,
             Action = action,
-            Strength = strength
+            Strength = strength,
+            MarketSnapshotId = marketSnapshotId
         };
     }
 

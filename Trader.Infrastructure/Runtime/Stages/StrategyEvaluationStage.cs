@@ -196,7 +196,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 priceAtEval: snapshot.LastTradedPrice,
                 featuresJson: featuresJson,
                 action: primaryAction,
-                strength: primaryStrength);
+                strength: primaryStrength,
+                marketSnapshotId: snapshot.Id);   // ← جدید
 
             await _uow.StrategyEvaluations.AddAsync(evalEntity);
         }

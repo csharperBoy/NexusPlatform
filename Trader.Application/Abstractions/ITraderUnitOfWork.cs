@@ -21,7 +21,10 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
     IRepository<TDbContext, OrderTrade, Guid> OrderTrades { get; }
     IRepository<TDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
+    IRepository<TDbContext, MarketSnapshotRecord, Guid> MarketSnapshots { get; }
+    IRepository<TDbContext, CandleRecord, Guid> CandleRecords { get; }
     // Spec Repositories
+    ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
     ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
@@ -33,4 +36,5 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
     ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
     ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
+    ISpecificationRepository<MarketSnapshotRecord, Guid> MarketSnapshotSpecs { get; }
 }

@@ -548,11 +548,11 @@ namespace Trader.ExternalApiClient.EasyTrader
 
         /// <summary>GET /chart/api/v2/datafeed/miniChart/history</summary>
         public async Task<CandleHistoryResponse> GetChartHistoryAsync(
-            string accessToken,
-            string symbolIsin,
-            int days,
-            int intervalMinutes,
-            CancellationToken ct = default)
+    string accessToken,
+    string symbolIsin,
+    int days,
+    int intervalMinutes,
+    CancellationToken ct = default)
         {
             var url = _options.BaseUrl + EasyTraderEndpoints.ChartHistory
                 + $"?symbol={Uri.EscapeDataString(symbolIsin)}:{intervalMinutes}&days={days}";
@@ -564,17 +564,52 @@ namespace Trader.ExternalApiClient.EasyTrader
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadAsStringAsync(ct);
 
+            var contentType = res.Content.Headers.ContentType?.MediaType ?? "?";
+            var trimmed = body.TrimStart();
+            var isHtml = trimmed.StartsWith("<");
+
             if (!res.IsSuccessStatusCode)
+            {
                 throw new EasyTraderException(
-                    $"Chart history failed {(int)res.StatusCode}. Body: {Truncate(body, 300)}",
+                    $"Chart history failed {(int)res.StatusCode} for " +
+                    $"{symbolIsin}:{intervalMinutes} days={days}. " +
+                    $"ContentType={contentType}. " +
+                    $"Location={res.Headers.Location?.ToString() ?? "none"}. " +
+                    $"Body: {Truncate(body, 400)}",
                     (int)res.StatusCode, body);
+            }
 
             if (string.IsNullOrWhiteSpace(body))
+            {
                 throw new EasyTraderException(
-                    $"Chart history returned empty body for isin={symbolIsin}");
+                    $"Chart history empty body for {symbolIsin}:{intervalMinutes} days={days}.",
+                    (int)res.StatusCode, body);
+            }
 
-            return JsonSerializer.Deserialize<CandleHistoryResponse>(body, JsonOpts)
-                ?? throw new EasyTraderException("Chart history deserialization failed");
+            if (isHtml)
+            {
+                throw new EasyTraderException(
+                    $"Chart history returned HTML (not JSON) for " +
+                    $"{symbolIsin}:{intervalMinutes} days={days}. " +
+                    $"URL={url}. " +
+                    $"ContentType={contentType}. " +
+                    $"HTTP={res.Version}. " +
+                    $"BodyPreview: {Truncate(trimmed, 400)}",
+                    (int)res.StatusCode, body);
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<CandleHistoryResponse>(body, JsonOpts)
+                    ?? throw new EasyTraderException("Chart history deserialization returned null.");
+            }
+            catch (JsonException jex)
+            {
+                throw new EasyTraderException(
+                    $"Chart history JSON parse failed for {symbolIsin}:{intervalMinutes}. " +
+                    $"URL={url}. BodyPreview: {Truncate(body, 400)}. Inner: {jex.Message}",
+                    (int)res.StatusCode, body);
+            }
         }
 
         /* ══════════════════════════════════════════════════

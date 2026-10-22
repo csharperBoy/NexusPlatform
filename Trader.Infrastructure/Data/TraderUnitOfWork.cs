@@ -38,7 +38,10 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
     ISpecificationRepository<OrderTrade, Guid> orderTradeSpecs,
     IRepository<TraderDbContext, StrategyEvaluation, Guid> strategyEvaluations,
 ISpecificationRepository<StrategyEvaluation, Guid> strategyEvaluationSpecs,
-
+    IRepository<TraderDbContext, MarketSnapshotRecord, Guid> marketSnapshots,
+    ISpecificationRepository<MarketSnapshotRecord, Guid> marketSnapshotSpecs,
+    IRepository<TraderDbContext, CandleRecord, Guid> candleRecords,
+ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs,
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -68,6 +71,10 @@ ISpecificationRepository<StrategyEvaluation, Guid> strategyEvaluationSpecs,
         OrderTradeSpecs = orderTradeSpecs;
         StrategyEvaluations = strategyEvaluations;
         StrategyEvaluationSpecs = strategyEvaluationSpecs;
+        MarketSnapshots = marketSnapshots;
+        MarketSnapshotSpecs = marketSnapshotSpecs;
+        CandleRecords = candleRecords;
+        CandleRecordSpecs = candleRecordSpecs;
 
     }
 public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
@@ -84,7 +91,10 @@ public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public IRepository<TraderDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
     public IRepository<TraderDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
     public IRepository<TraderDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
-    
+    public IRepository<TraderDbContext, MarketSnapshotRecord, Guid> MarketSnapshots { get; }
+    public IRepository<TraderDbContext, CandleRecord, Guid> CandleRecords { get; }
+
+    public ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     public ISpecificationRepository<Signal, Guid> SignalSpecs { get; }
     public ISpecificationRepository<OrderIntent, Guid> OrderIntentSpecs { get; }
@@ -95,4 +105,5 @@ public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<TraderAccount, Guid> AccountSpecs { get; }
     public ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
     public ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
+    public ISpecificationRepository<MarketSnapshotRecord, Guid> MarketSnapshotSpecs { get; }
 }

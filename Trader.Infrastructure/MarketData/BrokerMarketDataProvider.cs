@@ -194,39 +194,34 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         }
 
         return new MarketSnapshot(
-            Isin: isin,
-            SymbolName: null, // در DTO batch موجود نیست
-
-            StateCode: dto.StateCode,
-
-            LastTradedPrice: dto.LastTradedPrice,
-            ClosingPrice: dto.ClosingPrice,
-            PreviousDayClosingPrice: dto.FeeOfPreviousDaysClosingPrice,
-            PriceVar: dto.PriceVar,
-            FirstTradedPrice: dto.FirstTradedPrice,
-            HighPrice: dto.HighPrice,
-            LowPrice: dto.LowPrice,
-            HighAllowedPrice: dto.HighAllowedPrice,
-            LowAllowedPrice: dto.LowAllowedPrice,
-            PriceTickSize: dto.PriceTickSize,
-
-            BestBuyPrice: dto.BestBuyPrice,
-            BestBuyQuantity: dto.BestBuyQuantity,
-            BestSellPrice: dto.BestSellPrice,
-            BestSellQuantity: dto.BestSellQuantity,
-
-            BuyRatio: dto.BuyRatio,
-            SellRatio: dto.SellRatio,
-            MinValidBuyVolume: dto.MinValidBuyVolume,
-            MaxValidBuyVolume: dto.MaxValidBuyVolume,
-            MinValidSellVolume: dto.MinValidSellVolume,
-            MaxValidSellVolume: dto.MaxValidSellVolume,
-
-            TotalTradeValue: dto.TotalTradeValue,
-            TotalNumberOfTrades: dto.TotalNumberOfTrades,
-            TotalNumberOfSharesTraded: dto.TotalNumberOfSharesTraded,
-
-            CapturedAt: capturedAt,
-            Source: source);
+    Id: null,                                  // ← جدید (Stage 1 پر می‌کند)
+    Isin: isin,
+    SymbolName: null,
+    StateCode: dto.StateCode,
+    LastTradedPrice: dto.LastTradedPrice,
+    ClosingPrice: dto.ClosingPrice,
+    PreviousDayClosingPrice: dto.FeeOfPreviousDaysClosingPrice,
+    PriceVar: dto.PriceVar,
+    FirstTradedPrice: dto.FirstTradedPrice,
+    HighPrice: dto.HighPrice,
+    LowPrice: dto.LowPrice,
+    HighAllowedPrice: dto.HighAllowedPrice,
+    LowAllowedPrice: dto.LowAllowedPrice,
+    PriceTickSize: dto.PriceTickSize,
+    BestBuyPrice: dto.BestBuyPrice,
+    BestBuyQuantity: dto.BestBuyQuantity,
+    BestSellPrice: dto.BestSellPrice,
+    BestSellQuantity: dto.BestSellQuantity,
+    BuyRatio: dto.BuyRatio,
+    SellRatio: dto.SellRatio,
+    MinValidBuyVolume: dto.MinValidBuyVolume,
+    MaxValidBuyVolume: dto.MaxValidBuyVolume,
+    MinValidSellVolume: dto.MinValidSellVolume,
+    MaxValidSellVolume: dto.MaxValidSellVolume,
+    TotalTradeValue: dto.TotalTradeValue,
+    TotalNumberOfTrades: dto.TotalNumberOfTrades,
+    TotalNumberOfSharesTraded: dto.TotalNumberOfSharesTraded,
+    CapturedAt: capturedAt,
+    Source: source);
     }
 }

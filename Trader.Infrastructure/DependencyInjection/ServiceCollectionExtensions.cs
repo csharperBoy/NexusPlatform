@@ -94,6 +94,11 @@ namespace Trader.Infrastructure.DependencyInjection
 
             services.AddScoped<IRepository<TraderDbContext, StrategyEvaluation, Guid>,
                 EfRepository<TraderDbContext, StrategyEvaluation, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, MarketSnapshotRecord, Guid>,
+                EfRepository<TraderDbContext, MarketSnapshotRecord, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, CandleRecord, Guid>,
+   EfRepository<TraderDbContext, CandleRecord, Guid>>();
+
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
@@ -125,7 +130,12 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, Position, Guid>>();
             services.AddScoped<ISpecificationRepository<StrategyEvaluation, Guid>,
                 EfSpecificationRepository<TraderDbContext, StrategyEvaluation, Guid>>();
+            services.AddScoped<ISpecificationRepository<MarketSnapshotRecord, Guid>,
+                EfSpecificationRepository<TraderDbContext, MarketSnapshotRecord, Guid>>();
+            services.AddScoped<ISpecificationRepository<CandleRecord, Guid>,
+                EfSpecificationRepository<TraderDbContext, CandleRecord, Guid>>();
 
+            services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
@@ -267,7 +277,7 @@ namespace Trader.Infrastructure.DependencyInjection
             // 📌 رجیستر HostedService برای مقداردهی اولیه ماژول
             services.AddHostedService<ModuleInitializer>();
 
-           
+
             return services;
         }
     }

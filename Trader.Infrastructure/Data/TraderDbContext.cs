@@ -40,6 +40,8 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<OrderTrade> OrderTrades { get; set; }
     public virtual DbSet<Position> Positions { get; set; }
     public virtual DbSet<StrategyEvaluation> StrategyEvaluations { get; set; }
+    public virtual DbSet<MarketSnapshotRecord> MarketSnapshots { get; set; }
+    public virtual DbSet<CandleRecord> Candles { get; set; }
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -72,5 +74,7 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new OrderTradeConfiguration());
         modelBuilder.ApplyConfiguration(new PositionConfiguration());
         modelBuilder.ApplyConfiguration(new StrategyEvaluationConfiguration());
+        modelBuilder.ApplyConfiguration(new MarketSnapshotRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new CandleRecordConfiguration());
     }
 }

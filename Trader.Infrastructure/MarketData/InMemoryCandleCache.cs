@@ -36,10 +36,10 @@ public sealed class InMemoryCandleCache : ICandleCache
         var now = DateTime.UtcNow;
         var tfDuration = timeFrame.ToDuration();
 
+        // ─── Cache hit? ───
         if (_cache.TryGetValue(key, out var entry))
         {
             var elapsedSinceLastCandle = now - entry.LastClosedCandleTime;
-
             if (entry.Candles.Count >= requiredCount
                 && elapsedSinceLastCandle < tfDuration)
             {
@@ -47,41 +47,63 @@ public sealed class InMemoryCandleCache : ICandleCache
             }
         }
 
-        // ─── Fetch از Provider در یک Scope جدید ───
+        // ─── Cache miss → Fetch ───
         IReadOnlyList<Candle> candles;
+        string source = "BrokerMarketData";
 
-        try
+        using (var scope = _scopeFactory.CreateScope())
         {
-            using var scope = _scopeFactory.CreateScope();
             var providerResolver = scope.ServiceProvider
                 .GetRequiredService<IMarketDataProviderResolver>();
 
             var provider = providerResolver.Resolve(MarketType.IranStock);
             if (provider is null)
             {
-                _logger.LogWarning(
-                    "No provider for IranStock; returning empty candles.");
+                _logger.LogWarning("No provider for IranStock.");
                 return Array.Empty<Candle>();
             }
 
-            candles = await provider.GetCandlesAsync(
-                isin, timeFrame, requiredCount, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Failed to fetch candles for {Isin} tf={TimeFrame}.",
-                isin, timeFrame);
-            return Array.Empty<Candle>();
+            try
+            {
+                candles = await provider.GetCandlesAsync(
+                    isin, timeFrame, requiredCount, ct);
+                source = provider.ProviderName;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to fetch candles for {Isin} tf={Tf}.",
+                    isin, timeFrame);
+                return Array.Empty<Candle>();
+            }
         }
 
         if (candles.Count == 0) return Array.Empty<Candle>();
 
+        // ─── Persist کندل‌های جدید ───
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var persister = scope.ServiceProvider
+                .GetRequiredService<ICandlePersistenceService>();
+
+            await persister.PersistAsync(
+                isin, (int)timeFrame, candles, source, ct);
+        }
+        catch (Exception ex)
+        {
+            // Persistence fail → Cache را کنسل نمی‌کند
+            _logger.LogWarning(ex,
+                "Candle persistence failed for {Isin} tf={Tf}. Continuing with in-memory cache.",
+                isin, timeFrame);
+        }
+
+        // ─── Update Cache ───
         var lastClosed = candles[^1].OpenTime + tfDuration;
         _cache[key] = new CacheEntry(candles, lastClosed, now);
 
         _logger.LogDebug(
-            "Candles loaded: {Isin} tf={TimeFrame} count={Count} lastClosed={LastClosed}",
+            "Candles loaded: {Isin} tf={Tf} count={Count} lastClosed={LastClosed}",
             isin, timeFrame, candles.Count, lastClosed);
 
         return candles;
@@ -94,6 +116,5 @@ public sealed class InMemoryCandleCache : ICandleCache
 
     public void InvalidateAll() => _cache.Clear();
 
-    private static string BuildKey(string isin, TimeFrame tf)
-        => $"{isin}:{(int)tf}";
+    private static string BuildKey(string isin, TimeFrame tf) => $"{isin}:{(int)tf}";
 }

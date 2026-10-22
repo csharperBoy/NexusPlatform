@@ -1,23 +1,23 @@
 ﻿namespace Trader.Application.Runtime;
 
 /// <summary>
-/// نمای لحظه‌ای یک Instrument برای Strategy. Immutable.
-/// Stage 1 آن را از DTO کارگزاری می‌سازد.
+/// نمای لحظه‌ای یک Instrument. Immutable.
+/// Id بعد از Persist توسط Stage 1 پر می‌شود (null قبل از Save).
 /// </summary>
 public sealed record MarketSnapshot(
-    // ─── Identity ───
+    // ─── Identity (nullable در حافظه، بعد از Save پر می‌شود) ───
+    Guid? Id,
     string Isin,
     string? SymbolName,
 
     // ─── Market State ───
-    /// <summary>کد وضعیت نماد (EasyTrader StateCode).</summary>
     string StateCode,
 
     // ─── Price ───
     long LastTradedPrice,
     long ClosingPrice,
     long PreviousDayClosingPrice,
-    double PriceVar,                  // درصد تغییر
+    double PriceVar,
     long FirstTradedPrice,
     long HighPrice,
     long LowPrice,

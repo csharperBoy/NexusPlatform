@@ -174,6 +174,62 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("BrokerOrders", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.CandleRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Close")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("FetchedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("High")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("Low")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("Open")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("OpenTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("TimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<long>("Volume")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id")
+                        .HasName("PK_CandleRecord");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Isin", "TimeFrame", "OpenTime")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Candle_Isin_Tf_Time_Desc");
+
+                    b.ToTable("Candles", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.ExecutionLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -367,6 +423,119 @@ namespace Trader.Infrastructure.Migrations
                         .HasDatabaseName("IX_InstrumentOrderPreset_ModifiedBy");
 
                     b.ToTable("InstrumentOrderPresets", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.MarketSnapshotRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("BestBuyPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BestBuyQuantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BestSellPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("BestSellQuantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("BuyRatio")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<DateTime>("CapturedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("ClosingPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("FirstTradedPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("HighAllowedPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("HighPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<long>("LastTradedPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LowAllowedPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LowPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MaxValidBuyVolume")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MaxValidSellVolume")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MinValidBuyVolume")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("MinValidSellVolume")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PreviousDayClosingPrice")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PriceTickSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<double>("PriceVar")
+                        .HasColumnType("float");
+
+                    b.Property<decimal>("SellRatio")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StateCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("SymbolName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("TotalNumberOfSharesTraded")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalNumberOfTrades")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalTradeValue")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id")
+                        .HasName("PK_MarketSnapshotRecord");
+
+                    b.HasIndex("CapturedAt")
+                        .HasDatabaseName("IX_MarketSnapshot_Time");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Isin", "CapturedAt")
+                        .HasDatabaseName("IX_MarketSnapshot_Isin_Time");
+
+                    b.ToTable("MarketSnapshots", "trader");
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.OrderIntent", b =>
@@ -806,6 +975,9 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid?>("MarketSnapshotId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("OutcomeJson")
                         .HasColumnType("nvarchar(max)");
 
@@ -843,6 +1015,9 @@ namespace Trader.Infrastructure.Migrations
 
                     b.HasIndex("Id")
                         .IsUnique();
+
+                    b.HasIndex("MarketSnapshotId")
+                        .HasDatabaseName("IX_StrategyEval_MarketSnapshotId");
 
                     b.HasIndex("SignalId")
                         .HasDatabaseName("IX_StrategyEval_SignalId");

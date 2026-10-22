@@ -20,7 +20,9 @@ public class StrategyEvaluationConfiguration : BaseConfiguration<StrategyEvaluat
         builder.Property(x => x.PriceAtEval)
             .HasPrecision(18, 4)
             .IsRequired();
-
+        builder.Property(x => x.MarketSnapshotId).IsRequired(false);
+        builder.HasIndex(x => x.MarketSnapshotId)
+            .HasDatabaseName("IX_StrategyEval_MarketSnapshotId");
         builder.Property(x => x.FeaturesJson)
             .HasColumnType("nvarchar(max)")
             .IsRequired();
