@@ -9,11 +9,13 @@ using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
+using Trader.Application.Abstractions.Indicators;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
+using Trader.Application.Indicators.Rsi;
 using Trader.Application.Runtime;
 using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
@@ -98,6 +100,8 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, MarketSnapshotRecord, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, CandleRecord, Guid>,
    EfRepository<TraderDbContext, CandleRecord, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, TradingSchedule, Guid>,
+   EfRepository<TraderDbContext, TradingSchedule, Guid>>();
 
             /* ═══════════ Repositories — Specification ═══════════ */
 
@@ -134,6 +138,8 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, MarketSnapshotRecord, Guid>>();
             services.AddScoped<ISpecificationRepository<CandleRecord, Guid>,
                 EfSpecificationRepository<TraderDbContext, CandleRecord, Guid>>();
+            services.AddScoped<ISpecificationRepository<TradingSchedule, Guid>,
+                EfSpecificationRepository<TraderDbContext, TradingSchedule, Guid>>();
 
             services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 
@@ -197,6 +203,11 @@ namespace Trader.Infrastructure.DependencyInjection
             // ─── Runtime Scoped ───
             services.AddScoped<ITradingRunManager, TradingRunManager>();
 
+            // ─── Indicators ───
+            services.AddSingleton<IIndicator<RsiConfig, decimal?>, RsiIndicator>();
+            // ─── Market Session ───
+            services.AddSingleton<ITradingScheduleCache, TradingScheduleCache>();
+            services.AddSingleton<IMarketSessionProvider, IranMarketSessionProvider>();
             // ─── Strategy Factory ───
             services.AddTraderStrategies();
             services.AddSingleton<IStrategyFactory, StrategyFactory>();

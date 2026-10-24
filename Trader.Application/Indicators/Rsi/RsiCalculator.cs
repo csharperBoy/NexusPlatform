@@ -1,7 +1,7 @@
-﻿namespace Trader.Application.Strategies.Rsi;
+﻿namespace Trader.Application.Indicators.Rsi;
 
 /// <summary>محاسبه‌ی خالص RSI. بدون حالت، بدون I/O.</summary>
-internal static class RsiCalculator
+public static class RsiCalculator
 {
     /// <summary>
     /// RSI را با روش Wilder's Smoothing محاسبه می‌کند.

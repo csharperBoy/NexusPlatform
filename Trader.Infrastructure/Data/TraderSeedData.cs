@@ -9,6 +9,8 @@ using Core.Shared.Enums;
 using Core.Shared.Enums.Authorization;
 using Core.Shared.Enums.Navigation;
 using Microsoft.Extensions.Logging;
+using Trader.Application.Abstractions;
+using Trader.Domain.Entities;
 
 namespace Trader.Infrastructure.Data
 {
@@ -381,6 +383,102 @@ namespace Trader.Infrastructure.Data
             catch (Exception ex)
             {
                 logger.LogError(ex, "❌ Error during Trader navigation seeding");
+                throw;
+            }
+        }
+
+        /* ═══════════════════ Trading Schedules ═══════════════════ */
+
+        public static async Task SeedTradingSchedulesAsync(
+            ITraderUnitOfWork<TraderDbContext> uow,
+            ILogger logger,
+            CancellationToken cancellationToken = default)
+        {
+            logger.LogInformation("🚀 Starting TradingSchedule seed...");
+
+            var schedules = new[]
+            {
+        new
+        {
+            Code = "TSE-REGULAR",
+            Name = "بورس تهران — سهام عادی",
+            Description = "سهام بورس تهران، فرابورس و صندوق‌های قابل معامله",
+            PreMarket = new TimeOnly(8, 45),
+            SessionStart = new TimeOnly(9, 0),
+            SessionEnd = new TimeOnly(12, 30),
+            AfternoonStart = (TimeOnly?)null,
+            AfternoonEnd = (TimeOnly?)null,
+            AfterHoursEnd = (TimeOnly?)null
+        },
+        new
+        {
+            Code = "TSE-OPTIONS",
+            Name = "بورس تهران — اختیار معامله",
+            Description = "قراردادهای اختیار معامله",
+            PreMarket = new TimeOnly(8, 45),
+            SessionStart = new TimeOnly(9, 0),
+            SessionEnd = new TimeOnly(15, 0),
+            AfternoonStart = (TimeOnly?)null,
+            AfternoonEnd = (TimeOnly?)null,
+            AfterHoursEnd = (TimeOnly?)null
+        },
+        new
+        {
+            Code = "TSE-LEVERAGED",
+            Name = "صندوق‌های اهرمی",
+            Description = "صندوق‌های اهرمی با ساعت معاملاتی مشابه سهام",
+            PreMarket = new TimeOnly(8, 45),
+            SessionStart = new TimeOnly(9, 0),
+            SessionEnd = new TimeOnly(12, 30),
+            AfternoonStart = (TimeOnly?)null,
+            AfternoonEnd = (TimeOnly?)null,
+            AfterHoursEnd = (TimeOnly?)null
+        },
+        new
+        {
+            Code = "TSE-AYAR",
+            Name = "گواهی عیار / صیاد",
+            Description = "گواهی‌های سپرده‌ی کالایی — جلسه‌ی بعدازظهر",
+            PreMarket = new TimeOnly(12, 25),
+            SessionStart = new TimeOnly(12, 30),
+            SessionEnd = new TimeOnly(18, 0),
+            AfternoonStart = (TimeOnly?)null,
+            AfternoonEnd = (TimeOnly?)null,
+            AfterHoursEnd = (TimeOnly?)null
+        }
+    };
+
+            try
+            {
+                foreach (var s in schedules)
+                {
+                    // اگر Code از قبل هست، Skip
+                    var existing = await uow.TradingSchedules.GetAllAsync();
+                    if (existing.Any(x => x.Code == s.Code))
+                    {
+                        logger.LogDebug(
+                            "TradingSchedule '{Code}' already exists; skipping.", s.Code);
+                        continue;
+                    }
+
+                    var schedule = TradingSchedule.Create(
+                        s.Code, s.Name, s.Description,
+                        s.PreMarket, s.SessionStart, s.SessionEnd,
+                        s.AfternoonStart, s.AfternoonEnd, s.AfterHoursEnd);
+
+                    await uow.TradingSchedules.AddAsync(schedule);
+
+                    logger.LogInformation(
+                        "TradingSchedule created: {Code} ({Name}) session={Start}-{End}",
+                        s.Code, s.Name, s.SessionStart, s.SessionEnd);
+                }
+
+                await uow.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("✅ TradingSchedule seed completed.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "❌ TradingSchedule seed failed.");
                 throw;
             }
         }

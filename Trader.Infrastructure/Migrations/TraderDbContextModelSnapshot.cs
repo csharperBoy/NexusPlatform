@@ -318,6 +318,9 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<Guid?>("TradingScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
@@ -348,6 +351,9 @@ namespace Trader.Infrastructure.Migrations
 
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_Instrument_ModifiedBy");
+
+                    b.HasIndex("TradingScheduleId")
+                        .HasDatabaseName("IX_Instrument_TradingScheduleId");
 
                     b.ToTable("Instruments", "trader");
                 });
@@ -1303,8 +1309,71 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("TradingRunSymbols", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.TradingSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<TimeOnly?>("AfterHoursEnd")
+                        .HasColumnType("time(0)");
+
+                    b.Property<TimeOnly?>("AfternoonEnd")
+                        .HasColumnType("time(0)");
+
+                    b.Property<TimeOnly?>("AfternoonStart")
+                        .HasColumnType("time(0)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<TimeOnly>("PreMarketStart")
+                        .HasColumnType("time(0)");
+
+                    b.Property<TimeOnly>("SessionEnd")
+                        .HasColumnType("time(0)");
+
+                    b.Property<TimeOnly>("SessionStart")
+                        .HasColumnType("time(0)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_TradingSchedule");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_TradingSchedule_Code");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_TradingSchedule_IsActive");
+
+                    b.ToTable("TradingSchedules", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.Instrument", b =>
                 {
+                    b.HasOne("Trader.Domain.Entities.TradingSchedule", "TradingSchedule")
+                        .WithMany()
+                        .HasForeignKey("TradingScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.OwnsOne("Trader.Domain.ValueObjects.OptionContract", "OptionContract", b1 =>
                         {
                             b1.Property<Guid>("InstrumentId")
@@ -1338,6 +1407,8 @@ namespace Trader.Infrastructure.Migrations
                         });
 
                     b.Navigation("OptionContract");
+
+                    b.Navigation("TradingSchedule");
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.InstrumentOrderPreset", b =>

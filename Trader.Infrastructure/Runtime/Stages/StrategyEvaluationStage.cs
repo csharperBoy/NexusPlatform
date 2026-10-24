@@ -155,14 +155,41 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             return (envelopes, false);
         }
 
+        // ─── Candles اگر Strategy نیاز دارد ───
         IReadOnlyList<Candle> candles = Array.Empty<Candle>();
         if (ctx.Strategy.RequiredCandleCount > 0)
         {
-            candles = await _candleCache.GetOrLoadAsync(
+            var allCandles = await _candleCache.GetOrLoadAsync(
                 symbol.Isin,
                 ctx.PrimaryTimeFrame,
                 ctx.Strategy.RequiredCandleCount,
                 ct);
+
+            // ─── اگر Strategy فقط closed می‌خواهد، کندل in-progress را کنار بگذار ───
+            if (ctx.Strategy.RequiresClosedCandlesOnly && allCandles.Count > 0)
+            {
+                var tfDuration = ctx.PrimaryTimeFrame.ToDuration();
+                var nowUtc = DateTime.UtcNow;
+
+                candles = allCandles
+                    .Where(c => c.OpenTime + tfDuration <= nowUtc)
+                    .ToList();
+
+                if (candles.Count < allCandles.Count)
+                {
+                    _logger.LogTrace(
+                        "Filtered {Diff} in-progress candle(s) for {Isin} tf={Tf} (kept {Kept}/{Total}).",
+                        allCandles.Count - candles.Count,
+                        symbol.Isin,
+                        ctx.PrimaryTimeFrame,
+                        candles.Count,
+                        allCandles.Count);
+                }
+            }
+            else
+            {
+                candles = allCandles;
+            }
         }
 
         var input = new StrategyInput(

@@ -1,6 +1,7 @@
 ﻿using Core.Shared.DTOs;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Dtos.Instruments;
 using Trader.Application.Specifications.Instruments;
 using Trader.Domain.Entities;
@@ -14,12 +15,14 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
 {
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly ILogger<InstrumentService> _logger;
-
+    private readonly ITradingScheduleCache _scheduleCache;
     public InstrumentService(
         ITraderUnitOfWork<TraderDbContext> uow,
+    ITradingScheduleCache scheduleCache,
         ILogger<InstrumentService> logger)
     {
         _uow = uow;
+        _scheduleCache = scheduleCache;
         _logger = logger;
     }
 
@@ -52,6 +55,9 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         await _uow.Instruments.AddAsync(instrument);
         await _uow.SaveChangesAsync();
 
+        // Invalidate cache for new instrument's ISIN
+        _scheduleCache.Invalidate(instrument.Isin);
+
         _logger.LogInformation(
             "Created Instrument {Id} isin={Isin} name={Symbol}",
             instrument.Id, instrument.Isin, instrument.SymbolName);
@@ -69,6 +75,7 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         await _uow.Instruments.UpdateAsync(instrument);
         await _uow.SaveChangesAsync();
 
+        _scheduleCache.Invalidate(instrument.Isin);
         _logger.LogInformation("Updated Instrument {Id}", id);
     }
 

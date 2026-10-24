@@ -3,6 +3,7 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Runtime;
 using Trader.Application.Specifications.Candles;
+using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.MarketData;
@@ -21,15 +22,32 @@ public sealed class CandlePersistenceService : ICandlePersistenceService
     }
 
     public async Task<int> PersistAsync(
-        string isin,
-        int timeFrame,
-        IReadOnlyList<Candle> candles,
-        string source,
-        CancellationToken ct = default)
+    string isin,
+    int timeFrame,
+    IReadOnlyList<Candle> candles,
+    string source,
+    CancellationToken ct = default)
     {
         if (candles.Count == 0) return 0;
 
-        var minTime = candles.Min(c => c.OpenTime);
+        // ─── فقط کندل‌های بسته‌شده ───
+        var tfEnum = (TimeFrame)timeFrame;
+        var tfDuration = tfEnum.ToDuration();
+        var now = DateTime.UtcNow;
+
+        var closedCandles = candles
+            .Where(c => c.OpenTime + tfDuration <= now)
+            .ToList();
+
+        if (closedCandles.Count == 0)
+        {
+            _logger.LogDebug(
+                "No closed candles yet for {Isin} tf={Tf} (all {Count} are in-progress).",
+                isin, tfEnum, candles.Count);
+            return 0;
+        }
+
+        var minTime = closedCandles.Min(c => c.OpenTime);
 
         // ─── پیدا کردن OpenTimeهای موجود ───
         HashSet<DateTime> existingTimes;
@@ -42,37 +60,26 @@ public sealed class CandlePersistenceService : ICandlePersistenceService
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed to query existing candles for {Isin} tf={Tf}.",
-                isin, timeFrame);
+                "Failed to query existing candles for {Isin} tf={Tf}.", isin, timeFrame);
             return 0;
         }
 
         // ─── فیلتر کندل‌های جدید ───
-        var newCandles = candles
+        var newCandles = closedCandles
             .Where(c => !existingTimes.Contains(c.OpenTime))
             .ToList();
 
-        if (newCandles.Count == 0)
-            return 0;
+        if (newCandles.Count == 0) return 0;
 
         var fetchedAt = DateTime.UtcNow;
         var inserted = 0;
 
         foreach (var c in newCandles)
         {
-            try
-            {
-                var record = CandleRecordMapper.FromRuntime(
-                    c, isin, timeFrame, source, fetchedAt);
-                await _uow.CandleRecords.AddAsync(record);
-                inserted++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "Failed to map candle for {Isin} at {Time}.",
-                    isin, c.OpenTime);
-            }
+            var record = CandleRecordMapper.FromRuntime(
+                c, isin, timeFrame, source, fetchedAt);
+            await _uow.CandleRecords.AddAsync(record);
+            inserted++;
         }
 
         if (inserted == 0) return 0;
@@ -89,9 +96,9 @@ public sealed class CandlePersistenceService : ICandlePersistenceService
             return 0;
         }
 
-        _logger.LogInformation(
-            "Candles persisted: isin={Isin} tf={Tf} new={Inserted} total={Total}",
-            isin, timeFrame, inserted, candles.Count);
+        _logger.LogDebug(
+            "Candles persisted: isin={Isin} tf={Tf} new={Inserted} closed={Closed} total={Total}",
+            isin, timeFrame, inserted, closedCandles.Count, candles.Count);
 
         return inserted;
     }

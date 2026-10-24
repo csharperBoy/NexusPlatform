@@ -1,4 +1,6 @@
-﻿using Trader.Application.Abstractions.Strategies;
+﻿using Trader.Application.Abstractions.Indicators;
+using Trader.Application.Abstractions.Strategies;
+using Trader.Application.Indicators.Rsi;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
 
@@ -6,27 +8,40 @@ namespace Trader.Application.Strategies.Rsi;
 
 public sealed class RsiStrategy : IStrategy
 {
+    private readonly IIndicator<RsiConfig, decimal?> _rsiIndicator;
     private readonly RsiStrategyConfig _config;
 
-    public RsiStrategy(RsiStrategyConfig config) => _config = config;
+    public RsiStrategy(
+        IIndicator<RsiConfig, decimal?> rsiIndicator,
+        RsiStrategyConfig config)
+    {
+        _rsiIndicator = rsiIndicator;
+        _config = config;
+    }
 
     public string Key => RsiStrategyRegistration.KeyName;
     public string DisplayName => RsiStrategyRegistration.DisplayNameValue;
     public int RequiredCandleCount => _config.Period + 50;
 
+    public bool RequiresClosedCandlesOnly => true;
     public StrategyEvaluationResult Evaluate(StrategyInput input)
     {
-        if (input.Candles.Count < _config.Period + 1)
-            return StrategyEvaluationResult.Empty();  // no features, no signal
+        // ─── ۱. Indicator (فقط محاسبه) ───
+        var rsiConfig = new RsiConfig { Period = _config.Period };
 
-        var closes = input.Candles.Select(c => c.Close).ToList();
-        var rsi = RsiCalculator.Calculate(closes, _config.Period);
+        var rsi = _rsiIndicator.Compute(
+            new IndicatorInput(
+                input.Candles,
+                input.LatestSnapshot,
+                input.TimeFrame),
+            rsiConfig);
+
         if (rsi is null)
             return StrategyEvaluationResult.Empty();
 
         var value = rsi.Value;
 
-        // ─── Feature Vector ───
+        // ─── ۲. Features (برای AI/ML) ───
         var features = new Dictionary<string, object?>
         {
             ["rsi"] = value,
@@ -39,7 +54,7 @@ public sealed class RsiStrategy : IStrategy
             ["lastCandleTime"] = input.Candles[^1].OpenTime,
         };
 
-        // ─── BUY ───
+        // ─── ۳. تصمیم (منطق استراتژی) ───
         if (value < _config.OversoldThreshold)
         {
             var strength = ComputeStrength(value, _config.OversoldThreshold, isBuy: true);
@@ -57,7 +72,6 @@ public sealed class RsiStrategy : IStrategy
                     features);
             }
         }
-        // ─── SELL ───
         else if (value > _config.OverboughtThreshold)
         {
             var strength = ComputeStrength(value, _config.OverboughtThreshold, isBuy: false);

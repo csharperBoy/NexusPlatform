@@ -23,6 +23,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
     IRepository<TDbContext, MarketSnapshotRecord, Guid> MarketSnapshots { get; }
     IRepository<TDbContext, CandleRecord, Guid> CandleRecords { get; }
+    IRepository<TDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     // Spec Repositories
     ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
@@ -37,4 +38,5 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     ISpecificationRepository<ExecutionLog, Guid> ExecutionLogSpecs { get; }
     ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     ISpecificationRepository<MarketSnapshotRecord, Guid> MarketSnapshotSpecs { get; }
+    ISpecificationRepository<TradingSchedule, Guid> TradingScheduleSpecs { get; }
 }

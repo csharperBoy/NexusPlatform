@@ -18,7 +18,8 @@ public class Instrument : BaseEntity, IAuditableEntity
     public string? BoardCode { get; private set; }
     public OptionContract? OptionContract { get; private set; }
     public bool IsActive { get; private set; }
-
+    public Guid? TradingScheduleId { get; private set; }
+    public TradingSchedule? TradingSchedule { get; private set; }
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -35,7 +36,8 @@ public class Instrument : BaseEntity, IAuditableEntity
         InstrumentType type,
         MarketType market,
         string? boardCode = null,
-        OptionContract? optionContract = null)
+        OptionContract? optionContract = null,
+    Guid? tradingScheduleId = null)
     {
         if (string.IsNullOrWhiteSpace(isin))
             throw new ArgumentException("ISIN is required.", nameof(isin));
@@ -54,7 +56,8 @@ public class Instrument : BaseEntity, IAuditableEntity
             BoardCode = boardCode,
             OptionContract = optionContract,
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            TradingScheduleId = tradingScheduleId
         };
     }
 
@@ -66,6 +69,11 @@ public class Instrument : BaseEntity, IAuditableEntity
         Touch();
     }
 
+    public void SetTradingSchedule(Guid? scheduleId)
+    {
+        TradingScheduleId = scheduleId;
+        Touch();
+    }
     public void Deactivate()
     {
         IsActive = false;

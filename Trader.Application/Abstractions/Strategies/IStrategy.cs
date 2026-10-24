@@ -10,5 +10,11 @@ public interface IStrategy
     /// </summary>
     int RequiredCandleCount { get; }
 
+    /// <summary>
+    /// true → فقط کندل‌های بسته‌شده در اختیار Strategy قرار می‌گیرد.
+    /// RSI/MACD → true. Breakout/Scalping → false (احتمالاً).
+    /// </summary>
+    bool RequiresClosedCandlesOnly { get; }
+
     StrategyEvaluationResult Evaluate(StrategyInput input);
 }

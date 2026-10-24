@@ -29,7 +29,15 @@ public class InstrumentConfiguration : BaseConfiguration<Instrument>
 
         builder.Property(x => x.Type).HasConversion<int>().IsRequired();
         builder.Property(x => x.Market).HasConversion<int>().IsRequired();
+        // بعد از تنظیمات موجود:
+        builder.HasOne(x => x.TradingSchedule)
+            .WithMany()
+            .HasForeignKey(x => x.TradingScheduleId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
+        builder.HasIndex(x => x.TradingScheduleId)
+            .HasDatabaseName("IX_Instrument_TradingScheduleId");
         builder.Property(x => x.BoardCode).HasMaxLength(50);
         builder.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
 

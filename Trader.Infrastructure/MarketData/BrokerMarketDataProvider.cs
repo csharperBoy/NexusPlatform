@@ -29,16 +29,21 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
     private readonly IBrokerClientFactory _brokerFactory;
     private readonly IBrokerSessionProvider _sessionProvider;
     private readonly ILogger<BrokerMarketDataProvider> _logger;
-
+    private readonly ITradingScheduleCache _scheduleCache;
+    private readonly IMarketSessionProvider _marketSession;
     public BrokerMarketDataProvider(
         ITraderUnitOfWork<TraderDbContext> uow,
         IBrokerClientFactory brokerFactory,
         IBrokerSessionProvider sessionProvider,
+    ITradingScheduleCache scheduleCache,
+    IMarketSessionProvider marketSession,
         ILogger<BrokerMarketDataProvider> logger)
     {
         _uow = uow;
         _brokerFactory = brokerFactory;
         _sessionProvider = sessionProvider;
+        _scheduleCache = scheduleCache;
+        _marketSession = marketSession;
         _logger = logger;
     }
 
@@ -53,12 +58,40 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
     }
 
     public async Task<IReadOnlyList<MarketSnapshot>> GetBatchSnapshotsAsync(
-        IReadOnlyList<string> isins, CancellationToken ct = default)
+    IReadOnlyList<string> isins, CancellationToken ct = default)
     {
         if (isins.Count == 0)
             return Array.Empty<MarketSnapshot>();
 
+        // ─── فیلتر بر اساس TradingSchedule ───
+        var utcNow = DateTime.UtcNow;
+        var openIsins = new List<string>(isins.Count);
+
+        foreach (var isin in isins)
+        {
+            var schedule = await _scheduleCache.GetForIsinAsync(isin, ct);
+            if (_marketSession.IsMarketOpen(schedule, utcNow))
+                openIsins.Add(isin);
+        }
+
+        if (openIsins.Count == 0)
+        {
+            _logger.LogTrace(
+                "All {Count} markets closed; skipping snapshot fetch.", isins.Count);
+            return Array.Empty<MarketSnapshot>();
+        }
+
+        if (openIsins.Count < isins.Count)
+        {
+            _logger.LogDebug(
+                "Filtered snapshots: {Open}/{Total} markets open.",
+                openIsins.Count, isins.Count);
+        }
+
+        // از اینجا به بعد، openIsins به جای isins استفاده شود.
+        // (همان کدی که بود، فقط isins → openIsins)
         var account = await PickAccountAsync(ct);
+
         if (account is null)
         {
             _logger.LogWarning(
@@ -83,12 +116,12 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         List<BatchMarketDataItemDto> dtos;
         try
         {
-            dtos = await reader.GetBatchMarketDataAsync(session, isins, ct);
+            dtos = await reader.GetBatchMarketDataAsync(session, openIsins, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Batch market data fetch failed for {Count} symbols.", isins.Count);
+                "Batch market data fetch failed for {Count} symbols.", openIsins.Count);
             return Array.Empty<MarketSnapshot>();
         }
 
@@ -105,7 +138,7 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
 
         _logger.LogDebug(
             "Fetched {Count}/{Requested} snapshots from broker.",
-            snapshots.Count, isins.Count);
+            snapshots.Count, openIsins.Count);
 
         return snapshots;
     }
@@ -113,6 +146,15 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
     string isin, TimeFrame timeFrame, int count, CancellationToken ct = default)
     {
         if (count <= 0) return Array.Empty<Candle>();
+
+        // ─── Skip اگر بازار بسته ───
+        var schedule = await _scheduleCache.GetForIsinAsync(isin, ct);
+        if (!_marketSession.IsMarketOpen(schedule, DateTime.UtcNow))
+        {
+            _logger.LogTrace(
+                "Market closed for {Isin}; skipping candle fetch.", isin);
+            return Array.Empty<Candle>();
+        }
 
         var account = await PickAccountAsync(ct);
         if (account is null) return Array.Empty<Candle>();

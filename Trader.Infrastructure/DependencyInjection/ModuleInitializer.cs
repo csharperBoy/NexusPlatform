@@ -2,11 +2,13 @@
 using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.Navigation.PublicService;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Trader.Application.Abstractions;
 
 namespace Trader.Infrastructure.Data
 {
@@ -67,10 +69,11 @@ namespace Trader.Infrastructure.Data
                 var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
                 var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
                 var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
+                var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
 
                 await TraderSeedData.SeedTraderForAuthorizationAsync(resourceService,permissionService,roleService,/* _configuration,*/ _logger);
-
                 await TraderSeedData.SeedTradersForNavigationAsync(menuService, _logger);
+                await TraderSeedData.SeedTradingSchedulesAsync(uow, _logger, cancellationToken);
                 _logger.LogInformation("Trader module initialization completed successfully.");
             }
             catch (Exception ex)
