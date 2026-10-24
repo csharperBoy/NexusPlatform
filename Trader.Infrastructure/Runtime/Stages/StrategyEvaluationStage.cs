@@ -165,7 +165,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 ctx.Strategy.RequiredCandleCount,
                 ct);
 
-            // ─── اگر Strategy فقط closed می‌خواهد، کندل in-progress را کنار بگذار ───
+            // ─── اگر Strategy فقط closed می‌خواهد، in-progress را کنار بگذار ───
             if (ctx.Strategy.RequiresClosedCandlesOnly && allCandles.Count > 0)
             {
                 var tfDuration = ctx.PrimaryTimeFrame.ToDuration();
@@ -178,7 +178,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 if (candles.Count < allCandles.Count)
                 {
                     _logger.LogTrace(
-                        "Filtered {Diff} in-progress candle(s) for {Isin} tf={Tf} (kept {Kept}/{Total}).",
+                        "Filtered {Diff} in-progress candle(s) for {Isin} tf={Tf} " +
+                        "(kept {Kept}/{Total}).",
                         allCandles.Count - candles.Count,
                         symbol.Isin,
                         ctx.PrimaryTimeFrame,
