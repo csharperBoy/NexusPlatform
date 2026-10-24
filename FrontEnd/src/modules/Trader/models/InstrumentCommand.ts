@@ -1,7 +1,7 @@
 export interface OptionContractModel {
   optionType: number;
   strikePrice: number;
-  expirationDate: string; // yyyy-MM-dd
+  expirationDate: string;
   underlyingIsin: string;
 }
 
@@ -12,6 +12,7 @@ export interface CreateInstrumentCommand {
   type: number;
   market: number;
   boardCode?: string | null;
+  tradingScheduleId?: string | null;
   optionContract?: OptionContractModel | null;
 }
 
@@ -20,4 +21,5 @@ export interface UpdateInstrumentCommand {
   symbolName: string;
   displayName: string;
   boardCode?: string | null;
+  tradingScheduleId?: string | null;
 }

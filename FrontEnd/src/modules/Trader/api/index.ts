@@ -10,3 +10,4 @@ export { strategyApi } from "./strategyApi";       // ← NEW
 export { tradingRunApi } from "./tradingRunApi";   // ← NEW
 export { positionApi } from "./positionApi";
 export { signalApi } from "./signalApi";
+export { tradingScheduleApi } from "./tradingScheduleApi";

@@ -1,7 +1,8 @@
 import React from "react";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
 import type { GenericColumnDef } from "@/core/components/crud/types";
-import { instrumentCrudApi } from "../../hooks";
+import { instrumentCrudApi } from "../../hooks/useInstrumentManagement";
+import { tradingScheduleApi } from "../../api/tradingScheduleApi";
 import type {
   InstrumentInfoView,
   CreateInstrumentCommand,
@@ -17,7 +18,6 @@ const instrumentTypeOptions: SelectionListDto[] = [
   { value: "4", label: "صندوق", display: "صندوق" },
   { value: "5", label: "ارز", display: "ارز" },
   { value: "6", label: "رمزارز", display: "رمزارز" },
-  // ⚠️ Option (1) در Phase 1 پشتیبانی نمی‌شود (نیاز به Modal سفارشی)
 ];
 
 const marketTypeOptions: SelectionListDto[] = [
@@ -35,8 +35,8 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     type: "text",
     dir: "ltr",
     required: true,
-    editable: false,        // بعد از ساخت قابل ویرایش نیست
-    editableInAdd: true,    // در Add Modal نشان داده شود
+    editable: false,
+    editableInAdd: true,
   },
   {
     key: "symbolName",
@@ -55,8 +55,8 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     label: "نوع",
     type: "select",
     required: true,
-    editable: false,        // در جدول read-only
-    editableInAdd: true,    // در Add Modal editable
+    editable: false,
+    editableInAdd: true,
     staticOptions: instrumentTypeOptions,
     valueType: "number",
     render: (_v, item) => item.typeName,
@@ -77,6 +77,17 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     label: "کد تابلو",
     type: "text",
     dir: "ltr",
+  },
+  {
+    key: "tradingScheduleId",
+    label: "ساعت معاملاتی",
+    type: "select",
+    selectionKey: "tradingSchedule",
+    required: false,
+    render: (_v, item) =>
+      item.tradingScheduleName
+        ? `${item.tradingScheduleName}`
+        : "—",
   },
   {
     key: "isActive",
@@ -110,11 +121,15 @@ export const InstrumentsManagementPage: React.FC = () => {
         crudOptions={{
           api: instrumentCrudApi,
           columns,
+          selectionApis: {
+            tradingSchedule: tradingScheduleApi.GetSelectionList,
+          },
           mapToUpdateCommand: (item) => ({
             id: item.id,
             symbolName: item.symbolName,
             displayName: item.displayName,
             boardCode: item.boardCode ?? null,
+            tradingScheduleId: item.tradingScheduleId ?? null,
           }),
           mapToCreateCommand: (formData) => ({
             isin: String(formData.isin ?? "").trim(),
@@ -125,7 +140,10 @@ export const InstrumentsManagementPage: React.FC = () => {
             boardCode: formData.boardCode
               ? String(formData.boardCode).trim()
               : null,
-            optionContract: null, // ⚠️ Phase 1: Option via custom modal
+            tradingScheduleId: formData.tradingScheduleId
+              ? String(formData.tradingScheduleId)
+              : null,
+            optionContract: null,
           }),
           tableFeatures: {
             enableSearch: true,

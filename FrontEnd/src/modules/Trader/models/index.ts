@@ -101,3 +101,5 @@ export {
   SIGNAL_ACTION_LABELS,
   SIGNAL_ACTION_COLORS,
 } from "./SignalView";
+
+export type { TradingScheduleInfoView } from "./TradingScheduleInfoView";

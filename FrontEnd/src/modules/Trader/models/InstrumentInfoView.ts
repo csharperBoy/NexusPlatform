@@ -3,11 +3,14 @@ export interface InstrumentInfoView {
   isin: string;
   symbolName: string;
   displayName: string;
-  type: number;         // InstrumentType
+  type: number;
   typeName: string;
-  market: number;       // MarketType
+  market: number;
   marketName: string;
   boardCode?: string | null;
+  tradingScheduleId?: string | null;
+  tradingScheduleCode?: string | null;
+  tradingScheduleName?: string | null;
   isActive: boolean;
-  createdAt: string;    // ISO
+  createdAt: string;
 }
