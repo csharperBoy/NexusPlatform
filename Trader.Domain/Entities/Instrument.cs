@@ -30,13 +30,13 @@ public class Instrument : BaseEntity, IAuditableEntity
     private Instrument() { } // EF
 
     public static Instrument Create(
-        string isin,
-        string symbolName,
-        string displayName,
-        InstrumentType type,
-        MarketType market,
-        string? boardCode = null,
-        OptionContract? optionContract = null,
+    string isin,
+    string symbolName,
+    string displayName,
+    InstrumentType type,
+    MarketType market,
+    string? boardCode = null,
+    OptionContract? optionContract = null,
     Guid? tradingScheduleId = null)
     {
         if (string.IsNullOrWhiteSpace(isin))
@@ -55,17 +55,22 @@ public class Instrument : BaseEntity, IAuditableEntity
             Market = market,
             BoardCode = boardCode,
             OptionContract = optionContract,
+            TradingScheduleId = tradingScheduleId,   // ← جدید
             IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            TradingScheduleId = tradingScheduleId
+            CreatedAt = DateTime.UtcNow
         };
     }
 
-    public void Update(string symbolName, string displayName, string? boardCode)
+    public void Update(
+        string symbolName,
+        string displayName,
+        string? boardCode,
+        Guid? tradingScheduleId)   // ← جدید
     {
         SymbolName = symbolName.Trim();
         DisplayName = displayName.Trim();
         BoardCode = boardCode;
+        TradingScheduleId = tradingScheduleId;
         Touch();
     }
 

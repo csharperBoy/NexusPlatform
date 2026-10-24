@@ -1,5 +1,4 @@
-﻿using Core.Shared.DTOs;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Dtos.Instruments;
@@ -14,11 +13,12 @@ namespace Trader.Infrastructure.Services;
 public class InstrumentService : IInstrumentCommandService, IInstrumentQueryService
 {
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
-    private readonly ILogger<InstrumentService> _logger;
     private readonly ITradingScheduleCache _scheduleCache;
+    private readonly ILogger<InstrumentService> _logger;
+
     public InstrumentService(
         ITraderUnitOfWork<TraderDbContext> uow,
-    ITradingScheduleCache scheduleCache,
+        ITradingScheduleCache scheduleCache,
         ILogger<InstrumentService> logger)
     {
         _uow = uow;
@@ -50,17 +50,17 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             type,
             market,
             model.BoardCode,
-            optionContract);
+            optionContract,
+            model.TradingScheduleId);    // ← جدید
 
         await _uow.Instruments.AddAsync(instrument);
         await _uow.SaveChangesAsync();
 
-        // Invalidate cache for new instrument's ISIN
         _scheduleCache.Invalidate(instrument.Isin);
 
         _logger.LogInformation(
-            "Created Instrument {Id} isin={Isin} name={Symbol}",
-            instrument.Id, instrument.Isin, instrument.SymbolName);
+            "Created Instrument {Id} isin={Isin} schedule={ScheduleId}",
+            instrument.Id, instrument.Isin, instrument.TradingScheduleId);
 
         return instrument.Id;
     }
@@ -70,12 +70,17 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         var instrument = await _uow.Instruments.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Instrument {id} not found.");
 
-        instrument.Update(model.SymbolName, model.DisplayName, model.BoardCode);
+        instrument.Update(
+            model.SymbolName,
+            model.DisplayName,
+            model.BoardCode,
+            model.TradingScheduleId);    // ← جدید
 
         await _uow.Instruments.UpdateAsync(instrument);
         await _uow.SaveChangesAsync();
 
         _scheduleCache.Invalidate(instrument.Isin);
+
         _logger.LogInformation("Updated Instrument {Id}", id);
     }
 
@@ -85,9 +90,10 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             ?? throw new InvalidOperationException($"Instrument {id} not found.");
 
         instrument.Deactivate();
-
         await _uow.Instruments.UpdateAsync(instrument);
         await _uow.SaveChangesAsync();
+
+        _scheduleCache.Invalidate(instrument.Isin);
 
         _logger.LogInformation("Deactivated Instrument {Id}", id);
     }
@@ -97,9 +103,12 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
     public async Task<IReadOnlyList<InstrumentInfoView>> GetListAsync()
     {
         var instruments = await _uow.Instruments.GetAllAsync();
+        var schedules = await _uow.TradingSchedules.GetAllAsync();
+        var scheduleById = schedules.ToDictionary(s => s.Id);
+
         return instruments
             .OrderBy(i => i.SymbolName)
-            .Select(MapToInfoView)
+            .Select(i => MapToInfoView(i, scheduleById))
             .ToList();
     }
 
@@ -107,30 +116,56 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
     {
         var spec = new InstrumentByIsinSpec(isin);
         var instrument = await _uow.InstrumentSpecs.GetBySpecAsync(spec);
-        return instrument is null ? null : MapToInfoView(instrument);
+        if (instrument is null) return null;
+
+        TradingSchedule? schedule = null;
+        if (instrument.TradingScheduleId is Guid sid)
+            schedule = await _uow.TradingSchedules.GetByIdAsync(sid);
+
+        var dict = schedule is null
+            ? new Dictionary<Guid, TradingSchedule>()
+            : new Dictionary<Guid, TradingSchedule> { [schedule.Id] = schedule };
+
+        return MapToInfoView(instrument, dict);
     }
 
-    public async Task<IReadOnlyList<SelectionListDto>> GetSelectionListAsync()
+    public async Task<IReadOnlyList<InstrumentSelectionView>> GetSelectionListAsync()
     {
         var spec = new ActiveInstrumentsSpec();
         var instruments = await _uow.InstrumentSpecs.ListBySpecAsync(spec);
 
         return instruments
-            .Select(i => new SelectionListDto(
-                i.Isin, i.SymbolName, i.DisplayName))
+            .Select(i => new InstrumentSelectionView(
+                Value: i.Isin,
+                Label: i.SymbolName,
+                Display: i.DisplayName))
             .ToList();
     }
 
-    private static InstrumentInfoView MapToInfoView(Instrument i) => new(
-        i.Id,
-        i.Isin,
-        i.SymbolName,
-        i.DisplayName,
-        (int)i.Type,
-        i.Type.ToString(),
-        (int)i.Market,
-        i.Market.ToString(),
-        i.BoardCode,
-        i.IsActive,
-        i.CreatedAt);
+    /* ═══════════════════ Helpers ═══════════════════ */
+
+    private static InstrumentInfoView MapToInfoView(
+        Instrument i,
+        IReadOnlyDictionary<Guid, TradingSchedule> schedules)
+    {
+        TradingSchedule? schedule = null;
+        if (i.TradingScheduleId is Guid sid)
+            schedules.TryGetValue(sid, out schedule);
+
+        return new InstrumentInfoView(
+            i.Id,
+            i.Isin,
+            i.SymbolName,
+            i.DisplayName,
+            (int)i.Type,
+            i.Type.ToString(),
+            (int)i.Market,
+            i.Market.ToString(),
+            i.BoardCode,
+            i.TradingScheduleId,
+            schedule?.Code,
+            schedule?.Name,
+            i.IsActive,
+            i.CreatedAt);
+    }
 }

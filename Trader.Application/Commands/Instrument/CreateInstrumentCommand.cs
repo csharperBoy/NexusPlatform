@@ -3,8 +3,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos.Instruments;
-using Trader.Domain.Enums;
-using Trader.Domain.ValueObjects;
 
 namespace Trader.Application.Commands.Instrument;
 
@@ -15,6 +13,7 @@ public record CreateInstrumentCommand(
     int Type,
     int Market,
     string? BoardCode,
+    Guid? TradingScheduleId,
     OptionContractModel? OptionContract
 ) : IRequest<Result<Guid>>;
 
@@ -45,10 +44,12 @@ public class CreateInstrumentCommandHandler
                 request.Type,
                 request.Market,
                 request.BoardCode,
+                request.TradingScheduleId,
                 request.OptionContract);
 
             var id = await _service.CreateAsync(model);
-            _logger.LogInformation("Instrument created: {Id} isin={Isin}", id, request.Isin);
+            _logger.LogInformation(
+                "Instrument created: {Id} isin={Isin}", id, request.Isin);
             return Result<Guid>.Ok(id);
         }
         catch (Exception ex)

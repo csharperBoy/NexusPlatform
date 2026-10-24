@@ -7,6 +7,7 @@ public sealed record CreateInstrumentModel(
     int Type,
     int Market,
     string? BoardCode,
+    Guid? TradingScheduleId,
     OptionContractModel? OptionContract);
 
 public sealed record OptionContractModel(

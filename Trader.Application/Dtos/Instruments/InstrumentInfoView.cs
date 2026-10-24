@@ -10,5 +10,8 @@ public sealed record InstrumentInfoView(
     int Market,
     string MarketName,
     string? BoardCode,
+    Guid? TradingScheduleId,
+    string? TradingScheduleCode,
+    string? TradingScheduleName,
     bool IsActive,
     DateTime CreatedAt);

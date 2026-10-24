@@ -3,4 +3,5 @@
 public sealed record UpdateInstrumentModel(
     string SymbolName,
     string DisplayName,
-    string? BoardCode);
+    string? BoardCode,
+    Guid? TradingScheduleId);

@@ -10,7 +10,8 @@ public record UpdateInstrumentCommand(
     Guid Id,
     string SymbolName,
     string DisplayName,
-    string? BoardCode
+    string? BoardCode,
+    Guid? TradingScheduleId
 ) : IRequest<Result<bool>>;
 
 public class UpdateInstrumentCommandHandler
@@ -36,7 +37,8 @@ public class UpdateInstrumentCommandHandler
             var model = new UpdateInstrumentModel(
                 request.SymbolName,
                 request.DisplayName,
-                request.BoardCode);
+                request.BoardCode,
+                request.TradingScheduleId);
 
             await _service.UpdateAsync(request.Id, model);
             return Result<bool>.Ok(true);

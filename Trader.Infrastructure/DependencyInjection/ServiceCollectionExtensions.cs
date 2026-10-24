@@ -190,6 +190,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IMarketDataProvider, BrokerMarketDataProvider>();
             services.AddScoped<IMarketDataProviderResolver, MarketDataProviderResolver>();
 
+            services.AddScoped<ITradingScheduleQueryService, TradingScheduleService>();
             // ─── Runtime Stages ───
             services.AddScoped<IMarketDataIngestionStage, MarketDataIngestionStage>();
             // ─── Runtime Recovery ───
