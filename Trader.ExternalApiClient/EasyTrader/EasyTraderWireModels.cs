@@ -135,6 +135,22 @@ namespace Trader.ExternalApiClient.EasyTrader
         [JsonPropertyName("s")]
         public string? S { get; set; }
     }
+    /// <summary>
+    /// پاسخ TradingView UDF از endpoint /chart/api/v2/datafeed/history.
+    /// آرایه‌ها هم‌طول هستند (تعداد = کندل‌ها).
+    /// </summary>
+    public class TradingViewHistoryResponse
+    {
+        /// <summary>"ok" یا "no_data" یا "error".</summary>
+        [JsonPropertyName("s")] public string? Status { get; set; }
+
+        [JsonPropertyName("t")] public long[]? Time { get; set; }
+        [JsonPropertyName("o")] public decimal[]? Open { get; set; }
+        [JsonPropertyName("h")] public decimal[]? High { get; set; }
+        [JsonPropertyName("l")] public decimal[]? Low { get; set; }
+        [JsonPropertyName("c")] public decimal[]? Close { get; set; }
+        [JsonPropertyName("v")] public long[]? Volume { get; set; }
+    }
 
     public class CandleItem
     {

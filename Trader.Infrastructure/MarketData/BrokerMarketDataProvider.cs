@@ -120,34 +120,48 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         var session = await _sessionProvider.GetSessionAsync(account.Id, ct);
         var reader = _brokerFactory.Get<IBrokerMarketDataReader>(account.Broker);
 
-        // محاسبه‌ی روزهای مورد نیاز بر اساس TimeFrame و تعداد
-        var intervalMinutes = (int)timeFrame;
-        var totalMinutes = count * intervalMinutes;
-        // در بازار ایران روزانه حدود ۴ ساعت معاملات مؤثر است (۲۴۰ دقیقه)
-        // برای محافظه‌کاری ۲۴۰ دقیقه فرض می‌کنیم، تا تعداد روز کافی باشد
-        const int tradingMinutesPerDay = 240;
-        var days = Math.Max(1, (totalMinutes / tradingMinutesPerDay) + 2);
+        // ─── TimeFrame → resolution ───
+        string resolution;
+        try
+        {
+            resolution = TimeFrameToResolution(timeFrame);
+        }
+        catch (NotSupportedException ex)
+        {
+            _logger.LogError(ex,
+                "TimeFrame {TimeFrame} is not supported by the broker's chart API.",
+                timeFrame);
+            return Array.Empty<Candle>();
+        }
 
+        // ─── Fetch via V2 (countback = دقیقاً همان تعداد درخواستی) ───
         List<CandleDto> raw;
         try
         {
-            raw = await reader.GetCandlesAsync(session, isin, days, intervalMinutes, ct);
+            raw = await reader.GetCandlesAsync(session, isin, resolution, count, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Candle fetch failed for {Isin} tf={TimeFrame}", isin, timeFrame);
+                "Candle fetch failed: isin={Isin} tf={TimeFrame} " +
+                "resolution={Resolution} countback={Countback}",
+                isin, timeFrame, resolution, count);
             return Array.Empty<Candle>();
         }
 
         if (raw.Count == 0) return Array.Empty<Candle>();
 
-        // آخرین {count} کندل را برمی‌گردانیم (جدیدترین‌ها)
+        // ─── ترتیب صعودی (قدیمی → جدید) ───
+        if (raw.Count > 1 && raw[0].T > raw[^1].T)
+            raw.Reverse();
+
+        // ─── آخرین {count} کندل (در صورت بیشتر بودن) ───
         var take = Math.Min(count, raw.Count);
         var slice = raw.Count > take
             ? raw.GetRange(raw.Count - take, take)
             : raw;
 
+        // ─── Map ───
         var result = new List<Candle>(slice.Count);
         foreach (var dto in slice)
         {
@@ -164,12 +178,36 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
             catch (ArgumentOutOfRangeException ex)
             {
                 _logger.LogWarning(ex,
-                    "Invalid candle timestamp {T} for {Isin}; skipping.", dto.T, isin);
+                    "Invalid candle timestamp {T} for {Isin}. Skipping.", dto.T, isin);
             }
         }
 
         return result;
     }
+
+    /* ═══════════════════ Helpers ═══════════════════ */
+
+    /// <summary>
+    /// TimeFrame → resolution string مورد قبول /chart/api/v2/datafeed/history.
+    /// مقادیر معتبر: "1", "5", "15", "30", "60", "1D", "1W", "1M".
+    /// H4 پشتیبانی نمی‌شود — نیاز به aggregation از H1 دارد (Phase 2).
+    /// </summary>
+    private static string TimeFrameToResolution(TimeFrame tf) => tf switch
+    {
+        TimeFrame.M1 => "1",
+        TimeFrame.M5 => "5",
+        TimeFrame.M15 => "15",
+        TimeFrame.M30 => "30",
+        TimeFrame.H1 => "60",
+        TimeFrame.D1 => "1D",
+        TimeFrame.W1 => "1W",
+        TimeFrame.H4 => throw new NotSupportedException(
+            "H4 (240 minutes) is not supported by EasyTrader chart API. " +
+            "Supported: M1, M5, M15, M30, H1, D1, W1. " +
+            "Use H1 and aggregate in Phase 2."),
+        _ => throw new NotSupportedException(
+            $"TimeFrame {tf} is not supported.")
+    };
 
     /* ═══════════════════ Helpers ═══════════════════ */
 

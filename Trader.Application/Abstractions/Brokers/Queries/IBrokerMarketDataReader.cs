@@ -9,9 +9,18 @@ namespace Trader.Application.Abstractions.Brokers.Queries
             Task<SymbolMarketDataDto> GetSymbolInfoAsync(
                 ExternalSystemSession session, string symbolIsin, CancellationToken ct = default);
 
-            Task<List<CandleDto>> GetCandlesAsync(
-                ExternalSystemSession session, string symbolIsin,
-                int days = 1, int intervalMinutes = 1, CancellationToken ct = default);
+
+        /// <summary>
+        /// دریافت Candle از Broker.
+        /// resolution: "1", "5", "15", "30", "60", "1D", "1W", "1M"
+        /// countback: تعداد کندل درخواستی.
+        /// </summary>
+        Task<List<CandleDto>> GetCandlesAsync(
+            ExternalSystemSession session,
+            string symbolIsin,
+            string resolution,
+            int countback,
+            CancellationToken ct = default);
 
             Task<List<BatchMarketDataItemDto>> GetBatchMarketDataAsync(
                 ExternalSystemSession session, IReadOnlyList<string> symbolIsins,

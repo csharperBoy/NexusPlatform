@@ -612,6 +612,111 @@ namespace Trader.ExternalApiClient.EasyTrader
             }
         }
 
+        /// <summary>
+        /// GetCandles via /chart/api/v2/datafeed/history (TradingView UDF).
+        /// پشتیبانی از resolution: 1, 5, 15, 30, 60, 1D, 1W, 1M
+        /// </summary>
+        public async Task<TradingViewHistoryResponse> GetChartHistoryV2Async(
+            string accessToken,
+            string symbolIsin,
+            string resolution,
+            int countback,
+            CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(symbolIsin))
+                return new();
+
+            if (countback <= 0)
+                return new();
+
+            // ─── سرور بدون :N خطا می‌دهد («Symbol is invalid»). همیشه :1 می‌گذاریم.
+            // تست: :1 و :2 هر دو همان داده را برمی‌گردانند. :1 امن‌ترین است.
+            var symbolParam = symbolIsin.Contains(':') ? symbolIsin : $"{symbolIsin}:1";
+
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var url = _options.BaseUrl.TrimEnd('/') + EasyTraderEndpoints.ChartHistoryV2
+                + $"?symbol={Uri.EscapeDataString(symbolParam)}"
+                + $"&resolution={Uri.EscapeDataString(resolution)}"
+                + $"&from=0"
+                + $"&to={now}"
+                + $"&countback={countback}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, accessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+            var contentType = res.Content.Headers.ContentType?.MediaType ?? "?";
+
+            // ─── WAF / HTML detection ───
+            var trimmed = body.TrimStart();
+            if (trimmed.StartsWith("<"))
+            {
+                throw new EasyTraderException(
+                    $"Chart history V2 returned HTML (WAF/block) for " +
+                    $"{symbolIsin} resolution={resolution} countback={countback}. " +
+                    $"ContentType={contentType}. Preview: {Truncate(trimmed, 300)}",
+                    (int)res.StatusCode, body);
+            }
+
+            if (!res.IsSuccessStatusCode)
+            {
+                throw new EasyTraderException(
+                    $"Chart history V2 failed {(int)res.StatusCode} for " +
+                    $"{symbolIsin} resolution={resolution} countback={countback}. " +
+                    $"ContentType={contentType}. Body: {Truncate(body, 400)}",
+                    (int)res.StatusCode, body);
+            }
+
+            if (string.IsNullOrWhiteSpace(body))
+                return new();
+
+            TradingViewHistoryResponse? wire;
+            try
+            {
+                wire = JsonSerializer.Deserialize<TradingViewHistoryResponse>(body, JsonOpts);
+            }
+            catch (JsonException jex)
+            {
+                throw new EasyTraderException(
+                    $"Chart history V2 JSON parse failed for {symbolIsin}. " +
+                    $"URL={url}. Preview: {Truncate(body, 400)}. Inner: {jex.Message}");
+            }
+
+            if (wire is null) return new();
+
+            // "no_data" حالت طبیعی برای نماد تازه‌عرضه یا بازه‌ی خالی است — خطا نیست.
+            if (string.Equals(wire.Status, "no_data", StringComparison.OrdinalIgnoreCase))
+                return new();
+
+            if (!string.Equals(wire.Status, "ok", StringComparison.OrdinalIgnoreCase))
+                throw new EasyTraderException(
+                    $"Chart history V2 returned status='{wire.Status}' for {symbolIsin}.");
+
+            if (wire.Time is null || wire.Time.Length == 0)
+                return new();
+
+            // ─── اعتبارسنجی آرایه‌های هم‌طول ───
+            var n = wire.Time.Length;
+            if (wire.Open?.Length != n
+                || wire.High?.Length != n
+                || wire.Low?.Length != n
+                || wire.Close?.Length != n
+                || wire.Volume?.Length != n)
+            {
+                throw new EasyTraderException(
+                    $"Chart history V2 returned inconsistent array lengths for " +
+                    $"{symbolIsin} resolution={resolution}. " +
+                    $"t={n}, o={wire.Open?.Length}, h={wire.High?.Length}, " +
+                    $"l={wire.Low?.Length}, c={wire.Close?.Length}, v={wire.Volume?.Length}.");
+            }
+
+            
+
+            return wire;
+        }
         /* ══════════════════════════════════════════════════
            ANALYSIS
            ══════════════════════════════════════════════════ */

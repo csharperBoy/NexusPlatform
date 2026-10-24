@@ -25,8 +25,21 @@
         public const string TradingTime = "/symbols/api/TradingTime";
 
         /* ═══ Chart ═══ */
+
+        /* ═══ Chart History — miniChart (legacy: only M1 & D1) ═══ */
+        /// <summary>
+        /// فقط interval = 1 (M1) و 1440 (D1) را پشتیبانی می‌کند.
+        /// day valid= 1, 7, 30, 90, 365
+        /// برای سایر Timeframeها از <see cref="ChartHistoryV2"/> استفاده کنید.
+        /// </summary>
         public const string ChartHistory = "/chart/api/v2/datafeed/miniChart/history";
 
+        /* ═══ Chart History — V2 (TradingView UDF, همه Timeframeها) ═══ */
+        /// <summary>
+        /// پشتیبانی از resolution: 1, 5, 15, 30, 60, 1D, 1W, 1M
+        /// پارامترها: symbol=ISIN:1&amp;resolution=N&amp;from=0&amp;to=UNIX&amp;countback=N
+        /// </summary>
+        public const string ChartHistoryV2 = "/chart/api/v2/datafeed/history";
         /* ═══ Analysis ═══ */
         public const string IndInstAnalysis = "/easy/api/symbol-analysis/ind-inst";
         public const string TechnicalAnalysis = "/easy/api/symbol-analysis/technical-analysis";

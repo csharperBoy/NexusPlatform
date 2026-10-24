@@ -10,9 +10,9 @@ namespace Trader.Infrastructure.MarketData;
 public sealed class InMemoryCandleCache : ICandleCache
 {
     private sealed record CacheEntry(
-        IReadOnlyList<Candle> Candles,
-        DateTime LastClosedCandleTime,
-        DateTime FetchedAt);
+    IReadOnlyList<Candle> Candles,
+    DateTime ExpiresAt,           // ← تغییر نام: LastClosedCandleTime → ExpiresAt
+    DateTime FetchedAt);
 
     private readonly ConcurrentDictionary<string, CacheEntry> _cache = new();
     private readonly IServiceScopeFactory _scopeFactory;
@@ -39,9 +39,7 @@ public sealed class InMemoryCandleCache : ICandleCache
         // ─── Cache hit? ───
         if (_cache.TryGetValue(key, out var entry))
         {
-            var elapsedSinceLastCandle = now - entry.LastClosedCandleTime;
-            if (entry.Candles.Count >= requiredCount
-                && elapsedSinceLastCandle < tfDuration)
+            if (entry.Candles.Count >= requiredCount && now < entry.ExpiresAt)
             {
                 return entry.Candles;
             }
@@ -98,13 +96,31 @@ public sealed class InMemoryCandleCache : ICandleCache
                 isin, timeFrame);
         }
 
-        // ─── Update Cache ───
-        var lastClosed = candles[^1].OpenTime + tfDuration;
-        _cache[key] = new CacheEntry(candles, lastClosed, now);
+        // ─── Expiry = زمان بسته شدن کندل بعدی + buffer ───
+        var lastCandleTime = candles[^1].OpenTime;
+        var nextCandleClose = lastCandleTime + tfDuration;
+
+        // Buffer برای latency سرور — تا کندل جدید آماده شود
+        // M1: 15s | M5: 30s | M15+: 60s | D1: 1h
+        var buffer = timeFrame switch
+        {
+            TimeFrame.M1 => TimeSpan.FromSeconds(15),
+            TimeFrame.M5 => TimeSpan.FromSeconds(30),
+            TimeFrame.M15 => TimeSpan.FromSeconds(60),
+            TimeFrame.M30 => TimeSpan.FromSeconds(90),
+            TimeFrame.H1 => TimeSpan.FromMinutes(3),
+            TimeFrame.H4 => TimeSpan.FromMinutes(5),
+            TimeFrame.D1 => TimeSpan.FromHours(2),      // شب تا صبح cache
+            TimeFrame.W1 => TimeSpan.FromHours(12),
+            _ => TimeSpan.FromSeconds(30)
+        };
+
+        var expiresAt = nextCandleClose + buffer;
+        _cache[key] = new CacheEntry(candles, expiresAt, now);
 
         _logger.LogDebug(
-            "Candles loaded: {Isin} tf={Tf} count={Count} lastClosed={LastClosed}",
-            isin, timeFrame, candles.Count, lastClosed);
+            "Candles loaded: {Isin} tf={Tf} count={Count} lastCandle={Last} expiresAt={Exp}",
+            isin, timeFrame, candles.Count, lastCandleTime, expiresAt);
 
         return candles;
     }
