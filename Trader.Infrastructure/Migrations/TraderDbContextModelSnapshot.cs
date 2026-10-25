@@ -235,6 +235,15 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<DateTime>("EffectiveAt")
                         .HasColumnType("datetime2");
 
@@ -242,6 +251,13 @@ namespace Trader.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<decimal>("Rate")
                         .HasPrecision(18, 6)
@@ -260,8 +276,20 @@ namespace Trader.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("PK_CurrencyRate");
 
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_CurrencyRate_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_CurrencyRate_CreatedBy");
+
                     b.HasIndex("Id")
                         .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_CurrencyRate_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_CurrencyRate_ModifiedBy");
 
                     b.HasIndex("FromCurrency", "ToCurrency", "EffectiveAt")
                         .IsUnique()
