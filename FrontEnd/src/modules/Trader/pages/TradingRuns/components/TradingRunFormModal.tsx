@@ -395,38 +395,40 @@ setCurrencyRateValue(null);
     ارز تحلیل (اختیاری)
   </label>
   <div className="flex items-center gap-2">
-    <input
-      type="text"
-      value={targetCurrency}
-      onChange={(e) => setTargetCurrency(e.target.value.toUpperCase())}
-      placeholder="IRR (پایه — بدون تبدیل)"
-      dir="ltr"
-      list="run-currencies"
-      maxLength={10}
+    <select
+      value={targetCurrency || ""}
+      onChange={(e) => setTargetCurrency(e.target.value)}
       className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-    />
+    >
+      <option value="">— بدون تبدیل (ریال) —</option>
+      <option value="USD">دلار آمریکا (USD)</option>
+      <option value="EUR">یورو (EUR)</option>
+      <option value="GBP">پوند انگلیس (GBP)</option>
+      <option value="AED">درهم امارات (AED)</option>
+      <option value="TRY">لیر ترکیه (TRY)</option>
+      <option value="CNY">یوان چین (CNY)</option>
+      <option value="JPY">ین ژاپن (JPY)</option>
+      <option value="CHF">فرانک سوئیس (CHF)</option>
+      <option value="GOLD">طلا (GOLD)</option>
+    </select>
     {currencyRateStatus === "checking" && (
-      <span className="text-xs text-gray-500">⏳ بررسی...</span>
+      <span className="whitespace-nowrap text-xs text-gray-500">
+        ⏳ بررسی...
+      </span>
     )}
     {currencyRateStatus === "ok" && currencyRateValue != null && (
-      <span className="text-xs text-emerald-500">
+      <span className="whitespace-nowrap text-xs text-emerald-500">
         ✓ {currencyRateValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
       </span>
     )}
     {currencyRateStatus === "missing" && (
-      <span className="text-xs text-red-500">❌ نرخ ثبت نشده</span>
+      <span className="whitespace-nowrap text-xs text-red-500">
+        ❌ نرخ ثبت نشده
+      </span>
     )}
   </div>
-  <datalist id="run-currencies">
-    <option value="USD" />
-    <option value="EUR" />
-    <option value="GBP" />
-    <option value="AED" />
-    <option value="TRY" />
-    <option value="CNY" />
-  </datalist>
   <p className="mt-1 text-[10px] text-gray-500">
-    اگر خالی باشد یا IRR باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
+    اگر خالی باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
     برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
   </p>
 </div>

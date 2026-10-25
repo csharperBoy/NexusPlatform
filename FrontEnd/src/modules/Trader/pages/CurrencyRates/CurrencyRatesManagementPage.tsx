@@ -9,6 +9,18 @@ function parseUtcDate(s: string): Date {
   return new Date(hasTz ? s : s + "Z");
 }
 
+/**
+ * تبدیل Date به مقدار قابل قبول برای <input type="datetime-local">
+ * در timezone محلی مرورگر (نه UTC).
+ */
+function toLocalDateTimeInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
+}
+
 function formatTehran(s: string): string {
   try {
     return parseUtcDate(s).toLocaleString("fa-IR", {
@@ -31,7 +43,18 @@ function formatRate(rate: number): string {
 }
 
 /* ─── Common Currencies ─── */
-const COMMON_CURRENCIES = ["USD", "EUR", "GBP", "AED", "TRY", "CNY", "GOLD"];
+const STANDARD_CURRENCIES = [
+  { value: "USD", label: "دلار آمریکا (USD)" },
+  { value: "EUR", label: "یورو (EUR)" },
+  { value: "GBP", label: "پوند انگلیس (GBP)" },
+  { value: "AED", label: "درهم امارات (AED)" },
+  { value: "TRY", label: "لیر ترکیه (TRY)" },
+  { value: "CNY", label: "یوان چین (CNY)" },
+  { value: "JPY", label: "ین ژاپن (JPY)" },
+  { value: "CHF", label: "فرانک سوئیس (CHF)" },
+  { value: "GOLD", label: "طلا (GOLD)" },
+  { value: "IRR", label: "ریال ایران (IRR)" },
+];
 
 /* ═══════════════════ Create Modal ═══════════════════ */
 
@@ -50,20 +73,33 @@ const CreateModal: React.FC<CreateModalProps> = ({
 }) => {
   const [fromCurrency, setFromCurrency] = useState("USD");
   const [toCurrency, setToCurrency] = useState("IRR");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+  const [useCustomFrom, setUseCustomFrom] = useState(false);
+  const [useCustomTo, setUseCustomTo] = useState(false);
   const [rate, setRate] = useState<string>("");
-  const [effectiveAt, setEffectiveAt] = useState<string>(
-    new Date().toISOString().slice(0, 16),
+  const [effectiveAt, setEffectiveAt] = useState<string>(() =>
+    toLocalDateTimeInputValue(new Date()),
   );
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  const resolvedFrom = useCustomFrom
+    ? customFrom.trim().toUpperCase()
+    : fromCurrency;
+  const resolvedTo = useCustomTo ? customTo.trim().toUpperCase() : toCurrency;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!fromCurrency.trim() || !toCurrency.trim()) {
+    if (!resolvedFrom || !resolvedTo) {
       setError("هر دو ارز الزامی است");
+      return;
+    }
+    if (resolvedFrom === resolvedTo) {
+      setError("ارز مبدأ و مقصد نباید یکسان باشند");
       return;
     }
     const rateNum = Number(rate);
@@ -71,21 +107,17 @@ const CreateModal: React.FC<CreateModalProps> = ({
       setError("نرخ باید بزرگ‌تر از صفر باشد");
       return;
     }
-    if (fromCurrency.toUpperCase() === toCurrency.toUpperCase()) {
-      setError("ارز مبدأ و مقصد نباید یکسان باشند");
-      return;
-    }
 
     try {
       await onSubmit({
-        fromCurrency: fromCurrency.toUpperCase(),
-        toCurrency: toCurrency.toUpperCase(),
+        fromCurrency: resolvedFrom,
+        toCurrency: resolvedTo,
         rate: rateNum,
         effectiveAt: new Date(effectiveAt).toISOString(),
         source: "Manual",
       });
-      // Reset
       setRate("");
+      setEffectiveAt(toLocalDateTimeInputValue(new Date()));
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطا در ثبت");
     }
@@ -105,47 +137,88 @@ const CreateModal: React.FC<CreateModalProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                ارز مبدأ
-              </label>
-              <input
-                type="text"
-                value={fromCurrency}
-                onChange={(e) => setFromCurrency(e.target.value.toUpperCase())}
-                placeholder="USD"
-                dir="ltr"
-                list="currencies"
+          {/* ─── From ─── */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              ارز مبدأ
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={useCustomFrom ? "__custom__" : fromCurrency}
+                onChange={(e) => {
+                  if (e.target.value === "__custom__") {
+                    setUseCustomFrom(true);
+                  } else {
+                    setUseCustomFrom(false);
+                    setFromCurrency(e.target.value);
+                  }
+                }}
                 className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                ارز مقصد
-              </label>
-              <input
-                type="text"
-                value={toCurrency}
-                onChange={(e) => setToCurrency(e.target.value.toUpperCase())}
-                placeholder="IRR"
-                dir="ltr"
-                list="currencies"
-                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
+              >
+                {STANDARD_CURRENCIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+                <option value="__custom__">سایر (دلخواه)...</option>
+              </select>
+              {useCustomFrom && (
+                <input
+                  type="text"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value.toUpperCase())}
+                  placeholder="کد ارز"
+                  dir="ltr"
+                  maxLength={10}
+                  className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+              )}
             </div>
           </div>
 
-          <datalist id="currencies">
-            {COMMON_CURRENCIES.map((c) => (
-              <option key={c} value={c} />
-            ))}
-            <option value="IRR" />
-          </datalist>
-
+          {/* ─── To ─── */}
           <div>
-            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              نرخ (۱ {fromCurrency} = ? {toCurrency})
+            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              ارز مقصد
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={useCustomTo ? "__custom__" : toCurrency}
+                onChange={(e) => {
+                  if (e.target.value === "__custom__") {
+                    setUseCustomTo(true);
+                  } else {
+                    setUseCustomTo(false);
+                    setToCurrency(e.target.value);
+                  }
+                }}
+                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                {STANDARD_CURRENCIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+                <option value="__custom__">سایر (دلخواه)...</option>
+              </select>
+              {useCustomTo && (
+                <input
+                  type="text"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value.toUpperCase())}
+                  placeholder="کد ارز"
+                  dir="ltr"
+                  maxLength={10}
+                  className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ─── Rate ─── */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              نرخ (۱ {resolvedFrom || "?"} = ? {resolvedTo || "?"})
             </label>
             <input
               type="number"
@@ -159,9 +232,10 @@ const CreateModal: React.FC<CreateModalProps> = ({
             />
           </div>
 
+          {/* ─── Effective At ─── */}
           <div>
-            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              زمان اعتبار
+            <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              زمان اعتبار (وقت محلی)
             </label>
             <input
               type="datetime-local"
@@ -170,7 +244,8 @@ const CreateModal: React.FC<CreateModalProps> = ({
               className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
             <p className="mt-1 text-[10px] text-gray-500">
-              از این لحظه به بعد، این نرخ (یا نرخ جدیدتر) معتبر است
+              از این لحظه به بعد، این نرخ (یا نرخ جدیدتر) معتبر است. 
+              اگر خالی بماند، الآن ثبت می‌شود.
             </p>
           </div>
 
