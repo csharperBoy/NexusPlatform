@@ -9,6 +9,7 @@ import {
   InstrumentsManagementPage,
   AccountsManagementPage,
   PositionsPage,
+  CurrencyRatesManagementPage,
   SignalsPage } from "./pages";
 
 export const TraderShotgunRoutes: RouteObject[] = [
@@ -16,6 +17,7 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/instruments",    element: <InstrumentsManagementPage /> },
   { path: "trader/strategies",     element: <StrategiesListPage /> },
   { path: "trader/trading-runs",   element: <TradingRunsManagementPage /> },
+  { path: "trader/currency-rates", element: <CurrencyRatesManagementPage /> }, 
   { path: "trader/positions",      element: <PositionsPage /> },
   { path: "trader/signals",        element: <SignalsPage /> },
   { path: "trader/schedule-plans", element: <SchedulePlansManagementPage /> },

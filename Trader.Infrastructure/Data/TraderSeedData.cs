@@ -156,6 +156,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Generated trading signals",
                             DisplayOrder = 3012,
                             Icon = "zap",
+                        },new()
+                        {
+                            Key = "trader.currencyrate",
+                            Name = "Currency Rate",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Currency exchange rates",
+                            DisplayOrder = 3013,
+                            Icon = "dollar-sign",
                         },
                     }
                 }
@@ -196,6 +205,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.tradingrun", roleId, "Full access to Trading Run"),
                 FullAccess("trader.position", roleId, "View positions"),
                 FullAccess("trader.signal", roleId, "View signals"),
+                FullAccess("trader.currencyrate", roleId, "Full access to Currency Rate"),
             };
         }
 
@@ -354,6 +364,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.executionlog",
                             ParentKey = "trader",
                             Path = "/trader/logs"
+                        },new()
+                        {
+                            Title = "نرخ‌های ارز",
+                            Description = "مدیریت نرخ برابری ارز",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 111,
+                            Key = "trader.currencyrate",
+                            ParentKey = "trader",
+                            Path = "/trader/currency-rates"
                         }
                     }
                 }

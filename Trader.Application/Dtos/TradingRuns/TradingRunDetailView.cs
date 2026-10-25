@@ -8,6 +8,7 @@ public sealed record TradingRunDetailView(
     string StrategyKey,
     string StrategyConfigJson,
     int PrimaryTimeFrame,
+    string? TargetCurrency,
     TradingRunSettingsDto Settings,
     IReadOnlyList<TradingRunSymbolDto> Symbols,
     IReadOnlyList<Guid> AccountIds,

@@ -43,7 +43,9 @@ ISpecificationRepository<StrategyEvaluation, Guid> strategyEvaluationSpecs,
     IRepository<TraderDbContext, MarketSnapshotRecord, Guid> marketSnapshots,
     ISpecificationRepository<MarketSnapshotRecord, Guid> marketSnapshotSpecs,
     IRepository<TraderDbContext, CandleRecord, Guid> candleRecords,
-ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs,
+ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs, 
+IRepository<TraderDbContext, CurrencyRate, Guid> currencyRates,
+ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -78,10 +80,12 @@ ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs,
         CandleRecords = candleRecords;
         CandleRecordSpecs = candleRecordSpecs;
         TradingSchedules = tradingSchedules;
-        TradingScheduleSpecs = tradingScheduleSpecs;
+        TradingScheduleSpecs = tradingScheduleSpecs; 
+        CurrencyRates = currencyRates;
+        CurrencyRateSpecs = currencyRateSpecs;
 
     }
-public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
+    public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     public IRepository<TraderDbContext, TraderAccount, Guid> Accounts { get; }
     public IRepository<TraderDbContext, Instrument, Guid> Instruments { get; }
@@ -98,7 +102,8 @@ public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public IRepository<TraderDbContext, MarketSnapshotRecord, Guid> MarketSnapshots { get; }
     public IRepository<TraderDbContext, CandleRecord, Guid> CandleRecords { get; }
     public IRepository<TraderDbContext, TradingSchedule, Guid> TradingSchedules { get; }
-
+    public IRepository<TraderDbContext, CurrencyRate, Guid> CurrencyRates { get; }
+    public ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
     public ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
     public ISpecificationRepository<Signal, Guid> SignalSpecs { get; }

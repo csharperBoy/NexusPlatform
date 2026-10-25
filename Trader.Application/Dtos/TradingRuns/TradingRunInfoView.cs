@@ -10,6 +10,7 @@ public sealed record TradingRunInfoView(
     string PrimaryTimeFrameName,
     int CapitalAllocationMode,
     decimal? FixedCapital,
+    string? TargetCurrency,
     int SymbolCount,
     int AccountCount,
     DateTime? StartedAt,

@@ -10,3 +10,5 @@ export { StrategiesListPage } from "./Strategies/StrategiesListPage";
 
 export { PositionsPage } from "./Positions/PositionsPage";
 export { SignalsPage } from "./Signals/SignalsPage";
+
+export { CurrencyRatesManagementPage } from "./CurrencyRates/CurrencyRatesManagementPage";

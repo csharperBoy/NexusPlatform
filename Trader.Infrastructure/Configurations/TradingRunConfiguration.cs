@@ -80,7 +80,9 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
 
         builder.Property(x => x.StartedAt).IsRequired(false);
         builder.Property(x => x.StoppedAt).IsRequired(false);
-
+        builder.Property(x => x.TargetCurrency)
+    .HasMaxLength(10)
+    .IsRequired(false);
         // ─── Relations ───
         builder.HasMany(x => x.Symbols)
             .WithOne()

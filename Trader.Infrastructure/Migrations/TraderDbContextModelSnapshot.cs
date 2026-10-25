@@ -230,6 +230,47 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("Candles", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.CurrencyRate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("EffectiveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FromCurrency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ToCurrency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_CurrencyRate");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("FromCurrency", "ToCurrency", "EffectiveAt")
+                        .IsUnique()
+                        .IsDescending(false, false, true)
+                        .HasDatabaseName("IX_CurrencyRate_Pair_TimeDesc");
+
+                    b.ToTable("CurrencyRates", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.ExecutionLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1211,6 +1252,10 @@ namespace Trader.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TargetCurrency")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.HasKey("Id")
                         .HasName("PK_TradingRun");

@@ -5,6 +5,7 @@ public sealed record UpdateTradingRunModel(
     string StrategyKey,
     string StrategyConfigJson,
     int PrimaryTimeFrame,
+    string? TargetCurrency,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
     IReadOnlyList<Guid> AccountIds);

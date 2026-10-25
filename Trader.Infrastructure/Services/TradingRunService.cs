@@ -27,7 +27,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
         _logger = logger;
     }
 
-    
+
     /* ═══════════════════ Commands ═══════════════════ */
 
     public async Task<Guid> CreateAsync(CreateTradingRunModel model)
@@ -46,7 +46,8 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
             onStop: (StopRunBehavior)model.Settings.OnStop,
             symbols: model.Symbols.Select(s =>
                 (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
-            accountIds: model.AccountIds);
+            accountIds: model.AccountIds,
+    targetCurrency: model.TargetCurrency);
 
         await _uow.TradingRuns.AddAsync(run);
         await _uow.SaveChangesAsync();
@@ -74,7 +75,8 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
             BuildTakeProfit(model.Settings),
             (OrderMode)model.Settings.DefaultOrderMode,
             (MarketCloseBehavior)model.Settings.OnMarketClose,
-            (StopRunBehavior)model.Settings.OnStop);
+            (StopRunBehavior)model.Settings.OnStop,
+    model.TargetCurrency);
 
         // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
@@ -232,20 +234,21 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     }
 
     private static TradingRunInfoView MapToInfoView(TradingRun r) => new(
-        r.Id,
-        r.Name,
-        (int)r.State,
-        r.State.ToString(),
-        r.StrategyKey,
-        (int)r.PrimaryTimeFrame,
-        r.PrimaryTimeFrame.ToCode(),
-        (int)r.CapitalAllocation.Mode,
-        r.CapitalAllocation.FixedAmount?.Amount,
-        r.Symbols.Count,
-        r.Accounts.Count,
-        r.StartedAt,
-        r.StoppedAt,
-        r.CreatedAt);
+    r.Id,
+    r.Name,
+    (int)r.State,
+    r.State.ToString(),
+    r.StrategyKey,
+    (int)r.PrimaryTimeFrame,
+    r.PrimaryTimeFrame.ToCode(),
+    (int)r.CapitalAllocation.Mode,
+    r.CapitalAllocation.FixedAmount?.Amount,
+    r.TargetCurrency,                                     // ← جدید
+    r.Symbols.Count,
+    r.Accounts.Count,
+    r.StartedAt,
+    r.StoppedAt,
+    r.CreatedAt);
 
     private static TradingRunDetailView MapToDetailView(TradingRun r) => new(
         r.Id,
@@ -255,6 +258,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
         r.StrategyKey,
         r.StrategyConfigJson,
         (int)r.PrimaryTimeFrame,
+    r.TargetCurrency,
         new TradingRunSettingsDto(
             (int)r.CapitalAllocation.Mode,
             r.CapitalAllocation.FixedAmount?.Amount,

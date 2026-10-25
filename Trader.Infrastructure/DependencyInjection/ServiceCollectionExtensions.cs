@@ -102,7 +102,10 @@ namespace Trader.Infrastructure.DependencyInjection
    EfRepository<TraderDbContext, CandleRecord, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, TradingSchedule, Guid>,
    EfRepository<TraderDbContext, TradingSchedule, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, CurrencyRate, Guid>,
+    EfRepository<TraderDbContext, CurrencyRate, Guid>>();
 
+            
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
@@ -140,6 +143,8 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, CandleRecord, Guid>>();
             services.AddScoped<ISpecificationRepository<TradingSchedule, Guid>,
                 EfSpecificationRepository<TraderDbContext, TradingSchedule, Guid>>();
+            services.AddScoped<ISpecificationRepository<CurrencyRate, Guid>,
+                EfSpecificationRepository<TraderDbContext, CurrencyRate, Guid>>();
 
             services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 
@@ -178,6 +183,9 @@ namespace Trader.Infrastructure.DependencyInjection
             services.Configure<TradingRuntimeOptions>(
                 configuration.GetSection(TradingRuntimeOptions.SectionName));
 
+            services.AddScoped<ICurrencyRateService, CurrencyRateService>();
+
+            services.AddSingleton<ICandleTransformer, CurrencyCandleTransformer>();
             // ─── Session Cache (Singleton) ───
             // TODO: When moving to multi-instance, replace with RedisBrokerSessionCache.
             services.AddSingleton<IBrokerSessionCache, InMemoryBrokerSessionCache>();
@@ -214,7 +222,9 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddSingleton<IStrategyFactory, StrategyFactory>();
             // Position Closer
             services.AddSingleton<IPositionCloser, PositionCloser>();
-
+            // ─── Currency ───
+            services.AddSingleton<CurrencyRateCache>();
+            services.AddSingleton<ICurrencyRateProvider, DbCurrencyRateProvider>();
             // ─── Application Services ───
             services.AddScoped<IInstrumentCommandService, InstrumentService>();
             services.AddScoped<IInstrumentQueryService, InstrumentService>();

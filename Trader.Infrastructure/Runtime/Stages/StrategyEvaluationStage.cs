@@ -29,6 +29,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly UserDataContext _userContext;
     private readonly IUserContextCache _userContextCache;
+    private readonly ICandleTransformer _candleTransformer;
     private readonly ILogger<StrategyEvaluationStage> _logger;
 
     public StrategyEvaluationStage(
@@ -39,6 +40,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         ITraderUnitOfWork<TraderDbContext> uow,
         UserDataContext userContext,
         IUserContextCache userContextCache,
+        ICandleTransformer candleTransformer,
         ILogger<StrategyEvaluationStage> logger)
     {
         _runCache = runCache;
@@ -48,6 +50,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         _uow = uow;
         _userContext = userContext;
         _userContextCache = userContextCache;
+        _candleTransformer = candleTransformer;
         _logger = logger;
     }
 
@@ -192,7 +195,38 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 candles = allCandles;
             }
         }
+        // ─── Currency Transformation (اختیاری) ───
+        string? appliedCurrency = null;
+        decimal? appliedRate = null;
 
+        if (!string.IsNullOrWhiteSpace(ctx.TargetCurrency) && candles.Count > 0)
+        {
+            try
+            {
+                var transformed = await _candleTransformer.TransformAsync(
+                    candles, ctx.TargetCurrency, now, ct);
+
+                // نرخ مؤثر (برای Audit) — تنها یک بار، برای Features
+                appliedCurrency = ctx.TargetCurrency.ToUpperInvariant();
+                // Rate = lastCloseIRR / lastCloseTransformed
+                var lastIrr = candles[^1].Close;
+                var lastTransformed = transformed[^1].Close;
+                appliedRate = lastTransformed > 0m ? lastIrr / lastTransformed : null;
+
+                candles = transformed;
+
+                _logger.LogDebug(
+                    "Applied currency transform: IRR→{Target} for {Isin} (rate≈{Rate:N2})",
+                    appliedCurrency, symbol.Isin, appliedRate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Currency transform failed for {Isin} → {Target}. Skipping this evaluation.",
+                    symbol.Isin, ctx.TargetCurrency);
+                return (new List<SignalEnvelope>(), false);
+            }
+        }
         var input = new StrategyInput(
             Isin: symbol.Isin,
             LatestSnapshot: snapshot,
@@ -215,7 +249,17 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             var primaryStrength = result.Signals.Count > 0
                 ? result.Signals[0].Strength.Value
                 : 0m;
+            if (result.Features != null && appliedCurrency != null)
+            {
+                var enriched = new Dictionary<string, object?>(result.Features);
 
+                enriched["targetCurrency"] = appliedCurrency;
+                enriched["priceAtEvalIrr"] = snapshot.LastTradedPrice;
+                if (appliedRate.HasValue)
+                    enriched["appliedRate"] = appliedRate.Value;
+
+                result = result with { Features = enriched };
+            }
             evalEntity = StrategyEvaluation.Create(
                 runId: ctx.RunId,
                 isin: symbol.Isin,

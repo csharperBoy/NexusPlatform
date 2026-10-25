@@ -214,6 +214,7 @@ export const TradingRunsManagementPage: React.FC = () => {
               <th className="p-3">وضعیت</th>
               <th className="p-3">استراتژی</th>
               <th className="p-3">تایم‌فریم</th>
+              <th className="p-3">ارز</th>
               <th className="p-3">سرمایه</th>
               <th className="p-3 text-center">نمادها</th>
               <th className="p-3 text-center">حساب‌ها</th>
@@ -261,6 +262,9 @@ export const TradingRunsManagementPage: React.FC = () => {
                       {run.strategyKey}
                     </td>
                     <td className="p-3">{tf}</td>
+                    <td className="p-3 font-mono text-xs">
+                      {run.targetCurrency ?? "IRR"}
+                    </td>
                     <td className="p-3">
                       <span className="text-xs">
                         {capLabel}

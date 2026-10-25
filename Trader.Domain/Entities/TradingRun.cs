@@ -36,7 +36,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
 
     public IReadOnlyList<TradingRunSymbol> Symbols => _symbols.AsReadOnly();
     public IReadOnlyList<TradingRunAccount> Accounts => _accounts.AsReadOnly();
-
+    public string? TargetCurrency { get; private set; }   // مثلاً "USD" یا null
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -81,7 +81,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         MarketCloseBehavior onMarketClose,
         StopRunBehavior onStop,
         IEnumerable<(string Isin, SymbolAllocation Allocation)> symbols,
-        IEnumerable<Guid> accountIds)
+        IEnumerable<Guid> accountIds,
+    string? targetCurrency = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Run name is required.", nameof(name));
@@ -102,7 +103,9 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             DefaultOrderMode = defaultOrderMode,
             OnMarketClose = onMarketClose,
             OnStop = onStop,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            TargetCurrency = NormalizeCurrency(targetCurrency)   // ← جدید
+
         };
 
         foreach (var (isin, allocation) in symbols)
@@ -114,7 +117,15 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         run.RecomputeReadiness();
         return run;
     }
-
+    private static string? NormalizeCurrency(string? currency)
+    {
+        if (string.IsNullOrWhiteSpace(currency)) return null;
+        var c = currency.Trim().ToUpperInvariant();
+        if (c.Length < 2 || c.Length > 10)
+            throw new InvalidOperationException(
+                $"TargetCurrency '{currency}' is not a valid ISO code.");
+        return c;
+    }
     // ─────────────── Settings ───────────────
 
     public void UpdateSettings(
@@ -127,7 +138,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         TakeProfitConfig? takeProfit,
         OrderMode defaultOrderMode,
         MarketCloseBehavior onMarketClose,
-        StopRunBehavior onStop)
+        StopRunBehavior onStop,
+    string? targetCurrency)
     {
         EnsureNotRunning();
 
@@ -140,7 +152,9 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         TakeProfit = takeProfit;
         DefaultOrderMode = defaultOrderMode;
         OnMarketClose = onMarketClose;
-        OnStop = onStop;
+        OnStop = onStop; 
+        TargetCurrency = NormalizeCurrency(targetCurrency);
+
         Touch();
         RecomputeReadiness();
     }

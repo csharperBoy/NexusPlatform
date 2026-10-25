@@ -103,3 +103,6 @@ export {
 } from "./SignalView";
 
 export type { TradingScheduleInfoView } from "./TradingScheduleInfoView";
+
+export type { CurrencyRateView } from "./CurrencyRateView";
+export type { CreateCurrencyRateCommand } from "./CreateCurrencyRateCommand";

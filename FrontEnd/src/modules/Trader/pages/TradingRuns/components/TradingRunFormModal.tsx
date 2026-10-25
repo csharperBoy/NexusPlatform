@@ -22,6 +22,7 @@ import {
 import { StrategyConfigEditor } from "./StrategyConfigEditor";
 import { SymbolAllocationEditor } from "./SymbolAllocationEditor";
 import { AccountSelector } from "./AccountSelector";
+import { currencyRateApi } from "@/modules/Trader/api";
 
 type SlTpMode = "none" | "percent" | "price";
 
@@ -66,7 +67,10 @@ export const TradingRunFormModal: React.FC<Props> = ({
   const [primaryTimeFrame, setPrimaryTimeFrame] = useState<number>(
     TimeFrame.D1,
   );
-
+const [targetCurrency, setTargetCurrency] = useState<string>("");
+const [currencyRateStatus, setCurrencyRateStatus] =
+  useState<"idle" | "checking" | "ok" | "missing">("idle");
+const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
   const [capitalAllocationMode, setCapitalAllocationMode] = useState<number>(
     CapitalAllocationMode.Fixed,
   );
@@ -92,6 +96,47 @@ export const TradingRunFormModal: React.FC<Props> = ({
   const [accountIds, setAccountIds] = useState<string[]>([]);
 
   const [error, setError] = useState<string | null>(null);
+useEffect(() => {
+  if (!isOpen) return;
+
+  const cur = targetCurrency.trim().toUpperCase();
+  if (!cur || cur === "IRR") {
+    setCurrencyRateStatus("idle");
+    setCurrencyRateValue(null);
+    return;
+  }
+
+  let cancelled = false;
+  setCurrencyRateStatus("checking");
+  setCurrencyRateValue(null);
+
+  (async () => {
+    try {
+      const rate = await currencyRateApi.GetLatest(cur, "IRR");
+      if (cancelled) return;
+      if (rate != null && rate > 0) {
+        setCurrencyRateStatus("ok");
+        setCurrencyRateValue(rate);
+      } else {
+        // Try reverse direction (IRR→cur) in case only that exists
+        const reverseRate = await currencyRateApi.GetLatest("IRR", cur);
+        if (cancelled) return;
+        if (reverseRate != null && reverseRate > 0) {
+          setCurrencyRateStatus("ok");
+          setCurrencyRateValue(1 / reverseRate);
+        } else {
+          setCurrencyRateStatus("missing");
+        }
+      }
+    } catch {
+      if (!cancelled) setCurrencyRateStatus("missing");
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [targetCurrency, isOpen]);
 
   /* ─── Init: Edit ─── */
   useEffect(() => {
@@ -101,6 +146,7 @@ export const TradingRunFormModal: React.FC<Props> = ({
       setName(initialDetail.name);
       setStrategyKey(initialDetail.strategyKey);
       setPrimaryTimeFrame(initialDetail.primaryTimeFrame);
+      setTargetCurrency(initialDetail.targetCurrency ?? "");
       setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
       setFixedCapitalAmount(
         initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
@@ -157,6 +203,9 @@ export const TradingRunFormModal: React.FC<Props> = ({
     setName("");
     setStrategyKey(strategies[0]?.key ?? "");
     setPrimaryTimeFrame(TimeFrame.D1);
+    setTargetCurrency("");
+setCurrencyRateStatus("idle");
+setCurrencyRateValue(null);
     setCapitalAllocationMode(CapitalAllocationMode.Fixed);
     setFixedCapitalAmount("");
     setSlMode("none");
@@ -239,6 +288,10 @@ export const TradingRunFormModal: React.FC<Props> = ({
       const v = Number(tpPrice);
       if (!v || v <= 0) return "قیمت حد سود باید بزرگ‌تر از صفر باشد";
     }
+    if (targetCurrency.trim() && currencyRateStatus === "missing") 
+      {
+        return "نرخ ارز این Currency در سیستم موجود نیست. ابتدا از صفحه‌ی «نرخ‌های ارز» ثبت کنید.";
+      }
     return null;
   };
 
@@ -270,14 +323,15 @@ export const TradingRunFormModal: React.FC<Props> = ({
     };
 
     const base: CreateTradingRunCommand = {
-      name: name.trim(),
-      strategyKey,
-      strategyConfigJson: JSON.stringify(strategyConfig),
-      primaryTimeFrame,
-      settings,
-      symbols,
-      accountIds,
-    };
+        name: name.trim(),
+        strategyKey,
+        strategyConfigJson: JSON.stringify(strategyConfig),
+        primaryTimeFrame,
+        targetCurrency: targetCurrency.trim().toUpperCase() || null,
+        settings,
+        symbols,
+        accountIds,
+      };
 
     try {
       if (mode === "edit" && initialDetail) {
@@ -335,6 +389,47 @@ export const TradingRunFormModal: React.FC<Props> = ({
           {/* ۲. Strategy */}
           <Section title="استراتژی">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {/* Currency */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    ارز تحلیل (اختیاری)
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      type="text"
+      value={targetCurrency}
+      onChange={(e) => setTargetCurrency(e.target.value.toUpperCase())}
+      placeholder="IRR (پایه — بدون تبدیل)"
+      dir="ltr"
+      list="run-currencies"
+      maxLength={10}
+      className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    />
+    {currencyRateStatus === "checking" && (
+      <span className="text-xs text-gray-500">⏳ بررسی...</span>
+    )}
+    {currencyRateStatus === "ok" && currencyRateValue != null && (
+      <span className="text-xs text-emerald-500">
+        ✓ {currencyRateValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+      </span>
+    )}
+    {currencyRateStatus === "missing" && (
+      <span className="text-xs text-red-500">❌ نرخ ثبت نشده</span>
+    )}
+  </div>
+  <datalist id="run-currencies">
+    <option value="USD" />
+    <option value="EUR" />
+    <option value="GBP" />
+    <option value="AED" />
+    <option value="TRY" />
+    <option value="CNY" />
+  </datalist>
+  <p className="mt-1 text-[10px] text-gray-500">
+    اگر خالی باشد یا IRR باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
+    برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
+  </p>
+</div>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
                   استراتژی <span className="text-red-500">*</span>

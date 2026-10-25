@@ -12,11 +12,12 @@ public sealed record RunRuntimeContext(
     Guid RunId,
     string Name,
     Guid OwnerPersonId,
-    Guid OwnerUserId,              // ← غیرnullable، در Start اعتبارسنجی شده
+    Guid OwnerUserId,
     string StrategyKey,
     IStrategy Strategy,
     StrategyConfig StrategyConfig,
     TimeFrame PrimaryTimeFrame,
+    string? TargetCurrency,               // ← جدید
     CapitalAllocation CapitalAllocation,
     StopLossConfig? StopLoss,
     TakeProfitConfig? TakeProfit,

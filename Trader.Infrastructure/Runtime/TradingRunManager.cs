@@ -62,22 +62,23 @@ public sealed class TradingRunManager : ITradingRunManager
             .ToList();
 
         var context = new RunRuntimeContext(
-            RunId: run.Id,
-            Name: run.Name,
-            OwnerPersonId: run.OwnerPersonId ?? Guid.Empty,
-            OwnerUserId: run.OwnerUserId.Value,
-            StrategyKey: run.StrategyKey,
-            Strategy: strategy,
-            StrategyConfig: config,
-            PrimaryTimeFrame: run.PrimaryTimeFrame,
-            CapitalAllocation: run.CapitalAllocation,
-            StopLoss: run.StopLoss,
-            TakeProfit: run.TakeProfit,
-            DefaultOrderMode: run.DefaultOrderMode,
-            OnMarketClose: run.OnMarketClose,
-            OnStop: run.OnStop,
-            Symbols: symbols,
-            AccountIds: accountIds);
+                            RunId: run.Id,
+                            Name: run.Name,
+                            OwnerPersonId: run.OwnerPersonId ?? Guid.Empty,
+                            OwnerUserId: run.OwnerUserId.Value,
+                            StrategyKey: run.StrategyKey,
+                            Strategy: strategy,
+                            StrategyConfig: config,
+                            PrimaryTimeFrame: run.PrimaryTimeFrame,
+                            TargetCurrency: run.TargetCurrency,                   // ← جدید
+                            CapitalAllocation: run.CapitalAllocation,
+                            StopLoss: run.StopLoss,
+                            TakeProfit: run.TakeProfit,
+                            DefaultOrderMode: run.DefaultOrderMode,
+                            OnMarketClose: run.OnMarketClose,
+                            OnStop: run.OnStop,
+                            Symbols: symbols,
+                            AccountIds: accountIds);
 
         _cache.Set(context);
 
