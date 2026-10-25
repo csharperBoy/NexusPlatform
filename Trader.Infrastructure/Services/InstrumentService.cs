@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Core.Domain.Common;
+using Core.Shared.DTOs;
+using Microsoft.Extensions.Logging;
+using System.Reflection.Emit;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Dtos.Instruments;
@@ -65,16 +68,29 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         return instrument.Id;
     }
 
-    public async Task UpdateAsync(Guid id, UpdateInstrumentModel model)
+
+    public async Task<bool> UpdateAsync(
+        Guid id,
+        Optional<string?> symbolName,
+        Optional<string?> displayName,
+        Optional<string?> boardCode,
+        Optional<Guid?> tradingScheduleId)
     {
         var instrument = await _uow.Instruments.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Instrument {id} not found.");
 
-        instrument.Update(
-            model.SymbolName,
-            model.DisplayName,
-            model.BoardCode,
-            model.TradingScheduleId);    // ← جدید
+        var hasChange = instrument.ApplyChange(
+            symbolName,
+            displayName,
+            boardCode,
+            tradingScheduleId);
+
+        if (!hasChange)
+        {
+            _logger.LogInformation(
+                "No changes applied for Instrument {Id}", id);
+            return false;
+        }
 
         await _uow.Instruments.UpdateAsync(instrument);
         await _uow.SaveChangesAsync();
@@ -82,6 +98,7 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         _scheduleCache.Invalidate(instrument.Isin);
 
         _logger.LogInformation("Updated Instrument {Id}", id);
+        return true;
     }
 
     public async Task DeactivateAsync(Guid id)
@@ -129,16 +146,16 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         return MapToInfoView(instrument, dict);
     }
 
-    public async Task<IReadOnlyList<InstrumentSelectionView>> GetSelectionListAsync()
+    public async Task<IReadOnlyList<SelectionListDto>> GetSelectionListAsync()
     {
         var spec = new ActiveInstrumentsSpec();
         var instruments = await _uow.InstrumentSpecs.ListBySpecAsync(spec);
 
         return instruments
-            .Select(i => new InstrumentSelectionView(
-                Value: i.Isin,
-                Label: i.SymbolName,
-                Display: i.DisplayName))
+            .Select(i => new SelectionListDto(
+                i.Isin,
+                 i.SymbolName,
+                i.DisplayName))
             .ToList();
     }
 

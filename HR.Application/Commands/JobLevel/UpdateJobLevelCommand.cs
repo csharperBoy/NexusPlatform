@@ -3,11 +3,6 @@ using Core.Shared.Results;
 using HR.Application.Interfaces;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HR.Application.Commands.JobLevel
 {

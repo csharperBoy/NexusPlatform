@@ -1,4 +1,5 @@
-﻿using Core.Domain.Common.EntityProperties;
+﻿using Core.Domain.Common;
+using Core.Domain.Common.EntityProperties;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
 
@@ -61,18 +62,63 @@ public class Instrument : BaseEntity, IAuditableEntity
         };
     }
 
-    public void Update(
-        string symbolName,
-        string displayName,
-        string? boardCode,
-        Guid? tradingScheduleId)   // ← جدید
+
+    public bool ApplyChange(
+        Optional<string?> symbolName,
+        Optional<string?> displayName,
+        Optional<string?> boardCode,
+        Optional<Guid?> tradingScheduleId)
     {
-        SymbolName = symbolName.Trim();
-        DisplayName = displayName.Trim();
-        BoardCode = boardCode;
-        TradingScheduleId = tradingScheduleId;
-        Touch();
+        bool hasChange = false;
+
+        if (symbolName.IsSet)
+        {
+            var newValue = symbolName.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(newValue))
+                throw new InvalidOperationException("SymbolName cannot be empty.");
+
+            if (newValue != SymbolName)
+            {
+                SymbolName = newValue;
+                hasChange = true;
+            }
+        }
+
+        if (displayName.IsSet)
+        {
+            var newValue = displayName.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(newValue))
+                throw new InvalidOperationException("DisplayName cannot be empty.");
+
+            if (newValue != DisplayName)
+            {
+                DisplayName = newValue;
+                hasChange = true;
+            }
+        }
+
+        if (boardCode.IsSet)
+        {
+            var newValue = boardCode.Value?.Trim();
+            if (newValue != BoardCode)
+            {
+                BoardCode = newValue;
+                hasChange = true;
+            }
+        }
+
+        if (tradingScheduleId.IsSet && tradingScheduleId.Value != TradingScheduleId)
+        {
+            TradingScheduleId = tradingScheduleId.Value;
+            hasChange = true;
+        }
+
+        if (hasChange)
+            Touch();
+
+        return hasChange;
     }
+
 
     public void SetTradingSchedule(Guid? scheduleId)
     {

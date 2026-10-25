@@ -24,6 +24,7 @@ interface MockInstrument {
   type: number;
   market: number;
   boardCode?: string | null;
+  tradingScheduleId?: string | null;   // ← اضافه شود
   isActive: boolean;
   createdAt: string;
 }
@@ -39,6 +40,9 @@ function toView(m: MockInstrument): InstrumentInfoView {
     market: m.market,
     marketName: marketNameOf(m.market),
     boardCode: m.boardCode ?? null,
+    tradingScheduleId: m.tradingScheduleId ?? null,       // ← جدید
+    tradingScheduleCode: null,                             // mock
+    tradingScheduleName: null,                             // mock
     isActive: m.isActive,
     createdAt: m.createdAt,
   };
@@ -151,12 +155,7 @@ export const instrumentApi = {
     const api = getAPI(API_MODULE);
     const response = await api.put<boolean>(
       `/api/Trader/Instrument/${data.id}`,
-      {
-        id: data.id,
-        symbolName: data.symbolName,
-        displayName: data.displayName,
-        boardCode: data.boardCode ?? null,
-      },
+      data,
       { withCredentials: true },
     );
     return response.data;

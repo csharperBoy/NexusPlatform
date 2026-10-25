@@ -1,17 +1,17 @@
-﻿using Core.Shared.Results;
+﻿using Core.Domain.Common;
+using Core.Shared.Results;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
-using Trader.Application.Dtos.Instruments;
 
 namespace Trader.Application.Commands.Instrument;
 
 public record UpdateInstrumentCommand(
     Guid Id,
-    string SymbolName,
-    string DisplayName,
-    string? BoardCode,
-    Guid? TradingScheduleId
+    Optional<string?> SymbolName,
+    Optional<string?> DisplayName,
+    Optional<string?> BoardCode,
+    Optional<Guid?> TradingScheduleId
 ) : IRequest<Result<bool>>;
 
 public class UpdateInstrumentCommandHandler
@@ -34,14 +34,20 @@ public class UpdateInstrumentCommandHandler
     {
         try
         {
-            var model = new UpdateInstrumentModel(
+            var hasChange = await _service.UpdateAsync(
+                request.Id,
                 request.SymbolName,
                 request.DisplayName,
                 request.BoardCode,
                 request.TradingScheduleId);
 
-            await _service.UpdateAsync(request.Id, model);
-            return Result<bool>.Ok(true);
+            if (!hasChange)
+            {
+                _logger.LogInformation(
+                    "No changes for Instrument {Id}", request.Id);
+            }
+
+            return Result<bool>.Ok(hasChange);
         }
         catch (Exception ex)
         {
