@@ -262,6 +262,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.WebApi", "Trader.WebApi\Trader.WebApi.csproj", "{1983F32F-CD16-47C8-AE41-B7D711F6ECB1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{93E86E81-5D93-4F96-AAB1-B97CB3287288}"
+	ProjectSection(SolutionItems) = preProject
+		TRADING-ARCHITECTURE.md = TRADING-ARCHITECTURE.md
+		TRADING-STORY.md = TRADING-STORY.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "future", "future", "{D948ABA0-7A92-401E-8664-026B2BAB4725}"
 	ProjectSection(SolutionItems) = preProject

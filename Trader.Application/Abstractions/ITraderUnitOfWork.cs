@@ -25,6 +25,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, CandleRecord, Guid> CandleRecords { get; }
     IRepository<TDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     IRepository<TDbContext, CurrencyRate, Guid> CurrencyRates { get; }
+    IRepository<TDbContext, TradingEvent, Guid> TradingEvents { get; }
     // Spec Repositories
     ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
     ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
@@ -41,4 +42,5 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     ISpecificationRepository<MarketSnapshotRecord, Guid> MarketSnapshotSpecs { get; }
     ISpecificationRepository<TradingSchedule, Guid> TradingScheduleSpecs { get; }
+    ISpecificationRepository<TradingEvent, Guid> TradingEventSpecs { get; }
 }

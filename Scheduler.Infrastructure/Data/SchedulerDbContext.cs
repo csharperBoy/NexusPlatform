@@ -21,7 +21,9 @@ namespace Scheduler.Infrastructure.Data
         }
 
         public virtual DbSet<ScheduledJob> ScheduledJobs { get; set; }
-       
+        // ۱) DbSet
+        public virtual DbSet<RecurringSchedule> RecurringSchedules { get; set; }
+
         public override void EnsureTriggers(CancellationToken cancellationToken = default(CancellationToken))
         {
             //EnsureTrigger("HR.Infrastructure.SqlScript", "CreateAssignmentTrigger.sql", "trg_Assignments_CheckOverlap");
@@ -38,7 +40,7 @@ namespace Scheduler.Infrastructure.Data
 
             modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration("scheduler"));
             modelBuilder.ApplyConfiguration(new ScheduledJobConfiguration());
-
+            modelBuilder.ApplyConfiguration(new RecurringScheduleConfiguration());
         }
     }
 

@@ -1213,6 +1213,93 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("Symbols", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.TradingEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BrokerOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("OrderIntentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("PositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SignalId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Stage")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TradeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_TradingEvent");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("OccurredAt")
+                        .HasDatabaseName("IX_TradingEvent_Time");
+
+                    b.HasIndex("OrderIntentId")
+                        .HasDatabaseName("IX_TradingEvent_OrderIntentId")
+                        .HasFilter("[OrderIntentId] IS NOT NULL");
+
+                    b.HasIndex("PositionId")
+                        .HasDatabaseName("IX_TradingEvent_PositionId")
+                        .HasFilter("[PositionId] IS NOT NULL");
+
+                    b.HasIndex("SignalId")
+                        .HasDatabaseName("IX_TradingEvent_SignalId")
+                        .HasFilter("[SignalId] IS NOT NULL");
+
+                    b.HasIndex("Isin", "OccurredAt")
+                        .HasDatabaseName("IX_TradingEvent_Isin_Time");
+
+                    b.HasIndex("RunId", "OccurredAt")
+                        .HasDatabaseName("IX_TradingEvent_Run_Time");
+
+                    b.HasIndex("Severity", "OccurredAt")
+                        .HasDatabaseName("IX_TradingEvent_Errors_Time")
+                        .HasFilter("[Severity] >= 3");
+
+                    b.HasIndex("Stage", "Severity", "OccurredAt")
+                        .HasDatabaseName("IX_TradingEvent_Stage_Sev_Time");
+
+                    b.ToTable("TradingEvents", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.TradingRun", b =>
                 {
                     b.Property<Guid>("Id")

@@ -37,6 +37,7 @@ using Trader.Infrastructure.Runtime.Recovery;
 using Trader.Infrastructure.Runtime.Stages;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
+using Trader.Infrastructure.Services.Retention;
 namespace Trader.Infrastructure.DependencyInjection
 {
     public static class ServiceCollectionExtensions
@@ -105,7 +106,10 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, CurrencyRate, Guid>,
     EfRepository<TraderDbContext, CurrencyRate, Guid>>();
 
-            
+            services.AddScoped<IRepository<TraderDbContext, TradingEvent, Guid>,
+                EfRepository<TraderDbContext, TradingEvent, Guid>>();
+
+
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
@@ -145,6 +149,8 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, TradingSchedule, Guid>>();
             services.AddScoped<ISpecificationRepository<CurrencyRate, Guid>,
                 EfSpecificationRepository<TraderDbContext, CurrencyRate, Guid>>();
+            services.AddScoped<ISpecificationRepository<TradingEvent, Guid>,
+                EfSpecificationRepository<TraderDbContext, TradingEvent, Guid>>();
 
             services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 
@@ -192,7 +198,11 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Session Provider (Scoped چون ISecretProtector و UoW Scoped هستند) ───
             services.AddScoped<IBrokerSessionProvider, BrokerSessionProvider>();
+            // ─── Trading Events ───
 
+            services.Configure<TradingLoggingOptions>(
+               configuration.GetSection(TradingLoggingOptions.SectionName));
+            services.AddScoped<ITradingEventRetentionService, TradingEventRetentionService>();
             // ─── Market Data (existing) ───
             services.AddSingleton<IMarketSnapshotStore, InMemoryMarketSnapshotStore>();
             services.AddScoped<IMarketDataProvider, BrokerMarketDataProvider>();

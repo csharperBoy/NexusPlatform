@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Scheduler.Application.Attributes
+﻿namespace Scheduler.Application.Attributes
 {
     /// <summary>
     /// کلید یکتای یک payload. برای serialization/deserialization استفاده میشه.

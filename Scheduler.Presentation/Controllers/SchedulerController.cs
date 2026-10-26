@@ -1,49 +1,64 @@
 ﻿using Core.Presentation.Controllers;
-using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Scheduler.Application.Abstractions;
+using Scheduler.Application.Commands.RecurringSchedules;
+using Scheduler.Application.Commands.ScheduledJobs;
 using Scheduler.Application.Models;
 using Scheduler.Application.Queries;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Scheduler.Application.Queries.RecurringSchedules;
+using Scheduler.Application.Queries.ScheduledJobs;
 
-namespace Scheduler.Presentation.Controllers
+namespace Scheduler.Presentation.Controllers;
+
+[ApiController]
+[Route("api/Scheduler/[controller]")]
+public class SchedulerController : BaseController
 {
-    
-    [ApiController]
-    [Route("api/Scheduler/[controller]")]
-    public class SchedulerController : BaseController
+    /* ═══════════ Scheduled Jobs (One-Off + Occurrences) ═══════════ */
+
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> Get(Guid id)
     {
-        private readonly ISchedulerService _scheduler;
+        var result = await Mediator.Send(new GetScheduledJobQuery(id));
+        return HandleResult(result);
+    }
 
-        public SchedulerController(ISchedulerService scheduler)
-            => _scheduler = scheduler;
+    [HttpPost("Query")]
+    public async Task<IActionResult> Query([FromBody] SchedulerQuery request)
+    {
+        var result = await Mediator.Send(new QueryScheduledJobsQuery(request));
+        return HandleResult(result);
+    }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ScheduledJobInfo>> Get(Guid id, CancellationToken ct)
-        {
-            var job = await _scheduler.GetAsync(id, ct);
-            return job is null ? NotFound() : Ok(job);
-        }
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Cancel(Guid id)
+    {
+        var result = await Mediator.Send(new CancelScheduledJobCommand(id));
+        return HandleResult(result);
+    }
 
-        [HttpPost("query")]
-        public async Task<ActionResult<IReadOnlyList<ScheduledJobInfo>>> Query(
-            [FromBody] SchedulerQuery query, CancellationToken ct)
-        {
-            var result = await _scheduler.QueryAsync(query, ct);
-            return Ok(result);
-        }
+    /* ═══════════ Recurring Schedules ═══════════ */
 
-        [HttpDelete("{id:guid}")]
-        public async Task<ActionResult> Cancel(Guid id, CancellationToken ct)
-        {
-            var ok = await _scheduler.CancelAsync(id, ct);
-            return ok ? NoContent() : NotFound();
-        }
+    [HttpPost("Recurring/Create")]
+    public async Task<IActionResult> CreateRecurring(
+        [FromBody] CreateRecurringScheduleCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return HandleResult(result);
+    }
 
+    [HttpGet("Recurring/{id:guid}")]
+    public async Task<IActionResult> GetRecurring(Guid id)
+    {
+        var result = await Mediator.Send(new GetRecurringScheduleQuery(id));
+        return HandleResult(result);
+    }
+
+    [HttpPost("Recurring/Query")]
+    public async Task<IActionResult> QueryRecurring(
+        [FromBody] RecurringSchedulerQuery request)
+    {
+        var result = await Mediator.Send(new QueryRecurringSchedulesQuery(request));
+        return HandleResult(result);
     }
 }

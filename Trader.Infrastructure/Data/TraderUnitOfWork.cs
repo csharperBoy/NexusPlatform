@@ -45,7 +45,9 @@ ISpecificationRepository<StrategyEvaluation, Guid> strategyEvaluationSpecs,
     IRepository<TraderDbContext, CandleRecord, Guid> candleRecords,
 ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs, 
 IRepository<TraderDbContext, CurrencyRate, Guid> currencyRates,
+IRepository<TraderDbContext, TradingEvent, Guid> tradingEvents,
 ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
+ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -83,6 +85,8 @@ ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
         TradingScheduleSpecs = tradingScheduleSpecs; 
         CurrencyRates = currencyRates;
         CurrencyRateSpecs = currencyRateSpecs;
+        TradingEvents = tradingEvents;
+        TradingEventSpecs = tradingEventSpecs;
 
     }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
@@ -103,6 +107,7 @@ ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
     public IRepository<TraderDbContext, CandleRecord, Guid> CandleRecords { get; }
     public IRepository<TraderDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     public IRepository<TraderDbContext, CurrencyRate, Guid> CurrencyRates { get; }
+    public IRepository<TraderDbContext, TradingEvent, Guid> TradingEvents { get; }
     public ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
     public ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }
@@ -117,4 +122,5 @@ ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
     public ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
     public ISpecificationRepository<MarketSnapshotRecord, Guid> MarketSnapshotSpecs { get; }
     public ISpecificationRepository<TradingSchedule, Guid> TradingScheduleSpecs { get; }
+    public ISpecificationRepository<TradingEvent, Guid> TradingEventSpecs { get; }
 }

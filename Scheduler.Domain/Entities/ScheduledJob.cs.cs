@@ -1,11 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
-using Core.Domain.Interfaces;
 using Scheduler.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Scheduler.Domain.Entities
 {
@@ -74,15 +68,21 @@ namespace Scheduler.Domain.Entities
         public DateTimeOffset? StartedAt { get; private set; }
         public DateTimeOffset? CompletedAt { get; private set; }
         public string? Error { get; private set; }
-
+        public Guid? RecurringScheduleId { get; private set; }   // ← جدید
         private ScheduledJob() { }  // EF Core
-
+        public void SetHangfireJobId(string hangfireJobId)
+        {
+            if (string.IsNullOrWhiteSpace(hangfireJobId))
+                throw new ArgumentException("HangfireJobId is required.", nameof(hangfireJobId));
+            HangfireJobId = hangfireJobId;
+        }
         public static ScheduledJob Create(
-            string jobType,
-            string hangfireJobId,
-            string payloadJson,
-            DateTimeOffset fireAt,
-            TimeSpan preFireBuffer)
+      string jobType,
+      string hangfireJobId,
+      string payloadJson,
+      DateTimeOffset fireAt,
+      TimeSpan preFireBuffer,
+      Guid? recurringScheduleId = null)         // ← جدید
         {
             return new ScheduledJob
             {
@@ -91,6 +91,7 @@ namespace Scheduler.Domain.Entities
                 PayloadJson = payloadJson,
                 FireAt = fireAt,
                 PreFireBuffer = preFireBuffer,
+                RecurringScheduleId = recurringScheduleId,
                 State = ScheduledJobState.Pending,
             };
         }

@@ -44,6 +44,7 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<CandleRecord> Candles { get; set; }
     public virtual DbSet<TradingSchedule> TradingSchedules { get; set; }
     public virtual DbSet<CurrencyRate> CurrencyRates { get; set; }
+    public virtual DbSet<TradingEvent> TradingEvents { get; set; }
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -80,5 +81,6 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new CandleRecordConfiguration());
         modelBuilder.ApplyConfiguration(new TradingScheduleConfiguration());
         modelBuilder.ApplyConfiguration(new CurrencyRateConfiguration());
+        modelBuilder.ApplyConfiguration(new TradingEventConfiguration());
     }
 }

@@ -83,6 +83,138 @@ namespace Scheduler.Infrastructure.Migrations
                     b.ToTable("OutboxMessages", "scheduler");
                 });
 
+            modelBuilder.Entity("Scheduler.Domain.Entities.RecurringSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("CurrentScheduledJobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("EndAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("FailureCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("JobType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("LastRunAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("MaxFailures")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(10);
+
+                    b.Property<int?>("MaxOccurrences")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("NextRunAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("OccurredCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid?>("OwnerOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecurrencePatternJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("StartAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_RecurringSchedule");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_RecurringSchedule_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_RecurringSchedule_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_RecurringSchedule_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_RecurringSchedule_ModifiedBy");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RecurringSchedule_Name");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_RecurringSchedule_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_RecurringSchedule_OwnerPerson");
+
+                    b.HasIndex("State")
+                        .HasDatabaseName("IX_RecurringSchedule_State");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_RecurringSchedule_ScopedLookup");
+
+                    b.HasIndex("State", "NextRunAt")
+                        .HasDatabaseName("IX_RecurringSchedule_State_NextRun");
+
+                    b.ToTable("RecurringSchedules", "scheduler");
+                });
+
             modelBuilder.Entity("Scheduler.Domain.Entities.ScheduledJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -143,6 +275,9 @@ namespace Scheduler.Infrastructure.Migrations
                     b.Property<long>("PreFireBuffer")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid?>("RecurringScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset?>("StartedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -177,6 +312,9 @@ namespace Scheduler.Infrastructure.Migrations
 
                     b.HasIndex("OwnerPersonId")
                         .HasDatabaseName("IX_ScheduledJob_OwnerPerson");
+
+                    b.HasIndex("RecurringScheduleId")
+                        .HasDatabaseName("IX_ScheduledJob_RecurringScheduleId");
 
                     b.HasIndex("State");
 

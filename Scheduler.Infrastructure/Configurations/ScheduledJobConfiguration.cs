@@ -24,7 +24,9 @@ namespace Scheduler.Infrastructure.Configurations
                     .HasConversion(
                         v => v.Ticks,
                         v => TimeSpan.FromTicks(v));
-
+            builder.Property(x => x.RecurringScheduleId).IsRequired(false);
+            builder.HasIndex(x => x.RecurringScheduleId)
+                .HasDatabaseName("IX_ScheduledJob_RecurringScheduleId");
             builder.HasIndex(x => x.FireAt);
             builder.HasIndex(x => x.State);
             builder.HasIndex(x => x.HangfireJobId).IsUnique();

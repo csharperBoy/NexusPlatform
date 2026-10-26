@@ -1,4 +1,7 @@
-﻿using Hangfire;
+﻿using Core.Application.Abstractions;
+using Core.Infrastructure.Repositories;
+using Hangfire;
+using Hangfire.Server;
 using Hangfire.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,9 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Scheduler.Application.Abstractions;
 using Scheduler.Application.DependencyInjection;
 using Scheduler.Application.Models;
+using Scheduler.Domain.Entities;
 using Scheduler.Infrastructure.Data;
 using Scheduler.Infrastructure.Jobs;
-using Scheduler.Infrastructure.Data;
 using Scheduler.Infrastructure.Services;
 
 namespace Scheduler.Infrastructure.DependencyInjection;
@@ -61,9 +64,21 @@ public static class ServiceCollectionExtensions
 
             return registry;
         });
+        /* ─── Rescheduler ─── */
+        /* ─── Unit of Work ─── */
+        services.AddScoped<ISchedulerUnitOfWork<SchedulerDbContext>, SchedulerUnitOfWork>();
 
+        /* ─── Repositories ─── */
+        services.AddScoped<IRepository<SchedulerDbContext, ScheduledJob, Guid>,
+            EfRepository<SchedulerDbContext, ScheduledJob, Guid>>();
+        services.AddScoped<IRepository<SchedulerDbContext, RecurringSchedule, Guid>,
+            EfRepository<SchedulerDbContext, RecurringSchedule, Guid>>();
         /* ─── Dispatcher ─── */
         services.AddScoped<HangfireJobDispatcher>();
+
+        /* ─── Recurring Scheduler ─── */
+        services.AddScoped<IRecurringScheduleRescheduler, RecurringScheduleRescheduler>();
+        services.AddScoped<IRecurringSchedulePayloadFactory, RecurringSchedulePayloadFactory>();
 
         /* ─── SchedulerService ─── */
         services.AddScoped<ISchedulerService, HangfireSchedulerService>();

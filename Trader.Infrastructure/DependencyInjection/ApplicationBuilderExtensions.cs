@@ -1,11 +1,12 @@
 ﻿using Core.Infrastructure.Database;
-using Trader.Infrastructure.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Trader.Infrastructure.Data;
+using Trader.Infrastructure.Services.Retention;
 namespace Trader.Infrastructure.Data
 {
     /*
@@ -47,6 +48,8 @@ namespace Trader.Infrastructure.Data
         public static async Task<IApplicationBuilder> Trader_UseInfrastructure(this IApplicationBuilder app)
         {
             await app.RunSmartMigrations();
+
+
             return app;
         }
 
