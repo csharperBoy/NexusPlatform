@@ -2,18 +2,14 @@
 
 namespace Trader.Application.Abstractions.MarketData;
 
-/// <summary>
-/// تبدیل Candleها به یک نمایش دیگر (مثلاً از IRR به USD).
-/// Transformation فقط روی OHLC اعمال می‌شود؛ Volume (تعداد سهم) دست‌نخورده.
-/// </summary>
 public interface ICandleTransformer
 {
     /// <summary>
-    /// Candleهای IRR را به targetCurrency تبدیل می‌کند.
-    /// نرخ ارز در atTime استفاده می‌شود (آخرین نرخ قبل از atTime).
-    /// اگر نرخ موجود نباشد، CurrencyRateNotFoundException.
+    /// تبدیل Candleهای IRR به targetCurrency با Per-Candle Historical Rate.
+    /// هر کندل با آخرین نرخ موجود در زمان OpenTime خودش تبدیل می‌شود.
     /// </summary>
     Task<IReadOnlyList<Candle>> TransformAsync(
+        string isin,
         IReadOnlyList<Candle> irrCandles,
         string targetCurrency,
         DateTime atTime,

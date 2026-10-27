@@ -1,19 +1,29 @@
 ﻿namespace Trader.Application.Abstractions.MarketData;
 
-/// <summary>
-/// نرخ برابری ارز در یک لحظه‌ی مشخص.
-/// Phase 1: هیچ Implementation وجود ندارد — فقط Interface.
-/// Phase 3: Adapter به Nima/Sana/Sarafi آنلاین.
-/// </summary>
 public interface ICurrencyRateProvider
 {
     /// <summary>
-    /// نرخ تبدیل از fromCurrency به toCurrency در atTime.
-    /// مثال: GetRateAsync("USD", "IRR", candle.OpenTime) → 650,000
+    /// آخرین نرخ برای یک Pair در لحظه‌ی atTime.
     /// </summary>
     Task<decimal> GetRateAsync(
         string fromCurrency,
         string toCurrency,
         DateTime atTime,
         CancellationToken ct = default);
+
+    /// <summary>
+    /// همه‌ی نرخ‌های یک Pair تا لحظه‌ی toTime (صعودی بر اساس EffectiveAt).
+    /// برای Per-Candle Transformation استفاده می‌شود.
+    /// </summary>
+    Task<IReadOnlyList<CurrencyRatePoint>> GetRateHistoryAsync(
+        string fromCurrency,
+        string toCurrency,
+        DateTime toTime,
+        CancellationToken ct = default);
 }
+
+/// <summary>یک نقطه‌ی نرخ در تاریخ. Rate = مقدار toCurrency برای ۱ fromCurrency.</summary>
+public sealed record CurrencyRatePoint(
+    decimal Rate,
+    DateTime EffectiveAt,
+    string Source);

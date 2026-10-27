@@ -12,3 +12,5 @@ export { PositionsPage } from "./Positions/PositionsPage";
 export { SignalsPage } from "./Signals/SignalsPage";
 
 export { CurrencyRatesManagementPage } from "./CurrencyRates/CurrencyRatesManagementPage";
+
+export { TradingEventsPage } from "./Events/TradingEventsPage";

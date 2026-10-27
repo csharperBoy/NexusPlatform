@@ -101,6 +101,69 @@ public sealed class DbCurrencyRateProvider : ICurrencyRateProvider
 
         return rate.Rate;
     }
+
+    public async Task<IReadOnlyList<CurrencyRatePoint>> GetRateHistoryAsync(
+        string fromCurrency,
+        string toCurrency,
+        DateTime toTime,
+        CancellationToken ct = default)
+    {
+        var from = fromCurrency.Trim().ToUpperInvariant();
+        var to = toCurrency.Trim().ToUpperInvariant();
+
+        if (from == to)
+        {
+            return new[] { new CurrencyRatePoint(1m, DateTime.MinValue, "identity") };
+        }
+
+        var utcToTime = toTime.Kind == DateTimeKind.Utc
+            ? toTime
+            : DateTime.SpecifyKind(toTime, DateTimeKind.Utc);
+
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider
+            .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+
+        var spec = new CurrencyRatesPairUntilSpec(from, to, utcToTime);
+        var rates = (await uow.CurrencyRateSpecs.ListBySpecAsync(spec)).ToList();
+
+        if (rates.Count == 0)
+        {
+            _logger.LogDebug(
+                "No rates for {From}↔{To} up to {ToTime:O}.",
+                from, to, utcToTime);
+            return Array.Empty<CurrencyRatePoint>();
+        }
+
+        var points = new List<CurrencyRatePoint>(rates.Count);
+
+        foreach (var r in rates)
+        {
+            if (r.FromCurrency == from && r.ToCurrency == to)
+            {
+
+                points.Add(new CurrencyRatePoint(
+                    r.Rate, r.EffectiveAt, r.Source));
+                
+            }
+            else
+            {
+                if (r.Rate <= 0m) continue;
+                points.Add(new CurrencyRatePoint(
+                    1m / r.Rate, r.EffectiveAt, r.Source + " (inverted)"));
+            }
+        }
+
+        points.Sort((a, b) => a.EffectiveAt.CompareTo(b.EffectiveAt));
+
+        _logger.LogDebug(
+            "Rate history: {From}→{To} = {Count} points (first: {First:O}, last: {Last:O})",
+            from, to, points.Count,
+            points.Count > 0 ? points[0].EffectiveAt : DateTime.MinValue,
+            points.Count > 0 ? points[^1].EffectiveAt : DateTime.MinValue);
+
+        return points;
+    }
 }
 
 /// <summary>نرخ ارز در DB موجود نیست.</summary>

@@ -247,41 +247,69 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             try
             {
                 var transformed = await _candleTransformer.TransformAsync(
-                    candles, ctx.TargetCurrency, now, ct);
+                    symbol.Isin,
+                    candles,
+                    ctx.TargetCurrency,
+                    now,
+                    ct);
 
-                // نرخ مؤثر (برای Audit) — تنها یک بار، برای Features
                 appliedCurrency = ctx.TargetCurrency.ToUpperInvariant();
-                // Rate = lastCloseIRR / lastCloseTransformed
+
+                // نرخ مؤثر آخرین کندل (برای Audit و Features)
                 var lastIrr = candles[^1].Close;
                 var lastTransformed = transformed[^1].Close;
-                appliedRate = lastTransformed > 0m ? lastIrr / lastTransformed : null;
+                appliedRate = lastIrr > 0m
+                    ? lastTransformed / lastIrr
+                    : null;
 
                 candles = transformed;
+
                 // ─── CurrencyTransformed Event ───
                 _eventLogger.Log(
                     stage: TradingStage.StrategyEvaluation,
                     type: TradingEventType.CurrencyTransformed,
                     severity: TradingEventSeverity.Debug,
-                    message: $"قیمت‌های «{symbol.Isin}» از ریال به {appliedCurrency} " +
-                             $"تبدیل شدند (نرخ: {appliedRate:N0}).",
+                    message: $"قیمت‌های «{symbol.Isin}» از ریال به {appliedCurrency} تبدیل شدند " +
+                             $"(Per-Candle، نرخ آخرین کندل: {FormatRateDisplay(appliedRate, appliedCurrency)}).",
                     payload: new
                     {
                         targetCurrency = appliedCurrency,
-                        appliedRate,
+                        lastCandleRate = appliedRate,
+                        lastCandleRateDisplay = FormatRateDisplay(appliedRate, appliedCurrency),
                         candleCount = candles.Count,
                     },
                     runId: ctx.RunId,
                     isin: symbol.Isin);
 
                 _logger.LogDebug(
-                    "Applied currency transform: IRR→{Target} for {Isin} (rate≈{Rate:N2})",
-                    appliedCurrency, symbol.Isin, appliedRate);
+                    "Applied per-candle currency transform: IRR→{Target} for {Isin} " +
+                    "(last candle rate≈{Rate:E4}, i.e., {DisplayRate})",
+                    appliedCurrency, symbol.Isin, appliedRate,
+                    FormatRateDisplay(appliedRate, appliedCurrency));
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Currency transform failed for {Isin} → {Target}. Skipping this evaluation.",
+                    "Currency transform failed for {Isin} → {Target}. " +
+                    "Skipping evaluation.",
                     symbol.Isin, ctx.TargetCurrency);
+
+                _eventLogger.Log(
+                    stage: TradingStage.StrategyEvaluation,
+                    type: TradingEventType.StrategyEvaluationFailed,
+                    severity: TradingEventSeverity.Error,
+                    message: $"تبدیل ارز برای «{symbol.Isin}» به {ctx.TargetCurrency} " +
+                             $"ناموفق بود: {ex.Message}",
+                    payload: new
+                    {
+                        targetCurrency = ctx.TargetCurrency,
+                        errorType = ex.GetType().Name,
+                        errorMessage = ex.Message,
+                    },
+                    runId: ctx.RunId,
+                    isin: symbol.Isin);
+
                 return (new List<SignalEnvelope>(), false);
             }
         }
@@ -413,6 +441,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         return (envelopes, evalEntity != null);
     }
+  
     private static string ActionToPersian(SignalAction action) => action switch
     {
         SignalAction.Buy => "خرید",
@@ -420,4 +449,31 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         SignalAction.Hold => "خنثی",
         _ => "نامشخص"
     };
+    private static string FormatRate(decimal? rate, string? targetCurrency)
+    {
+        if (rate is null || rate <= 0m) return "—";
+
+        // نرخ استفاده‌شده = IRR → Target (مثل 3.759e-7)
+        // نمایش بهتر: معکوسش = "چند ریال برای ۱ واحد ارز"
+        var inverted = 1m / rate.Value;
+
+        return inverted >= 1m
+            ? $"{inverted:N0} ریال = ۱ {targetCurrency}"
+            : $"{rate.Value:E4}";
+    }
+    /// <summary>
+    /// نمایش خوانا از نرخ.
+    /// appliedRate = IRR→Target (مثلاً 3.76e-7)
+    /// معکوسش = "چند ریال برای ۱ واحد ارز" (مثلاً 2,660,000)
+    /// </summary>
+    private static string FormatRateDisplay(decimal? rate, string? targetCurrency)
+    {
+        if (rate is null || rate <= 0m) return "—";
+
+        var inverted = 1m / rate.Value;
+
+        return inverted >= 1m
+            ? $"{inverted:N0} ریال = ۱ {targetCurrency}"
+            : $"{rate.Value:E4}";
+    }
 }

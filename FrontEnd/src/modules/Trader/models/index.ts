@@ -106,3 +106,14 @@ export type { TradingScheduleInfoView } from "./TradingScheduleInfoView";
 
 export type { CurrencyRateView } from "./CurrencyRateView";
 export type { CreateCurrencyRateCommand } from "./CreateCurrencyRateCommand";
+
+export type {
+  TradingEventView,
+  TradingEventQuery,
+} from "./TradingEventView";
+
+export {
+  STAGE_LABELS,
+  SEVERITY_LABELS,
+  SEVERITY_COLORS,
+} from "./TradingEventView";

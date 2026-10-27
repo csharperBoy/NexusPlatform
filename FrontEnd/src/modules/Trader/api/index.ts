@@ -13,3 +13,4 @@ export { signalApi } from "./signalApi";
 export { tradingScheduleApi } from "./tradingScheduleApi";
 
 export { currencyRateApi } from "./currencyRateApi";
+export { tradingEventApi } from "./tradingEventApi";

@@ -165,6 +165,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Currency exchange rates",
                             DisplayOrder = 3013,
                             Icon = "dollar-sign",
+                        },new()
+                        {
+                            Key = "trader.tradingevent",
+                            Name = "Trading Event",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Trading runtime events log",
+                            DisplayOrder = 3014,
+                            Icon = "list",
                         },
                     }
                 }
@@ -206,6 +215,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.position", roleId, "View positions"),
                 FullAccess("trader.signal", roleId, "View signals"),
                 FullAccess("trader.currencyrate", roleId, "Full access to Currency Rate"),
+                FullAccess("trader.tradingevent", roleId, "View trading events"),
             };
         }
 
@@ -373,7 +383,16 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.currencyrate",
                             ParentKey = "trader",
                             Path = "/trader/currency-rates"
-                        }
+                        },new()
+                        {
+                            Title = "لاگ رویدادها",
+                            Description = "لاگ کامل اجرای پلن‌های معاملاتی",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 112,
+                            Key = "trader.tradingevent",
+                            ParentKey = "trader",
+                            Path = "/trader/events"
+                        },
                     }
                 }
             };

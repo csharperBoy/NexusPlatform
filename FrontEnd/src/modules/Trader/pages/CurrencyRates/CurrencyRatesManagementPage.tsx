@@ -218,8 +218,13 @@ const CreateModal: React.FC<CreateModalProps> = ({
           {/* ─── Rate ─── */}
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-              نرخ (۱ {resolvedFrom || "?"} = ? {resolvedTo || "?"})
+            نرخ
             </label>
+            <p className="mb-2 text-[11px] text-gray-500">
+            {resolvedFrom && resolvedTo
+                ? `یک واحد ${resolvedFrom} چند ${resolvedTo} است؟`
+                : "مثال: ۱ USD = ۶۵۰,۰۰۰ IRR"}
+            </p>
             <input
               type="number"
               value={rate}
@@ -230,6 +235,11 @@ const CreateModal: React.FC<CreateModalProps> = ({
               step="any"
               className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
+            {resolvedFrom && resolvedTo && Number(rate) > 0 && (
+                <p className="mt-1 text-[10px] text-gray-500">
+                    ۱ {resolvedFrom} = {Number(rate).toLocaleString("fa-IR")} {resolvedTo}
+                </p>
+                )}
           </div>
 
           {/* ─── Effective At ─── */}
