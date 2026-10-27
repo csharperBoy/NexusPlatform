@@ -164,15 +164,17 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         // ─── Candles اگر Strategy نیاز دارد ───
         IReadOnlyList<Candle> candles = Array.Empty<Candle>();
+        IReadOnlyList<Candle> allCandles = Array.Empty<Candle>();
+
         if (ctx.Strategy.RequiredCandleCount > 0)
         {
-            var allCandles = await _candleCache.GetOrLoadAsync(
+            allCandles = await _candleCache.GetOrLoadAsync(
                 symbol.Isin,
                 ctx.PrimaryTimeFrame,
                 ctx.Strategy.RequiredCandleCount,
                 ct);
 
-            // ─── اگر Strategy فقط closed می‌خواهد، in-progress را کنار بگذار ───
+            // فیلتر closed
             if (ctx.Strategy.RequiresClosedCandlesOnly && allCandles.Count > 0)
             {
                 var tfDuration = ctx.PrimaryTimeFrame.ToDuration();
@@ -185,8 +187,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 if (candles.Count < allCandles.Count)
                 {
                     _logger.LogTrace(
-                        "Filtered {Diff} in-progress candle(s) for {Isin} tf={Tf} " +
-                        "(kept {Kept}/{Total}).",
+                        "Filtered {Diff} in-progress candle(s) for {Isin} tf={Tf} (kept {Kept}/{Total}).",
                         allCandles.Count - candles.Count,
                         symbol.Isin,
                         ctx.PrimaryTimeFrame,
@@ -197,6 +198,44 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             else
             {
                 candles = allCandles;
+            }
+
+            // ─── CandlesLoaded / CandlesLoadFailed Event ───
+            if (candles.Count == 0)
+            {
+                _eventLogger.Log(
+                    stage: TradingStage.StrategyEvaluation,
+                    type: TradingEventType.CandlesLoadFailed,
+                    severity: TradingEventSeverity.Warning,
+                    message: $"داده‌ی کافی کندل برای «{symbol.Isin}» وجود ندارد " +
+                             $"(موردنیاز: {ctx.Strategy.RequiredCandleCount}, " +
+                             $"دریافت‌شده: {allCandles.Count}).",
+                    payload: new
+                    {
+                        timeFrame = ctx.PrimaryTimeFrame.ToCode(),
+                        requiredCount = ctx.Strategy.RequiredCandleCount,
+                        rawCount = allCandles.Count,
+                        closedCount = candles.Count,
+                    },
+                    runId: ctx.RunId,
+                    isin: symbol.Isin);
+            }
+            else
+            {
+                _eventLogger.Log(
+                    stage: TradingStage.StrategyEvaluation,
+                    type: TradingEventType.CandlesLoaded,
+                    severity: TradingEventSeverity.Debug,
+                    message: $"{candles.Count} کندل {ctx.PrimaryTimeFrame.ToCode()} " +
+                             $"«{symbol.Isin}» بارگذاری شد.",
+                    payload: new
+                    {
+                        timeFrame = ctx.PrimaryTimeFrame.ToCode(),
+                        candleCount = candles.Count,
+                        lastCandleTime = candles[^1].OpenTime,
+                    },
+                    runId: ctx.RunId,
+                    isin: symbol.Isin);
             }
         }
         // ─── Currency Transformation (اختیاری) ───
@@ -218,6 +257,21 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 appliedRate = lastTransformed > 0m ? lastIrr / lastTransformed : null;
 
                 candles = transformed;
+                // ─── CurrencyTransformed Event ───
+                _eventLogger.Log(
+                    stage: TradingStage.StrategyEvaluation,
+                    type: TradingEventType.CurrencyTransformed,
+                    severity: TradingEventSeverity.Debug,
+                    message: $"قیمت‌های «{symbol.Isin}» از ریال به {appliedCurrency} " +
+                             $"تبدیل شدند (نرخ: {appliedRate:N0}).",
+                    payload: new
+                    {
+                        targetCurrency = appliedCurrency,
+                        appliedRate,
+                        candleCount = candles.Count,
+                    },
+                    runId: ctx.RunId,
+                    isin: symbol.Isin);
 
                 _logger.LogDebug(
                     "Applied currency transform: IRR→{Target} for {Isin} (rate≈{Rate:N2})",
@@ -231,6 +285,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 return (new List<SignalEnvelope>(), false);
             }
         }
+
         var input = new StrategyInput(
             Isin: symbol.Isin,
             LatestSnapshot: snapshot,
@@ -240,6 +295,29 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             EvaluatedAt: now);
 
         var result = ctx.Strategy.Evaluate(input);
+
+        // ─── NoSignalGenerated (Debug) — فقط اگر Features دارد و Hold است ───
+        if (result.Features != null
+            && result.Signals.Count == 0)
+        {
+            var rsiFeature = result.Features.TryGetValue("rsi", out var rsiVal)
+                ? rsiVal?.ToString()
+                : "—";
+
+            _eventLogger.Log(
+                stage: TradingStage.StrategyEvaluation,
+                type: TradingEventType.NoSignalGenerated,
+                severity: TradingEventSeverity.Debug,
+                message: $"سیگنالی برای «{symbol.Isin}» صادر نشد. " +
+                         $"RSI: {rsiFeature} " +
+                         $"(قدرت کافی نبود یا در محدوده‌ی خنثی).",
+                payload: new
+                {
+                    features = result.Features,
+                },
+                runId: ctx.RunId,
+                isin: symbol.Isin);
+        }
 
         // ─── StrategyEvaluation (فقط اگر Features موجود باشد) ───
         StrategyEvaluation? evalEntity = null;
