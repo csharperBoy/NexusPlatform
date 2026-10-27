@@ -182,7 +182,9 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Candle Cache (Singleton) ───
             services.AddSingleton<ICandleCache, InMemoryCandleCache>();
+            /* ═══════════ Scheduler Integration ═══════════ */
 
+            services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();
             // ─── Runtime Stages ───
             services.AddScoped<IStrategyEvaluationStage, StrategyEvaluationStage>();
             // ─── Options ───

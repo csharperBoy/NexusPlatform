@@ -1,90 +1,153 @@
-﻿using Core.Application.Abstractions;
-using Core.Application.Abstractions.Authorization.PublicService;
+﻿using Core.Application.Abstractions.Authorization.PublicService;
 using Core.Application.Abstractions.Identity.PublicService;
 using Core.Application.Abstractions.Navigation.PublicService;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Scheduler.Application.Abstractions;
+using Scheduler.Application.Models;
+using Scheduler.Domain.ValueObjects;
 using Trader.Application.Abstractions;
+using Trader.Application.Runtime;
+using Trader.Application.Scheduler;
+using Trader.Infrastructure.Data;
 
-namespace Trader.Infrastructure.Data
+namespace Trader.Infrastructure.Data;
+
+public class ModuleInitializer : IHostedService
 {
-    /*
-     📌 ModuleInitializer
-     --------------------
-     این کلاس یک Hosted Service است که در زمان راه‌اندازی برنامه (Startup) اجرا می‌شود
-     و وظیفه‌اش مقداردهی اولیه (Initialization) ماژول Sample است.
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<ModuleInitializer> _logger;
+    private readonly IConfiguration _configuration;
 
-     ✅ نکات کلیدی:
-     - از IHostedService ارث‌بری می‌کند → یعنی در زمان شروع و پایان برنامه اجرا می‌شود.
-     - در متد StartAsync:
-       1. یک Scope جدید از DI Container ساخته می‌شود.
-       2. سرویس‌های مورد نیاز (Repository و UnitOfWork) دریافت می‌شوند.
-       3. متد SeedEntityAsync فراخوانی می‌شود تا داده‌های اولیه در دیتابیس درج شوند.
-       4. لاگ‌ها وضعیت عملیات را ثبت می‌کنند.
-     - در متد StopAsync هیچ عملیات خاصی انجام نمی‌شود (فقط Task.CompletedTask برمی‌گرداند).
-
-     🛠 جریان کار:
-     1. برنامه اجرا می‌شود.
-     2. Hosted Service فعال شده و متد StartAsync اجرا می‌شود.
-     3. داده‌های اولیه بررسی و در صورت نیاز درج می‌شوند.
-     4. لاگ موفقیت یا خطا ثبت می‌شود.
-     5. در پایان برنامه، متد StopAsync فراخوانی می‌شود (اینجا خالی است).
-
-     📌 نتیجه:
-     این کلاس تضمین می‌کند که ماژول Sample همیشه داده‌های اولیه مورد نیازش را داشته باشد
-     و در زمان راه‌اندازی برنامه آماده‌ی استفاده باشد.
-    */
-
-    public class ModuleInitializer : IHostedService
+    public ModuleInitializer(
+        IServiceProvider serviceProvider,
+        ILogger<ModuleInitializer> logger,
+        IConfiguration configuration)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ModuleInitializer> _logger;
-        private readonly IConfiguration _configuration;
+        _serviceProvider = serviceProvider;
+        _configuration = configuration;
+        _logger = logger;
+    }
 
-        public ModuleInitializer(IServiceProvider serviceProvider, ILogger<ModuleInitializer> logger, IConfiguration configuration)
+    public async Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var services = scope.ServiceProvider;
+
+        try
         {
-            _serviceProvider = serviceProvider;
-            _configuration = configuration;
-            _logger = logger;
+            _logger.LogInformation("Starting Trader module initialization...");
 
+            // ─── Authorization + Navigation Seed ───
+            var resourceService = services.GetRequiredService<IResourcePublicService>();
+            var permissionService = services.GetRequiredService<IPermissionPublicService>();
+            var roleService = services.GetRequiredService<IRolePublicService>();
+            var menuService = services.GetRequiredService<IMenuPublicService>();
+
+            await TraderSeedData.SeedTraderForAuthorizationAsync(
+                resourceService, permissionService, roleService, _logger);
+
+            await TraderSeedData.SeedTradersForNavigationAsync(menuService, _logger);
+
+            // ─── Trading Schedules Seed ───
+            var uow = services.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+            await TraderSeedData.SeedTradingSchedulesAsync(uow, _logger, cancellationToken);
+
+            // ─── NEW: Register Retention Recurring Schedule ───
+            await EnsureRetentionRecurringScheduleAsync(services, cancellationToken);
+
+            _logger.LogInformation("Trader module initialization completed successfully.");
         }
-
-        public async Task StartAsync(CancellationToken cancellationToken)
+        catch (Exception ex)
         {
-            using var scope = _serviceProvider.CreateScope();
-            var services = scope.ServiceProvider;
-
-            try
-            {
-                _logger.LogInformation("Starting Trader module initialization...");
-
-                // 📌 اجرای Seed داده‌ها با Repository + UnitOfWork
-                //var repo = scope.ServiceProvider.GetRequiredService<IRepository<TraderDbContext, SampleEntity, Guid>>();
-                //var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork<SampleDbContext>>();
-                var resourceService = scope.ServiceProvider.GetRequiredService<IResourcePublicService>();
-                var permissionService = scope.ServiceProvider.GetRequiredService<IPermissionPublicService>();
-                var roleService = scope.ServiceProvider.GetRequiredService<IRolePublicService>();
-                var menuService = scope.ServiceProvider.GetRequiredService<IMenuPublicService>();
-                var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-
-                await TraderSeedData.SeedTraderForAuthorizationAsync(resourceService,permissionService,roleService,/* _configuration,*/ _logger);
-                await TraderSeedData.SeedTradersForNavigationAsync(menuService, _logger);
-                await TraderSeedData.SeedTradingSchedulesAsync(uow, _logger, cancellationToken);
-                _logger.LogInformation("Trader module initialization completed successfully.");
-            }
-            catch (Exception ex)
-            {
-                // 📌 ثبت خطا در صورت شکست عملیات
-                _logger.LogError(ex, "An error occurred while initializing the Sample module");
-                throw;
-            }
+            _logger.LogError(ex, "An error occurred while initializing the Trader module");
+            throw;
         }
+    }
 
-        // 📌 متد StopAsync در پایان برنامه فراخوانی می‌شود (اینجا خالی است)
-        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    /* ═══════════════════ Retention Recurring Schedule ═══════════════════ */
+
+    private async Task EnsureRetentionRecurringScheduleAsync(
+        IServiceProvider sp, CancellationToken ct)
+    {
+        try
+        {
+            var scheduler = sp.GetService<ISchedulerService>();
+            if (scheduler is null)
+            {
+                _logger.LogWarning(
+                    "ISchedulerService not registered. " +
+                    "Retention Recurring Schedule will not be created.");
+                return;
+            }
+
+            // ─── Idempotency: check if already exists ───
+            var existing = await scheduler.QueryRecurringAsync(
+                new RecurringSchedulerQuery(JobType: RetentionCleanupPayload.Key), ct);
+
+            if (existing.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Retention RecurringSchedule already exists (Id: {Id}). Skipping.",
+                    existing[0].Id);
+                return;
+            }
+
+            // ─── Read RetentionDays from Options ───
+            var loggingOptions = sp.GetRequiredService<IOptionsMonitor<TradingLoggingOptions>>();
+            var retentionDays = loggingOptions.CurrentValue.RetentionDays;
+
+            // ─── Compute first run time ───
+            var tz = TimeZoneInfo.FindSystemTimeZoneById(
+                OperatingSystem.IsWindows() ? "Iran Standard Time" : "Asia/Tehran");
+            var startAt = ComputeNextRunAt2330Tehran(tz);
+
+            // ─── Schedule Recurring ───
+            var id = await scheduler.ScheduleRecurringAsync(
+                name: "trader-event-retention",
+                payload: new RetentionCleanupPayload { RetentionDays = retentionDays },
+                pattern: RecurrencePattern.Daily(),
+                startAt: startAt,
+                timeZone: tz,
+                ct: ct);
+
+            _logger.LogInformation(
+                "Retention RecurringSchedule created: Id={Id} FirstRun={StartAt:O} " +
+                "RetentionDays={Days}",
+                id, startAt, retentionDays);
+        }
+        catch (Exception ex)
+        {
+            // Don't rethrow — module init should succeed even if this fails
+            _logger.LogError(ex,
+                "Failed to register Retention RecurringSchedule. " +
+                "Retention cleanup will NOT run automatically.");
+        }
+    }
+
+    /// <summary>
+    /// زمان اولین اجرا: امروز ۲۳:۳۰ تهران (اگر نگذشته) — وگرنه فردا ۲۳:۳۰.
+    /// </summary>
+    private static DateTimeOffset ComputeNextRunAt2330Tehran(TimeZoneInfo tz)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var nowTehran = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, tz);
+
+        var todayRun = nowTehran.Date.AddHours(23).AddMinutes(30);
+
+        DateTime targetTehran;
+        if (nowTehran < todayRun)
+            targetTehran = todayRun;             // امروز
+        else
+            targetTehran = todayRun.AddDays(1);  // فردا
+
+        var unspecified = DateTime.SpecifyKind(targetTehran, DateTimeKind.Unspecified);
+        var utc = TimeZoneInfo.ConvertTimeToUtc(unspecified, tz);
+        return new DateTimeOffset(utc, TimeSpan.Zero);
     }
 }
