@@ -6,6 +6,7 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Runtime;
@@ -41,7 +42,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     private readonly IMarketSnapshotStore _snapshotStore;
     private readonly IBrokerOrderDispatcher _dispatcher;
     private readonly ILogger<OrderLifecycleStage> _logger;
-
+    private readonly ITradingEventLogger _eventLogger;
     public OrderLifecycleStage(
         IRunExecutionContextCache runCache,
         ITraderUnitOfWork<TraderDbContext> uow,
@@ -54,6 +55,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     IUserContextCache userContextCache,
         UserDataContext userContext,
         IOptions<TradingRuntimeOptions> options,
+    ITradingEventLogger eventLogger,
         ILogger<OrderLifecycleStage> logger)
     {
         _runCache = runCache;
@@ -66,6 +68,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         _options = options.Value;
         _snapshotStore = snapshotStore;
         _dispatcher = dispatcher;
+        _eventLogger = eventLogger;
         _logger = logger;
     }
 
@@ -193,10 +196,10 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     Trader.ExternalApiClient.ExternalSystemSession session,
     CancellationToken ct)
     {
-        var positions = await _uow.PositionSpecs.ListBySpecAsync(
-            new OpenPositionsByAccountSpec(accountId));
+        var positions = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByAccountSpec(accountId))).ToList();
 
-        if (positions.Count() == 0) return;
+        if (positions.Count == 0) return;
 
         var dispatched = 0;
 
@@ -216,11 +219,11 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
                 if (!triggerSL && !triggerTP) continue;
 
                 // ─── Skip اگر Sell باز داریم ───
-                var existing = await _uow.OrderIntentSpecs.ListBySpecAsync(
+                var existing = (await _uow.OrderIntentSpecs.ListBySpecAsync(
                     new OpenSellIntentsByPositionSpec(
-                        pos.RunId, pos.TraderAccountId, pos.Isin));
+                        pos.RunId, pos.TraderAccountId, pos.Isin))).ToList();
 
-                if (existing.Count() > 0) continue;
+                if (existing.Count > 0) continue;
 
                 // ─── قیمت فروش: Best Bid یا LastTraded ───
                 decimal sellPriceValue = snap.BestBuyPrice > 0
@@ -230,6 +233,32 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
                 if (sellPriceValue <= 0m) continue;
 
                 var reason = triggerSL ? "StopLoss triggered" : "TakeProfit triggered";
+
+                // ─── SL/TP Triggered Event ───
+                _eventLogger.Log(
+                    stage: TradingStage.OrderLifecycle,
+                    type: triggerSL
+                        ? TradingEventType.StopLossTriggered
+                        : TradingEventType.TakeProfitTriggered,
+                    severity: triggerSL
+                        ? TradingEventSeverity.Warning
+                        : TradingEventSeverity.Info,
+                    message: triggerSL
+                        ? $"حد ضرر فعال شد برای «{pos.Isin}»: " +
+                          $"قیمت فعلی {currentPrice.Value:N0} (SL: {pos.StopLossPrice?.Value:N0})"
+                        : $"حد سود فعال شد برای «{pos.Isin}»: " +
+                          $"قیمت فعلی {currentPrice.Value:N0} (TP: {pos.TakeProfitPrice?.Value:N0})",
+                    payload: new
+                    {
+                        currentPrice = currentPrice.Value,
+                        stopLossPrice = pos.StopLossPrice?.Value,
+                        takeProfitPrice = pos.TakeProfitPrice?.Value,
+                        positionQuantity = pos.Quantity.Value,
+                    },
+                    runId: pos.RunId,
+                    isin: pos.Isin,
+                    accountId: pos.TraderAccountId,
+                    positionId: pos.Id);
 
                 var intent = OrderIntent.Create(
                     runId: pos.RunId,
@@ -246,6 +275,27 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
                 await _dispatcher.DispatchAsync(intent, account.Broker, session, ct);
                 dispatched++;
+
+                // ─── OrderDispatched Event ───
+                _eventLogger.Log(
+                    stage: TradingStage.OrderLifecycle,
+                    type: TradingEventType.OrderDispatched,
+                    severity: TradingEventSeverity.Info,
+                    message: $"سفارش فروش خودکار برای «{pos.Isin}» ارسال شد. " +
+                             $"دلیل: {(triggerSL ? "حد ضرر" : "حد سود")}, " +
+                             $"تعداد: {pos.Quantity.Value:N0}, قیمت: {sellPriceValue:N0}",
+                    payload: new
+                    {
+                        reason,
+                        quantity = pos.Quantity.Value,
+                        price = sellPriceValue,
+                        broker = account.Broker.ToString(),
+                    },
+                    runId: pos.RunId,
+                    isin: pos.Isin,
+                    accountId: pos.TraderAccountId,
+                    orderIntentId: intent.Id,
+                    positionId: pos.Id);
 
                 _logger.LogInformation(
                     "SL/TP auto-close dispatched: run={RunId} isin={Isin} reason={Reason} " +
@@ -311,6 +361,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         var changed = false;
 
         // ─── ۱. Sync State ───
+        var oldState = ourOrder.State;
         if (dto.State != ourOrder.State)
         {
             ourOrder.ApplyStateUpdate(dto.State, ourOrder.FilledQuantity);
@@ -318,7 +369,26 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
             _logger.LogInformation(
                 "Order state changed: {OrderId} {OldState} → {NewState}",
-                ourOrder.BrokerOrderId, ourOrder.State, dto.State);
+                ourOrder.BrokerOrderId, oldState, dto.State);
+
+            // ─── OrderStatusUpdated Event ───
+            _eventLogger.Log(
+                stage: TradingStage.OrderLifecycle,
+                type: TradingEventType.OrderStatusUpdated,
+                severity: TradingEventSeverity.Info,
+                message: $"وضعیت سفارش {ourOrder.BrokerOrderId} از " +
+                         $"{StateToPersian(oldState)} به {StateToPersian(dto.State)} تغییر کرد",
+                payload: new
+                {
+                    oldState = oldState.ToString(),
+                    newState = dto.State.ToString(),
+                    filledQuantity = ourOrder.FilledQuantity.Value,
+                    totalQuantity = ourOrder.Quantity.Value,
+                },
+                runId: ourOrder.RunId,
+                isin: ourOrder.Isin,
+                accountId: ourOrder.TraderAccountId,
+                brokerOrderId: ourOrder.Id);
         }
 
         // ─── ۲. Sync Trades (اگر ExecutedQuantity افزایش یافته) ───
@@ -383,8 +453,29 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
                         changed = true;
 
                         _logger.LogWarning(
-                            "Trade canceled: order={OrderId} trade={TradeNumber} qty={Qty}",
-                            ourOrder.BrokerOrderId, dto.TradeNumber, existing.Quantity.Value);
+                                "Trade canceled: order={OrderId} trade={TradeNumber} qty={Qty}",
+                                ourOrder.BrokerOrderId, dto.TradeNumber, existing.Quantity.Value);
+
+                        // ─── TradeCanceled Event ───
+                        _eventLogger.Log(
+                            stage: TradingStage.OrderLifecycle,
+                            type: TradingEventType.TradeCanceled,
+                            severity: TradingEventSeverity.Warning,
+                            message: $"معامله شماره {dto.TradeNumber} لغو شد: " +
+                                     $"{existing.Quantity.Value:N0} سهم «{ourOrder.Isin}» " +
+                                     $"به قیمت {existing.Price.Value:N0}",
+                            payload: new
+                            {
+                                tradeNumber = dto.TradeNumber,
+                                quantity = existing.Quantity.Value,
+                                price = existing.Price.Value,
+                                cancelDateTime = dto.CancelDateTime,
+                            },
+                            runId: ourOrder.RunId,
+                            isin: ourOrder.Isin,
+                            accountId: ourOrder.TraderAccountId,
+                            brokerOrderId: ourOrder.Id,
+                            tradeId: existing.Id);
                     }
 
                     continue;
@@ -409,9 +500,30 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
                 changed = true;
 
                 _logger.LogInformation(
-                    "New trade applied: order={OrderId} trade={TradeNumber} qty={Qty} price={Price} time={Time}",
-                    ourOrder.BrokerOrderId, dto.TradeNumber,
-                    dto.Quantity, dto.Price, dto.TradeDate);
+                            "New trade applied: order={OrderId} trade={TradeNumber} qty={Qty} price={Price} time={Time}",
+                            ourOrder.BrokerOrderId, dto.TradeNumber, dto.Quantity, dto.Price, dto.TradeDate);
+
+                // ─── TradeReceived Event ───
+                _eventLogger.Log(
+                    stage: TradingStage.OrderLifecycle,
+                    type: TradingEventType.TradeReceived,
+                    severity: TradingEventSeverity.Info,
+                    message: $"معامله دریافت شد: {SideToPersian(ourOrder.Side)} " +
+                             $"{dto.Quantity:N0} سهم «{ourOrder.Isin}» " +
+                             $"به قیمت {dto.Price:N0} (شماره معامله: {dto.TradeNumber})",
+                    payload: new
+                    {
+                        tradeNumber = dto.TradeNumber,
+                        quantity = dto.Quantity,
+                        price = dto.Price,
+                        side = ourOrder.Side.ToString(),
+                        tradeDate = dto.TradeDate,
+                    },
+                    runId: ourOrder.RunId,
+                    isin: ourOrder.Isin,
+                    accountId: ourOrder.TraderAccountId,
+                    brokerOrderId: ourOrder.Id,
+                    tradeId: trade.Id);
             }
             catch (Exception ex)
             {
@@ -432,4 +544,22 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
         return changed;
     }
+    private static string StateToPersian(OrderStateKind state) => state switch
+    {
+        OrderStateKind.Pending => "در انتظار",
+        OrderStateKind.Open => "باز",
+        OrderStateKind.PartiallyExecuted => "نیمه اجرا",
+        OrderStateKind.FullyExecuted => "کامل اجرا",
+        OrderStateKind.Canceled => "لغو شده",
+        OrderStateKind.Rejected => "رد شده",
+        OrderStateKind.Expired => "منقضی",
+        _ => "نامشخص"
+    };
+
+    private static string SideToPersian(OrderSide side) => side switch
+    {
+        OrderSide.Buy => "خرید",
+        OrderSide.Sell => "فروش",
+        _ => side.ToString()
+    };
 }

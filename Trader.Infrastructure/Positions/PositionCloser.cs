@@ -96,9 +96,9 @@ public sealed class PositionCloser : IPositionCloser
                 // ─── Skip اگر Sell باز داریم ───
                 var existingSpec = new OpenSellIntentsByPositionSpec(
                     pos.RunId, pos.TraderAccountId, pos.Isin);
-                var existing = await uow.OrderIntentSpecs.ListBySpecAsync(existingSpec);
+                var existing = (await uow.OrderIntentSpecs.ListBySpecAsync(existingSpec)).ToList();
 
-                if (existing.Count() > 0)
+                if (existing.Count > 0)
                 {
                     _logger.LogDebug(
                         "Sell already pending for position {PositionId} ({Isin}); skipping.",

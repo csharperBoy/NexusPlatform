@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
@@ -16,17 +17,20 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly ITradingRunManager _runManager;
     private readonly ISignalChannel _signalChannel;
+    private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<RuntimeRecoveryService> _logger;
 
     public RuntimeRecoveryService(
         ITraderUnitOfWork<TraderDbContext> uow,
         ITradingRunManager runManager,
         ISignalChannel signalChannel,
+        ITradingEventLogger eventLogger,
         ILogger<RuntimeRecoveryService> logger)
     {
         _uow = uow;
         _runManager = runManager;
         _signalChannel = signalChannel;
+        _eventLogger = eventLogger;
         _logger = logger;
     }
 
@@ -34,31 +38,83 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
     {
         _logger.LogInformation("Runtime recovery starting...");
 
-        var runningRunIds = await LoadRunningRunsAsync(ct);
-        if (runningRunIds.Count == 0)
+        _eventLogger.Log(
+            stage: TradingStage.Recovery,
+            type: TradingEventType.RecoveryStarted,
+            severity: TradingEventSeverity.Info,
+            message: "فرآیند بازیابی Runtime شروع شد.");
+
+        try
         {
-            _logger.LogInformation("Runtime recovery: no running runs to restore.");
-            return;
+            var runningRunIds = await LoadRunningRunsAsync(ct);
+            if (runningRunIds.Count == 0)
+            {
+                _logger.LogInformation(
+                    "Runtime recovery: no running runs to restore.");
+
+                _eventLogger.Log(
+                    stage: TradingStage.Recovery,
+                    type: TradingEventType.RecoveryCompleted,
+                    severity: TradingEventSeverity.Info,
+                    message: "بازیابی کامل شد: هیچ پلن فعالی برای بازیابی نبود.",
+                    payload: new { restoredRuns = 0, repushedSignals = 0 });
+
+                await _eventLogger.FlushAsync(ct);
+                return;
+            }
+
+            var repushed = await RecoverUnconsumedSignalsAsync(runningRunIds, ct);
+
+            _logger.LogInformation(
+                "Runtime recovery completed. Restored {RunCount} runs, re-pushed {SignalCount} signals.",
+                runningRunIds.Count, repushed);
+
+            _eventLogger.Log(
+                stage: TradingStage.Recovery,
+                type: TradingEventType.RecoveryCompleted,
+                severity: TradingEventSeverity.Info,
+                message: $"بازیابی کامل شد: {runningRunIds.Count} پلن بازیابی شد، " +
+                         $"{repushed} سیگنال Re-Push شد.",
+                payload: new
+                {
+                    restoredRuns = runningRunIds.Count,
+                    repushedSignals = repushed
+                });
         }
-
-        await RecoverUnconsumedSignalsAsync(runningRunIds, ct);
-
-        _logger.LogInformation(
-            "Runtime recovery completed. Restored {RunCount} runs.", runningRunIds.Count);
+        catch (Exception ex)
+        {
+            _eventLogger.Log(
+                stage: TradingStage.Recovery,
+                type: TradingEventType.RecoveryFailed,
+                severity: TradingEventSeverity.Error,
+                message: $"بازیابی ناموفق بود: {ex.Message}",
+                payload: new
+                {
+                    errorType = ex.GetType().Name,
+                    errorMessage = ex.Message
+                });
+            throw;
+        }
+        finally
+        {
+            try { await _eventLogger.FlushAsync(ct); }
+            catch (Exception flushEx)
+            {
+                _logger.LogError(flushEx,
+                    "Failed to flush recovery events.");
+            }
+        }
     }
-
-    /* ═══════════════════ Phase 1: Restore Run Contexts ═══════════════════ */
 
     private async Task<HashSet<Guid>> LoadRunningRunsAsync(CancellationToken ct)
     {
         var spec = new RunningTradingRunsSpec();
-        var runs = await _uow.TradingRunSpecs.ListBySpecAsync(spec);
+        var runs = (await _uow.TradingRunSpecs.ListBySpecAsync(spec)).ToList();
 
-        if (runs.Count() == 0)
-            return new HashSet<Guid>();
+        if (runs.Count == 0) return new HashSet<Guid>();
 
         _logger.LogInformation(
-            "Runtime recovery: {Count} runs in Running state.", runs.Count());
+            "Runtime recovery: {Count} runs in Running state.", runs.Count);
 
         var restored = new HashSet<Guid>();
 
@@ -71,12 +127,31 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
 
                 _logger.LogInformation(
                     "Restored run {RunId} ({Name})", run.Id, run.Name);
+
+                _eventLogger.Log(
+                    stage: TradingStage.Recovery,
+                    type: TradingEventType.RunRestoredFromRecovery,
+                    severity: TradingEventSeverity.Info,
+                    message: $"پلن «{run.Name}» از بازیابی Startup فعال شد.",
+                    runId: run.Id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Failed to restore run {RunId} ({Name}). Marking faulted.",
                     run.Id, run.Name);
+
+                _eventLogger.Log(
+                    stage: TradingStage.Recovery,
+                    type: TradingEventType.RecoveryFailed,
+                    severity: TradingEventSeverity.Error,
+                    message: $"بازیابی پلن «{run.Name}» ناموفق بود: {ex.Message}",
+                    payload: new
+                    {
+                        errorType = ex.GetType().Name,
+                        errorMessage = ex.Message
+                    },
+                    runId: run.Id);
 
                 try
                 {
@@ -95,86 +170,53 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
         return restored;
     }
 
-    /* ═══════════════════ Phase 2: Recover Unconsumed Signals ═══════════════════ */
-
-    private async Task RecoverUnconsumedSignalsAsync(
-        HashSet<Guid> runningRunIds, CancellationToken ct)
+    private async Task<int> RecoverUnconsumedSignalsAsync(
+    HashSet<Guid> runningRunIds, CancellationToken ct)
     {
-        // ─── Signalهای Consume‌نشده برای Runهای فعال ───
         var spec = new UnconsumedSignalsByRunsSpec(runningRunIds);
-        var signals = await _uow.SignalSpecs.ListBySpecAsync(spec);
+        var signals = (await _uow.SignalSpecs.ListBySpecAsync(spec)).ToList();
 
-        if (signals.Count() == 0)
-        {
-            _logger.LogDebug("Runtime recovery: no unconsumed signals.");
-            return;
-        }
+        if (signals.Count == 0) return 0;
 
         _logger.LogInformation(
-            "Runtime recovery: {Count} unconsumed signals found.", signals.Count());
+            "Runtime recovery: {Count} unconsumed signals found.", signals.Count);
 
-        var repushedCount = 0;
-        var skippedCount = 0;
+        var repushed = 0;
 
         foreach (var signal in signals)
         {
             try
             {
-                // ─── آیا OrderIntent برای این Signal ساخته شده؟ ───
                 var intentSpec = new OrderIntentsBySignalSpec(signal.Id);
-                var existingIntents = await _uow.OrderIntentSpecs.ListBySpecAsync(intentSpec);
+                var existingIntents = (await _uow.OrderIntentSpecs
+                    .ListBySpecAsync(intentSpec)).ToList();
 
-                if (existingIntents.Count() > 0)
+                if (existingIntents.Count > 0)
                 {
-                    // سناریو C/D: قبلاً OrderIntent ساخته شده — Skip
-                    // پذیرش ریسک: اگر برای بعضی Accountها Intent نساخته باشد، آن‌ها Skip می‌شوند.
                     signal.MarkConsumed();
                     await _uow.Signals.UpdateAsync(signal);
-                    skippedCount++;
-
                     _logger.LogWarning(
-                        "Signal {SignalId} (run={RunId} isin={Isin}) has existing OrderIntents " +
-                        "({Count}); marking as consumed to prevent duplicate execution.",
-                        signal.Id, signal.RunId, signal.Isin, existingIntents.Count());
+                        "Signal {SignalId} has existing OrderIntents; marking consumed.",
+                        signal.Id);
                 }
                 else
                 {
-                    // سناریو B: هیچ OrderIntent — Re-Push
                     var envelope = new SignalEnvelope(
                         signal.RunId, signal, signal.ProducedAt);
-
                     await _signalChannel.WriteAsync(envelope, ct);
-                    repushedCount++;
-
+                    repushed++;
                     _logger.LogInformation(
-                        "Re-pushed signal {SignalId} (run={RunId} isin={Isin} action={Action}).",
-                        signal.Id, signal.RunId, signal.Isin, signal.Action);
+                        "Re-pushed signal {SignalId}.", signal.Id);
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Failed to recover signal {SignalId}. Skipping.", signal.Id);
+                    "Failed to recover signal {SignalId}.", signal.Id);
             }
         }
 
-        if (skippedCount > 0)
-        {
-            try
-            {
-                await _uow.SaveChangesAsync(ct);
-                _logger.LogInformation(
-                    "Marked {Count} signals as consumed.", skippedCount);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "Failed to persist consumed state for recovered signals.");
-            }
-        }
-
-        _logger.LogInformation(
-            "Signal recovery: {RePushed} re-pushed, {Skipped} skipped (already consumed).",
-            repushedCount, skippedCount);
+        await _uow.SaveChangesAsync(ct);
+        return repushed;
     }
 }
