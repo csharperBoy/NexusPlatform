@@ -61,4 +61,26 @@ public class SchedulerController : BaseController
         var result = await Mediator.Send(new QueryRecurringSchedulesQuery(request));
         return HandleResult(result);
     }
+
+
+    [HttpPost("Recurring/{id:guid}/Pause")]
+    public async Task<IActionResult> PauseRecurring(Guid id)
+    {
+        var result = await Mediator.Send(new PauseRecurringScheduleCommand(id));
+        return HandleResult(result);
+    }
+
+    [HttpPost("Recurring/{id:guid}/Resume")]
+    public async Task<IActionResult> ResumeRecurring(Guid id)
+    {
+        var result = await Mediator.Send(new ResumeRecurringScheduleCommand(id));
+        return HandleResult(result);
+    }
+
+    [HttpDelete("Recurring/{id:guid}")]
+    public async Task<IActionResult> CancelRecurring(Guid id)
+    {
+        var result = await Mediator.Send(new CancelRecurringScheduleCommand(id));
+        return HandleResult(result);
+    }
 }

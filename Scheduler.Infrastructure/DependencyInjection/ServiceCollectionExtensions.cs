@@ -79,7 +79,11 @@ public static class ServiceCollectionExtensions
         /* ─── Recurring Scheduler ─── */
         services.AddScoped<IRecurringScheduleRescheduler, RecurringScheduleRescheduler>();
         services.AddScoped<IRecurringSchedulePayloadFactory, RecurringSchedulePayloadFactory>();
+        /* ─── Recovery ─── */
+        services.AddScoped<IRecurringScheduleRecovery, RecurringScheduleRecovery>();
 
+        /* ─── Startup HostedService (Recovery runner) ─── */
+        services.AddHostedService<RecurringScheduleStartupService>();
         /* ─── SchedulerService ─── */
         services.AddScoped<ISchedulerService, HangfireSchedulerService>();
 

@@ -251,4 +251,129 @@ class HangfireSchedulerService : ISchedulerService
         r.Id, r.Name, r.JobType, r.State, r.StartAt, r.EndAt,
         r.MaxOccurrences, r.OccurredCount, r.FailureCount,
         r.LastRunAt, r.NextRunAt, r.TimeZoneId);
+
+    /* ═══════════════════ Lifecycle ═══════════════════ */
+
+    public async Task<bool> PauseRecurringAsync(
+        Guid recurringScheduleId, CancellationToken ct = default)
+    {
+        var recurring = await _uow.RecurringSchedules.GetByIdAsync(recurringScheduleId);
+        if (recurring is null || recurring.State != RecurringScheduleState.Active)
+            return false;
+
+        recurring.Pause();
+        await _uow.RecurringSchedules.UpdateAsync(recurring);
+
+        // Cancel pending Hangfire job
+        await CancelPendingOccurrenceAsync(recurringScheduleId, ct);
+
+        await _uow.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "RecurringSchedule {Id} '{Name}' paused.", recurring.Id, recurring.Name);
+        return true;
+    }
+
+    public async Task<bool> ResumeRecurringAsync(
+        Guid recurringScheduleId, CancellationToken ct = default)
+    {
+        var recurring = await _uow.RecurringSchedules.GetByIdAsync(recurringScheduleId);
+        if (recurring is null || recurring.State != RecurringScheduleState.Paused)
+            return false;
+
+        // ─── Bounds check first ───
+        if (recurring.MaxOccurrences.HasValue
+            && recurring.OccurredCount >= recurring.MaxOccurrences.Value)
+        {
+            recurring.Complete();
+            await _uow.RecurringSchedules.UpdateAsync(recurring);
+            await _uow.SaveChangesAsync(ct);
+            _logger.LogInformation(
+                "RecurringSchedule {Id} completed on Resume (max occurrences reached).",
+                recurring.Id);
+            return false;
+        }
+
+        var tz = TimeZoneInfo.FindSystemTimeZoneById(recurring.TimeZoneId);
+        var pattern = RecurrencePattern.FromJson(recurring.RecurrencePatternJson);
+        var now = DateTimeOffset.UtcNow;
+        var nextFireAt = pattern.GetNextOccurrence(recurring.StartAt, now, tz);
+
+        if (recurring.EndAt.HasValue && nextFireAt > recurring.EndAt.Value)
+        {
+            recurring.Complete();
+            await _uow.RecurringSchedules.UpdateAsync(recurring);
+            await _uow.SaveChangesAsync(ct);
+            _logger.LogInformation(
+                "RecurringSchedule {Id} completed on Resume (end date reached).",
+                recurring.Id);
+            return false;
+        }
+
+        recurring.Resume();
+        await _uow.RecurringSchedules.UpdateAsync(recurring);
+        await _uow.SaveChangesAsync(ct);
+
+        await ScheduleOccurrenceAsync(recurring, nextFireAt, ct);
+
+        _logger.LogInformation(
+            "RecurringSchedule {Id} '{Name}' resumed. Next {FireAt}",
+            recurring.Id, recurring.Name, nextFireAt);
+        return true;
+    }
+
+    public async Task<bool> CancelRecurringAsync(
+        Guid recurringScheduleId, CancellationToken ct = default)
+    {
+        var recurring = await _uow.RecurringSchedules.GetByIdAsync(recurringScheduleId);
+        if (recurring is null) return false;
+        if (recurring.State == RecurringScheduleState.Cancelled
+            || recurring.State == RecurringScheduleState.Completed)
+            return false;
+
+        recurring.Cancel();
+        await _uow.RecurringSchedules.UpdateAsync(recurring);
+
+        await CancelPendingOccurrenceAsync(recurringScheduleId, ct);
+
+        await _uow.SaveChangesAsync(ct);
+
+        _logger.LogInformation(
+            "RecurringSchedule {Id} '{Name}' cancelled.", recurring.Id, recurring.Name);
+        return true;
+    }
+
+    /* ═══════════════════ Helper ═══════════════════ */
+
+    private async Task CancelPendingOccurrenceAsync(
+        Guid recurringScheduleId, CancellationToken ct)
+    {
+        var pendingJobs = await _uow.ScheduledJobs.GetAllAsync(
+            q => q.Where(s => s.RecurringScheduleId == recurringScheduleId
+                           && s.State == ScheduledJobState.Pending));
+
+        foreach (var pending in pendingJobs)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(pending.HangfireJobId)
+                    && pending.HangfireJobId != "PENDING")
+                {
+                    _jobs.Delete(pending.HangfireJobId);
+                }
+
+                pending.MarkCancelled();
+                await _uow.ScheduledJobs.UpdateAsync(pending);
+
+                _logger.LogDebug(
+                    "Cancelled pending ScheduledJob {Id} for RecurringSchedule {RecId}.",
+                    pending.Id, recurringScheduleId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "Failed to cancel pending job {Id}.", pending.Id);
+            }
+        }
+    }
 }

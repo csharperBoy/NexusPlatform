@@ -54,5 +54,17 @@ namespace Scheduler.Application.Abstractions
         Task<IReadOnlyList<RecurringScheduleInfo>> QueryRecurringAsync(
             RecurringSchedulerQuery query,
             CancellationToken ct = default);
+
+        Task<bool> PauseRecurringAsync(
+    Guid recurringScheduleId,
+    CancellationToken ct = default);
+
+        Task<bool> ResumeRecurringAsync(
+            Guid recurringScheduleId,
+            CancellationToken ct = default);
+
+        Task<bool> CancelRecurringAsync(
+            Guid recurringScheduleId,
+            CancellationToken ct = default);
     }
 }
