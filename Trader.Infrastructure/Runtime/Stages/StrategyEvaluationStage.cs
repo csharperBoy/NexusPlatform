@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
@@ -30,6 +31,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
     private readonly UserDataContext _userContext;
     private readonly IUserContextCache _userContextCache;
     private readonly ICandleTransformer _candleTransformer;
+    private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<StrategyEvaluationStage> _logger;
 
     public StrategyEvaluationStage(
@@ -41,6 +43,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         UserDataContext userContext,
         IUserContextCache userContextCache,
         ICandleTransformer candleTransformer,
+        ITradingEventLogger eventLogger,
         ILogger<StrategyEvaluationStage> logger)
     {
         _runCache = runCache;
@@ -51,6 +54,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         _userContext = userContext;
         _userContextCache = userContextCache;
         _candleTransformer = candleTransformer;
+        _eventLogger = eventLogger;
         _logger = logger;
     }
 
@@ -241,6 +245,19 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         StrategyEvaluation? evalEntity = null;
         if (result.Features != null)
         {
+            // ─── ۱. Enrichment اول (قبل از Serialization) ───
+            if (appliedCurrency != null)
+            {
+                var enriched = new Dictionary<string, object?>(result.Features);
+                enriched["targetCurrency"] = appliedCurrency;
+                enriched["priceAtEvalIrr"] = snapshot.LastTradedPrice;
+                if (appliedRate.HasValue)
+                    enriched["appliedRate"] = appliedRate.Value;
+
+                result = result with { Features = enriched };
+            }
+
+            // ─── ۲. Serialization بعد از Enrichment ───
             var featuresJson = JsonSerializer.Serialize(result.Features, JsonOpts);
 
             var primaryAction = result.Signals.Count > 0
@@ -249,17 +266,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             var primaryStrength = result.Signals.Count > 0
                 ? result.Signals[0].Strength.Value
                 : 0m;
-            if (result.Features != null && appliedCurrency != null)
-            {
-                var enriched = new Dictionary<string, object?>(result.Features);
 
-                enriched["targetCurrency"] = appliedCurrency;
-                enriched["priceAtEvalIrr"] = snapshot.LastTradedPrice;
-                if (appliedRate.HasValue)
-                    enriched["appliedRate"] = appliedRate.Value;
-
-                result = result with { Features = enriched };
-            }
             evalEntity = StrategyEvaluation.Create(
                 runId: ctx.RunId,
                 isin: symbol.Isin,
@@ -269,7 +276,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 featuresJson: featuresJson,
                 action: primaryAction,
                 strength: primaryStrength,
-                marketSnapshotId: snapshot.Id);   // ← جدید
+                marketSnapshotId: snapshot.Id);
 
             await _uow.StrategyEvaluations.AddAsync(evalEntity);
         }
@@ -298,7 +305,22 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
             await _uow.Signals.AddAsync(signal);
             envelopes.Add(new SignalEnvelope(ctx.RunId, signal, now));
-
+            // ─── SignalGenerated Event ───
+            _eventLogger.Log(
+                stage: TradingStage.StrategyEvaluation,
+                type: TradingEventType.SignalGenerated,
+                severity: TradingEventSeverity.Info,
+                message: $"سیگنال {ActionToPersian(s.Action)} برای «{symbol.Isin}» در پلن «{ctx.Name}» " +
+                         $"صادر شد. قدرت: {s.Strength.Value:0.##}",
+                payload: new
+                {
+                    action = s.Action.ToString(),
+                    strength = s.Strength.Value,
+                    metadata = s.MetadataJson,
+                },
+                runId: ctx.RunId,
+                isin: symbol.Isin,
+                signalId: signal.Id);
             // Link دوطرفه
             evalEntity?.LinkSignal(signal.Id);
         }
@@ -313,4 +335,11 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         return (envelopes, evalEntity != null);
     }
+    private static string ActionToPersian(SignalAction action) => action switch
+    {
+        SignalAction.Buy => "خرید",
+        SignalAction.Sell => "فروش",
+        SignalAction.Hold => "خنثی",
+        _ => "نامشخص"
+    };
 }

@@ -10,6 +10,7 @@ using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.Indicators;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Runtime;
@@ -30,6 +31,7 @@ using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Execution;
+using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Positions;
 using Trader.Infrastructure.Runtime;
@@ -182,6 +184,8 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Candle Cache (Singleton) ───
             services.AddSingleton<ICandleCache, InMemoryCandleCache>();
+            /* ═══════════ Trading Event Logger ═══════════ */
+            services.AddScoped<ITradingEventLogger, TradingEventLogger>();
             /* ═══════════ Scheduler Integration ═══════════ */
 
             services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Runtime;
 
@@ -93,24 +94,43 @@ public sealed class TradingRuntimeWorker : BackgroundService
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        // Stage 1
-        await sp.GetRequiredService<IMarketDataIngestionStage>().RunOnceAsync(ct);
-
-        // Stage 2
-        await sp.GetRequiredService<IStrategyEvaluationStage>().RunOnceAsync(ct);
-
-        // Stage 3
-        await sp.GetRequiredService<IExecutionStage>().RunOnceAsync(ct);
-
-        // Stage 4 (با interval داخلی خودش)
-        await sp.GetRequiredService<IOrderLifecycleStage>().RunOnceAsync(ct);
-
-        stopwatch.Stop();
-        if (stopwatch.ElapsedMilliseconds > 1000)
+        try
         {
-            _logger.LogWarning(
-                "Tick took {ElapsedMs} ms — slower than expected.",
-                stopwatch.ElapsedMilliseconds);
+            // Stage 1
+            await sp.GetRequiredService<IMarketDataIngestionStage>().RunOnceAsync(ct);
+
+            // Stage 2
+            await sp.GetRequiredService<IStrategyEvaluationStage>().RunOnceAsync(ct);
+
+            // Stage 3
+            await sp.GetRequiredService<IExecutionStage>().RunOnceAsync(ct);
+
+            // Stage 4 (با interval داخلی خودش)
+            await sp.GetRequiredService<IOrderLifecycleStage>().RunOnceAsync(ct);
+        }
+        finally
+        {
+            stopwatch.Stop();
+
+            // ─── Flush رویدادها — حتی اگر Stageها Fail شوند ───
+            try
+            {
+                var eventLogger = sp.GetService<ITradingEventLogger>();
+                if (eventLogger is not null)
+                    await eventLogger.FlushAsync(CancellationToken.None);
+            }
+            catch (Exception flushEx)
+            {
+                _logger.LogError(flushEx,
+                    "Failed to flush trading events at end of tick.");
+            }
+
+            if (stopwatch.ElapsedMilliseconds > 1000)
+            {
+                _logger.LogWarning(
+                    "Tick took {ElapsedMs} ms — slower than expected.",
+                    stopwatch.ElapsedMilliseconds);
+            }
         }
     }
 
