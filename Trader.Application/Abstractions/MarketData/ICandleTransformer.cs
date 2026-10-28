@@ -2,13 +2,16 @@
 
 namespace Trader.Application.Abstractions.MarketData;
 
+public sealed record CandleTransformationResult(
+    IReadOnlyList<Candle> Candles,
+    decimal? LastCandleRate,
+    DateTime? LastCandleRateEffectiveAt,
+    int CandleCountBeforeFirstRate,
+    int RatePointCount);
+
 public interface ICandleTransformer
 {
-    /// <summary>
-    /// تبدیل Candleهای IRR به targetCurrency با Per-Candle Historical Rate.
-    /// هر کندل با آخرین نرخ موجود در زمان OpenTime خودش تبدیل می‌شود.
-    /// </summary>
-    Task<IReadOnlyList<Candle>> TransformAsync(
+    Task<CandleTransformationResult> TransformAsync(
         string isin,
         IReadOnlyList<Candle> irrCandles,
         string targetCurrency,

@@ -8,14 +8,10 @@ namespace Trader.Infrastructure.MarketData;
 public sealed class CurrencyCandleTransformer : ICandleTransformer
 {
     private const string BaseCurrency = "IRR";
-
-    /// <summary>
-    /// Cache TTL — کوتاه تا وقتی نرخ جدید ثبت می‌شود، تأثیر بگیرد.
-    /// </summary>
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
     private sealed record CacheEntry(
-        IReadOnlyList<Candle> Transformed,
+        CandleTransformationResult Result,
         DateTime ExpiresAt);
 
     private readonly ICurrencyRateProvider _rateProvider;
@@ -30,30 +26,35 @@ public sealed class CurrencyCandleTransformer : ICandleTransformer
         _logger = logger;
     }
 
-    public async Task<IReadOnlyList<Candle>> TransformAsync(
+    public async Task<CandleTransformationResult> TransformAsync(
         string isin,
         IReadOnlyList<Candle> irrCandles,
         string targetCurrency,
         DateTime atTime,
         CancellationToken ct = default)
     {
-        if (irrCandles.Count == 0) return irrCandles;
+        if (irrCandles.Count == 0)
+        {
+            return new CandleTransformationResult(
+                irrCandles, null, null, 0, 0);
+        }
 
         var target = targetCurrency.Trim().ToUpperInvariant();
-        if (target == BaseCurrency) return irrCandles;
+        if (target == BaseCurrency)
+        {
+            return new CandleTransformationResult(
+                irrCandles, 1m, null, 0, 0);
+        }
 
-        // ─── Cache Key: (isin, target, lastCandleTime) ───
-        // وقتی کندل جدید می‌آید، lastCandleTime عوض می‌شود → Cache miss → Re-transform.
         var lastCandleTime = irrCandles[^1].OpenTime;
         var cacheKey = $"{isin}:{target}:{lastCandleTime:yyyyMMddHHmm}";
 
         if (_cache.TryGetValue(cacheKey, out var entry)
             && DateTime.UtcNow < entry.ExpiresAt)
         {
-            return entry.Transformed;
+            return entry.Result;
         }
 
-        // ─── Fetch Rate History ───
         IReadOnlyList<CurrencyRatePoint> rates;
         try
         {
@@ -73,30 +74,56 @@ public sealed class CurrencyCandleTransformer : ICandleTransformer
                 $"up to {atTime:O}. Register at least one rate via /trader/currency-rates.");
         }
 
-        // ─── Per-Candle Transform ───
+        // ─── Debug: نمایش دقیق نقاط نرخ ───
+        _logger.LogDebug(
+            "Rate points for {From}→{To}: [{Points}]",
+            BaseCurrency, target,
+            string.Join(", ", rates.Select(r =>
+                $"{r.Rate:E8}@{r.EffectiveAt:yyyy-MM-dd HH:mm:ssZ}")));
+
         var baselineRate = rates[0].Rate;
         var firstRateTime = rates[0].EffectiveAt;
         var candlesBeforeFirstRate = 0;
 
         var result = new List<Candle>(irrCandles.Count);
 
-        foreach (var candle in irrCandles)
-        {
-            var rate = FindRateAt(rates, candle.OpenTime);
+        decimal? lastCandleRate = null;
+        DateTime? lastCandleRateEffectiveAt = null;
 
-            if (rate is null)
+        for (int i = 0; i < irrCandles.Count; i++)
+        {
+            var candle = irrCandles[i];
+            var isLastCandle = (i == irrCandles.Count - 1);
+
+            // ─── کندل آخر (in-progress): از atTime (الان) ───
+            // ─── کندل‌های تاریخی: از OpenTime ───
+            var lookupTime = isLastCandle ? atTime : candle.OpenTime;
+
+            var ratePoint = FindRateAt(rates, lookupTime);
+
+            decimal rate;
+            if (ratePoint is null)
             {
                 rate = baselineRate;
                 candlesBeforeFirstRate++;
             }
+            else
+            {
+                rate = ratePoint.Rate;
+            }
+
+            if (i == irrCandles.Count - 1)
+            {
+                lastCandleRate = rate;
+                lastCandleRateEffectiveAt = ratePoint?.EffectiveAt ?? firstRateTime;
+            }
 
             result.Add(candle with
             {
-                Open = candle.Open * rate.Value,
-                High = candle.High * rate.Value,
-                Low = candle.Low * rate.Value,
-                Close = candle.Close * rate.Value,
-                // Volume دست‌نخورده — تعداد سهم
+                Open = candle.Open * rate,
+                High = candle.High * rate,
+                Low = candle.Low * rate,
+                Close = candle.Close * rate,
             });
         }
 
@@ -105,43 +132,42 @@ public sealed class CurrencyCandleTransformer : ICandleTransformer
             _logger.LogWarning(
                 "{Count}/{Total} candles are OLDER than the first registered rate " +
                 "for IRR→{Target} (first rate at {FirstRateTime:O}). " +
-                "Using baseline rate {Baseline:E4} for them. " +
-                "For accurate historical analysis, register rates covering the full candle range.",
-                candlesBeforeFirstRate,
-                irrCandles.Count,
-                target,
-                firstRateTime,
-                baselineRate);
+                "Using baseline rate {Baseline:E8} for them.",
+                candlesBeforeFirstRate, irrCandles.Count, target,
+                firstRateTime, baselineRate);
         }
 
         _logger.LogDebug(
-            "Per-candle transform: {Count} candles IRR→{Target}, " +
-            "ratePoints={RateCount}, baseline={Baseline:E4}, " +
+            "Per-candle transform: {Count} candles IRR→{Target}, ratePoints={RateCount}, " +
+            "lastCandleRate={LastRate:E8} (effective at {LastEffectiveAt:O}), " +
             "candlesBeforeFirstRate={BeforeCount}",
-            result.Count, target, rates.Count, baselineRate, candlesBeforeFirstRate);
+            result.Count, target, rates.Count,
+            lastCandleRate, lastCandleRateEffectiveAt, candlesBeforeFirstRate);
 
-        // ─── Update Cache ───
-        _cache[cacheKey] = new CacheEntry(result, DateTime.UtcNow.Add(CacheTtl));
+        var finalResult = new CandleTransformationResult(
+            result,
+            lastCandleRate,
+            lastCandleRateEffectiveAt,
+            candlesBeforeFirstRate,
+            rates.Count);
 
-        return result;
+        _cache[cacheKey] = new CacheEntry(finalResult, DateTime.UtcNow.Add(CacheTtl));
+
+        return finalResult;
     }
 
-    /// <summary>
-    /// آخرین نرخ با EffectiveAt ≤ atTime. Binary search روی آرایه‌ی صعودی.
-    /// </summary>
-    private static decimal? FindRateAt(
+    private static CurrencyRatePoint? FindRateAt(
         IReadOnlyList<CurrencyRatePoint> rates, DateTime atTime)
     {
         int lo = 0, hi = rates.Count - 1;
-        decimal? result = null;
+        CurrencyRatePoint? result = null;
 
         while (lo <= hi)
         {
             int mid = (lo + hi) / 2;
-
             if (rates[mid].EffectiveAt <= atTime)
             {
-                result = rates[mid].Rate;
+                result = rates[mid];
                 lo = mid + 1;
             }
             else

@@ -241,12 +241,17 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
         // ─── Currency Transformation (اختیاری) ───
         string? appliedCurrency = null;
         decimal? appliedRate = null;
+        DateTime? appliedRateEffectiveAt = null;
+        int? candleCountBeforeFirstRate = null;
+        int? ratePointCount = null;
 
-        if (!string.IsNullOrWhiteSpace(ctx.TargetCurrency) && candles.Count > 0)
+        if (!string.IsNullOrWhiteSpace(ctx.TargetCurrency)
+            && ctx.TargetCurrency.Trim().ToUpperInvariant() != "IRR"
+            && candles.Count > 0)
         {
             try
             {
-                var transformed = await _candleTransformer.TransformAsync(
+                var transformation = await _candleTransformer.TransformAsync(
                     symbol.Isin,
                     candles,
                     ctx.TargetCurrency,
@@ -254,15 +259,12 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                     ct);
 
                 appliedCurrency = ctx.TargetCurrency.ToUpperInvariant();
+                appliedRate = transformation.LastCandleRate;
+                appliedRateEffectiveAt = transformation.LastCandleRateEffectiveAt;
+                candleCountBeforeFirstRate = transformation.CandleCountBeforeFirstRate;
+                ratePointCount = transformation.RatePointCount;
 
-                // نرخ مؤثر آخرین کندل (برای Audit و Features)
-                var lastIrr = candles[^1].Close;
-                var lastTransformed = transformed[^1].Close;
-                appliedRate = lastIrr > 0m
-                    ? lastTransformed / lastIrr
-                    : null;
-
-                candles = transformed;
+                candles = transformation.Candles;
 
                 // ─── CurrencyTransformed Event ───
                 _eventLogger.Log(
@@ -276,23 +278,23 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                         targetCurrency = appliedCurrency,
                         lastCandleRate = appliedRate,
                         lastCandleRateDisplay = FormatRateDisplay(appliedRate, appliedCurrency),
+                        lastCandleRateEffectiveAt = appliedRateEffectiveAt,
                         candleCount = candles.Count,
+                        ratePointCount,
+                        candleCountBeforeFirstRate,
                     },
                     runId: ctx.RunId,
                     isin: symbol.Isin);
 
                 _logger.LogDebug(
                     "Applied per-candle currency transform: IRR→{Target} for {Isin} " +
-                    "(last candle rate≈{Rate:E4}, i.e., {DisplayRate})",
-                    appliedCurrency, symbol.Isin, appliedRate,
-                    FormatRateDisplay(appliedRate, appliedCurrency));
-
+                    "(lastCandleRate={Rate:E8}, ratePoints={RatePoints})",
+                    appliedCurrency, symbol.Isin, appliedRate, ratePointCount);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
-                    "Currency transform failed for {Isin} → {Target}. " +
-                    "Skipping evaluation.",
+                    "Currency transform failed for {Isin} → {Target}. Skipping evaluation.",
                     symbol.Isin, ctx.TargetCurrency);
 
                 _eventLogger.Log(
@@ -359,6 +361,8 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 enriched["priceAtEvalIrr"] = snapshot.LastTradedPrice;
                 if (appliedRate.HasValue)
                     enriched["appliedRate"] = appliedRate.Value;
+                if (appliedRateEffectiveAt.HasValue)
+                    enriched["appliedRateEffectiveAt"] = appliedRateEffectiveAt.Value;
 
                 result = result with { Features = enriched };
             }
