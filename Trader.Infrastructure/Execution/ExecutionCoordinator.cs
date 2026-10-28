@@ -6,6 +6,8 @@ using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
+using Trader.Application.Specifications.OrderIntents;
+using Trader.Application.Specifications.Positions;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
@@ -133,38 +135,100 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     Guid accountId,
     CancellationToken ct)
     {
-        // ۱. Build OrderIntent
-        var intent = await _intentBuilder.BuildAsync(envelope.Signal, ctx, accountId, ct);
+        // ─── GUARD 1: Position باز برای همین Symbol در همین Account؟ ───
+        var openPositions = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByRunSpec(ctx.RunId)))
+            .Where(p => p.TraderAccountId == accountId
+                     && p.State != PositionState.Closed)
+            .ToList();
 
-        if (intent is null)
+        var existingPosition = openPositions
+            .FirstOrDefault(p => p.Isin == envelope.Signal.Isin);
+
+        if (envelope.Signal.Action == SignalAction.Buy && existingPosition is not null)
         {
             _eventLogger.Log(
                 stage: TradingStage.Execution,
                 type: TradingEventType.OrderIntentSkipped,
-                severity: TradingEventSeverity.Debug,
-                message: $"OrderIntent برای «{envelope.Signal.Isin}» ساخته نشد. " +
-                         $"احتمالاً سرمایه کافی نیست یا Signal رد شد.",
+                severity: TradingEventSeverity.Info,
+                message: $"سفارش خرید «{envelope.Signal.Isin}» رد شد: " +
+                         $"موقعیت باز وجود دارد ({existingPosition.Quantity.Value:N0} سهم).",
+                payload: new
+                {
+                    reason = "OpenPositionExists",
+                    positionId = existingPosition.Id,
+                    positionQuantity = existingPosition.Quantity.Value,
+                },
+                runId: ctx.RunId,
+                isin: envelope.Signal.Isin,
+                accountId: accountId,
+                signalId: envelope.Signal.Id,
+                positionId: existingPosition.Id);
+
+            return false;
+        }
+
+        if (envelope.Signal.Action == SignalAction.Sell && existingPosition is null)
+        {
+            _eventLogger.Log(
+                stage: TradingStage.Execution,
+                type: TradingEventType.OrderIntentSkipped,
+                severity: TradingEventSeverity.Info,
+                message: $"سفارش فروش «{envelope.Signal.Isin}» رد شد: " +
+                         $"هیچ موقعیت بازی وجود ندارد.",
+                payload: new { reason = "NoOpenPosition" },
                 runId: ctx.RunId,
                 isin: envelope.Signal.Isin,
                 accountId: accountId,
                 signalId: envelope.Signal.Id);
+
             return false;
         }
 
-        // ─── OrderIntentCreated Event ───
+        // ─── GUARD 2: OrderIntent در راه (Pending/Dispatched)؟ ───
+        var inflightIntents = (await _uow.OrderIntentSpecs.ListBySpecAsync(
+            new PendingOrderIntentsByRunSpec(ctx.RunId)))
+            .Where(i => i.TraderAccountId == accountId
+                     && i.Isin == envelope.Signal.Isin)
+            .ToList();
+
+        if (inflightIntents.Count > 0)
+        {
+            var inflight = inflightIntents[0];
+            _eventLogger.Log(
+                stage: TradingStage.Execution,
+                type: TradingEventType.OrderIntentSkipped,
+                severity: TradingEventSeverity.Info,
+                message: $"سفارش «{envelope.Signal.Isin}» رد شد: " +
+                         $"یک سفارش در راه است (State: {inflight.State}).",
+                payload: new
+                {
+                    reason = "InflightOrderIntentExists",
+                    orderIntentId = inflight.Id,
+                    orderIntentState = inflight.State.ToString(),
+                },
+                runId: ctx.RunId,
+                isin: envelope.Signal.Isin,
+                accountId: accountId,
+                signalId: envelope.Signal.Id,
+                orderIntentId: inflight.Id);
+
+            return false;
+        }
+
+        // ─── PROCEED: Build OrderIntent ───
+        var intent = await _intentBuilder.BuildAsync(
+            envelope.Signal, ctx, accountId, ct);
+
+        if (intent is null) return false;
+
         _eventLogger.Log(
             stage: TradingStage.Execution,
             type: TradingEventType.OrderIntentCreated,
             severity: TradingEventSeverity.Info,
-            message: $"تصمیم اجرا: {OrderSideToPersian(intent.Side)} " +
+            message: $"تصمیم اجرا: {SideToPersian(intent.Side)} " +
                      $"{intent.Quantity.Value:N0} سهم «{intent.Isin}» " +
-                     $"به قیمت {intent.Price.Value:N0} ریال" +
-                     (intent.StopLossPrice.HasValue
-                        ? $" (SL: {intent.StopLossPrice.Value:N0})"
-                        : "") +
-                     (intent.TakeProfitPrice.HasValue
-                        ? $" (TP: {intent.TakeProfitPrice.Value:N0})"
-                        : ""),
+                     $"به قیمت {intent.Price.Value:N0} ریال",
             payload: new
             {
                 side = intent.Side.ToString(),
@@ -179,36 +243,28 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             signalId: envelope.Signal.Id,
             orderIntentId: intent.Id);
 
-        // ۲. Account
+        // ─── Account + Session ───
         var account = await _uow.Accounts.GetByIdAsync(accountId);
         if (account is null)
         {
-            _eventLogger.Log(
-                stage: TradingStage.Execution,
-                type: TradingEventType.OrderDispatchFailed,
-                severity: TradingEventSeverity.Error,
-                message: $"حساب معاملاتی پیدا نشد: {accountId}",
-                runId: ctx.RunId,
-                isin: intent.Isin,
-                accountId: accountId,
-                orderIntentId: intent.Id);
+            _logger.LogWarning("Account {AccountId} not found.", accountId);
             return false;
         }
 
         var session = await _sessionProvider.GetSessionAsync(accountId, ct);
 
-        // ۳. Dispatch
+        // ─── Dispatch ───
         try
         {
-            var brokerOrder = await _dispatcher.DispatchAsync(intent, account.Broker, session, ct);
+            var brokerOrder = await _dispatcher.DispatchAsync(
+                intent, account.Broker, session, ct);
 
-            // ─── OrderDispatched Event ───
             _eventLogger.Log(
                 stage: TradingStage.Execution,
                 type: TradingEventType.OrderDispatched,
                 severity: TradingEventSeverity.Info,
-                message: $"سفارش {OrderSideToPersian(intent.Side)} " +
-                         $"«{intent.Isin}» به کارگزاری {account.Broker} ارسال شد. " +
+                message: $"سفارش {SideToPersian(intent.Side)} «{intent.Isin}» " +
+                         $"به کارگزاری {account.Broker} ارسال شد. " +
                          $"شماره: {brokerOrder.BrokerOrderId ?? "—"}",
                 payload: new
                 {
@@ -229,13 +285,11 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
                 stage: TradingStage.Execution,
                 type: TradingEventType.OrderDispatchFailed,
                 severity: TradingEventSeverity.Error,
-                message: $"ارسال سفارش «{intent.Isin}» به کارگزاری {account.Broker} " +
-                         $"ناموفق بود: {ex.Message}",
+                message: $"ارسال سفارش «{intent.Isin}» ناموفق بود: {ex.Message}",
                 payload: new
                 {
                     errorType = ex.GetType().Name,
                     errorMessage = ex.Message,
-                    broker = account.Broker.ToString(),
                 },
                 runId: ctx.RunId,
                 isin: intent.Isin,
@@ -245,7 +299,8 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             throw;
         }
     }
-    private static string OrderSideToPersian(OrderSide side) => side switch
+
+    private static string SideToPersian(OrderSide side) => side switch
     {
         OrderSide.Buy => "خرید",
         OrderSide.Sell => "فروش",

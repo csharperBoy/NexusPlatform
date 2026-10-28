@@ -185,6 +185,7 @@ namespace Trader.Infrastructure.DependencyInjection
             // ─── Candle Cache (Singleton) ───
             services.AddSingleton<ICandleCache, InMemoryCandleCache>();
             services.AddScoped<ITradingEventQueryService, TradingEventQueryService>();
+            services.AddScoped<ICommittedCapitalCalculator, CommittedCapitalCalculator>();
             /* ═══════════ Trading Event Logger ═══════════ */
             services.AddScoped<ITradingEventLogger, TradingEventLogger>();
             /* ═══════════ Scheduler Integration ═══════════ */
