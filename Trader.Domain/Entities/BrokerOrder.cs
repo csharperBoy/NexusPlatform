@@ -34,20 +34,25 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
     private BrokerOrder() { } // EF
 
     public static BrokerOrder CreatePending(
-        Guid runId,
-        Guid traderAccountId,
-        Guid? orderIntentId,
-        string isin,
-        OrderSide side,
-        Price price,
-        Quantity quantity)
+    Guid runId,
+    Guid traderAccountId,
+    Guid? orderIntentId,
+    string isin,
+    OrderSide side,
+    Price price,
+    Quantity quantity)
     {
+        // ─── Validation ───
+        if (string.IsNullOrWhiteSpace(isin))
+            throw new ArgumentException(
+                "Isin is required and cannot be null/empty.", nameof(isin));
+
         return new BrokerOrder
         {
             RunId = runId,
             TraderAccountId = traderAccountId,
             OrderIntentId = orderIntentId,
-            Isin = isin,
+            Isin = isin,                        // ← چک کن این خط هست!
             Side = side,
             Price = price,
             Quantity = quantity,

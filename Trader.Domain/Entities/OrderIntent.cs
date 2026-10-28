@@ -50,14 +50,32 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     string? reason = null,
     Price? stopLossPrice = null,
     Price? takeProfitPrice = null,
-    Guid? sourceEvaluationId = null)     // ← جدید
+    Guid? sourceEvaluationId = null)
     {
-        // ... validation
+        // ─── Validation ───
+        if (string.IsNullOrWhiteSpace(isin))
+            throw new ArgumentException(
+                "Isin is required and cannot be null/empty.", nameof(isin));
+
+        if (quantity.IsZero)
+            throw new InvalidOperationException("Order quantity cannot be zero.");
 
         return new OrderIntent
         {
-            // ... existing
-            SourceEvaluationId = sourceEvaluationId
+            RunId = runId,
+            TraderAccountId = traderAccountId,
+            SourceSignalId = sourceSignalId,
+            Isin = isin,                        // ← چک کن این خط هست!
+            Side = side,
+            Price = price,
+            Quantity = quantity,
+            OrderMode = orderMode,
+            State = OrderIntentState.Pending,
+            Reason = reason,
+            StopLossPrice = stopLossPrice,
+            TakeProfitPrice = takeProfitPrice,
+            SourceEvaluationId = sourceEvaluationId,
+            CreatedAt = DateTime.UtcNow
         };
     }
 

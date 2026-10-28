@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions.Logging;
@@ -21,17 +22,17 @@ public sealed class TradingEventLogger : ITradingEventLogger
         WriteIndented = false,
     };
 
-    private readonly TraderDbContext _db;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly TradingEventSeverity _minSeverity;
     private readonly ILogger<TradingEventLogger> _logger;
     private readonly List<TradingEvent> _buffer = new();
 
     public TradingEventLogger(
-        TraderDbContext db,
+        IServiceScopeFactory scopeFactory,
         IOptionsMonitor<TradingLoggingOptions> options,
         ILogger<TradingEventLogger> logger)
     {
-        _db = db;
+        _scopeFactory = scopeFactory;
         _minSeverity = options.CurrentValue.GetMinSeverityEnum();
         _logger = logger;
     }
@@ -51,9 +52,7 @@ public sealed class TradingEventLogger : ITradingEventLogger
         Guid? tradeId = null,
         Guid? positionId = null)
     {
-        // Filter — قبل از Serialization (Performance)
-        if (severity < _minSeverity)
-            return;
+        if (severity < _minSeverity) return;
 
         try
         {
@@ -78,7 +77,6 @@ public sealed class TradingEventLogger : ITradingEventLogger
 
             _buffer.Add(evt);
 
-            // Overflow guard
             if (_buffer.Count > MaxBufferSize)
             {
                 _logger.LogWarning(
@@ -89,7 +87,6 @@ public sealed class TradingEventLogger : ITradingEventLogger
         }
         catch (Exception ex)
         {
-            // Logger نباید Caller را بشکند
             _logger.LogError(ex,
                 "Failed to buffer trading event: {Type} {Message}", type, message);
         }
@@ -103,22 +100,21 @@ public sealed class TradingEventLogger : ITradingEventLogger
 
         try
         {
-            await _db.TradingEvents.AddRangeAsync(batch, ct);
-            await _db.SaveChangesAsync(ct);
+            // ─── Scope جدید: DbContext تازه و جدا از Stageها ───
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
+
+            await db.TradingEvents.AddRangeAsync(batch, ct);
+            await db.SaveChangesAsync(ct);
 
             _buffer.Clear();
-
-            _logger.LogDebug(
-                "Flushed {Count} trading events.", batch.Count);
+            _logger.LogDebug("Flushed {Count} trading events.", batch.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
                 "Failed to persist {Count} trading events. Buffer retained for next flush.",
                 batch.Count);
-
-            // Buffer را نگه دار — در Tick بعد دوباره تلاش می‌شود
-            // اگر باز Fail شد، Overflow Guard فعال می‌شود
         }
     }
 }
