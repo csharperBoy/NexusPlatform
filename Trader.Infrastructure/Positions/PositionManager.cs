@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Positions;
@@ -253,10 +254,25 @@ public sealed class PositionManager : IPositionManager
     /* ═══════════════════ Helpers ═══════════════════ */
 
     private async Task<Position?> FindPositionAsync(
-        BrokerOrder order, CancellationToken ct)
+    BrokerOrder order, CancellationToken ct)
     {
+        // ═══════════════ ۱. ChangeTracker (Positionهای Save نشده) ═══════════════
+        var tracked = _uow.Context.ChangeTracker
+            .Entries<Position>()
+            .Where(e => e.State != EntityState.Deleted)
+            .Select(e => e.Entity)
+            .FirstOrDefault(p =>
+                p.RunId == order.RunId
+                && p.TraderAccountId == order.TraderAccountId
+                && p.Isin == order.Isin
+                && p.State != PositionState.Closed);
+
+        if (tracked is not null)
+            return tracked;
+
+        // ═══════════════ ۲. DB (Positionهای Save شده) ═══════════════
         var spec = new OpenPositionsByRunSpec(order.RunId);
-        var positions = await _uow.PositionSpecs.ListBySpecAsync(spec);
+        var positions = (await _uow.PositionSpecs.ListBySpecAsync(spec)).ToList();
 
         return positions.FirstOrDefault(p =>
             p.Isin == order.Isin

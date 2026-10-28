@@ -185,27 +185,40 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             return false;
         }
 
-        // ─── GUARD 2: OrderIntent در راه (Pending/Dispatched)؟ ───
-        var inflightIntents = (await _uow.OrderIntentSpecs.ListBySpecAsync(
+        // ─── GUARD 2: OrderIntentهای تکراری بر اساس Side ───
+        var pendingIntents = (await _uow.OrderIntentSpecs.ListBySpecAsync(
             new PendingOrderIntentsByRunSpec(ctx.RunId)))
             .Where(i => i.TraderAccountId == accountId
                      && i.Isin == envelope.Signal.Isin)
             .ToList();
 
-        if (inflightIntents.Count > 0)
+        // برای BUY: فقط Pending/Dispatched (چون Acknowledged = Position باز است که Guard 1 بلوکه کرد)
+        // برای SELL: Pending/Dispatched/Acknowledged (چون Acknowledged = فروش در راه)
+        var relevantIntents = envelope.Signal.Action == SignalAction.Sell
+            ? pendingIntents.Where(i =>
+                i.State == OrderIntentState.Pending
+                || i.State == OrderIntentState.Dispatched
+                || i.State == OrderIntentState.Acknowledged).ToList()
+            : pendingIntents.Where(i =>
+                i.State == OrderIntentState.Pending
+                || i.State == OrderIntentState.Dispatched).ToList();
+
+        if (relevantIntents.Count > 0)
         {
-            var inflight = inflightIntents[0];
+            var inflight = relevantIntents[0];
             _eventLogger.Log(
                 stage: TradingStage.Execution,
                 type: TradingEventType.OrderIntentSkipped,
                 severity: TradingEventSeverity.Info,
                 message: $"سفارش «{envelope.Signal.Isin}» رد شد: " +
-                         $"یک سفارش در راه است (State: {inflight.State}).",
+                         $"یک سفارش {SideToPersian(inflight.Side)} در راه است " +
+                         $"(State: {inflight.State}).",
                 payload: new
                 {
                     reason = "InflightOrderIntentExists",
                     orderIntentId = inflight.Id,
                     orderIntentState = inflight.State.ToString(),
+                    side = inflight.Side.ToString(),
                 },
                 runId: ctx.RunId,
                 isin: envelope.Signal.Isin,

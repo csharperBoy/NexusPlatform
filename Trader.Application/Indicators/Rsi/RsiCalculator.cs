@@ -37,7 +37,11 @@ public static class RsiCalculator
             avgLoss = ((avgLoss * (period - 1)) + loss) / period;
         }
 
-        if (avgLoss == 0m) return 100m;
+        if (avgLoss == 0m)
+        {
+            // همه صعود یا همه صاف
+            return avgGain == 0m ? 50m : 100m;
+        }
 
         var rs = avgGain / avgLoss;
         var rsi = 100m - (100m / (1m + rs));

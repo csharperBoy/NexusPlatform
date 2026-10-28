@@ -9,7 +9,8 @@ public sealed class PendingOrderIntentsByRunSpec : BaseSpecification<OrderIntent
     public PendingOrderIntentsByRunSpec(Guid runId)
         : base(i => i.RunId == runId
                  && (i.State == OrderIntentState.Pending
-                  || i.State == OrderIntentState.Dispatched))
+                  || i.State == OrderIntentState.Dispatched
+                  || i.State == OrderIntentState.Acknowledged))
     {
     }
 }
