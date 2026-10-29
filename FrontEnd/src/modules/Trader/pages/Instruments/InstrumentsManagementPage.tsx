@@ -47,6 +47,8 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     label: "نام نماد",
     type: "text",
     required: true,
+    sticky: "right",
+    stickyWidth: 150,
   },
   {
     key: "displayName",
@@ -216,16 +218,19 @@ export const InstrumentsManagementPage: React.FC = () => {
             minOrderValueRial: item.minOrderValueRial ?? null,
           }),
 
-          tableFeatures: {
-            enableSearch: true,
-            enableDelete: true,
-            enableColumnFilter: true,
-            
-  horizontalScroll: true,  
-  
-  stickyAction: "left",      
-  stickyActionWidth: 100,  
-          },
+         tableFeatures: {
+  enableSearch: true,
+  enableDelete: true,
+  enableColumnFilter: true,
+  horizontalScroll: true,
+  stickyAction: "left",
+  stickyActionWidth: 100,
+   classNames: {
+  //  tr: "group bg-gray-100 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800/50",
+    stickyTd: "bg-gray-100 dark:bg-gray-900",
+  stickyTh: "bg-gray-50 dark:bg-gray-700",
+ },
+},
           pageFeatures: {
             enableAdd: true,
             

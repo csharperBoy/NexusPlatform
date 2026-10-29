@@ -1,6 +1,9 @@
-//src/core/components/crud/components/GenericCrudPage.tsx
 import React, { useMemo } from "react";
-import { GenericColumnDef, UseGenericCrudOptions } from "../types";
+import {
+  GenericColumnDef,
+  TableClassNames,
+  UseGenericCrudOptions,
+} from "../types";
 import { useGenericCrud } from "../hooks/useGenericCrud";
 import { GenericAddModal } from "./GenericAddModal";
 import { SearchableMultiSelect } from "../../Selection/SearchableMultiSelect";
@@ -13,6 +16,28 @@ interface StickyLayout {
   byKey: Record<string, StickyInfo>;
   action?: StickyInfo;
 }
+
+/* ─────────────────────────── Default classes ─────────────────────────── */
+
+const DEFAULT_CLASSES: Required<TableClassNames> = {
+  wrapper:
+    "overflow-x-auto rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 w-full max-w-full min-w-0 [contain:inline-size]",
+  table: "text-right text-sm text-gray-700 dark:text-gray-300",
+  thead: "bg-gray-50 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+  th: "p-3",
+  thAction: "p-3 text-center",
+  filterInput:
+    "w-full rounded border border-gray-300 p-1 text-xs font-normal dark:border-gray-600 dark:bg-gray-800 dark:text-white",
+  tbody: "divide-y divide-gray-200 dark:divide-gray-700",
+  tr: "group hover:bg-gray-50 dark:hover:bg-gray-800/50",
+  td: "p-2",
+  tdAction: "p-2 text-center",
+  tdEmpty: "p-4 text-center",
+  stickyTh: "bg-inherit",
+  stickyTd: "bg-inherit",
+  deleteButton:
+    "rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30",
+};
 
 interface GenericCrudPageProps<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
   title: string;
@@ -31,94 +56,84 @@ export function GenericCrudPage<T extends BaseEntity, TCreateCmd, TUpdateCmd>({
   });
 
   const { tableFeatures, pageFeatures } = crudOptions;
+
+  /* ─── Configurable classes (defaults + user overrides) ─── */
+  const classes: Required<TableClassNames> = {
+    ...DEFAULT_CLASSES,
+    ...(tableFeatures?.classNames ?? {}),
+  };
+
+  /* ─── Feature flags ─── */
   const showSearch = tableFeatures?.enableSearch !== false;
   const showColumnFilter = tableFeatures?.enableColumnFilter !== false;
   const showDeleteAction = tableFeatures?.enableDelete !== false;
   const showAddButton = pageFeatures?.enableAdd !== false;
   const showActionColumn = tableFeatures?.enableDelete !== false;
-const horizontalScroll = tableFeatures?.horizontalScroll === true;
+  const horizontalScroll = tableFeatures?.horizontalScroll === true;
 
-/* ─── Configurable classes ─── */
-const tableClass = tableFeatures?.tableClass ?? "";
-const headerBgClass =
-  tableFeatures?.headerBgClass ?? "bg-gray-50 dark:bg-gray-700";
-const headerTextClass =
-  tableFeatures?.headerTextClass ??
-  "text-xs text-gray-700 dark:text-gray-300";
-const headerCellClass = tableFeatures?.headerCellClass ?? "p-3";
-const cellClass = tableFeatures?.cellClass ?? "p-2";
-const rowBgClass =
-  tableFeatures?.rowBgClass ?? "bg-white dark:bg-gray-900";
-const rowHoverClass =
-  tableFeatures?.rowHoverClass ??
-  "hover:bg-gray-50 dark:hover:bg-gray-800/50";
-const stickyBorderClass = tableFeatures?.stickyBorderClass ?? "";
+  /* ─── Sticky layout ─── */
+  const stickyLayout = useMemo<StickyLayout | null>(() => {
+    const anyColumnSticky = columns.some((c) => c.sticky);
+    const actionSticky = tableFeatures?.stickyAction;
+    if (!anyColumnSticky && !actionSticky) return null;
 
-/* ─── Sticky layout ─── */
-const stickyLayout = useMemo<StickyLayout | null>(() => {
-  const anyColumnSticky = columns.some((c) => c.sticky);
-  const actionSticky = tableFeatures?.stickyAction;
-  if (!anyColumnSticky && !actionSticky) return null;
+    const isRtl =
+      typeof document === "undefined" ||
+      document.documentElement.dir === "rtl" ||
+      document.documentElement.dir === "";
 
-  const isRtl =
-    typeof document === "undefined" ||
-    document.documentElement.dir === "rtl" ||
-    document.documentElement.dir === "";
+    const allItems: Array<{ key: string; sticky?: StickySide; width: number }> = [
+      ...columns.map((c) => ({
+        key: String(c.key),
+        sticky: c.sticky,
+        width: c.stickyWidth ?? 120,
+      })),
+      ...(actionSticky
+        ? [
+            {
+              key: "__action__",
+              sticky: actionSticky,
+              width: tableFeatures?.stickyActionWidth ?? 100,
+            },
+          ]
+        : []),
+    ];
 
-  const allItems: Array<{ key: string; sticky?: StickySide; width: number }> = [
-    ...columns.map((c) => ({
-      key: String(c.key),
-      sticky: c.sticky,
-      width: c.stickyWidth ?? 120,
-    })),
-    ...(actionSticky
-      ? [
-          {
-            key: "__action__",
-            sticky: actionSticky,
-            width: tableFeatures?.stickyActionWidth ?? 100,
-          },
-        ]
-      : []),
-  ];
+    const byKey: Record<string, StickyInfo> = {};
 
-  const byKey: Record<string, StickyInfo> = {};
-
-  let leftOffset = 0;
-  const leftItems = isRtl ? [...allItems].reverse() : allItems;
-  for (const item of leftItems) {
-    if (item.sticky === "left") {
-      byKey[item.key] = { side: "left", offset: leftOffset };
-      leftOffset += item.width;
+    let leftOffset = 0;
+    const leftItems = isRtl ? [...allItems].reverse() : allItems;
+    for (const item of leftItems) {
+      if (item.sticky === "left") {
+        byKey[item.key] = { side: "left", offset: leftOffset };
+        leftOffset += item.width;
+      }
     }
-  }
 
-  let rightOffset = 0;
-  const rightItems = isRtl ? allItems : [...allItems].reverse();
-  for (const item of rightItems) {
-    if (item.sticky === "right") {
-      byKey[item.key] = { side: "right", offset: rightOffset };
-      rightOffset += item.width;
+    let rightOffset = 0;
+    const rightItems = isRtl ? allItems : [...allItems].reverse();
+    for (const item of rightItems) {
+      if (item.sticky === "right") {
+        byKey[item.key] = { side: "right", offset: rightOffset };
+        rightOffset += item.width;
+      }
     }
-  }
 
-  return { byKey, action: byKey["__action__"] };
-}, [columns, tableFeatures?.stickyAction, tableFeatures?.stickyActionWidth]);
+    return { byKey, action: byKey["__action__"] };
+  }, [columns, tableFeatures?.stickyAction, tableFeatures?.stickyActionWidth]);
 
-const stickyCellClass = (side: StickySide): string =>
-  stickyBorderClass
-    ? stickyBorderClass
-    : side === "left"
-      ? ""
-      : "";
+  const stickyCellStyle = (
+    info: StickyInfo,
+    zIndex: number,
+  ): React.CSSProperties =>
+    info.side === "left"
+      ? { position: "sticky", left: `${info.offset}px`, zIndex }
+      : { position: "sticky", right: `${info.offset}px`, zIndex };
 
-const stickyCellStyle = (
-  info: StickyInfo,
-  zIndex: number,
-): React.CSSProperties =>
-  info.side === "left"
-    ? { position: "sticky", left: `${info.offset}px`, zIndex }
-    : { position: "sticky", right: `${info.offset}px`, zIndex };
+  const tableClassName = `${classes.table} ${
+    horizontalScroll ? "min-w-max w-full" : "w-full"
+  }`;
+
   return (
     <div className="space-y-4 p-6">
       {/* Header & Action Bar */}
@@ -167,124 +182,120 @@ const stickyCellStyle = (
       )}
 
       {/* Data Table */}
-     <div
-  className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 w-full max-w-full min-w-0 [contain:inline-size]"
->
-  <table
-  className={`text-right text-sm text-gray-700 dark:text-gray-300 ${tableClass} ${
-    horizontalScroll ? "min-w-max w-full" : "w-full"
-  }`}
->
-          <thead className={`${headerBgClass} ${headerTextClass}`}>
+      <div className={classes.wrapper}>
+        <table className={tableClassName}>
+          <thead className={classes.thead}>
             <tr>
               {columns.map((col) => {
-  const stickyInfo = stickyLayout?.byKey[String(col.key)];
+                const stickyInfo = stickyLayout?.byKey[String(col.key)];
 
-  return (
-    <th
-      key={String(col.key)}
-      className={`p-3 ${
-        stickyInfo
-          ? `${stickyCellClass(stickyInfo.side)} bg-gray-50 dark:bg-gray-700`
-          : ""
-      }`}
-      style={{
-        ...(col.minWidth ? { minWidth: `${col.minWidth}px` } : {}),
-        ...(stickyInfo ? stickyCellStyle(stickyInfo, 10) : {}),
-      }}
-    >
-      <div className="flex flex-col gap-2">
-        <span>{col.label}</span>
-        {showColumnFilter && (
-          <input
-            type="text"
-            placeholder="فیلتر..."
-            value={crud.columnFilters[String(col.key)] || ""}
-            onChange={(e) =>
-              crud.setColumnFilters((prev) => ({
-                ...prev,
-                [String(col.key)]: e.target.value,
-              }))
-            }
-            className="w-full rounded border border-gray-300 p-1 text-xs font-normal dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-          />
-        )}
-      </div>
-    </th>
-  );
-})}
+                return (
+                  <th
+                    key={String(col.key)}
+                    className={`${classes.th} ${
+                      stickyInfo ? classes.stickyTh : ""
+                    }`}
+                    style={{
+                      ...(col.minWidth
+                        ? { minWidth: `${col.minWidth}px` }
+                        : {}),
+                      ...(stickyInfo ? stickyCellStyle(stickyInfo, 10) : {}),
+                    }}
+                  >
+                    <div className="flex flex-col gap-2">
+                      <span>{col.label}</span>
+                      {showColumnFilter && (
+                        <input
+                          type="text"
+                          placeholder="فیلتر..."
+                          value={crud.columnFilters[String(col.key)] || ""}
+                          onChange={(e) =>
+                            crud.setColumnFilters((prev) => ({
+                              ...prev,
+                              [String(col.key)]: e.target.value,
+                            }))
+                          }
+                          className={classes.filterInput}
+                        />
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
               {showActionColumn && (
-  <th
-    className={`p-3 text-center ${
-      stickyLayout?.action
-        ? `${stickyCellClass(stickyLayout.action.side)} bg-gray-50 dark:bg-gray-700`
-        : ""
-    }`}
-    style={
-      stickyLayout?.action
-        ? stickyCellStyle(stickyLayout.action, 10)
-        : undefined
-    }
-  >
-    عملیات
-  </th>
-)}
+                <th
+                  className={`${classes.thAction} ${
+                    stickyLayout?.action ? classes.stickyTh : ""
+                  }`}
+                  style={
+                    stickyLayout?.action
+                      ? stickyCellStyle(stickyLayout.action, 10)
+                      : undefined
+                  }
+                >
+                  عملیات
+                </th>
+              )}
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className={classes.tbody}>
             {crud.loading ? (
               <tr>
-                <td colSpan={columns.length + 1} className="p-4 text-center">
+                <td
+                  colSpan={columns.length + (showActionColumn ? 1 : 0)}
+                  className={classes.tdEmpty}
+                >
                   در حال بارگذاری داده‌ها...
                 </td>
               </tr>
             ) : crud.items.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="p-4 text-center">
+                <td
+                  colSpan={columns.length + (showActionColumn ? 1 : 0)}
+                  className={classes.tdEmpty}
+                >
                   رکوردی یافت نشد.
                 </td>
               </tr>
             ) : (
               crud.items.map((item) => (
-                <tr
-                  key={item.id}
-                   className="group hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
+                <tr key={item.id} className={classes.tr}>
                   {columns.map((col) => {
-  const key = col.key as keyof T;
-  const value = item[key];
-  const stickyInfo = stickyLayout?.byKey[String(key)];
+                    const key = col.key as keyof T;
+                    const value = item[key];
+                    const stickyInfo = stickyLayout?.byKey[String(key)];
 
-  const options = col.staticOptions
-    ? col.staticOptions
-    : col.selectionKey
-      ? crud.selectionLists[col.selectionKey] || []
-      : [];
+                    const options = col.staticOptions
+                      ? col.staticOptions
+                      : col.selectionKey
+                        ? crud.selectionLists[col.selectionKey] || []
+                        : [];
 
-  return (
-    <td
-      key={String(key)}
-      className={`p-2 ${col.noWrap ? "whitespace-nowrap" : ""} ${
-  stickyInfo
-    ? `${stickyCellClass(stickyInfo.side)} ${stickyBgClass} ${stickyHoverBgClass}`
-    : ""
-}`}
-      style={{
-        ...(col.minWidth ? { minWidth: `${col.minWidth}px` } : {}),
-        ...(stickyInfo ? stickyCellStyle(stickyInfo, 5) : {}),
-      }}
-    >
+                    return (
+                      <td
+                        key={String(key)}
+                        className={`${classes.td} ${
+                          col.noWrap ? "whitespace-nowrap" : ""
+                        } ${stickyInfo ? classes.stickyTd : ""}`}
+                        style={{
+                          ...(col.minWidth
+                            ? { minWidth: `${col.minWidth}px` }
+                            : {}),
+                          ...(stickyInfo
+                            ? stickyCellStyle(stickyInfo, 5)
+                            : {}),
+                        }}
+                      >
                         {col.editable !== false ? (
                           col.type === "select" ? (
                             <select
-                              // ← NEW: تبدیل امن عدد/null به string برای نمایش
                               value={value == null ? "" : String(value)}
                               onChange={(e) =>
                                 crud.handleFieldChange(
                                   item.id,
                                   key,
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -299,15 +310,14 @@ const stickyCellStyle = (
                           ) : col.type === "multi-select" ? (
                             <SearchableMultiSelect
                               options={options}
-                              // ← NEW: تبدیل ایمن هر عضو آرایه به string
                               value={
                                 Array.isArray(value)
                                   ? (value as any[]).map((x) =>
                                       String(
                                         typeof x === "object" && x != null
                                           ? x.id
-                                          : x
-                                      )
+                                          : x,
+                                      ),
                                     )
                                   : []
                               }
@@ -330,24 +340,21 @@ const stickyCellStyle = (
                                 crud.handleFieldChange(
                                   item.id,
                                   key,
-                                  e.target.checked
+                                  e.target.checked,
                                 )
                               }
                               className="h-4 w-4 rounded border-gray-300 text-blue-600"
                             />
                           ) : (
                             <input
-                              type={
-                                col.type === "number" ? "number" : "text"
-                              }
-                              // ← NEW: استفاده از ?? به جای || تا مقدار صفر حفظ بشه
+                              type={col.type === "number" ? "number" : "text"}
                               value={value == null ? "" : String(value)}
                               dir={col.dir || "rtl"}
                               onChange={(e) =>
                                 crud.handleFieldChange(
                                   item.id,
                                   key,
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className={`w-full rounded border border-gray-300 p-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white ${
@@ -355,40 +362,38 @@ const stickyCellStyle = (
                               }`}
                             />
                           )
-                             ) : col.render ? (
-        col.render(value, item)
-      ) : (
-        <span dir={col.dir || "rtl"} className={col.className}>
-          {String(value ?? "")}
-        </span>
-      )}
-    </td>
-  );
-})}
+                        ) : col.render ? (
+                          col.render(value, item)
+                        ) : (
+                          <span dir={col.dir || "rtl"} className={col.className}>
+                            {String(value ?? "")}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
 
                   {showActionColumn && (
-  <td
-    className={`p-2 text-center ${
-  stickyLayout?.action
-    ? `${stickyCellClass(stickyLayout.action.side)} ${stickyBgClass} ${stickyHoverBgClass}`
-    : ""
-}`}
-    style={
-      stickyLayout?.action
-        ? stickyCellStyle(stickyLayout.action, 5)
-        : undefined
-    }
-  >
-    {showDeleteAction && (
-      <button
-        onClick={() => crud.prepareDelete(item)}
-        className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-      >
-        حذف
-      </button>
-    )}
-  </td>
-)}
+                    <td
+                      className={`${classes.tdAction} ${
+                        stickyLayout?.action ? classes.stickyTd : ""
+                      }`}
+                      style={
+                        stickyLayout?.action
+                          ? stickyCellStyle(stickyLayout.action, 5)
+                          : undefined
+                      }
+                    >
+                      {showDeleteAction && (
+                        <button
+                          onClick={() => crud.prepareDelete(item)}
+                          className={classes.deleteButton}
+                        >
+                          حذف
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))
             )}
