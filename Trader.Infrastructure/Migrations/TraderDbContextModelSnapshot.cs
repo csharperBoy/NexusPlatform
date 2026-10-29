@@ -348,6 +348,12 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<decimal>("BuyCommissionRate")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasDefaultValue(0.0037m);
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime2")
@@ -375,12 +381,31 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("Market")
                         .HasColumnType("int");
 
+                    b.Property<long>("MaxOrderQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(100000L);
+
+                    b.Property<long>("MinOrderQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.Property<long?>("MinOrderValueRial")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ModifiedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal>("SellCommissionRate")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)")
+                        .HasDefaultValue(0.0037m);
 
                     b.Property<string>("SymbolName")
                         .IsRequired()
@@ -1367,6 +1392,12 @@ namespace Trader.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("StrengthMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(4, 2)
+                        .HasColumnType("decimal(4,2)")
+                        .HasDefaultValue(1.5m);
 
                     b.Property<string>("TargetCurrency")
                         .HasMaxLength(10)
