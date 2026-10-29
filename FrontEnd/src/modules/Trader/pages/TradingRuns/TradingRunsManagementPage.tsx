@@ -226,13 +226,13 @@ export const TradingRunsManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center">
+                <td colSpan={10} className="p-6 text-center">
                   در حال بارگذاری...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center">
+                <td colSpan={10} className="p-6 text-center">
                   هیچ پلنی یافت نشد.
                 </td>
               </tr>

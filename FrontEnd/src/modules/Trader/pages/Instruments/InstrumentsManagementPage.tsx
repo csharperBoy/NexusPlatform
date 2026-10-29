@@ -171,6 +171,7 @@ export const InstrumentsManagementPage: React.FC = () => {
         crudOptions={{
           api: instrumentCrudApi,
           columns,
+          
           selectionApis: {
             tradingSchedule: tradingScheduleApi.GetSelectionList,
           },
@@ -219,9 +220,15 @@ export const InstrumentsManagementPage: React.FC = () => {
             enableSearch: true,
             enableDelete: true,
             enableColumnFilter: true,
+            
+  horizontalScroll: true,  
+  
+  stickyAction: "left",      
+  stickyActionWidth: 100,  
           },
           pageFeatures: {
             enableAdd: true,
+            
           },
         }}
       />

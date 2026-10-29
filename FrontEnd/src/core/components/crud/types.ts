@@ -47,6 +47,16 @@ export interface GenericColumnDef<T> {
   className?: string;
   render?: (value: any, item: T) => React.ReactNode;
   getFilterValue?: (entity: T) => string;
+  // NEW — برای horizontalScroll
+  /** حداقل عرض ستون به پیکسل (اختیاری). */
+  minWidth?: number;
+  /** اگر true، محتوای سلول در یک خط می‌ماند (بدون wrap). */
+  noWrap?: boolean;
+   // NEW — Sticky columns
+  /** چسبیدن ستون به لبه‌ی visual (left/right) در صورت اسکرول افقی. */
+  sticky?: "left" | "right";
+  /** عرض ستون (px). الزامی اگر sticky set باشد. */
+  stickyWidth?: number;
 }
 
 export interface GenericCrudApi<T extends BaseEntity, TCreateCmd, TUpdateCmd> {
@@ -63,6 +73,22 @@ export interface TableFeatures {
   enableSearch?: boolean;
   enableColumnFilter?: boolean;
   enableDelete?: boolean;
+  horizontalScroll?: boolean; 
+  /** چسبیدن ستون Action (دکمه‌ی حذف) به لبه. */
+  stickyAction?: "left" | "right";
+  /** عرض ستون Action (px). پیش‌فرض 100. */
+  stickyActionWidth?: number;
+    /**
+   * کلاس پس‌زمینه‌ی solid برای sticky cells. باید با پس‌زمینه‌ی page/table یکی باشد.
+   * پیش‌فرض: "bg-gray-50 dark:bg-gray-900"
+   */
+  stickyBgClass?: string;
+
+  /**
+   * کلاس پس‌زمینه‌ی hover. باید کمی تیره‌تر از stickyBgClass باشد تا hover دیده شود.
+   * پیش‌فرض: "group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
+   */
+  stickyHoverBgClass?: string;
 }
 
 export interface PageFeatures {
