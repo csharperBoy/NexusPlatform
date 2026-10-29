@@ -8,6 +8,11 @@ public sealed record CreateInstrumentModel(
     int Market,
     string? BoardCode,
     Guid? TradingScheduleId,
+    decimal BuyCommissionRate,
+    decimal SellCommissionRate,
+    long MinOrderQuantity,
+    long MaxOrderQuantity,
+    long? MinOrderValueRial,
     OptionContractModel? OptionContract);
 
 public sealed record OptionContractModel(

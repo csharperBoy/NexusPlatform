@@ -1,13 +1,22 @@
 ﻿namespace Trader.Application.Abstractions.Execution;
 
 /// <summary>
-/// محاسبه‌ی سرمایه‌ی «در حال استفاده» (Commit شده).
-/// = مجموع OrderIntentهای فعال + ارزش موقعیت‌های باز
+/// محاسبه‌ی سرمایه‌ی «مصرف‌شده»:
+/// = ارزش موقعیت‌های باز + حجم باقی‌مانده‌ی سفارشات BUY در راه
 /// </summary>
 public interface ICommittedCapitalCalculator
 {
-    Task<decimal> CalculateAsync(
+    /// <summary>سرمایه‌ی مصرف‌شده در کل Run (همه‌ی نمادها) در یک Account.</summary>
+    Task<decimal> CalculateForRunAsync(
         Guid runId,
         Guid accountId,
         CancellationToken ct = default);
+
+    /// <summary>سرمایه‌ی مصرف‌شده برای یک Symbol خاص.</summary>
+    Task<decimal> CalculateForSymbolAsync(
+        Guid runId,
+        Guid accountId,
+        string isin,
+        CancellationToken ct = default);
 }
+

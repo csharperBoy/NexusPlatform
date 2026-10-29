@@ -40,7 +40,27 @@ public class InstrumentConfiguration : BaseConfiguration<Instrument>
             .HasDatabaseName("IX_Instrument_TradingScheduleId");
         builder.Property(x => x.BoardCode).HasMaxLength(50);
         builder.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
+        // ─── Commission + Order Limits ───
+        builder.Property(x => x.BuyCommissionRate)
+            .HasPrecision(9, 6)
+            .IsRequired()
+            .HasDefaultValue(0.0037m);
 
+        builder.Property(x => x.SellCommissionRate)
+            .HasPrecision(9, 6)
+            .IsRequired()
+            .HasDefaultValue(0.0037m);
+
+        builder.Property(x => x.MinOrderQuantity)
+            .IsRequired()
+            .HasDefaultValue(1L);
+
+        builder.Property(x => x.MaxOrderQuantity)
+            .IsRequired()
+            .HasDefaultValue(100000L);
+
+        builder.Property(x => x.MinOrderValueRial)
+            .IsRequired(false);
         // OptionContract به عنوان Owned Type
         builder.OwnsOne(x => x.OptionContract, ob =>
         {

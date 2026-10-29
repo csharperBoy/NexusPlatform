@@ -17,7 +17,8 @@ public sealed record RunRuntimeContext(
     IStrategy Strategy,
     StrategyConfig StrategyConfig,
     TimeFrame PrimaryTimeFrame,
-    string? TargetCurrency,               // ← جدید
+    string? TargetCurrency,
+    decimal StrengthMultiplier,
     CapitalAllocation CapitalAllocation,
     StopLossConfig? StopLoss,
     TakeProfitConfig? TakeProfit,

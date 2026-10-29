@@ -6,6 +6,7 @@ using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
+using Trader.Application.Specifications.BrokerOrders;
 using Trader.Application.Specifications.OrderIntents;
 using Trader.Application.Specifications.Positions;
 using Trader.Domain.Enums;
@@ -135,101 +136,39 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     Guid accountId,
     CancellationToken ct)
     {
-        // ─── GUARD 1: Position باز برای همین Symbol در همین Account؟ ───
-        var openPositions = (await _uow.PositionSpecs.ListBySpecAsync(
-            new OpenPositionsByRunSpec(ctx.RunId)))
-            .Where(p => p.TraderAccountId == accountId
-                     && p.State != PositionState.Closed)
+        // ─── GUARD: BrokerOrder در راه ───
+        var inflightOrders = (await _uow.BrokerOrderSpecs.ListBySpecAsync(
+            new OpenBrokerOrdersByAccountSpec(accountId)))
+            .Where(o => o.RunId == ctx.RunId
+                     && o.Isin == envelope.Signal.Isin
+                     && !o.IsTerminal)
             .ToList();
 
-        var existingPosition = openPositions
-            .FirstOrDefault(p => p.Isin == envelope.Signal.Isin);
-
-        if (envelope.Signal.Action == SignalAction.Buy && existingPosition is not null)
+        if (inflightOrders.Count > 0)
         {
-            _eventLogger.Log(
-                stage: TradingStage.Execution,
-                type: TradingEventType.OrderIntentSkipped,
-                severity: TradingEventSeverity.Info,
-                message: $"سفارش خرید «{envelope.Signal.Isin}» رد شد: " +
-                         $"موقعیت باز وجود دارد ({existingPosition.Quantity.Value:N0} سهم).",
-                payload: new
-                {
-                    reason = "OpenPositionExists",
-                    positionId = existingPosition.Id,
-                    positionQuantity = existingPosition.Quantity.Value,
-                },
-                runId: ctx.RunId,
-                isin: envelope.Signal.Isin,
-                accountId: accountId,
-                signalId: envelope.Signal.Id,
-                positionId: existingPosition.Id);
-
-            return false;
-        }
-
-        if (envelope.Signal.Action == SignalAction.Sell && existingPosition is null)
-        {
-            _eventLogger.Log(
-                stage: TradingStage.Execution,
-                type: TradingEventType.OrderIntentSkipped,
-                severity: TradingEventSeverity.Info,
-                message: $"سفارش فروش «{envelope.Signal.Isin}» رد شد: " +
-                         $"هیچ موقعیت بازی وجود ندارد.",
-                payload: new { reason = "NoOpenPosition" },
-                runId: ctx.RunId,
-                isin: envelope.Signal.Isin,
-                accountId: accountId,
-                signalId: envelope.Signal.Id);
-
-            return false;
-        }
-
-        // ─── GUARD 2: OrderIntentهای تکراری بر اساس Side ───
-        var pendingIntents = (await _uow.OrderIntentSpecs.ListBySpecAsync(
-            new PendingOrderIntentsByRunSpec(ctx.RunId)))
-            .Where(i => i.TraderAccountId == accountId
-                     && i.Isin == envelope.Signal.Isin)
-            .ToList();
-
-        // برای BUY: فقط Pending/Dispatched (چون Acknowledged = Position باز است که Guard 1 بلوکه کرد)
-        // برای SELL: Pending/Dispatched/Acknowledged (چون Acknowledged = فروش در راه)
-        var relevantIntents = envelope.Signal.Action == SignalAction.Sell
-            ? pendingIntents.Where(i =>
-                i.State == OrderIntentState.Pending
-                || i.State == OrderIntentState.Dispatched
-                || i.State == OrderIntentState.Acknowledged).ToList()
-            : pendingIntents.Where(i =>
-                i.State == OrderIntentState.Pending
-                || i.State == OrderIntentState.Dispatched).ToList();
-
-        if (relevantIntents.Count > 0)
-        {
-            var inflight = relevantIntents[0];
+            var inflight = inflightOrders[0];
             _eventLogger.Log(
                 stage: TradingStage.Execution,
                 type: TradingEventType.OrderIntentSkipped,
                 severity: TradingEventSeverity.Info,
                 message: $"سفارش «{envelope.Signal.Isin}» رد شد: " +
-                         $"یک سفارش {SideToPersian(inflight.Side)} در راه است " +
-                         $"(State: {inflight.State}).",
+                         $"یک سفارش در حال اجراست (State: {inflight.State}).",
                 payload: new
                 {
-                    reason = "InflightOrderIntentExists",
-                    orderIntentId = inflight.Id,
-                    orderIntentState = inflight.State.ToString(),
-                    side = inflight.Side.ToString(),
+                    reason = "InflightBrokerOrderExists",
+                    brokerOrderId = inflight.BrokerOrderId,
+                    brokerOrderState = inflight.State.ToString(),
                 },
                 runId: ctx.RunId,
                 isin: envelope.Signal.Isin,
                 accountId: accountId,
                 signalId: envelope.Signal.Id,
-                orderIntentId: inflight.Id);
+                brokerOrderId: inflight.Id);
 
             return false;
         }
 
-        // ─── PROCEED: Build OrderIntent ───
+        // ─── Build Intent (شامل stepped capital + min/max) ───
         var intent = await _intentBuilder.BuildAsync(
             envelope.Signal, ctx, accountId, ct);
 
@@ -247,8 +186,6 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
                 side = intent.Side.ToString(),
                 quantity = intent.Quantity.Value,
                 price = intent.Price.Value,
-                stopLossPrice = intent.StopLossPrice?.Value,
-                takeProfitPrice = intent.TakeProfitPrice?.Value,
             },
             runId: ctx.RunId,
             isin: intent.Isin,
@@ -258,11 +195,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
 
         // ─── Account + Session ───
         var account = await _uow.Accounts.GetByIdAsync(accountId);
-        if (account is null)
-        {
-            _logger.LogWarning("Account {AccountId} not found.", accountId);
-            return false;
-        }
+        if (account is null) return false;
 
         var session = await _sessionProvider.GetSessionAsync(accountId, ct);
 
@@ -279,11 +212,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
                 message: $"سفارش {SideToPersian(intent.Side)} «{intent.Isin}» " +
                          $"به کارگزاری {account.Broker} ارسال شد. " +
                          $"شماره: {brokerOrder.BrokerOrderId ?? "—"}",
-                payload: new
-                {
-                    brokerOrderId = brokerOrder.BrokerOrderId,
-                    broker = account.Broker.ToString(),
-                },
+                payload: new { brokerOrderId = brokerOrder.BrokerOrderId },
                 runId: ctx.RunId,
                 isin: intent.Isin,
                 accountId: accountId,

@@ -37,6 +37,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
     public IReadOnlyList<TradingRunSymbol> Symbols => _symbols.AsReadOnly();
     public IReadOnlyList<TradingRunAccount> Accounts => _accounts.AsReadOnly();
     public string? TargetCurrency { get; private set; }   // مثلاً "USD" یا null
+    public decimal StrengthMultiplier { get; private set; } = 1.5m;
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -82,12 +83,15 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         StopRunBehavior onStop,
         IEnumerable<(string Isin, SymbolAllocation Allocation)> symbols,
         IEnumerable<Guid> accountIds,
-    string? targetCurrency = null)
+    string? targetCurrency = null,
+    decimal strengthMultiplier = 1.5m)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Run name is required.", nameof(name));
         if (string.IsNullOrWhiteSpace(strategyKey))
             throw new ArgumentException("Strategy key is required.", nameof(strategyKey));
+
+        ValidateStrengthMultiplier(strengthMultiplier);
 
         var run = new TradingRun
         {
@@ -104,7 +108,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             OnMarketClose = onMarketClose,
             OnStop = onStop,
             CreatedAt = DateTime.UtcNow,
-            TargetCurrency = NormalizeCurrency(targetCurrency)   // ← جدید
+            TargetCurrency = NormalizeCurrency(targetCurrency),
+            StrengthMultiplier = strengthMultiplier,
 
         };
 
@@ -116,6 +121,13 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
 
         run.RecomputeReadiness();
         return run;
+    }
+
+    private static void ValidateStrengthMultiplier(decimal m)
+    {
+        if (m < 0.1m || m > 5.0m)
+            throw new ArgumentOutOfRangeException(nameof(m),
+                "StrengthMultiplier must be between 0.1 and 5.0.");
     }
     private static string? NormalizeCurrency(string? currency)
     {
@@ -139,9 +151,12 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         OrderMode defaultOrderMode,
         MarketCloseBehavior onMarketClose,
         StopRunBehavior onStop,
-    string? targetCurrency)
+    string? targetCurrency,
+    decimal strengthMultiplier)
     {
         EnsureNotRunning();
+        ValidateStrengthMultiplier(strengthMultiplier);
+
 
         Name = name.Trim();
         StrategyKey = strategyKey.Trim();
@@ -154,6 +169,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         OnMarketClose = onMarketClose;
         OnStop = onStop; 
         TargetCurrency = NormalizeCurrency(targetCurrency);
+        StrengthMultiplier = strengthMultiplier;
 
         Touch();
         RecomputeReadiness();

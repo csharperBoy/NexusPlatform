@@ -11,7 +11,12 @@ public record UpdateInstrumentCommand(
     Optional<string?> SymbolName,
     Optional<string?> DisplayName,
     Optional<string?> BoardCode,
-    Optional<Guid?> TradingScheduleId
+    Optional<Guid?> TradingScheduleId,
+    Optional<decimal> BuyCommissionRate,
+    Optional<decimal> SellCommissionRate,
+    Optional<long> MinOrderQuantity,
+    Optional<long> MaxOrderQuantity,
+    Optional<long?> MinOrderValueRial
 ) : IRequest<Result<bool>>;
 
 public class UpdateInstrumentCommandHandler
@@ -39,13 +44,12 @@ public class UpdateInstrumentCommandHandler
                 request.SymbolName,
                 request.DisplayName,
                 request.BoardCode,
-                request.TradingScheduleId);
-
-            if (!hasChange)
-            {
-                _logger.LogInformation(
-                    "No changes for Instrument {Id}", request.Id);
-            }
+                request.TradingScheduleId,
+                request.BuyCommissionRate,
+                request.SellCommissionRate,
+                request.MinOrderQuantity,
+                request.MaxOrderQuantity,
+                request.MinOrderValueRial);
 
             return Result<bool>.Ok(hasChange);
         }

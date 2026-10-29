@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Execution;
+using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Runtime;
+using Trader.Application.Specifications.Instruments;
+using Trader.Application.Specifications.Positions;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
@@ -13,21 +16,24 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
 {
     private readonly IMarketSnapshotStore _snapshotStore;
     private readonly ICapitalAllocator _capitalAllocator;
-    private readonly IPositionSizer _positionSizer;
+    private readonly ICommittedCapitalCalculator _committedCapital;
     private readonly ITraderUnitOfWork<Data.TraderDbContext> _uow;
+    private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<OrderIntentBuilder> _logger;
 
     public OrderIntentBuilder(
         IMarketSnapshotStore snapshotStore,
         ICapitalAllocator capitalAllocator,
-        IPositionSizer positionSizer,
+        ICommittedCapitalCalculator committedCapital,
         ITraderUnitOfWork<Data.TraderDbContext> uow,
+        ITradingEventLogger eventLogger,
         ILogger<OrderIntentBuilder> logger)
     {
         _snapshotStore = snapshotStore;
         _capitalAllocator = capitalAllocator;
-        _positionSizer = positionSizer;
+        _committedCapital = committedCapital;
         _uow = uow;
+        _eventLogger = eventLogger;
         _logger = logger;
     }
 
@@ -37,94 +43,230 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
         Guid accountId,
         CancellationToken ct = default)
     {
-        if (signal.Action == SignalAction.Hold)
-            return null;
+        if (signal.Action == SignalAction.Hold) return null;
 
-        // ─── Snapshot ───
+        // ─── ۱. Snapshot ───
         var snapshot = _snapshotStore.GetLatest(signal.Isin);
         if (snapshot is null)
         {
-            _logger.LogWarning(
-                "No snapshot for {Isin}; cannot build OrderIntent.", signal.Isin);
+            _logger.LogWarning("No snapshot for {Isin}.", signal.Isin);
             return null;
         }
 
-        // ─── تخصیص سرمایه به این Symbol ───
+        // ─── ۲. Instrument ───
+        var instrument = await _uow.InstrumentSpecs.GetBySpecAsync(
+            new InstrumentByIsinSpec(signal.Isin));
+
+        if (instrument is null)
+        {
+            _logger.LogWarning("Instrument {Isin} not found.", signal.Isin);
+            return null;
+        }
+
+        // ─── ۳. Allocation ───
         var symbolAllocation = context.Symbols
             .FirstOrDefault(s => s.Isin == signal.Isin)?.Allocation;
         if (symbolAllocation is null || symbolAllocation.Value.Percentage <= 0m)
         {
-            _logger.LogWarning(
-                "No allocation for {Isin} in run {RunId}.", signal.Isin, context.RunId);
-            return null;
-        }
-
-        var runCapital = await _capitalAllocator.GetAllocatableCapitalAsync(
-            context, accountId, ct);
-
-        if (runCapital <= 0m)
-        {
             _logger.LogDebug(
-                "Run {RunId} has no allocatable capital for account {AccountId}.",
-                context.RunId, accountId);
+                "No allocation for {Isin} in run {RunId}.",
+                signal.Isin, context.RunId);
             return null;
         }
 
-        var allocatedCapital = runCapital * symbolAllocation.Value.Percentage / 100m;
-
-        // ─── Position Sizing ───
-        var quantity = _positionSizer.CalculateQuantity(
-            snapshot, signal.Action, allocatedCapital);
-
-        if (quantity <= 0)
-        {
-            _logger.LogDebug(
-                "Calculated quantity is zero for {Isin}. Skipping.", signal.Isin);
-            return null;
-        }
-
-        // ─── Price + SL/TP ───
+        // ─── ۴. Price ───
         var price = ResolvePrice(snapshot, signal.Action);
-        var entryPrice = new Price(price);
+        if (price <= 0m)
+        {
+            _logger.LogWarning("Invalid price for {Isin}.", signal.Isin);
+            return null;
+        }
 
-        // فقط برای BUY معنی دارد (Position باز می‌شود)
-        Price? stopLossPrice = null;
-        Price? takeProfitPrice = null;
+        long quantity;
 
         if (signal.Action == SignalAction.Buy)
         {
-            stopLossPrice = context.StopLoss?.ResolveForEntry(entryPrice);
-            takeProfitPrice = context.TakeProfit?.ResolveForEntry(entryPrice);
+            quantity = await ComputeBuyQuantityAsync(
+                signal, context, accountId, instrument, price, symbolAllocation.Value, ct);
+
+            if (quantity <= 0) return null;
+        }
+        else // Sell
+        {
+            quantity = await ComputeSellQuantityAsync(
+                signal, context, accountId, instrument, ct);
+
+            if (quantity <= 0) return null;
         }
 
+        // ─── ۵. SL/TP (فقط BUY) ───
+        var entryPrice = new Price(price);
+        Price? sl = null;
+        Price? tp = null;
+
+        if (signal.Action == SignalAction.Buy)
+        {
+            sl = context.StopLoss?.ResolveForEntry(entryPrice);
+            tp = context.TakeProfit?.ResolveForEntry(entryPrice);
+        }
+
+        // ─── ۶. Create Intent ───
         var intent = OrderIntent.Create(
-    runId: context.RunId,
-    traderAccountId: accountId,
-    sourceSignalId: signal.Id,
-    isin: signal.Isin,
-    side: signal.Action == SignalAction.Buy ? OrderSide.Buy : OrderSide.Sell,
-    price: entryPrice,
-    quantity: new Quantity(quantity),
-    orderMode: context.DefaultOrderMode,
-    reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}",
-    stopLossPrice: stopLossPrice,
-    takeProfitPrice: takeProfitPrice,
-    sourceEvaluationId: signal.SourceEvaluationId);   // ← جدید
+            runId: context.RunId,
+            traderAccountId: accountId,
+            sourceSignalId: signal.Id,
+            isin: signal.Isin,
+            side: signal.Action == SignalAction.Buy ? OrderSide.Buy : OrderSide.Sell,
+            price: entryPrice,
+            quantity: new Quantity(quantity),
+            orderMode: context.DefaultOrderMode,
+            reason: $"Signal {signal.Id} strength={signal.Strength.Value:0.##}",
+            stopLossPrice: sl,
+            takeProfitPrice: tp,
+            sourceEvaluationId: signal.SourceEvaluationId);
 
         await _uow.OrderIntents.AddAsync(intent);
 
         _logger.LogInformation(
-            "OrderIntent built: run={RunId} account={AccountId} isin={Isin} side={Side} qty={Qty} price={Price} SL={SL} TP={TP}",
-            context.RunId, accountId, signal.Isin, intent.Side, quantity, price,
-            stopLossPrice?.Value, takeProfitPrice?.Value);
+            "OrderIntent built: run={RunId} isin={Isin} side={Side} qty={Qty} price={Price} SL={SL} TP={TP}",
+            context.RunId, signal.Isin, intent.Side, quantity, price,
+            sl?.Value, tp?.Value);
 
         return intent;
     }
 
+    /* ═══════════════════ BUY ═══════════════════ */
+
+    private async Task<long> ComputeBuyQuantityAsync(
+        Signal signal,
+        RunRuntimeContext context,
+        Guid accountId,
+        Instrument instrument,
+        decimal price,
+        SymbolAllocation allocation,
+        CancellationToken ct)
+    {
+        // ─── ۱. سرمایه‌ی کل Run برای این Account ───
+        var totalCapital = await _capitalAllocator.GetAllocatableCapitalAsync(
+            context, accountId, ct);
+
+        if (totalCapital <= 0m) return 0;
+
+        var allocatedForSymbol = totalCapital * allocation.Percentage / 100m;
+
+        // ─── ۲. Target با Stepped (strength-based) ───
+        var targetCapital = allocatedForSymbol
+            * signal.Strength.Value
+            * context.StrengthMultiplier;
+
+        if (targetCapital > allocatedForSymbol)
+            targetCapital = allocatedForSymbol;   // cap
+
+        if (targetCapital <= 0m) return 0;
+
+        // ─── ۳. Committed ───
+        var committed = await _committedCapital.CalculateForSymbolAsync(
+            context.RunId, accountId, signal.Isin, ct);
+
+        var delta = targetCapital - committed;
+        if (delta <= 0m)
+        {
+            _logger.LogDebug(
+                "Stepped BUY skipped: target={Target:N0} committed={Committed:N0} isin={Isin}",
+                targetCapital, committed, signal.Isin);
+            return 0;
+        }
+
+        // ─── ۴. Commission ───
+        var effectiveDelta = delta * (1m - instrument.BuyCommissionRate);
+
+        // ─── ۵. Quantity ───
+        var qty = (long)Math.Floor(effectiveDelta / price);
+
+        // ─── ۶. Min value check ───
+        if (instrument.MinOrderValueRial.HasValue)
+        {
+            var orderValue = qty * (long)price;
+            if (orderValue < instrument.MinOrderValueRial.Value)
+            {
+                _logger.LogInformation(
+                    "BUY skipped: orderValue={Value:N0} < minValue={Min:N0} isin={Isin}",
+                    orderValue, instrument.MinOrderValueRial.Value, signal.Isin);
+                return 0;
+            }
+        }
+
+        // ─── ۷. Min/Max quantity ───
+        if (qty < instrument.MinOrderQuantity)
+        {
+            _logger.LogInformation(
+                "BUY skipped: qty={Qty} < minQty={Min} isin={Isin}",
+                qty, instrument.MinOrderQuantity, signal.Isin);
+            return 0;
+        }
+
+        if (qty > instrument.MaxOrderQuantity)
+        {
+            _logger.LogInformation(
+                "BUY capped: requestedQty={Qty} > maxQty={Max} isin={Isin} (will split across ticks)",
+                qty, instrument.MaxOrderQuantity, signal.Isin);
+            qty = instrument.MaxOrderQuantity;
+        }
+
+        return qty;
+    }
+
+    /* ═══════════════════ SELL ═══════════════════ */
+
+    private async Task<long> ComputeSellQuantityAsync(
+        Signal signal,
+        RunRuntimeContext context,
+        Guid accountId,
+        Instrument instrument,
+        CancellationToken ct)
+    {
+        // ─── ۱. Position ───
+        var positions = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByRunSpec(context.RunId)))
+            .Where(p => p.TraderAccountId == accountId
+                     && p.Isin == signal.Isin
+                     && p.State != PositionState.Closed)
+            .ToList();
+
+        var position = positions.FirstOrDefault();
+        if (position is null)
+        {
+            _logger.LogDebug(
+                "SELL skipped: no open position isin={Isin}", signal.Isin);
+            return 0;
+        }
+
+        var qty = position.Quantity.Value;
+
+        // ─── ۲. Min/Max ───
+        if (qty < instrument.MinOrderQuantity)
+        {
+            _logger.LogInformation(
+                "SELL skipped: positionQty={Qty} < minQty={Min} isin={Isin}",
+                qty, instrument.MinOrderQuantity, signal.Isin);
+            return 0;
+        }
+
+        if (qty > instrument.MaxOrderQuantity)
+        {
+            _logger.LogInformation(
+                "SELL capped: positionQty={Qty} > maxQty={Max} isin={Isin} (will split across ticks)",
+                qty, instrument.MaxOrderQuantity, signal.Isin);
+            qty = instrument.MaxOrderQuantity;
+        }
+
+        return qty;
+    }
+
+    /* ═══════════════════ Helpers ═══════════════════ */
+
     private static decimal ResolvePrice(MarketSnapshot snapshot, SignalAction action)
     {
-        // Buy: از BestAskPrice اگر موجود باشد، وگرنه LastTradedPrice
-        // Sell: از BestBuyPrice اگر موجود باشد، وگرنه LastTradedPrice
         if (action == SignalAction.Buy)
         {
             if (snapshot.BestSellPrice > 0) return snapshot.BestSellPrice;

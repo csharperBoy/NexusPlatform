@@ -33,21 +33,22 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     public async Task<Guid> CreateAsync(CreateTradingRunModel model)
     {
         var run = TradingRun.Create(
-            model.Name,
-            ownerPersonId: Guid.Empty,
-            strategyKey: model.StrategyKey,
-            strategyConfigJson: model.StrategyConfigJson,
-            timeFrame: (TimeFrame)model.PrimaryTimeFrame,
-            capitalAllocation: BuildCapitalAllocation(model.Settings),
-            stopLoss: BuildStopLoss(model.Settings),
-            takeProfit: BuildTakeProfit(model.Settings),
-            defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
-            onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
-            onStop: (StopRunBehavior)model.Settings.OnStop,
-            symbols: model.Symbols.Select(s =>
-                (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
-            accountIds: model.AccountIds,
-    targetCurrency: model.TargetCurrency);
+    model.Name,
+    ownerPersonId: Guid.Empty,
+    strategyKey: model.StrategyKey,
+    strategyConfigJson: model.StrategyConfigJson,
+    timeFrame: (TimeFrame)model.PrimaryTimeFrame,
+    capitalAllocation: BuildCapitalAllocation(model.Settings),
+    stopLoss: BuildStopLoss(model.Settings),
+    takeProfit: BuildTakeProfit(model.Settings),
+    defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
+    onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
+    onStop: (StopRunBehavior)model.Settings.OnStop,
+    symbols: model.Symbols.Select(s =>
+        (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
+    accountIds: model.AccountIds,
+    targetCurrency: model.TargetCurrency,
+    strengthMultiplier: model.StrengthMultiplier);
 
         await _uow.TradingRuns.AddAsync(run);
         await _uow.SaveChangesAsync();
@@ -66,17 +67,18 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 
         run.UpdateSettings(
-            model.Name,
-            model.StrategyKey,
-            model.StrategyConfigJson,
-            (TimeFrame)model.PrimaryTimeFrame,
-            BuildCapitalAllocation(model.Settings),
-            BuildStopLoss(model.Settings),
-            BuildTakeProfit(model.Settings),
-            (OrderMode)model.Settings.DefaultOrderMode,
-            (MarketCloseBehavior)model.Settings.OnMarketClose,
-            (StopRunBehavior)model.Settings.OnStop,
-    model.TargetCurrency);
+     model.Name,
+     model.StrategyKey,
+     model.StrategyConfigJson,
+     (TimeFrame)model.PrimaryTimeFrame,
+     BuildCapitalAllocation(model.Settings),
+     BuildStopLoss(model.Settings),
+     BuildTakeProfit(model.Settings),
+     (OrderMode)model.Settings.DefaultOrderMode,
+     (MarketCloseBehavior)model.Settings.OnMarketClose,
+     (StopRunBehavior)model.Settings.OnStop,
+     model.TargetCurrency,
+     model.StrengthMultiplier);
 
         // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
@@ -234,45 +236,27 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     }
 
     private static TradingRunInfoView MapToInfoView(TradingRun r) => new(
-    r.Id,
-    r.Name,
-    (int)r.State,
-    r.State.ToString(),
-    r.StrategyKey,
-    (int)r.PrimaryTimeFrame,
-    r.PrimaryTimeFrame.ToCode(),
-    (int)r.CapitalAllocation.Mode,
-    r.CapitalAllocation.FixedAmount?.Amount,
-    r.TargetCurrency,                                     // ← جدید
-    r.Symbols.Count,
-    r.Accounts.Count,
-    r.StartedAt,
-    r.StoppedAt,
-    r.CreatedAt);
+    r.Id, r.Name, (int)r.State, r.State.ToString(),
+    r.StrategyKey, (int)r.PrimaryTimeFrame, r.PrimaryTimeFrame.ToCode(),
+    (int)r.CapitalAllocation.Mode, r.CapitalAllocation.FixedAmount?.Amount,
+    r.TargetCurrency,
+    r.StrengthMultiplier,
+    r.Symbols.Count, r.Accounts.Count,
+    r.StartedAt, r.StoppedAt, r.CreatedAt);
 
     private static TradingRunDetailView MapToDetailView(TradingRun r) => new(
-        r.Id,
-        r.Name,
-        (int)r.State,
-        r.State.ToString(),
-        r.StrategyKey,
-        r.StrategyConfigJson,
-        (int)r.PrimaryTimeFrame,
+    r.Id, r.Name, (int)r.State, r.State.ToString(),
+    r.StrategyKey, r.StrategyConfigJson,
+    (int)r.PrimaryTimeFrame,
     r.TargetCurrency,
-        new TradingRunSettingsDto(
-            (int)r.CapitalAllocation.Mode,
-            r.CapitalAllocation.FixedAmount?.Amount,
-            r.StopLoss?.Percentage,
-            r.StopLoss?.AbsolutePrice?.Value,
-            r.TakeProfit?.Percentage,
-            r.TakeProfit?.AbsolutePrice?.Value,
-            (int)r.DefaultOrderMode,
-            (int)r.OnMarketClose,
-            (int)r.OnStop),
-        r.Symbols.Select(s => new TradingRunSymbolDto(s.Isin, s.Allocation.Percentage)).ToList(),
-        r.Accounts.Select(a => a.TraderAccountId).ToList(),
-        r.StartedAt,
-        r.StoppedAt,
-        r.CreatedAt,
-        r.ModifiedAt);
+    r.StrengthMultiplier,
+    new TradingRunSettingsDto(
+        (int)r.CapitalAllocation.Mode,
+        r.CapitalAllocation.FixedAmount?.Amount,
+        r.StopLoss?.Percentage, r.StopLoss?.AbsolutePrice?.Value,
+        r.TakeProfit?.Percentage, r.TakeProfit?.AbsolutePrice?.Value,
+        (int)r.DefaultOrderMode, (int)r.OnMarketClose, (int)r.OnStop),
+    r.Symbols.Select(s => new TradingRunSymbolDto(s.Isin, s.Allocation.Percentage)).ToList(),
+    r.Accounts.Select(a => a.TraderAccountId).ToList(),
+    r.StartedAt, r.StoppedAt, r.CreatedAt, r.ModifiedAt);
 }

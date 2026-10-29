@@ -83,6 +83,10 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
         builder.Property(x => x.TargetCurrency)
     .HasMaxLength(10)
     .IsRequired(false);
+        builder.Property(x => x.StrengthMultiplier)
+    .HasPrecision(4, 2)
+    .IsRequired()
+    .HasDefaultValue(1.5m);
         // ─── Relations ───
         builder.HasMany(x => x.Symbols)
             .WithOne()

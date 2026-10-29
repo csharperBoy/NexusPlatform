@@ -170,7 +170,6 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ICapitalAllocator, CompositeCapitalAllocator>();
 
             // ─── Execution ───
-            services.AddScoped<IPositionSizer, PercentPositionSizer>();
             services.AddScoped<IOrderIntentBuilder, OrderIntentBuilder>();
             services.AddScoped<IBrokerOrderDispatcher, BrokerOrderDispatcher>();
             services.AddScoped<IExecutionCoordinator, ExecutionCoordinator>();

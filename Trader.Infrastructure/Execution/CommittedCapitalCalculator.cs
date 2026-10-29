@@ -1,6 +1,6 @@
 ﻿using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Execution;
-using Trader.Application.Specifications.OrderIntents;
+using Trader.Application.Specifications.BrokerOrders;
 using Trader.Application.Specifications.Positions;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -16,31 +16,44 @@ public sealed class CommittedCapitalCalculator : ICommittedCapitalCalculator
         _uow = uow;
     }
 
-    public async Task<decimal> CalculateAsync(
+    public Task<decimal> CalculateForRunAsync(
         Guid runId, Guid accountId, CancellationToken ct = default)
+        => CalculateInternalAsync(runId, accountId, isin: null, ct);
+
+    public Task<decimal> CalculateForSymbolAsync(
+        Guid runId, Guid accountId, string isin, CancellationToken ct = default)
+        => CalculateInternalAsync(runId, accountId, isin, ct);
+
+    private async Task<decimal> CalculateInternalAsync(
+        Guid runId, Guid accountId, string? isin, CancellationToken ct)
     {
-        // ─── ۱. OrderIntentهای فعال (سفارشات در راه) ───
-        var activeIntents = (await _uow.OrderIntentSpecs.ListBySpecAsync(
-            new PendingOrderIntentsByRunSpec(runId)))
-            .Where(i => i.TraderAccountId == accountId);
+        // ─── ۱. Positionهای باز (سرمایه‌ی از دست رفته در خرید) ───
+        var positions = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByRunSpec(runId)))
+            .Where(p => p.TraderAccountId == accountId
+                     && p.State != PositionState.Closed
+                     && (isin == null || p.Isin == isin));
 
-        decimal intentsTotal = 0m;
-        foreach (var i in activeIntents)
+        decimal positionsValue = 0m;
+        foreach (var p in positions)
+            positionsValue += p.AverageEntryPrice.Value * p.Quantity.Value;
+
+        // ─── ۲. سفارشات BUY در راه (سرمایه‌ی هنوز خرج نشده، ولی رزرو شده) ───
+        var activeOrders = (await _uow.BrokerOrderSpecs.ListBySpecAsync(
+            new OpenBrokerOrdersByAccountSpec(accountId)))
+            .Where(o => o.RunId == runId
+                     && !o.IsTerminal
+                     && o.Side == OrderSide.Buy
+                     && (isin == null || o.Isin == isin));
+
+        decimal activeOrdersValue = 0m;
+        foreach (var o in activeOrders)
         {
-            intentsTotal += i.Price.Value * i.Quantity.Value;
+            var remaining = o.Quantity.Value - o.FilledQuantity.Value;
+            if (remaining > 0)
+                activeOrdersValue += o.Price.Value * remaining;
         }
 
-        // ─── ۲. Positionهای باز (سهام موجود) ───
-        var openPositions = (await _uow.PositionSpecs.ListBySpecAsync(
-            new OpenPositionsByAccountSpec(accountId)))
-            .Where(p => p.RunId == runId && p.State != PositionState.Closed);
-
-        decimal positionsTotal = 0m;
-        foreach (var p in openPositions)
-        {
-            positionsTotal += p.AverageEntryPrice.Value * p.Quantity.Value;
-        }
-
-        return intentsTotal + positionsTotal;
+        return positionsValue + activeOrdersValue;
     }
 }

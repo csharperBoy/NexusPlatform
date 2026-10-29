@@ -54,7 +54,12 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             market,
             model.BoardCode,
             optionContract,
-            model.TradingScheduleId);    // ← جدید
+            model.TradingScheduleId,
+            model.BuyCommissionRate,
+            model.SellCommissionRate,
+            model.MinOrderQuantity,
+            model.MaxOrderQuantity,
+            model.MinOrderValueRial);
 
         await _uow.Instruments.AddAsync(instrument);
         await _uow.SaveChangesAsync();
@@ -62,19 +67,25 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
         _scheduleCache.Invalidate(instrument.Isin);
 
         _logger.LogInformation(
-            "Created Instrument {Id} isin={Isin} schedule={ScheduleId}",
-            instrument.Id, instrument.Isin, instrument.TradingScheduleId);
+            "Created Instrument {Id} isin={Isin} buyComm={BuyRate} sellComm={SellRate}",
+            instrument.Id, instrument.Isin,
+            instrument.BuyCommissionRate, instrument.SellCommissionRate);
 
         return instrument.Id;
     }
 
 
     public async Task<bool> UpdateAsync(
-        Guid id,
-        Optional<string?> symbolName,
-        Optional<string?> displayName,
-        Optional<string?> boardCode,
-        Optional<Guid?> tradingScheduleId)
+    Guid id,
+    Optional<string?> symbolName,
+    Optional<string?> displayName,
+    Optional<string?> boardCode,
+    Optional<Guid?> tradingScheduleId,
+    Optional<decimal> buyCommissionRate,
+    Optional<decimal> sellCommissionRate,
+    Optional<long> minOrderQuantity,
+    Optional<long> maxOrderQuantity,
+    Optional<long?> minOrderValueRial)
     {
         var instrument = await _uow.Instruments.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Instrument {id} not found.");
@@ -83,12 +94,16 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             symbolName,
             displayName,
             boardCode,
-            tradingScheduleId);
+            tradingScheduleId,
+            buyCommissionRate,
+            sellCommissionRate,
+            minOrderQuantity,
+            maxOrderQuantity,
+            minOrderValueRial);
 
         if (!hasChange)
         {
-            _logger.LogInformation(
-                "No changes applied for Instrument {Id}", id);
+            _logger.LogInformation("No changes for Instrument {Id}", id);
             return false;
         }
 
@@ -162,8 +177,8 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
     /* ═══════════════════ Helpers ═══════════════════ */
 
     private static InstrumentInfoView MapToInfoView(
-        Instrument i,
-        IReadOnlyDictionary<Guid, TradingSchedule> schedules)
+    Instrument i,
+    IReadOnlyDictionary<Guid, TradingSchedule> schedules)
     {
         TradingSchedule? schedule = null;
         if (i.TradingScheduleId is Guid sid)
@@ -182,6 +197,11 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             i.TradingScheduleId,
             schedule?.Code,
             schedule?.Name,
+            i.BuyCommissionRate,
+            i.SellCommissionRate,
+            i.MinOrderQuantity,
+            i.MaxOrderQuantity,
+            i.MinOrderValueRial,
             i.IsActive,
             i.CreatedAt);
     }

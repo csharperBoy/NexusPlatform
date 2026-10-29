@@ -14,6 +14,11 @@ public record CreateInstrumentCommand(
     int Market,
     string? BoardCode,
     Guid? TradingScheduleId,
+    decimal BuyCommissionRate,
+    decimal SellCommissionRate,
+    long MinOrderQuantity,
+    long MaxOrderQuantity,
+    long? MinOrderValueRial,
     OptionContractModel? OptionContract
 ) : IRequest<Result<Guid>>;
 
@@ -45,11 +50,14 @@ public class CreateInstrumentCommandHandler
                 request.Market,
                 request.BoardCode,
                 request.TradingScheduleId,
+                request.BuyCommissionRate,
+                request.SellCommissionRate,
+                request.MinOrderQuantity,
+                request.MaxOrderQuantity,
+                request.MinOrderValueRial,
                 request.OptionContract);
 
             var id = await _service.CreateAsync(model);
-            _logger.LogInformation(
-                "Instrument created: {Id} isin={Isin}", id, request.Isin);
             return Result<Guid>.Ok(id);
         }
         catch (Exception ex)

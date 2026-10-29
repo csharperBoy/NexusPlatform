@@ -13,6 +13,7 @@ public record UpdateTradingRunCommand(
     string StrategyConfigJson,
     int PrimaryTimeFrame,
     string? TargetCurrency,
+    decimal StrengthMultiplier,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
     IReadOnlyList<Guid> AccountIds
@@ -44,6 +45,7 @@ public class UpdateTradingRunCommandHandler
                 request.StrategyConfigJson,
                 request.PrimaryTimeFrame,
     request.TargetCurrency,
+                request.StrengthMultiplier,
                 request.Settings,
                 request.Symbols,
                 request.AccountIds);

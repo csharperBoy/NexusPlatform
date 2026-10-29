@@ -13,5 +13,10 @@ public sealed record InstrumentInfoView(
     Guid? TradingScheduleId,
     string? TradingScheduleCode,
     string? TradingScheduleName,
+    decimal BuyCommissionRate,
+    decimal SellCommissionRate,
+    long MinOrderQuantity,
+    long MaxOrderQuantity,
+    long? MinOrderValueRial,
     bool IsActive,
     DateTime CreatedAt);
