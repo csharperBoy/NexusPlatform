@@ -68,66 +68,70 @@ export const tradingRunApi = {
 
   /* ─── ایجاد ─── */
   create: async (data: CreateTradingRunCommand): Promise<string> => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
-      const id = mockUid();
-      items.push({
-        id,
-        name: data.name,
-        state: 1, // Ready
-        stateName: "Ready",
-        strategyKey: data.strategyKey,
-        primaryTimeFrame: data.primaryTimeFrame,
-        primaryTimeFrameName: "1d",
-        capitalAllocationMode: data.settings.capitalAllocationMode,
-        fixedCapital: data.settings.fixedCapitalAmount ?? null,
-        symbolCount: data.symbols.length,
-        accountCount: data.accountIds.length,
-        startedAt: null,
-        stoppedAt: null,
-        createdAt: new Date().toISOString(),
-      });
-      mockSave(MOCK_KEY, items);
-      return id;
-    }
-    const api = getAPI(API_MODULE);
-    const response = await api.post<string>(
-      "/api/Trader/TradingRun/Create",
-      data,
-      { withCredentials: true },
-    );
-    return response.data;
-  },
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+    const id = mockUid();
+    items.push({
+      id,
+      name: data.name,
+      state: 1,
+      stateName: "Ready",
+      strategyKey: data.strategyKey,
+      primaryTimeFrame: data.primaryTimeFrame,
+      primaryTimeFrameName: "1d",
+      capitalAllocationMode: data.settings.capitalAllocationMode,
+      fixedCapital: data.settings.fixedCapitalAmount ?? null,
+      targetCurrency: data.targetCurrency ?? null,
+      strengthMultiplier: data.strengthMultiplier,
+      symbolCount: data.symbols.length,
+      accountCount: data.accountIds.length,
+      startedAt: null,
+      stoppedAt: null,
+      createdAt: new Date().toISOString(),
+    });
+    mockSave(MOCK_KEY, items);
+    return id;
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.post<string>(
+    "/api/Trader/TradingRun/Create",
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
 
   /* ─── ویرایش ─── */
   update: async (data: UpdateTradingRunCommand): Promise<boolean> => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
-      const idx = items.findIndex((r) => r.id === data.id);
-      if (idx < 0) throw new Error("پلن پیدا نشد");
-      items[idx] = {
-        ...items[idx],
-        name: data.name,
-        strategyKey: data.strategyKey,
-        primaryTimeFrame: data.primaryTimeFrame,
-        capitalAllocationMode: data.settings.capitalAllocationMode,
-        fixedCapital: data.settings.fixedCapitalAmount ?? null,
-        symbolCount: data.symbols.length,
-        accountCount: data.accountIds.length,
-      };
-      mockSave(MOCK_KEY, items);
-      return true;
-    }
-    const api = getAPI(API_MODULE);
-    const response = await api.put<boolean>(
-      `/api/Trader/TradingRun/${data.id}`,
-      data,
-      { withCredentials: true },
-    );
-    return response.data;
-  },
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+    const idx = items.findIndex((r) => r.id === data.id);
+    if (idx < 0) throw new Error("پلن پیدا نشد");
+    items[idx] = {
+      ...items[idx],
+      name: data.name,
+      strategyKey: data.strategyKey,
+      primaryTimeFrame: data.primaryTimeFrame,
+      capitalAllocationMode: data.settings.capitalAllocationMode,
+      fixedCapital: data.settings.fixedCapitalAmount ?? null,
+      targetCurrency: data.targetCurrency ?? null,
+      strengthMultiplier: data.strengthMultiplier,
+      symbolCount: data.symbols.length,
+      accountCount: data.accountIds.length,
+    };
+    mockSave(MOCK_KEY, items);
+    return true;
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.put<boolean>(
+    `/api/Trader/TradingRun/${data.id}`,
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
 
   /* ─── حذف ─── */
   delete: async (id: string): Promise<boolean> => {

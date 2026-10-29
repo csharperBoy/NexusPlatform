@@ -11,6 +11,14 @@ export interface InstrumentInfoView {
   tradingScheduleId?: string | null;
   tradingScheduleCode?: string | null;
   tradingScheduleName?: string | null;
+
+  // NEW — Commission + Order Limits
+  buyCommissionRate: number;      // 0.0037 = 0.37%
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+
   isActive: boolean;
   createdAt: string;
 }

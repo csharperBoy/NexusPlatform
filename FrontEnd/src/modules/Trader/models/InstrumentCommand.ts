@@ -13,6 +13,13 @@ export interface CreateInstrumentCommand {
   market: number;
   boardCode?: string | null;
   tradingScheduleId?: string | null;
+
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+
   optionContract?: OptionContractModel | null;
 }
 
@@ -22,4 +29,10 @@ export interface UpdateInstrumentCommand {
   displayName: string;
   boardCode?: string | null;
   tradingScheduleId?: string | null;
+
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
 }

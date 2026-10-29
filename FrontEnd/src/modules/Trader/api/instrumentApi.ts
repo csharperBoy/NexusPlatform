@@ -24,7 +24,12 @@ interface MockInstrument {
   type: number;
   market: number;
   boardCode?: string | null;
-  tradingScheduleId?: string | null;   // ← اضافه شود
+  tradingScheduleId?: string | null;
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -40,9 +45,14 @@ function toView(m: MockInstrument): InstrumentInfoView {
     market: m.market,
     marketName: marketNameOf(m.market),
     boardCode: m.boardCode ?? null,
-    tradingScheduleId: m.tradingScheduleId ?? null,       // ← جدید
-    tradingScheduleCode: null,                             // mock
-    tradingScheduleName: null,                             // mock
+    tradingScheduleId: m.tradingScheduleId ?? null,
+    tradingScheduleCode: null,
+    tradingScheduleName: null,
+    buyCommissionRate: m.buyCommissionRate,
+    sellCommissionRate: m.sellCommissionRate,
+    minOrderQuantity: m.minOrderQuantity,
+    maxOrderQuantity: m.maxOrderQuantity,
+    minOrderValueRial: m.minOrderValueRial ?? null,
     isActive: m.isActive,
     createdAt: m.createdAt,
   };
@@ -108,58 +118,83 @@ export const instrumentApi = {
   },
 
   /* ─── ایجاد ─── */
-  create: async (data: CreateInstrumentCommand): Promise<string> => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
-      const inst: MockInstrument = {
-        id: mockUid(),
-        isin: data.isin,
-        symbolName: data.symbolName,
-        displayName: data.displayName,
-        type: data.type,
-        market: data.market,
-        boardCode: data.boardCode ?? null,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-      items.push(inst);
-      mockSave(MOCK_KEY, items);
-      return inst.id;
-    }
-    const api = getAPI(API_MODULE);
-    const response = await api.post<string>(
-      "/api/Trader/Instrument/Create",
-      data,
-      { withCredentials: true },
-    );
-    return response.data;
-  },
+ create: async (data: CreateInstrumentCommand): Promise<string> => {
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
+    const inst: MockInstrument = {
+      id: mockUid(),
+      isin: data.isin,
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      type: data.type,
+      market: data.market,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    items.push(inst);
+    mockSave(MOCK_KEY, items);
+    return inst.id;
+  }
+
+  const api = getAPI(API_MODULE);
+  const response = await api.post<string>(
+    "/api/Trader/Instrument/Create",
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
 
   /* ─── ویرایش ─── */
   update: async (data: UpdateInstrumentCommand): Promise<boolean> => {
-    if (USE_MOCK) {
-      await mockDelay(300);
-      const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
-      const idx = items.findIndex((i) => i.id === data.id);
-      if (idx < 0) throw new Error("نماد پیدا نشد");
-      items[idx] = {
-        ...items[idx],
-        symbolName: data.symbolName,
-        displayName: data.displayName,
-        boardCode: data.boardCode ?? null,
-      };
-      mockSave(MOCK_KEY, items);
-      return true;
-    }
-    const api = getAPI(API_MODULE);
-    const response = await api.put<boolean>(
-      `/api/Trader/Instrument/${data.id}`,
-      data,
-      { withCredentials: true },
-    );
-    return response.data;
-  },
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
+    const idx = items.findIndex((i) => i.id === data.id);
+    if (idx < 0) throw new Error("نماد پیدا نشد");
+    items[idx] = {
+      ...items[idx],
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+    };
+    mockSave(MOCK_KEY, items);
+    return true;
+  }
+
+  const api = getAPI(API_MODULE);
+  const response = await api.put<boolean>(
+    `/api/Trader/Instrument/${data.id}`,
+    {
+      id: data.id,
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+    },
+    { withCredentials: true },
+  );
+  return response.data;
+},
 
   /* ─── غیرفعال‌سازی (soft delete) ─── */
   delete: async (id: string): Promise<boolean> => {

@@ -27,6 +27,10 @@ const marketTypeOptions: SelectionListDto[] = [
   { value: "20", label: "کریپتو", display: "کریپتو" },
 ];
 
+/* ─── Helpers ─── */
+const formatCommission = (rate: number): string =>
+  `${(rate * 100).toFixed(3)}%`;
+
 /* ─── Columns ─── */
 const columns: GenericColumnDef<InstrumentInfoView>[] = [
   {
@@ -85,10 +89,56 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     selectionKey: "tradingSchedule",
     required: false,
     render: (_v, item) =>
-      item.tradingScheduleName
-        ? `${item.tradingScheduleName}`
-        : "—",
+      item.tradingScheduleName ? item.tradingScheduleName : "—",
   },
+
+  /* ─── NEW: Commission + Order Limits ─── */
+  {
+    key: "buyCommissionRate",
+    label: "کمیسیون خرید (%)",
+    type: "number",
+    required: true,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number) => formatCommission(v),
+  },
+  {
+    key: "sellCommissionRate",
+    label: "کمیسیون فروش (%)",
+    type: "number",
+    required: true,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number) => formatCommission(v),
+  },
+  {
+    key: "minOrderQuantity",
+    label: "حداقل تعداد",
+    type: "number",
+    required: true,
+    valueType: "number",
+    dir: "ltr",
+  },
+  {
+    key: "maxOrderQuantity",
+    label: "حداکثر تعداد",
+    type: "number",
+    required: true,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number) => v?.toLocaleString?.("fa-IR") ?? v,
+  },
+  {
+    key: "minOrderValueRial",
+    label: "حداقل ارزش (ریال)",
+    type: "number",
+    required: false,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number | null) =>
+      v != null ? v.toLocaleString("fa-IR") : "—",
+  },
+
   {
     key: "isActive",
     label: "وضعیت",
@@ -124,13 +174,7 @@ export const InstrumentsManagementPage: React.FC = () => {
           selectionApis: {
             tradingSchedule: tradingScheduleApi.GetSelectionList,
           },
-          mapToUpdateCommand: (item) => ({
-            id: item.id,
-            symbolName: item.symbolName,
-            displayName: item.displayName,
-            boardCode: item.boardCode ?? null,
-            tradingScheduleId: item.tradingScheduleId ?? null,
-          }),
+
           mapToCreateCommand: (formData) => ({
             isin: String(formData.isin ?? "").trim(),
             symbolName: String(formData.symbolName ?? "").trim(),
@@ -143,8 +187,34 @@ export const InstrumentsManagementPage: React.FC = () => {
             tradingScheduleId: formData.tradingScheduleId
               ? String(formData.tradingScheduleId)
               : null,
+
+            // Commission: ورودی به درصد است (0.37) → تبدیل به نسبت (0.0037)
+            buyCommissionRate: Number(formData.buyCommissionRate ?? 0) / 100,
+            sellCommissionRate: Number(formData.sellCommissionRate ?? 0) / 100,
+            minOrderQuantity: Number(formData.minOrderQuantity ?? 1),
+            maxOrderQuantity: Number(formData.maxOrderQuantity ?? 100000),
+            minOrderValueRial:
+              formData.minOrderValueRial == null ||
+              formData.minOrderValueRial === ""
+                ? null
+                : Number(formData.minOrderValueRial),
+
             optionContract: null,
           }),
+
+          mapToUpdateCommand: (item) => ({
+            id: item.id,
+            symbolName: item.symbolName,
+            displayName: item.displayName,
+            boardCode: item.boardCode ?? null,
+            tradingScheduleId: item.tradingScheduleId ?? null,
+            buyCommissionRate: item.buyCommissionRate,
+            sellCommissionRate: item.sellCommissionRate,
+            minOrderQuantity: item.minOrderQuantity,
+            maxOrderQuantity: item.maxOrderQuantity,
+            minOrderValueRial: item.minOrderValueRial ?? null,
+          }),
+
           tableFeatures: {
             enableSearch: true,
             enableDelete: true,

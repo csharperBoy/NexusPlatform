@@ -68,6 +68,7 @@ export const TradingRunFormModal: React.FC<Props> = ({
     TimeFrame.D1,
   );
 const [targetCurrency, setTargetCurrency] = useState<string>("");
+const [strengthMultiplier, setStrengthMultiplier] = useState<string>("1.5");
 const [currencyRateStatus, setCurrencyRateStatus] =
   useState<"idle" | "checking" | "ok" | "missing">("idle");
 const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
@@ -147,6 +148,7 @@ useEffect(() => {
       setStrategyKey(initialDetail.strategyKey);
       setPrimaryTimeFrame(initialDetail.primaryTimeFrame);
       setTargetCurrency(initialDetail.targetCurrency ?? "");
+      setStrengthMultiplier(initialDetail.strengthMultiplier.toString());
       setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
       setFixedCapitalAmount(
         initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
@@ -204,6 +206,7 @@ useEffect(() => {
     setStrategyKey(strategies[0]?.key ?? "");
     setPrimaryTimeFrame(TimeFrame.D1);
     setTargetCurrency("");
+    setStrengthMultiplier("1.5");
 setCurrencyRateStatus("idle");
 setCurrencyRateValue(null);
     setCapitalAllocationMode(CapitalAllocationMode.Fixed);
@@ -304,7 +307,10 @@ setCurrencyRateValue(null);
       return;
     }
     setError(null);
-
+    const sm = Number(strengthMultiplier);
+    if (isNaN(sm) || sm < 0.1 || sm > 5) {
+      return "ضریب قدرت باید بین 0.1 تا 5 باشد";
+    }
     const settings: TradingRunSettingsModel = {
       capitalAllocationMode,
       fixedCapitalAmount:
@@ -323,15 +329,16 @@ setCurrencyRateValue(null);
     };
 
     const base: CreateTradingRunCommand = {
-        name: name.trim(),
-        strategyKey,
-        strategyConfigJson: JSON.stringify(strategyConfig),
-        primaryTimeFrame,
-        targetCurrency: targetCurrency.trim().toUpperCase() || null,
-        settings,
-        symbols,
-        accountIds,
-      };
+  name: name.trim(),
+  strategyKey,
+  strategyConfigJson: JSON.stringify(strategyConfig),
+  primaryTimeFrame,
+  targetCurrency: targetCurrency.trim().toUpperCase() || null,
+  strengthMultiplier: Number(strengthMultiplier) || 1.5,   // ← NEW
+  settings,
+  symbols,
+  accountIds,
+};
 
     try {
       if (mode === "edit" && initialDetail) {
@@ -430,6 +437,37 @@ setCurrencyRateValue(null);
   <p className="mt-1 text-[10px] text-gray-500">
     اگر خالی باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
     برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
+  </p>
+</div>
+{/* Strength Multiplier */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    ضریب قدرت سیگنال (Stepped Buying)
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      type="number"
+      value={strengthMultiplier}
+      onChange={(e) => setStrengthMultiplier(e.target.value)}
+      dir="ltr"
+      min={0.1}
+      max={5}
+      step={0.1}
+      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    />
+    <span className="text-xs text-gray-500">
+      {Number(strengthMultiplier) > 0
+        ? `مثال: RSI=36 → ${(
+            Number(strengthMultiplier) *
+            0.1 *
+            100
+          ).toFixed(1)}% سرمایه`
+        : "—"}
+    </span>
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    سرمایه‌ی هدف = سرمایه‌ی Symbol × قدرت سیگنال × این ضریب.
+    مقدار بالاتر → خرید بزرگ‌تر. پیش‌فرض ۱.۵.
   </p>
 </div>
               <div className="flex flex-col gap-1">
