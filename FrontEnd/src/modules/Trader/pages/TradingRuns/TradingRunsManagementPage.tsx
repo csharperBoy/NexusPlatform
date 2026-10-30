@@ -216,6 +216,7 @@ export const TradingRunsManagementPage: React.FC = () => {
               <th className="p-3">تایم‌فریم</th>
               <th className="p-3">ارز</th>
               <th className="p-3 text-center">ضریب</th>
+              <th className="p-3 text-center">آستانه</th>
               <th className="p-3">سرمایه</th>              
               <th className="p-3 text-center">نمادها</th>
               <th className="p-3 text-center">حساب‌ها</th>
@@ -226,13 +227,13 @@ export const TradingRunsManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={10} className="p-6 text-center">
+                <td colSpan={11} className="p-6 text-center">
                   در حال بارگذاری...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="p-6 text-center">
+                <td colSpan={11} className="p-6 text-center">
                   هیچ پلنی یافت نشد.
                 </td>
               </tr>
@@ -268,6 +269,9 @@ export const TradingRunsManagementPage: React.FC = () => {
                     </td>
                     <td className="p-3 text-center font-mono text-xs">
   {run.strengthMultiplier.toFixed(1)}×
+</td>
+<td className="p-3 text-center font-mono text-xs">
+  {(run.minDeltaPercent * 100).toFixed(1)}%
 </td>
                     <td className="p-3">
                       <span className="text-xs">

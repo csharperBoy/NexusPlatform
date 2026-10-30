@@ -9,7 +9,8 @@ export interface TradingRunInfoView {
   capitalAllocationMode: number;
   fixedCapital?: number | null;
   targetCurrency: string | null; 
-  strengthMultiplier: number;     
+  strengthMultiplier: number;    
+  minDeltaPercent: number; 
   symbolCount: number;
   accountCount: number;
   startedAt?: string | null;
@@ -44,6 +45,7 @@ export interface TradingRunDetailView {
   primaryTimeFrame: number;
   targetCurrency: string | null;  
   strengthMultiplier: number;   
+  minDeltaPercent: number;
   settings: TradingRunSettingsDto;
   symbols: TradingRunSymbolDto[];
   accountIds: string[];
@@ -78,6 +80,7 @@ export interface CreateTradingRunCommand {
   primaryTimeFrame: number;
   targetCurrency: string | null;  
   strengthMultiplier: number;   
+  minDeltaPercent: number;
   settings: TradingRunSettingsModel;
   symbols: TradingRunSymbolModel[];
   accountIds: string[];

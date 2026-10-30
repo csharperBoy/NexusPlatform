@@ -69,6 +69,7 @@ export const TradingRunFormModal: React.FC<Props> = ({
   );
 const [targetCurrency, setTargetCurrency] = useState<string>("");
 const [strengthMultiplier, setStrengthMultiplier] = useState<string>("1.5");
+const [minDeltaPercent, setMinDeltaPercent] = useState<string>("3");   
 const [currencyRateStatus, setCurrencyRateStatus] =
   useState<"idle" | "checking" | "ok" | "missing">("idle");
 const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
@@ -149,6 +150,7 @@ useEffect(() => {
       setPrimaryTimeFrame(initialDetail.primaryTimeFrame);
       setTargetCurrency(initialDetail.targetCurrency ?? "");
       setStrengthMultiplier(initialDetail.strengthMultiplier.toString());
+setMinDeltaPercent((initialDetail.minDeltaPercent * 100).toString()); 
       setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
       setFixedCapitalAmount(
         initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
@@ -207,6 +209,7 @@ useEffect(() => {
     setPrimaryTimeFrame(TimeFrame.D1);
     setTargetCurrency("");
     setStrengthMultiplier("1.5");
+setMinDeltaPercent("3");   
 setCurrencyRateStatus("idle");
 setCurrencyRateValue(null);
     setCapitalAllocationMode(CapitalAllocationMode.Fixed);
@@ -311,6 +314,10 @@ setCurrencyRateValue(null);
     if (isNaN(sm) || sm < 0.1 || sm > 5) {
       return "ضریب قدرت باید بین 0.1 تا 5 باشد";
     }
+    const md = Number(minDeltaPercent);
+    if (isNaN(md) || md < 0 || md > 100) {
+      return "حداقل تغییر باید بین 0 تا 100 درصد باشد";
+    }
     const settings: TradingRunSettingsModel = {
       capitalAllocationMode,
       fixedCapitalAmount:
@@ -334,7 +341,8 @@ setCurrencyRateValue(null);
   strategyConfigJson: JSON.stringify(strategyConfig),
   primaryTimeFrame,
   targetCurrency: targetCurrency.trim().toUpperCase() || null,
-  strengthMultiplier: Number(strengthMultiplier) || 1.5,   // ← NEW
+  strengthMultiplier: Number(strengthMultiplier) || 1.5,  
+  minDeltaPercent: (Number(minDeltaPercent) || 0) / 100,   
   settings,
   symbols,
   accountIds,
@@ -468,6 +476,33 @@ setCurrencyRateValue(null);
   <p className="mt-1 text-[10px] text-gray-500">
     سرمایه‌ی هدف = سرمایه‌ی Symbol × قدرت سیگنال × این ضریب.
     مقدار بالاتر → خرید بزرگ‌تر. پیش‌فرض ۱.۵.
+  </p>
+</div>
+{/* Min Delta Percent */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    حداقل تغییر سرمایه برای خرید مجدد (%)
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      type="number"
+      value={minDeltaPercent}
+      onChange={(e) => setMinDeltaPercent(e.target.value)}
+      dir="ltr"
+      min={0}
+      max={100}
+      step={0.5}
+      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    />
+    <span className="text-xs text-gray-500">
+      {Number(minDeltaPercent) > 0
+        ? `خرید مجدد فقط وقتی سهمی از سرمایه‌ی نماد بیش از ${Number(minDeltaPercent).toFixed(1)}٪ تغییر کند`
+        : "بدون آستانه — هر افت کوچک باعث خرید می‌شود"}
+    </span>
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    مثال: با ۳٪، در سرمایه‌ی ۱۰ میلیون ریالی، فقط خریدهای بیش از ۳۰۰٬۰۰۰ ریال
+    اجرا می‌شوند. از خریدهای کوچک پشت‌سرهم جلوگیری می‌کند.
   </p>
 </div>
               <div className="flex flex-col gap-1">
