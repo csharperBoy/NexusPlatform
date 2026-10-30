@@ -10,6 +10,7 @@ public sealed record TradingRunDetailView(
     int PrimaryTimeFrame,
     string? TargetCurrency,
     decimal StrengthMultiplier,
+    decimal MinDeltaPercent,
     TradingRunSettingsDto Settings,
     IReadOnlyList<TradingRunSymbolDto> Symbols,
     IReadOnlyList<Guid> AccountIds,

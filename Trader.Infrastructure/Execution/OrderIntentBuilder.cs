@@ -176,7 +176,16 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
                 targetCapital, committed, signal.Isin);
             return 0;
         }
-
+        // ─── MinDelta Threshold ───
+        var minDelta = allocatedForSymbol * context.MinDeltaPercent;
+        if (delta < minDelta)
+        {
+            _logger.LogDebug(
+                "Stepped BUY skipped: delta={Delta:N0} < minDelta={MinDelta:N0} " +
+                "(MinDeltaPercent={Pct:P2}) isin={Isin}",
+                delta, minDelta, context.MinDeltaPercent, signal.Isin);
+            return 0;
+        }
         // ─── ۴. Commission ───
         var effectiveDelta = delta * (1m - instrument.BuyCommissionRate);
 

@@ -12,6 +12,7 @@ public sealed record TradingRunInfoView(
     decimal? FixedCapital,
     string? TargetCurrency,
     decimal StrengthMultiplier,
+    decimal MinDeltaPercent,
     int SymbolCount,
     int AccountCount,
     DateTime? StartedAt,

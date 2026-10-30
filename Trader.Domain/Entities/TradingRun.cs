@@ -38,6 +38,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
     public IReadOnlyList<TradingRunAccount> Accounts => _accounts.AsReadOnly();
     public string? TargetCurrency { get; private set; }   // مثلاً "USD" یا null
     public decimal StrengthMultiplier { get; private set; } = 1.5m;
+    public decimal MinDeltaPercent { get; private set; } = 0.03m;  
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -84,7 +85,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         IEnumerable<(string Isin, SymbolAllocation Allocation)> symbols,
         IEnumerable<Guid> accountIds,
     string? targetCurrency = null,
-    decimal strengthMultiplier = 1.5m)
+    decimal strengthMultiplier = 1.5m,
+    decimal minDeltaPercent = 0.03m)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Run name is required.", nameof(name));
@@ -92,6 +94,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             throw new ArgumentException("Strategy key is required.", nameof(strategyKey));
 
         ValidateStrengthMultiplier(strengthMultiplier);
+        ValidateMinDeltaPercent(minDeltaPercent);
 
         var run = new TradingRun
         {
@@ -110,6 +113,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             CreatedAt = DateTime.UtcNow,
             TargetCurrency = NormalizeCurrency(targetCurrency),
             StrengthMultiplier = strengthMultiplier,
+            MinDeltaPercent = minDeltaPercent,
 
         };
 
@@ -123,6 +127,12 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         return run;
     }
 
+    private static void ValidateMinDeltaPercent(decimal p)
+    {
+        if (p < 0m || p > 1m)
+            throw new ArgumentOutOfRangeException(nameof(p),
+                "MinDeltaPercent must be between 0 and 1 (0% to 100%).");
+    }
     private static void ValidateStrengthMultiplier(decimal m)
     {
         if (m < 0.1m || m > 5.0m)
@@ -152,11 +162,13 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         MarketCloseBehavior onMarketClose,
         StopRunBehavior onStop,
     string? targetCurrency,
-    decimal strengthMultiplier)
+    decimal strengthMultiplier,
+    decimal minDeltaPercent)
     {
         EnsureNotRunning();
         ValidateStrengthMultiplier(strengthMultiplier);
 
+        ValidateMinDeltaPercent(minDeltaPercent);
 
         Name = name.Trim();
         StrategyKey = strategyKey.Trim();
@@ -170,6 +182,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         OnStop = onStop; 
         TargetCurrency = NormalizeCurrency(targetCurrency);
         StrengthMultiplier = strengthMultiplier;
+        MinDeltaPercent = minDeltaPercent;
 
         Touch();
         RecomputeReadiness();

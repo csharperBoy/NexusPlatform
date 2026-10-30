@@ -48,7 +48,8 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
         (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
     accountIds: model.AccountIds,
     targetCurrency: model.TargetCurrency,
-    strengthMultiplier: model.StrengthMultiplier);
+    strengthMultiplier: model.StrengthMultiplier,
+    minDeltaPercent: model.MinDeltaPercent);
 
         await _uow.TradingRuns.AddAsync(run);
         await _uow.SaveChangesAsync();
@@ -78,7 +79,8 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
      (MarketCloseBehavior)model.Settings.OnMarketClose,
      (StopRunBehavior)model.Settings.OnStop,
      model.TargetCurrency,
-     model.StrengthMultiplier);
+     model.StrengthMultiplier,
+    model.MinDeltaPercent);
 
         // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
@@ -241,6 +243,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     (int)r.CapitalAllocation.Mode, r.CapitalAllocation.FixedAmount?.Amount,
     r.TargetCurrency,
     r.StrengthMultiplier,
+    r.MinDeltaPercent,
     r.Symbols.Count, r.Accounts.Count,
     r.StartedAt, r.StoppedAt, r.CreatedAt);
 
@@ -250,6 +253,7 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     (int)r.PrimaryTimeFrame,
     r.TargetCurrency,
     r.StrengthMultiplier,
+    r.MinDeltaPercent,
     new TradingRunSettingsDto(
         (int)r.CapitalAllocation.Mode,
         r.CapitalAllocation.FixedAmount?.Amount,

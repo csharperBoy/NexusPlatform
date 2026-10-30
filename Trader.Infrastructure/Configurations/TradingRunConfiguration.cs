@@ -87,6 +87,11 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
     .HasPrecision(4, 2)
     .IsRequired()
     .HasDefaultValue(1.5m);
+
+        builder.Property(x => x.MinDeltaPercent)                 // ← NEW
+            .HasPrecision(5, 4)
+            .IsRequired()
+            .HasDefaultValue(0.03m);
         // ─── Relations ───
         builder.HasMany(x => x.Symbols)
             .WithOne()

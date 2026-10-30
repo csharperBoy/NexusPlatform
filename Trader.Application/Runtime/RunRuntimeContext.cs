@@ -19,6 +19,7 @@ public sealed record RunRuntimeContext(
     TimeFrame PrimaryTimeFrame,
     string? TargetCurrency,
     decimal StrengthMultiplier,
+    decimal MinDeltaPercent,
     CapitalAllocation CapitalAllocation,
     StopLossConfig? StopLoss,
     TakeProfitConfig? TakeProfit,

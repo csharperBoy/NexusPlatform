@@ -75,6 +75,7 @@ public sealed class TradingRunManager : ITradingRunManager
                         PrimaryTimeFrame: run.PrimaryTimeFrame,
                         TargetCurrency: run.TargetCurrency,
                         StrengthMultiplier: run.StrengthMultiplier,
+    MinDeltaPercent: run.MinDeltaPercent,
                         CapitalAllocation: run.CapitalAllocation,
                         StopLoss: run.StopLoss,
                         TakeProfit: run.TakeProfit,

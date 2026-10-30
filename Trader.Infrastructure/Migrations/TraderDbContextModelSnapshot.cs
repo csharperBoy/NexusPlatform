@@ -1342,6 +1342,12 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("DefaultOrderMode")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("MinDeltaPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)")
+                        .HasDefaultValue(0.03m);
+
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
 
