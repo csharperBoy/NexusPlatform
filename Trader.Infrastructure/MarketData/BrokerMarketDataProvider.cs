@@ -143,18 +143,10 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         return snapshots;
     }
     public async Task<IReadOnlyList<Candle>> GetCandlesAsync(
-    string isin, TimeFrame timeFrame, int count, CancellationToken ct = default)
+    string isin, TimeFrame timeFrame, int count,
+    CancellationToken ct = default, DateTime? toTime = null)
     {
         if (count <= 0) return Array.Empty<Candle>();
-
-        // ─── Skip اگر بازار بسته ───
-        var schedule = await _scheduleCache.GetForIsinAsync(isin, ct);
-        if (!_marketSession.IsMarketOpen(schedule, DateTime.UtcNow))
-        {
-            _logger.LogTrace(
-                "Market closed for {Isin}; skipping candle fetch.", isin);
-            return Array.Empty<Candle>();
-        }
 
         var account = await PickAccountAsync(ct);
         if (account is null) return Array.Empty<Candle>();
@@ -162,48 +154,36 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         var session = await _sessionProvider.GetSessionAsync(account.Id, ct);
         var reader = _brokerFactory.Get<IBrokerMarketDataReader>(account.Broker);
 
-        // ─── TimeFrame → resolution ───
         string resolution;
-        try
-        {
-            resolution = TimeFrameToResolution(timeFrame);
-        }
+        try { resolution = TimeFrameToResolution(timeFrame); }
         catch (NotSupportedException ex)
         {
-            _logger.LogError(ex,
-                "TimeFrame {TimeFrame} is not supported by the broker's chart API.",
-                timeFrame);
+            _logger.LogError(ex, "TimeFrame {Tf} not supported.", timeFrame);
             return Array.Empty<Candle>();
         }
 
-        // ─── Fetch via V2 (countback = دقیقاً همان تعداد درخواستی) ───
         List<CandleDto> raw;
         try
         {
-            raw = await reader.GetCandlesAsync(session, isin, resolution, count, ct);
+            raw = await reader.GetCandlesUntilAsync(
+                session, isin, resolution, count, toTime ?? DateTime.UtcNow, ct);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Candle fetch failed: isin={Isin} tf={TimeFrame} " +
-                "resolution={Resolution} countback={Countback}",
-                isin, timeFrame, resolution, count);
+                "Candle fetch failed: isin={Isin} tf={Tf} to={To:O}",
+                isin, timeFrame, toTime);
             return Array.Empty<Candle>();
         }
 
         if (raw.Count == 0) return Array.Empty<Candle>();
 
-        // ─── ترتیب صعودی (قدیمی → جدید) ───
         if (raw.Count > 1 && raw[0].T > raw[^1].T)
             raw.Reverse();
 
-        // ─── آخرین {count} کندل (در صورت بیشتر بودن) ───
         var take = Math.Min(count, raw.Count);
-        var slice = raw.Count > take
-            ? raw.GetRange(raw.Count - take, take)
-            : raw;
+        var slice = raw.Count > take ? raw.GetRange(raw.Count - take, take) : raw;
 
-        // ─── Map ───
         var result = new List<Candle>(slice.Count);
         foreach (var dto in slice)
         {
@@ -217,15 +197,13 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
                     Close: dto.C,
                     Volume: dto.V));
             }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                _logger.LogWarning(ex,
-                    "Invalid candle timestamp {T} for {Isin}. Skipping.", dto.T, isin);
-            }
+            catch (ArgumentOutOfRangeException) { }
         }
 
         return result;
     }
+
+   
 
     /* ═══════════════════ Helpers ═══════════════════ */
 
@@ -243,10 +221,6 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         TimeFrame.H1 => "60",
         TimeFrame.D1 => "1D",
         TimeFrame.W1 => "1W",
-        TimeFrame.H4 => throw new NotSupportedException(
-            "H4 (240 minutes) is not supported by EasyTrader chart API. " +
-            "Supported: M1, M5, M15, M30, H1, D1, W1. " +
-            "Use H1 and aggregate in Phase 2."),
         _ => throw new NotSupportedException(
             $"TimeFrame {tf} is not supported.")
     };

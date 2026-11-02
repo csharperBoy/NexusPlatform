@@ -22,6 +22,15 @@ namespace Trader.Application.Abstractions.Brokers.Queries
             int countback,
             CancellationToken ct = default);
 
+        // ─── NEW ───
+        Task<List<CandleDto>> GetCandlesUntilAsync(
+            ExternalSystemSession session,
+            string symbolIsin,
+            string resolution,
+            int countback,
+            DateTime toTime,
+            CancellationToken ct = default);
+
             Task<List<BatchMarketDataItemDto>> GetBatchMarketDataAsync(
                 ExternalSystemSession session, IReadOnlyList<string> symbolIsins,
                 CancellationToken ct = default);

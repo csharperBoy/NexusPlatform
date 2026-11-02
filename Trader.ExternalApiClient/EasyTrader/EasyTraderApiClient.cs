@@ -621,7 +621,8 @@ namespace Trader.ExternalApiClient.EasyTrader
             string symbolIsin,
             string resolution,
             int countback,
-            CancellationToken ct = default)
+            CancellationToken ct = default,
+    DateTime? toTime = null)
         {
             if (string.IsNullOrWhiteSpace(symbolIsin))
                 return new();
@@ -633,13 +634,15 @@ namespace Trader.ExternalApiClient.EasyTrader
             // تست: :1 و :2 هر دو همان داده را برمی‌گردانند. :1 امن‌ترین است.
             var symbolParam = symbolIsin.Contains(':') ? symbolIsin : $"{symbolIsin}:1";
 
-            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            //var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+            var toUnix = (toTime ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
 
             var url = _options.BaseUrl.TrimEnd('/') + EasyTraderEndpoints.ChartHistoryV2
                 + $"?symbol={Uri.EscapeDataString(symbolParam)}"
                 + $"&resolution={Uri.EscapeDataString(resolution)}"
                 + $"&from=0"
-                + $"&to={now}"
+                + $"&to={toUnix}"
                 + $"&countback={countback}";
 
             var client = CreateSharedClient();

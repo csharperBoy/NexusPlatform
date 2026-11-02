@@ -36,20 +36,29 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Capabilities
                 FetchedAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             };
         }
-        public async Task<List<CandleDto>> GetCandlesAsync(
-    ExternalSystemSession session,
-    string symbolIsin,
-    string resolution,
-    int countback,
-    CancellationToken ct = default)
+        public Task<List<CandleDto>> GetCandlesAsync(
+    ExternalSystemSession session, string symbolIsin, string resolution,
+    int countback, CancellationToken ct = default)
+    => GetCandlesUntilAsync(session, symbolIsin, resolution, countback,
+        DateTime.UtcNow, ct);
+
+        public async Task<List<CandleDto>> GetCandlesUntilAsync(
+            ExternalSystemSession session, string symbolIsin, string resolution,
+            int countback, DateTime toTime, CancellationToken ct = default)
         {
             var s = AsSession(session);
-            var wire = await Api.GetChartHistoryV2Async(
-                s.AccessToken, symbolIsin, resolution, countback, ct);
 
-            // ─── تبدیل از Columnar به List<CandleDto> ───
+            var wire = await Api.GetChartHistoryV2Async(
+                s.AccessToken, symbolIsin, resolution, countback, ct, toTime);
+
+            if (wire is null
+                || wire.Time is null
+                || wire.Time.Length == 0)
+                return new();
+
             var n = wire.Time.Length;
             var result = new List<CandleDto>(n);
+
             for (int i = 0; i < n; i++)
             {
                 result.Add(new CandleDto
@@ -62,10 +71,9 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Capabilities
                     V = wire.Volume![i]
                 });
             }
+
             return result;
         }
-       
-
         public async Task<ReturnChartDto> GetReturnChartAsync(
             ExternalSystemSession session, string symbolIsin,
             CancellationToken ct = default)

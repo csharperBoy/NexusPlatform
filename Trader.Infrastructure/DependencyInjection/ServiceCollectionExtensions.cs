@@ -9,6 +9,7 @@ using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
+using Trader.Application.Abstractions.HistoricalData;
 using Trader.Application.Abstractions.Indicators;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
@@ -31,6 +32,7 @@ using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Execution;
+using Trader.Infrastructure.HistoricalData;
 using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Positions;
@@ -203,6 +205,22 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ICommittedCapitalCalculator, CommittedCapitalCalculator>();
             /* ═══════════ Trading Event Logger ═══════════ */
             services.AddScoped<ITradingEventLogger, TradingEventLogger>();
+
+            // ─── Size Calculator ───
+            services.AddScoped<IOrderSizeCalculator, OrderSizeCalculator>();
+
+            // ─── Historical Data ───
+            services.Configure<HistoricalDataCollectionOptions>(
+                configuration.GetSection(HistoricalDataCollectionOptions.SectionName));
+
+            services.AddScoped<HistoricalDataCollectionService>();
+            services.AddScoped<IHistoricalDataCollectionCommandService>(
+                sp => sp.GetRequiredService<HistoricalDataCollectionService>());
+            services.AddScoped<IHistoricalDataCollectionQueryService>(
+                sp => sp.GetRequiredService<HistoricalDataCollectionService>());
+
+            services.AddScoped<IHistoricalDataCollector, HistoricalDataCollector>();
+            services.AddHostedService<HistoricalDataCollectionWorker>();
             /* ═══════════ Scheduler Integration ═══════════ */
 
             services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();
