@@ -26,6 +26,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     IRepository<TDbContext, CurrencyRate, Guid> CurrencyRates { get; }
     IRepository<TDbContext, TradingEvent, Guid> TradingEvents { get; }
+    IRepository<TDbContext, BacktestEvent, Guid> BacktestEvents { get; }
     // Backtest
     IRepository<TDbContext, BacktestRun, Guid> BacktestRuns { get; }
     IRepository<TDbContext, BacktestSymbol, Guid> BacktestSymbols { get; }

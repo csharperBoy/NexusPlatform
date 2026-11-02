@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Domain.Entities;
+using Trader.Infrastructure.Backtesting;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Data;
@@ -29,6 +30,7 @@ IRepository<TraderDbContext, BacktestSymbol, Guid> backtestSymbols,
 IRepository<TraderDbContext, BacktestTrade, Guid> backtestTrades,
 IRepository<TraderDbContext, BacktestDailyEquity, Guid> backtestDailyEquities,
 IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> historicalDataCollectionJobs,
+IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> backtestEvents,
 ISpecificationRepository<BacktestRun, Guid> backtestRunSpecs,
 ISpecificationRepository<BacktestTrade, Guid> backtestTradeSpecs,
         ISpecificationRepository<TradingRun, Guid> tradingRunSpecs,
@@ -69,7 +71,7 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         SchedulePlans = schedulePlans;
         ScheduledOrders = scheduledOrders;
         ExecutionLogs = executionLogs;
-
+        BacktestEvents = backtestEvents;
         TradingRunSpecs = tradingRunSpecs;
         SignalSpecs = signalSpecs;
         OrderIntentSpecs = orderIntentSpecs;
@@ -114,6 +116,7 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, Position, Guid> Positions { get; }
     public IRepository<TraderDbContext, SchedulePlan, Guid> SchedulePlans { get; }
     public IRepository<TraderDbContext, ScheduledOrder, Guid> ScheduledOrders { get; }
+    public IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> BacktestEvents { get; }
     public IRepository<TraderDbContext, ExecutionLog, Guid> ExecutionLogs { get; }
     public IRepository<TraderDbContext, StrategyEvaluation, Guid> StrategyEvaluations { get; }
     public IRepository<TraderDbContext, MarketSnapshotRecord, Guid> MarketSnapshots { get; }

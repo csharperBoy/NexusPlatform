@@ -52,7 +52,7 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<BacktestTrade> BacktestTrades { get; set; }
     public virtual DbSet<BacktestDailyEquity> BacktestDailyEquities { get; set; }
     public virtual DbSet<HistoricalDataCollectionJob> HistoricalDataCollectionJobs { get; set; }
-
+    public virtual DbSet<BacktestEvent> BacktestEvents { get; set; }
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -95,6 +95,7 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new BacktestSymbolConfiguration());
         modelBuilder.ApplyConfiguration(new BacktestTradeConfiguration());
         modelBuilder.ApplyConfiguration(new BacktestDailyEquityConfiguration());
-        modelBuilder.ApplyConfiguration(new HistoricalDataCollectionJobConfiguration());
+        modelBuilder.ApplyConfiguration(new HistoricalDataCollectionJobConfiguration()); 
+        modelBuilder.ApplyConfiguration(new BacktestEventConfiguration());
     }
 }

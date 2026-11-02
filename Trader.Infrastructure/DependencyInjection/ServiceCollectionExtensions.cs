@@ -115,7 +115,9 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, TradingEvent, Guid>,
                 EfRepository<TraderDbContext, TradingEvent, Guid>>();
 
-        // Backtest 
+            services.AddScoped<IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid>,
+    EfRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid>>();
+            // Backtest 
             services.AddScoped<IRepository<TraderDbContext, BacktestRun, Guid>,
                 EfRepository<TraderDbContext, BacktestRun, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, BacktestSymbol, Guid>,

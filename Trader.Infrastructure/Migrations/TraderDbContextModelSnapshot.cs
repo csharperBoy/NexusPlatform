@@ -123,6 +123,59 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("BacktestDailyEquities", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BacktestRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CandleTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TradeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BacktestEvent");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("BacktestRunId", "OccurredAt")
+                        .HasDatabaseName("IX_BacktestEvent_Run_Time");
+
+                    b.HasIndex("BacktestRunId", "Severity")
+                        .HasDatabaseName("IX_BacktestEvent_Run_Severity");
+
+                    b.HasIndex("BacktestRunId", "Type")
+                        .HasDatabaseName("IX_BacktestEvent_Run_Type");
+
+                    b.ToTable("BacktestEvents", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.BacktestRun", b =>
                 {
                     b.Property<Guid>("Id")
