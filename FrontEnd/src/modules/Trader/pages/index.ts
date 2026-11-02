@@ -14,3 +14,7 @@ export { SignalsPage } from "./Signals/SignalsPage";
 export { CurrencyRatesManagementPage } from "./CurrencyRates/CurrencyRatesManagementPage";
 
 export { TradingEventsPage } from "./Events/TradingEventsPage";
+
+export { BacktestDetailPage } from "./Backtests/BacktestDetailPage";
+
+export { BacktestsListPage } from "./Backtests/BacktestsListPage";

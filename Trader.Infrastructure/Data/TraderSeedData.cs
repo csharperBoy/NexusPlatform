@@ -174,6 +174,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Trading runtime events log",
                             DisplayOrder = 3014,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.backtest",
+                            Name = "Backtest",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Backtest runs and results",
+                            DisplayOrder = 3015,
+                            Icon = "trending-up",
                         },
                     }
                 }
@@ -216,6 +225,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.signal", roleId, "View signals"),
                 FullAccess("trader.currencyrate", roleId, "Full access to Currency Rate"),
                 FullAccess("trader.tradingevent", roleId, "View trading events"),
+                FullAccess("trader.backtest", roleId, "Full access to Backtest"),
             };
         }
 
@@ -392,6 +402,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.tradingevent",
                             ParentKey = "trader",
                             Path = "/trader/events"
+                        },new()
+                        {
+                            Title = "بکتست‌ها",
+                            Description = "اجرای بکتست روی داده‌ی تاریخی",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 113,
+                            Key = "trader.backtest",
+                            ParentKey = "trader",
+                            Path = "/trader/backtests"
                         },
                     }
                 }

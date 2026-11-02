@@ -117,3 +117,21 @@ export {
   SEVERITY_LABELS,
   SEVERITY_COLORS,
 } from "./TradingEventView";
+
+export type {
+  BacktestSymbolModel,
+  RunBacktestConfigModel,
+  RunBacktestModel,
+  BacktestRunSummaryView,
+  BacktestRunDetailView,
+  BacktestTradeView,
+  BacktestDailyEquityView,
+} from "./Backtest";
+
+export {
+  BacktestStatus,
+  BacktestExitReason,
+  BACKTEST_STATUS_LABELS,
+  BACKTEST_STATUS_COLORS,
+  EXIT_REASON_LABELS,
+} from "./Backtest";

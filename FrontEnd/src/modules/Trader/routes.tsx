@@ -10,7 +10,7 @@ import {
   AccountsManagementPage,
   PositionsPage,
   CurrencyRatesManagementPage,
-  SignalsPage, 
+  SignalsPage, BacktestDetailPage,BacktestsListPage,
   TradingEventsPage} from "./pages";
 
 export const TraderShotgunRoutes: RouteObject[] = [
@@ -25,7 +25,8 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/server-clock",   element: <ServerClockPage /> },
   { path: "trader/logs",           element: <LogViewerPage /> },
   { path: "trader/events", element: <TradingEventsPage /> },
-  
+  { path: "trader/backtests", element: <BacktestsListPage /> },
+  { path: "trader/backtests/:id", element: <BacktestDetailPage /> },
 ];
 
 export const traderPanelRoutes: RouteObject[] = [
