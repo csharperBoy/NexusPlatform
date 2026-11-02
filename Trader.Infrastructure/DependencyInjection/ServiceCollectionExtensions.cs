@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Scheduler.Application.DependencyInjection;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
@@ -28,6 +29,7 @@ using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.ExternalApiClient.DependencyInjection;
 using Trader.ExternalApiClient.EasyTrader;
+using Trader.Infrastructure.Backtesting;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
 using Trader.Infrastructure.Data;
@@ -221,6 +223,11 @@ namespace Trader.Infrastructure.DependencyInjection
 
             services.AddScoped<IHistoricalDataCollector, HistoricalDataCollector>();
             services.AddHostedService<HistoricalDataCollectionWorker>();
+
+            // ─── Backtest Engine ───
+            services.AddScoped<ISubCandleResolver, SubCandleResolver>();
+            services.AddSingleton<IOrderFillSimulator, OrderFillSimulator>();
+            services.AddScoped<IBacktestEngine, BacktestEngine>();
             /* ═══════════ Scheduler Integration ═══════════ */
 
             services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();

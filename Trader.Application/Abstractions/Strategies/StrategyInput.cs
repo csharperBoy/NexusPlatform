@@ -8,7 +8,7 @@ namespace Trader.Application.Abstractions.Strategies;
 /// </summary>
 public sealed record StrategyInput(
     string Isin,
-    MarketSnapshot LatestSnapshot,
+    MarketSnapshot? LatestSnapshot,
     IReadOnlyList<Candle> Candles,
     StrategyConfig Configuration,
     TimeFrame TimeFrame,
