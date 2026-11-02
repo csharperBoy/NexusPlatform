@@ -1,11 +1,12 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Runtime;
+using Trader.Application.Specifications.Backtests;
 using Trader.Application.Specifications.Candles;
 using Trader.Application.Specifications.Instruments;
 using Trader.Domain.Entities;
@@ -38,7 +39,8 @@ public sealed class BacktestEngine : IBacktestEngine
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
 
-        var run = await uow.BacktestRuns.GetByIdAsync(backtestRunId);
+        var spec = new BacktestRunByIdWithSymbolsSpec(backtestRunId);
+        var run = await uow.BacktestRunSpecs.GetBySpecAsync(spec);
         if (run is null)
         {
             _logger.LogWarning("BacktestRun {Id} not found.", backtestRunId);

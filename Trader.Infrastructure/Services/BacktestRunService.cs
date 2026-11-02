@@ -166,9 +166,10 @@ public sealed class BacktestRunService
     }
 
     public async Task<BacktestRunDetailView?> GetByIdAsync(
-        Guid id, CancellationToken ct = default)
+    Guid id, CancellationToken ct = default)
     {
-        var run = await _uow.BacktestRuns.GetByIdAsync(id);
+        var spec = new BacktestRunByIdWithSymbolsSpec(id);
+        var run = await _uow.BacktestRunSpecs.GetBySpecAsync(spec);
         return run is null ? null : MapToDetail(run);
     }
 
