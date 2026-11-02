@@ -18,3 +18,10 @@ export { TradingEventsPage } from "./Events/TradingEventsPage";
 export { BacktestDetailPage } from "./Backtests/BacktestDetailPage";
 
 export { BacktestsListPage } from "./Backtests/BacktestsListPage";
+
+
+export { CollectionStatusBadge } from "./HistoricalData/CollectionStatusBadge";
+
+export { CreateCollectionModal } from "./HistoricalData/CreateCollectionModal";
+
+export { HistoricalDataCollectionPage } from "./HistoricalData/HistoricalDataCollectionPage";

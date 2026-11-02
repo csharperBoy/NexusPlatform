@@ -183,6 +183,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Backtest runs and results",
                             DisplayOrder = 3015,
                             Icon = "trending-up",
+                        },new()
+                        {
+                            Key = "trader.historicaldata",
+                            Name = "Historical Data Collection",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Historical candles collection jobs",
+                            DisplayOrder = 3016,
+                            Icon = "database",
                         },
                     }
                 }
@@ -226,6 +235,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.currencyrate", roleId, "Full access to Currency Rate"),
                 FullAccess("trader.tradingevent", roleId, "View trading events"),
                 FullAccess("trader.backtest", roleId, "Full access to Backtest"),
+                FullAccess("trader.historicaldata", roleId, "Full access to Historical Data Collection"),
             };
         }
 
@@ -411,6 +421,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.backtest",
                             ParentKey = "trader",
                             Path = "/trader/backtests"
+                        },new()
+                        {
+                            Title = "داده‌ی تاریخی",
+                            Description = "جمع‌آوری کندل‌های تاریخی برای Backtest",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 114,
+                            Key = "trader.historicaldata",
+                            ParentKey = "trader",
+                            Path = "/trader/historical-data"
                         },
                     }
                 }

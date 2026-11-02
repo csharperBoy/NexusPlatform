@@ -15,3 +15,4 @@ export { tradingScheduleApi } from "./tradingScheduleApi";
 export { currencyRateApi } from "./currencyRateApi";
 export { tradingEventApi } from "./tradingEventApi";
 export { backtestApi } from "./backtestApi";
+export { historicalDataCollectionApi } from "./historicalDataCollectionApi";

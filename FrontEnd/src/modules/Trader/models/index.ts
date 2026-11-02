@@ -135,3 +135,17 @@ export {
   BACKTEST_STATUS_COLORS,
   EXIT_REASON_LABELS,
 } from "./Backtest";
+
+export type {
+  HistoricalDataCollectionJobSummaryView,
+  HistoricalDataCollectionJobDetailView,
+  CollectHistoricalDataCommand,
+} from "./HistoricalDataCollection";
+
+export {
+  CollectionJobStatus,
+  COLLECTION_STATUS_LABELS,
+  COLLECTION_STATUS_COLORS,
+  COLLECTION_TIMEFRAME_OPTIONS,
+  TIMEFRAME_LABEL_MAP,
+} from "./HistoricalDataCollection";
