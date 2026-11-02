@@ -83,6 +83,384 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("OutboxMessages", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestDailyEquity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BacktestRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Cash")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("DailyReturnPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Equity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("PositionValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BacktestDailyEquity");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("BacktestRunId", "Date")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BacktestDailyEquity_Run_Date");
+
+                    b.ToTable("BacktestDailyEquities", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AvgLoss")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("AvgWin")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("CapitalAllocationMode")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfigSnapshotJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("DateFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DefaultOrderMode")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<decimal>("FinalEquity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("FixedCapitalAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("InitialCapital")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("LosingTrades")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MaxDrawdownPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("MinDeltaPercent")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("OnMarketClose")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OnStop")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("OwnerOrganizationUnitId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPersonId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerPositionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("PrimaryTimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ProfitFactor")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("SharpeRatio")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("SlippagePercent")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<Guid?>("SourceRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("StopLossPercentage")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal?>("StopLossPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("StrategyConfigJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StrategyKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("StrengthMultiplier")
+                        .HasPrecision(4, 2)
+                        .HasColumnType("decimal(4,2)");
+
+                    b.Property<int?>("SubCandleTimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("TakeProfitPercentage")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal?>("TakeProfitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TargetCurrency")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("TotalCommission")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalReturnPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("TotalSlippage")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("TotalTrades")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("WinRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<int>("WinningTrades")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BacktestRun");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_BacktestRun_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_BacktestRun_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_BacktestRun_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_BacktestRun_ModifiedBy");
+
+                    b.HasIndex("OwnerOrganizationUnitId")
+                        .HasDatabaseName("IX_BacktestRun_OwnerOrgUnit");
+
+                    b.HasIndex("OwnerPersonId")
+                        .HasDatabaseName("IX_BacktestRun_OwnerPerson");
+
+                    b.HasIndex("SourceRunId")
+                        .HasDatabaseName("IX_BacktestRun_SourceRun");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_BacktestRun_Status");
+
+                    b.HasIndex("OwnerOrganizationUnitId", "OwnerPersonId")
+                        .HasDatabaseName("IX_BacktestRun_ScopedLookup");
+
+                    b.ToTable("BacktestRuns", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestSymbol", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AllocationPercentage")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<Guid>("BacktestRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BacktestSymbol");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("BacktestRunId", "Isin")
+                        .IsUnique()
+                        .HasDatabaseName("UX_BacktestSymbol_Run_Isin");
+
+                    b.ToTable("BacktestSymbols", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestTrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BacktestRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntryFillsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EntryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("ExitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("ExitQuantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ExitReason")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExitTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("GrossPnL")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("HoldingDurationSeconds")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("LastEntryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("NetPnL")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("NetPnLPct")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("TotalBuyCommission")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("TotalEntryQuantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalSellCommission")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("WeightedAvgEntryPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BacktestTrade");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("BacktestRunId", "ExitTime")
+                        .HasDatabaseName("IX_BacktestTrade_Run_ExitTime");
+
+                    b.HasIndex("BacktestRunId", "Isin")
+                        .HasDatabaseName("IX_BacktestTrade_Run_Isin");
+
+                    b.HasIndex("BacktestRunId", "NetPnL")
+                        .HasDatabaseName("IX_BacktestTrade_Run_NetPnL");
+
+                    b.ToTable("BacktestTrades", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.BrokerOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -337,6 +715,110 @@ namespace Trader.Infrastructure.Migrations
                         .HasDatabaseName("IX_ExecutionLog_Timestamp");
 
                     b.ToTable("ExecutionLogs", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.HistoricalDataCollectionJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CompletedCombinations")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("CurrentIsin")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("CurrentTimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DurationMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("IsinsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LogMessagesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("ProgressPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TimeFramesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TotalCandlesCollected")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TotalCombinations")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_HistoricalDataCollectionJob");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_ModifiedBy");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_Status");
+
+                    b.ToTable("HistoricalDataCollectionJobs", "trader");
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.Instrument", b =>
@@ -1564,6 +2046,15 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("TradingSchedules", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestSymbol", b =>
+                {
+                    b.HasOne("Trader.Domain.Entities.BacktestRun", null)
+                        .WithMany("Symbols")
+                        .HasForeignKey("BacktestRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.Instrument", b =>
                 {
                     b.HasOne("Trader.Domain.Entities.TradingSchedule", "TradingSchedule")
@@ -1798,6 +2289,11 @@ namespace Trader.Infrastructure.Migrations
                         .HasForeignKey("TradingRunId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.BacktestRun", b =>
+                {
+                    b.Navigation("Symbols");
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.SchedulePlan", b =>

@@ -24,6 +24,13 @@ public class TraderUnitOfWork : EfUnitOfWork<TraderDbContext>, ITraderUnitOfWork
         IRepository<TraderDbContext, ScheduledOrder, Guid> scheduledOrders,
         IRepository<TraderDbContext, ExecutionLog, Guid> executionLogs,
         IRepository<TraderDbContext, TradingSchedule, Guid> tradingSchedules,
+        IRepository<TraderDbContext, BacktestRun, Guid> backtestRuns,
+IRepository<TraderDbContext, BacktestSymbol, Guid> backtestSymbols,
+IRepository<TraderDbContext, BacktestTrade, Guid> backtestTrades,
+IRepository<TraderDbContext, BacktestDailyEquity, Guid> backtestDailyEquities,
+IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> historicalDataCollectionJobs,
+ISpecificationRepository<BacktestRun, Guid> backtestRunSpecs,
+ISpecificationRepository<BacktestTrade, Guid> backtestTradeSpecs,
         ISpecificationRepository<TradingRun, Guid> tradingRunSpecs,
         ISpecificationRepository<Signal, Guid> signalSpecs,
         ISpecificationRepository<OrderIntent, Guid> orderIntentSpecs,
@@ -72,7 +79,13 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         PositionSpecs = positionSpecs;
         AccountSpecs = accountSpecs;
         ExecutionLogSpecs = executionLogSpecs;
-
+        BacktestRuns = backtestRuns;
+        BacktestSymbols = backtestSymbols;
+        BacktestTrades = backtestTrades;
+        BacktestDailyEquities = backtestDailyEquities;
+        HistoricalDataCollectionJobs = historicalDataCollectionJobs;
+        BacktestRunSpecs = backtestRunSpecs;
+        BacktestTradeSpecs = backtestTradeSpecs;
         OrderTrades = orderTrades;
         OrderTradeSpecs = orderTradeSpecs;
         StrategyEvaluations = strategyEvaluations;
@@ -108,6 +121,13 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     public IRepository<TraderDbContext, CurrencyRate, Guid> CurrencyRates { get; }
     public IRepository<TraderDbContext, TradingEvent, Guid> TradingEvents { get; }
+    public IRepository<TraderDbContext, BacktestRun, Guid> BacktestRuns { get; }
+    public IRepository<TraderDbContext, BacktestSymbol, Guid> BacktestSymbols { get; }
+    public IRepository<TraderDbContext, BacktestTrade, Guid> BacktestTrades { get; }
+    public IRepository<TraderDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
+    public IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
+    public ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
+    public ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }
     public ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
     public ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     public ISpecificationRepository<TradingRun, Guid> TradingRunSpecs { get; }

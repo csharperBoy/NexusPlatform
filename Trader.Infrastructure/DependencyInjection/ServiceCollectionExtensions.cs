@@ -111,6 +111,17 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, TradingEvent, Guid>,
                 EfRepository<TraderDbContext, TradingEvent, Guid>>();
 
+        // Backtest 
+            services.AddScoped<IRepository<TraderDbContext, BacktestRun, Guid>,
+                EfRepository<TraderDbContext, BacktestRun, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, BacktestSymbol, Guid>,
+                EfRepository<TraderDbContext, BacktestSymbol, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, BacktestTrade, Guid>,
+                EfRepository<TraderDbContext, BacktestTrade, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, BacktestDailyEquity, Guid>,
+                EfRepository<TraderDbContext, BacktestDailyEquity, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>,
+                EfRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
 
             /* ═══════════ Repositories — Specification ═══════════ */
 
@@ -153,6 +164,11 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfSpecificationRepository<TraderDbContext, CurrencyRate, Guid>>();
             services.AddScoped<ISpecificationRepository<TradingEvent, Guid>,
                 EfSpecificationRepository<TraderDbContext, TradingEvent, Guid>>();
+            //Backtest
+            services.AddScoped<ISpecificationRepository<BacktestRun, Guid>,
+                EfSpecificationRepository<TraderDbContext, BacktestRun, Guid>>();
+            services.AddScoped<ISpecificationRepository<BacktestTrade, Guid>,
+                EfSpecificationRepository<TraderDbContext, BacktestTrade, Guid>>();
 
             services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 

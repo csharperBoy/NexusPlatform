@@ -26,7 +26,16 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, TradingSchedule, Guid> TradingSchedules { get; }
     IRepository<TDbContext, CurrencyRate, Guid> CurrencyRates { get; }
     IRepository<TDbContext, TradingEvent, Guid> TradingEvents { get; }
+    // Backtest
+    IRepository<TDbContext, BacktestRun, Guid> BacktestRuns { get; }
+    IRepository<TDbContext, BacktestSymbol, Guid> BacktestSymbols { get; }
+    IRepository<TDbContext, BacktestTrade, Guid> BacktestTrades { get; }
+    IRepository<TDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
+    IRepository<TDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
+
     // Spec Repositories
+    ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
+    ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }
     ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
     ISpecificationRepository<CandleRecord, Guid> CandleRecordSpecs { get; }
     ISpecificationRepository<StrategyEvaluation, Guid> StrategyEvaluationSpecs { get; }
