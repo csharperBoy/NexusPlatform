@@ -24,10 +24,8 @@ public class BacktestEventConfiguration : BaseConfiguration<BacktestEvent>
 
         builder.HasIndex(x => new { x.BacktestRunId, x.OccurredAt })
             .HasDatabaseName("IX_BacktestEvent_Run_Time");
-
         builder.HasIndex(x => new { x.BacktestRunId, x.Type })
             .HasDatabaseName("IX_BacktestEvent_Run_Type");
-
         builder.HasIndex(x => new { x.BacktestRunId, x.Severity })
             .HasDatabaseName("IX_BacktestEvent_Run_Severity");
     }

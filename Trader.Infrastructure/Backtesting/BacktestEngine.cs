@@ -39,6 +39,7 @@ public sealed class BacktestEngine : IBacktestEngine
     {
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+        var eventLogger = scope.ServiceProvider.GetRequiredService<IBacktestEventLogger>();
 
         // Backtest operations (loading historical candles) can exceed default 30s
         uow.Context.Database.SetCommandTimeout(TimeSpan.FromMinutes(5));
@@ -64,10 +65,20 @@ public sealed class BacktestEngine : IBacktestEngine
         _logger.LogInformation(
             "BacktestRun {Id} started. strategy={Strategy} symbols={Symbols} range={From:yyyy-MM-dd}→{To:yyyy-MM-dd}",
             run.Id, run.StrategyKey, run.Symbols.Count, run.DateFrom, run.DateTo);
-
+        eventLogger.Log(run.Id, BacktestEventType.RunStarted, BacktestEventSeverity.Info,
+            $"بکتست شروع شد. استراتژی: {run.StrategyKey}, نمادها: {run.Symbols.Count}, " +
+            $"بازه: {run.DateFrom:yyyy-MM-dd} تا {run.DateTo:yyyy-MM-dd}",
+            payload: new
+            {
+                strategy = run.StrategyKey,
+                symbols = run.Symbols.Select(s => s.Isin).ToArray(),
+                dateFrom = run.DateFrom,
+                dateTo = run.DateTo,
+                initialCapital = run.InitialCapital
+            });
         try
         {
-            var state = await SimulateAsync(run, uow, ct);
+            var state = await SimulateAsync(run, uow, eventLogger, ct);
 
             var metrics = BacktestMetricsCalculator.Calculate(
                 state.InitialCapital, state.Cash, state.Trades, state.DailyEquities);
@@ -99,6 +110,22 @@ public sealed class BacktestEngine : IBacktestEngine
             _logger.LogInformation(
                 "BacktestRun {Id} completed. return={ReturnPct:0.##}% trades={Trades} duration={Dur}ms",
                 run.Id, metrics.TotalReturnPct, metrics.TotalTrades, run.DurationMs);
+            eventLogger.Log(run.Id, BacktestEventType.MetricsComputed, BacktestEventSeverity.Info,
+                    $"متریک‌ها محاسبه شدند. بازده: {metrics.TotalReturnPct:0.##}%, " +
+                    $"تریدها: {metrics.TotalTrades} (برد: {metrics.WinningTrades}, باخت: {metrics.LosingTrades})",
+                    payload: metrics);
+
+                            eventLogger.Log(run.Id, BacktestEventType.RunCompleted, BacktestEventSeverity.Info,
+                                $"بکتست تکمیل شد. سرمایه‌ی نهایی: {state.Cash:N0}, مدت: {run.DurationMs}ms",
+                                payload: new
+                                {
+                                    finalEquity = state.Cash,
+                                    totalReturnPct = metrics.TotalReturnPct,
+                                    totalTrades = metrics.TotalTrades,
+                                    durationMs = run.DurationMs
+                                });
+
+                            await eventLogger.FlushAsync(ct);
         }
         catch (OperationCanceledException)
         {
@@ -110,9 +137,16 @@ public sealed class BacktestEngine : IBacktestEngine
         catch (Exception ex)
         {
             _logger.LogError(ex, "BacktestRun {Id} failed.", run.Id);
+
+            eventLogger.Log(run.Id, BacktestEventType.RunFailed, BacktestEventSeverity.Error,
+                $"بکتست ناموفق بود: {ex.Message}",
+                payload: new { exceptionType = ex.GetType().Name, exceptionMessage = ex.Message });
+
             run.MarkFailed(ex.Message);
             await uow.BacktestRuns.UpdateAsync(run);
             await uow.SaveChangesAsync(CancellationToken.None);
+
+            await eventLogger.FlushAsync(CancellationToken.None);
             throw;
         }
     }
@@ -120,9 +154,10 @@ public sealed class BacktestEngine : IBacktestEngine
     /* ═══════════════════ Simulation ═══════════════════ */
 
     private async Task<BacktestState> SimulateAsync(
-        BacktestRun run,
-        ITraderUnitOfWork<TraderDbContext> uow,
-        CancellationToken ct)
+    BacktestRun run,
+    ITraderUnitOfWork<TraderDbContext> uow,
+    IBacktestEventLogger eventLogger,
+    CancellationToken ct)
     {
         var scope = _scopeFactory.CreateScope().ServiceProvider;
 
@@ -133,12 +168,27 @@ public sealed class BacktestEngine : IBacktestEngine
         // ─── Config ───
         var strategyConfig = strategyFactory.DeserializeConfig(
             run.StrategyKey, run.StrategyConfigJson);
+       
         var strategy = strategyFactory.Create(run.StrategyKey, strategyConfig);
 
         var timeFrame = (TimeFrame)run.PrimaryTimeFrame;
         var subTimeFrame = run.SubCandleTimeFrame.HasValue
             ? (TimeFrame)run.SubCandleTimeFrame.Value
             : (TimeFrame?)null;
+
+        eventLogger.Log(run.Id, BacktestEventType.ConfigLoaded, BacktestEventSeverity.Info,
+   $"Config لود شد. استراتژی: {run.StrategyKey}, " +
+   $"تایم‌فریم: {timeFrame}, sub-candle: {subTimeFrame?.ToString() ?? "غیرفعال"}, " +
+   $"Strength: {run.StrengthMultiplier}, MinDelta: {run.MinDeltaPercent:P1}",
+   payload: new
+   {
+       strategyKey = run.StrategyKey,
+       strategyConfigJson = run.StrategyConfigJson,
+       timeFrame = timeFrame.ToString(),
+       subTimeFrame = subTimeFrame?.ToString(),
+       strengthMultiplier = run.StrengthMultiplier,
+       minDeltaPercent = run.MinDeltaPercent
+   });
 
         // اگر subTimeFrame >= primary، استفاده نکن
         if (subTimeFrame.HasValue && (int)subTimeFrame.Value >= (int)timeFrame)
@@ -158,6 +208,9 @@ public sealed class BacktestEngine : IBacktestEngine
                 throw new InvalidOperationException(
                     $"Instrument '{s.Isin}' not found for backtest {run.Id}.");
             instruments[s.Isin] = inst;
+            eventLogger.Log(run.Id, BacktestEventType.InstrumentsLoaded, BacktestEventSeverity.Debug,
+    $"Instrument {s.Isin} لود شد.",
+    isin: s.Isin);
         }
 
         // ─── Candles ───
@@ -185,7 +238,18 @@ public sealed class BacktestEngine : IBacktestEngine
             }
 
             primaryCandles[s.Isin] = primary;
-
+            eventLogger.Log(run.Id, BacktestEventType.CandlesLoaded, BacktestEventSeverity.Info,
+    $"کندل‌های {s.Isin} لود شدند: {primary.Count} کندل " +
+    $"({primary[0].OpenTime:yyyy-MM-dd} تا {primary[^1].OpenTime:yyyy-MM-dd})",
+    payload: new
+    {
+        isin = s.Isin,
+        timeFrame = timeFrame.ToString(),
+        count = primary.Count,
+        firstCandle = primary[0].OpenTime,
+        lastCandle = primary[^1].OpenTime
+    },
+    isin: s.Isin);
             if (subCandles is not null)
             {
                 var sub = await LoadCandlesAsync(
@@ -246,7 +310,15 @@ public sealed class BacktestEngine : IBacktestEngine
             var cmp = a.Time.CompareTo(b.Time);
             return cmp != 0 ? cmp : string.Compare(a.Isin, b.Isin, StringComparison.Ordinal);
         });
+        eventLogger.Log(run.Id, BacktestEventType.EventsBuilt, BacktestEventSeverity.Info,
+    $"{events.Count:N0} رویداد شبیه‌سازی ساخته شد " +
+    $"({(events.Count > 0 ? events[0].Time : DateTime.MinValue):yyyy-MM-dd} تا " +
+    $"{(events.Count > 0 ? events[^1].Time : DateTime.MinValue):yyyy-MM-dd})",
+    payload: new { eventCount = events.Count },
+    candleTime: events.Count > 0 ? events[0].Time : (DateTime?)null);
 
+        eventLogger.Log(run.Id, BacktestEventType.SimulationStarted, BacktestEventSeverity.Info,
+            "شبیه‌سازی شروع شد.");
         // ─── Running candle list per symbol ───
         var runningCandles = symbolAllocations
             .ToDictionary(s => s.Isin, s => new List<Candle>());
@@ -297,7 +369,7 @@ public sealed class BacktestEngine : IBacktestEngine
                 if (resolution.Triggered)
                 {
                     ClosePosition(state, isin, resolution.Price,
-                        resolution.Reason, candle.OpenTime, instrument, run);
+                        resolution.Reason, candle.OpenTime, instrument, run, eventLogger);
                 }
             }
 
@@ -331,7 +403,7 @@ public sealed class BacktestEngine : IBacktestEngine
                     foreach (var sig in evalResult.Signals)
                     {
                         HandleSignal(state, sig, isin, candle, instrument,
-                            allocPct, run, sizeCalc);
+                            allocPct, run, sizeCalc, eventLogger);
                     }
                 }
             }
@@ -369,7 +441,7 @@ public sealed class BacktestEngine : IBacktestEngine
             var lastCandle = primaryCandles[isin].Last();
             ClosePosition(state, isin, lastCandle.Close,
                 BacktestExitReason.EndOfBacktest,
-                lastCandle.OpenTime, instruments[isin], run);
+                lastCandle.OpenTime, instruments[isin], run, eventLogger);
         }
 
         // ─── Final day equity after close ───
@@ -410,14 +482,15 @@ public sealed class BacktestEngine : IBacktestEngine
     /* ═══════════════════ Signal Handling ═══════════════════ */
 
     private void HandleSignal(
-        BacktestState state,
-        StrategySignal sig,
-        string isin,
-        Candle candle,
-        Instrument instrument,
-        decimal allocPct,
-        BacktestRun run,
-        Trader.Application.Abstractions.Execution.IOrderSizeCalculator sizeCalc)
+    BacktestState state,
+    StrategySignal sig,
+    string isin,
+    Candle candle,
+    Instrument instrument,
+    decimal allocPct,
+    BacktestRun run,
+    Trader.Application.Abstractions.Execution.IOrderSizeCalculator sizeCalc,
+    IBacktestEventLogger eventLogger)
     {
         if (sig.Action == SignalAction.Buy)
         {
@@ -445,6 +518,22 @@ public sealed class BacktestEngine : IBacktestEngine
             {
                 state.PendingOrders[isin] = new PendingOrder(
                     isin, OrderSide.Buy, result.Quantity, candle.OpenTime);
+
+                eventLogger.Log(run.Id, BacktestEventType.SignalGenerated, BacktestEventSeverity.Info,
+                    $"سیگنال خرید {isin}: {result.Quantity:N0} سهم @ {candle.Close:N0} " +
+                    $"(قدرت: {sig.Strength.Value:0.##})",
+                    payload: new
+                    {
+                        action = "Buy",
+                        strength = sig.Strength.Value,
+                        quantity = result.Quantity,
+                        price = candle.Close,
+                        targetCapital = result.TargetCapital,
+                        committedCapital = result.CommittedCapital,
+                        delta = result.Delta
+                    },
+                    isin: isin,
+                    candleTime: candle.OpenTime);
             }
         }
         else if (sig.Action == SignalAction.Sell)
@@ -462,6 +551,19 @@ public sealed class BacktestEngine : IBacktestEngine
             {
                 state.PendingOrders[isin] = new PendingOrder(
                     isin, OrderSide.Sell, result.Quantity, candle.OpenTime);
+
+                eventLogger.Log(run.Id, BacktestEventType.SignalGenerated, BacktestEventSeverity.Info,
+                    $"سیگنال فروش {isin}: {result.Quantity:N0} سهم @ {candle.Close:N0} " +
+                    $"(قدرت: {sig.Strength.Value:0.##})",
+                    payload: new
+                    {
+                        action = "Sell",
+                        strength = sig.Strength.Value,
+                        quantity = result.Quantity,
+                        price = candle.Close
+                    },
+                    isin: isin,
+                    candleTime: candle.OpenTime);
             }
         }
     }
@@ -469,12 +571,13 @@ public sealed class BacktestEngine : IBacktestEngine
     /* ═══════════════════ Fill / Close ═══════════════════ */
 
     private void ExecuteFill(
-        BacktestState state,
-        PendingOrder pending,
-        Candle fillCandle,
-        Instrument instrument,
-        BacktestRun run,
-        string isin)
+    BacktestState state,
+    PendingOrder pending,
+    Candle fillCandle,
+    Instrument instrument,
+    BacktestRun run,
+    string isin,
+    IBacktestEventLogger eventLogger)
     {
         var fillPrice = _fillSimulator.FillPrice(
             pending.Side, fillCandle.Open, run.SlippagePercent);
@@ -510,7 +613,18 @@ public sealed class BacktestEngine : IBacktestEngine
 
             state.Cash -= totalCost;
             state.TotalCommission += commission;
-
+            eventLogger.Log(run.Id, BacktestEventType.FillExecuted, BacktestEventSeverity.Info,
+    $"خرید انجام شد: {qty:N0} سهم {isin} @ {fillPrice:N0}",
+    payload: new
+    {
+        side = "Buy",
+        quantity = qty,
+        price = fillPrice,
+        commission = commission,
+        totalCost = totalCost
+    },
+    isin: isin,
+    candleTime: fillCandle.OpenTime);
             if (state.Positions.TryGetValue(isin, out var existingPos))
             {
                 var newQty = existingPos.Quantity + qty;
@@ -540,6 +654,20 @@ public sealed class BacktestEngine : IBacktestEngine
                 pos.EntryFills.Add(new EntryFill(
                     fillCandle.OpenTime, fillPrice, qty, commission));
                 state.Positions[isin] = pos;
+                eventLogger.Log(run.Id, BacktestEventType.PositionOpened, BacktestEventSeverity.Info,
+    $"موقعیت باز شد: {qty:N0} سهم {isin} @ {fillPrice:N0}" +
+    (sl.HasValue ? $" (SL: {sl.Value:N0})" : "") +
+    (tp.HasValue ? $" (TP: {tp.Value:N0})" : ""),
+    payload: new
+    {
+        quantity = qty,
+        entryPrice = fillPrice,
+        stopLoss = sl,
+        takeProfit = tp,
+        commission = commission
+    },
+    isin: isin,
+    candleTime: fillCandle.OpenTime);
             }
         }
         else // Sell
@@ -553,6 +681,7 @@ public sealed class BacktestEngine : IBacktestEngine
             var commission = fillPrice * sellQty * commissionRate;
 
             state.Cash += proceeds;
+            
             state.TotalCommission += commission;
 
             var entryFillsJson = JsonSerializer.Serialize(
@@ -574,19 +703,32 @@ public sealed class BacktestEngine : IBacktestEngine
                 totalSellCommission: commission,
                 exitReason: BacktestExitReason.Signal);
 
+            eventLogger.Log(run.Id, BacktestEventType.PositionClosed, BacktestEventSeverity.Info,
+    $"موقعیت بسته شد (سیگنال): {sellQty:N0} سهم {isin} @ {fillPrice:N0}",
+    payload: new
+    {
+        quantity = sellQty,
+        exitPrice = fillPrice,
+        commission = commission,
+        exitReason = "Signal"
+    },
+    isin: isin,
+    candleTime: fillCandle.OpenTime,
+    tradeId: trade.Id);
             state.Trades.Add(trade);
             state.Positions.Remove(isin);
         }
     }
 
     private void ClosePosition(
-        BacktestState state,
-        string isin,
-        decimal triggerPrice,
-        BacktestExitReason reason,
-        DateTime time,
-        Instrument instrument,
-        BacktestRun run)
+    BacktestState state,
+    string isin,
+    decimal triggerPrice,
+    BacktestExitReason reason,
+    DateTime time,
+    Instrument instrument,
+    BacktestRun run,
+    IBacktestEventLogger eventLogger)
     {
         if (!state.Positions.TryGetValue(isin, out var pos)) return;
 
@@ -624,6 +766,27 @@ public sealed class BacktestEngine : IBacktestEngine
 
         state.Trades.Add(trade);
         state.Positions.Remove(isin);
+        if (reason == BacktestExitReason.StopLoss || reason == BacktestExitReason.TakeProfit)
+        {
+            eventLogger.Log(run.Id,
+                BacktestEventType.SLTPTriggered,
+                reason == BacktestExitReason.StopLoss
+                    ? BacktestEventSeverity.Warning
+                    : BacktestEventSeverity.Info,
+                $"{(reason == BacktestExitReason.StopLoss ? "حد ضرر" : "حد سود")} فعال شد: " +
+                $"{pos.Quantity:N0} سهم {isin} @ {fillPrice:N0} (trigger: {triggerPrice:N0})",
+                payload: new
+                {
+                    reason = reason.ToString(),
+                    quantity = pos.Quantity,
+                    triggerPrice = triggerPrice,
+                    fillPrice = fillPrice,
+                    commission = commission
+                },
+                isin: isin,
+                candleTime: time,
+                tradeId: trade.Id);
+        }
     }
 
     /* ═══════════════════ Helpers ═══════════════════ */

@@ -129,6 +129,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>,
                 EfRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
 
+
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
@@ -209,7 +210,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ICommittedCapitalCalculator, CommittedCapitalCalculator>();
             /* ═══════════ Trading Event Logger ═══════════ */
             services.AddScoped<ITradingEventLogger, TradingEventLogger>();
-
+            services.AddScoped<IBacktestEventLogger, BacktestEventLogger>();
             // ─── Size Calculator ───
             services.AddScoped<IOrderSizeCalculator, OrderSizeCalculator>();
 
