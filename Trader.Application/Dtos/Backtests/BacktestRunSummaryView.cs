@@ -1,0 +1,25 @@
+﻿namespace Trader.Application.Dtos.Backtests;
+
+public sealed record BacktestRunSummaryView(
+    Guid Id,
+    string Name,
+    int Status,
+    string StatusName,
+    string StrategyKey,
+    int PrimaryTimeFrame,
+    string? TargetCurrency,
+    decimal InitialCapital,
+    decimal FinalEquity,
+    decimal TotalReturnPct,
+    decimal MaxDrawdownPct,
+    decimal SharpeRatio,
+    decimal WinRate,
+    int TotalTrades,
+    int WinningTrades,
+    int LosingTrades,
+    DateTime DateFrom,
+    DateTime DateTo,
+    DateTime? StartedAt,
+    DateTime? CompletedAt,
+    long? DurationMs,
+    DateTime CreatedAt);

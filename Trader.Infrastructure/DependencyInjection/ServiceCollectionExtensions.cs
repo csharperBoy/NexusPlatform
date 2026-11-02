@@ -228,6 +228,13 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<ISubCandleResolver, SubCandleResolver>();
             services.AddSingleton<IOrderFillSimulator, OrderFillSimulator>();
             services.AddScoped<IBacktestEngine, BacktestEngine>();
+            // ─── Backtest Run Service (Command + Query) ───
+            services.AddScoped<BacktestRunService>();
+            services.AddScoped<IBacktestRunCommandService>(
+                sp => sp.GetRequiredService<BacktestRunService>());
+            services.AddScoped<IBacktestRunQueryService>(
+                sp => sp.GetRequiredService<BacktestRunService>());
+            services.AddHostedService<BacktestWorker>();
             /* ═══════════ Scheduler Integration ═══════════ */
 
             services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();
