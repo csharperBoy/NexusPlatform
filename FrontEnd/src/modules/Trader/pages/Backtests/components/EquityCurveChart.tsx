@@ -9,6 +9,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import type {
+  NameType,
+  ValueType,
+} from "recharts/types/component/DefaultTooltipContent";
 import type { BacktestDailyEquityView } from "../../../models";
 
 interface Series {
@@ -22,15 +26,14 @@ interface Props {
 }
 
 const COLORS = [
-  "#10b981", // emerald
-  "#3b82f6", // blue
-  "#f59e0b", // amber
-  "#ef4444", // red
-  "#8b5cf6", // violet
+  "#10b981",
+  "#3b82f6",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
 ];
 
 export const EquityCurveChart: React.FC<Props> = ({ series }) => {
-  // Merge all series into a single array keyed by date
   const mergedData = useMemo(() => {
     const dateMap = new Map<string, Record<string, number | string>>();
 
@@ -69,26 +72,26 @@ export const EquityCurveChart: React.FC<Props> = ({ series }) => {
             <XAxis
               dataKey="date"
               tick={{ fontSize: 10 }}
-              tickFormatter={(v) => {
-                const d = new Date(v);
+              tickFormatter={(v: string | number) => {
+                const d = new Date(String(v));
                 return `${d.getMonth() + 1}/${d.getDate()}`;
               }}
             />
             <YAxis
               tick={{ fontSize: 10 }}
-              tickFormatter={(v) => {
+              tickFormatter={(v: number) => {
                 if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
                 if (Math.abs(v) >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
                 return String(v);
               }}
             />
             <Tooltip
-              formatter={(value: any) =>
+              formatter={(value: ValueType | undefined) =>
                 typeof value === "number"
                   ? value.toLocaleString("fa-IR", { maximumFractionDigits: 0 })
-                  : value
+                  : String(value ?? "")
               }
-              labelFormatter={(label) => `تاریخ: ${label}`}
+              labelFormatter={(label) => `تاریخ: ${String(label)}`}
               contentStyle={{
                 direction: "rtl",
                 fontFamily: "inherit",
@@ -96,9 +99,10 @@ export const EquityCurveChart: React.FC<Props> = ({ series }) => {
               }}
             />
             <Legend
-              formatter={(value) => {
-                const idx = parseInt(value.replace("series", ""), 10);
-                return series[idx]?.name ?? value;
+              formatter={(value: NameType) => {
+                const str = String(value);
+                const idx = parseInt(str.replace("series", ""), 10);
+                return series[idx]?.name ?? str;
               }}
             />
             {series.map((s, idx) => (
