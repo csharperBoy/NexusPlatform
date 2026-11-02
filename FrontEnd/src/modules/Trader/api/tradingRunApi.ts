@@ -118,7 +118,8 @@ export const tradingRunApi = {
       capitalAllocationMode: data.settings.capitalAllocationMode,
       fixedCapital: data.settings.fixedCapitalAmount ?? null,
       targetCurrency: data.targetCurrency ?? null,
-      strengthMultiplier: data.strengthMultiplier,
+      strengthMultiplier: data.strengthMultiplier,      
+  minDeltaPercent: data.minDeltaPercent,
       symbolCount: data.symbols.length,
       accountCount: data.accountIds.length,
     };
