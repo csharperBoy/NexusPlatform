@@ -7,6 +7,8 @@ import type {
   RunBacktestConfigModel,
 } from "../../models";
 import { TimeFrame, TIMEFRAME_LABELS } from "../../models";
+import { SymbolAllocationEditor } from "../TradingRuns/components/SymbolAllocationEditor";
+import type { TradingRunSymbolModel } from "../../models";
 
 interface Props {
   isOpen: boolean;
@@ -55,7 +57,7 @@ export const BacktestCreateModal: React.FC<Props> = ({
   const [minDeltaPercent, setMinDeltaPercent] = useState("3");
   const [stopLossPct, setStopLossPct] = useState("20");
   const [takeProfitPct, setTakeProfitPct] = useState("50");
-  const [symbolsRaw, setSymbolsRaw] = useState("");
+  const [symbols, setSymbols] = useState<TradingRunSymbolModel[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,32 +82,26 @@ export const BacktestCreateModal: React.FC<Props> = ({
   }, [isOpen]);
 
   const buildVirtualConfig = (): RunBacktestConfigModel => {
-    const symbols = symbolsRaw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((isin, idx, arr) => ({
-        isin,
-        allocationPercentage: 100 / arr.length,
-      }));
-
-    return {
-      strategyKey,
-      strategyConfigJson,
-      primaryTimeFrame,
-      targetCurrency: null,
-      strengthMultiplier: Number(strengthMultiplier),
-      minDeltaPercent: Number(minDeltaPercent) / 100,
-      stopLossPercentage: stopLossPct ? Number(stopLossPct) : null,
-      stopLossPrice: null,
-      takeProfitPercentage: takeProfitPct ? Number(takeProfitPct) : null,
-      takeProfitPrice: null,
-      defaultOrderMode: 0,
-      onMarketClose: 0,
-      onStop: 0,
-      symbols,
-    };
+  return {
+    strategyKey,
+    strategyConfigJson,
+    primaryTimeFrame,
+    targetCurrency: null,
+    strengthMultiplier: Number(strengthMultiplier),
+    minDeltaPercent: Number(minDeltaPercent) / 100,
+    stopLossPercentage: stopLossPct ? Number(stopLossPct) : null,
+    stopLossPrice: null,
+    takeProfitPercentage: takeProfitPct ? Number(takeProfitPct) : null,
+    takeProfitPrice: null,
+    defaultOrderMode: 0,
+    onMarketClose: 0,
+    onStop: 0,
+    symbols: symbols.map((s) => ({
+      isin: s.isin,
+      allocationPercentage: s.allocationPercentage,
+    })),
   };
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,12 +127,17 @@ export const BacktestCreateModal: React.FC<Props> = ({
     }
 
     if (mode === "virtual") {
-      const vc = buildVirtualConfig();
-      if (vc.symbols.length === 0) {
-        setError("حداقل یک نماد وارد کنید.");
-        return;
-      }
-    }
+  if (symbols.length === 0) {
+    setError("حداقل یک نماد انتخاب کنید.");
+    return;
+  }
+
+  const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
+  if (Math.abs(total - 100) > 0.01) {
+    setError("مجموع درصد تخصیص نمادها باید ۱۰۰ باشد.");
+    return;
+  }
+}
 
     const model: RunBacktestModel = {
       name: name.trim(),
@@ -352,21 +353,14 @@ export const BacktestCreateModal: React.FC<Props> = ({
               </div>
 
               <div>
-                <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                  نمادها (با کاما جدا کنید)
+                <label className="mb-2 block text-xs text-gray-600 dark:text-gray-400">
+                    نمادها و تخصیص سرمایه *
                 </label>
-                <input
-                  type="text"
-                  value={symbolsRaw}
-                  onChange={(e) => setSymbolsRaw(e.target.value)}
-                  placeholder="IRO1PNES0001, IRO1FOLD0001"
-                  dir="ltr"
-                  className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                <SymbolAllocationEditor
+                    symbols={symbols}
+                    onChange={setSymbols}
                 />
-                <p className="mt-1 text-[10px] text-gray-500">
-                  تخصیص سرمایه به‌طور مساوی بین نمادها تقسیم می‌شود.
-                </p>
-              </div>
+                </div>
             </div>
           )}
 
