@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Trader.Application.Abstractions;
@@ -38,6 +39,9 @@ public sealed class BacktestEngine : IBacktestEngine
     {
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+
+        // Backtest operations (loading historical candles) can exceed default 30s
+        uow.Context.Database.SetCommandTimeout(TimeSpan.FromMinutes(5));
 
         var spec = new BacktestRunByIdWithSymbolsSpec(backtestRunId);
         var run = await uow.BacktestRunSpecs.GetBySpecAsync(spec);
@@ -250,11 +254,17 @@ public sealed class BacktestEngine : IBacktestEngine
         // ─── Daily equity tracking ───
         DateTime? currentDay = null;
         decimal lastEquity = state.Cash;
+        // Cap history per symbol to strategy's requirement + small buffer.
+        // RSI(14) is memoryless after warmup — old candles don't change result.
+        var maxHistoryToKeep = strategy.RequiredCandleCount + 20;
 
+        var totalEvents = events.Count;
+        var lastProgressLog = 0;
         // ─── Simulation Loop ───
-        foreach (var ev in events)
+        for (int eventIdx = 0; eventIdx < events.Count; eventIdx++)
         {
             ct.ThrowIfCancellationRequested();
+            var ev = events[eventIdx];
 
             var isin = ev.Isin;
             var candle = ev.Candle;
@@ -263,6 +273,13 @@ public sealed class BacktestEngine : IBacktestEngine
 
             state.LastPrices[isin] = candle.Close;
             runningCandles[isin].Add(candle);
+
+            // Trim to bounded history
+            if (runningCandles[isin].Count > maxHistoryToKeep)
+            {
+                runningCandles[isin].RemoveRange(
+                    0, runningCandles[isin].Count - maxHistoryToKeep);
+            }
 
             // ─── 1. Execute pending fill ───
             if (state.PendingOrders.TryGetValue(isin, out var pending))
@@ -329,6 +346,16 @@ public sealed class BacktestEngine : IBacktestEngine
                 }
                 currentDay = dayOfCandle;
                 lastEquity = ComputeEquity(state);
+            }
+
+            // ─── 5. Progress log (every 10%) ───
+            if (eventIdx - lastProgressLog >= totalEvents / 10)
+            {
+                lastProgressLog = eventIdx;
+                _logger.LogInformation(
+                    "BacktestRun {RunId} progress: {Done:N0}/{Total:N0} ({Pct:0.0}%)",
+                    run.Id, eventIdx + 1, totalEvents,
+                    (eventIdx + 1) * 100.0 / totalEvents);
             }
         }
 
@@ -653,19 +680,25 @@ public sealed class BacktestEngine : IBacktestEngine
         => prev > 0m ? (current - prev) / prev * 100m : 0m;
 
     private async Task<List<Candle>> LoadCandlesAsync(
-        ITraderUnitOfWork<TraderDbContext> uow,
-        string isin,
-        TimeFrame timeFrame,
-        DateTime from,
-        DateTime to,
-        CancellationToken ct)
+    ITraderUnitOfWork<TraderDbContext> uow,
+    string isin,
+    TimeFrame timeFrame,
+    DateTime from,
+    DateTime to,
+    CancellationToken ct)
     {
-        var spec = new CandlesByIsinTfAfterSpec(isin, (int)timeFrame, from);
-        var rows = await uow.CandleRecordSpecs.ListBySpecAsync(spec);
+        // Read-only loading — bypass tracking for large historical sets
+        // (60k+ rows with tracking → 30s+ timeout)
+        var rows = await uow.Context.Candles
+            .AsNoTracking()
+            .Where(c => c.Isin == isin
+                     && c.TimeFrame == (int)timeFrame
+                     && c.OpenTime >= from
+                     && c.OpenTime <= to)
+            .OrderBy(c => c.OpenTime)
+            .ToListAsync(ct);
 
         return rows
-            .Where(r => r.OpenTime <= to)
-            .OrderBy(r => r.OpenTime)
             .Select(r => new Candle(
                 OpenTime: r.OpenTime,
                 Open: r.Open,
