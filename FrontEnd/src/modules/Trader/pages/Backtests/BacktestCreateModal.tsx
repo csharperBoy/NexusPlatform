@@ -9,7 +9,7 @@ import type {
 import { TimeFrame, TIMEFRAME_LABELS } from "../../models";
 import { SymbolAllocationEditor } from "../TradingRuns/components/SymbolAllocationEditor";
 import type { TradingRunSymbolModel } from "../../models";
-
+import { currencyRateApi } from "../../api/currencyRateApi";
 interface Props {
   isOpen: boolean;
   initialSourceRunId?: string | null;
@@ -46,7 +46,10 @@ export const BacktestCreateModal: React.FC<Props> = ({
   const [initialCapital, setInitialCapital] = useState("10000000");
   const [slippage, setSlippage] = useState("0.1"); // percent
   const [subCandleTf, setSubCandleTf] = useState("1");
-
+const [targetCurrency, setTargetCurrency] = useState("");
+const [currencyRateStatus, setCurrencyRateStatus] =
+  useState<"idle" | "checking" | "ok" | "missing">("idle");
+const [currencyRateCount, setCurrencyRateCount] = useState(0);
   // Virtual config
   const [strategyKey, setStrategyKey] = useState("rsi");
   const [strategyConfigJson, setStrategyConfigJson] = useState(
@@ -75,18 +78,71 @@ export const BacktestCreateModal: React.FC<Props> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) {
-      setName("");
-      setError(null);
+  if (isOpen) {
+    setName("");
+    setTargetCurrency("");
+    setCurrencyRateStatus("idle");
+    setCurrencyRateCount(0);
+    setError(null);
+  }
+}, [isOpen]);
+
+useEffect(() => {
+  if (!isOpen) return;
+
+  const cur = targetCurrency.trim().toUpperCase();
+  if (!cur || cur === "IRR") {
+    setCurrencyRateStatus("idle");
+    setCurrencyRateCount(0);
+    return;
+  }
+
+  let cancelled = false;
+  setCurrencyRateStatus("checking");
+  setCurrencyRateCount(0);
+
+  (async () => {
+    try {
+      // تاریخ شروع Backtest
+      const fromDate = new Date(dateFrom).toISOString();
+
+      // درخواست همه‌ی نرخ‌ها
+      const rates = await currencyRateApi.GetList(cur, "IRR", 500);
+
+      if (cancelled) return;
+
+      const usable = rates.filter((r) => {
+        const effectiveAt = new Date(
+          /[Zz]|[+-]\d{2}:?\d{2}$/.test(r.effectiveAt)
+            ? r.effectiveAt
+            : r.effectiveAt + "Z",
+        );
+        // نرخ‌هایی که قبل از شروع Backtest ثبت شده‌اند
+        return effectiveAt <= new Date(dateFrom);
+      });
+
+      if (usable.length === 0) {
+        setCurrencyRateStatus("missing");
+      } else {
+        setCurrencyRateStatus("ok");
+        setCurrencyRateCount(usable.length);
+      }
+    } catch {
+      if (!cancelled) setCurrencyRateStatus("missing");
     }
-  }, [isOpen]);
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [targetCurrency, isOpen, dateFrom]);
 
   const buildVirtualConfig = (): RunBacktestConfigModel => {
-  return {
+    return {
     strategyKey,
     strategyConfigJson,
     primaryTimeFrame,
-    targetCurrency: null,
+    targetCurrency: targetCurrency.trim().toUpperCase() || null,
     strengthMultiplier: Number(strengthMultiplier),
     minDeltaPercent: Number(minDeltaPercent) / 100,
     stopLossPercentage: stopLossPct ? Number(stopLossPct) : null,
@@ -97,71 +153,72 @@ export const BacktestCreateModal: React.FC<Props> = ({
     onMarketClose: 0,
     onStop: 0,
     symbols: symbols.map((s) => ({
-      isin: s.isin,
-      allocationPercentage: s.allocationPercentage,
+        isin: s.isin,
+        allocationPercentage: s.allocationPercentage,
     })),
-  };
-};
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!name.trim()) {
-      setError("نام بکتست الزامی است.");
-      return;
-    }
-    if (new Date(dateTo) <= new Date(dateFrom)) {
-      setError("تاریخ پایان باید بعد از تاریخ شروع باشد.");
-      return;
-    }
-    const ic = Number(initialCapital);
-    if (!ic || ic <= 0) {
-      setError("سرمایه‌ی اولیه باید بزرگ‌تر از صفر باشد.");
-      return;
-    }
-
-    if (mode === "existing" && !sourceRunId) {
-      setError("یک Run انتخاب کنید.");
-      return;
-    }
-
-    if (mode === "virtual") {
-  if (symbols.length === 0) {
-    setError("حداقل یک نماد انتخاب کنید.");
-    return;
-  }
-
-  const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
-  if (Math.abs(total - 100) > 0.01) {
-    setError("مجموع درصد تخصیص نمادها باید ۱۰۰ باشد.");
-    return;
-  }
-}
-
-    const model: RunBacktestModel = {
-      name: name.trim(),
-      sourceRunId: mode === "existing" ? sourceRunId : null,
-      configOverride: mode === "virtual" ? buildVirtualConfig() : null,
-      dateFrom: new Date(dateFrom).toISOString(),
-      dateTo: new Date(dateTo + "T23:59:59Z").toISOString(),
-      initialCapital: ic,
-      slippagePercent: Number(slippage) / 100,
-      subCandleTimeFrame: subCandleTf ? Number(subCandleTf) : null,
-      timeZoneId: "Asia/Tehran",
     };
+};
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError(null);
 
-    setSubmitting(true);
-    try {
-      const id = await backtestApi.Run(model);
-      onCreated(id);
-      onClose();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "خطا در اجرا");
-    } finally {
-      setSubmitting(false);
+  if (!name.trim()) {
+    setError("نام بکتست الزامی است.");
+    return;
+  }
+  if (new Date(dateTo) <= new Date(dateFrom)) {
+    setError("تاریخ پایان باید بعد از تاریخ شروع باشد.");
+    return;
+  }
+  const ic = Number(initialCapital);
+  if (!ic || ic <= 0) {
+    setError("سرمایه‌ی اولیه باید بزرگ‌تر از صفر باشد.");
+    return;
+  }
+
+  if (mode === "existing" && !sourceRunId) {
+    setError("یک Run انتخاب کنید.");
+    return;
+  }
+
+  if (mode === "virtual") {
+    if (symbols.length === 0) {
+      setError("حداقل یک نماد انتخاب کنید.");
+      return;
     }
+
+    const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
+    if (Math.abs(total - 100) > 0.01) {
+      setError("مجموع درصد تخصیص نمادها باید ۱۰۰ باشد.");
+      return;
+    }
+  }
+
+  // ─── Build Model ───
+  // configOverride فقط برای Virtual Mode
+  const model: RunBacktestModel = {
+    name: name.trim(),
+    sourceRunId: mode === "existing" ? sourceRunId : null,
+    configOverride: mode === "virtual" ? buildVirtualConfig() : null,
+    dateFrom: new Date(dateFrom).toISOString(),
+    dateTo: new Date(dateTo + "T23:59:59Z").toISOString(),
+    initialCapital: ic,
+    slippagePercent: Number(slippage) / 100,
+    subCandleTimeFrame: subCandleTf ? Number(subCandleTf) : null,
+    timeZoneId: "Asia/Tehran",
   };
+
+  setSubmitting(true);
+  try {
+    const id = await backtestApi.Run(model);
+    onCreated(id);
+    onClose();
+  } catch (e) {
+    setError(e instanceof Error ? e.message : "خطا در اجرا");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (!isOpen) return null;
 
@@ -311,6 +368,43 @@ export const BacktestCreateModal: React.FC<Props> = ({
                     className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                   />
                 </div>
+                <div>
+  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+    ارز تحلیل (اختیاری)
+  </label>
+  <div className="flex items-center gap-2">
+    <select
+      value={targetCurrency}
+      onChange={(e) => setTargetCurrency(e.target.value)}
+      className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    >
+      <option value="">IRR (پایه)</option>
+      <option value="USD">دلار آمریکا (USD)</option>
+      <option value="EUR">یورو (EUR)</option>
+      <option value="GBP">پوند انگلیس (GBP)</option>
+      <option value="AED">درهم امارات (AED)</option>
+      <option value="TRY">لیر ترکیه (TRY)</option>
+      <option value="CNY">یوان چین (CNY)</option>
+    </select>
+    {currencyRateStatus === "checking" && (
+      <span className="whitespace-nowrap text-xs text-gray-500">⏳</span>
+    )}
+    {currencyRateStatus === "ok" && (
+      <span className="whitespace-nowrap text-xs text-emerald-600">
+        ✓ {currencyRateCount}
+      </span>
+    )}
+    {currencyRateStatus === "missing" && (
+      <span className="whitespace-nowrap text-xs text-amber-600">
+        ⚠️ نرخ تاریخی نیست
+      </span>
+    )}
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    اگر خالی باشد یا IRR، تحلیل روی قیمت ریالی انجام می‌شود. نیاز به نرخ‌های
+    تاریخی ارز در بازه‌ی Backtest دارید.
+  </p>
+</div>
                 <div>
                   <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
                     MinDelta (%)
