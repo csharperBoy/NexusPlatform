@@ -4,7 +4,7 @@ import { useBacktestManagement } from "../../hooks/useBacktestManagement";
 import { BacktestStatusBadge } from "./components/BacktestStatusBadge";
 import { BacktestCreateModal } from "./BacktestCreateModal";
 import { BacktestStatus } from "../../models";
-
+import { useNavigate } from "react-router-dom";
 const fmtMoney = (v: number): string =>
   v.toLocaleString("fa-IR", { maximumFractionDigits: 0 });
 
@@ -14,7 +14,26 @@ export const BacktestsListPage: React.FC = () => {
   const { runs, loading, error, refresh, handleCancel } =
     useBacktestManagement();
   const [createOpen, setCreateOpen] = useState(false);
+const navigate = useNavigate();
+const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+const toggleId = (id: string) => {
+  setSelectedIds((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+};
+
+const clearSelection = () => setSelectedIds(new Set());
+
+const handleCompare = () => {
+  if (selectedIds.size < 2) return;
+  navigate(
+    `/trader/backtests/compare?ids=${Array.from(selectedIds).join(",")}`,
+  );
+};
   // Poll running backtests
   useEffect(() => {
     const hasRunning = runs.some(
@@ -51,6 +70,15 @@ export const BacktestsListPage: React.FC = () => {
           >
             🔄 بروزرسانی
           </button>
+          {selectedIds.size >= 2 && (
+  <button
+    type="button"
+    onClick={handleCompare}
+    className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+  >
+    📊 مقایسه ({selectedIds.size})
+  </button>
+)}
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
@@ -70,7 +98,19 @@ export const BacktestsListPage: React.FC = () => {
       <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm dark:border-gray-700">
         <table className="w-full text-right text-sm text-gray-700 dark:text-gray-300">
           <thead className="bg-gray-50 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-            <tr>
+           <tr>
+  <th className="w-10 p-3">
+    {selectedIds.size > 0 && (
+      <button
+        type="button"
+        onClick={clearSelection}
+        className="text-xs text-red-600 hover:underline"
+        title="پاک کردن انتخاب"
+      >
+        ✕
+      </button>
+    )}
+  </th>
               <th className="p-3">نام</th>
               <th className="p-3">وضعیت</th>
               <th className="p-3">استراتژی</th>
@@ -85,23 +125,33 @@ export const BacktestsListPage: React.FC = () => {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {loading && runs.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center">
+                <td colSpan={10} className="p-6 text-center">
                   در حال بارگذاری...
                 </td>
               </tr>
             ) : runs.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-6 text-center text-gray-500">
+                <td colSpan={10} className="p-6 text-center text-gray-500">
                   هیچ بکتستی وجود ندارد.
                 </td>
               </tr>
             ) : (
               runs.map((r) => (
-                <tr
-                  key={r.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700/30"
-                >
-                  <td className="p-3 font-medium">{r.name}</td>
+  <tr
+    key={r.id}
+    className={`hover:bg-gray-50 dark:hover:bg-gray-700/30 ${
+      selectedIds.has(r.id) ? "bg-blue-50 dark:bg-blue-900/20" : ""
+    }`}
+  >
+    <td className="p-3">
+      <input
+        type="checkbox"
+        checked={selectedIds.has(r.id)}
+        onChange={() => toggleId(r.id)}
+        className="rounded"
+      />
+    </td>
+    <td className="p-3 font-medium">{r.name}</td>
                   <td className="p-3">
                     <BacktestStatusBadge status={r.status} />
                   </td>

@@ -19,6 +19,7 @@ export { BacktestDetailPage } from "./Backtests/BacktestDetailPage";
 
 export { BacktestsListPage } from "./Backtests/BacktestsListPage";
 
+export { BacktestComparePage } from "./Backtests/BacktestComparePage";
 
 export { CollectionStatusBadge } from "./HistoricalData/CollectionStatusBadge";
 

@@ -14,7 +14,8 @@ import {
   BacktestDetailPage,
   BacktestsListPage,
   TradingEventsPage,
-  HistoricalDataCollectionPage} from "./pages";
+  HistoricalDataCollectionPage,
+  BacktestComparePage} from "./pages";
 
 export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/accounts",       element: <AccountsManagementPage /> },
@@ -29,8 +30,9 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/logs",           element: <LogViewerPage /> },
   { path: "trader/events", element: <TradingEventsPage /> },
   { path: "trader/backtests", element: <BacktestsListPage /> },
+  // در TraderShotgunRoutes (قبل از route detail، چون path match باید قبل از :id باشد):
+{ path: "trader/backtests/compare", element: <BacktestComparePage /> },
   { path: "trader/backtests/:id", element: <BacktestDetailPage /> },
-  
 { path: "trader/historical-data", element: <HistoricalDataCollectionPage /> },
 ];
 
