@@ -252,7 +252,16 @@ export const PositionsPage: React.FC = () => {
                   key={p.id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
-                  <td className="p-3 font-mono text-xs">{p.isin}</td>
+                  <td className="p-3">
+  <div className="flex items-center gap-1">
+    <span className="font-mono text-xs">{p.isin}</span>
+    {p.isPaper && (
+      <span className="rounded bg-cyan-900/40 px-1.5 py-0.5 text-[9px] font-medium text-cyan-300">
+        PAPER
+      </span>
+    )}
+  </div>
+</td>
                   <td className="p-3">
                     <StateBadge state={p.state} />
                   </td>

@@ -13,7 +13,9 @@ import {
   CapitalAllocationMode,
   CAPITAL_MODE_LABELS,
   OrderMode,
-  ORDER_MODE_LABELS,
+  ORDER_MODE_LABELS, 
+  ExecutionMode,
+   EXECUTION_MODE_LABELS,
   MarketCloseBehavior,
   MARKET_CLOSE_LABELS,
   StopRunBehavior,
@@ -23,7 +25,6 @@ import { StrategyConfigEditor } from "./StrategyConfigEditor";
 import { SymbolAllocationEditor } from "./SymbolAllocationEditor";
 import { AccountSelector } from "./AccountSelector";
 import { currencyRateApi } from "@/modules/Trader/api";
-
 type SlTpMode = "none" | "percent" | "price";
 
 interface Props {
@@ -69,7 +70,8 @@ export const TradingRunFormModal: React.FC<Props> = ({
   );
 const [targetCurrency, setTargetCurrency] = useState<string>("");
 const [strengthMultiplier, setStrengthMultiplier] = useState<string>("1.5");
-const [minDeltaPercent, setMinDeltaPercent] = useState<string>("3");   
+const [minDeltaPercent, setMinDeltaPercent] = useState<string>("3");  
+const [executionMode, setExecutionMode] = useState<number>(ExecutionMode.Live); 
 const [currencyRateStatus, setCurrencyRateStatus] =
   useState<"idle" | "checking" | "ok" | "missing">("idle");
 const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
@@ -151,6 +153,7 @@ useEffect(() => {
       setTargetCurrency(initialDetail.targetCurrency ?? "");
       setStrengthMultiplier(initialDetail.strengthMultiplier.toString());
 setMinDeltaPercent((initialDetail.minDeltaPercent * 100).toString()); 
+setExecutionMode(initialDetail.executionMode);
       setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
       setFixedCapitalAmount(
         initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
@@ -210,6 +213,7 @@ setMinDeltaPercent((initialDetail.minDeltaPercent * 100).toString());
     setTargetCurrency("");
     setStrengthMultiplier("1.5");
 setMinDeltaPercent("3");   
+setExecutionMode(ExecutionMode.Live);
 setCurrencyRateStatus("idle");
 setCurrencyRateValue(null);
     setCapitalAllocationMode(CapitalAllocationMode.Fixed);
@@ -341,8 +345,9 @@ setCurrencyRateValue(null);
   strategyConfigJson: JSON.stringify(strategyConfig),
   primaryTimeFrame,
   targetCurrency: targetCurrency.trim().toUpperCase() || null,
-  strengthMultiplier: Number(strengthMultiplier) || 1.5,  
-  minDeltaPercent: (Number(minDeltaPercent) || 0) / 100,   
+  strengthMultiplier: Number(strengthMultiplier) || 1.5,
+  minDeltaPercent: (Number(minDeltaPercent) || 0) / 100,
+  executionMode,                                          // ← NEW
   settings,
   symbols,
   accountIds,
@@ -400,7 +405,55 @@ setCurrencyRateValue(null);
               />
             </div>
           </Section>
+{/* ۱.۵ Execution Mode */}
+<Section title="حالت اجرا">
+  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+    {[ExecutionMode.Live, ExecutionMode.Paper].map((mode) => {
+      const isSelected = executionMode === mode;
+      const isLive = mode === ExecutionMode.Live;
 
+      return (
+        <label
+          key={mode}
+          className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+            isSelected
+              ? isLive
+                ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                : "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
+              : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/30"
+          }`}
+        >
+          <input
+            type="radio"
+            name="executionMode"
+            checked={isSelected}
+            onChange={() => setExecutionMode(mode)}
+            className="mt-1"
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {EXECUTION_MODE_LABELS[mode]}
+            </p>
+            <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+              {isLive
+                ? "سفارش واقعی به کارگزاری ارسال می‌شود. سرمایه‌ی واقعی در ریسک است."
+                : "سفارش فقط شبیه‌سازی می‌شود. بدون ارتباط با کارگزاری، بدون ریسک پول واقعی."}
+            </p>
+          </div>
+        </label>
+      );
+    })}
+  </div>
+
+  {executionMode === ExecutionMode.Paper && (
+    <div className="mt-2 rounded-lg border border-cyan-700 bg-cyan-900/20 p-3 text-xs text-cyan-300">
+      ℹ️ در حالت Paper، سفارش‌ها بلافاصله در قیمت Best Ask/Bid پر می‌شوند.
+      Commission و Slippage روی حساب مجازی محاسبه می‌شوند ولی پول واقعی خارج
+      نمی‌شود. تمام Orderها/Positionها با تگ <strong>Paper</strong> در DB ثبت
+      می‌شوند.
+    </div>
+  )}
+</Section>
           {/* ۲. Strategy */}
           <Section title="استراتژی">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

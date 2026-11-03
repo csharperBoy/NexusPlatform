@@ -11,6 +11,8 @@ export interface TradingRunInfoView {
   targetCurrency: string | null; 
   strengthMultiplier: number;    
   minDeltaPercent: number; 
+  executionMode: number;                
+  executionModeName: string;  
   symbolCount: number;
   accountCount: number;
   startedAt?: string | null;
@@ -46,6 +48,8 @@ export interface TradingRunDetailView {
   targetCurrency: string | null;  
   strengthMultiplier: number;   
   minDeltaPercent: number;
+  executionMode: number;             
+  executionModeName: string; 
   settings: TradingRunSettingsDto;
   symbols: TradingRunSymbolDto[];
   accountIds: string[];
@@ -81,6 +85,7 @@ export interface CreateTradingRunCommand {
   targetCurrency: string | null;  
   strengthMultiplier: number;   
   minDeltaPercent: number;
+  executionMode: number; 
   settings: TradingRunSettingsModel;
   symbols: TradingRunSymbolModel[];
   accountIds: string[];

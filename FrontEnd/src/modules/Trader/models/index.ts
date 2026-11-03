@@ -157,3 +157,9 @@ export {
   BACKTEST_EVENT_TYPE_COLORS,
   BACKTEST_EVENT_SEVERITY_LABELS,
 } from "./BacktestEvent";
+
+export {
+  ExecutionMode,
+  EXECUTION_MODE_LABELS,
+  EXECUTION_MODE_COLORS,
+} from "./TradingRunEnums";

@@ -13,5 +13,6 @@ public sealed record PositionView(
     decimal? UnrealizedPnL,
     decimal? StopLossPrice,
     decimal? TakeProfitPrice,
+    bool IsPaper,
     DateTime OpenedAt,
     DateTime? ClosedAt);

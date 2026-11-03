@@ -85,6 +85,9 @@ export const tradingRunApi = {
       targetCurrency: data.targetCurrency ?? null,
       strengthMultiplier: data.strengthMultiplier,
   minDeltaPercent: data.minDeltaPercent,
+  
+  executionMode: data.executionMode,                              
+  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
       symbolCount: data.symbols.length,
       accountCount: data.accountIds.length,
       startedAt: null,
@@ -120,6 +123,9 @@ export const tradingRunApi = {
       targetCurrency: data.targetCurrency ?? null,
       strengthMultiplier: data.strengthMultiplier,      
   minDeltaPercent: data.minDeltaPercent,
+  
+  executionMode: data.executionMode,                             
+  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
       symbolCount: data.symbols.length,
       accountCount: data.accountIds.length,
     };

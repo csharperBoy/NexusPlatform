@@ -17,11 +17,29 @@ import {
   TIMEFRAME_LABELS,
   TimeFrame,
   StopRunBehavior,
+  ExecutionMode,
+  EXECUTION_MODE_LABELS,
+  EXECUTION_MODE_COLORS,
 } from "../../models";
 import { RunStateBadge } from "./components/RunStateBadge";
 import { RunActions } from "./components/RunActions";
 import { StopRunConfirmModal } from "./components/StopRunConfirmModal";
 import { TradingRunFormModal } from "./components/TradingRunFormModal";
+
+const ExecutionModeBadge: React.FC<{ mode: number }> = ({ mode }) => {
+  const m = mode as ExecutionMode;
+  const label = EXECUTION_MODE_LABELS[m] ?? "—";
+  const colors = EXECUTION_MODE_COLORS[m] ?? "bg-slate-700 text-slate-300";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${colors}`}
+    >
+      {m === ExecutionMode.Paper ? "📄 " : "🔴 "}
+      {label}
+    </span>
+  );
+};
 
 export const TradingRunsManagementPage: React.FC = () => {
   const {
@@ -212,6 +230,7 @@ export const TradingRunsManagementPage: React.FC = () => {
             <tr>
               <th className="p-3">نام</th>
               <th className="p-3">وضعیت</th>
+              <th className="p-3">حالت</th>
               <th className="p-3">استراتژی</th>
               <th className="p-3">تایم‌فریم</th>
               <th className="p-3">ارز</th>
@@ -227,13 +246,13 @@ export const TradingRunsManagementPage: React.FC = () => {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={11} className="p-6 text-center">
+                <td colSpan={12} className="p-6 text-center">
                   در حال بارگذاری...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={11} className="p-6 text-center">
+                <td colSpan={12} className="p-6 text-center">
                   هیچ پلنی یافت نشد.
                 </td>
               </tr>
@@ -259,6 +278,9 @@ export const TradingRunsManagementPage: React.FC = () => {
                     <td className="p-3 font-medium">{run.name}</td>
                     <td className="p-3">
                       <RunStateBadge state={run.state} />
+                    </td>
+                    <td className="p-3">
+                      <ExecutionModeBadge mode={run.executionMode} />
                     </td>
                     <td className="p-3 font-mono text-xs">
                       {run.strategyKey}

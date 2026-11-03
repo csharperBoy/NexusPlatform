@@ -84,3 +84,19 @@ export const ORDER_MODE_LABELS: Record<OrderMode, string> = {
   [OrderMode.Quantity]: "بر اساس تعداد",
   [OrderMode.TotalValue]: "بر اساس ارزش کل",
 };
+
+
+export enum ExecutionMode {
+  Live = 0,
+  Paper = 1,
+}
+
+export const EXECUTION_MODE_LABELS: Record<ExecutionMode, string> = {
+  [ExecutionMode.Live]: "واقعی (Live)",
+  [ExecutionMode.Paper]: "شبیه‌سازی (Paper)",
+};
+
+export const EXECUTION_MODE_COLORS: Record<ExecutionMode, string> = {
+  [ExecutionMode.Live]: "bg-red-900/40 text-red-300",
+  [ExecutionMode.Paper]: "bg-cyan-900/40 text-cyan-300",
+};

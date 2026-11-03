@@ -29,6 +29,7 @@ export interface PositionView {
   unrealizedPnL: number | null;
   stopLossPrice: number | null;
   takeProfitPrice: number | null;
+  isPaper: boolean;  
   openedAt: string;
   closedAt: string | null;
 }

@@ -37,18 +37,19 @@ public class PositionQueryService : IPositionQueryService
     }
 
     private static PositionView MapToView(Position p) => new(
-        p.Id,
-        p.RunId,
-        p.TraderAccountId,
-        p.Isin,
-        (int)p.State,
-        p.State.ToString(),
-        p.Quantity.Value,
-        p.AverageEntryPrice.Value,
-        p.RealizedPnL.Amount,
-        p.UnrealizedPnL?.Amount,
-        p.StopLossPrice?.Value,
-        p.TakeProfitPrice?.Value,
-        p.OpenedAt,
-        p.ClosedAt);
+     p.Id,
+     p.RunId,
+     p.TraderAccountId,
+     p.Isin,
+     (int)p.State,
+     p.State.ToString(),
+     p.Quantity.Value,
+     p.AverageEntryPrice.Value,
+     p.RealizedPnL.Amount,
+     p.UnrealizedPnL?.Amount,
+     p.StopLossPrice?.Value,
+     p.TakeProfitPrice?.Value,
+     p.IsPaper,                                 // ← NEW
+     p.OpenedAt,
+     p.ClosedAt);
 }
