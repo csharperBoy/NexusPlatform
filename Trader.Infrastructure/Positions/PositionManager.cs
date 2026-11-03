@@ -55,14 +55,15 @@ public sealed class PositionManager : IPositionManager
                 }
 
                 position = Position.Open(
-                    runId: order.RunId,
-                    traderAccountId: order.TraderAccountId,
-                    isin: trade.Isin,
-                    quantity: trade.Quantity,
-                    entryPrice: trade.Price,
-                    stopLossPrice: sl,
-                    takeProfitPrice: tp,
-                    sourceEvaluationId: sourceEvalId);
+    runId: order.RunId,
+    traderAccountId: order.TraderAccountId,
+    isin: trade.Isin,
+    quantity: trade.Quantity,
+    entryPrice: trade.Price,
+    stopLossPrice: sl,
+    takeProfitPrice: tp,
+    sourceEvaluationId: sourceEvalId,
+    isPaper: order.IsPaper);                        // ← NEW
 
                 await _uow.Positions.AddAsync(position);
 

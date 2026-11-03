@@ -26,7 +26,9 @@ public class OrderIntentConfiguration : BaseConfiguration<OrderIntent>
         p => p.HasValue ? p.Value.Value : (decimal?)null,
         v => v.HasValue ? new Price(v.Value) : (Price?)null)
     .HasPrecision(18, 4);
-
+        builder.Property(x => x.IsPaper)
+    .IsRequired()
+    .HasDefaultValue(false);
         builder.Property(x => x.TakeProfitPrice)
             .HasConversion(
                 p => p.HasValue ? p.Value.Value : (decimal?)null,

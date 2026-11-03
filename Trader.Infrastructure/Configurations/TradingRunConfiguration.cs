@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trader.Domain.Entities;
+using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
 
 namespace Trader.Infrastructure.Configurations;
@@ -92,6 +93,11 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
             .HasPrecision(5, 4)
             .IsRequired()
             .HasDefaultValue(0.03m);
+
+        builder.Property(x => x.ExecutionMode)
+    .HasConversion<int>()
+    .IsRequired()
+    .HasDefaultValue(ExecutionMode.Live);
         // ─── Relations ───
         builder.HasMany(x => x.Symbols)
             .WithOne()

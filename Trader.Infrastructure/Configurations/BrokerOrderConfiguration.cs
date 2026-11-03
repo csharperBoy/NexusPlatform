@@ -25,6 +25,10 @@ public class BrokerOrderConfiguration : BaseConfiguration<BrokerOrder>
             .HasConversion(p => p.Value, v => new Trader.Domain.ValueObjects.Price(v))
             .HasPrecision(18, 4);
 
+        builder.Property(x => x.IsPaper)
+    .IsRequired()
+    .HasDefaultValue(false);
+
         builder.Property(x => x.Quantity)
             .HasConversion(q => q.Value, v => new Trader.Domain.ValueObjects.Quantity(v));
 

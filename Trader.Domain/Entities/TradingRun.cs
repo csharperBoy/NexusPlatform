@@ -38,7 +38,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
     public IReadOnlyList<TradingRunAccount> Accounts => _accounts.AsReadOnly();
     public string? TargetCurrency { get; private set; }   // مثلاً "USD" یا null
     public decimal StrengthMultiplier { get; private set; } = 1.5m;
-    public decimal MinDeltaPercent { get; private set; } = 0.03m;  
+    public decimal MinDeltaPercent { get; private set; } = 0.03m;
+    public ExecutionMode ExecutionMode { get; private set; } = ExecutionMode.Live;   // ← NEW
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -86,7 +87,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         IEnumerable<Guid> accountIds,
     string? targetCurrency = null,
     decimal strengthMultiplier = 1.5m,
-    decimal minDeltaPercent = 0.03m)
+    decimal minDeltaPercent = 0.03m,
+    ExecutionMode executionMode = ExecutionMode.Live)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Run name is required.", nameof(name));
@@ -114,7 +116,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             TargetCurrency = NormalizeCurrency(targetCurrency),
             StrengthMultiplier = strengthMultiplier,
             MinDeltaPercent = minDeltaPercent,
-
+            ExecutionMode = executionMode,
         };
 
         foreach (var (isin, allocation) in symbols)
@@ -163,7 +165,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         StopRunBehavior onStop,
     string? targetCurrency,
     decimal strengthMultiplier,
-    decimal minDeltaPercent)
+    decimal minDeltaPercent,
+ExecutionMode executionMode)
     {
         EnsureNotRunning();
         ValidateStrengthMultiplier(strengthMultiplier);
@@ -183,7 +186,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         TargetCurrency = NormalizeCurrency(targetCurrency);
         StrengthMultiplier = strengthMultiplier;
         MinDeltaPercent = minDeltaPercent;
-
+        ExecutionMode = executionMode;
         Touch();
         RecomputeReadiness();
     }

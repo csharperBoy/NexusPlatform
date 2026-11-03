@@ -20,6 +20,7 @@ public sealed record RunRuntimeContext(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    ExecutionMode ExecutionMode,                     // ← NEW
     CapitalAllocation CapitalAllocation,
     StopLossConfig? StopLoss,
     TakeProfitConfig? TakeProfit,

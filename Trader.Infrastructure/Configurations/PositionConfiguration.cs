@@ -27,6 +27,10 @@ public class PositionConfiguration : BaseConfiguration<Position>
             .HasPrecision(18, 4)
             .IsRequired();
 
+        builder.Property(x => x.IsPaper)
+    .IsRequired()
+    .HasDefaultValue(false);
+
         // ─── RealizedPnL (non-nullable) ───
         builder.OwnsOne(x => x.RealizedPnL, rb =>
         {

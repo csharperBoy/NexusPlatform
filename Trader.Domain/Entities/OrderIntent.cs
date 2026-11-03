@@ -29,6 +29,7 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     public Price? StopLossPrice { get; private set; }
     public Price? TakeProfitPrice { get; private set; }
     public Guid? SourceEvaluationId { get; private set; }
+    public bool IsPaper { get; private set; }            
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -50,7 +51,8 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     string? reason = null,
     Price? stopLossPrice = null,
     Price? takeProfitPrice = null,
-    Guid? sourceEvaluationId = null)
+    Guid? sourceEvaluationId = null,
+    bool isPaper = false)
     {
         // ─── Validation ───
         if (string.IsNullOrWhiteSpace(isin))
@@ -75,7 +77,8 @@ public class OrderIntent : BaseEntity, IAuditableEntity
             StopLossPrice = stopLossPrice,
             TakeProfitPrice = takeProfitPrice,
             SourceEvaluationId = sourceEvaluationId,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsPaper = isPaper,
         };
     }
 

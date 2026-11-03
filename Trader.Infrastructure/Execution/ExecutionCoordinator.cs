@@ -18,7 +18,10 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
 {
     private readonly IRunExecutionContextCache _runCache;
     private readonly IOrderIntentBuilder _intentBuilder;
-    private readonly IBrokerOrderDispatcher _dispatcher;
+
+    //private readonly IBrokerOrderDispatcher _dispatcher;
+    private readonly IOrderDispatcherResolver _dispatcherResolver;
+
     private readonly IBrokerSessionProvider _sessionProvider;
     private readonly IBrokerClientFactory _brokerFactory;
     private readonly IUserContextCache _userContextCache;
@@ -30,7 +33,10 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     public ExecutionCoordinator(
         IRunExecutionContextCache runCache,
         IOrderIntentBuilder intentBuilder,
-        IBrokerOrderDispatcher dispatcher,
+
+        //IBrokerOrderDispatcher dispatcher,
+    IOrderDispatcherResolver dispatcherResolver,
+
         IBrokerSessionProvider sessionProvider,
         IBrokerClientFactory brokerFactory,
         IUserContextCache userContextCache,
@@ -41,7 +47,10 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     {
         _runCache = runCache;
         _intentBuilder = intentBuilder;
-        _dispatcher = dispatcher;
+
+        //_dispatcher = dispatcher;
+        _dispatcherResolver = dispatcherResolver;
+
         _sessionProvider = sessionProvider;
         _brokerFactory = brokerFactory;
         _userContextCache = userContextCache;
@@ -202,7 +211,9 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         // ─── Dispatch ───
         try
         {
-            var brokerOrder = await _dispatcher.DispatchAsync(
+            // Route based on intent.IsPaper
+            var dispatcher = _dispatcherResolver.Resolve(intent.IsPaper);
+            var brokerOrder = await dispatcher.DispatchAsync(
                 intent, account.Broker, session, ct);
 
             _eventLogger.Log(

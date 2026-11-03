@@ -11,6 +11,8 @@ public sealed record TradingRunDetailView(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    int ExecutionMode,                       
+    string ExecutionModeName,
     TradingRunSettingsDto Settings,
     IReadOnlyList<TradingRunSymbolDto> Symbols,
     IReadOnlyList<Guid> AccountIds,

@@ -22,7 +22,7 @@ public sealed class TradingRunManager : ITradingRunManager
     public TradingRunManager(
         ITraderUnitOfWork<TraderDbContext> uow,
         IRunExecutionContextCache cache,
-        IStrategyFactory strategyFactory, 
+        IStrategyFactory strategyFactory,
         IPositionCloser positionCloser,
          ITradingEventLogger eventLogger,
         ILogger<TradingRunManager> logger)
@@ -76,6 +76,7 @@ public sealed class TradingRunManager : ITradingRunManager
                         TargetCurrency: run.TargetCurrency,
                         StrengthMultiplier: run.StrengthMultiplier,
     MinDeltaPercent: run.MinDeltaPercent,
+ExecutionMode: run.ExecutionMode,
                         CapitalAllocation: run.CapitalAllocation,
                         StopLoss: run.StopLoss,
                         TakeProfit: run.TakeProfit,

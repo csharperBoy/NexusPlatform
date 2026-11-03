@@ -39,8 +39,8 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     private readonly IUserContextCache _userContextCache;
     private readonly UserDataContext _userContext;
     private readonly TradingRuntimeOptions _options;
-    private readonly IMarketSnapshotStore _snapshotStore;
-    private readonly IBrokerOrderDispatcher _dispatcher;
+    private readonly IMarketSnapshotStore _snapshotStore; 
+    private readonly IOrderDispatcherResolver _dispatcherResolver;
     private readonly ILogger<OrderLifecycleStage> _logger;
     private readonly ITradingEventLogger _eventLogger;
     public OrderLifecycleStage(
@@ -50,7 +50,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         IBrokerClientFactory brokerFactory,
         IPositionManager positionManager,
         IMarketSnapshotStore snapshotStore,
-    IBrokerOrderDispatcher dispatcher,
+    IOrderDispatcherResolver dispatcherResolver,
 
     IUserContextCache userContextCache,
         UserDataContext userContext,
@@ -67,7 +67,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         _userContext = userContext;
         _options = options.Value;
         _snapshotStore = snapshotStore;
-        _dispatcher = dispatcher;
+        _dispatcherResolver = dispatcherResolver;
         _eventLogger = eventLogger;
         _logger = logger;
     }
@@ -269,11 +269,13 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
                     price: new Price(sellPriceValue),
                     quantity: pos.Quantity,
                     orderMode: OrderMode.Quantity,
-                    reason: reason);
+                    reason: reason,
+                    isPaper: pos.IsPaper);                            // ← NEW
 
                 await _uow.OrderIntents.AddAsync(intent);
 
-                await _dispatcher.DispatchAsync(intent, account.Broker, session, ct);
+                var dispatcher = _dispatcherResolver.Resolve(pos.IsPaper);   // ← NEW
+                await dispatcher.DispatchAsync(intent, account.Broker, session, ct);
                 dispatched++;
 
                 // ─── OrderDispatched Event ───

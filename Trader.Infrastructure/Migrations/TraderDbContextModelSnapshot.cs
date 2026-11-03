@@ -535,6 +535,11 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<long>("FilledQuantity")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("IsPaper")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Isin")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1197,6 +1202,11 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<bool>("IsPaper")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Isin")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1355,6 +1365,11 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("IsPaper")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Isin")
                         .IsRequired()
@@ -1876,6 +1891,11 @@ namespace Trader.Infrastructure.Migrations
 
                     b.Property<int>("DefaultOrderMode")
                         .HasColumnType("int");
+
+                    b.Property<int>("ExecutionMode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<decimal>("MinDeltaPercent")
                         .ValueGeneratedOnAdd()

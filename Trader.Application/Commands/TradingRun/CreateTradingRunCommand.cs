@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos.TradingRuns;
+using Trader.Domain.Enums;
 
 namespace Trader.Application.Commands.TradingRun;
 
@@ -14,6 +15,7 @@ public record CreateTradingRunCommand(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
     IReadOnlyList<Guid> AccountIds
@@ -47,6 +49,7 @@ public class CreateTradingRunCommandHandler
     request.TargetCurrency,
                 request.StrengthMultiplier,
     request.MinDeltaPercent,
+    request.ExecutionMode,
                 request.Settings,
                 request.Symbols,
                 request.AccountIds);

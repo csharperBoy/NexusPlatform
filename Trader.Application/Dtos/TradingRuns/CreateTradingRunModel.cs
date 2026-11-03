@@ -9,6 +9,7 @@ public sealed record CreateTradingRunModel(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
     IReadOnlyList<Guid> AccountIds);

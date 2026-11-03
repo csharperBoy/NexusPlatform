@@ -12,6 +12,7 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
     public Guid? OrderIntentId { get; private set; }
     public Guid RunId { get; private set; }
     public Guid TraderAccountId { get; private set; }
+    public bool IsPaper { get; private set; }        
     public string? BrokerOrderId { get; private set; }
 
     public string Isin { get; private set; } = default!;
@@ -40,7 +41,8 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
     string isin,
     OrderSide side,
     Price price,
-    Quantity quantity)
+    Quantity quantity,
+    bool isPaper = false)
     {
         // ─── Validation ───
         if (string.IsNullOrWhiteSpace(isin))
@@ -59,7 +61,8 @@ public class BrokerOrder : BaseEntity, IAuditableEntity
             FilledQuantity = Quantity.Zero,
             State = OrderStateKind.Pending,
             SubmittedAt = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsPaper = isPaper
         };
     }
 

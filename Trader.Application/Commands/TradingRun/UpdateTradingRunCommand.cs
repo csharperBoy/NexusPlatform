@@ -15,6 +15,7 @@ public record UpdateTradingRunCommand(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
     IReadOnlyList<Guid> AccountIds
@@ -48,6 +49,8 @@ public class UpdateTradingRunCommandHandler
     request.TargetCurrency,
                 request.StrengthMultiplier,
     request.MinDeltaPercent,
+
+    request.ExecutionMode,
                 request.Settings,
                 request.Symbols,
                 request.AccountIds);

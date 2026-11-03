@@ -27,6 +27,8 @@ public class Position : BaseEntity, IAuditableEntity
     public DateTime OpenedAt { get; private set; }
     public DateTime? ClosedAt { get; private set; }
     public Guid? SourceEvaluationId { get; private set; }
+
+    public bool IsPaper { get; private set; }              
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -44,7 +46,8 @@ public class Position : BaseEntity, IAuditableEntity
         Price entryPrice,
         Price? stopLossPrice,
         Price? takeProfitPrice,
-    Guid? sourceEvaluationId = null)
+    Guid? sourceEvaluationId = null,
+    bool isPaper = false)
     {
         if (quantity.IsZero)
             throw new InvalidOperationException("Cannot open position with zero quantity.");
@@ -62,7 +65,8 @@ public class Position : BaseEntity, IAuditableEntity
             TakeProfitPrice = takeProfitPrice,
             OpenedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
-            SourceEvaluationId = sourceEvaluationId
+            SourceEvaluationId = sourceEvaluationId,
+            IsPaper = isPaper,
         };
     }
 

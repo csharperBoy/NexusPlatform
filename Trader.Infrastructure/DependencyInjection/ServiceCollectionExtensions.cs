@@ -194,7 +194,16 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Execution ───
             services.AddScoped<IOrderIntentBuilder, OrderIntentBuilder>();
-            services.AddScoped<IBrokerOrderDispatcher, BrokerOrderDispatcher>();
+            // Live + Paper dispatchers (concrete types for Resolver)
+            services.AddScoped<BrokerOrderDispatcher>();
+            services.AddScoped<PaperBrokerOrderDispatcher>();
+
+            // Resolver
+            services.AddScoped<IOrderDispatcherResolver, OrderDispatcherResolver>();
+
+            // Backward compat — پیش‌فرض Live
+            services.AddScoped<IBrokerOrderDispatcher>(sp =>
+                sp.GetRequiredService<BrokerOrderDispatcher>());
             services.AddScoped<IExecutionCoordinator, ExecutionCoordinator>();
 
             // ─── Stages ───

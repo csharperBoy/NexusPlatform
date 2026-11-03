@@ -13,6 +13,8 @@ public sealed record TradingRunInfoView(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
+    int ExecutionMode,                           
+    string ExecutionModeName,
     int SymbolCount,
     int AccountCount,
     DateTime? StartedAt,

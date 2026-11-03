@@ -49,7 +49,9 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     accountIds: model.AccountIds,
     targetCurrency: model.TargetCurrency,
     strengthMultiplier: model.StrengthMultiplier,
-    minDeltaPercent: model.MinDeltaPercent);
+    minDeltaPercent: model.MinDeltaPercent,
+
+executionMode: (ExecutionMode)model.ExecutionMode);
 
         await _uow.TradingRuns.AddAsync(run);
         await _uow.SaveChangesAsync();
@@ -80,7 +82,9 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
      (StopRunBehavior)model.Settings.OnStop,
      model.TargetCurrency,
      model.StrengthMultiplier,
-    model.MinDeltaPercent);
+
+    model.MinDeltaPercent,
+    (ExecutionMode)model.ExecutionMode);
 
         // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
@@ -243,7 +247,9 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     (int)r.CapitalAllocation.Mode, r.CapitalAllocation.FixedAmount?.Amount,
     r.TargetCurrency,
     r.StrengthMultiplier,
-    r.MinDeltaPercent,
+    r.MinDeltaPercent, 
+    (int)r.ExecutionMode,
+r.ExecutionMode.ToString(),
     r.Symbols.Count, r.Accounts.Count,
     r.StartedAt, r.StoppedAt, r.CreatedAt);
 
@@ -254,6 +260,8 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     r.TargetCurrency,
     r.StrengthMultiplier,
     r.MinDeltaPercent,
+    (int)r.ExecutionMode,
+r.ExecutionMode.ToString(),
     new TradingRunSettingsDto(
         (int)r.CapitalAllocation.Mode,
         r.CapitalAllocation.FixedAmount?.Amount,
