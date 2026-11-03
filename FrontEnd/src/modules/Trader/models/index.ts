@@ -149,3 +149,11 @@ export {
   COLLECTION_TIMEFRAME_OPTIONS,
   TIMEFRAME_LABEL_MAP,
 } from "./HistoricalDataCollection";
+export type { BacktestEventView, BacktestEventQuery } from "./BacktestEvent";
+export {
+  BacktestEventType,
+  BacktestEventSeverity,
+  BACKTEST_EVENT_TYPE_LABELS,
+  BACKTEST_EVENT_TYPE_COLORS,
+  BACKTEST_EVENT_SEVERITY_LABELS,
+} from "./BacktestEvent";

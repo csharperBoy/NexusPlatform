@@ -30,8 +30,9 @@ internal sealed record PendingOrder(
     long Quantity,
     DateTime SignalTime);
 
-/// <summary>یک رخداد در Timeline (candle + sub-candles).</summary>
-internal sealed record BacktestEvent(
+/// <summary>یک رخداد در Timeline شبیه‌سازی (candle + sub-candles).
+/// نام «BacktestCandleEvent» تا با Domain Entity اشتباه نشود.</summary>
+internal sealed record BacktestCandleEvent(
     DateTime Time,
     string Isin,
     Candle Candle,

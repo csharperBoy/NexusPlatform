@@ -11,7 +11,7 @@ import { BacktestStatusBadge } from "./components/BacktestStatusBadge";
 import { MetricsCards } from "./components/MetricsCards";
 import { EquityCurveChart } from "./components/EquityCurveChart";
 import { TradesTable } from "./components/TradesTable";
-
+import { BacktestLogsTab } from "./components/BacktestLogsTab";
 export const BacktestDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [run, setRun] = useState<BacktestRunDetailView | null>(null);
@@ -19,7 +19,7 @@ export const BacktestDetailPage: React.FC = () => {
   const [equity, setEquity] = useState<BacktestDailyEquityView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+const [activeTab, setActiveTab] = useState<"summary" | "logs">("summary");
   const load = async () => {
     if (!id) return;
     setLoading(true);
@@ -121,36 +121,68 @@ export const BacktestDetailPage: React.FC = () => {
           ⚠️ {run.errorMessage}
         </div>
       )}
+{/* Tab Bar */}
+<div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
+  <button
+    type="button"
+    onClick={() => setActiveTab("summary")}
+    className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+      activeTab === "summary"
+        ? "border-blue-500 text-blue-600 dark:text-blue-400"
+        : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+    }`}
+  >
+    خلاصه
+  </button>
+  <button
+    type="button"
+    onClick={() => setActiveTab("logs")}
+    className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+      activeTab === "logs"
+        ? "border-blue-500 text-blue-600 dark:text-blue-400"
+        : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+    }`}
+  >
+    لاگ‌ها
+  </button>
+</div>
+{activeTab === "summary" && (
+  <>
+    {run.status === BacktestStatus.Completed && (
+      <>
+        <MetricsCards run={run} />
+        <EquityCurveChart
+          series={[
+            {
+              name: run.name,
+              data: equity,
+              color: "#10b981",
+            },
+          ]}
+        />
+        <TradesTable trades={trades} />
+      </>
+    )}
 
-      {run.status === BacktestStatus.Completed && (
-        <>
-          <MetricsCards run={run} />
+    {run.status === BacktestStatus.Pending && (
+      <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4 text-sm text-blue-300">
+        ⏳ در انتظار اجرا...
+      </div>
+    )}
 
-          <EquityCurveChart
-            series={[
-              {
-                name: run.name,
-                data: equity,
-                color: "#10b981",
-              },
-            ]}
-          />
+    {run.status === BacktestStatus.Running && (
+      <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-300">
+        ⚡ در حال اجرا...
+      </div>
+    )}
+  </>
+)}
 
-          <TradesTable trades={trades} />
-        </>
-      )}
+{activeTab === "logs" && <BacktestLogsTab backtestRunId={run.id} />}
+      
 
-      {run.status === BacktestStatus.Pending && (
-        <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-4 text-sm text-blue-300">
-          ⏳ در انتظار اجرا...
-        </div>
-      )}
+      
 
-      {run.status === BacktestStatus.Running && (
-        <div className="rounded-lg border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-300">
-          ⚡ در حال اجرا...
-        </div>
-      )}
     </div>
   );
 };

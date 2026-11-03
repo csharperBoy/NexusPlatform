@@ -3,6 +3,7 @@ using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Trader.Application.Commands.Backtest;
+using Trader.Application.Dtos.Backtests;
 using Trader.Application.Queries.Backtest;
 
 namespace Trader.Presentation.Controller;
@@ -71,6 +72,13 @@ public class BacktestController : BaseController
     public async Task<IActionResult> Compare([FromBody] List<Guid> ids)
     {
         var result = await Mediator.Send(new CompareBacktestsQuery(ids));
+        return HandleResult(result);
+    }
+    [HttpPost("QueryEvents")]
+    [AuthorizeResource("trader.tradingrun", "View")]
+    public async Task<IActionResult> QueryEvents([FromBody] BacktestEventQuery query)
+    {
+        var result = await Mediator.Send(new GetBacktestEventsQuery(query));
         return HandleResult(result);
     }
 }

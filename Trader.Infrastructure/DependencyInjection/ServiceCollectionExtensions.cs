@@ -199,6 +199,7 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // ─── Stages ───
             services.AddScoped<IExecutionStage, ExecutionStage>();
+            services.AddScoped<IBacktestEventQueryService, BacktestEventQueryService>();
             // ─── User Context Cache (Singleton) ───
             services.AddSingleton<IUserContextCache, UserContextCache>();
             // ─── Signal Channel (Singleton) ───

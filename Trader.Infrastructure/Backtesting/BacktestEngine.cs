@@ -275,7 +275,7 @@ public sealed class BacktestEngine : IBacktestEngine
         };
 
         // ─── Build Events ───
-        var events = new List<BacktestEvent>();
+        var events = new List<BacktestCandleEvent>();
         var tfDuration = timeFrame.ToDuration();
 
         foreach (var s in symbolAllocations)
@@ -297,7 +297,7 @@ public sealed class BacktestEngine : IBacktestEngine
                         .ToList();
                 }
 
-                events.Add(new BacktestEvent(
+                events.Add(new BacktestCandleEvent(
                     Time: c.OpenTime,
                     Isin: s.Isin,
                     Candle: c,
@@ -356,7 +356,7 @@ public sealed class BacktestEngine : IBacktestEngine
             // ─── 1. Execute pending fill ───
             if (state.PendingOrders.TryGetValue(isin, out var pending))
             {
-                ExecuteFill(state, pending, candle, instrument, run, isin);
+                ExecuteFill(state, pending, candle, instrument, run, isin, eventLogger);
                 state.PendingOrders.Remove(isin);
             }
 

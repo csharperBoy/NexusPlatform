@@ -7,7 +7,15 @@ import type {
   BacktestDailyEquityView,
 } from "../models";
 import { mockDelay } from "./_mockStorage";
+import type { BacktestEventView, BacktestEventQuery } from "../models";
 
+export interface PagedResult<T> {
+  items: T[];
+  totalRecords: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 const API_MODULE = "trader";
 const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
 
@@ -112,4 +120,26 @@ export const backtestApi = {
     );
     return response.data;
   },
+  
+QueryEvents: async (
+  query: BacktestEventQuery,
+): Promise<PagedResult<BacktestEventView>> => {
+  if (USE_MOCK) {
+    await mockDelay(150);
+    return {
+      items: [],
+      totalRecords: 0,
+      page: 1,
+      pageSize: 500,
+      totalPages: 0,
+    };
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.post<PagedResult<BacktestEventView>>(
+    "/api/Trader/Backtest/QueryEvents",
+    query,
+    { withCredentials: true },
+  );
+  return response.data;
+},
 };
