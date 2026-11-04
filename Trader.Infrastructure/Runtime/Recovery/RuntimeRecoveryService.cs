@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Logging;
+using Trader.Application.Abstractions.Reconciliation;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
@@ -18,6 +19,8 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
     private readonly ITradingRunManager _runManager;
     private readonly ISignalChannel _signalChannel;
     private readonly ITradingEventLogger _eventLogger;
+    private readonly IReconciliationService _reconciliationService;
+
     private readonly ILogger<RuntimeRecoveryService> _logger;
 
     public RuntimeRecoveryService(
@@ -25,12 +28,14 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
         ITradingRunManager runManager,
         ISignalChannel signalChannel,
         ITradingEventLogger eventLogger,
+    IReconciliationService reconciliationService,      
         ILogger<RuntimeRecoveryService> logger)
     {
         _uow = uow;
         _runManager = runManager;
         _signalChannel = signalChannel;
         _eventLogger = eventLogger;
+        _reconciliationService = reconciliationService;
         _logger = logger;
     }
 
@@ -80,6 +85,24 @@ public sealed class RuntimeRecoveryService : IRuntimeRecoveryService
                     restoredRuns = runningRunIds.Count,
                     repushedSignals = repushed
                 });
+
+            // ─── Broker Reconciliation بعد از Restore ───
+            try
+            {
+                _logger.LogInformation("Starting broker reconciliation after recovery...");
+                var recon = await _reconciliationService.ReconcileAllAsync(ct);
+                _logger.LogInformation(
+                    "Recovery reconciliation: {Accounts} accounts, {Mismatches} mismatches.",
+                    recon.AccountsChecked,
+                    recon.QuantityMismatches + recon.DbOnlyPositions + recon.BrokerOnlyPositions);
+
+            }
+            catch (Exception ex)
+            {
+                // Reconciliation Failure نباید Recovery را بشکند
+                _logger.LogError(ex,
+                    "Startup reconciliation failed. Continuing with recovery.");
+            }
         }
         catch (Exception ex)
         {

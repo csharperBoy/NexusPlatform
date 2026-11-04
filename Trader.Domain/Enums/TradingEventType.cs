@@ -58,4 +58,10 @@ public enum TradingEventType
     WorkerTickCompleted = 61,
     WorkerTickFailed = 62,
     RetentionCleanupCompleted = 63,
+
+    // ─── Reconciliation (70-79) ───
+    ReconciliationStarted = 70,
+    ReconciliationCompleted = 71,
+    ReconciliationFailed = 72,
+    ReconciliationMismatchFound = 73,
 }

@@ -12,4 +12,5 @@ public enum TradingStage
     OrderLifecycle = 4,      // Stage 4
     Recovery = 5,            // Startup Recovery
     System = 6,              // Worker-level (Tick, Retention, ...)
+    Reconciliation = 7,
 }

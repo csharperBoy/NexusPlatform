@@ -15,6 +15,7 @@ using Trader.Application.Abstractions.Indicators;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
+using Trader.Application.Abstractions.Reconciliation;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
@@ -38,6 +39,7 @@ using Trader.Infrastructure.HistoricalData;
 using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Positions;
+using Trader.Infrastructure.Reconciliation;
 using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Runtime.Recovery;
 using Trader.Infrastructure.Runtime.Stages;
@@ -200,6 +202,8 @@ namespace Trader.Infrastructure.DependencyInjection
 
             // Resolver
             services.AddScoped<IOrderDispatcherResolver, OrderDispatcherResolver>();
+            // ─── Reconciliation ───
+            services.AddScoped<IReconciliationService, ReconciliationService>();
 
             // Backward compat — پیش‌فرض Live
             services.AddScoped<IBrokerOrderDispatcher>(sp =>
