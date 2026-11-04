@@ -6,7 +6,7 @@
 
 > این سند وضعیت کامل پروژه را در نقطه‌ی فعلی توضیح می‌دهد.
 > برای ادامه‌ی کار در چت جدید، این فایل + فایل‌های لیست‌شده در انتها را بفرست.
-> آخرین به‌روزرسانی: ۱۴۰۵/۰۸/۱۳ (Phase A3 — Graceful Shutdown)
+> آخرین به‌روزرسانی: ۱۴۰۵/۰۸/۱۳ (Phase A4 — Health Checks)
 
 ---
 
@@ -306,16 +306,15 @@ src/modules/Trader/
 - `GenericAddModal`, `useGenericCrud`, `SearchableMultiSelect`, `TagInput`
 
 ---
-
 ## 8. PHASE A STATUS (Foundation Hardening)
 
 | # | Feature | Status |
 |---|---|---|
-| **A1** | Broker Reconciliation | ✅ Done (Quantity + AvgPrice + 3 Mismatch kinds؛ Log-only) |
-| **A2** | Sub-Candle Strategy Support | ✅ Done (`ExtraCandleRequirements` + `ExtraTimeFrames` dict) |
-| **A3** | Graceful Shutdown | ✅ Done (StopAsync override + 3 shutdown events + FlushAsync retry) |
-| **A4** | Health Checks per Component | ⏳ Next |
-| **A5** | Retention برای BacktestEvents | ⏳ Pending |
+| **A1** | Broker Reconciliation | ✅ Done |
+| **A2** | Sub-Candle Strategy Support | ✅ Done |
+| **A3** | Graceful Shutdown | ✅ Done (Polly DbRetry) |
+| **A4** | Health Checks per Component | ✅ Done |
+| **A5** | Retention برای BacktestEvents | ⏳ Next |
 | **A6** | Unit Tests برای Critical Logic | ⏳ Pending |
 
 ### Future Phases
@@ -393,6 +392,7 @@ src/modules/Trader/
 - `Trader.Application/Abstractions/Backtesting/*.cs`
 - `Trader.Application/Abstractions/Logging/ITradingEventLogger.cs`
 - `Trader.Application/Abstractions/Reconciliation/IReconciliationService.cs`
+- `Trader.Application/Abstractions/Health/IRuntimeHealthState.cs`
 
 ### Infrastructure — Key Implementations (فقط برای reference، نه همه فایل‌ها)
 - `Trader.Infrastructure/Runtime/Stages/StrategyEvaluationStage.cs` (بحرانی — منطق پیچیده)
@@ -411,6 +411,9 @@ src/modules/Trader/
 - `Trader.Infrastructure/Reconciliation/ReconciliationService.cs`
 - `Trader.Infrastructure/Backtesting/BacktestEngine.cs`
 - `Trader.Infrastructure/DependencyInjection/ServiceCollectionExtensions.cs` (Registration Mapping)
+- `Trader.Infrastructure/Health/*.cs` (۵ HealthCheck + RuntimeHealthState)
+- `Trader.Infrastructure/Data/HealthCheckExtensions.cs` (Registration)
+- `Trader.Infrastructure/DependencyInjection/ApplicationBuilderExtensions.cs` (`Trader_MapHealthChecks`)
 
 ### Application — Sample Strategy
 - `Trader.Application/Strategies/Rsi/RsiStrategy.cs` (+ Registration, Config, Calculator)
@@ -485,11 +488,11 @@ src/modules/Trader/
 
 ## 14. RECENT COMPLETED WORK (آخرین ۵ پیام)
 
-1. **A3 Graceful Shutdown** — `TradingRuntimeWorker.StopAsync` override + 3 shutdown event types (64/65/66). `FlushAsync` در `TradingEventLogger` و `BacktestEventLogger` از `IReadOnlyPolicyRegistry<string>` و Polly policy `DbRetry` (fallback: `DefaultRetry` → `NoOp`) استفاده می‌کند — **نه Retry سفارشی**. دلیل: `RetryBehavior` فقط MediatR است؛ BackgroundService از Pipeline رد نمی‌شود.
-2. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService`. Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset` (نه Reflection).
-3. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict) + `StrategyEvaluationStage` بازنویسی + `BacktestEngine` Extra TF Loading.
-4. **Backtest Currency** — فقط در Virtual Mode (نه Existing Run Override).
-5. **Compare UI** — multi-backtest side-by-side + multi-series Equity Chart (Recharts).
+1. **A4 Health Checks** — `IRuntimeHealthState` (Singleton, Interlocked) + 5 Custom `IHealthCheck` (RuntimeWorker, BacktestWorker, HistoricalWorker, BrokerSession, MarketDataFreshness) + reuse `AddDbContextCheck<TraderDbContext>` با tags + endpointهای `/health/trader`, `/health/trader/db`, `/health/trader/runtime`, ... . Workers با `MarkTickNow/MarkBacktestPollNow/MarkHistoricalPollNow` state را Update می‌کنند. Broker/MarketData → Degraded (transient), Worker stalls → Unhealthy.
+2. **A3 Graceful Shutdown** — `TradingRuntimeWorker.StopAsync` override + 3 shutdown event types (64/65/66). `FlushAsync` از Polly `IReadOnlyPolicyRegistry<string>.Get<IAsyncPolicy>("DbRetry")` (fallback: DefaultRetry → NoOp).
+3. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService`. Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset`.
+4. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict).
+5. **Backtest Currency** — فقط در Virtual Mode.
 ---
 
 **پایان سند**
