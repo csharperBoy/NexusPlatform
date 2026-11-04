@@ -6,7 +6,7 @@
 
 > این سند وضعیت کامل پروژه را در نقطه‌ی فعلی توضیح می‌دهد.
 > برای ادامه‌ی کار در چت جدید، این فایل + فایل‌های لیست‌شده در انتها را بفرست.
-> آخرین به‌روزرسانی: ۱۴۰۵/۰۸/۱۳ (Phase A1 — Broker Reconciliation)
+> آخرین به‌روزرسانی: ۱۴۰۵/۰۸/۱۳ (Phase A3 — Graceful Shutdown)
 
 ---
 
@@ -133,7 +133,7 @@
 | `InstrumentOrderPreset` | تنظیمات پیش‌فرض سفارش (UI ندارد) | ✅ |
 
 ### Enums مهم
-`ExecutionMode { Live=0, Paper=1 }`, `TradingRunState`, `SignalAction { Hold=0, Buy=1, Sell=2 }`, `OrderSide`, `OrderStateKind`, `OrderIntentState`, `PositionState`, `TimeFrame`, `CapitalAllocationMode`, `OrderMode`, `MarketCloseBehavior`, `StopRunBehavior`, `TradingStage`, `TradingEventType` (~40 نوع), `TradingEventSeverity { Debug, Info, Warning, Error, Critical }`, `BacktestStatus`, `BacktestExitReason`, `CollectionJobStatus`, `InstrumentType`, `MarketType`, `BrokerType`, `OptionType`, `BacktestEventType`, `BacktestEventSeverity`
+`ExecutionMode { Live=0, Paper=1 }`, `TradingRunState`, `SignalAction { Hold=0, Buy=1, Sell=2 }`, `OrderSide`, `OrderStateKind`, `OrderIntentState`, `PositionState`, `TimeFrame`, `CapitalAllocationMode`, `OrderMode`, `MarketCloseBehavior`, `StopRunBehavior`, `TradingStage`, `TradingEventType` (~43 نوع), `TradingEventSeverity { Debug, Info, Warning, Error, Critical }`, `BacktestStatus`, `BacktestExitReason`, `CollectionJobStatus`, `InstrumentType`, `MarketType`, `BrokerType`, `OptionType`, `BacktestEventType`, `BacktestEventSeverity`
 
 ---
 
@@ -313,8 +313,8 @@ src/modules/Trader/
 |---|---|---|
 | **A1** | Broker Reconciliation | ✅ Done (Quantity + AvgPrice + 3 Mismatch kinds؛ Log-only) |
 | **A2** | Sub-Candle Strategy Support | ✅ Done (`ExtraCandleRequirements` + `ExtraTimeFrames` dict) |
-| **A3** | Graceful Shutdown | ⏳ Next |
-| **A4** | Health Checks per Component | ⏳ Pending |
+| **A3** | Graceful Shutdown | ✅ Done (StopAsync override + 3 shutdown events + FlushAsync retry) |
+| **A4** | Health Checks per Component | ⏳ Next |
 | **A5** | Retention برای BacktestEvents | ⏳ Pending |
 | **A6** | Unit Tests برای Critical Logic | ⏳ Pending |
 
@@ -357,6 +357,7 @@ src/modules/Trader/
 - PnL از Broker (`TotalRealizedProfitAndLoss`) هنوز در Reconciliation مقایسه نمی‌شود (Phase A1+)
 - Bonus/StockRight در Reconciliation نادیده گرفته می‌شود (ممکن است Mismatch کاذب بدهد)
 
+- **Resilience**: هر Retry روی Database/Callهای حساس از `IReadOnlyPolicyRegistry<string>` و Polly policies پلتفرم (`DbRetry`, `DefaultRetry`) استفاده می‌کند — نه Retry سفارشی. `RetryBehavior` فقط برای MediatR؛ BackgroundServiceها (مثل `TradingEventLogger.FlushAsync`) مستقیم از Registry می‌خوانند.
 ---
 
 ## 10. FILES TO SEND IN NEW CHAT
@@ -484,12 +485,11 @@ src/modules/Trader/
 
 ## 14. RECENT COMPLETED WORK (آخرین ۵ پیام)
 
-1. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService` + Migration نبود (فقط Event Types جدید). **Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset` (نه Reflection).**
-2. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict) + `StrategyEvaluationStage` بازنویسی + `BacktestEngine` Extra TF Loading
-3. **Backtest Currency** — فقط در Virtual Mode (نه Existing Run)
-4. **Compare UI** — multi-backtest side-by-side + multi-series Equity Chart (Recharts)
-5. **Paper Trading** — `PaperBrokerOrderDispatcher` + `IsPaper` flags + `ExecutionMode` در TradingRun + UI toggle
-
+1. **A3 Graceful Shutdown** — `TradingRuntimeWorker.StopAsync` override + 3 shutdown event types (64/65/66). `FlushAsync` در `TradingEventLogger` و `BacktestEventLogger` از `IReadOnlyPolicyRegistry<string>` و Polly policy `DbRetry` (fallback: `DefaultRetry` → `NoOp`) استفاده می‌کند — **نه Retry سفارشی**. دلیل: `RetryBehavior` فقط MediatR است؛ BackgroundService از Pipeline رد نمی‌شود.
+2. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService`. Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset` (نه Reflection).
+3. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict) + `StrategyEvaluationStage` بازنویسی + `BacktestEngine` Extra TF Loading.
+4. **Backtest Currency** — فقط در Virtual Mode (نه Existing Run Override).
+5. **Compare UI** — multi-backtest side-by-side + multi-series Equity Chart (Recharts).
 ---
 
 **پایان سند**
