@@ -1,12 +1,6 @@
-﻿using Trader.Infrastructure.Data;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Trader.Infrastructure.Health;
 namespace Trader.Infrastructure.Data
 {
     /*
@@ -38,14 +32,34 @@ namespace Trader.Infrastructure.Data
 
     public static class HealthCheckExtensions
     {
-        public static IServiceCollection Trader_AddHealthChecks(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection Trader_AddHealthChecks(
+            this IServiceCollection services,
+            IConfiguration config)
         {
-            // 📌 گرفتن Connection String (در صورت نیاز برای Health Checkهای سفارشی)
             var conn = config.GetConnectionString("DefaultConnection");
 
-            // 📌 اضافه کردن Health Check برای دیتابیس SampleDbContext
+            // ─── Health State (Singleton) ───
+            services.AddSingleton<
+                Trader.Application.Abstractions.Health.IRuntimeHealthState,
+                RuntimeHealthState>();
+
+            // ─── Database (existing platform helper + tags) ───
             services.AddHealthChecks()
-                    .AddDbContextCheck<TraderDbContext>("TraderDatabase");
+                .AddDbContextCheck<TraderDbContext>(
+                    name: "TraderDatabase",
+                    tags: new[] { "db" })
+
+                // ─── Custom ───
+                .AddCheck<RuntimeWorkerHealthCheck>(
+                    "RuntimeWorker", tags: new[] { "runtime" })
+                .AddCheck<BacktestWorkerHealthCheck>(
+                    "BacktestWorker", tags: new[] { "backtest" })
+                .AddCheck<HistoricalWorkerHealthCheck>(
+                    "HistoricalWorker", tags: new[] { "historical" })
+                .AddCheck<BrokerSessionHealthCheck>(
+                    "BrokerSession", tags: new[] { "broker" })
+                .AddCheck<MarketDataFreshnessHealthCheck>(
+                    "MarketDataFreshness", tags: new[] { "marketdata" });
 
             return services;
         }

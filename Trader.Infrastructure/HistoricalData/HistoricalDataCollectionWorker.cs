@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.Health;
 using Trader.Application.Abstractions.HistoricalData;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -16,13 +17,17 @@ public sealed class HistoricalDataCollectionWorker : BackgroundService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IRuntimeHealthState _healthState;
+
     private readonly ILogger<HistoricalDataCollectionWorker> _logger;
 
     public HistoricalDataCollectionWorker(
         IServiceScopeFactory scopeFactory,
+    IRuntimeHealthState healthState,
         ILogger<HistoricalDataCollectionWorker> logger)
     {
         _scopeFactory = scopeFactory;
+        _healthState = healthState;
         _logger = logger;
     }
 
@@ -60,6 +65,8 @@ public sealed class HistoricalDataCollectionWorker : BackgroundService
 
     private async Task ProcessPendingJobsAsync(CancellationToken ct)
     {
+
+        _healthState.MarkHistoricalPollNow();   
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
         var collector = scope.ServiceProvider.GetRequiredService<IHistoricalDataCollector>();

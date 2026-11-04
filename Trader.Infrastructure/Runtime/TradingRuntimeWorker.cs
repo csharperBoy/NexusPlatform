@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Trader.Application.Abstractions.Health;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Runtime;
@@ -18,15 +19,19 @@ public sealed class TradingRuntimeWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptionsMonitor<TradingRuntimeOptions> _options;
+    private readonly IRuntimeHealthState _healthState;
+
     private readonly ILogger<TradingRuntimeWorker> _logger;
 
     public TradingRuntimeWorker(
         IServiceScopeFactory scopeFactory,
         IOptionsMonitor<TradingRuntimeOptions> options,
+    IRuntimeHealthState healthState,       
         ILogger<TradingRuntimeWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _options = options;
+        _healthState = healthState;
         _logger = logger;
     }
 
@@ -90,6 +95,7 @@ public sealed class TradingRuntimeWorker : BackgroundService
 
     private async Task TickAsync(CancellationToken ct)
     {
+        _healthState.MarkTickNow();
         using var scope = _scopeFactory.CreateScope();
         var sp = scope.ServiceProvider;
 

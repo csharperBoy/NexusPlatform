@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
+using Trader.Application.Abstractions.Health;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
@@ -16,13 +17,17 @@ public sealed class BacktestWorker : BackgroundService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(10);
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IRuntimeHealthState _healthState;
+
     private readonly ILogger<BacktestWorker> _logger;
 
     public BacktestWorker(
         IServiceScopeFactory scopeFactory,
+    IRuntimeHealthState healthState,
         ILogger<BacktestWorker> logger)
     {
         _scopeFactory = scopeFactory;
+        _healthState = healthState;
         _logger = logger;
     }
 
@@ -60,6 +65,8 @@ public sealed class BacktestWorker : BackgroundService
 
     private async Task ProcessPendingAsync(CancellationToken ct)
     {
+
+        _healthState.MarkBacktestPollNow();    
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
         var engine = scope.ServiceProvider.GetRequiredService<IBacktestEngine>();

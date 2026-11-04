@@ -1,10 +1,15 @@
 ﻿using Core.Infrastructure.Database;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Services.Retention;
 namespace Trader.Infrastructure.Data
@@ -49,10 +54,80 @@ namespace Trader.Infrastructure.Data
         {
             await app.RunSmartMigrations();
 
+            if (app is IEndpointRouteBuilder endpoints)
+            {
+                endpoints.Trader_MapHealthChecks();
+            }
 
             return app;
         }
+        /// <summary>
+        /// Maps Trader health check endpoints:
+        ///   GET /health/trader
+        ///   GET /health/trader/db
+        ///   GET /health/trader/runtime
+        ///   GET /health/trader/backtest
+        ///   GET /health/trader/historical
+        ///   GET /health/trader/broker
+        ///   GET /health/trader/marketdata
+        /// All anonymous (intended for K8s/Docker probes).
+        /// </summary>
+        public static IEndpointRouteBuilder Trader_MapHealthChecks(
+            this IEndpointRouteBuilder endpoints,
+            string basePattern = "/health/trader")
+        {
+            var writer = new Func<HttpContext, HealthReport, Task>(WriteResponse);
 
+            void Map(string pattern, Func<HealthCheckRegistration, bool> predicate)
+                => endpoints.MapHealthChecks(pattern, new HealthCheckOptions
+                {
+                    Predicate = predicate,
+                    ResponseWriter = writer,
+                });
+
+            Map(basePattern, _ => true);
+            Map($"{basePattern}/db", c => c.Tags.Contains("db"));
+            Map($"{basePattern}/runtime", c => c.Tags.Contains("runtime"));
+            Map($"{basePattern}/backtest", c => c.Tags.Contains("backtest"));
+            Map($"{basePattern}/historical", c => c.Tags.Contains("historical"));
+            Map($"{basePattern}/broker", c => c.Tags.Contains("broker"));
+            Map($"{basePattern}/marketdata", c => c.Tags.Contains("marketdata"));
+
+            return endpoints;
+        }
+
+        private static readonly JsonSerializerOptions JsonOpts =
+            new(JsonSerializerDefaults.Web)
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+
+        private static Task WriteResponse(HttpContext context, HealthReport report)
+        {
+            context.Response.ContentType = "application/json; charset=utf-8";
+
+            var payload = new
+            {
+                status = report.Status.ToString(),
+                totalDurationMs = Math.Round(report.TotalDuration.TotalMilliseconds, 2),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                entries = report.Entries.ToDictionary(
+                    e => e.Key,
+                    e => new
+                    {
+                        status = e.Value.Status.ToString(),
+                        description = e.Value.Description,
+                        durationMs = Math.Round(e.Value.Duration.TotalMilliseconds, 2),
+                        tags = e.Value.Tags.ToArray(),
+                        data = e.Value.Data.Count > 0 ? e.Value.Data : null,
+                        exception = e.Value.Exception?.Message,
+                    }),
+            };
+
+            return context.Response.WriteAsync(
+                JsonSerializer.Serialize(payload, JsonOpts));
+        }
         // 📌 اجرای Migrationها به صورت هوشمند
         private static async Task<IApplicationBuilder> RunSmartMigrations(this IApplicationBuilder app)
         {
