@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Registry;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Runtime;
 using Trader.Domain.Entities;
@@ -24,17 +26,30 @@ public sealed class TradingEventLogger : ITradingEventLogger
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TradingEventSeverity _minSeverity;
+    private readonly IAsyncPolicy _retryPolicy;
     private readonly ILogger<TradingEventLogger> _logger;
     private readonly List<TradingEvent> _buffer = new();
 
     public TradingEventLogger(
         IServiceScopeFactory scopeFactory,
         IOptionsMonitor<TradingLoggingOptions> options,
+        IReadOnlyPolicyRegistry<string> policies,
         ILogger<TradingEventLogger> logger)
     {
         _scopeFactory = scopeFactory;
         _minSeverity = options.CurrentValue.GetMinSeverityEnum();
         _logger = logger;
+
+        // Use platform's Polly registry:
+        // - DbRetry (5 retries, 1s base) preferred for DB writes
+        // - DefaultRetry (3 retries) fallback
+        // - NoOp if neither registered
+        if (policies.TryGet<IAsyncPolicy>("DbRetry", out var dbRetry))
+            _retryPolicy = dbRetry;
+        else if (policies.TryGet<IAsyncPolicy>("DefaultRetry", out var defRetry))
+            _retryPolicy = defRetry;
+        else
+            _retryPolicy = Policy.NoOpAsync();
     }
 
     public void Log(
@@ -100,12 +115,15 @@ public sealed class TradingEventLogger : ITradingEventLogger
 
         try
         {
-            // ─── Scope جدید: DbContext تازه و جدا از Stageها ───
-            using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
+            // Retry handled by platform Polly policy (DbRetry/DefaultRetry/NoOp)
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TraderDbContext>();
 
-            await db.TradingEvents.AddRangeAsync(batch, ct);
-            await db.SaveChangesAsync(ct);
+                await db.TradingEvents.AddRangeAsync(batch, ct);
+                await db.SaveChangesAsync(ct);
+            });
 
             _buffer.Clear();
             _logger.LogDebug("Flushed {Count} trading events.", batch.Count);
@@ -113,7 +131,7 @@ public sealed class TradingEventLogger : ITradingEventLogger
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed to persist {Count} trading events. Buffer retained for next flush.",
+                "Failed to persist {Count} trading events after retry policy. Buffer retained.",
                 batch.Count);
         }
     }

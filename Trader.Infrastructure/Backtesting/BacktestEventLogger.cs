@@ -2,6 +2,8 @@
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Registry;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
 using Trader.Domain.Entities;
@@ -21,15 +23,24 @@ public sealed class BacktestEventLogger : IBacktestEventLogger
     };
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IAsyncPolicy _retryPolicy;
     private readonly ILogger<BacktestEventLogger> _logger;
     private readonly List<BacktestEvent> _buffer = new();
 
     public BacktestEventLogger(
         IServiceScopeFactory scopeFactory,
+        IReadOnlyPolicyRegistry<string> policies,
         ILogger<BacktestEventLogger> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+
+        if (policies.TryGet<IAsyncPolicy>("DbRetry", out var dbRetry))
+            _retryPolicy = dbRetry;
+        else if (policies.TryGet<IAsyncPolicy>("DefaultRetry", out var defRetry))
+            _retryPolicy = defRetry;
+        else
+            _retryPolicy = Policy.NoOpAsync();
     }
 
     public void Log(
@@ -81,14 +92,17 @@ public sealed class BacktestEventLogger : IBacktestEventLogger
 
         try
         {
-            // Fresh scope to isolate from main UoW
-            using var scope = _scopeFactory.CreateScope();
-            var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var uow = scope.ServiceProvider
+                    .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
 
-            foreach (var e in batch)
-                await uow.BacktestEvents.AddAsync(e);
+                foreach (var e in batch)
+                    await uow.BacktestEvents.AddAsync(e);
 
-            await uow.SaveChangesAsync(ct);
+                await uow.SaveChangesAsync(ct);
+            });
 
             _buffer.Clear();
             _logger.LogDebug("Flushed {Count} backtest events.", batch.Count);
@@ -96,7 +110,7 @@ public sealed class BacktestEventLogger : IBacktestEventLogger
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Failed to persist {Count} backtest events. Buffer retained.",
+                "Failed to persist {Count} backtest events after retry policy.",
                 batch.Count);
         }
     }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Runtime;
+using Trader.Domain.Enums;
 
 namespace Trader.Infrastructure.Runtime;
 
@@ -133,7 +134,92 @@ public sealed class TradingRuntimeWorker : BackgroundService
             }
         }
     }
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "TradingRuntimeWorker graceful shutdown started.");
 
+        // ─── Log ShutdownStarted (fresh scope) ───
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var eventLogger = scope.ServiceProvider.GetService<ITradingEventLogger>();
+
+            if (eventLogger is not null)
+            {
+                eventLogger.Log(
+                    stage: TradingStage.System,
+                    type: TradingEventType.ShutdownStarted,
+                    severity: TradingEventSeverity.Info,
+                    message: "خاموش‌شدن سیستم شروع شد. در حال اتمام Tick جاری...",
+                    payload: new
+                    {
+                        startedAt = DateTime.UtcNow,
+                    });
+
+                await eventLogger.FlushAsync(CancellationToken.None);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to log ShutdownStarted event; continuing.");
+        }
+
+        // ─── Wait for current Tick + loop to break ───
+        // base.StopAsync cancels stoppingToken and awaits _executeTask.
+        // HostOptions.ShutdownTimeout enforces upper bound.
+        var shutdownStart = DateTime.UtcNow;
+
+        try
+        {
+            await base.StopAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                "Shutdown cancelled by host timeout after {ElapsedMs}ms.",
+                (DateTime.UtcNow - shutdownStart).TotalMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Unexpected error during StopAsync after {ElapsedMs}ms.",
+                (DateTime.UtcNow - shutdownStart).TotalMilliseconds);
+        }
+
+        var elapsedMs = (long)(DateTime.UtcNow - shutdownStart).TotalMilliseconds;
+
+        // ─── Log ShutdownCompleted (fresh scope) ───
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var eventLogger = scope.ServiceProvider.GetService<ITradingEventLogger>();
+
+            if (eventLogger is not null)
+            {
+                eventLogger.Log(
+                    stage: TradingStage.System,
+                    type: TradingEventType.ShutdownCompleted,
+                    severity: TradingEventSeverity.Info,
+                    message: $"خاموش‌شدن سیستم کامل شد. مدت: {elapsedMs}ms.",
+                    payload: new
+                    {
+                        elapsedMs,
+                        completedAt = DateTime.UtcNow,
+                    });
+
+                await eventLogger.FlushAsync(CancellationToken.None);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to log ShutdownCompleted event.");
+        }
+
+        _logger.LogInformation(
+            "TradingRuntimeWorker graceful shutdown completed in {ElapsedMs}ms.",
+            elapsedMs);
+    }
     /* ═══════════════════ Startup Recovery ═══════════════════ */
 
     private async Task RunStartupRecoveryAsync(CancellationToken ct)
