@@ -279,15 +279,20 @@ public sealed class ReconciliationService : IReconciliationService
                 });
 
         var brokerByIsin = brokerPortfolio
-            .Where(p => !string.IsNullOrWhiteSpace(GetIsin(p)) && GetQuantity(p) > 0)
-            .GroupBy(p => GetIsin(p)!)
-            .ToDictionary(
-                g => g.Key,
-                g => new
-                {
-                    Qty = g.Sum(p => GetQuantity(p)),
-                    AvgPrice = 0m,   // اگر Broker میانگین می‌دهد، اضافه کن
-                });
+         .Where(p => !string.IsNullOrWhiteSpace(GetIsin(p)) && GetQuantity(p) > 0)
+         .GroupBy(p => GetIsin(p)!)
+         .ToDictionary(
+             g => g.Key,
+             g =>
+             {
+                 var qty = g.Sum(p => GetQuantity(p));
+                 // TotalBuyAveragePrice میانگین خرید کل دوره است
+                 // اگر چند ردیف برای یک ISIN نبود (معمولاً هست)، مستقیم بگیر
+                 var avg = qty > 0
+                     ? g.Sum(p => p.TotalBuyAveragePrice * GetQuantity(p)) / qty
+                     : 0m;
+                 return new { Qty = qty, AvgPrice = avg };
+             });
 
         // ─── ۶. Match ───
         var allIsins = dbByIsin.Keys.Union(brokerByIsin.Keys).ToList();
@@ -419,23 +424,8 @@ public sealed class ReconciliationService : IReconciliationService
 
     // PortfolioPerformanceDto — اگر فیلدها متفاوت است، این دو متد را تنظیم کن
     private static string? GetIsin(PortfolioPerformanceDto p)
-    {
-        // DTO فعلی — فرض: Isin یا SymbolIsin
-        // اگر نام متفاوت است، اینجا اصلاح کن
-        var prop = typeof(PortfolioPerformanceDto).GetProperty("SymbolIsin")
-                   ?? typeof(PortfolioPerformanceDto).GetProperty("Isin");
-        return prop?.GetValue(p) as string;
-    }
+    => string.IsNullOrWhiteSpace(p.SymbolIsin) ? null : p.SymbolIsin;
 
     private static long GetQuantity(PortfolioPerformanceDto p)
-    {
-        var prop = typeof(PortfolioPerformanceDto).GetProperty("Quantity");
-        var val = prop?.GetValue(p);
-        return val switch
-        {
-            long l => l,
-            int i => i,
-            _ => 0L,
-        };
-    }
+        => p.Asset;
 }
