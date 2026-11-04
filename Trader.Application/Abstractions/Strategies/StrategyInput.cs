@@ -1,15 +1,19 @@
 ﻿using Trader.Application.Runtime;
 using Trader.Domain.Enums;
+
 namespace Trader.Application.Abstractions.Strategies;
 
-/// <summary>
-/// تمام ورودی‌های موردنیاز یک Strategy در یک لحظه.
-/// Strategy هیچ I/O ندارد — همه چیز از پیش آماده است.
-/// </summary>
 public sealed record StrategyInput(
     string Isin,
     MarketSnapshot? LatestSnapshot,
     IReadOnlyList<Candle> Candles,
+
+    /// <summary>
+    /// کندل‌های Sub-TimeFrame. Key = TimeFrame درخواستی از ExtraCandleRequirements.
+    /// null یا خالی = Strategy فقط PrimaryTimeFrame را می‌بیند.
+    /// </summary>
+    IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>? ExtraTimeFrames,
+
     StrategyConfig Configuration,
     TimeFrame TimeFrame,
     DateTime EvaluatedAt);

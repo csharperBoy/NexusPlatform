@@ -10,6 +10,7 @@ public enum BacktestEventType
     InstrumentsLoaded = 11,
     CandlesLoaded = 12,
     EventsBuilt = 13,
+    ExtraCandlesLoaded = 14,
 
     SimulationStarted = 20,
     SignalGenerated = 21,

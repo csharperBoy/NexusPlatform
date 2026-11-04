@@ -147,11 +147,11 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
     /* ═══════════════════ Core ═══════════════════ */
 
     private async Task<(List<SignalEnvelope> Envelopes, bool EvaluationSaved)>
-        EvaluateOnlyAsync(
-            RunRuntimeContext ctx,
-            RunSymbolContext symbol,
-            DateTime now,
-            CancellationToken ct)
+    EvaluateOnlyAsync(
+        RunRuntimeContext ctx,
+        RunSymbolContext symbol,
+        DateTime now,
+        CancellationToken ct)
     {
         var envelopes = new List<SignalEnvelope>();
 
@@ -162,7 +162,9 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             return (envelopes, false);
         }
 
-        // ─── Candles اگر Strategy نیاز دارد ───
+        // ═══════════════════════════════════════════════════════════════
+        // 1. PRIMARY CANDLES
+        // ═══════════════════════════════════════════════════════════════
         IReadOnlyList<Candle> candles = Array.Empty<Candle>();
         IReadOnlyList<Candle> allCandles = Array.Empty<Candle>();
 
@@ -174,7 +176,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 ctx.Strategy.RequiredCandleCount,
                 ct);
 
-            // فیلتر closed
+            // فیلتر Closed
             if (ctx.Strategy.RequiresClosedCandlesOnly && allCandles.Count > 0)
             {
                 var tfDuration = ctx.PrimaryTimeFrame.ToDuration();
@@ -200,7 +202,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 candles = allCandles;
             }
 
-            // ─── CandlesLoaded / CandlesLoadFailed Event ───
+            // ─── CandlesLoaded / CandlesLoadFailed ───
             if (candles.Count == 0)
             {
                 _eventLogger.Log(
@@ -216,6 +218,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                         requiredCount = ctx.Strategy.RequiredCandleCount,
                         rawCount = allCandles.Count,
                         closedCount = candles.Count,
+                        isSubCandle = false,
                     },
                     runId: ctx.RunId,
                     isin: symbol.Isin);
@@ -233,32 +236,38 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                         timeFrame = ctx.PrimaryTimeFrame.ToCode(),
                         candleCount = candles.Count,
                         lastCandleTime = candles[^1].OpenTime,
+                        isSubCandle = false,
                     },
                     runId: ctx.RunId,
                     isin: symbol.Isin);
             }
         }
-        // ─── Currency Transformation (اختیاری) ───
+
+        // ═══════════════════════════════════════════════════════════════
+        // 2. CURRENCY TRANSFORM (Primary)
+        // ═══════════════════════════════════════════════════════════════
         string? appliedCurrency = null;
         decimal? appliedRate = null;
         DateTime? appliedRateEffectiveAt = null;
         int? candleCountBeforeFirstRate = null;
         int? ratePointCount = null;
 
-        if (!string.IsNullOrWhiteSpace(ctx.TargetCurrency)
-            && ctx.TargetCurrency.Trim().ToUpperInvariant() != "IRR"
-            && candles.Count > 0)
+        var needsCurrencyTransform =
+            !string.IsNullOrWhiteSpace(ctx.TargetCurrency)
+            && ctx.TargetCurrency.Trim().ToUpperInvariant() != "IRR";
+
+        if (needsCurrencyTransform && candles.Count > 0)
         {
             try
             {
                 var transformation = await _candleTransformer.TransformAsync(
                     symbol.Isin,
                     candles,
-                    ctx.TargetCurrency,
+                    ctx.TargetCurrency!,
                     now,
                     ct);
 
-                appliedCurrency = ctx.TargetCurrency.ToUpperInvariant();
+                appliedCurrency = ctx.TargetCurrency!.ToUpperInvariant();
                 appliedRate = transformation.LastCandleRate;
                 appliedRateEffectiveAt = transformation.LastCandleRateEffectiveAt;
                 candleCountBeforeFirstRate = transformation.CandleCountBeforeFirstRate;
@@ -266,7 +275,6 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
                 candles = transformation.Candles;
 
-                // ─── CurrencyTransformed Event ───
                 _eventLogger.Log(
                     stage: TradingStage.StrategyEvaluation,
                     type: TradingEventType.CurrencyTransformed,
@@ -275,6 +283,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                              $"(Per-Candle، نرخ آخرین کندل: {FormatRateDisplay(appliedRate, appliedCurrency)}).",
                     payload: new
                     {
+                        timeFrame = ctx.PrimaryTimeFrame.ToCode(),
                         targetCurrency = appliedCurrency,
                         lastCandleRate = appliedRate,
                         lastCandleRateDisplay = FormatRateDisplay(appliedRate, appliedCurrency),
@@ -316,19 +325,146 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 3. EXTRA TIMEFRAMES (Sub-Candle) — NEW
+        // ═══════════════════════════════════════════════════════════════
+        IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>? extraTimeFrames = null;
+
+        var requirements = ctx.Strategy.ExtraCandleRequirements;
+        if (requirements.Count > 0)
+        {
+            var dict = new Dictionary<TimeFrame, IReadOnlyList<Candle>>();
+
+            foreach (var req in requirements)
+            {
+                // Skip اگر با Primary یکی است یا بزرگ‌تر است (منطقی نیست)
+                if (req.TimeFrame == ctx.PrimaryTimeFrame
+                    || (int)req.TimeFrame >= (int)ctx.PrimaryTimeFrame)
+                {
+                    _logger.LogDebug(
+                        "Skipping extra TF {TF} for {Isin}: >= primary {Primary}.",
+                        req.TimeFrame, symbol.Isin, ctx.PrimaryTimeFrame);
+                    continue;
+                }
+
+                try
+                {
+                    var allExtra = await _candleCache.GetOrLoadAsync(
+                        symbol.Isin, req.TimeFrame, req.Count, ct);
+
+                    IReadOnlyList<Candle> slice;
+                    if (req.ClosedOnly && allExtra.Count > 0)
+                    {
+                        var tfDur = req.TimeFrame.ToDuration();
+                        var nowUtc = DateTime.UtcNow;
+                        slice = allExtra
+                            .Where(c => c.OpenTime + tfDur <= nowUtc)
+                            .ToList();
+                    }
+                    else
+                    {
+                        slice = allExtra;
+                    }
+
+                    // Currency transform برای Sub-Candle هم اعمال می‌شود
+                    if (needsCurrencyTransform && slice.Count > 0)
+                    {
+                        var trans = await _candleTransformer.TransformAsync(
+                            symbol.Isin, slice, ctx.TargetCurrency!, now, ct);
+                        slice = trans.Candles;
+                    }
+
+                    dict[req.TimeFrame] = slice;
+
+                    // ─── Event: CandlesLoaded (isSubCandle=true) ───
+                    if (slice.Count == 0)
+                    {
+                        _eventLogger.Log(
+                            stage: TradingStage.StrategyEvaluation,
+                            type: TradingEventType.CandlesLoadFailed,
+                            severity: TradingEventSeverity.Warning,
+                            message: $"داده‌ی Sub-Candle ({req.TimeFrame.ToCode()}) " +
+                                     $"برای «{symbol.Isin}» کافی نیست " +
+                                     $"(موردنیاز: {req.Count}, دریافت‌شده: {allExtra.Count}).",
+                            payload: new
+                            {
+                                timeFrame = req.TimeFrame.ToCode(),
+                                requiredCount = req.Count,
+                                rawCount = allExtra.Count,
+                                closedCount = slice.Count,
+                                isSubCandle = true,
+                            },
+                            runId: ctx.RunId,
+                            isin: symbol.Isin);
+                    }
+                    else
+                    {
+                        _eventLogger.Log(
+                            stage: TradingStage.StrategyEvaluation,
+                            type: TradingEventType.CandlesLoaded,
+                            severity: TradingEventSeverity.Debug,
+                            message: $"{slice.Count} کندل {req.TimeFrame.ToCode()} " +
+                                     $"«{symbol.Isin}» (Sub-Candle) بارگذاری شد.",
+                            payload: new
+                            {
+                                timeFrame = req.TimeFrame.ToCode(),
+                                candleCount = slice.Count,
+                                lastCandleTime = slice[^1].OpenTime,
+                                requiredCount = req.Count,
+                                isSubCandle = true,
+                            },
+                            runId: ctx.RunId,
+                            isin: symbol.Isin);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to load extra TF {TF} for {Isin}. Skipping evaluation.",
+                        req.TimeFrame, symbol.Isin);
+
+                    _eventLogger.Log(
+                        stage: TradingStage.StrategyEvaluation,
+                        type: TradingEventType.CandlesLoadFailed,
+                        severity: TradingEventSeverity.Warning,
+                        message: $"دریافت کندل‌های Sub ({req.TimeFrame.ToCode()}) " +
+                                 $"برای «{symbol.Isin}» ناموفق بود: {ex.Message}",
+                        payload: new
+                        {
+                            timeFrame = req.TimeFrame.ToCode(),
+                            requiredCount = req.Count,
+                            isSubCandle = true,
+                            errorType = ex.GetType().Name,
+                            errorMessage = ex.Message,
+                        },
+                        runId: ctx.RunId,
+                        isin: symbol.Isin);
+
+                    return (new List<SignalEnvelope>(), false);
+                }
+            }
+
+            extraTimeFrames = dict;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // 4. STRATEGY EVALUATE
+        // ═══════════════════════════════════════════════════════════════
         var input = new StrategyInput(
             Isin: symbol.Isin,
             LatestSnapshot: snapshot,
             Candles: candles,
+            ExtraTimeFrames: extraTimeFrames,       // ← NEW
             Configuration: ctx.StrategyConfig,
             TimeFrame: ctx.PrimaryTimeFrame,
             EvaluatedAt: now);
 
         var result = ctx.Strategy.Evaluate(input);
 
-        // ─── NoSignalGenerated (Debug) — فقط اگر Features دارد و Hold است ───
-        if (result.Features != null
-            && result.Signals.Count == 0)
+        // ═══════════════════════════════════════════════════════════════
+        // 5. NoSignalGenerated (Debug)
+        // ═══════════════════════════════════════════════════════════════
+        if (result.Features != null && result.Signals.Count == 0)
         {
             var rsiFeature = result.Features.TryGetValue("rsi", out var rsiVal)
                 ? rsiVal?.ToString()
@@ -349,11 +485,13 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 isin: symbol.Isin);
         }
 
-        // ─── StrategyEvaluation (فقط اگر Features موجود باشد) ───
+        // ═══════════════════════════════════════════════════════════════
+        // 6. STRATEGY EVALUATION — Enrichment BEFORE Serialization
+        // ═══════════════════════════════════════════════════════════════
         StrategyEvaluation? evalEntity = null;
         if (result.Features != null)
         {
-            // ─── ۱. Enrichment اول (قبل از Serialization) ───
+            // ۱. Enrichment اول
             if (appliedCurrency != null)
             {
                 var enriched = new Dictionary<string, object?>(result.Features);
@@ -367,7 +505,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 result = result with { Features = enriched };
             }
 
-            // ─── ۲. Serialization بعد از Enrichment ───
+            // ۲. Serialization بعد از Enrichment
             var featuresJson = JsonSerializer.Serialize(result.Features, JsonOpts);
 
             var primaryAction = result.Signals.Count > 0
@@ -391,7 +529,9 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
             await _uow.StrategyEvaluations.AddAsync(evalEntity);
         }
 
-        // ─── Signals ───
+        // ═══════════════════════════════════════════════════════════════
+        // 7. SIGNALS
+        // ═══════════════════════════════════════════════════════════════
         foreach (var s in result.Signals)
         {
             if (s.Action == SignalAction.Hold) continue;
@@ -415,7 +555,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
             await _uow.Signals.AddAsync(signal);
             envelopes.Add(new SignalEnvelope(ctx.RunId, signal, now));
-            // ─── SignalGenerated Event ───
+
             _eventLogger.Log(
                 stage: TradingStage.StrategyEvaluation,
                 type: TradingEventType.SignalGenerated,
@@ -431,7 +571,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
                 runId: ctx.RunId,
                 isin: symbol.Isin,
                 signalId: signal.Id);
-            // Link دوطرفه
+
             evalEntity?.LinkSignal(signal.Id);
         }
 
@@ -445,7 +585,7 @@ public sealed class StrategyEvaluationStage : IStrategyEvaluationStage
 
         return (envelopes, evalEntity != null);
     }
-  
+
     private static string ActionToPersian(SignalAction action) => action switch
     {
         SignalAction.Buy => "خرید",

@@ -267,6 +267,55 @@ public sealed class BacktestEngine : IBacktestEngine
             }
         }
 
+        // ─── Extra TimeFrames (Strategy requirements + SL/TP sub) ───
+        var strategyReqs = strategy.ExtraCandleRequirements
+            .Where(r => r.TimeFrame != timeFrame
+                     && (int)r.TimeFrame < (int)timeFrame)
+            .ToList();
+
+        // Union of all needed extra TFs
+        var neededExtraTfs = new HashSet<TimeFrame>();
+        if (subTimeFrame.HasValue)
+            neededExtraTfs.Add(subTimeFrame.Value);
+        foreach (var req in strategyReqs)
+            neededExtraTfs.Add(req.TimeFrame);
+
+        // Load all extra TFs once per symbol
+        var extraCandleLists = new Dictionary<(string Isin, TimeFrame Tf), List<Candle>>();
+        foreach (var s in symbolAllocations)
+        {
+            foreach (var tf in neededExtraTfs)
+            {
+                var extra = await LoadCandlesAsync(
+                    uow, s.Isin, tf, run.DateFrom, run.DateTo, ct);
+
+                if (!string.IsNullOrWhiteSpace(run.TargetCurrency)
+                    && run.TargetCurrency != "IRR"
+                    && extra.Count > 0)
+                {
+                    var tr = await transformer.TransformAsync(
+                        s.Isin, extra, run.TargetCurrency, run.DateTo, ct);
+                    extra = tr.Candles.ToList();
+                }
+
+                extraCandleLists[(s.Isin, tf)] = extra;
+
+                if (strategyReqs.Any(r => r.TimeFrame == tf))
+                {
+                    eventLogger.Log(run.Id, BacktestEventType.CandlesLoaded,
+                        BacktestEventSeverity.Info,
+                        $"کندل‌های Sub ({tf}) برای {s.Isin}: {extra.Count} کندل",
+                        payload: new
+                        {
+                            isin = s.Isin,
+                            timeFrame = tf.ToString(),
+                            isSubCandle = true,
+                            count = extra.Count
+                        },
+                        isin: s.Isin);
+                }
+            }
+        }
         // ─── State ───
         var state = new BacktestState
         {
@@ -379,10 +428,34 @@ public sealed class BacktestEngine : IBacktestEngine
                 var histCandles = runningCandles[isin];
                 if (histCandles.Count >= strategy.RequiredCandleCount)
                 {
+                    // Build ExtraTimeFrames dict for this event
+                    IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>? extraForStrategy = null;
+                    if (strategyReqs.Count > 0)
+                    {
+                        var windowEnd = candle.OpenTime + tfDuration;
+                        var dict = new Dictionary<TimeFrame, IReadOnlyList<Candle>>();
+
+                        foreach (var req in strategyReqs)
+                        {
+                            var full = extraCandleLists[(isin, req.TimeFrame)];
+                            var reqDur = req.TimeFrame.ToDuration();
+
+                            var slice = full
+                                .Where(c => c.OpenTime + reqDur <= windowEnd)
+                                .TakeLast(req.Count)
+                                .ToList();
+
+                            dict[req.TimeFrame] = slice;
+                        }
+
+                        extraForStrategy = dict;
+                    }
+
                     var input = new StrategyInput(
                         Isin: isin,
                         LatestSnapshot: null,
                         Candles: histCandles,
+                        ExtraTimeFrames: extraForStrategy,    // ← NEW
                         Configuration: strategyConfig,
                         TimeFrame: timeFrame,
                         EvaluatedAt: candle.OpenTime);

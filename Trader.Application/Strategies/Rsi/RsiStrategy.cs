@@ -24,6 +24,8 @@ public sealed class RsiStrategy : IStrategy
     public int RequiredCandleCount => _config.Period + 50;
 
     public bool RequiresClosedCandlesOnly => true;
+    public IReadOnlyList<CandleRequirement> ExtraCandleRequirements
+    => Array.Empty<CandleRequirement>();
     public StrategyEvaluationResult Evaluate(StrategyInput input)
     {
         // ─── ۱. Indicator (فقط محاسبه) ───

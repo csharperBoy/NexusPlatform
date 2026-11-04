@@ -15,6 +15,10 @@ public interface IStrategy
     /// RSI/MACD → true. Breakout/Scalping → false (احتمالاً).
     /// </summary>
     bool RequiresClosedCandlesOnly { get; }
-
+    /// <summary>
+    /// TimeFrameهای اضافی که Strategy نیاز دارد (Sub-Candle).
+    /// خالی = فقط PrimaryTimeFrame (رفتار قبلی، backward-compatible).
+    /// </summary>
+    IReadOnlyList<CandleRequirement> ExtraCandleRequirements { get; }
     StrategyEvaluationResult Evaluate(StrategyInput input);
 }
