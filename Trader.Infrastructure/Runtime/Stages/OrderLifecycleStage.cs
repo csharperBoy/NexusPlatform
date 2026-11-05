@@ -126,68 +126,91 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
     private async Task SyncAccountAsync(Guid accountId, CancellationToken ct)
     {
-        var spec = new OpenBrokerOrdersByAccountSpec(accountId);
-        var openOrders = (await _uow.BrokerOrderSpecs.ListBySpecAsync(spec))
+        var account = await _uow.Accounts.GetByIdAsync(accountId);
+        if (account is null) return;
+
+        // ═══════════════════════════════════════════════════════════════
+        // 1. Sync open orders with broker (if any exist)
+        // ═══════════════════════════════════════════════════════════════
+        var modifiedCount = 0;
+        Trader.ExternalApiClient.ExternalSystemSession? session = null;
+
+        var openOrders = (await _uow.BrokerOrderSpecs.ListBySpecAsync(
+            new OpenBrokerOrdersByAccountSpec(accountId)))
             .Where(o => !o.IsTerminal)
             .Where(o => !string.IsNullOrWhiteSpace(o.BrokerOrderId))
             .ToList();
 
-        if (openOrders.Count == 0) return;
-
-        var account = await _uow.Accounts.GetByIdAsync(accountId);
-        if (account is null) return;
-
-        var session = await _sessionProvider.GetSessionAsync(accountId, ct);
-        var historyReader = _brokerFactory.Get<IBrokerOrderHistoryReader>(account.Broker);
-
-        // ─── ۱. Fetch تمام Order History (Pagination) ───
-        var brokerOrders = await FetchAllHistoryAsync(historyReader, session, ct);
-        if (brokerOrders.Count == 0) return;
-
-        var brokerOrdersById = brokerOrders
-            .GroupBy(o => o.OrderId)
-            .ToDictionary(g => g.Key, g => g.Last());
-
-        // ─── ۲. برای هر Order باز ما، وضعیت را Sync کن ───
-        var modifiedCount = 0;
-
-        foreach (var ourOrder in openOrders)
+        if (openOrders.Count > 0)
         {
-            if (ourOrder.BrokerOrderId is null) continue;
-            if (!brokerOrdersById.TryGetValue(ourOrder.BrokerOrderId, out var dto)) continue;
+            session = await _sessionProvider.GetSessionAsync(accountId, ct);
+            var historyReader = _brokerFactory.Get<IBrokerOrderHistoryReader>(account.Broker);
 
-            try
+            var brokerOrders = await FetchAllHistoryAsync(historyReader, session, ct);
+            if (brokerOrders.Count > 0)
             {
-                var changed = await SyncOrderAsync(
-                    ourOrder, dto, historyReader, session, ct);
+                var brokerOrdersById = brokerOrders
+                    .GroupBy(o => o.OrderId)
+                    .ToDictionary(g => g.Key, g => g.Last());
 
-                if (changed) modifiedCount++;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "Failed to sync order {OrderId} for account {AccountId}.",
-                    ourOrder.BrokerOrderId, accountId);
+                foreach (var ourOrder in openOrders)
+                {
+                    if (ourOrder.BrokerOrderId is null) continue;
+                    if (!brokerOrdersById.TryGetValue(ourOrder.BrokerOrderId, out var dto)) continue;
+
+                    try
+                    {
+                        var changed = await SyncOrderAsync(
+                            ourOrder, dto, historyReader, session, ct);
+                        if (changed) modifiedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "Failed to sync order {OrderId} for account {AccountId}.",
+                            ourOrder.BrokerOrderId, accountId);
+                    }
+                }
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        // 2. Persist order changes before SL/TP monitoring
+        // ═══════════════════════════════════════════════════════════════
         if (modifiedCount > 0)
         {
             await _uow.SaveChangesAsync(ct);
             _logger.LogInformation(
                 "Stage 4: {Count} orders updated for account {AccountId}.",
                 modifiedCount, accountId);
+        }
 
-            // ─── Monitoring SL/TP بعد از Sync ───
-            try
-            {
-                await CheckStopsAndCloseAsync(accountId, account, session, ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex,
-                    "SL/TP monitoring failed for account {AccountId}.", accountId);
-            }
+        // ═══════════════════════════════════════════════════════════════
+        // 3. ALWAYS monitor SL/TP for open positions
+        //
+        // این مرحله مستقل از Order activity است. حتی اگر هیچ سفارش بازی
+        // وجود نداشته باشد، Positionهای باز باید در هر tick بررسی شوند.
+        // باگ قبلی: اگر Run یک Buy Order ارسال می‌کرد و آن Order فوراً
+        // Fill می‌شد، openOrders.Count به صفر می‌رسید و SyncAccountAsync
+        // early-return می‌کرد — یعنی SL/TP هرگز monitor نمی‌شد.
+        // ═══════════════════════════════════════════════════════════════
+        var openPositionsCount = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsByAccountSpec(accountId))).Count();
+
+        if (openPositionsCount == 0) return;
+
+        try
+        {
+            // Session ممکن است در مرحله 1 گرفته شده باشد یا نه.
+            // GetSessionAsync روی Cache کار می‌کند، هزینه‌ی ناچیز.
+            session ??= await _sessionProvider.GetSessionAsync(accountId, ct);
+
+            await CheckStopsAndCloseAsync(accountId, account, session, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "SL/TP monitoring failed for account {AccountId}.", accountId);
         }
     }
     private async Task CheckStopsAndCloseAsync(

@@ -67,4 +67,7 @@ public enum TradingEventType
     ReconciliationCompleted = 71,
     ReconciliationFailed = 72,
     ReconciliationMismatchFound = 73,
+
+    // ─── Data Integrity (80-89) ───
+    PositionOvershootDetected = 80,
 }

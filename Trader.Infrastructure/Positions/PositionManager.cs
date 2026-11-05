@@ -4,6 +4,7 @@ using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Positions;
+using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Specifications.Positions;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -17,15 +18,18 @@ public sealed class PositionManager : IPositionManager
 {
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly ITradingEventLogger _eventLogger;
+    private readonly IRunExecutionContextCache _runCache;
     private readonly ILogger<PositionManager> _logger;
 
     public PositionManager(
         ITraderUnitOfWork<TraderDbContext> uow,
         ITradingEventLogger eventLogger,
+        IRunExecutionContextCache runCache,
         ILogger<PositionManager> logger)
     {
         _uow = uow;
         _eventLogger = eventLogger;
+        _runCache = runCache;
         _logger = logger;
     }
 
@@ -143,19 +147,71 @@ public sealed class PositionManager : IPositionManager
                 return;
             }
 
-            var sellQty = trade.Quantity.Value > position.Quantity.Value
-                ? position.Quantity.Value
-                : trade.Quantity.Value;
+            // ═══════════════════════════════════════════════════════════
+            // CRITICAL: Position Overshoot Detection
+            //
+            // اگر Broker یک Sell بزرگ‌تر از Position ثبت‌شده گزارش دهد،
+            // State Domain با واقعیت همخوان نیست. علت‌های ممکن:
+            //   • Manual Trade در Broker (خارج از سیستم)
+            //   • Trade از Account دیگری (data bug)
+            //   • Data Race در ترتیب پردازش
+            //   • Position پس از Close شدن، دوباره Sell شده
+            //
+            // تصمیم: Fill را اعمال نمی‌کنیم (Position در "known good"
+            // state می‌ماند)، Run را Fault می‌کنیم، و از Cache خارج
+            // می‌کنیم. Reconciliation اختلاف را نشان می‌دهد.
+            // ═══════════════════════════════════════════════════════════
+            if (trade.Quantity.Value > position.Quantity.Value)
+            {
+                var overshootQty = trade.Quantity.Value - position.Quantity.Value;
 
+                _logger.LogCritical(
+                    "POSITION OVERSHOOT DETECTED: broker sell trade {TradeQty} " +
+                    "exceeds tracked position {PosQty} for {Isin} " +
+                    "(run={RunId}, account={AccountId}, trade={TradeNumber}). " +
+                    "Fill NOT applied. Run will be faulted.",
+                    trade.Quantity.Value, position.Quantity.Value, trade.Isin,
+                    order.RunId, order.TraderAccountId, trade.TradeNumber);
+
+                _eventLogger.Log(
+                    stage: TradingStage.OrderLifecycle,
+                    type: TradingEventType.PositionOvershootDetected,
+                    severity: TradingEventSeverity.Critical,
+                    message: $"⚠️ مغایرت بحرانی: Broker فروش {trade.Quantity.Value:N0} سهم " +
+                             $"«{trade.Isin}» را گزارش داد، ولی Position ثبت‌شده فقط " +
+                             $"{position.Quantity.Value:N0} سهم دارد. " +
+                             $"مقدار اضافی: {overshootQty:N0} سهم. " +
+                             $"Fill اعمال نشد. پلن برای بررسی دستی Fault شد.",
+                    payload: new
+                    {
+                        brokerSellQuantity = trade.Quantity.Value,
+                        positionQuantity = position.Quantity.Value,
+                        overshootQuantity = overshootQty,
+                        tradeNumber = trade.TradeNumber,
+                        tradePrice = trade.Price.Value,
+                        tradeDate = trade.TradeDate,
+                    },
+                    runId: order.RunId,
+                    isin: trade.Isin,
+                    accountId: order.TraderAccountId,
+                    brokerOrderId: order.Id,
+                    tradeId: trade.Id,
+                    positionId: position.Id);
+
+                await FaultRunAsync(order.RunId, ct);
+
+                // Fill اعمال نشد:
+                // - Trade record در DB هست (audit trail)
+                // - FilledQuantity توسط caller (SyncTradesAsync) به‌روز می‌شود
+                // - Position در "known good" state می‌ماند
+                // - Reconciliation اختلاف Position vs Broker را نشان می‌دهد
+                return;
+            }
+
+            // ═══ Normal sell path ═══
+            var sellQty = trade.Quantity.Value;
             var fillPrice = trade.Price.Value;
             var pnlBefore = position.RealizedPnL.Amount;
-
-            if (sellQty < trade.Quantity.Value)
-            {
-                _logger.LogWarning(
-                    "Sell trade {Qty} exceeds position {PosQty} for {Isin}; clamped to {Clamped}.",
-                    trade.Quantity.Value, position.Quantity.Value, trade.Isin, sellQty);
-            }
 
             position.ApplySellFill(new Quantity(sellQty), trade.Price);
 
@@ -231,7 +287,63 @@ public sealed class PositionManager : IPositionManager
             position.AverageEntryPrice.Value,
             DateTime.UtcNow));
     }
+    /// <summary>
+    /// Run را به وضعیت Faulted منتقل می‌کند و از Runtime Cache خارج می‌کند
+    /// تا Pipeline دیگر آن را پردازش نکند. Positionها دست‌نخورده می‌مانند
+    /// (KeepPositions) و نیاز به بررسی دستی دارند.
+    /// </summary>
+    private async Task FaultRunAsync(Guid runId, CancellationToken ct)
+    {
+        try
+        {
+            var run = await _uow.TradingRuns.GetByIdAsync(runId);
+            if (run is null)
+            {
+                _logger.LogError(
+                    "Cannot fault run {RunId}: TradingRun not found in DB.", runId);
+                // با این حال از Cache خارج کن — pipeline باید متوقف شود
+                _runCache.Remove(runId);
+                return;
+            }
 
+            if (run.State == TradingRunState.Running)
+            {
+                run.MarkFaulted(
+                    "Position overshoot detected: broker reported sell trade " +
+                    "exceeding tracked position quantity. Fill was NOT applied " +
+                    "to avoid silent data corruption. Manual reconciliation required.");
+                await _uow.TradingRuns.UpdateAsync(run);
+                await _uow.SaveChangesAsync(ct);
+
+                _logger.LogWarning(
+                    "TradingRun {RunId} marked as Faulted due to position overshoot.",
+                    runId);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "Run {RunId} state is {State} (not Running); skipping MarkFaulted. " +
+                    "Still removing from cache.",
+                    runId, run.State);
+            }
+
+            // خارج کردن از Cache — Stageهای بعدی این Run را نمی‌بینند.
+            // از TradingRunManager.StopAsync استفاده نمی‌کنیم چون آن
+            // RunStopped event صادر می‌کند که برای Fault گمراه‌کننده است.
+            _runCache.Remove(runId);
+        }
+        catch (Exception ex)
+        {
+            // هرگز نگذار Fault handling خودش Pipeline را بشکند.
+            // حداقل Cache را پاک کن.
+            _logger.LogError(ex,
+                "Failed to fault run {RunId} after position overshoot. " +
+                "Removing from cache anyway.", runId);
+
+            try { _runCache.Remove(runId); }
+            catch { /* swallow */ }
+        }
+    }
     public async Task ApplyTradeCancelAsync(
         BrokerOrder order, OrderTrade trade, CancellationToken ct = default)
     {
