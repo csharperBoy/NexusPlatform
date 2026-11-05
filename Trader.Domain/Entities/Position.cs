@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Trader.Domain.Calculations;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
 
@@ -70,23 +71,29 @@ public class Position : BaseEntity, IAuditableEntity
         };
     }
 
+    
     public void ApplyBuyFill(Quantity qty, Price price)
     {
-        var newTotalQty = Quantity.Value + qty.Value;
-        var newAvg = ((AverageEntryPrice.Value * Quantity.Value) + (price.Value * qty.Value))
-                     / newTotalQty;
+        var newAvg = FillMath.CalculateWeightedAveragePrice(
+            currentQty: Quantity.Value,
+            currentAvgPrice: AverageEntryPrice.Value,
+            fillQty: qty.Value,
+            fillPrice: price.Value);
 
-        Quantity = new Quantity(newTotalQty);
+        Quantity = new Quantity(Quantity.Value + qty.Value);
         AverageEntryPrice = new Price(newAvg);
         Touch();
     }
-
     public void ApplySellFill(Quantity qty, Price price)
     {
         if (qty.Value > Quantity.Value)
             throw new InvalidOperationException("Sell quantity exceeds position quantity.");
 
-        var realized = (price.Value - AverageEntryPrice.Value) * qty.Value;
+        var realized = FillMath.CalculateRealizedPnL(
+            avgPrice: AverageEntryPrice.Value,
+            fillPrice: price.Value,
+            fillQty: qty.Value);
+
         RealizedPnL = RealizedPnL.Add(new Money(realized));
 
         var remaining = Quantity.Value - qty.Value;

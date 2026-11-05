@@ -1,5 +1,6 @@
 ﻿using Trader.Application.Runtime;
 using Trader.Domain.Entities;
+using Trader.Domain.Enums;
 
 namespace Trader.Infrastructure.MarketData;
 
@@ -8,7 +9,7 @@ public static class CandleRecordMapper
     public static CandleRecord FromRuntime(
         Candle src,
         string isin,
-        int timeFrame,
+        TimeFrame timeFrame,
         string source,
         DateTime fetchedAt)
     {

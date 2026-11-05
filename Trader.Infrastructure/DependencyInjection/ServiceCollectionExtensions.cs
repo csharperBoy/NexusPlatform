@@ -135,6 +135,8 @@ namespace Trader.Infrastructure.DependencyInjection
             /* ═══════════ Repositories — Specification ═══════════ */
 
             // Legacy
+            services.AddScoped<ISpecificationRepository<HistoricalDataCollectionJob, Guid>,
+                EfSpecificationRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
             services.AddScoped<ISpecificationRepository<TraderAccount, Guid>,
                 EfSpecificationRepository<TraderDbContext, TraderAccount, Guid>>();
             services.AddScoped<ISpecificationRepository<TraderSymbol, Guid>,
@@ -301,7 +303,6 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddSingleton<IMarketSessionProvider, IranMarketSessionProvider>();
             // ─── Strategy Factory ───
             services.AddTraderStrategies();
-            services.AddSingleton<IStrategyFactory, StrategyFactory>();
             // Position Closer
             services.AddSingleton<IPositionCloser, PositionCloser>();
             // ─── Currency ───

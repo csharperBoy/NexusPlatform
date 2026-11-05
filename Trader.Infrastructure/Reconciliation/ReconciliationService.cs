@@ -6,6 +6,7 @@ using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Reconciliation;
 using Trader.Application.Dtos.Account;
 using Trader.Application.Dtos.Reconciliation;
+using Trader.Application.Specifications.Positions;
 using Trader.Application.Specifications.TradingRuns;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -382,16 +383,13 @@ public sealed class ReconciliationService : IReconciliationService
         var accountIds = new HashSet<Guid>();
 
         // ۱. Accounts با Position باز non-paper
-        var openPositions = (await _uow.Positions.GetAllAsync())
-            .Where(p => !p.IsPaper
-                     && p.State != PositionState.Closed
-                     && p.Quantity.Value > 0);
-
+        var openPositions = (await _uow.PositionSpecs.ListBySpecAsync(
+            new OpenPositionsWithoutPaperSpec()));
         foreach (var p in openPositions)
             accountIds.Add(p.TraderAccountId);
 
-        // ۲. Accounts از Runهای Runnable (برای کشف Broker-only Positionها)
-        var runnableSpec = new RunnableTradingRunsSpec();
+        // ۲. Accounts از Runهای Running/Ready
+        var runnableSpec = new RunnableOrRunningTradingRunsSpec();
         var runnableRuns = await _uow.TradingRunSpecs.ListBySpecAsync(runnableSpec);
 
         foreach (var run in runnableRuns)

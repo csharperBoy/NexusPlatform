@@ -220,6 +220,31 @@ public class OrderSizeCalculatorTests
 
         result.Quantity.Should().Be(10_000);
     }
+    [Fact]
+    public void CalculateBuy_WithNonZeroCommission_UsesExactFormula()
+    {
+        // این تست عمداً عددی را انتخاب می‌کند که در آن
+        // (1 - c) و 1/(1 + c) به integer مختلف floor می‌شوند.
+        //
+        // Legacy (1 - c):  73,000 × 0.9963 / 1 = 72,729.9  → 72,729
+        // Exact 1/(1+c):   73,000 / 1.0037      ≈ 72,730.99 → 72,730
+        //
+        // تست قبلاً (با approximation) 72,729 برمی‌گرداند و FAIL می‌شد.
+        // حالا (با exact) 72,730 برمی‌گرداند و PASS.
+        var input = BuyInput(
+            allocated: 73_000m,
+            committed: 0m,
+            strength: 1.0m,
+            price: 1m,
+            commission: 0.0037m,
+            minQty: 1, maxQty: 200_000, minValue: null,
+            availableCash: null);   // Live mode
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(72_730,
+            because: "the exact formula 1/(1+c) is slightly tighter than (1-c)");
+    }
 
     // ────────────────────────────────────────────────────────────
     // Helper
@@ -235,7 +260,7 @@ public class OrderSizeCalculatorTests
         long maxQty,
         decimal? minValue,
         decimal minDeltaPercent = 0m,
-        decimal? availableCash = 0m)
+    decimal? availableCash = null)
     {
         return new BuySizeInput(
             AllocatedCapital: allocated,

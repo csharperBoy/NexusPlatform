@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Health;
 using Trader.Application.Abstractions.HistoricalData;
+using Trader.Application.Specifications.HistoricalData;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
@@ -66,15 +67,12 @@ public sealed class HistoricalDataCollectionWorker : BackgroundService
     private async Task ProcessPendingJobsAsync(CancellationToken ct)
     {
 
-        _healthState.MarkHistoricalPollNow();   
+        _healthState.MarkHistoricalPollNow();
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
         var collector = scope.ServiceProvider.GetRequiredService<IHistoricalDataCollector>();
 
-        var pending = (await uow.HistoricalDataCollectionJobs.GetAllAsync())
-            .Where(j => j.Status == CollectionJobStatus.Pending)
-            .OrderBy(j => j.CreatedAt)
-            .ToList();
+        var pending = (await uow.HistoricalDataCollectionJobSpecs.ListBySpecAsync(new PendingHistoricalJobsSpec())).ToList();
 
         if (pending.Count == 0) return;
 

@@ -99,25 +99,34 @@ public sealed class TradingRuntimeWorker : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var sp = scope.ServiceProvider;
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var tickStopwatch = System.Diagnostics.Stopwatch.StartNew();
+        long stage1Ms = 0, stage2Ms = 0, stage3Ms = 0, stage4Ms = 0;
 
         try
         {
             // Stage 1
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             await sp.GetRequiredService<IMarketDataIngestionStage>().RunOnceAsync(ct);
+            stage1Ms = sw.ElapsedMilliseconds;
 
             // Stage 2
+            sw.Restart();
             await sp.GetRequiredService<IStrategyEvaluationStage>().RunOnceAsync(ct);
+            stage2Ms = sw.ElapsedMilliseconds;
 
             // Stage 3
+            sw.Restart();
             await sp.GetRequiredService<IExecutionStage>().RunOnceAsync(ct);
+            stage3Ms = sw.ElapsedMilliseconds;
 
-            // Stage 4 (با interval داخلی خودش)
+            // Stage 4
+            sw.Restart();
             await sp.GetRequiredService<IOrderLifecycleStage>().RunOnceAsync(ct);
+            stage4Ms = sw.ElapsedMilliseconds;
         }
         finally
         {
-            stopwatch.Stop();
+            tickStopwatch.Stop();
 
             // ─── Flush رویدادها — حتی اگر Stageها Fail شوند ───
             try
@@ -132,11 +141,19 @@ public sealed class TradingRuntimeWorker : BackgroundService
                     "Failed to flush trading events at end of tick.");
             }
 
-            if (stopwatch.ElapsedMilliseconds > 1000)
+            if (tickStopwatch.ElapsedMilliseconds > 1000)
             {
                 _logger.LogWarning(
-                    "Tick took {ElapsedMs} ms — slower than expected.",
-                    stopwatch.ElapsedMilliseconds);
+                    "Slow tick: total={Total}ms stage1={S1}ms stage2={S2}ms stage3={S3}ms stage4={S4}ms",
+                    tickStopwatch.ElapsedMilliseconds,
+                    stage1Ms, stage2Ms, stage3Ms, stage4Ms);
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "Tick: total={Total}ms stage1={S1}ms stage2={S2}ms stage3={S3}ms stage4={S4}ms",
+                    tickStopwatch.ElapsedMilliseconds,
+                    stage1Ms, stage2Ms, stage3Ms, stage4Ms);
             }
         }
     }

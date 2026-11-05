@@ -13,7 +13,7 @@ public class CandleRecordConfiguration : BaseConfiguration<CandleRecord>
         builder.ToTable("Candles", "trader");
 
         builder.Property(x => x.Isin).IsRequired().HasMaxLength(20);
-        builder.Property(x => x.TimeFrame).IsRequired();
+        builder.Property(x => x.TimeFrame).HasConversion<int>().IsRequired();
         builder.Property(x => x.OpenTime).IsRequired();
 
         builder.Property(x => x.Open).HasPrecision(18, 4).IsRequired();

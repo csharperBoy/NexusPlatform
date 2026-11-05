@@ -25,25 +25,21 @@ public sealed class TradingEventLogger : ITradingEventLogger
     };
 
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly TradingEventSeverity _minSeverity;
+    private readonly IOptionsMonitor<TradingLoggingOptions> _options;   // ← NEW
     private readonly IAsyncPolicy _retryPolicy;
     private readonly ILogger<TradingEventLogger> _logger;
     private readonly List<TradingEvent> _buffer = new();
 
     public TradingEventLogger(
         IServiceScopeFactory scopeFactory,
-        IOptionsMonitor<TradingLoggingOptions> options,
+        IOptionsMonitor<TradingLoggingOptions> options,          // ← از قبل بود
         IReadOnlyPolicyRegistry<string> policies,
         ILogger<TradingEventLogger> logger)
     {
         _scopeFactory = scopeFactory;
-        _minSeverity = options.CurrentValue.GetMinSeverityEnum();
+        _options = options;                                       // ← ذخیره Ref
         _logger = logger;
 
-        // Use platform's Polly registry:
-        // - DbRetry (5 retries, 1s base) preferred for DB writes
-        // - DefaultRetry (3 retries) fallback
-        // - NoOp if neither registered
         if (policies.TryGet<IAsyncPolicy>("DbRetry", out var dbRetry))
             _retryPolicy = dbRetry;
         else if (policies.TryGet<IAsyncPolicy>("DefaultRetry", out var defRetry))
@@ -67,7 +63,9 @@ public sealed class TradingEventLogger : ITradingEventLogger
         Guid? tradeId = null,
         Guid? positionId = null)
     {
-        if (severity < _minSeverity) return;
+        // ─── Dynamic MinSeverity (M3) ───
+        var minSeverity = _options.CurrentValue.GetMinSeverityEnum();
+        if (severity < minSeverity) return;
 
         try
         {
@@ -106,6 +104,7 @@ public sealed class TradingEventLogger : ITradingEventLogger
                 "Failed to buffer trading event: {Type} {Message}", type, message);
         }
     }
+
 
     public async Task FlushAsync(CancellationToken ct = default)
     {

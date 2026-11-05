@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Trader.Domain.Calculations;
 using Trader.Domain.Enums;
 
 namespace Trader.Domain.Entities;
@@ -39,21 +40,25 @@ public class BacktestTrade : BaseEntity
     private BacktestTrade() { } // EF
 
     public static BacktestTrade Create(
-        Guid backtestRunId,
-        string isin,
-        DateTime entryTime,
-        DateTime lastEntryTime,
-        long totalEntryQuantity,
-        decimal weightedAvgEntryPrice,
-        decimal totalBuyCommission,
-        string entryFillsJson,
-        DateTime exitTime,
-        decimal exitPrice,
-        long exitQuantity,
-        decimal totalSellCommission,
-        BacktestExitReason exitReason)
+    Guid backtestRunId,
+    string isin,
+    DateTime entryTime,
+    DateTime lastEntryTime,
+    long totalEntryQuantity,
+    decimal weightedAvgEntryPrice,
+    decimal totalBuyCommission,
+    string entryFillsJson,
+    DateTime exitTime,
+    decimal exitPrice,
+    long exitQuantity,
+    decimal totalSellCommission,
+    BacktestExitReason exitReason)
     {
-        var grossPnl = (exitPrice - weightedAvgEntryPrice) * exitQuantity;
+        var grossPnl = FillMath.CalculateRealizedPnL(
+            avgPrice: weightedAvgEntryPrice,
+            fillPrice: exitPrice,
+            fillQty: exitQuantity);
+
         var netPnl = grossPnl - totalBuyCommission - totalSellCommission;
         var totalInvested = weightedAvgEntryPrice * totalEntryQuantity + totalBuyCommission;
         var netPnlPct = totalInvested > 0m ? (netPnl / totalInvested) * 100m : 0m;

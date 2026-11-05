@@ -10,6 +10,7 @@ using Trader.Application.Runtime;
 using Trader.Application.Specifications.Backtests;
 using Trader.Application.Specifications.Candles;
 using Trader.Application.Specifications.Instruments;
+using Trader.Domain.Calculations;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -666,45 +667,46 @@ public sealed class BacktestEngine : IBacktestEngine
 
         if (pending.Side == OrderSide.Buy)
         {
-            // ─── Re-check cash ───
             var commissionRate = instrument.BuyCommissionRate;
-            var cost = fillPrice * pending.Quantity * (1m + commissionRate);
-            var qty = pending.Quantity;
 
-            if (cost > state.Cash)
-            {
-                var maxQty = (long)Math.Floor(state.Cash / (fillPrice * (1m + commissionRate)));
-                if (maxQty < instrument.MinOrderQuantity) return;
-                qty = maxQty;
-            }
+            // ─── حداکثر قابل خرید با cash موجود (فرمول دقیق از FillMath) ───
+            // M9: قبلاً دو بار cash check می‌شد (یکی برای clamp، یکی defensive).
+            // با CalculateMaxBuyQuantity، فرمول دقیقاً همان است که cash را
+            // تضمین می‌کند — چک دوم defensive نیست، dead است. حذف شد.
+            var affordableQty = FillMath.CalculateMaxBuyQuantity(
+                state.Cash, fillPrice, commissionRate);
+
+            var qty = Math.Min(pending.Quantity, affordableQty);
 
             if (qty < instrument.MinOrderQuantity) return;
 
-            var commission = fillPrice * qty * commissionRate;
+            var commission = FillMath.CalculateCommission(fillPrice, qty, commissionRate);
             var totalCost = fillPrice * qty + commission;
-
-            if (totalCost > state.Cash) return;
 
             state.Cash -= totalCost;
             state.TotalCommission += commission;
             eventLogger.Log(run.Id, BacktestEventType.FillExecuted, BacktestEventSeverity.Info,
-    $"خرید انجام شد: {qty:N0} سهم {isin} @ {fillPrice:N0}",
-    payload: new
-    {
-        side = "Buy",
-        quantity = qty,
-        price = fillPrice,
-        commission = commission,
-        totalCost = totalCost
-    },
-    isin: isin,
-    candleTime: fillCandle.OpenTime);
+                $"خرید انجام شد: {qty:N0} سهم {isin} @ {fillPrice:N0}",
+                payload: new
+                {
+                    side = "Buy",
+                    quantity = qty,
+                    price = fillPrice,
+                    commission = commission,
+                    totalCost = totalCost
+                },
+                isin: isin,
+                candleTime: fillCandle.OpenTime);
             if (state.Positions.TryGetValue(isin, out var existingPos))
             {
-                var newQty = existingPos.Quantity + qty;
-                var newAvg = (existingPos.Quantity * existingPos.WeightedAvgEntryPrice
-                    + qty * fillPrice) / newQty;
-                existingPos.Quantity = newQty;
+                // ─── Weighted Average از FillMath ───
+                var newAvg = FillMath.CalculateWeightedAveragePrice(
+                    currentQty: existingPos.Quantity,
+                    currentAvgPrice: existingPos.WeightedAvgEntryPrice,
+                    fillQty: qty,
+                    fillPrice: fillPrice);
+
+                existingPos.Quantity += qty;
                 existingPos.WeightedAvgEntryPrice = newAvg;
                 existingPos.TotalBuyCommission += commission;
                 existingPos.EntryFills.Add(new EntryFill(
@@ -729,19 +731,19 @@ public sealed class BacktestEngine : IBacktestEngine
                     fillCandle.OpenTime, fillPrice, qty, commission));
                 state.Positions[isin] = pos;
                 eventLogger.Log(run.Id, BacktestEventType.PositionOpened, BacktestEventSeverity.Info,
-    $"موقعیت باز شد: {qty:N0} سهم {isin} @ {fillPrice:N0}" +
-    (sl.HasValue ? $" (SL: {sl.Value:N0})" : "") +
-    (tp.HasValue ? $" (TP: {tp.Value:N0})" : ""),
-    payload: new
-    {
-        quantity = qty,
-        entryPrice = fillPrice,
-        stopLoss = sl,
-        takeProfit = tp,
-        commission = commission
-    },
-    isin: isin,
-    candleTime: fillCandle.OpenTime);
+                    $"موقعیت باز شد: {qty:N0} سهم {isin} @ {fillPrice:N0}" +
+                    (sl.HasValue ? $" (SL: {sl.Value:N0})" : "") +
+                    (tp.HasValue ? $" (TP: {tp.Value:N0})" : ""),
+                    payload: new
+                    {
+                        quantity = qty,
+                        entryPrice = fillPrice,
+                        stopLoss = sl,
+                        takeProfit = tp,
+                        commission = commission
+                    },
+                    isin: isin,
+                    candleTime: fillCandle.OpenTime);
             }
         }
         else // Sell
@@ -751,8 +753,12 @@ public sealed class BacktestEngine : IBacktestEngine
             if (sellQty <= 0) return;
 
             var commissionRate = instrument.SellCommissionRate;
-            var proceeds = fillPrice * sellQty * (1m - commissionRate);
-            var commission = fillPrice * sellQty * commissionRate;
+
+            // ─── Commission از FillMath؛ proceeds = gross - commission ───
+            // توجه: قبلاً بود fillPrice * sellQty * (1m - commissionRate)
+            // ریاضی معادل: fillPrice*sellQty - fillPrice*sellQty*rate = gross - commission
+            var commission = FillMath.CalculateCommission(fillPrice, sellQty, commissionRate);
+            var proceeds = fillPrice * sellQty - commission;
 
             state.Cash += proceeds;
 
@@ -762,6 +768,8 @@ public sealed class BacktestEngine : IBacktestEngine
                 pos.EntryFills,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
+            // BacktestTrade.Create خودش FillMath.CalculateRealizedPnL را
+            // برای grossPnL صدا می‌زند (بعد از PR 5 تغییر کرد).
             var trade = Domain.Entities.BacktestTrade.Create(
                 backtestRunId: run.Id,
                 isin: isin,
@@ -778,17 +786,17 @@ public sealed class BacktestEngine : IBacktestEngine
                 exitReason: BacktestExitReason.Signal);
 
             eventLogger.Log(run.Id, BacktestEventType.PositionClosed, BacktestEventSeverity.Info,
-    $"موقعیت بسته شد (سیگنال): {sellQty:N0} سهم {isin} @ {fillPrice:N0}",
-    payload: new
-    {
-        quantity = sellQty,
-        exitPrice = fillPrice,
-        commission = commission,
-        exitReason = "Signal"
-    },
-    isin: isin,
-    candleTime: fillCandle.OpenTime,
-    tradeId: trade.Id);
+                $"موقعیت بسته شد (سیگنال): {sellQty:N0} سهم {isin} @ {fillPrice:N0}",
+                payload: new
+                {
+                    quantity = sellQty,
+                    exitPrice = fillPrice,
+                    commission = commission,
+                    exitReason = "Signal"
+                },
+                isin: isin,
+                candleTime: fillCandle.OpenTime,
+                tradeId: trade.Id);
             state.Trades.Add(trade);
             state.Positions.Remove(isin);
         }
@@ -813,8 +821,8 @@ public sealed class BacktestEngine : IBacktestEngine
         state.TotalSlippage += Math.Abs(fillPrice - triggerPrice) * pos.Quantity;
 
         var commissionRate = instrument.SellCommissionRate;
-        var proceeds = fillPrice * pos.Quantity * (1m - commissionRate);
-        var commission = fillPrice * pos.Quantity * commissionRate;
+        var commission = FillMath.CalculateCommission(fillPrice, pos.Quantity, commissionRate);
+        var proceeds = fillPrice * pos.Quantity - commission;
 
         state.Cash += proceeds;
         state.TotalCommission += commission;
@@ -929,7 +937,7 @@ public sealed class BacktestEngine : IBacktestEngine
         var rows = await uow.Context.Candles
             .AsNoTracking()
             .Where(c => c.Isin == isin
-                     && c.TimeFrame == (int)timeFrame
+                    && (int)c.TimeFrame == (int)timeFrame
                      && c.OpenTime >= from
                      && c.OpenTime <= to)
             .OrderBy(c => c.OpenTime)

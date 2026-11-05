@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Trader.Domain.Enums;
 
 namespace Trader.Domain.Entities;
 
@@ -9,7 +10,7 @@ namespace Trader.Domain.Entities;
 public class CandleRecord : BaseEntity
 {
     public string Isin { get; private set; } = default!;
-    public int TimeFrame { get; private set; }         // TimeFrame enum as int
+    public TimeFrame TimeFrame { get; private set; }         // TimeFrame enum as int
     public DateTime OpenTime { get; private set; }     // UTC
 
     public decimal Open { get; private set; }
@@ -25,7 +26,7 @@ public class CandleRecord : BaseEntity
 
     public static CandleRecord Create(
         string isin,
-        int timeFrame,
+        TimeFrame timeFrame,
         DateTime openTime,
         decimal open,
         decimal high,

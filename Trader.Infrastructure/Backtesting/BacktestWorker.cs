@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.Health;
+using Trader.Application.Specifications.Backtests;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
@@ -71,10 +72,8 @@ public sealed class BacktestWorker : BackgroundService
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
         var engine = scope.ServiceProvider.GetRequiredService<IBacktestEngine>();
 
-        var pending = (await uow.BacktestRuns.GetAllAsync())
-            .Where(b => b.Status == BacktestStatus.Pending)
-            .OrderBy(b => b.CreatedAt)
-            .ToList();
+        var pending = (await uow.BacktestRunSpecs.ListBySpecAsync(
+       new PendingBacktestRunsSpec())).ToList();
 
         if (pending.Count == 0) return;
 

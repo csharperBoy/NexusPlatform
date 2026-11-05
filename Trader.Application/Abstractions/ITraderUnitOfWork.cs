@@ -35,6 +35,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
 
     // Spec Repositories
+    ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }
     ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
     ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }
     ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }

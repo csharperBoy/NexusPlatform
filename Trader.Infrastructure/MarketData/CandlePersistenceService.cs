@@ -92,7 +92,7 @@ public sealed class CandlePersistenceService : ICandlePersistenceService
             try
             {
                 var record = CandleRecordMapper.FromRuntime(
-                    c, isin, timeFrame, source, fetchedAt);
+                    c, isin, tfEnum, source, fetchedAt);
                 await _uow.CandleRecords.AddAsync(record);
                 inserted++;
             }

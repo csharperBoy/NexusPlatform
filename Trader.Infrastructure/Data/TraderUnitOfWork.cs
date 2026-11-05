@@ -31,6 +31,7 @@ IRepository<TraderDbContext, BacktestTrade, Guid> backtestTrades,
 IRepository<TraderDbContext, BacktestDailyEquity, Guid> backtestDailyEquities,
 IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> historicalDataCollectionJobs,
 IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> backtestEvents,
+ISpecificationRepository<HistoricalDataCollectionJob, Guid> historicalDataCollectionJobSpecs,
 ISpecificationRepository<BacktestRun, Guid> backtestRunSpecs,
 ISpecificationRepository<BacktestTrade, Guid> backtestTradeSpecs,
         ISpecificationRepository<TradingRun, Guid> tradingRunSpecs,
@@ -102,7 +103,7 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         CurrencyRateSpecs = currencyRateSpecs;
         TradingEvents = tradingEvents;
         TradingEventSpecs = tradingEventSpecs;
-
+        HistoricalDataCollectionJobSpecs = historicalDataCollectionJobSpecs;
     }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
@@ -129,6 +130,7 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, BacktestTrade, Guid> BacktestTrades { get; }
     public IRepository<TraderDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
     public IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
+    public ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }
     public ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
     public ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }
     public ISpecificationRepository<CurrencyRate, Guid> CurrencyRateSpecs { get; }
