@@ -129,10 +129,11 @@ namespace Trader.Infrastructure.Services
 
         public async Task<IReadOnlyList<AccountInfoView>> GetAccountListAsync()
         {
-            var accounts = await _accountRepository.GetAllAsync();
+            // OrderBy در SQL اجرا می‌شود، نه در حافظه
+            var accounts = await _accountRepository.GetAllAsync(
+                q => q.OrderBy(a => a.Name));
 
             return accounts
-                .OrderBy(a => a.Name)
                 .Select(a => new AccountInfoView
                 {
                     Id = a.Id,

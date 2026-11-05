@@ -355,6 +355,10 @@ src/modules/Trader/
 - `InstrumentOrderPreset` UI ندارد
 - PnL از Broker (`TotalRealizedProfitAndLoss`) هنوز در Reconciliation مقایسه نمی‌شود (Phase A1+)
 - Bonus/StockRight در Reconciliation نادیده گرفته می‌شود (ممکن است Mismatch کاذب بدهد)
+- **ExecutionLogService.GetLogsAsync** — Filter در SQL اجرا می‌شود
+  (بهبود PR 9)، ولی Skip/Take هنوز در حافظه است. اگر تعداد Log
+  از ۵۰,۰۰۰ گذشت، `GetLogsPagedAsync` با ApplyPaging به
+  IExecutionLogQueryService اضافه شود.
 
 - **Resilience**: هر Retry روی Database/Callهای حساس از `IReadOnlyPolicyRegistry<string>` و Polly policies پلتفرم (`DbRetry`, `DefaultRetry`) استفاده می‌کند — نه Retry سفارشی. `RetryBehavior` فقط برای MediatR؛ BackgroundServiceها (مثل `TradingEventLogger.FlushAsync`) مستقیم از Registry می‌خوانند.
 ---

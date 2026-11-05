@@ -125,10 +125,11 @@ namespace Trader.Infrastructure.Services
 
         public async Task<IReadOnlyList<SymbolInfoView>> GetSymbolListAsync()
         {
-            var symbols = await _symbolRepository.GetAllAsync();
+            // OrderBy در SQL اجرا می‌شود، نه در حافظه
+            var symbols = await _symbolRepository.GetAllAsync(
+                q => q.OrderBy(s => s.SymbolName));
 
             return symbols
-                .OrderBy(s => s.SymbolName)
                 .Select(s => new SymbolInfoView
                 {
                     Id = s.Id,

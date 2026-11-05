@@ -489,7 +489,7 @@ public sealed class BacktestEngine : IBacktestEngine
             {
                 if (currentDay.HasValue)
                 {
-                    RecordEquity(state, currentDay.Value, lastEquity);
+                    RecordEquity(state, run.Id, currentDay.Value, lastEquity);
                 }
                 currentDay = dayOfCandle;
                 lastEquity = ComputeEquity(state);
@@ -508,7 +508,7 @@ public sealed class BacktestEngine : IBacktestEngine
 
         // ─── Final day equity ───
         if (currentDay.HasValue)
-            RecordEquity(state, currentDay.Value, lastEquity);
+            RecordEquity(state, run.Id, currentDay.Value, lastEquity);
 
         // ─── Close all remaining at last close ───
         foreach (var (isin, pos) in state.Positions.ToList())
@@ -523,7 +523,7 @@ public sealed class BacktestEngine : IBacktestEngine
         if (currentDay.HasValue)
         {
             var finalEquity = ComputeEquity(state);
-            // Update last equity entry
+            // Update last equity entry in place — RunId is already correct
             if (state.DailyEquities.Count > 0)
             {
                 var lastEq = state.DailyEquities[^1];
@@ -536,20 +536,6 @@ public sealed class BacktestEngine : IBacktestEngine
                     dailyReturnPct: ComputeDailyReturn(finalEquity, lastEquity));
             }
         }
-
-        // Fix backtestRunId on daily equities (they were created with Guid.Empty)
-        for (int i = 0; i < state.DailyEquities.Count; i++)
-        {
-            var eq = state.DailyEquities[i];
-            state.DailyEquities[i] = BacktestDailyEquity.Create(
-                backtestRunId: run.Id,
-                date: eq.Date,
-                equity: eq.Equity,
-                cash: eq.Cash,
-                positionValue: eq.PositionValue,
-                dailyReturnPct: eq.DailyReturnPct);
-        }
-
 
         return state;
     }
@@ -901,9 +887,10 @@ public sealed class BacktestEngine : IBacktestEngine
     }
 
     private static void RecordEquity(
-        BacktestState state,
-        DateTime day,
-        decimal prevDayEquity)
+    BacktestState state,
+    Guid runId,
+    DateTime day,
+    decimal prevDayEquity)
     {
         var equity = ComputeEquity(state);
         var posValue = equity - state.Cash;
@@ -913,7 +900,7 @@ public sealed class BacktestEngine : IBacktestEngine
             : 0m;
 
         state.DailyEquities.Add(Domain.Entities.BacktestDailyEquity.Create(
-            backtestRunId: Guid.Empty,   // set by caller
+            backtestRunId: runId,
             date: DateTime.SpecifyKind(day, DateTimeKind.Utc),
             equity: equity,
             cash: state.Cash,
