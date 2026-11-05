@@ -141,14 +141,10 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             throw new ArgumentOutOfRangeException(nameof(m),
                 "StrengthMultiplier must be between 0.1 and 5.0.");
     }
+    
     private static string? NormalizeCurrency(string? currency)
     {
-        if (string.IsNullOrWhiteSpace(currency)) return null;
-        var c = currency.Trim().ToUpperInvariant();
-        if (c.Length < 2 || c.Length > 10)
-            throw new InvalidOperationException(
-                $"TargetCurrency '{currency}' is not a valid ISO code.");
-        return c;
+        return CurrencyCode.NormalizeOrNull(currency, nameof(currency));
     }
     // ─────────────── Settings ───────────────
 

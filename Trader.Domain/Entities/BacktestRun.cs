@@ -160,9 +160,7 @@ public class BacktestRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             StrategyKey = strategyKey.Trim(),
             StrategyConfigJson = strategyConfigJson,
             PrimaryTimeFrame = primaryTimeFrame,
-            TargetCurrency = string.IsNullOrWhiteSpace(targetCurrency)
-                ? null
-                : targetCurrency.Trim().ToUpperInvariant(),
+            TargetCurrency = CurrencyCode.NormalizeOrNull(targetCurrency, nameof(targetCurrency)),
             CapitalAllocationMode = capitalAllocationMode,
             FixedCapitalAmount = fixedCapitalAmount,
             StrengthMultiplier = strengthMultiplier,
