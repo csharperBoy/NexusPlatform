@@ -135,9 +135,11 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         var modifiedCount = 0;
         Trader.ExternalApiClient.ExternalSystemSession? session = null;
 
+        // OpenBrokerOrdersByAccountSpec خودش terminal states را فیلتر می‌کند،
+        // پس .Where(o => !o.IsTerminal) در اینجا redundant است.
+        // فقط BrokerOrderId باید غیر خالی باشد (سفارش‌های assign نشده).
         var openOrders = (await _uow.BrokerOrderSpecs.ListBySpecAsync(
             new OpenBrokerOrdersByAccountSpec(accountId)))
-            .Where(o => !o.IsTerminal)
             .Where(o => !string.IsNullOrWhiteSpace(o.BrokerOrderId))
             .ToList();
 
@@ -188,23 +190,20 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         // ═══════════════════════════════════════════════════════════════
         // 3. ALWAYS monitor SL/TP for open positions
         //
-        // این مرحله مستقل از Order activity است. حتی اگر هیچ سفارش بازی
-        // وجود نداشته باشد، Positionهای باز باید در هر tick بررسی شوند.
-        // باگ قبلی: اگر Run یک Buy Order ارسال می‌کرد و آن Order فوراً
-        // Fill می‌شد، openOrders.Count به صفر می‌رسید و SyncAccountAsync
-        // early-return می‌کرد — یعنی SL/TP هرگز monitor نمی‌شد.
+        // مستقل از Order activity. باگ قبلی: بعد از fill شدن Buy،
+        // openOrders.Count صفر می‌شد و این متد early-return می‌کرد،
+        // پس SL/TP هرگز اجرا نمی‌شد. حالا مستقل بررسی می‌شود.
+        //
+        // CountBySpecAsync → SELECT COUNT(*) در DB، بدون Load کردن entityها.
         // ═══════════════════════════════════════════════════════════════
-        var openPositionsCount = (await _uow.PositionSpecs.ListBySpecAsync(
-            new OpenPositionsByAccountSpec(accountId))).Count();
+        var openPositionsCount = await _uow.PositionSpecs.CountBySpecAsync(
+            new OpenPositionsByAccountSpec(accountId));
 
         if (openPositionsCount == 0) return;
 
         try
         {
-            // Session ممکن است در مرحله 1 گرفته شده باشد یا نه.
-            // GetSessionAsync روی Cache کار می‌کند، هزینه‌ی ناچیز.
             session ??= await _sessionProvider.GetSessionAsync(accountId, ct);
-
             await CheckStopsAndCloseAsync(accountId, account, session, ct);
         }
         catch (Exception ex)
