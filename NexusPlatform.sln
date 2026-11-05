@@ -302,6 +302,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Codes", "Codes", "{7871AA8B
 		OthersModuleCodes.md = OthersModuleCodes.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Tests", "Trader.Tests\Trader.Tests.csproj", "{1B209CC0-D0FF-4A24-922F-7C34ED013847}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -680,6 +682,10 @@ Global
 		{77000757-5E3E-41C4-AEF4-5E140C751CD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77000757-5E3E-41C4-AEF4-5E140C751CD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77000757-5E3E-41C4-AEF4-5E140C751CD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B209CC0-D0FF-4A24-922F-7C34ED013847}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B209CC0-D0FF-4A24-922F-7C34ED013847}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B209CC0-D0FF-4A24-922F-7C34ED013847}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B209CC0-D0FF-4A24-922F-7C34ED013847}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -814,6 +820,7 @@ Global
 		{770C0E81-5990-4A8A-AD18-30C8E7D01643} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
 		{AE115F48-F773-4E27-9C21-D5C8E2C51CA7} = {770C0E81-5990-4A8A-AD18-30C8E7D01643}
 		{7871AA8B-6FF5-443C-8159-C9A2C3857D8B} = {93E86E81-5D93-4F96-AAB1-B97CB3287288}
+		{1B209CC0-D0FF-4A24-922F-7C34ED013847} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}

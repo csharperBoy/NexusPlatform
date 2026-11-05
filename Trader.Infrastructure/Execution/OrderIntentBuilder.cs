@@ -94,7 +94,7 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
             var result = _sizeCalculator.CalculateBuy(new BuySizeInput(
                 AllocatedCapital: allocatedForSymbol,
                 CommittedCapital: committed,
-                AvailableCash: 0m,               // Live → broker check
+                AvailableCash: null,               // Live → broker check
                 SignalStrength: signal.Strength.Value,
                 StrengthMultiplier: context.StrengthMultiplier,
                 MinDeltaPercent: context.MinDeltaPercent,

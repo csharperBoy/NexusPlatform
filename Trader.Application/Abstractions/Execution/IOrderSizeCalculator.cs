@@ -13,7 +13,7 @@ public interface IOrderSizeCalculator
 public sealed record BuySizeInput(
     decimal AllocatedCapital,          // totalCapital × allocation%
     decimal CommittedCapital,          // هزینه‌ی Positionهای باز + Orderهای در راه
-    decimal AvailableCash,             // 0 = چک نشود (Live)؛ در Backtest = Cash واقعی
+    decimal? AvailableCash,             // 0 = چک نشود (Live)؛ در Backtest = Cash واقعی
     decimal SignalStrength,            // 0..1
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,

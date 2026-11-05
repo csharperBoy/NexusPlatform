@@ -38,15 +38,15 @@ public sealed class OrderSizeCalculator : IOrderSizeCalculator
         var qty = (long)Math.Floor(effectiveDelta / input.Price);
 
         // ─── ۶. AvailableCash Guard (اختیاری) ───
-        if (input.AvailableCash > 0m && qty > 0)
+        if (input.AvailableCash.HasValue && input.AvailableCash.Value > 0m && qty > 0)
         {
+            var cash = input.AvailableCash.Value;
             var cost = qty * input.Price * (1m + input.BuyCommissionRate);
-            if (cost > input.AvailableCash)
+            if (cost > cash)
             {
                 var maxAffordable = (long)Math.Floor(
-                    input.AvailableCash / (input.Price * (1m + input.BuyCommissionRate)));
-                if (maxAffordable < qty)
-                    qty = maxAffordable;
+                    cash / (input.Price * (1m + input.BuyCommissionRate)));
+                if (maxAffordable < qty) qty = maxAffordable;
             }
         }
 
