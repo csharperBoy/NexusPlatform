@@ -115,17 +115,17 @@ public sealed class BacktestEngine : IBacktestEngine
                     $"تریدها: {metrics.TotalTrades} (برد: {metrics.WinningTrades}, باخت: {metrics.LosingTrades})",
                     payload: metrics);
 
-                            eventLogger.Log(run.Id, BacktestEventType.RunCompleted, BacktestEventSeverity.Info,
-                                $"بکتست تکمیل شد. سرمایه‌ی نهایی: {state.Cash:N0}, مدت: {run.DurationMs}ms",
-                                payload: new
-                                {
-                                    finalEquity = state.Cash,
-                                    totalReturnPct = metrics.TotalReturnPct,
-                                    totalTrades = metrics.TotalTrades,
-                                    durationMs = run.DurationMs
-                                });
+            eventLogger.Log(run.Id, BacktestEventType.RunCompleted, BacktestEventSeverity.Info,
+                $"بکتست تکمیل شد. سرمایه‌ی نهایی: {state.Cash:N0}, مدت: {run.DurationMs}ms",
+                payload: new
+                {
+                    finalEquity = state.Cash,
+                    totalReturnPct = metrics.TotalReturnPct,
+                    totalTrades = metrics.TotalTrades,
+                    durationMs = run.DurationMs
+                });
 
-                            await eventLogger.FlushAsync(ct);
+            await eventLogger.FlushAsync(ct);
         }
         catch (OperationCanceledException)
         {
@@ -154,21 +154,22 @@ public sealed class BacktestEngine : IBacktestEngine
     /* ═══════════════════ Simulation ═══════════════════ */
 
     private async Task<BacktestState> SimulateAsync(
-    BacktestRun run,
-    ITraderUnitOfWork<TraderDbContext> uow,
-    IBacktestEventLogger eventLogger,
-    CancellationToken ct)
+        BacktestRun run,
+        ITraderUnitOfWork<TraderDbContext> uow,
+        IBacktestEventLogger eventLogger,
+        CancellationToken ct)
     {
-        var scope = _scopeFactory.CreateScope().ServiceProvider;
+        using var simulationScope = _scopeFactory.CreateScope();
+        var sp = simulationScope.ServiceProvider;
 
-        var strategyFactory = scope.GetRequiredService<IStrategyFactory>();
-        var sizeCalc = scope.GetRequiredService<Trader.Application.Abstractions.Execution.IOrderSizeCalculator>();
-        var transformer = scope.GetRequiredService<ICandleTransformer>();
+        var strategyFactory = sp.GetRequiredService<IStrategyFactory>();
+        var sizeCalc = sp.GetRequiredService<Trader.Application.Abstractions.Execution.IOrderSizeCalculator>();
+        var transformer = sp.GetRequiredService<ICandleTransformer>();
 
         // ─── Config ───
         var strategyConfig = strategyFactory.DeserializeConfig(
-            run.StrategyKey, run.StrategyConfigJson);
-       
+                run.StrategyKey, run.StrategyConfigJson);
+
         var strategy = strategyFactory.Create(run.StrategyKey, strategyConfig);
 
         var timeFrame = (TimeFrame)run.PrimaryTimeFrame;
@@ -754,7 +755,7 @@ public sealed class BacktestEngine : IBacktestEngine
             var commission = fillPrice * sellQty * commissionRate;
 
             state.Cash += proceeds;
-            
+
             state.TotalCommission += commission;
 
             var entryFillsJson = JsonSerializer.Serialize(

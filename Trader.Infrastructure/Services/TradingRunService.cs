@@ -69,22 +69,24 @@ executionMode: (ExecutionMode)model.ExecutionMode);
         var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec)
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 
+        // Domain invariant: Run در حال اجرا قابل ویرایش نیست.
+        // UpdateSettings() در صورت Running بودن throw می‌کند.
+        // برای تغییر Config، ابتدا Stop کنید، ویرایش کنید، سپس Start.
         run.UpdateSettings(
-     model.Name,
-     model.StrategyKey,
-     model.StrategyConfigJson,
-     (TimeFrame)model.PrimaryTimeFrame,
-     BuildCapitalAllocation(model.Settings),
-     BuildStopLoss(model.Settings),
-     BuildTakeProfit(model.Settings),
-     (OrderMode)model.Settings.DefaultOrderMode,
-     (MarketCloseBehavior)model.Settings.OnMarketClose,
-     (StopRunBehavior)model.Settings.OnStop,
-     model.TargetCurrency,
-     model.StrengthMultiplier,
-
-    model.MinDeltaPercent,
-    (ExecutionMode)model.ExecutionMode);
+            model.Name,
+            model.StrategyKey,
+            model.StrategyConfigJson,
+            (TimeFrame)model.PrimaryTimeFrame,
+            BuildCapitalAllocation(model.Settings),
+            BuildStopLoss(model.Settings),
+            BuildTakeProfit(model.Settings),
+            (OrderMode)model.Settings.DefaultOrderMode,
+            (MarketCloseBehavior)model.Settings.OnMarketClose,
+            (StopRunBehavior)model.Settings.OnStop,
+            model.TargetCurrency,
+            model.StrengthMultiplier,
+            model.MinDeltaPercent,
+            (ExecutionMode)model.ExecutionMode);
 
         // Sync Symbols
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
@@ -114,12 +116,6 @@ executionMode: (ExecutionMode)model.ExecutionMode);
 
         await _uow.TradingRuns.UpdateAsync(run);
         await _uow.SaveChangesAsync();
-
-        // اگر Run فعال است، Context را Refresh کن
-        if (_runManager.IsRunning(id))
-        {
-            await _runManager.StartAsync(id); // Idempotent → Refresh
-        }
 
         _logger.LogInformation("Updated TradingRun {Id}", id);
     }
