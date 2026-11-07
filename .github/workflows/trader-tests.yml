@@ -1,0 +1,29 @@
+name: Build & Test
+
+on:
+  push:
+    branches: [ master, Trader, AkSteel ]
+  pull_request:
+    branches: [ master, Trader, AkSteel ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Trader.Tests/Trader.Tests.csproj --no-build --configuration Release --verbosity normal
