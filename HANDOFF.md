@@ -361,6 +361,12 @@ src/modules/Trader/
   IExecutionLogQueryService اضافه شود.
 
 - **Resilience**: هر Retry روی Database/Callهای حساس از `IReadOnlyPolicyRegistry<string>` و Polly policies پلتفرم (`DbRetry`, `DefaultRetry`) استفاده می‌کند — نه Retry سفارشی. `RetryBehavior` فقط برای MediatR؛ BackgroundServiceها (مثل `TradingEventLogger.FlushAsync`) مستقیم از Registry می‌خوانند.
+
+- **Core.Shared/Result.cs** — `Result<T>.Fail(string)` hides `Result.Fail(string)`
+  (Warning در CI). اگر کد `Result<T>` را به `Result` upcast کند و `Fail` صدا بزند،
+  نسخه‌ی پایه اجرا می‌شود (behavior silently different). نیاز به بررسی:
+  یا `new` keyword اضافه شود (اگر hide intentional)، یا Base را virtual/override کنند،
+  یا از interface استفاده شود. Priority: Low (کار می‌کند)، Risk: Medium (اگر باگ دهد).
 ---
 
 ## 10. FILES TO SEND IN NEW CHAT

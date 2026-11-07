@@ -265,6 +265,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{93E86E81-5
 	ProjectSection(SolutionItems) = preProject
 		HANDOFF.md = HANDOFF.md
 		TRADING-ARCHITECTURE.md = TRADING-ARCHITECTURE.md
+		TRADING-DECISIONS.md = TRADING-DECISIONS.md
 		TRADING-STORY.md = TRADING-STORY.md
 	EndProjectSection
 EndProject

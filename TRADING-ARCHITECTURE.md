@@ -1,7 +1,13 @@
+
 # Trading Module — Backend Architecture
 
 > مستند جامع جریان کار، تصمیم‌گیری، و اجرا در ماژول Trading.
-> آخرین به‌روزرسانی: ۱۴۰۴/۰۸/۰۵
+>
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۸/۱۶ — بعد از سری Refactor (PR 1-12)
+>
+> **توجه:** این سند **جریان کار** را توصیف می‌کند. برای **دلیل هر تصمیم معماری**،
+> به [docs/TRADING-DECISIONS.md](./TRADING-DECISIONS.md) مراجعه کن. هر تصمیم با
+> شناسه‌ی `D1`..`D28` در آن سند ارجاع داده شده.
 
 ---
 
@@ -19,7 +25,7 @@
 10. [Startup Recovery](#10-startup-recovery)
 11. [Indicatorها](#11-indicatorها)
 12. [Strategyها](#12-strategyها)
-13. [Trading Schedule (ساعت معاملاتی)](#13-trading-schedule-ساعت-معاملاتی)
+13. [Trading Schedule](#13-trading-schedule-ساعت-معاملاتی)
 14. [Currency Transformation](#14-currency-transformation)
 15. [Persistence برای AI/ML](#15-persistence-برای-aiml)
 16. [پیکربندی و DI](#16-پیکربندی-و-di)
@@ -40,13 +46,15 @@ Trading Module یک **موتور معاملات الگوریتمی** است که
 
 ### اصول معماری
 
-| اصل | توضیح |
-|---|---|
-| **Strategy از Account جداست** | Strategy فقط تحلیل می‌کند، نمی‌داند چند حساب دارد |
-| **Market Data از Execution جداست** | یک منبع داده برای همه‌ی Runها |
-| **TradingRun مسئول Execution Context است** | تنظیمات Capital، SL/TP، Accountها در Run |
-| **Broker پشت Abstraction** | Mofid/Agah/سایر از طریق `IBroker*` Interface |
-| **Future-ready, Simple Phase 1** | Extensible بدون Overengineering |
+| اصل | توضیح | شناسه |
+|---|---|---|
+| **Strategy از Account جداست** | Strategy فقط تحلیل می‌کند، نمی‌داند چند حساب دارد | D1 |
+| **Market Data از Execution جداست** | یک منبع داده برای همه‌ی Runها | D2 |
+| **TradingRun مسئول Execution Context است** | تنظیمات Capital، SL/TP، Accountها در Run | D3 |
+| **Broker پشت Abstraction** | Mofid/Agah/سایر از طریق `IBroker*` Interface | D18, D19 |
+| **Multi-Account = Fan-Out (بدون Coordination)** | یک Signal روی همه‌ی Accountهای همان Run | D5 |
+| **FillMath = تنها منبع محاسبات Fill** | Live/Paper/Backtest همه از همان فرمول | D10 |
+| **Future-ready, Simple Phase 1** | Extensible بدون Overengineering | — |
 
 ### چرخه‌ی کلی
 
@@ -57,7 +65,8 @@ Broker API
 Market Data Ingestion (Stage 1)
     │
     ▼
-Strategy Evaluation (Stage 2) ──→ Indicator (RSI، MACD، ...)
+Strategy Evaluation (Stage 2) ──→ StrategyEvaluationService
+    │                                 └─→ Indicator (RSI، MACD، ...)
     │
     ▼
 Signal (تولید شده)
@@ -70,6 +79,9 @@ Execution (Stage 3) ──→ OrderIntent ──→ BrokerOrder
     │                                        │
     ▼                                        ▼
 Order Lifecycle (Stage 4) ──→ OrderTrade ──→ Position
+    │                                            │
+    │                                            ▼
+    └─→ FillMath.CalculateRealizedPnL ──→ PnL
     │
     ▼
 Position Events (PnL، Close، ...)
@@ -81,19 +93,21 @@ Position Events (PnL، Close، ...)
 
 | مفهوم | تعریف |
 |---|---|
-| **Instrument** | هویت نماد (فولاد، شپنا، ...). ISIN یکتا. |
+| **Instrument** | هویت نماد (فولاد، شپنا، ...). ISIN یکتا. Option Contract از نوع Owned Type. |
 | **TraderAccount** | حساب کارگزاری. BrokerType + Username + Session. |
 | **TradingSchedule** | ساعت معاملاتی نماد (سهام عادی ۹-۱۲:۳۰، عیار ۱۲:۳۰-۱۸، ...) |
 | **TradingRun** | یک "پلن". یک Strategy + چند Symbol + چند Account + تنظیمات Execution. |
 | **Strategy** | منطق تولید Signal. هیچ I/O. |
 | **Indicator** | تابع محاسباتی خالص (RSI، MACD). بدون I/O، بدون Strategy. |
+| **FillMath** | توابع خالص محاسبات Fill (Weighted Average، PnL، Commission). |
 | **Signal** | خروجی Strategy: `Action (Buy/Sell) + Strength`. بدون قیمت، بدون مقدار. |
-| **OrderIntent** | تصمیم اجرا برای یک Account خاص. شامل Price، Quantity، SL/TP. |
-| **BrokerOrder** | سفارش واقعی که به Broker فرستاده شد. |
+| **OrderIntent** | تصمیم اجرا برای یک Account خاص. شامل Price، Quantity، SL/TP، IsPaper. |
+| **BrokerOrder** | سفارش واقعی که به Broker فرستاده شد. `IsPaper` برای Paper Mode. |
 | **OrderTrade** | یک Fill (بخشی) از BrokerOrder. |
-| **Position** | موقعیت باز یک (Run, Account, Isin). |
-| **MarketSnapshot** | قیمت لحظه‌ای از Broker. |
-| **Candle** | OHLCV یک بازه‌ی زمانی. |
+| **Position** | موقعیت باز یک (Run, Account, Isin). `IsPaper` برای Paper Mode. |
+| **MarketSnapshot** | قیمت لحظه‌ای از Broker. همیشه ریالی. |
+| **Candle** | OHLCV یک بازه‌ی زمانی. ممکن است تبدیل ارز شده باشد. |
+| **ExecutionMode** | `Live` (پول واقعی) یا `Paper` (شبیه‌سازی). |
 
 ---
 
@@ -108,14 +122,17 @@ Position Events (PnL، Close، ...)
                          │
 ┌────────────────────────▼─────────────────────────────┐
 │  Application (Commands, Queries, Interfaces, DTOs)   │
-│  - IStrategy, IIndicator, IBrokerSessionProvider      │
-│  - ITraderUnitOfWork, IMarketDataProvider             │
+│  - IStrategy, IIndicator, IStrategyEvaluationService  │
+│  - IBrokerSessionProvider, ITraderUnitOfWork          │
+│  - IMarketDataProvider, IOrderSizeCalculator          │
 └─────────────────────────────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
-│  Domain (Entities, Value Objects, Events)            │
+│  Domain (Entities, Value Objects, Events, Calculations)│
 │  - TradingRun, Signal, OrderIntent, Position          │
 │  - CandleRecord, MarketSnapshotRecord, CurrencyRate   │
+│  - FillMath (Weighted Average, PnL, Commission)       │
+│  - CurrencyCode (TargetCurrency Whitelist)            │
 └─────────────────────────────────────────────────────┘
                          │
 ┌────────────────────────▼─────────────────────────────┐
@@ -123,6 +140,7 @@ Position Events (PnL، Close، ...)
 │  - TraderDbContext, TraderUnitOfWork                  │
 │  - EasyTrader Adapter                                 │
 │  - TradingRuntimeWorker + Stages 1-4                  │
+│  - StrategyEvaluationService, OrderSizeCalculator     │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -147,32 +165,100 @@ IBrokerAccountReader    ──→ Cash Balance
 
 | جدول | کاربرد | حجم/روز (۱ نماد M5) |
 |---|---|---|
-| `Instruments` | نمادها | ثابت |
+| `Instruments` | نمادها + Commission + Order Limits + OptionContract | ثابت |
 | `TraderAccounts` | حساب‌ها | ثابت |
 | `TradingSchedules` | ساعت معاملاتی | ۴-۱۰ ردیف ثابت |
 | `TradingRuns` | پلن‌ها | کم |
 | `Signals` | سیگنال‌های تولیدشده | ~۰-۱۰ |
 | `OrderIntents` | تصمیم‌های اجرا | ~۰-۱۰ |
-| `BrokerOrders` | سفارش‌های واقعی | ~۰-۱۰ |
+| `BrokerOrders` | سفارش‌های واقعی/Paper | ~۰-۱۰ |
 | `OrderTrades` | Fillها | ~۰-۳۰ |
 | `Positions` | موقعیت‌ها | ~۰-۱۰ |
-| `MarketSnapshots` | قیمت لحظه‌ای | ~۷۰۰-۳۰۰۰ (با Market Hours) |
+| `MarketSnapshots` | قیمت لحظه‌ای | ~۷۰۰-۳۰۰۰ |
 | `StrategyEvaluations` | هر Evaluate | ~۷۰۰-۳۰۰۰ |
 | `Candles` | کندل‌های تاریخی | ۵-۱۰ (M5) |
 | `CurrencyRates` | نرخ ارز | کم |
+| `TradingEvents` | Event Logging | ~۵۰-۲۰۰ |
+
+### فیلدهای کلیدی (تغییرات نسبت به نسخه‌ی قبلی)
+
+#### `TradingRuns`
+
+```
+- State: Created / Ready / Running / Stopped / Faulted
+- StrategyKey, StrategyConfigJson
+- PrimaryTimeFrame (enum)
+- CapitalAllocation (Owned: Mode Fixed/Dynamic + FixedAmount)
+- StopLoss (Owned: Percentage یا AbsolutePrice)
+- TakeProfit (Owned: Percentage یا AbsolutePrice)
+- DefaultOrderMode: Quantity / TotalValue
+- OnMarketClose: KeepPositions / ClosePositions
+- OnStop: KeepPositions / ClosePositions
+- TargetCurrency: string? (whitelisted — D4/M10)
+- StrengthMultiplier: decimal (default 1.5)       ← Stepped Buying
+- MinDeltaPercent: decimal (default 0.03)         ← Stepped Buying
+- ExecutionMode: Live / Paper                     ← Paper Trading
+```
+
+#### `OrderIntents`
+
+```
+- RunId, TraderAccountId, SourceSignalId
+- SourceEvaluationId: Guid?                       ← ML/Audit trace
+- Isin, Side, Price, Quantity, OrderMode
+- State: Pending / Dispatched / Acknowledged / Rejected / Failed
+- StopLossPrice, TakeProfitPrice (از TradingRun.Settings در لحظه‌ی Build)
+- IsPaper: bool                                   ← Paper Trading
+- Reason, FailureReason, DispatchedAt, CompletedAt
+```
+
+#### `BrokerOrders`
+
+```
+- OrderIntentId, RunId, TraderAccountId
+- BrokerOrderId: string? (از Broker)
+- IsPaper: bool
+- Isin, Side, Price, Quantity, FilledQuantity
+- State: Pending / Open / PartiallyExecuted / FullyExecuted / Canceled / Rejected / Expired
+- SubmittedAt, LastSyncedAt
+```
+
+#### `Positions`
+
+```
+- RunId, TraderAccountId, Isin
+- SourceEvaluationId: Guid?                       ← ML/Audit trace
+- IsPaper: bool
+- State: Open / PartiallyClosed / Closed
+- Quantity, AverageEntryPrice
+- RealizedPnL (Owned: Amount + Currency)
+- UnrealizedPnL (Owned: Amount + Currency, nullable)
+- StopLossPrice, TakeProfitPrice
+- OpenedAt, ClosedAt
+```
+
+#### `Candles`
+
+```
+- Isin, TimeFrame (enum، نه int — N5), OpenTime
+- Open, High, Low, Close, Volume
+- Source, FetchedAt
+```
 
 ### روابط کلیدی
 
 ```
-TradingRun ─┬── TradingRunSymbol (N) ── ISIN
+TradingRun ─┬── TradingRunSymbol (N) ── ISIN + Allocation%
             └── TradingRunAccount (N) ── TraderAccountId
 
 TradingRun ──→ Signal (N) ──→ OrderIntent (N) ──→ BrokerOrder (N) ──→ OrderTrade (N)
                                                                           │
                                                                           ▼
                                                                       Position
-Signal ──→ StrategyEvaluation (1:1)
+
+Signal ──→ StrategyEvaluation (1:1 از طریق SourceEvaluationId)
 OrderIntent ──→ StrategyEvaluation (N:1)
+Position ──→ StrategyEvaluation (N:1)
 
 Instrument ──→ TradingSchedule (N:1)
 ```
@@ -196,6 +282,7 @@ Instrument ──→ TradingSchedule (N:1)
 │     - Stage 2 (Strategy Evaluation)         │
 │     - Stage 3 (Execution)                   │
 │     - Stage 4 (Order Lifecycle, هر 5 ثانیه) │
+│     - Flush TradingEvents                   │
 │     - Scope Dispose                         │
 └────────────────────────────────────────────┘
 ```
@@ -210,6 +297,16 @@ Instrument ──→ TradingSchedule (N:1)
 
 `PeriodicTimer` استفاده می‌شود که Drift ندارد. اگر Tick ۲ ثانیه طول بکشد و Interval ۱۰ ثانیه باشد، Tick بعدی در ثانیه ۱۲ شروع می‌شود (نه ۱۴).
 
+### Per-Stage Timing (N4)
+
+هر Tick، زمان هر Stage جدا اندازه‌گیری می‌شود. اگر Total > 1000ms، Warning با breakdown صادر می‌شود:
+
+```
+Slow tick: total=1250ms stage1=800ms stage2=150ms stage3=200ms stage4=100ms
+```
+
+این کمک می‌کند که دقیقاً بدانیم کدام Stage کند است.
+
 ### پیکربندی
 
 ```json
@@ -219,6 +316,10 @@ Instrument ──→ TradingSchedule (N:1)
     "OrderLifecycleInterval": "00:00:05",
     "SignalChannelCapacity": 1000,
     "OrderPollBatchSize": 100
+  },
+  "Logging": {
+    "MinSeverity": "Info",
+    "RetentionDays": 90
   }
 }
 ```
@@ -258,7 +359,7 @@ Update InMemoryMarketSnapshotStore (with Ids)
 
 ### Deduplication
 
-اگر Run A و Run B هر دو `فولاد` را داشته باشند، فقط **یک بار** از Broker Fetch می‌شود. این در `MarketDataIngestionStage` مدیریت می‌شود:
+اگر Run A و Run B هر دو `فولاد` را داشته باشند، فقط **یک بار** از Broker Fetch می‌شود:
 
 ```csharp
 var isins = contexts
@@ -289,6 +390,12 @@ if (openIsins.Count == 0)
 
 **نتیجه:** شبانه هیچ Broker Callی زده نمی‌شود → WAF Trigger نمی‌شود.
 
+### Event Logging
+
+- `MarketDataFetched` — با تعداد نماد و elapsed
+- `MarketClosedSkipped` — Debug
+- `MarketDataFetchFailed` — با error detail
+
 ---
 
 ## 7. Stage 2 — Strategy Evaluation
@@ -297,32 +404,60 @@ if (openIsins.Count == 0)
 
 برای هر (Run × Symbol): اجرای Strategy، ذخیره‌ی Evaluation، تولید Signal در صورت وجود.
 
+**توجه (M6):** از PR 11، منطق ارزیابی در `IStrategyEvaluationService` (Application Abstractions) است. Stage حالا فقط **Orchestrator** است (~140 LOC، قبلاً ~480 LOC).
+
+### دو Component
+
+| Component | مسئولیت |
+|---|---|
+| `StrategyEvaluationService` (Infra) | Load candles، Currency transform، Extra TF، Evaluate، Enrich features، ساخت `StrategyEvaluation` + `Signal`ها |
+| `StrategyEvaluationStage` (Infra) | User Context، فراخوانی Service per (Run, Symbol)، Persist، Push به Channel، Logging |
+
+**مرز (D-list):** Service به UoW و Channel دسترسی ندارد. فقط از Cacheها و Transformer استفاده می‌کند.
+
 ### جریان
 
 ```
-for each Run in RunCache.GetAllActive():
+StrategyEvaluationStage.RunOnceAsync()
     │
-    ├─→ Set User DataContext (برای Authorization)
+    ├─→ foreach Run in RunCache.GetAllActive():
+    │       ├─→ Set User DataContext (برای Authorization)
+    │       │
+    │       └─→ foreach Symbol in Run:
+    │               │
+    │               ├─→ IStrategyEvaluationService.EvaluateAsync(ctx, symbol, now)
+    │               │       │
+    │               │       ├─→ Snapshot از InMemoryMarketSnapshotStore
+    │               │       │       └─→ اگر null: return Empty
+    │               │       │
+    │               │       ├─→ Candle از InMemoryCandleCache
+    │               │       │       └─→ اگر Strategy.RequiredCandleCount = 0: skip
+    │               │       │
+    │               │       ├─→ فیلتر Closed Candles
+    │               │       │       └─→ اگر RequiresClosedCandlesOnly = true
+    │               │       │
+    │               │       ├─→ Currency Transform (اگر Run.TargetCurrency != null)
+    │               │       │       └─→ Per-Candle (D13)
+    │               │       │
+    │               │       ├─→ Extra TimeFrames (Sub-Candle)
+    │               │       │       └─→ اگر Strategy.ExtraCandleRequirements non-empty
+    │               │       │
+    │               │       ├─→ Strategy.Evaluate(input)
+    │               │       │
+    │               │       ├─→ Enrich features (اگر Currency transform شد)
+    │               │       │
+    │               │       ├─→ StrategyEvaluation.Create (اگر features موجود بود)
+    │               │       │
+    │               │       └─→ Signal.Create + LinkSignal (اگر Action != Hold)
+    │               │
+    │               ├─→ Persist batch.Evaluation
+    │               ├─→ Persist batch.Signals
+    │               ├─→ Log SignalGenerated per signal
+    │               └─→ Build envelope per signal
     │
-    └─→ for each Symbol in Run:
-            │
-            ├─→ Snapshot از InMemoryMarketSnapshotStore
-            ├─→ Candle از InMemoryCandleCache
-            │   ├─→ Cache hit? (TTL بر اساس کندل بعدی)
-            │   └─→ Cache miss → Fetch → Persist → Cache
-            ├─→ فیلتر Closed Candles (اگر Strategy.RequiresClosedCandlesOnly)
-            ├─→ Currency Transform (اگر Run.TargetCurrency != null)
-            ├─→ Strategy.Evaluate(input)
-            │   ├─→ Indicator.Compute (RSI)
-            │   └─→ منطق تصمیم (BUY/SELL/HOLD)
-            ├─→ ساخت StrategyEvaluation (DB record)
-            ├─→ اگر Signal تولید شد: Signal.Create + Channel Push
-            │
-            ▼
-    SaveChanges یک بار در پایان همه‌ی Runها
+    ├─→ SaveChanges یک بار (همه Evaluations + Signals)
     │
-    ▼
-Push همه‌ی Signals به Channel
+    └─→ Push envelopes به Channel
 ```
 
 ### Candle Cache Logic
@@ -360,19 +495,38 @@ var closedCandles = candles
 ```
 StrategyEvaluationResult
     │
-    ├─── Features (rsi، period، ...) → StrategyEvaluation.FeaturesJson
+    ├─── Features (rsi، period، targetCurrency، appliedRate، ...)
+    │       └─→ StrategyEvaluation.FeaturesJson
     │
     └─── Signals[]
             │
-            ├─── Signal.Create
+            ├─── Signal.Create (SourceEvaluationId = evalEntity.Id)
             ├─── AddDomainEvent(SignalGeneratedEvent)
-            ├─── Signal.SourceEvaluationId = evalEntity.Id
+            │
+            ▼
+        Return (Evaluation, Signals) از Service
+            │
+            ▼
+        Stage: AddAsync + SaveChanges
             │
             ▼
         Channel<SignalEnvelope> (in-memory)
 ```
 
 **نکته:** SaveChanges **قبل** از Push به Channel انجام می‌شود. اگر Process بین Save و Push بمیرد، Signal در DB هست ولی Stage 3 آن را ندیده — Recovery در Startup آن را می‌گیرد.
+
+### Extensibility: Sub-Candle (A2)
+
+Strategy می‌تواند در `ExtraCandleRequirements` بگوید که به TimeFrameهای کوچک‌تر از Primary نیاز دارد:
+
+```csharp
+public IReadOnlyList<CandleRequirement> ExtraCandleRequirements => new[]
+{
+    new CandleRequirement(TimeFrame.M15, Count: 5, ClosedOnly: true)
+};
+```
+
+Service این Candleها را Load می‌کند و از طریق `StrategyInput.ExtraTimeFrames` به Strategy می‌دهد. **محدودیت:** فقط TimeFrame کوچک‌تر از Primary.
 
 ---
 
@@ -382,10 +536,12 @@ StrategyEvaluationResult
 
 مصرف Signalها از Channel، ساخت OrderIntent، ارسال به Broker.
 
+**توجه (D5):** برای هر Signal، **همه‌ی Accountهای همان Run** پردازش می‌شوند — Fan-Out بدون Coordination.
+
 ### جریان
 
 ```
-Channel<SignalEnvelope> (drain، بدون Blocking)
+Channel<SignalEnvelope> (drain، بدون Blocking، max 200/tick)
     │
     ▼
 for each SignalEnvelope:
@@ -395,23 +551,28 @@ for each SignalEnvelope:
     │
     └─→ for each Account in Run.Accounts:
             │
+            ├─→ GUARD: BrokerOrder در راه برای همین (Run, Account, Isin)؟
+            │       └─→ اگر هست: Skip + Log OrderIntentSkipped
+            │
             ├─→ OrderIntentBuilder.BuildAsync
             │   ├─→ Snapshot از Store (قیمت ریالی، نه converted)
+            │   ├─→ Instrument lookup (برای Commission + Limits)
             │   ├─→ SymbolAllocation از Run.Symbols
-            │   ├─→ Capital Allocator (Fixed یا Dynamic)
-            │   ├─→ PositionSizer.CalculateQuantity
+            │   ├─→ ICapitalAllocator (Fixed یا Dynamic)
+            │   ├─→ ICommittedCapitalCalculator (Positionهای باز + Buy Orderهای در راه)
+            │   ├─→ IOrderSizeCalculator.CalculateBuy / CalculateSell
+            │   │       └─→ FillMath.CalculateMaxBuyQuantity
             │   ├─→ Resolve SL/TP از Run.Settings
-            │   ├─→ OrderIntent.Create (قیمت ریالی، qty، SL، TP)
+            │   ├─→ OrderIntent.Create (با IsPaper از Run.ExecutionMode)
             │   └─→ SourceEvaluationId (از Signal)
             │
             ├─→ BrokerSessionProvider.GetSessionAsync
             │
-            ├─→ BrokerOrderDispatcher.DispatchAsync
-            │   ├─→ BrokerOrder.CreatePending
-            │   ├─→ intent.MarkDispatched
-            │   ├─→ Broker API: SendBuyOrder / SendSellOrder
-            │   ├─→ اگر موفق: BrokerOrder.AssignBrokerOrderId + intent.MarkAcknowledged
-            │   └─→ اگر Fail: intent.MarkRejected/Failed
+            ├─→ IOrderDispatcherResolver.Resolve(intent.IsPaper)
+            │       ├─→ Live: BrokerOrderDispatcher
+            │       │       └─→ Broker API: SendBuyOrder / SendSellOrder
+            │       └─→ Paper: PaperBrokerOrderDispatcher
+            │               └─→ Immediate Fill + Position ApplyTradeAsync
             │
             ▼
         SaveChanges یک بار در پایان Handle
@@ -424,18 +585,72 @@ for each SignalEnvelope:
 | **Fixed** | `Run.CapitalAllocation.FixedAmount` (مقدار ثابت) |
 | **Dynamic** | `Broker.GetCashBalanceAsync().BuyPowerT0` (با Cache ۵ ثانیه) |
 
-### Position Sizing
+### Order Sizing (D10 + M7)
+
+**فرمول دقیق (PR 6):**
 
 ```csharp
-// PercentPositionSizer
-var price = ResolvePrice(snapshot, action);
-var effectiveCapital = allocatedCapital * (1 - commissionRate);
-var qty = floor(effectiveCapital / price);
+// 1. Target از Capital × Strength × Multiplier
+var targetCapital = allocatedCapital
+    * signalStrength
+    * strengthMultiplier;
+if (targetCapital > allocatedCapital) targetCapital = allocatedCapital;  // cap
+
+// 2. Delta = Target - Committed (Positionهای باز + Buy Orderهای در راه)
+var delta = targetCapital - committedCapital;
+if (delta <= 0) return Skip("DeltaLessThanOrEqualZero");
+
+// 3. MinDelta Guard (Stepped Buying)
+var minDelta = allocatedCapital * minDeltaPercent;
+if (delta < minDelta) return Skip("DeltaBelowMinThreshold");
+
+// 4. Quantity = floor(delta / (price × (1 + commissionRate)))
+var qty = FillMath.CalculateMaxBuyQuantity(delta, price, commissionRate);
+
+// 5. AvailableCash Guard (اختیاری، فقط Backtest — null = Live)
+if (availableCash.HasValue)
+{
+    var maxAffordable = FillMath.CalculateMaxBuyQuantity(
+        availableCash.Value, price, commissionRate);
+    if (maxAffordable < qty) qty = maxAffordable;
+}
+
+// 6. Min/Max Limits
+if (qty < minOrderQuantity) return Skip("QuantityBelowMin");
+if (qty > maxOrderQuantity) qty = maxOrderQuantity;
 ```
+
+**فرمول قدیمی (approximation) که ترک شد:**
+
+```csharp
+// ❌ قبلاً: qty = floor(delta × (1 - c) / price)
+// این کمی بیشتر qty می‌داد (O(c²) خطا)
+```
+
+### Stepped Buying (M7 + MinDeltaPercent)
+
+اگر Strategy هر tick Buy صادر کند و Position باز هم Buy ادامه دهد:
+
+- **Step 1:** StrengthMultiplier = 1.5، Capital = 100M
+  - Target = 100M × 0.6 × 1.5 = 90M
+  - Committed = 0
+  - Delta = 90M → qty = floor(90M / 50000) = 1800
+- **Step 2 (tick بعد):** Same Signal
+  - Committed = 1800 × 50000 = 90M
+  - Target = 90M (همان)
+  - Delta = 0 → **Skip** (DeltaLessThanOrEqualZero)
+- **Step 3 (قیمت افت، Signal Stronger):** Strength = 0.9
+  - Target = 100M × 0.9 × 1.5 = 135M → cap 100M
+  - Committed = 90M
+  - Delta = 10M
+  - MinDelta = 100M × 3% = 3M ✓
+  - qty = floor(10M / (50000 × 1.0037)) ≈ 199
+
+**نتیجه:** به‌جای خرید مکرر، فقط وقتی Delta از MinDelta بیشتر شود خرید انجام می‌شود.
 
 ### قیمت سفارش — **ریالی، نه تبدیل‌شده**
 
-**مهم:** حتی اگر Run.TargetCurrency = "USD" باشد، `OrderIntent.Price` از Snapshot ریالی می‌آید:
+**مهم:** حتی اگر `Run.TargetCurrency = "USD"` باشد، `OrderIntent.Price` از Snapshot ریالی می‌آید:
 
 ```csharp
 var snapshot = _snapshotStore.GetLatest(signal.Isin);  // ← ریالی
@@ -444,10 +659,20 @@ var price = ResolvePrice(snapshot, signal.Action);      // ← ریالی
 
 **دلیل:** Broker فقط ریال قبول می‌کند. Currency Transformation فقط برای تحلیل (Candles) است.
 
+### Paper Trading (D23)
+
+`PaperBrokerOrderDispatcher`:
+- Fill **فوری** در `intent.Price` (بدون Slippage)
+- `IsPaper = true` روی `BrokerOrder` و `Position`
+- Stage 4 آن را Skip می‌کند (چون `IsTerminal` است)
+
+**Paper Limit:** در Paper Mode، `AvailableCash` هنوز از Account واقعی (BuyPower) خوانده می‌شود. فقط سفارش به Broker نمی‌رود.
+
 ### Idempotency
 
-- Signal.MarkConsumed() بعد از Handle
+- `Signal.MarkConsumed()` بعد از Handle
 - در Recovery، Signalهای Consumed‌نشده بررسی می‌شوند
+- اگر `BrokerOrder` در راه برای همان (Run, Account, Isin) باشد، **Skip می‌شود** (جلوگیری از Duplicate Order)
 
 ---
 
@@ -456,6 +681,8 @@ var price = ResolvePrice(snapshot, signal.Action);      // ← ریالی
 ### مسئولیت
 
 Poll سفارش‌های باز از Broker، Sync Trades، اعمال روی Position، SL/TP monitoring.
+
+**توجه (C2 — D8):** از PR 2، SL/TP monitoring **مستقل از Order Activity** است. حتی اگر هیچ Order بازی نباشد، Positionهای باز در هر tick بررسی می‌شوند.
 
 ### جریان
 
@@ -471,36 +698,43 @@ for each Account:
     │
     ├─→ Set User DataContext
     │
-    ├─→ SyncAccountAsync
-    │   ├─→ Orderهای باز ما (از DB)
-    │   ├─→ Fetch Order History از Broker (Pagination)
-    │   │
-    │   └─→ for each باز Order:
-    │           ├─→ SyncOrderAsync
-    │           │   ├─→ BrokerOrder.ApplyStateUpdate
-    │           │   └─→ اگر ExecutedQuantity افزایش یافته:
-    │           │           └─→ SyncTradesAsync
-    │           │               ├─→ Fetch Trades از Broker
-    │           │               ├─→ for each Trade:
-    │           │               │   ├─→ اگر جدید: OrderTrade.Create + AddAsync
-    │           │               │   ├─→ PositionManager.ApplyTradeAsync
-    │           │               │   │   ├─→ اگر Buy + Position نیست: Position.Open
-    │           │               │   │   ├─→ اگر Buy + Position هست: ApplyBuyFill
-    │           │               │   │   └─→ اگر Sell: ApplySellFill
-    │           │               │   │
-    │           │               │   └─→ اگر Position بسته شد:
-    │           │               │       └─→ UpdateEvaluationOutcomeAsync
-    │           │               │
-    │           │               └─→ Tradeهای Cancelled: ApplyTradeCancelAsync
-    │           │
-    │           └─→ CheckStopsAndCloseAsync
-    │               ├─→ for each Position باز:
-    │               │   ├─→ Snapshot.GetLatest
-    │               │   ├─→ ShouldTriggerStopLoss/TakeProfit?
-    │               │   └─→ اگر بله: Sell OrderIntent + Dispatch
-    │               │
-    │               ▼
-    │           SaveChanges
+    └─→ SyncAccountAsync:
+            │
+            ├─→ [1] Order Sync (اگر Order باز داریم)
+            │       ├─→ Orderهای باز ما (از DB، spec-based)
+            │       ├─→ Fetch Order History از Broker (Pagination)
+            │       │
+            │       └─→ foreach باز Order:
+            │               ├─→ SyncOrderAsync
+            │               │       ├─→ BrokerOrder.ApplyStateUpdate
+            │               │       └─→ اگر ExecutedQuantity افزایش یافته:
+            │               │               └─→ SyncTradesAsync:
+            │               │                       ├─→ Fetch Trades از Broker
+            │               │                       ├─→ foreach Trade:
+            │               │                       │       ├─→ اگر جدید: OrderTrade.Create + AddAsync
+            │               │                       │       ├─→ PositionManager.ApplyTradeAsync
+            │               │                       │       │       ├─→ Buy + Position نیست: Position.Open
+            │               │                       │       │       ├─→ Buy + Position هست: ApplyBuyFill
+            │               │                       │       │       └─→ Sell: ApplySellFill
+            │               │                       │       │
+            │               │                       │       └─→ اگر Position بسته شد:
+            │               │                       │               └─→ UpdateEvaluationOutcomeAsync
+            │               │                       │
+            │               │                       └─→ Tradeهای Cancelled: ApplyTradeCancelAsync
+            │
+            ├─→ [2] SaveChanges (اگر Order تغییر کرد)
+            │
+            └─→ [3] SL/TP Monitoring (همیشه، مستقل از Order activity)
+                    ├─→ CountBySpecAsync(OpenPositionsByAccountSpec)
+                    └─→ اگر > 0:
+                            └─→ CheckStopsAndCloseAsync:
+                                    ├─→ foreach Position باز:
+                                    │       ├─→ Snapshot.GetLatest
+                                    │       ├─→ ShouldTriggerStopLoss/TakeProfit?
+                                    │       └─→ اگر بله: Sell OrderIntent + Dispatch
+                                    │               (با IsPaper از Position.IsPaper)
+                                    │
+                                    └─→ SaveChanges
 ```
 
 ### Trade Idempotency
@@ -530,7 +764,50 @@ if (order.OrderIntentId.HasValue)
 }
 
 position = Position.Open(..., stopLossPrice: sl, takeProfitPrice: tp,
-                         sourceEvaluationId: sourceEvalId);
+                         sourceEvaluationId: sourceEvalId,
+                         isPaper: order.IsPaper);
+```
+
+### Position Overshoot Detection (C4 — D9)
+
+**از PR 2:** اگر Broker یک Sell بزرگ‌تر از Position ثبت‌شده گزارش دهد:
+
+```csharp
+if (trade.Quantity.Value > position.Quantity.Value)
+{
+    // 1. Fill اعمال نمی‌شود (Position در known good state می‌ماند)
+    // 2. TradingEvent با Severity=Critical ثبت می‌شود
+    // 3. Run → Faulted
+    // 4. Run از Cache خارج می‌شود
+    // 5. Trade record هنوز persist می‌شود (audit trail)
+    return;
+}
+```
+
+**علت‌های ممکن:** Manual Trade در Broker، Cross-Account Bug، Data Race، Position Phantom.
+
+**چرا Faulted و نه Clamp:** ادامه دادن با State خراب، اختلاف را بزرگ‌تر می‌کند. بررسی دستی لازم است.
+
+### SL/TP Independence (C2 — D8)
+
+**قبل از PR 2 (باگ):**
+```csharp
+if (openOrders.Count == 0) return;   // ← SL/TP هرگز monitor نمی‌شد
+// ...
+if (modifiedCount > 0)
+{
+    await CheckStopsAndCloseAsync(...);   // ← فقط اگر Order تغییر کرد
+}
+```
+
+**بعد از PR 2:**
+```csharp
+// [1] Order Sync (اگر openOrders > 0)
+// [2] SaveChanges (اگر modified)
+// [3] SL/TP Check — همیشه، مستقل
+var count = await CountBySpecAsync(OpenPositionsByAccountSpec);
+if (count > 0)
+    await CheckStopsAndCloseAsync(...);
 ```
 
 ### Outcome Tracking
@@ -575,11 +852,15 @@ RuntimeRecoveryService.RecoverAsync()
     │       └─→ برای هر Run: TradingRunManager.StartAsync
     │           └─→ Context cache می‌شود
     │
-    └─→ Load Signalهای ConsumedAt=null برای Runهای فعال
-            │
-            ├─→ اگر هیچ OrderIntent ندارد → Re-Push به Channel (سناریو B)
-            │
-            └─→ اگر OrderIntent دارد → MarkConsumed + Log Warning (سناریو C/D)
+    ├─→ Load Signalهای ConsumedAt=null برای Runهای فعال
+    │       │
+    │       ├─→ اگر هیچ OrderIntent ندارد → Re-Push به Channel (سناریو B)
+    │       │
+    │       └─→ اگر OrderIntent دارد → MarkConsumed + Log Warning (سناریو C/D)
+    │
+    └─→ Broker Reconciliation (A1)
+            └─→ مقایسه‌ی Positionهای DB با Portfolio Broker
+                └─→ TradingEvent per Mismatch (Log-only، نه Auto-fix)
 ```
 
 ### سناریوها
@@ -591,6 +872,7 @@ RuntimeRecoveryService.RecoverAsync()
 | C: Crash وسط Stage 3 | Signal + شاید OrderIntent | Mark Consumed (جلوگیری از Duplicate) |
 | D: Crash بعد از Save | Signal + OrderIntent | Mark Consumed |
 | E: Crash بعد از Stop | Run=Stopped | Stage 4 در Tick بعدی Sync |
+| F: Run=Running ولی Cache خالی | Run State=Running | `TradingRunManager.StartAsync` |
 
 **فلسفه:** Duplicate Order فاجعه است. Missing Order یک Event نادر است که در Tick بعد جبران می‌شود.
 
@@ -621,7 +903,7 @@ public sealed record IndicatorInput(
 RsiCalculator (pure math)
     │
     │  input: IReadOnlyList<decimal> closes, int period
-    │  output: decimal?
+    │  output: decimal? (null = data کافی نیست)
     │
     ▼
 RsiIndicator (adapter)
@@ -639,8 +921,8 @@ RsiStrategy (decision logic)
 ```
 
 **چرا جدا:**
-- RsiCalculator می‌تواند در AI Pipeline استفاده شود
-- RsiStrategy و MacdRsiStrategy می‌توانند همان RsiIndicator را استفاده کنند
+- `RsiCalculator` می‌تواند در AI Pipeline یا Backtest مستقیم استفاده شود
+- `RsiStrategy` و `MacdRsiStrategy` می‌توانند همان `RsiIndicator` را استفاده کنند
 
 ### افزودن Indicator جدید
 
@@ -661,8 +943,17 @@ public interface IStrategy
     string DisplayName { get; }
     int RequiredCandleCount { get; }
     bool RequiresClosedCandlesOnly { get; }
+
+    /// <summary>TimeFrameهای اضافی که Strategy نیاز دارد (Sub-Candle)</summary>
+    IReadOnlyList<CandleRequirement> ExtraCandleRequirements { get; }
+
     StrategyEvaluationResult Evaluate(StrategyInput input);
 }
+
+public sealed record CandleRequirement(
+    TimeFrame TimeFrame,
+    int Count,
+    bool ClosedOnly = true);
 ```
 
 ### StrategyInput / Result
@@ -670,16 +961,24 @@ public interface IStrategy
 ```csharp
 public sealed record StrategyInput(
     string Isin,
-    MarketSnapshot LatestSnapshot,      // ← ریالی
-    IReadOnlyList<Candle> Candles,      // ← ممکن است Converted باشد
+    MarketSnapshot? LatestSnapshot,       // ← ریالی
+    IReadOnlyList<Candle> Candles,         // ← ممکن است Converted باشد
+    IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>? ExtraTimeFrames,  // ← NEW (A2)
     StrategyConfig Configuration,
     TimeFrame TimeFrame,
     DateTime EvaluatedAt);
 
 public sealed record StrategyEvaluationResult(
     IReadOnlyList<StrategySignal> Signals,
-    IReadOnlyDictionary<string, object?>? Features = null);
+    IReadOnlyDictionary<string, object?>? Features = null)
+{
+    public static StrategyEvaluationResult Empty(
+        IReadOnlyDictionary<string, object?>? features = null)
+        => new(Array.Empty<StrategySignal>(), features);
+}
 ```
+
+**نکته:** `Signals` یک **لیست** است — برای Strategy Ensemble آینده (D27). هر Strategy فعلاً یک Signal تولید می‌کند، ولی Interface محدود نمی‌کند.
 
 ### Registration
 
@@ -697,8 +996,10 @@ public sealed class RsiStrategyRegistration
 ثبت در DI:
 
 ```csharp
-services.AddTraderStrategies();  // Assembly scanning
+services.AddTraderStrategies();  // Assembly scanning — IStrategyRegistration
 ```
+
+**توجه:** `IStrategyFactory` در Application ثبت شده (نه Infrastructure). N1 در Review این Duplicate را حذف کرد.
 
 ### افزودن Strategy جدید
 
@@ -706,6 +1007,24 @@ services.AddTraderStrategies();  // Assembly scanning
 2. `Create` strategy class (پیاده‌سازی `IStrategy`)
 3. `Create` registration class (از `StrategyRegistration<TConfig>`)
 4. Assembly scanning خودکار پیدا می‌کند — **نیازی به DI خط نیست**
+
+### AI Strategy (آینده)
+
+AI یک `IStrategy` است، نه سیستم جدا:
+
+```csharp
+public sealed class AiStrategy : IStrategy
+{
+    public StrategyEvaluationResult Evaluate(StrategyInput input)
+    {
+        var features = ExtractFeatures(input);
+        var prediction = _model.Infer(features);
+        // ...
+    }
+}
+```
+
+Feature Extraction از `input.Candles` و `input.LatestSnapshot` — همان داده‌ای که به RSI می‌رسد.
 
 ---
 
@@ -756,6 +1075,10 @@ if (MarketClosed)
 
 **نتیجه:** بدون Market Hours، شبانه هزاران Call به Broker → WAF Block. با آن، صفر Call.
 
+### Cache — بهینه‌سازی (M1 Batch 3)
+
+از PR 12، `TradingScheduleCache.GetForIsinAsync` از `GetBySpecAsync` استفاده می‌کند و Fallback با `TOP 1` در SQL اجرا می‌شود — نه Load کردن همه Scheduleها.
+
 ---
 
 ## 14. Currency Transformation
@@ -764,10 +1087,31 @@ if (MarketClosed)
 
 تحلیل سهم در ارز دیگر مفید است — RSI روی USD نشان می‌دهد سهم واقعاً رشد کرده یا فقط ریال تضعیف شده.
 
+### Whitelist (M10 — D4)
+
+از PR 8، `TargetCurrency` در `TradingRun.Create` و `BacktestRun.Create` با `CurrencyCode.NormalizeOrNull` اعتبارسنجی می‌شود:
+
+```csharp
+public static class CurrencyCode
+{
+    private static readonly HashSet<string> Supported = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "IRR", "USD", "EUR", "GBP", "AED", "TRY", "CNY", "JPY", "CHF",
+    };
+    
+    public static string? NormalizeOrNull(string? code, string paramName);
+    public static string RequireValid(string? code, string paramName);
+}
+```
+
+اگر `TargetCurrency` در Whitelist نبود، `Create` فوراً `ArgumentException` می‌دهد — نه در اولین Tick که `CurrencyRateNotFoundException` می‌داد.
+
+**Phase 2:** اگر ارزهای پویا لازم شد، این کلاس به یک Entity با `IsActive` تبدیل می‌شود و اعتبارسنجی به Application Layer منتقل می‌شود.
+
 ### Data Model
 
 ```
-TradingRun.TargetCurrency: string? ("USD", "EUR", null)
+TradingRun.TargetCurrency: string? (whitelisted)
 
 CurrencyRate (Time-series table)
     ├── FromCurrency: "USD"
@@ -787,38 +1131,44 @@ WHERE FromCurrency = 'USD' AND ToCurrency = 'IRR'
 ORDER BY EffectiveAt DESC
 ```
 
-**نکته:** صبح نرخ ثبت می‌شود، ظهر همان نرخ استفاده می‌شود تا نرخ جدید ثبت شود.
+**Reverse Pair:** `DbCurrencyRateProvider` اگر Pair مستقیم نبود، معکوس را جستجو می‌کند:
 
-### Transformation
+```csharp
+var directRate = await QueryDbAsync(from, to, utcAtTime, ct);
+if (directRate is not null) return directRate.Value;
+
+var reverseRate = await QueryDbAsync(to, from, utcAtTime, ct);
+if (reverseRate is not null) return 1m / reverseRate.Value;
+```
+
+**Triangulation (USD→EUR via IRR) پشتیبانی نمی‌شود.**
+
+### Transformation (D13 — Per-Candle)
 
 در Stage 2، **قبل از** Strategy.Evaluate:
 
 ```csharp
 if (!string.IsNullOrWhiteSpace(ctx.TargetCurrency) && candles.Count > 0)
 {
-    var transformed = await _candleTransformer.TransformAsync(
-        candles, ctx.TargetCurrency, now, ct);
-    candles = transformed;
+    var transformation = await _candleTransformer.TransformAsync(
+        symbol.Isin, candles, ctx.TargetCurrency, now, ct);
+    candles = transformation.Candles;
 }
 ```
 
-**`CurrencyCandleTransformer`:**
-```csharp
-var rate = await _rateProvider.GetRateAsync("IRR", target, atTime);
-foreach (var c in irrCandles)
-    result.Add(c with { Open = c.Open * rate, ..., Close = c.Close * rate });
-```
+**`CurrencyCandleTransformer`:** هر Candle با نرخ ارز مربوط به **`OpenTime` همان Candle** تبدیل می‌شود (نه با نرخ آخرین Candle). برای Candleهایی که **قبل از** اولین نرخ ثبت‌شده هستند، از `baselineRate` استفاده می‌شود و `CandleCountBeforeFirstRate` در خروجی گزارش می‌شود.
 
 ### تصمیمات کلیدی
 
 | بخش | تبدیل می‌شود؟ |
 |---|---|
-| Candles (برای Strategy) | ✅ بله |
+| Candles (برای Strategy) | ✅ بله (Per-Candle) |
 | MarketSnapshot (برای Sizing/Execution) | ❌ نه — ریالی |
 | OrderIntent.Price | ❌ نه — ریالی |
 | Position.AverageEntryPrice | ❌ نه — ریالی |
 | StrategyEvaluation.FeaturesJson["lastClose"] | ✅ بله (transformed) |
 | StrategyEvaluation.FeaturesJson["priceAtEvalIrr"] | ✅ جدا ذخیره می‌شود |
+| StrategyEvaluation.FeaturesJson["appliedRate"] | ✅ جدا ذخیره می‌شود |
 
 **نتیجه:** تحلیل در USD، سفارش در IRR.
 
@@ -867,7 +1217,7 @@ WHERE Isin = 'IRO1FOLD0001'
   "strategyKey": "rsi",
   "marketSnapshotId": "snapshot-guid",
   "featuresJson": "{\"rsi\":45.5,\"period\":14,\"targetCurrency\":\"USD\",...}",
-  "action": 0,  // Hold/Buy/Sell
+  "action": 0,
   "strength": 0,
   "signalId": null,
   "outcomeJson": null
@@ -899,7 +1249,7 @@ WHERE Isin = 'IRO1FOLD0001' AND TimeFrame = 1440
 ORDER BY OpenTime DESC LIMIT 100;
 ```
 
-**کاربرد:** Historical Ground Truth (اگر Broker API عوض شد، داده موجود است). Backtesting.
+**کاربرد:** Historical Ground Truth. Backtesting.
 
 ### Dataset Query برای ML
 
@@ -945,6 +1295,10 @@ ORDER BY e.EvaluatedAt;
       "HeartbeatInterval": "00:00:10",
       "OrderLifecycleInterval": "00:00:05",
       "SignalChannelCapacity": 1000
+    },
+    "Logging": {
+      "MinSeverity": "Info",
+      "RetentionDays": 90
     }
   }
 }
@@ -953,7 +1307,7 @@ ORDER BY e.EvaluatedAt;
 ### DI Registration (چکیده)
 
 ```csharp
-services.AddTraderModule(configuration);
+services.AddTraderModule(configuration);      // Application + Infrastructure
 services.Trader_AddPresentation(configuration);
 ```
 
@@ -969,17 +1323,22 @@ services.Trader_AddPresentation(configuration);
 | `ISignalChannel` | Singleton | Stage 2 ↔ 3 |
 | `ITradingScheduleCache` | Singleton | Schedule Cache |
 | `CurrencyRateCache` | Singleton | Rate Cache |
+| `IUserContextCache` | Singleton | User context cache (TTL 5min) |
 | `ITraderUnitOfWork` | Scoped | EF DbContext |
 | Stageها (1-4) | Scoped | DbContext + UoW |
+| `IStrategyEvaluationService` | Scoped | DbContext + UoW (برای Cacheها) |
 | `TradingRunManager` | Scoped | UoW |
-| Strategy Factory | Singleton | Stateless |
-| Indicator | Singleton | Stateless |
+| `StrategyFactory` | Singleton | Stateless (N1: فقط در Application) |
+| `IStrategyRegistration` | Singleton | Stateless |
+| `IIndicator` | Singleton | Stateless |
+| `IOrderSizeCalculator` | Scoped | Stateless (اما Interface Scoped برای Potential DbContext) |
+| `IOrderDispatcherResolver` | Scoped | Resolve Live/Paper |
 
 ---
 
 ## 17. جریان یک Tick کامل
 
-### فرض: بازار باز است، یک Run فعال با RSI/فولاد M5
+### فرض: بازار باز، یک Run فعال، RSI/فولاد M5، Run Capital = 100M، Strategy strength = 0.6، Multiplier = 1.5
 
 ```
 T=08:30:00  Worker Tick #1 (Cold Start)
@@ -988,8 +1347,8 @@ T=08:30:00  Worker Tick #1 (Cold Start)
     │       └─→ Save MarketSnapshot در DB
     │       └─→ SnapshotStore.Upsert
     │
-    ├─→ Stage 2:
-    │       ├─→ CandleCache miss → Fetch 64 Candle M5 از Broker (~۳۸ دقیقه اول)
+    ├─→ Stage 2 (via StrategyEvaluationService):
+    │       ├─→ CandleCache miss → Fetch 64 Candle M5 از Broker
     │       ├─→ Persist Candleهای closed به DB
     │       ├─→ RSI = 45 (خنثی) → HOLD
     │       ├─→ StrategyEvaluation ذخیره (با FeaturesJson)
@@ -1003,30 +1362,34 @@ T=08:30:00  Worker Tick #1 (Cold Start)
 T=08:30:10  Worker Tick #2
     │
     ├─→ Stage 1: Fetch Snapshot
-    ├─→ Stage 2: Candle Cache hit (معتبر تا 08:35:30) → RSI محاسبه (45) → HOLD
+    ├─→ Stage 2: Candle Cache hit (تا 08:35:30) → RSI (45) → HOLD
     └─→ ...
     │
     ▼
 T=08:35:30  Worker Tick N
     │
-    ├─→ Stage 2: Cache expired (کندل 08:35 بسته شد) → Fetch → RSI = 28
-    │       └─→ Signal BUY (strength=0.6)
-    │       └─→ SaveChanges (Evaluation + Signal)
+    ├─→ Stage 2:
+    │       ├─→ Cache expired (کندل 08:35 بسته شد) → Fetch → RSI = 28
+    │       ├─→ Signal BUY (strength=0.6)
+    │       ├─→ SaveChanges (Evaluation + Signal)
     │       └─→ Channel Push
     │
     ├─→ Stage 3:
     │       ├─→ Consume Signal
-    │       ├─→ Capital = 100M ریال
-    │       ├─→ Allocated = 100M × 100% = 100M
+    │       ├─→ Capital = 100M ریال (از Broker یا Fixed)
+    │       ├─→ AllocatedForSymbol = 100M × 100% = 100M
+    │       ├─→ TargetCapital = 100M × 0.6 × 1.5 = 90M
+    │       ├─→ Committed = 0
+    │       ├─→ Delta = 90M
+    │       ├─→ MinDelta = 100M × 3% = 3M ✓
     │       ├─→ Price = 50000 (از Snapshot ریالی)
-    │       ├─→ Quantity = floor(100M / 50000) = 2000
+    │       ├─→ Quantity = floor(90M / (50000 × 1.0037)) = 1793
     │       ├─→ SL = 50000 × 0.8 = 40000
     │       ├─→ TP = 50000 × 1.5 = 75000
     │       ├─→ OrderIntent + BrokerOrder.CreatePending
     │       └─→ Broker API: SendBuyOrder → BrokerOrderId=abc123
     │
     └─→ Stage 4: Order باز نیست در DB (همین الان ساخته شد)
-            └─→ next Tick
     │
     ▼
 T=08:35:35  Worker Tick N+1
@@ -1049,13 +1412,24 @@ T=08:40:00  Worker Tick M
             │       └─→ PositionChangedEvent
     │
     ▼
+T=08:40:05  Worker Tick M+1
+    │
+    └─→ Stage 4:
+            ├─→ Order باز دیگر نیست (Filled)
+            ├─→ SL/TP Check (مستقل از Order activity — C2)
+            │       ├─→ Position: qty=500, current=51000
+            │       ├─→ SL hit? (51000 <= 40000) → NO
+            │       ├─→ TP hit? (51000 >= 75000) → NO
+            │       └─→ هیچ
+    │
+    ▼
 T=10:15:00  Worker Tick ...
     │
     └─→ Stage 4:
-            ├─→ Snapshot: price=76000 (> TP=75000)
-            ├─→ CheckStopsAndCloseAsync:
+            ├─→ SL/TP Check:
+            │       ├─→ Snapshot: price=76000 (> TP=75000)
             │       ├─→ ShouldTriggerTakeProfit → true
-            │       ├─→ Sell OrderIntent (qty=500, price=76000)
+            │       ├─→ Sell OrderIntent (qty=500, price=76000, IsPaper=from position)
             │       ├─→ Dispatch → BrokerOrder
             │       └─→ Reason: "TakeProfit triggered"
     │
@@ -1068,7 +1442,8 @@ T=10:15:30  Worker Tick ...
             ├─→ ApplySellFill:
             │       ├─→ Position.Quantity = 0
             │       ├─→ State = Closed
-            │       └─→ RealizedPnL = (76000-50000) × 500 = 13M ریال
+            │       └─→ RealizedPnL = FillMath.CalculateRealizedPnL(
+            │               avg=50000, exit=76000, qty=500) = 13M ریال
             ├─→ UpdateEvaluationOutcomeAsync:
             │       └─→ StrategyEvaluation.OutcomeJson = {
             │             "entryPrice": 50000,
@@ -1080,6 +1455,12 @@ T=10:15:30  Worker Tick ...
             └─→ ✅ دیتای کامل برای AI/ML
 ```
 
+### تغییرات نسبت به نسخه‌ی قبلی
+
+- **`Quantity`:** قبلاً ۲۰۰۰، حالا ۱۷۹۳ (Stepped Buying + Exact formula)
+- **SL/TP check در Tick M+1:** قبلاً Skip می‌شد (چون openOrders=0)، حالا اجرا می‌شود
+- **`RealizedPnL`:** از `FillMath.CalculateRealizedPnL` می‌آید (D10)
+
 ---
 
 ## 18. Lifecycle یک معامله
@@ -1090,13 +1471,13 @@ T=10:15:30  Worker Tick ...
     │
     ▼
 [2] OrderIntent
-    └─→ Run, Account, Isin, Price, Quantity, SL, TP
+    └─→ Run, Account, Isin, Price, Quantity, SL, TP, IsPaper
     └─→ State: Pending → Dispatched → Acknowledged
     │
     ▼
 [3] BrokerOrder
-    └─→ BrokerOrderId, State: Pending → Open → PartiallyFilled → Filled
-    └─→ SubmittedAt, LastSyncedAt
+    └─→ BrokerOrderId, IsPaper
+    └─→ State: Pending → Open → PartiallyFilled → Filled
     │
     ▼
 [4] OrderTrade (multiple)
@@ -1104,10 +1485,12 @@ T=10:15:30  Worker Tick ...
     └─→ IsCanceled (for cancellations)
     │
     ▼
-[5] Position (accumulated from trades)
+[5] Position (accumulated from trades via FillMath)
     └─→ State: Open → PartiallyClosed → Closed
-    └─→ AverageEntryPrice, Quantity, RealizedPnL
+    └─→ AverageEntryPrice = FillMath.CalculateWeightedAveragePrice
+    └─→ RealizedPnL = FillMath.CalculateRealizedPnL
     └─→ StopLossPrice, TakeProfitPrice
+    └─→ IsPaper
     │
     ▼
 [6] Outcome (when closed)
@@ -1141,7 +1524,8 @@ State: Signal با ConsumedAt=null، OrderIntent شاید ساخته شده
        سفارش شاید در Broker ثبت شده
 Action: Recovery → Signal را MarkConsumed (جلوگیری از Duplicate)
         ⚠️ Risk: سفارش در Broker هست ولی در DB نیست
-        Mitigation: Broker Reconciliation (Phase 2)
+        Mitigation: Broker Reconciliation (A1) — در Startup اجرا می‌شود
+                    Mismatch را در TradingEvents ثبت می‌کند (Log-only)
 ```
 
 ### Scenario D: Crash بعد از Stage 3 Save، قبل از MarkConsumed
@@ -1170,53 +1554,88 @@ Action: Recovery → TradingRunManager.StartAsync
         از Tick بعدی Stage 1-4 کار می‌کنند
 ```
 
+### Scenario G (C4): Position Overshoot در Stage 4
+
+```
+State: Broker یک Sell بزرگ‌تر از Position DB گزارش داد
+Action: 1. Fill اعمال نمی‌شود (Position در known good state)
+        2. TradingEvent (Severity=Critical, Type=PositionOvershootDetected)
+        3. Run → Faulted
+        4. Run از Cache خارج می‌شود
+        5. Trade record persist می‌شود (audit trail)
+        User: TradingEvents را چک کن، Position را دستی Fix کن، Run را Start کن
+```
+
 ---
 
 ## 20. نکات مهم و محدودیت‌ها
 
-### آنچه در Phase 1 پیاده شد
+### آنچه در Phase A پیاده شد (تکمیل‌شده)
 
-✅ Domain Model کامل (Instrument، TradingRun، Signal، Order، Position)
-✅ Multi-Broker با Capability Segregation
+✅ Domain Model کامل (Instrument با OptionContract، TradingRun، Signal، Order، Position)
+✅ Multi-Broker با Capability Segregation (D18)
+✅ Keyed DI برای Broker Capabilities (D19)
 ✅ Session Management (Auto-Relogin)
 ✅ Market Data با Deduplication
-✅ Candle Cache هوشمند (بسته شدن کندل)
+✅ Candle Cache هوشمند (بسته شدن کندل، Market-Aware TTL — D12)
 ✅ Strategy Framework + RSI
-✅ Indicator Abstraction (Jدا از Strategy)
+✅ Indicator Abstraction (جدا از Strategy)
 ✅ TradingSchedule per Instrument
-✅ Currency Transformation (فقط Candles، نه Orders)
+✅ Currency Transformation (Per-Candle — D13)
+✅ Currency Whitelist (M10 — D4)
 ✅ Signal → OrderIntent → BrokerOrder → OrderTrade → Position
-✅ SL/TP Monitoring با Auto-Close
-✅ Recovery در Startup
-✅ Persistence برای AI/ML (Snapshot، Evaluation، Candle)
-✅ Market Hours Check (WAF protection)
-✅ Outbox Pattern (از NexusPlatform)
+✅ **FillMath** — Single source for Fill arithmetic (M5 — D10)
+✅ **Stepped Buying** — StrengthMultiplier + MinDeltaPercent (M7)
+✅ **Exact Commission Formula** — `1/(1+c)` نه `(1-c)` (M7)
+✅ SL/TP Monitoring **مستقل از Order Activity** (C2 — D8)
+✅ **Position Overshoot → Run Faulted** (C4 — D9)
+✅ **Paper Trading** — `IsPaper` flag، Immediate Fill Dispatcher (D23)
+✅ **Backtesting Engine** — Config Snapshot (D22)، Sub-Candle Resolution
+✅ **Sub-Candle Strategy Support** (A2 — D26)
+✅ **Multi-Account Fan-Out** — یک Signal روی همه Accounts (D5)
+✅ **Startup Recovery** — Restore Running + Re-Push Signals
+✅ **Broker Reconciliation** — Log-only (A1 — D24)
+✅ **Retention** — Scheduler Recurring Job
+✅ **Health Checks** — ۵ Component (DB, Runtime, Backtest, Historical, Broker, MarketData)
+✅ **Graceful Shutdown** — Polly DbRetry
+✅ **Trading Events** — Buffer + Flush per Tick
+✅ **StrategyEvaluationStage Refactor** — `IStrategyEvaluationService` (M6 — ~140 LOC Stage)
+✅ **SQL-side Spec Queries** — Workerها و Services (M1)
+✅ **Per-Stage Timing** — Slow Tick breakdown (N4)
+✅ **CandleRecord.TimeFrame** — enum نه int (N5)
+✅ **Unit Tests** — 102 tests (Domain، Application، Infrastructure، Integration)
+✅ **Persistence برای AI/ML** — Snapshot، Evaluation، Candle
 
-### آنچه در Phase 2 اضافه می‌شود
+### آنچه در Phase B/C/D آینده
 
-🔲 **Broker Reconciliation** — Position Match با Portfolio
-🔲 **ClosePositions on Stop Run** (تکمیل)
-🔲 **MarketCloseBehavior** (بستن موقعیت‌ها آخر روز)
-🔲 **Paper Trading Mode**
-🔲 **Multiple Indicators** (MACD، EMA، ATR)
-🔲 **Composite Strategies** (RSI + MACD)
-🔲 **Backtesting Engine**
-🔲 **Frontend Dashboard** (Charts، Live Status)
-🔲 **Retention Policy** (پاک‌سازی دیتای قدیمی)
+🔲 **Data Infrastructure (B)** — TGJU USD Import، Data Completeness Check
+🔲 **Operations & Dashboard (C)** — Order Management UI، Order Preset UI، Daily PnL
+🔲 **Risk & Safety (D)** — Daily Loss Limit، Max Position Size، Circuit Breaker، Rate Limiter
+🔲 **Advanced (E)** — Multi-Indicator، Strategy Ensemble (D27)، Trailing Stop، AI/ML Pipeline (D28)
+🔲 **Multi-Instance Prep** — Redis BrokerSessionCache (D20), Distributed Lock
+🔲 **Broker Expansion** — Agah Adapter
+🔲 **Market Expansion** — Forex، Crypto (Market Type در Enum آماده)
+✅ **Frontend Dashboard** — چندین Page (Accounts، Instruments، Strategies، TradingRuns، Positions، Signals، Events، Backtests، HistoricalData، CurrencyRates)
 
 ### محدودیت‌های فعلی
 
-⚠️ **H4 پشتیبانی نمی‌شود** — EasyTrader `resolution` فقط 1, 5, 15, 30, 60, 1D, 1W, 1M
+⚠️ **H4 پشتیبانی نمی‌شود** — EasyTrader `resolution` فقط 1، 5، 15، 30، 60، 1D، 1W، 1M
 ⚠️ **Concurrent Login** — اگر چند Instance، Broker ممکن است قبول نکند (Phase 2: Redis)
-⚠️ **Multi-Currency Pairs** — فعلاً فقط X→IRR (یا معکوس)
-⚠️ **Cache Invalidation** — بعد از Update Run، Context Cache Refresh می‌شود ولی همه‌ی موارد
+⚠️ **Multi-Currency Pairs** — Pair مستقیم یا معکوس فقط. Triangulation (USD→EUR via IRR) پشتیبانی نمی‌شود
+⚠️ **Cache Invalidation** — ویرایش Run در Running ممنوع (D6). برای تغییر Config: Stop → Edit → Start
+⚠️ **Paper Trading Fill** — Immediate در `intent.Price`، بدون Slippage یا Partial Fill (D23)
 ⚠️ **No Fill Handling** — اگر سفارش Fill نشد، در Tick بعدی دوباره بررسی می‌شود (نه Cancel)
+⚠️ **Multi-Account Coordination** — Fan-Out بدون Policy (D5). اگر Run با ۳ Account باشد، هر سه مستقل تصمیم می‌گیرند
+⚠️ **Position Overshoot** — نیاز به بررسی دستی بعد از Fault (C4 — D9)
+⚠️ **Reconciliation** — Log-only (D24)، Bonus/StockRight نادیده (Mismatch کاذب ممکن است)
 
 ### نکات مهم عملیاتی
 
 🔸 **Logs:** همه‌چیز در `Logs/app-*.log` با CorrelationId
 🔸 **Debug:** `Trader.Infrastructure.*` را در `appsettings.Development.json` روی Debug
+🔸 **Health Check:** `GET /health/trader` — Composite (DB + Runtime + Backtest + Historical + Broker + MarketData)
 🔸 **DB Queries:**
+
 ```sql
 -- مشاهده Run فعال
 SELECT * FROM trader.TradingRuns WHERE State = 2;
@@ -1233,15 +1652,30 @@ ORDER BY EvaluatedAt DESC;
 
 -- Positions باز
 SELECT * FROM trader.Positions WHERE State <> 2;
+
+-- Tradeهای Paper (audit)
+SELECT * FROM trader.BrokerOrders WHERE IsPaper = 1 ORDER BY SubmittedAt DESC;
+
+-- Position Overshoot Events
+SELECT TOP 20 * FROM trader.TradingEvents
+WHERE Type = 80    -- PositionOvershootDetected
+ORDER BY OccurredAt DESC;
+
+-- Reconciliation Mismatches
+SELECT TOP 20 * FROM trader.TradingEvents
+WHERE Type IN (71, 73)   -- ReconciliationCompleted، ReconciliationMismatchFound
+ORDER BY OccurredAt DESC;
 ```
 
 ### هشدارهای Production
 
 ⚠️ **قبل از پول واقعی** — با مبلغ کم تست کن (۱-۱۰ میلیون ریال)
+⚠️ **Paper Mode** — یک هفته Paper Trading قبل از Live واقعی
 ⚠️ **Target Currency** — تست کن که Order با IRR ثبت می‌شود (نه Converted)
 ⚠️ **SL/TP** — یک Position باز کن و Trigger کن (مصنوعی)
 ⚠️ **Recovery** — برنامه را Restart کن وسط معامله، ببین چه می‌شود
 ⚠️ **WAF** — بعد از ساعت ۱۲:۳۵ (بسته بازار) لاگ را چک کن که WAF Error نباشد
+⚠️ **Reconciliation** — بعد از یک هفته، `POST /api/Trader/Reconciliation/Run` بزن و Mismatchها را بررسی کن
 
 ---
 
@@ -1253,7 +1687,7 @@ SELECT * FROM trader.Positions WHERE State <> 2;
 Trader.Domain/
 ├── Entities/
 │   ├── TradingRun.cs               # Aggregate Root
-│   ├── Instrument.cs               # هویت نماد
+│   ├── Instrument.cs               # هویت نماد + OptionContract (Owned)
 │   ├── TradingSchedule.cs          # ساعت معاملاتی
 │   ├── Signal.cs                   # خروجی Strategy
 │   ├── OrderIntent.cs              # تصمیم اجرا
@@ -1262,14 +1696,32 @@ Trader.Domain/
 │   ├── Position.cs                 # موقعیت باز
 │   ├── MarketSnapshotRecord.cs     # تاریخچه قیمت
 │   ├── StrategyEvaluation.cs       # تاریخچه تحلیل
-│   ├── CandleRecord.cs             # کندل تاریخی
+│   ├── CandleRecord.cs             # کندل تاریخی (TimeFrame enum)
 │   ├── CurrencyRate.cs             # نرخ ارز
-│   └── TraderAccount.cs            # حساب کارگزاری
+│   ├── TradingEvent.cs             # Event Logging
+│   ├── TraderAccount.cs            # حساب کارگزاری
+│   └── Backtest*.cs                # Backtest entities
+├── Calculations/
+│   └── FillMath.cs                 # ← NEW (M5، D10): Pure fill math
+├── ValueObjects/
+│   ├── Price.cs                    # readonly struct
+│   ├── Quantity.cs                 # readonly struct
+│   ├── Money.cs                    # class (EF OwnsOne)
+│   ├── CapitalAllocation.cs        # Fixed/Dynamic
+│   ├── StopLossConfig.cs           # Percentage/Absolute
+│   ├── TakeProfitConfig.cs         # Percentage/Absolute
+│   ├── SymbolAllocation.cs         # Percentage
+│   ├── SignalStrength.cs           # [0, 1]
+│   ├── OptionContract.cs           # Option details
+│   └── CurrencyCode.cs             # ← NEW (M10، D4): Whitelist
 └── Enums/
     ├── TradingRunState.cs
+    ├── ExecutionMode.cs             # ← NEW: Live/Paper
     ├── OrderSide.cs
     ├── SignalAction.cs
-    └── TimeFrame.cs
+    ├── TimeFrame.cs
+    ├── TradingEventType.cs          # شامل PositionOvershootDetected (80)
+    └── ...
 ```
 
 ### Application
@@ -1278,8 +1730,12 @@ Trader.Domain/
 Trader.Application/
 ├── Abstractions/
 │   ├── Strategies/
-│   │   ├── IStrategy.cs
-│   │   └── StrategyRegistration.cs
+│   │   ├── IStrategy.cs            # شامل ExtraCandleRequirements (A2)
+│   │   ├── StrategyRegistration.cs
+│   │   ├── StrategyInput.cs        # شامل ExtraTimeFrames (A2)
+│   │   ├── StrategyEvaluationResult.cs
+│   │   ├── CandleRequirement.cs    # ← NEW (A2)
+│   │   └── ...
 │   ├── Indicators/
 │   │   ├── IIndicator.cs
 │   │   └── IndicatorInput.cs
@@ -1293,19 +1749,26 @@ Trader.Application/
 │   ├── Execution/
 │   │   ├── IOrderIntentBuilder.cs
 │   │   ├── ICapitalAllocator.cs
-│   │   ├── IPositionSizer.cs
-│   │   └── IBrokerOrderDispatcher.cs
+│   │   ├── ICommittedCapitalCalculator.cs
+│   │   ├── IOrderSizeCalculator.cs        # BuySizeInput (AvailableCash: decimal?)
+│   │   ├── IOrderDispatcherResolver.cs
+│   │   ├── IBrokerOrderDispatcher.cs
+│   │   └── IExecutionCoordinator.cs
 │   ├── Positions/
 │   │   ├── IPositionManager.cs
 │   │   └── IPositionCloser.cs
 │   ├── Runtime/
 │   │   ├── IMarketDataIngestionStage.cs
 │   │   ├── IStrategyEvaluationStage.cs
+│   │   ├── IStrategyEvaluationService.cs  # ← NEW (M6): منطق ارزیابی
+│   │   ├── StrategyEvaluationBatchResult.cs # ← NEW
 │   │   ├── IExecutionStage.cs
 │   │   └── IOrderLifecycleStage.cs
 │   └── Brokers/
 │       ├── IBroker.cs
+│       ├── IBrokerClientFactory.cs
 │       ├── IBrokerSessionProvider.cs
+│       ├── IBrokerSessionCache.cs
 │       └── Commands/Queries/...
 ├── Strategies/
 │   └── Rsi/
@@ -1317,6 +1780,12 @@ Trader.Application/
 │       ├── RsiConfig.cs
 │       ├── RsiCalculator.cs        # Pure math
 │       └── RsiIndicator.cs         # Adapter
+├── Specifications/                 # ← SQL-side filtering
+│   ├── Backtests/
+│   ├── Positions/
+│   ├── TradingRuns/
+│   ├── Orders/
+│   └── ...
 └── Runtime/
     ├── MarketSnapshot.cs
     ├── Candle.cs
@@ -1334,15 +1803,17 @@ Trader.Infrastructure/
 │   ├── TraderUnitOfWork.cs
 │   └── TraderSeedData.cs
 ├── Runtime/
-│   ├── TradingRuntimeWorker.cs
+│   ├── TradingRuntimeWorker.cs             # Per-stage timing (N4)
 │   ├── TradingRunManager.cs
 │   ├── RunExecutionContextCache.cs
 │   ├── SignalChannel.cs
+│   ├── Services/
+│   │   └── StrategyEvaluationService.cs    # ← NEW (M6): منطق ارزیابی
 │   ├── Stages/
 │   │   ├── MarketDataIngestionStage.cs
-│   │   ├── StrategyEvaluationStage.cs
+│   │   ├── StrategyEvaluationStage.cs      # ~140 LOC (قبلاً 480)
 │   │   ├── ExecutionStage.cs
-│   │   └── OrderLifecycleStage.cs
+│   │   └── OrderLifecycleStage.cs          # SL/TP مستقل (C2)
 │   └── Recovery/
 │       └── RuntimeRecoveryService.cs
 ├── MarketData/
@@ -1350,9 +1821,10 @@ Trader.Infrastructure/
 │   ├── InMemoryMarketSnapshotStore.cs
 │   ├── InMemoryCandleCache.cs
 │   ├── CandlePersistenceService.cs
+│   ├── CandleRecordMapper.cs
 │   ├── IranMarketSessionProvider.cs
-│   ├── TradingScheduleCache.cs
-│   ├── CurrencyCandleTransformer.cs
+│   ├── TradingScheduleCache.cs             # SQL-side (M1)
+│   ├── CurrencyCandleTransformer.cs        # Per-Candle (D13)
 │   ├── DbCurrencyRateProvider.cs
 │   └── CurrencyRateCache.cs
 ├── Execution/
@@ -1360,29 +1832,66 @@ Trader.Infrastructure/
 │   ├── FixedCapitalAllocator.cs
 │   ├── DynamicCapitalAllocator.cs
 │   ├── CompositeCapitalAllocator.cs
-│   ├── PercentPositionSizer.cs
-│   ├── BrokerOrderDispatcher.cs
-│   └── ExecutionCoordinator.cs
+│   ├── CommittedCapitalCalculator.cs
+│   ├── OrderSizeCalculator.cs              # FillMath.CalculateMaxBuyQuantity (M7)
+│   ├── BrokerOrderDispatcher.cs            # Live
+│   ├── PaperBrokerOrderDispatcher.cs       # ← Paper (D23)
+│   ├── OrderDispatcherResolver.cs          # Live/Paper
+│   └── ExecutionCoordinator.cs             # Multi-Account fan-out (D5)
 ├── Positions/
-│   ├── PositionManager.cs
+│   ├── PositionManager.cs                  # FillMath + Overshoot (C4)
 │   └── PositionCloser.cs
 ├── Brokers/
 │   ├── BrokerSessionProvider.cs
 │   ├── InMemoryBrokerSessionCache.cs
 │   └── EasyTrader/
 │       └── Capabilities/...
+├── Backtesting/
+│   ├── BacktestEngine.cs                   # FillMath (M5)
+│   ├── BacktestWorker.cs
+│   ├── BacktestEventLogger.cs
+│   ├── SubCandleResolver.cs
+│   ├── OrderFillSimulator.cs
+│   └── BacktestMetricsCalculator.cs
+├── Reconciliation/
+│   └── ReconciliationService.cs            # Log-only (D24)
+├── Health/
+│   └── *HealthCheck.cs
 └── Services/
     ├── InstrumentService.cs
     ├── TradingRunService.cs
     ├── SignalQueryService.cs
     ├── PositionQueryService.cs
     ├── TradingScheduleService.cs
-    └── CurrencyRateService.cs
+    ├── CurrencyRateService.cs
+    ├── BacktestRunService.cs
+    └── ...
 ```
 
----
+### Tests
 
-**پایان مستند**
-
-> برای سؤالات یا ابهامات، به Logs، DB، و کد مراجعه کن.
-> اگر باگ پیدا کردی، ابتدا در `Trader.Infrastructure.*` Debug Logging را فعال کن.
+```
+Trader.Tests/
+├── Domain/
+│   ├── Entities/
+│   │   ├── PositionTests.cs
+│   │   └── TradingRunTests.cs
+│   ├── ValueObjects/
+│   │   ├── PriceTests.cs
+│   │   ├── CurrencyCodeTests.cs
+│   │   └── ...
+│   └── Calculations/
+│       └── FillMathTests.cs
+├── Application/
+│   ├── Indicators/
+│   │   └── RsiCalculatorTests.cs
+│   └── Strategies/
+│       └── RsiStrategyTests.cs
+└── Infrastructure/
+    ├── Execution/
+    │   └── OrderSizeCalculatorTests.cs
+    ├── Positions/
+    │   └── PositionManagerTests.cs          # C4 overshoot path
+    └── Runtime/
+        └── StrategyEvaluationStageTests.cs  # 7 integration tests
+```
