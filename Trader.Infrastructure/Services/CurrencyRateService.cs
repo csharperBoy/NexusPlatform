@@ -54,17 +54,31 @@ public sealed class CurrencyRateService : ICurrencyRateService
     }
 
     public async Task<IReadOnlyList<CurrencyRateView>> GetRecentAsync(
-        string? fromCurrency, string? toCurrency, int limit = 100)
+    string? fromCurrency, string? toCurrency, int limit = 100)
     {
-        var all = await _uow.CurrencyRates.GetAllAsync();
+        var takeClamped = Math.Clamp(limit, 1, 500);
 
-        return all
-            .Where(r => string.IsNullOrWhiteSpace(fromCurrency)
-                     || r.FromCurrency.Equals(fromCurrency, StringComparison.OrdinalIgnoreCase))
-            .Where(r => string.IsNullOrWhiteSpace(toCurrency)
-                     || r.ToCurrency.Equals(toCurrency, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(r => r.EffectiveAt)
-            .Take(limit)
+        // ─── SQL-side filter + order + take ───
+        var rates = await _uow.CurrencyRates.GetAllAsync(q =>
+        {
+            IQueryable<CurrencyRate> query = q;
+
+            if (!string.IsNullOrWhiteSpace(fromCurrency))
+            {
+                var f = fromCurrency.ToUpperInvariant();
+                query = query.Where(r => r.FromCurrency == f);
+            }
+
+            if (!string.IsNullOrWhiteSpace(toCurrency))
+            {
+                var t = toCurrency.ToUpperInvariant();
+                query = query.Where(r => r.ToCurrency == t);
+            }
+
+            return query.OrderByDescending(r => r.EffectiveAt).Take(takeClamped);
+        });
+
+        return rates
             .Select(r => new CurrencyRateView(
                 r.Id, r.FromCurrency, r.ToCurrency, r.Rate,
                 r.EffectiveAt, r.Source, r.CreatedAt))

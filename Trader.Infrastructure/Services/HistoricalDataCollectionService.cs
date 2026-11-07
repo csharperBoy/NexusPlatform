@@ -98,15 +98,15 @@ public sealed class HistoricalDataCollectionService
     /* ═══════════════════ Queries ═══════════════════ */
 
     public async Task<IReadOnlyList<HistoricalDataCollectionJobSummaryView>> GetListAsync(
-        int take = 50, CancellationToken ct = default)
+    int take = 50, CancellationToken ct = default)
     {
-        var jobs = await _uow.HistoricalDataCollectionJobs.GetAllAsync();
+        var takeClamped = Math.Clamp(take, 1, 500);
 
-        return jobs
-            .OrderByDescending(j => j.CreatedAt)
-            .Take(Math.Clamp(take, 1, 500))
-            .Select(MapToSummary)
-            .ToList();
+        // ─── SQL-side order + take ───
+        var jobs = await _uow.HistoricalDataCollectionJobs.GetAllAsync(q =>
+            q.OrderByDescending(j => j.CreatedAt).Take(takeClamped));
+
+        return jobs.Select(MapToSummary).ToList();
     }
 
     public async Task<HistoricalDataCollectionJobDetailView?> GetByIdAsync(

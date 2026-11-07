@@ -314,8 +314,8 @@ src/modules/Trader/
 | **A2** | Sub-Candle Strategy Support | ✅ Done |
 | **A3** | Graceful Shutdown | ✅ Done (Polly DbRetry) |
 | **A4** | Health Checks per Component | ✅ Done |
-| **A5** | Retention برای BacktestEvents | ⏳ Next |
-| **A6** | Unit Tests برای Critical Logic | ⏳ Pending |
+| **A5** | Retention برای BacktestEvents | ✅ Done |
+| **A6** | Unit Tests برای Critical Logic | ✅ Done (102 tests) |
 
 ### Future Phases
 - **B**: Data Infrastructure (TGJU USD Import, Data Completeness)
@@ -497,6 +497,26 @@ src/modules/Trader/
 3. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService`. Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset`.
 4. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict).
 5. **Backtest Currency** — فقط در Virtual Mode.
+
+## 14. RECENT COMPLETED WORK
+
+1. **M6 Refactor** — `StrategyEvaluationStage` split: `IStrategyEvaluationService`
+   (Application) برای منطق ارزیابی، Stage فقط Orchestration.
+   480 LOC → 140 LOC. 7 integration tests قبل از Refactor نوشته شد،
+   صفر تغییر در Assertions بعد از Refactor.
+2. **M5 Refactor** — `FillMath` extraction (Domain.Calculations).
+   Single source of truth برای Weighted Average، RealizedPnL، Commission.
+   Live/Paper/Backtest همه از همان فرمول استفاده می‌کنند.
+3. **M7 + M9 Fix** — Commission exact formula در `OrderSizeCalculator`
+   (`1/(1+c)` نه `(1-c)`), حذف Double Cash Check در `BacktestEngine`.
+   رفتار: Qty حداکثر ۱ سهم کمتر در edge cases.
+4. **C2 + C4 Fix** — SL/TP مستقل از Order Activity، Position Overshoot
+   → Run Faulted (نه Clamp). هر دو با Integration Test قفل شده‌اند.
+5. **M1 Batch 1-3 + M2 + M3 + M10 + N1 + N4 + N5** — Performance + Hygiene:
+   SQL-side Spec queries در Workerها/Services، Per-Stage Timing،
+   Whitelist TargetCurrency، CandleRecord TimeFrame enum.
+
+برای جزئیات هر تصمیم، به `docs/TRADING-ARCHITECTURE.md` (Decision Log) مراجعه کن.
 ---
 
 **پایان سند**

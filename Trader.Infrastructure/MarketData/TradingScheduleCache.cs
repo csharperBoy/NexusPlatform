@@ -29,7 +29,7 @@ public sealed class TradingScheduleCache : ITradingScheduleCache
     }
 
     public async Task<TradingSchedule?> GetForIsinAsync(
-        string isin, CancellationToken ct = default)
+    string isin, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(isin))
             return null;
@@ -48,23 +48,23 @@ public sealed class TradingScheduleCache : ITradingScheduleCache
             var uow = scope.ServiceProvider
                 .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
 
-            var instruments = await uow.InstrumentSpecs
-                .ListBySpecAsync(new InstrumentByIsinSpec(isin));
-
-            var instrument = instruments.FirstOrDefault();
+            // ─── 1. Instrument lookup — GetBySpecAsync نه ListBySpecAsync ───
+            var instrument = await uow.InstrumentSpecs
+                .GetBySpecAsync(new InstrumentByIsinSpec(isin));
 
             if (instrument?.TradingScheduleId is Guid scheduleId)
             {
                 schedule = await uow.TradingSchedules.GetByIdAsync(scheduleId);
             }
 
-            // ─── Fallback: اگر Instrument Schedule نداشت → Default ───
+            // ─── 2. Fallback: default schedule — SQL-side filter ───
             if (schedule is null)
             {
-                var all = await uow.TradingSchedules.GetAllAsync();
-                schedule = all.FirstOrDefault(s =>
-                    s.Code.Equals(DefaultScheduleCode, StringComparison.OrdinalIgnoreCase)
-                    && s.IsActive);
+                var defaults = await uow.TradingSchedules.GetAllAsync(q =>
+                    q.Where(s => s.Code == DefaultScheduleCode && s.IsActive)
+                     .Take(1));
+
+                schedule = defaults.FirstOrDefault();
             }
         }
         catch (Exception ex)

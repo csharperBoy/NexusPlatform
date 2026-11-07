@@ -148,23 +148,23 @@ public sealed class BacktestRunService
 
     /* ═══════════════════ Queries ═══════════════════ */
 
+    
     public async Task<IReadOnlyList<BacktestRunSummaryView>> GetListAsync(
-        Guid? sourceRunId, int take = 100, CancellationToken ct = default)
+    Guid? sourceRunId, int take = 100, CancellationToken ct = default)
     {
-        var all = await _uow.BacktestRuns.GetAllAsync();
+        var takeClamped = Math.Clamp(take, 1, 500);
 
-        var query = all.AsEnumerable();
+        // ─── SQL-side filter + order + take ───
+        var runs = await _uow.BacktestRuns.GetAllAsync(q =>
+        {
+            IQueryable<BacktestRun> query = q;
+            if (sourceRunId.HasValue)
+                query = query.Where(b => b.SourceRunId == sourceRunId.Value);
+            return query.OrderByDescending(b => b.CreatedAt).Take(takeClamped);
+        });
 
-        if (sourceRunId.HasValue)
-            query = query.Where(b => b.SourceRunId == sourceRunId.Value);
-
-        return query
-            .OrderByDescending(b => b.CreatedAt)
-            .Take(Math.Clamp(take, 1, 500))
-            .Select(MapToSummary)
-            .ToList();
+        return runs.Select(MapToSummary).ToList();
     }
-
     public async Task<BacktestRunDetailView?> GetByIdAsync(
     Guid id, CancellationToken ct = default)
     {
@@ -186,13 +186,14 @@ public sealed class BacktestRunService
     }
 
     public async Task<IReadOnlyList<BacktestDailyEquityView>> GetEquityCurveAsync(
-        Guid backtestRunId, CancellationToken ct = default)
+    Guid backtestRunId, CancellationToken ct = default)
     {
-        var all = await _uow.BacktestDailyEquities.GetAllAsync();
+        // ─── SQL-side filter + order ───
+        var equities = await _uow.BacktestDailyEquities.GetAllAsync(q =>
+            q.Where(e => e.BacktestRunId == backtestRunId)
+             .OrderBy(e => e.Date));
 
-        return all
-            .Where(e => e.BacktestRunId == backtestRunId)
-            .OrderBy(e => e.Date)
+        return equities
             .Select(e => new BacktestDailyEquityView(
                 e.Date, e.Equity, e.Cash, e.PositionValue, e.DailyReturnPct))
             .ToList();
