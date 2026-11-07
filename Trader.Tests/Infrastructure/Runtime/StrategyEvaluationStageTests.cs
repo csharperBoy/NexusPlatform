@@ -41,7 +41,6 @@ public class StrategyEvaluationStageTests
     {
         _userContext = UserDataContext.Empty();
 
-        // Default behavior — tests can override per-case
         _uow.Setup(x => x.StrategyEvaluations).Returns(_evaluations.Object);
         _uow.Setup(x => x.Signals).Returns(_signals.Object);
         _uow.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -59,15 +58,21 @@ public class StrategyEvaluationStageTests
                 It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(_userContext);
 
-        _sut = new StrategyEvaluationStage(
-            _runCache.Object,
+        // ─── NEW: StrategyEvaluationService ساخت از همان Mocks ───
+        var evaluationService = new Trader.Infrastructure.Runtime.Services.StrategyEvaluationService(
             _snapshotStore.Object,
             _candleCache.Object,
+            _candleTransformer.Object,
+            _eventLogger.Object,
+            new Mock<ILogger<Trader.Infrastructure.Runtime.Services.StrategyEvaluationService>>().Object);
+
+        _sut = new StrategyEvaluationStage(
+            _runCache.Object,
+            _userContextCache.Object,
+            _userContext,
+            evaluationService,
             _signalChannel.Object,
             _uow.Object,
-            _userContext,
-            _userContextCache.Object,
-            _candleTransformer.Object,
             _eventLogger.Object,
             _logger.Object);
     }

@@ -42,6 +42,7 @@ using Trader.Infrastructure.Positions;
 using Trader.Infrastructure.Reconciliation;
 using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Runtime.Recovery;
+using Trader.Infrastructure.Runtime.Services;
 using Trader.Infrastructure.Runtime.Stages;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
@@ -258,6 +259,7 @@ namespace Trader.Infrastructure.DependencyInjection
 
             services.AddScheduledJobHandler<RetentionCleanupPayload, RetentionCleanupHandler>();
             // ─── Runtime Stages ───
+            services.AddScoped<IStrategyEvaluationService, StrategyEvaluationService>();
             services.AddScoped<IStrategyEvaluationStage, StrategyEvaluationStage>();
             // ─── Options ───
             services.Configure<TradingRuntimeOptions>(
