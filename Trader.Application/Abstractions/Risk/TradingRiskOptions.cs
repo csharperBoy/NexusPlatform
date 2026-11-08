@@ -24,11 +24,17 @@ public sealed class DailyLossLimitOptions
     /// <summary>حداکثر ضرر روزانه به‌صورت درصد از Opening Equity.</summary>
     public decimal MaxLossPercent { get; set; } = 5.0m;
 
-    /// <summary>
-    /// Run-level: ضرر نسبت به Opening Equity همان Run محاسبه می‌شود.
-    /// (Account-level در آینده اگر نیاز بود.)
-    /// </summary>
+    /// <summary>Run-level (پیش‌فرض) — در آینده اگر Account-level لازم شد.</summary>
     public string Scope { get; set; } = "Run";
+
+    /// <summary>فاصله‌ی Refresh Cash از Broker. بین Refreshها از Cash قدیمی استفاده می‌شود.</summary>
+    public TimeSpan BrokerRefreshInterval { get; set; } = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// Paper Mode: پیش‌فرض false — چون Paper Cash tracked نیست،
+    /// Daily Loss واقعی نیست. اگر true شود، Paper هم Block می‌شود.
+    /// </summary>
+    public bool ApplyToPaper { get; set; } = false;
 }
 
 public sealed class MaxPositionSizeOptions

@@ -134,10 +134,13 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, BacktestDailyEquity, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>,
                 EfRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>,
+    EfRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>>();
 
 
             /* ═══════════ Repositories — Specification ═══════════ */
-
+            services.AddScoped<ISpecificationRepository<RunDailyEquitySnapshot, Guid>,
+                EfSpecificationRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>>();
             // Legacy
             services.AddScoped<ISpecificationRepository<HistoricalDataCollectionJob, Guid>,
                 EfSpecificationRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
@@ -275,6 +278,8 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRiskGuard, KillSwitchGuard>();
             services.AddScoped<IRiskGuardPipeline, RiskGuardPipeline>();
 
+            services.AddSingleton<IRunDailyEquityTracker, RunDailyEquityTracker>();
+            services.AddScoped<IRiskGuard, DailyLossLimitGuard>();
             // ─── Risk Repositories (اگر قبلاً GenericRepository registration نبود) ───
             services.AddScoped<IRepository<TraderDbContext, RiskKillSwitch, Guid>,
                 EfRepository<TraderDbContext, RiskKillSwitch, Guid>>();

@@ -32,6 +32,8 @@ IRepository<TraderDbContext, BacktestDailyEquity, Guid> backtestDailyEquities,
 IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> historicalDataCollectionJobs,
 IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> backtestEvents,
 IRepository<TraderDbContext, RiskKillSwitch, Guid> riskKillSwitches,
+IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> runDailyEquitySnapshots,
+ISpecificationRepository<RunDailyEquitySnapshot, Guid> runDailyEquitySnapshotSpecs,
 ISpecificationRepository<RiskKillSwitch, Guid> riskKillSwitchSpecs,
 ISpecificationRepository<HistoricalDataCollectionJob, Guid> historicalDataCollectionJobSpecs,
 ISpecificationRepository<BacktestRun, Guid> backtestRunSpecs,
@@ -108,6 +110,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         HistoricalDataCollectionJobSpecs = historicalDataCollectionJobSpecs;
         RiskKillSwitches = riskKillSwitches;
         RiskKillSwitchSpecs = riskKillSwitchSpecs;
+        RunDailyEquitySnapshots = runDailyEquitySnapshots;
+        RunDailyEquitySnapshotSpecs = runDailyEquitySnapshotSpecs;
     }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
@@ -135,6 +139,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
     public IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
     public IRepository<TraderDbContext, RiskKillSwitch, Guid> RiskKillSwitches { get; }
+    public IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshots { get; }
+    public ISpecificationRepository<RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshotSpecs { get; }
     public ISpecificationRepository<RiskKillSwitch, Guid> RiskKillSwitchSpecs { get; }
     public ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }
     public ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
