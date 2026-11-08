@@ -114,6 +114,12 @@ public class OrderIntentBuilderTests
             .ReturnsAsync(MakeInstrument());
         uow.SetupGet(x => x.InstrumentSpecs).Returns(instrumentSpecs.Object);
 
+        // ─── OrderIntents repository (OrderIntentBuilder.AddAsync) ───
+        var orderIntents = new Mock<IRepository<TraderDbContext, OrderIntent, Guid>>();
+        orderIntents.Setup(x => x.AddAsync(It.IsAny<OrderIntent>()))
+            .Returns(Task.CompletedTask);
+        uow.SetupGet(x => x.OrderIntents).Returns(orderIntents.Object);
+
         var eventLogger = new Mock<ITradingEventLogger>();
 
         var riskOptions = new Mock<IOptionsMonitor<TradingRiskOptions>>();
