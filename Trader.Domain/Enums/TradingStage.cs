@@ -13,4 +13,5 @@ public enum TradingStage
     Recovery = 5,            // Startup Recovery
     System = 6,              // Worker-level (Tick, Retention, ...)
     Reconciliation = 7,
+    Risk = 8,
 }

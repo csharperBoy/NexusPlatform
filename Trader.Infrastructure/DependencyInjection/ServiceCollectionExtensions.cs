@@ -16,6 +16,7 @@ using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.Reconciliation;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Abstractions.TradingRuns;
@@ -40,6 +41,8 @@ using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Positions;
 using Trader.Infrastructure.Reconciliation;
+using Trader.Infrastructure.Risk;
+using Trader.Infrastructure.Risk.Guards;
 using Trader.Infrastructure.Runtime;
 using Trader.Infrastructure.Runtime.Recovery;
 using Trader.Infrastructure.Runtime.Services;
@@ -264,7 +267,19 @@ namespace Trader.Infrastructure.DependencyInjection
             // ─── Options ───
             services.Configure<TradingRuntimeOptions>(
                 configuration.GetSection(TradingRuntimeOptions.SectionName));
+            // ─── Risk ───
+            services.Configure<TradingRiskOptions>(
+                configuration.GetSection(TradingRiskOptions.SectionName));
 
+            services.AddSingleton<IRiskStateTracker, RiskStateTracker>();
+            services.AddScoped<IRiskGuard, KillSwitchGuard>();
+            services.AddScoped<IRiskGuardPipeline, RiskGuardPipeline>();
+
+            // ─── Risk Repositories (اگر قبلاً GenericRepository registration نبود) ───
+            services.AddScoped<IRepository<TraderDbContext, RiskKillSwitch, Guid>,
+                EfRepository<TraderDbContext, RiskKillSwitch, Guid>>();
+            services.AddScoped<ISpecificationRepository<RiskKillSwitch, Guid>,
+                EfSpecificationRepository<TraderDbContext, RiskKillSwitch, Guid>>();
             services.AddScoped<ICurrencyRateService, CurrencyRateService>();
 
             services.AddSingleton<ICandleTransformer, CurrencyCandleTransformer>();

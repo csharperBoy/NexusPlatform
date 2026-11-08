@@ -70,4 +70,15 @@ public enum TradingEventType
 
     // ─── Data Integrity (80-89) ───
     PositionOvershootDetected = 80,
+
+
+    // ─── Risk & Safety (90-99) ───
+    OrderRiskBlocked = 90,
+    KillSwitchActivated = 91,
+    KillSwitchDeactivated = 92,
+    // رزرو برای PR 15-18:
+    // DailyLossLimitHit = 93,
+    // MaxPositionSizeExceeded = 94,
+    // ConsecutiveLossCircuitBroken = 95,
+    // RateLimitExceeded = 96,
 }

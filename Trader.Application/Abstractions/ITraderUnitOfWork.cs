@@ -33,8 +33,10 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, BacktestTrade, Guid> BacktestTrades { get; }
     IRepository<TDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
     IRepository<TDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
+    IRepository<TDbContext, RiskKillSwitch, Guid> RiskKillSwitches { get; }
 
     // Spec Repositories
+    ISpecificationRepository<RiskKillSwitch, Guid> RiskKillSwitchSpecs { get; }
     ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }
     ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
     ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }

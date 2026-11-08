@@ -1439,6 +1439,75 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("Positions", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.RiskKillSwitch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ActivatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ActivatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("DeactivatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeactivatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.HasKey("Id")
+                        .HasName("PK_RiskKillSwitch");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_RiskKillSwitch_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_RiskKillSwitch_CreatedBy");
+
+                    b.HasIndex("DeactivatedAt")
+                        .HasDatabaseName("IX_RiskKillSwitch_Active");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_RiskKillSwitch_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_RiskKillSwitch_ModifiedBy");
+
+                    b.HasIndex("AccountId", "DeactivatedAt")
+                        .HasDatabaseName("IX_RiskKillSwitch_Account_Active");
+
+                    b.ToTable("RiskKillSwitches", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.SchedulePlan", b =>
                 {
                     b.Property<Guid>("Id")

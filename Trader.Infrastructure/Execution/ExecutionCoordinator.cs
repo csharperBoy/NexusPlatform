@@ -4,6 +4,7 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.Logging;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Runtime;
 using Trader.Application.Specifications.BrokerOrders;
@@ -19,6 +20,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     private readonly IRunExecutionContextCache _runCache;
     private readonly IOrderIntentBuilder _intentBuilder;
 
+    private readonly IRiskGuardPipeline _riskPipeline;
     //private readonly IBrokerOrderDispatcher _dispatcher;
     private readonly IOrderDispatcherResolver _dispatcherResolver;
 
@@ -43,6 +45,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         UserDataContext userContext,
         ITraderUnitOfWork<TraderDbContext> uow,
     ITradingEventLogger eventLogger,
+    IRiskGuardPipeline riskPipeline,
         ILogger<ExecutionCoordinator> logger)
     {
         _runCache = runCache;
@@ -57,6 +60,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         _userContext = userContext;
         _uow = uow;
         _eventLogger = eventLogger;
+        _riskPipeline = riskPipeline;
         _logger = logger;
     }
 
@@ -177,7 +181,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             return false;
         }
 
-        // ─── Build Intent (شامل stepped capital + min/max) ───
+        // ─── Build Intent ───
         var intent = await _intentBuilder.BuildAsync(
             envelope.Signal, ctx, accountId, ct);
 
@@ -202,9 +206,44 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             signalId: envelope.Signal.Id,
             orderIntentId: intent.Id);
 
-        // ─── Account + Session ───
+        // ─── Account ───
         var account = await _uow.Accounts.GetByIdAsync(accountId);
         if (account is null) return false;
+
+        // ═══════════════════════════════════════════════════════════════
+        // NEW: Risk Check (بین Build و Dispatch)
+        // ═══════════════════════════════════════════════════════════════
+        var riskContext = new RiskCheckContext(intent, ctx, account);
+        var riskDecision = await _riskPipeline.CheckAsync(riskContext, ct);
+
+        if (riskDecision.Kind == RiskDecisionKind.Block)
+        {
+            intent.MarkRiskBlocked(riskDecision.Reason ?? "Blocked by risk.");
+
+            _eventLogger.Log(
+                stage: TradingStage.Risk,
+                type: TradingEventType.OrderRiskBlocked,
+                severity: TradingEventSeverity.Warning,
+                message: $"سفارش «{intent.Isin}» توسط Risk مسدود شد " +
+                         $"(Guard: {riskDecision.GuardName}): {riskDecision.Reason}",
+                payload: new
+                {
+                    guard = riskDecision.GuardName,
+                    reason = riskDecision.Reason,
+                    side = intent.Side.ToString(),
+                    quantity = intent.Quantity.Value,
+                    price = intent.Price.Value,
+                },
+                runId: ctx.RunId,
+                isin: intent.Isin,
+                accountId: accountId,
+                signalId: envelope.Signal.Id,
+                orderIntentId: intent.Id);
+
+            return false;
+        }
+
+        // ─── Session + Dispatch (موجود) ───
 
         var session = await _sessionProvider.GetSessionAsync(accountId, ct);
 

@@ -31,6 +31,8 @@ IRepository<TraderDbContext, BacktestTrade, Guid> backtestTrades,
 IRepository<TraderDbContext, BacktestDailyEquity, Guid> backtestDailyEquities,
 IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> historicalDataCollectionJobs,
 IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> backtestEvents,
+IRepository<TraderDbContext, RiskKillSwitch, Guid> riskKillSwitches,
+ISpecificationRepository<RiskKillSwitch, Guid> riskKillSwitchSpecs,
 ISpecificationRepository<HistoricalDataCollectionJob, Guid> historicalDataCollectionJobSpecs,
 ISpecificationRepository<BacktestRun, Guid> backtestRunSpecs,
 ISpecificationRepository<BacktestTrade, Guid> backtestTradeSpecs,
@@ -104,6 +106,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         TradingEvents = tradingEvents;
         TradingEventSpecs = tradingEventSpecs;
         HistoricalDataCollectionJobSpecs = historicalDataCollectionJobSpecs;
+        RiskKillSwitches = riskKillSwitches;
+        RiskKillSwitchSpecs = riskKillSwitchSpecs;
     }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
@@ -130,6 +134,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, BacktestTrade, Guid> BacktestTrades { get; }
     public IRepository<TraderDbContext, BacktestDailyEquity, Guid> BacktestDailyEquities { get; }
     public IRepository<TraderDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
+    public IRepository<TraderDbContext, RiskKillSwitch, Guid> RiskKillSwitches { get; }
+    public ISpecificationRepository<RiskKillSwitch, Guid> RiskKillSwitchSpecs { get; }
     public ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }
     public ISpecificationRepository<BacktestRun, Guid> BacktestRunSpecs { get; }
     public ISpecificationRepository<BacktestTrade, Guid> BacktestTradeSpecs { get; }

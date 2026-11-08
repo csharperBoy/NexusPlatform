@@ -38,7 +38,17 @@ public class OrderIntent : BaseEntity, IAuditableEntity
     public void Touch() => ModifiedAt = DateTime.UtcNow;
 
     private OrderIntent() { } // EF
+    public void MarkRiskBlocked(string reason)
+    {
+        if (State != OrderIntentState.Pending)
+            throw new InvalidOperationException(
+                $"Cannot mark RiskBlocked from state {State}.");
 
+        State = OrderIntentState.RiskBlocked;
+        FailureReason = reason;
+        CompletedAt = DateTime.UtcNow;
+        Touch();
+    }
     public static OrderIntent Create(
     Guid runId,
     Guid traderAccountId,
