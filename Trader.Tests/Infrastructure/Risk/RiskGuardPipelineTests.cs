@@ -75,7 +75,8 @@ public class RiskGuardPipelineTests
         var decision = await sut.CheckAsync(BuildContext());
 
         decision.Kind.Should().Be(RiskDecisionKind.Block);
-        decision.Reason.Should().Contain("threw exception");
+        decision.Reason.Should().Contain("error");              // ← was "threw exception"
+        decision.GuardName.Should().Be("Throwing");
     }
 
     // ─── Helpers ───
