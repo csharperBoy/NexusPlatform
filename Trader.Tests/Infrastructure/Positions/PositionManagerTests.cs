@@ -405,7 +405,7 @@ public class PositionManagerTests
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
             symbols: new[] { ("TEST", new SymbolAllocation(100m)) },
-            accountIds: new[] { accountId });
+            accounts: new[] { (accountId , 100m) });
 
         run.Start();   // Created → Ready → Running
         return run;

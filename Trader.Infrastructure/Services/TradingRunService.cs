@@ -44,9 +44,10 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
     onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
     onStop: (StopRunBehavior)model.Settings.OnStop,
-    symbols: model.Symbols.Select(s =>
+     symbols: model.Symbols.Select(s =>
         (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
-    accountIds: model.AccountIds,
+    accounts: model.Accounts.Select(a =>
+        (a.AccountId, a.AllocationPercent)),
     targetCurrency: model.TargetCurrency,
     strengthMultiplier: model.StrengthMultiplier,
     minDeltaPercent: model.MinDeltaPercent,
@@ -105,14 +106,25 @@ executionMode: (ExecutionMode)model.ExecutionMode);
         }
 
         // Sync Accounts
-        var incomingAccountIds = model.AccountIds.ToHashSet();
+        var incomingAccounts = model.Accounts.ToDictionary(
+    a => a.AccountId, a => a.AllocationPercent);
+
+        // حذف Accountهایی که در model نیستند
         foreach (var existing in run.Accounts.ToList())
         {
-            if (!incomingAccountIds.Contains(existing.TraderAccountId))
+            if (!incomingAccounts.ContainsKey(existing.TraderAccountId))
                 run.RemoveAccount(existing.TraderAccountId);
         }
-        foreach (var accId in model.AccountIds)
-            run.AddAccount(accId);
+
+        // اضافه یا update
+        foreach (var (accountId, percent) in incomingAccounts)
+        {
+            var existing = run.Accounts.FirstOrDefault(a => a.TraderAccountId == accountId);
+            if (existing is null)
+                run.AddAccount(accountId, percent);
+            else if (existing.AllocationPercent != percent)
+                run.UpdateAccountAllocation(accountId, percent);
+        }
 
         await _uow.TradingRuns.UpdateAsync(run);
         await _uow.SaveChangesAsync();
@@ -243,7 +255,7 @@ executionMode: (ExecutionMode)model.ExecutionMode);
     (int)r.CapitalAllocation.Mode, r.CapitalAllocation.FixedAmount?.Amount,
     r.TargetCurrency,
     r.StrengthMultiplier,
-    r.MinDeltaPercent, 
+    r.MinDeltaPercent,
     (int)r.ExecutionMode,
 r.ExecutionMode.ToString(),
     r.Symbols.Count, r.Accounts.Count,
@@ -265,6 +277,6 @@ r.ExecutionMode.ToString(),
         r.TakeProfit?.Percentage, r.TakeProfit?.AbsolutePrice?.Value,
         (int)r.DefaultOrderMode, (int)r.OnMarketClose, (int)r.OnStop),
     r.Symbols.Select(s => new TradingRunSymbolDto(s.Isin, s.Allocation.Percentage)).ToList(),
-    r.Accounts.Select(a => a.TraderAccountId).ToList(),
+    r.Accounts.Select(a => new TradingRunAccountDto(a.TraderAccountId, a.AllocationPercent)).ToList(),
     r.StartedAt, r.StoppedAt, r.CreatedAt, r.ModifiedAt);
 }

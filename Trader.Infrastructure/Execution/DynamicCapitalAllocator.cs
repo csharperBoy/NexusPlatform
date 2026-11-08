@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
-using Trader.Application.Abstractions.Brokers;
-using Trader.Application.Abstractions.Brokers.Queries;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Runtime;
 
@@ -9,25 +7,14 @@ namespace Trader.Infrastructure.Execution;
 
 public sealed class DynamicCapitalAllocator : ICapitalAllocator
 {
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(5);
-
-    private readonly IAccountBalanceCache _cache;
-    private readonly ITraderUnitOfWork<Data.TraderDbContext> _uow;
-    private readonly IBrokerClientFactory _brokerFactory;
-    private readonly IBrokerSessionProvider _sessionProvider;
+    private readonly IAccountCashCache _cashCache;
     private readonly ILogger<DynamicCapitalAllocator> _logger;
 
     public DynamicCapitalAllocator(
-        IAccountBalanceCache cache,
-        ITraderUnitOfWork<Data.TraderDbContext> uow,
-        IBrokerClientFactory brokerFactory,
-        IBrokerSessionProvider sessionProvider,
+        IAccountCashCache cashCache,
         ILogger<DynamicCapitalAllocator> logger)
     {
-        _cache = cache;
-        _uow = uow;
-        _brokerFactory = brokerFactory;
-        _sessionProvider = sessionProvider;
+        _cashCache = cashCache;
         _logger = logger;
     }
 
@@ -36,38 +23,21 @@ public sealed class DynamicCapitalAllocator : ICapitalAllocator
         Guid accountId,
         CancellationToken ct = default)
     {
-        if (_cache.TryGet(accountId, out var cached))
-            return cached;
+        // ── 1. BuyPower از Cache (یا Broker اگر invalidated/miss) ──
+        var cash = await _cashCache.GetOrRefreshAsync(accountId, ct);
 
-        var account = await _uow.Accounts.GetByIdAsync(accountId);
-        if (account is null)
-        {
-            _logger.LogWarning("Account {AccountId} not found.", accountId);
-            return 0m;
-        }
+        // ── 2. درصد این Account در این Run ──
+        var percent = context.GetAllocationFor(accountId);
 
-        try
-        {
-            var session = await _sessionProvider.GetSessionAsync(accountId, ct);
-            var reader = _brokerFactory.Get<IBrokerAccountReader>(account.Broker);
-            var money = await reader.GetCashBalanceAsync(session, ct);
+        // ── 3. Allocated ──
+        var allocated = cash.BuyPowerT0 * (percent / 100m);
 
-            var balance = (decimal)money.BuyPowerT0;
+        _logger.LogDebug(
+            "Allocated {Allocated:N0} for (run={RunId}, account={AccountId}): " +
+            "BuyPower={BuyPower:N0} × {Percent}%",
+            allocated, context.RunId, accountId,
+            cash.BuyPowerT0, percent);
 
-            _cache.Set(accountId, balance, CacheTtl);
-
-            _logger.LogInformation(
-                "Dynamic capital for account {AccountId}: BuyPowerT0={BuyPower} " +
-                "(T0={T0}, Block={Block}, Credit={Credit})",
-                accountId, balance, money.T0, money.Block, money.Credit);
-
-            return balance;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex,
-                "Failed to fetch cash balance for account {AccountId}.", accountId);
-            return 0m;
-        }
+        return allocated;
     }
 }

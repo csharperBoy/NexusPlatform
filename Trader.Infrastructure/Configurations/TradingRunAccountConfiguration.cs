@@ -15,6 +15,11 @@ public class TradingRunAccountConfiguration : BaseConfiguration<TradingRunAccoun
         builder.Property(x => x.TradingRunId).IsRequired();
         builder.Property(x => x.TraderAccountId).IsRequired();
 
+        builder.Property(x => x.AllocationPercent)
+            .HasPrecision(9, 4)
+            .IsRequired()
+            .HasDefaultValue(100m);   // برای رکوردهای موجود
+
         builder.HasIndex(x => new { x.TradingRunId, x.TraderAccountId })
             .IsUnique()
             .HasDatabaseName("UX_TradingRunAccount_Run_Account");

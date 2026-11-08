@@ -11,4 +11,4 @@ public sealed record UpdateTradingRunModel(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<Guid> AccountIds);
+    IReadOnlyList<TradingRunAccountModel> Accounts);

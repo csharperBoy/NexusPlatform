@@ -76,8 +76,8 @@ public class TradingRunTests
             defaultOrderMode: OrderMode.Quantity,
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
-            symbols: new[] { ("TEST", new SymbolAllocation(100m)) },
-            accountIds: new[] { Guid.NewGuid() },
+            symbols: new[] { ("TEST", new SymbolAllocation(100m)) }, 
+            accounts: new[] { (Guid.NewGuid(), 100m) },
             targetCurrency: targetCurrency);
     }
 }

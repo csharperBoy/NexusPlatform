@@ -28,6 +28,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     private readonly IBrokerClientFactory _brokerFactory;
     private readonly IUserContextCache _userContextCache;
     private readonly UserDataContext _userContext;
+    private readonly IAccountCashCache _cashCache;
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
     private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<ExecutionCoordinator> _logger;
@@ -46,6 +47,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         ITraderUnitOfWork<TraderDbContext> uow,
     ITradingEventLogger eventLogger,
     IRiskGuardPipeline riskPipeline,
+    IAccountCashCache cashCache,   
         ILogger<ExecutionCoordinator> logger)
     {
         _runCache = runCache;
@@ -61,6 +63,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         _uow = uow;
         _eventLogger = eventLogger;
         _riskPipeline = riskPipeline;
+        _cashCache = cashCache;
         _logger = logger;
     }
 
@@ -254,6 +257,9 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             var dispatcher = _dispatcherResolver.Resolve(intent.IsPaper);
             var brokerOrder = await dispatcher.DispatchAsync(
                 intent, account.Broker, session, ct);
+
+            // ── Cash تغییر کرده — Invalidate برای refresh بعدی ──
+            _cashCache.Invalidate(accountId);
 
             _eventLogger.Log(
                 stage: TradingStage.Execution,

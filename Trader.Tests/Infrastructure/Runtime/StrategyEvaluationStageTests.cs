@@ -375,7 +375,7 @@ public class StrategyEvaluationStageTests
             OnMarketClose: MarketCloseBehavior.KeepPositions,
             OnStop: StopRunBehavior.KeepPositions,
             Symbols: new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            AccountIds: new[] { Guid.NewGuid() });
+AccountAllocations: new[] { new RunAccountAllocation(Guid.NewGuid(), 100m) });
     }
 
     private static MarketSnapshot MakeSnapshot(string isin) => new(

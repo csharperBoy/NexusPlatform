@@ -18,7 +18,7 @@ public record CreateTradingRunCommand(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<Guid> AccountIds
+    IReadOnlyList<TradingRunAccountModel> Accounts   // ← changed
 ) : IRequest<Result<Guid>>;
 
 public class CreateTradingRunCommandHandler
@@ -52,7 +52,7 @@ public class CreateTradingRunCommandHandler
     request.ExecutionMode,
                 request.Settings,
                 request.Symbols,
-                request.AccountIds);
+                request.Accounts);
 
             var id = await _service.CreateAsync(model);
 

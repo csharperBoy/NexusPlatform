@@ -136,9 +136,14 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, HistoricalDataCollectionJob, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>,
     EfRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>,
+                EfRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>();
 
 
             /* ═══════════ Repositories — Specification ═══════════ */
+            services.AddScoped<ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid>,
+EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>();
+
             services.AddScoped<ISpecificationRepository<RunDailyEquitySnapshot, Guid>,
                 EfSpecificationRepository<TraderDbContext, RunDailyEquitySnapshot, Guid>>();
             // Legacy
@@ -192,7 +197,10 @@ namespace Trader.Infrastructure.DependencyInjection
 
             services.AddScoped<IUnitOfWork<TraderDbContext>,
                 EfUnitOfWork<TraderDbContext>>();
-            services.AddSingleton<IAccountBalanceCache, AccountBalanceCache>();
+
+            services.AddSingleton<IAccountCashCache, AccountCashCache>();
+            services.AddSingleton<IRunDailyEquityTracker, RunAccountDailyEquityTracker>();
+
             // ─── Position Manager ───
             services.AddScoped<IPositionManager, PositionManager>();
 
@@ -278,7 +286,7 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRiskGuard, KillSwitchGuard>();
             services.AddScoped<IRiskGuardPipeline, RiskGuardPipeline>();
 
-            services.AddSingleton<IRunDailyEquityTracker, RunDailyEquityTracker>();
+            services.AddSingleton<IRunDailyEquityTracker, RunAccountDailyEquityTracker>();
             services.AddScoped<IRiskGuard, DailyLossLimitGuard>();
             // ─── Risk Repositories (اگر قبلاً GenericRepository registration نبود) ───
             services.AddScoped<IRepository<TraderDbContext, RiskKillSwitch, Guid>,

@@ -102,7 +102,8 @@ public class RiskGuardPipelineTests
             CapitalAllocation.Dynamic(), null, null,
             OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
             new[] { ("TEST", new SymbolAllocation(100m)) },
-            new[] { account.Id });
+    new[] { (account.Id, 100m) },  
+    executionMode: ExecutionMode.Paper);
 
         var ctx = new RunRuntimeContext(
             run.Id, run.Name, Guid.Empty, Guid.NewGuid(), "rsi", null!, null!,
@@ -110,7 +111,7 @@ public class RiskGuardPipelineTests
             run.CapitalAllocation, null, null,
             OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
             new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            new[] { account.Id });
+    new[] { new RunAccountAllocation(account.Id, 100m) });  
 
         var intent = OrderIntent.Create(
             run.Id, account.Id, null, "TEST", OrderSide.Buy,

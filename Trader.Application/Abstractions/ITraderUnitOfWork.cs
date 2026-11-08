@@ -35,7 +35,9 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobs { get; }
     IRepository<TDbContext, RiskKillSwitch, Guid> RiskKillSwitches { get; }
     IRepository<TDbContext, RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshots { get; }
+    IRepository<TDbContext, RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshots { get; }
     // Spec Repositories
+    ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshotSpecs { get; }
     ISpecificationRepository<RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshotSpecs { get; }
     ISpecificationRepository<RiskKillSwitch, Guid> RiskKillSwitchSpecs { get; }
     ISpecificationRepository<HistoricalDataCollectionJob, Guid> HistoricalDataCollectionJobSpecs { get; }

@@ -84,7 +84,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         MarketCloseBehavior onMarketClose,
         StopRunBehavior onStop,
         IEnumerable<(string Isin, SymbolAllocation Allocation)> symbols,
-        IEnumerable<Guid> accountIds,
+        IEnumerable<(Guid AccountId, decimal AllocationPercent)> accounts,  
     string? targetCurrency = null,
     decimal strengthMultiplier = 1.5m,
     decimal minDeltaPercent = 0.03m,
@@ -122,8 +122,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         foreach (var (isin, allocation) in symbols)
             run.AddSymbolInternal(isin, allocation);
 
-        foreach (var acc in accountIds)
-            run.AddAccountInternal(acc);
+        foreach (var (accountId, percent) in accounts)
+            run.AddAccountInternal(accountId, percent);
 
         run.RecomputeReadiness();
         return run;
@@ -224,12 +224,28 @@ ExecutionMode executionMode)
 
     // ─────────────── Accounts ───────────────
 
-    public void AddAccount(Guid accountId)
+
+    public void AddAccount(Guid accountId, decimal allocationPercent = 100m)
     {
         EnsureNotRunning();
-        AddAccountInternal(accountId);
+        AddAccountInternal(accountId, allocationPercent);
         Touch();
         RecomputeReadiness();
+    }
+
+    public void UpdateAccountAllocation(Guid accountId, decimal allocationPercent)
+    {
+        EnsureNotRunning();
+        var acc = _accounts.FirstOrDefault(a => a.TraderAccountId == accountId)
+            ?? throw new InvalidOperationException($"Account {accountId} not in run.");
+        acc.UpdateAllocation(allocationPercent);
+        Touch();
+    }
+
+    private void AddAccountInternal(Guid accountId, decimal allocationPercent)
+    {
+        if (_accounts.Any(a => a.TraderAccountId == accountId)) return;
+        _accounts.Add(TradingRunAccount.Create(Id, accountId, allocationPercent));
     }
 
     public void RemoveAccount(Guid accountId)
@@ -242,11 +258,6 @@ ExecutionMode executionMode)
         RecomputeReadiness();
     }
 
-    private void AddAccountInternal(Guid accountId)
-    {
-        if (_accounts.Any(a => a.TraderAccountId == accountId)) return;
-        _accounts.Add(TradingRunAccount.Create(Id, accountId));
-    }
 
     // ─────────────── Lifecycle ───────────────
     public void Start()

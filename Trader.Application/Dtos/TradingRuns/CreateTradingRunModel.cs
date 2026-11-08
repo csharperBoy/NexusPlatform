@@ -1,6 +1,10 @@
 ﻿namespace Trader.Application.Dtos.TradingRuns;
 
 
+public sealed record TradingRunAccountModel(
+    Guid AccountId,
+    decimal AllocationPercent = 100m);
+
 public sealed record CreateTradingRunModel(
     string Name,
     string StrategyKey,
@@ -12,7 +16,7 @@ public sealed record CreateTradingRunModel(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<Guid> AccountIds);
+    IReadOnlyList<TradingRunAccountModel> Accounts);   
 
 public sealed record TradingRunSettingsModel(
     int CapitalAllocationMode,

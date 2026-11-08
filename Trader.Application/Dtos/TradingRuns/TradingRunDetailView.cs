@@ -15,8 +15,13 @@ public sealed record TradingRunDetailView(
     string ExecutionModeName,
     TradingRunSettingsDto Settings,
     IReadOnlyList<TradingRunSymbolDto> Symbols,
-    IReadOnlyList<Guid> AccountIds,
+    IReadOnlyList<TradingRunAccountDto> Accounts,
     DateTime? StartedAt,
     DateTime? StoppedAt,
     DateTime CreatedAt,
     DateTime? ModifiedAt);
+
+
+public sealed record TradingRunAccountDto(
+    Guid AccountId,
+    decimal AllocationPercent);

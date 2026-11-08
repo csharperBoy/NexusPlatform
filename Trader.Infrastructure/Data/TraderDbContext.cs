@@ -55,6 +55,7 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<BacktestEvent> BacktestEvents { get; set; }
     public virtual DbSet<RiskKillSwitch> RiskKillSwitches { get; set; }
     public virtual DbSet<RunDailyEquitySnapshot> RunDailyEquitySnapshots { get; set; }
+    public virtual DbSet<RunAccountDailyEquitySnapshot> RunAccountDailyEquitySnapshots { get; set; }
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -101,5 +102,6 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new BacktestEventConfiguration()); 
         modelBuilder.ApplyConfiguration(new RiskKillSwitchConfiguration());
         modelBuilder.ApplyConfiguration(new RunDailyEquitySnapshotConfiguration());
+        modelBuilder.ApplyConfiguration(new RunAccountDailyEquitySnapshotConfiguration());
     }
 }

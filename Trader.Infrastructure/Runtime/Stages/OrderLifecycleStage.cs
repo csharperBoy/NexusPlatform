@@ -28,7 +28,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 {
     private const int MaxPagesPerAccount = 10;
     private const int HistoryPageSize = 100;
-
+    private readonly IAccountCashCache _cashCache;
     private DateTime _lastRunAt = DateTime.MinValue;
 
     private readonly IRunExecutionContextCache _runCache;
@@ -49,7 +49,8 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         IBrokerSessionProvider sessionProvider,
         IBrokerClientFactory brokerFactory,
         IPositionManager positionManager,
-        IMarketSnapshotStore snapshotStore,
+        IAccountCashCache cashCache,
+    IMarketSnapshotStore snapshotStore,
     IOrderDispatcherResolver dispatcherResolver,
 
     IUserContextCache userContextCache,
@@ -60,6 +61,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     {
         _runCache = runCache;
         _uow = uow;
+        _cashCache = cashCache;
         _sessionProvider = sessionProvider;
         _brokerFactory = brokerFactory;
         _positionManager = positionManager;
@@ -298,6 +300,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
                 var dispatcher = _dispatcherResolver.Resolve(pos.IsPaper);   // ← NEW
                 await dispatcher.DispatchAsync(intent, account.Broker, session, ct);
+                _cashCache.Invalidate(pos.TraderAccountId);
                 dispatched++;
 
                 // ─── OrderDispatched Event ───
@@ -519,6 +522,10 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
                 await _uow.OrderTrades.AddAsync(trade);
                 await _positionManager.ApplyTradeAsync(ourOrder, trade, ct);
+
+
+                // ── Fill Cash را تغییر داد — Invalidate ──
+                _cashCache.Invalidate(ourOrder.TraderAccountId);
 
                 newFilledQty += dto.Quantity;
                 changed = true;

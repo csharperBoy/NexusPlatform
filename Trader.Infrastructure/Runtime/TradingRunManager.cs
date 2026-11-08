@@ -60,9 +60,12 @@ public sealed class TradingRunManager : ITradingRunManager
             .Select(s => new RunSymbolContext(s.Isin, s.Allocation))
             .ToList();
 
-        var accountIds = run.Accounts
-            .Select(a => a.TraderAccountId)
-            .ToList();
+        //var accountIds = run.Accounts
+        //    .Select(a => a.TraderAccountId)
+        //    .ToList();
+        var accountAllocations = run.Accounts
+    .Select(a => new RunAccountAllocation(a.TraderAccountId, a.AllocationPercent))
+    .ToList();
 
         var context = new RunRuntimeContext(
                         RunId: run.Id,
@@ -84,7 +87,7 @@ ExecutionMode: run.ExecutionMode,
                         OnMarketClose: run.OnMarketClose,
                         OnStop: run.OnStop,
                         Symbols: symbols,
-                        AccountIds: accountIds);
+            AccountAllocations: accountAllocations);
 
         _cache.Set(context);
 
@@ -97,7 +100,7 @@ ExecutionMode: run.ExecutionMode,
                      $"استراتژی: {run.StrategyKey}, " +
                      $"تایم‌فریم: {run.PrimaryTimeFrame.ToCode()}, " +
                      $"نمادها: {symbols.Count}, " +
-                     $"حساب‌ها: {accountIds.Count}" +
+                     $"حساب‌ها: {accountAllocations.Count}" +
                      (string.IsNullOrEmpty(run.TargetCurrency)
                         ? ""
                         : $", ارز تحلیل: {run.TargetCurrency}"),
@@ -106,7 +109,7 @@ ExecutionMode: run.ExecutionMode,
                 strategyKey = run.StrategyKey,
                 timeFrame = run.PrimaryTimeFrame.ToCode(),
                 symbolCount = symbols.Count,
-                accountCount = accountIds.Count,
+                accountCount = accountAllocations.Count,
                 targetCurrency = run.TargetCurrency,
             },
             runId: runId);

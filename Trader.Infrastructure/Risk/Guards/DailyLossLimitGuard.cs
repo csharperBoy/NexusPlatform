@@ -4,12 +4,6 @@ using Trader.Domain.Enums;
 
 namespace Trader.Infrastructure.Risk.Guards;
 
-/// <summary>
-/// اگر Run در یک روز بیش از MaxLossPercent ضرر کرده باشد، Orderها Block می‌شوند.
-///
-/// Run-level، Block-only (Positionها با SL/TP محافظت می‌شوند).
-/// Paper Mode skip (به‌جز اگر ApplyToPaper = true).
-/// </summary>
 public sealed class DailyLossLimitGuard : IRiskGuard
 {
     private readonly IRunDailyEquityTracker _tracker;
@@ -33,18 +27,19 @@ public sealed class DailyLossLimitGuard : IRiskGuard
         if (!opts.Enabled)
             return RiskDecision.Allow;
 
-        // Paper Mode skip (default) — Paper Cash tracked نیست
         if (context.RunContext.ExecutionMode == ExecutionMode.Paper && !opts.ApplyToPaper)
             return RiskDecision.Allow;
 
-        // ممکن است throw کند (Broker down) → pipeline به Block تبدیل می‌کند
+        // ── per-Account check ──
         var current = await _tracker.GetCurrentAsync(
-            context.RunContext.RunId, ct);
+            context.RunContext.RunId,
+            context.Account.Id,
+            ct);
 
         if (current.LossPercent >= opts.MaxLossPercent)
         {
             return RiskDecision.Block(
-                $"Daily loss {current.LossPercent:F2}% " +
+                $"Daily loss {current.LossPercent:F2}% for account '{context.Account.Name}' " +
                 $"exceeds limit {opts.MaxLossPercent:F2}% " +
                 $"(opening={current.Opening.OpeningEquity:N0}, " +
                 $"current={current.CurrentEquity:N0})",

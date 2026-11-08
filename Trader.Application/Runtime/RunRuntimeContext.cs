@@ -20,7 +20,7 @@ public sealed record RunRuntimeContext(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
-    ExecutionMode ExecutionMode,                     // ← NEW
+    ExecutionMode ExecutionMode,
     CapitalAllocation CapitalAllocation,
     StopLossConfig? StopLoss,
     TakeProfitConfig? TakeProfit,
@@ -28,4 +28,16 @@ public sealed record RunRuntimeContext(
     MarketCloseBehavior OnMarketClose,
     StopRunBehavior OnStop,
     IReadOnlyList<RunSymbolContext> Symbols,
-    IReadOnlyList<Guid> AccountIds);
+    IReadOnlyList<RunAccountAllocation> AccountAllocations)   // ← changed
+{
+    /// <summary>Account Ids — derived.</summary>
+    public IReadOnlyList<Guid> AccountIds =>
+        AccountAllocations.Select(a => a.AccountId).ToList();
+
+    /// <summary>درصد تخصیص برای یک Account خاص.</summary>
+    public decimal GetAllocationFor(Guid accountId)
+        => AccountAllocations
+            .FirstOrDefault(a => a.AccountId == accountId)?.Percent
+            ?? throw new InvalidOperationException(
+                $"Account {accountId} not in Run {RunId}.");
+}

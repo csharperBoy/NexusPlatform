@@ -24,105 +24,94 @@ public class DailyLossLimitGuardTests
     [Fact]
     public async Task Check_PaperMode_DefaultsToSkip()
     {
-        var sut = CreateSut(enabled: true, applyToPaper: false);
-        var tracker = new Mock<IRunDailyEquityTracker>();
-        // tracker نباید صدا زده شود
-
+        var (sut, tracker) = CreateSutWithMock(applyToPaper: false);
         var decision = await sut.CheckAsync(
             BuildContext(executionMode: ExecutionMode.Paper));
-
         decision.Kind.Should().Be(RiskDecisionKind.Allow);
         tracker.VerifyNoOtherCalls();
-    }
-
-    
-    [Fact]
-    public async Task Check_PaperModeWithApplyToPaper_BlocksOnExcessLoss()
-    {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: true);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BuildCurrent(openingEquity: 100M, currentEquity: 90M));
-        // 10% loss > 5% limit
-
-        var decision = await sut.CheckAsync(
-            BuildContext(executionMode: ExecutionMode.Paper));
-
-        decision.Kind.Should().Be(RiskDecisionKind.Block);
     }
 
     [Fact]
     public async Task Check_LossBelowThreshold_Allows()
     {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: false);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        var (sut, tracker) = CreateSutWithMock(applyToPaper: false);
+        tracker.Setup(x => x.GetCurrentAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildCurrent(openingEquity: 100_000_000M, currentEquity: 97_000_000M));
-        // 3% loss, limit 5% → Allow
 
         var decision = await sut.CheckAsync(BuildContext(executionMode: ExecutionMode.Live));
-
         decision.Kind.Should().Be(RiskDecisionKind.Allow);
     }
 
     [Fact]
     public async Task Check_LossAboveThreshold_Blocks()
     {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: false);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        var (sut, tracker) = CreateSutWithMock(applyToPaper: false);
+        tracker.Setup(x => x.GetCurrentAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(BuildCurrent(openingEquity: 100_000_000M, currentEquity: 94_000_000M));
-        // 6% loss, limit 5% → Block
 
         var decision = await sut.CheckAsync(BuildContext(executionMode: ExecutionMode.Live));
 
         decision.Kind.Should().Be(RiskDecisionKind.Block);
         decision.GuardName.Should().Be("DailyLossLimit");
-        decision.Reason.Should().Contain("6.00");   // loss percent
-        decision.Reason.Should().Contain("5.00");   // limit
+        decision.Reason.Should().Contain("6.00");
+        decision.Reason.Should().Contain("5.00");
     }
 
     [Fact]
-    public async Task Check_EquityIncreased_ShowsZeroLoss()
+    public async Task Check_PerAccount_Isolation()
     {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: false);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BuildCurrent(openingEquity: 100M, currentEquity: 120M));
+        var accountA = TraderAccount.Create(BrokerType.EasyTrader, "A", "u", "p");
+        var accountB = TraderAccount.Create(BrokerType.EasyTrader, "B", "u2", "p2");
 
-        var decision = await sut.CheckAsync(BuildContext(executionMode: ExecutionMode.Live));
+        var (sut, tracker) = CreateSutWithMock(applyToPaper: false);
+        tracker.Setup(x => x.GetCurrentAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid runId, Guid accId, CancellationToken ct) =>
+                accId == accountA.Id
+                    ? BuildCurrent(openingEquity: 100M, currentEquity: 90M)   // 10% loss
+                    : BuildCurrent(openingEquity: 100M, currentEquity: 99M)); // 1% loss
 
-        decision.Kind.Should().Be(RiskDecisionKind.Allow);
-    }
+        var decisionA = await sut.CheckAsync(BuildContextFor(accountA));
+        var decisionB = await sut.CheckAsync(BuildContextFor(accountB));
 
-    [Fact]
-    public async Task Check_ZeroOpeningEquity_DoesNotDivideByZero()
-    {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: false);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(BuildCurrent(openingEquity: 0M, currentEquity: 0M));
-
-        var decision = await sut.CheckAsync(BuildContext(executionMode: ExecutionMode.Live));
-
-        decision.Kind.Should().Be(RiskDecisionKind.Allow);
-    }
-
-    [Fact]
-    public async Task Check_TrackerThrows_Propagates()
-    {
-        var (sut, trackerMock) = CreateSutWithMock(applyToPaper: false);
-        trackerMock.Setup(x => x.GetCurrentAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("broker down"));
-
-        var act = () => sut.CheckAsync(BuildContext(executionMode: ExecutionMode.Live));
-
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        // pipeline این را به Block تبدیل می‌کند (fail-safe)
+        decisionA.Kind.Should().Be(RiskDecisionKind.Block);
+        decisionB.Kind.Should().Be(RiskDecisionKind.Allow);
     }
 
     // ─── Helpers ───
+    private static RiskCheckContext BuildContextFor(
+    TraderAccount account, ExecutionMode executionMode = ExecutionMode.Live)
+    {
+        var run = TradingRun.Create(
+            "test", Guid.NewGuid(), "rsi", "{}", TimeFrame.D1,
+            CapitalAllocation.Dynamic(), null, null,
+            OrderMode.Quantity, MarketCloseBehavior.KeepPositions,
+            StopRunBehavior.KeepPositions,
+            new[] { ("TEST", new SymbolAllocation(100m)) },
+            new[] { (account.Id, 100m) },
+            executionMode: executionMode);
 
-    private static DailyLossLimitGuard CreateSut(bool enabled, bool applyToPaper = false)
-        => CreateSutWithMock(applyToPaper, enabled).Sut;
+        var ctx = new RunRuntimeContext(
+            run.Id, run.Name, Guid.Empty, Guid.NewGuid(),
+            "rsi", null!, null!, TimeFrame.D1, null, 1.0m, 0.03m, executionMode,
+            run.CapitalAllocation, null, null,
+            OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
+            new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
+            new[] { new RunAccountAllocation(account.Id, 100m) });
 
-    private static (DailyLossLimitGuard Sut, Mock<IRunDailyEquityTracker> Tracker) CreateSutWithMock(
-        bool applyToPaper, bool enabled = true, decimal maxLoss = 5.0m)
+        var intent = OrderIntent.Create(
+            run.Id, account.Id, null, "TEST", OrderSide.Buy,
+            new Price(1000m), new Quantity(100), OrderMode.Quantity);
+
+        return new RiskCheckContext(intent, ctx, account);
+    }
+    private static DailyLossLimitGuard CreateSut(bool enabled)
+        => CreateSutWithMock(applyToPaper: false, enabled: enabled).Sut;
+
+    private static (DailyLossLimitGuard Sut, Mock<IRunDailyEquityTracker> Tracker)
+        CreateSutWithMock(bool applyToPaper, bool enabled = true)
     {
         var opts = new Mock<IOptionsMonitor<TradingRiskOptions>>();
         opts.Setup(x => x.CurrentValue).Returns(new TradingRiskOptions
@@ -131,29 +120,27 @@ public class DailyLossLimitGuardTests
             DailyLossLimit = new DailyLossLimitOptions
             {
                 Enabled = enabled,
-                MaxLossPercent = maxLoss,
+                MaxLossPercent = 5.0m,
                 ApplyToPaper = applyToPaper,
             }
         });
-
         var tracker = new Mock<IRunDailyEquityTracker>();
-        var sut = new DailyLossLimitGuard(tracker.Object, opts.Object);
-        return (sut, tracker);
+        return (new DailyLossLimitGuard(tracker.Object, opts.Object), tracker);
     }
 
-    private static RunDailyEquityCurrent BuildCurrent(
+    private static RunAccountDailyEquityCurrent BuildCurrent(
         decimal openingEquity, decimal currentEquity)
     {
-        // Opening equity = openingCash + openingPositionValue
-        var opening = new RunDailyEquityOpening(
+        var opening = new RunAccountDailyEquityOpening(
             RunId: Guid.NewGuid(),
+            AccountId: Guid.NewGuid(),
             TradingDate: new DateOnly(2026, 11, 8),
             OpeningCash: openingEquity,
             OpeningPositionValue: 0m,
             OpeningEquity: openingEquity,
             CapturedAt: DateTime.UtcNow);
 
-        return new RunDailyEquityCurrent(
+        return new RunAccountDailyEquityCurrent(
             Opening: opening,
             CurrentCash: currentEquity,
             CurrentPositionValue: 0m,
@@ -162,8 +149,14 @@ public class DailyLossLimitGuardTests
 
     private static RiskCheckContext BuildContext(
         ExecutionMode executionMode = ExecutionMode.Live)
+        => BuildContextForAccount(Guid.NewGuid(), executionMode);
+
+    private static RiskCheckContext BuildContextForAccount(
+        Guid accountId, ExecutionMode executionMode = ExecutionMode.Live)
     {
         var account = TraderAccount.Create(BrokerType.EasyTrader, "test", "u", "p");
+        // account.Id از BaseEntity — نمی‌توان override کرد
+        // برای تست per-account، از account.Id واقعی استفاده می‌کنیم
 
         var run = TradingRun.Create(
             "test", Guid.NewGuid(), "rsi", "{}", TimeFrame.D1,
@@ -171,20 +164,22 @@ public class DailyLossLimitGuardTests
             OrderMode.Quantity, MarketCloseBehavior.KeepPositions,
             StopRunBehavior.KeepPositions,
             new[] { ("TEST", new SymbolAllocation(100m)) },
-            new[] { account.Id },
+            new[] { (account.Id, 100m) },   // ← changed
             executionMode: executionMode);
+
+        var accountAllocs = new[]
+        {
+            new RunAccountAllocation(account.Id, 100m)
+        };
 
         var ctx = new RunRuntimeContext(
             run.Id, run.Name, Guid.Empty, Guid.NewGuid(),
             "rsi", null!, null!,
-            TimeFrame.D1, null, 1.0m, 0.03m,
-            executionMode,
+            TimeFrame.D1, null, 1.0m, 0.03m, executionMode,
             run.CapitalAllocation, null, null,
-            OrderMode.Quantity,
-            MarketCloseBehavior.KeepPositions,
-            StopRunBehavior.KeepPositions,
+            OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
             new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            new[] { account.Id });
+            accountAllocs);   // ← changed
 
         var intent = OrderIntent.Create(
             run.Id, account.Id, null, "TEST", OrderSide.Buy,

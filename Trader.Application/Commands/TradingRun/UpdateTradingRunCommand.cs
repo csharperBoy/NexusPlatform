@@ -18,7 +18,7 @@ public record UpdateTradingRunCommand(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<Guid> AccountIds
+    IReadOnlyList<TradingRunAccountModel> Accounts
 ) : IRequest<Result<bool>>;
 
 public class UpdateTradingRunCommandHandler
@@ -53,7 +53,7 @@ public class UpdateTradingRunCommandHandler
     request.ExecutionMode,
                 request.Settings,
                 request.Symbols,
-                request.AccountIds);
+                request.Accounts);
 
             await _service.UpdateAsync(request.Id, model);
             return Result<bool>.Ok(true);

@@ -104,7 +104,7 @@ public class KillSwitchGuardTests
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
             symbols: new[] { ("TEST", new SymbolAllocation(100m)) },
-            accountIds: new[] { account.Id });
+    accounts: new[] { (account.Id, 100m) });  
 
         var runContext = new RunRuntimeContext(
             RunId: run.Id,
@@ -126,7 +126,7 @@ public class KillSwitchGuardTests
             OnMarketClose: MarketCloseBehavior.KeepPositions,
             OnStop: StopRunBehavior.KeepPositions,
             Symbols: new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            AccountIds: new[] { account.Id });
+    AccountAllocations: new[] { new RunAccountAllocation(account.Id, 100m) });
 
         var intent = OrderIntent.Create(
             runId: run.Id,
