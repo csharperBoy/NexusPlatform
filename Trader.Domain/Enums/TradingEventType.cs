@@ -75,9 +75,9 @@ public enum TradingEventType
     OrderRiskBlocked = 90,
     KillSwitchActivated = 91,
     KillSwitchDeactivated = 92,
-    MaxPositionSizeReached = 93,        // ← NEW
+    MaxPositionSizeReached = 93,
+    CircuitBreakerTriggered = 94,
+    CircuitBreakerReset = 95,
     // رزرو:
-    // DailyLossLimitHit = 94,
-    // ConsecutiveLossCircuitBroken = 95,
     // RateLimitExceeded = 96,
 }

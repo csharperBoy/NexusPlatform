@@ -57,6 +57,7 @@ public sealed class CircuitBreakerOptions
     public bool Enabled { get; set; } = true;
     public int ConsecutiveLosses { get; set; } = 5;
     public int CooldownMinutes { get; set; } = 60;
+    public bool ApplyToPaper { get; set; } = false;
 }
 
 public sealed class RateLimiterOptions

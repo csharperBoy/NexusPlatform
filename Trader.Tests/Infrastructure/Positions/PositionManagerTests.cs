@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Logging;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -344,25 +345,95 @@ public class PositionManagerTests
         var eventLogger = new Mock<ITradingEventLogger>();
         var runCache = new Mock<IRunExecutionContextCache>();
 
+        // ─── NEW (PR 17): Loss Streak Tracker ───
+        var lossStreakTracker = new Mock<IRunAccountLossStreakTracker>();
+        lossStreakTracker
+            .Setup(x => x.OnPositionClosedAsync(
+                It.IsAny<Position>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         var sut = new PositionManager(
             uow.Object,
             eventLogger.Object,
             runCache.Object,
+            lossStreakTracker.Object,          // ← NEW
             NullLogger<PositionManager>.Instance);
 
         return (sut, new TestDeps(
             positions, positionSpecs, orderIntents, tradingRuns,
-            eventLogger, runCache, context));
+            eventLogger, runCache, lossStreakTracker, context));   // ← Add to deps
+    }
+    [Fact]
+    public async Task ApplyTradeAsync_SellFull_NotifiesLossStreakTracker()
+    {
+        // Arrange
+        var (sut, deps) = CreateSut();
+        var order = CreateOrder(OrderSide.Sell);
+
+        var existing = Position.Open(
+            runId: order.RunId,
+            traderAccountId: order.TraderAccountId,
+            isin: order.Isin,
+            quantity: new Quantity(100),
+            entryPrice: new Price(1000m),
+            stopLossPrice: null,
+            takeProfitPrice: null);
+
+        deps.PositionSpecs.Setup(x => x.ListBySpecAsync(
+                It.IsAny<Core.Domain.Specifications.ISpecification<Position>>()))
+            .ReturnsAsync(new[] { existing });
+
+        var trade = CreateTrade(order, OrderSide.Sell, qty: 100, price: 1100m);
+
+        // Act
+        await sut.ApplyTradeAsync(order, trade);
+
+        // Assert
+        existing.State.Should().Be(PositionState.Closed);
+        deps.LossStreakTracker.Verify(x => x.OnPositionClosedAsync(
+            It.Is<Position>(p => p.Id == existing.Id),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public async Task ApplyTradeAsync_SellPartial_DoesNotNotifyLossStreakTracker()
+    {
+        // Arrange
+        var (sut, deps) = CreateSut();
+        var order = CreateOrder(OrderSide.Sell);
+
+        var existing = Position.Open(
+            runId: order.RunId,
+            traderAccountId: order.TraderAccountId,
+            isin: order.Isin,
+            quantity: new Quantity(100),
+            entryPrice: new Price(1000m),
+            stopLossPrice: null,
+            takeProfitPrice: null);
+
+        deps.PositionSpecs.Setup(x => x.ListBySpecAsync(
+                It.IsAny<Core.Domain.Specifications.ISpecification<Position>>()))
+            .ReturnsAsync(new[] { existing });
+
+        var trade = CreateTrade(order, OrderSide.Sell, qty: 40, price: 1100m);
+
+        // Act
+        await sut.ApplyTradeAsync(order, trade);
+
+        // Assert
+        existing.State.Should().Be(PositionState.PartiallyClosed);
+        deps.LossStreakTracker.Verify(x => x.OnPositionClosedAsync(
+            It.IsAny<Position>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
     private sealed record TestDeps(
-        Mock<IRepository<TraderDbContext, Position, Guid>> Positions,
-        Mock<ISpecificationRepository<Position, Guid>> PositionSpecs,
-        Mock<IRepository<TraderDbContext, OrderIntent, Guid>> OrderIntents,
-        Mock<IRepository<TraderDbContext, TradingRun, Guid>> TradingRuns,
-        Mock<ITradingEventLogger> EventLogger,
-        Mock<IRunExecutionContextCache> RunCache,
-        TraderDbContext Context);
+    Mock<IRepository<TraderDbContext, Position, Guid>> Positions,
+    Mock<ISpecificationRepository<Position, Guid>> PositionSpecs,
+    Mock<IRepository<TraderDbContext, OrderIntent, Guid>> OrderIntents,
+    Mock<IRepository<TraderDbContext, TradingRun, Guid>> TradingRuns,
+    Mock<ITradingEventLogger> EventLogger,
+    Mock<IRunExecutionContextCache> RunCache,
+    Mock<IRunAccountLossStreakTracker> LossStreakTracker,      // ← NEW
+    TraderDbContext Context);
 
     private static BrokerOrder CreateOrder(OrderSide side, string isin = "TEST")
     {

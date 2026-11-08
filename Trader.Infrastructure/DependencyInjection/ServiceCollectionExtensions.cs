@@ -140,7 +140,12 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>();
 
 
+            services.AddScoped<IRepository<TraderDbContext, RunAccountLossStreak, Guid>,
+                EfRepository<TraderDbContext, RunAccountLossStreak, Guid>>();
+
             /* ═══════════ Repositories — Specification ═══════════ */
+            services.AddScoped<ISpecificationRepository<RunAccountLossStreak, Guid>,
+EfSpecificationRepository<TraderDbContext, RunAccountLossStreak, Guid>>();
             services.AddScoped<ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid>,
 EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>();
 
@@ -216,6 +221,8 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             // Live + Paper dispatchers (concrete types for Resolver)
             services.AddScoped<BrokerOrderDispatcher>();
             services.AddScoped<PaperBrokerOrderDispatcher>();
+            services.AddSingleton<IRunAccountLossStreakTracker, RunAccountLossStreakTracker>();
+            services.AddScoped<IRiskGuard, CircuitBreakerGuard>();
 
             // Resolver
             services.AddScoped<IOrderDispatcherResolver, OrderDispatcherResolver>();

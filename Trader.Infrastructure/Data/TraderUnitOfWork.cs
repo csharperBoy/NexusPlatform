@@ -34,6 +34,8 @@ IRepository<TraderDbContext, Domain.Entities.BacktestEvent, Guid> backtestEvents
 IRepository<TraderDbContext, RiskKillSwitch, Guid> riskKillSwitches,
 IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> runDailyEquitySnapshots,
 IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> runAccountDailyEquitySnapshots,
+IRepository<TraderDbContext, RunAccountLossStreak, Guid> runAccountLossStreaks,
+ISpecificationRepository<RunAccountLossStreak, Guid> runAccountLossStreakSpecs,
 ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> runAccountDailyEquitySnapshotSpecs,
 ISpecificationRepository<RunDailyEquitySnapshot, Guid> runDailyEquitySnapshotSpecs,
 ISpecificationRepository<RiskKillSwitch, Guid> riskKillSwitchSpecs,
@@ -116,6 +118,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         RunDailyEquitySnapshotSpecs = runDailyEquitySnapshotSpecs;
         RunAccountDailyEquitySnapshots = runAccountDailyEquitySnapshots;
         RunAccountDailyEquitySnapshotSpecs = runAccountDailyEquitySnapshotSpecs;
+        RunAccountLossStreaks = runAccountLossStreaks;
+        RunAccountLossStreakSpecs = runAccountLossStreakSpecs;
     }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
@@ -145,6 +149,8 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public IRepository<TraderDbContext, RiskKillSwitch, Guid> RiskKillSwitches { get; }
     public IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshots { get; }
     public IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshots { get; }
+    public IRepository<TraderDbContext, RunAccountLossStreak, Guid> RunAccountLossStreaks { get; }
+    public ISpecificationRepository<RunAccountLossStreak, Guid> RunAccountLossStreakSpecs { get; }
     public ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshotSpecs { get; }
     public ISpecificationRepository<RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshotSpecs { get; }
     public ISpecificationRepository<RiskKillSwitch, Guid> RiskKillSwitchSpecs { get; }

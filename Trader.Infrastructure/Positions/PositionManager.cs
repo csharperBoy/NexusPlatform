@@ -4,6 +4,7 @@ using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.Positions;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.TradingRuns;
 using Trader.Application.Specifications.Positions;
 using Trader.Domain.Entities;
@@ -20,16 +21,18 @@ public sealed class PositionManager : IPositionManager
     private readonly ITradingEventLogger _eventLogger;
     private readonly IRunExecutionContextCache _runCache;
     private readonly ILogger<PositionManager> _logger;
-
+    private readonly IRunAccountLossStreakTracker _lossStreakTracker;
     public PositionManager(
         ITraderUnitOfWork<TraderDbContext> uow,
         ITradingEventLogger eventLogger,
         IRunExecutionContextCache runCache,
+    IRunAccountLossStreakTracker lossStreakTracker,  
         ILogger<PositionManager> logger)
     {
         _uow = uow;
         _eventLogger = eventLogger;
         _runCache = runCache;
+        _lossStreakTracker = lossStreakTracker;
         _logger = logger;
     }
 
@@ -248,6 +251,18 @@ public sealed class PositionManager : IPositionManager
 
                 if (position.SourceEvaluationId.HasValue)
                     await UpdateEvaluationOutcomeAsync(position, order, trade, ct);
+
+                // ── Circuit Breaker Notify (PR 17) ──
+                try
+                {
+                    await _lossStreakTracker.OnPositionClosedAsync(position, ct);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "Failed to notify loss streak tracker for position {PositionId}.",
+                        position.Id);
+                }
             }
             else
             {
