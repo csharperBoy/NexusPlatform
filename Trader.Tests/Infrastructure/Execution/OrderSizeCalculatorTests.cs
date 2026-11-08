@@ -245,22 +245,106 @@ public class OrderSizeCalculatorTests
         result.Quantity.Should().Be(72_730,
             because: "the exact formula 1/(1+c) is slightly tighter than (1-c)");
     }
+    // ═══════════════════════════════════════════════════════════════
+    // MaxPositionValue (PR 16)
+    // ═══════════════════════════════════════════════════════════════
 
+    [Fact]
+    public void CalculateBuy_NoMaxPositionValue_NoCap()
+    {
+        // Target = 100M × 1.0 × 1.0 = 100M، بدون سقف → qty = 100k
+        var input = BuyInput(
+            allocated: 100_000_000m, committed: 0m,
+            strength: 1.0m, price: 1_000m, commission: 0m,
+            minQty: 1, maxQty: 1_000_000, minValue: null,
+            maxPositionValue: null);
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(100_000);
+        result.SkipReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void CalculateBuy_MaxPositionValueCaps_ReducesTarget()
+    {
+        // Target = 100M، Max = 30M → qty = 30k
+        var input = BuyInput(
+            allocated: 100_000_000m, committed: 0m,
+            strength: 1.0m, price: 1_000m, commission: 0m,
+            minQty: 1, maxQty: 1_000_000, minValue: null,
+            maxPositionValue: 30_000_000m);
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(30_000);
+        result.TargetCapital.Should().Be(30_000_000m);
+        result.SkipReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void CalculateBuy_MaxPositionValueAlreadyAtCap_SkipsWithReason()
+    {
+        // Target = 100M، Max = 30M، Committed = 30M → Delta = 0، Skip
+        var input = BuyInput(
+            allocated: 100_000_000m, committed: 30_000_000m,
+            strength: 1.0m, price: 1_000m, commission: 0m,
+            minQty: 1, maxQty: 1_000_000, minValue: null,
+            maxPositionValue: 30_000_000m);
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(0);
+        result.SkipReason.Should().Be("PositionValueCapReached");
+    }
+
+    [Fact]
+    public void CalculateBuy_MaxPositionValuePartiallyUsed_BuysUpToCap()
+    {
+        // Target = 100M، Max = 30M، Committed = 20M → Delta = 10M → qty = 10k
+        var input = BuyInput(
+            allocated: 100_000_000m, committed: 20_000_000m,
+            strength: 1.0m, price: 1_000m, commission: 0m,
+            minQty: 1, maxQty: 1_000_000, minValue: null,
+            maxPositionValue: 30_000_000m);
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(10_000);
+        result.SkipReason.Should().BeNull();
+    }
+
+    [Fact]
+    public void CalculateBuy_MaxPositionValueHigherThanTarget_NoEffect()
+    {
+        // Target = 20M، Max = 30M → target (20M) lower than max (30M) → no cap
+        var input = BuyInput(
+            allocated: 20_000_000m, committed: 0m,
+            strength: 1.0m, price: 1_000m, commission: 0m,
+            minQty: 1, maxQty: 1_000_000, minValue: null,
+            maxPositionValue: 30_000_000m);
+
+        var result = _sut.CalculateBuy(input);
+
+        result.Quantity.Should().Be(20_000);
+        result.SkipReason.Should().BeNull();
+    }
     // ────────────────────────────────────────────────────────────
     // Helper
     // ────────────────────────────────────────────────────────────
 
     private static BuySizeInput BuyInput(
-        decimal allocated,
-        decimal committed,
-        decimal strength,
-        decimal price,
-        decimal commission,
-        long minQty,
-        long maxQty,
-        decimal? minValue,
-        decimal minDeltaPercent = 0m,
-    decimal? availableCash = null)
+    decimal allocated,
+    decimal committed,
+    decimal strength,
+    decimal price,
+    decimal commission,
+    long minQty,
+    long maxQty,
+    decimal? minValue,
+    decimal minDeltaPercent = 0m,
+    decimal? availableCash = null,
+    decimal? maxPositionValue = null)   // ← NEW
     {
         return new BuySizeInput(
             AllocatedCapital: allocated,
@@ -273,6 +357,7 @@ public class OrderSizeCalculatorTests
             BuyCommissionRate: commission,
             MinOrderQuantity: minQty,
             MaxOrderQuantity: maxQty,
-            MinOrderValueRial: minValue is null ? null : (long)minValue.Value);
+            MinOrderValueRial: minValue is null ? null : (long)minValue.Value,
+            MaxPositionValue: maxPositionValue);
     }
 }

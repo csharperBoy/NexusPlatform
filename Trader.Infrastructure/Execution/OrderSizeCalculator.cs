@@ -13,14 +13,32 @@ public sealed class OrderSizeCalculator : IOrderSizeCalculator
             * input.StrengthMultiplier;
 
         if (targetCapital > input.AllocatedCapital)
-            targetCapital = input.AllocatedCapital;   // cap
+            targetCapital = input.AllocatedCapital;
+
+        // ═══════════════════════════════════════════════════════════════
+        // 1b. MaxPositionValue Cap (Phase D — PR 16)
+        // سقف مطلق برای ارزش Position. حتی اگر target بیشتر خواست، Cap.
+        // دلیل: هیچ Symbol نباید بیش از X% از Run Capital را بگیرد.
+        // ═══════════════════════════════════════════════════════════════
+        if (input.MaxPositionValue.HasValue
+            && targetCapital > input.MaxPositionValue.Value)
+        {
+            targetCapital = input.MaxPositionValue.Value;
+        }
 
         // ─── ۲. Delta ───
         var delta = targetCapital - input.CommittedCapital;
 
         if (delta <= 0m)
-            return new OrderSizeResult(0, targetCapital, input.CommittedCapital, delta,
-                "DeltaLessThanOrEqualZero");
+        {
+            // Skip reason دقیق‌تر: اگر علت cap بود، جدا گزارش کن
+            var reason = input.MaxPositionValue.HasValue
+                && input.CommittedCapital >= input.MaxPositionValue.Value
+                    ? "PositionValueCapReached"
+                    : "DeltaLessThanOrEqualZero";
+
+            return new OrderSizeResult(0, targetCapital, input.CommittedCapital, delta, reason);
+        }
 
         // ─── ۳. MinDelta ───
         var minDelta = input.AllocatedCapital * input.MinDeltaPercent;

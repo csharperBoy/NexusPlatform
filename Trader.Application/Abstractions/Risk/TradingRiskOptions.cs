@@ -43,6 +43,13 @@ public sealed class MaxPositionSizeOptions
 
     /// <summary>حداکثر درصد از Run Capital که یک Symbol می‌تواند بگیرد.</summary>
     public decimal MaxPercentPerSymbol { get; set; } = 30.0m;
+
+    /// <summary>
+    /// Paper Mode: apply or skip?
+    /// پیش‌فرض true — Paper باید مانند Live رفتار کند (شبیه‌سازی واقعی‌تر).
+    /// با false، Paper Mode از این چک معاف می‌شود.
+    /// </summary>
+    public bool ApplyToPaper { get; set; } = true;
 }
 
 public sealed class CircuitBreakerOptions

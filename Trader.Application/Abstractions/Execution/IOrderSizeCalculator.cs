@@ -11,17 +11,24 @@ public interface IOrderSizeCalculator
 }
 
 public sealed record BuySizeInput(
-    decimal AllocatedCapital,          // totalCapital × allocation%
-    decimal CommittedCapital,          // هزینه‌ی Positionهای باز + Orderهای در راه
-    decimal? AvailableCash,             // 0 = چک نشود (Live)؛ در Backtest = Cash واقعی
-    decimal SignalStrength,            // 0..1
+    decimal AllocatedCapital,
+    decimal CommittedCapital,
+    decimal? AvailableCash,
+    decimal SignalStrength,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
     decimal Price,
     decimal BuyCommissionRate,
     long MinOrderQuantity,
     long MaxOrderQuantity,
-    long? MinOrderValueRial);
+    long? MinOrderValueRial,
+
+    /// <summary>
+    /// سقف مطلق ارزش Position برای این (Run, Account, Symbol).
+    /// null = بدون سقف. اگر Target از این مقدار بیشتر شد، Cap می‌شود.
+    /// Delta برای رسیدن به Max از Committed محاسبه می‌شود.
+    /// </summary>
+    decimal? MaxPositionValue = null);
 
 public sealed record SellSizeInput(
     long PositionQuantity,

@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Runtime;
 using Trader.Application.Specifications.Instruments;
 using Trader.Application.Specifications.Positions;
@@ -21,7 +23,7 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
     private readonly ITraderUnitOfWork<Data.TraderDbContext> _uow;
     private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<OrderIntentBuilder> _logger;
-
+    private readonly IOptionsMonitor<TradingRiskOptions> _riskOptions;
     public OrderIntentBuilder(
         IMarketSnapshotStore snapshotStore,
         ICapitalAllocator capitalAllocator,
@@ -29,6 +31,7 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
         IOrderSizeCalculator sizeCalculator,
         ITraderUnitOfWork<Data.TraderDbContext> uow,
         ITradingEventLogger eventLogger,
+    IOptionsMonitor<TradingRiskOptions> riskOptions,  
         ILogger<OrderIntentBuilder> logger)
     {
         _snapshotStore = snapshotStore;
@@ -36,6 +39,7 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
         _committedCapital = committedCapital;
         _sizeCalculator = sizeCalculator;
         _uow = uow;
+        _riskOptions = riskOptions;
         _eventLogger = eventLogger;
         _logger = logger;
     }
@@ -88,13 +92,25 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
 
             var allocatedForSymbol = totalCapital * symbolAllocation.Value.Percentage / 100m;
 
+            // ═══════════════════════════════════════════════════════════════
+            // MaxPositionSize (Phase D — PR 16)
+            // ═══════════════════════════════════════════════════════════════
+            decimal? maxPositionValue = null;
+
+            var maxPosOpts = _riskOptions.CurrentValue.MaxPositionSize;
+            if (maxPosOpts.Enabled
+                && (context.ExecutionMode == ExecutionMode.Live || maxPosOpts.ApplyToPaper))
+            {
+                maxPositionValue = totalCapital * (maxPosOpts.MaxPercentPerSymbol / 100m);
+            }
+
             var committed = await _committedCapital.CalculateForSymbolAsync(
                 context.RunId, accountId, signal.Isin, ct);
 
             var result = _sizeCalculator.CalculateBuy(new BuySizeInput(
                 AllocatedCapital: allocatedForSymbol,
                 CommittedCapital: committed,
-                AvailableCash: null,               // Live → broker check
+                AvailableCash: null,
                 SignalStrength: signal.Strength.Value,
                 StrengthMultiplier: context.StrengthMultiplier,
                 MinDeltaPercent: context.MinDeltaPercent,
@@ -102,14 +118,39 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
                 BuyCommissionRate: instrument.BuyCommissionRate,
                 MinOrderQuantity: instrument.MinOrderQuantity,
                 MaxOrderQuantity: instrument.MaxOrderQuantity,
-                MinOrderValueRial: instrument.MinOrderValueRial));
+                MinOrderValueRial: instrument.MinOrderValueRial,
+                MaxPositionValue: maxPositionValue));   // ← NEW
 
             if (result.Quantity <= 0)
             {
+                // ── اگر علت MaxPositionSize بود، Event جدا صادر کن ──
+                if (result.SkipReason == "PositionValueCapReached")
+                {
+                    _eventLogger.Log(
+                        stage: TradingStage.Risk,
+                        type: TradingEventType.MaxPositionSizeReached,
+                        severity: TradingEventSeverity.Info,
+                        message: $"سفارش «{signal.Isin}» نادیده گرفته شد: " +
+                                 $"ارزش Position به سقف {maxPositionValue:N0} رسیده " +
+                                 $"({maxPosOpts.MaxPercentPerSymbol:F1}% از {totalCapital:N0}).",
+                        payload: new
+                        {
+                            currentCommitted = committed,
+                            maxPositionValue,
+                            maxPercentPerSymbol = maxPosOpts.MaxPercentPerSymbol,
+                            totalCapital,
+                        },
+                        runId: context.RunId,
+                        isin: signal.Isin,
+                        accountId: accountId,
+                        signalId: signal.Id);
+                }
+
                 _logger.LogDebug(
                     "BUY skipped for {Isin}: {Reason} (target={Target:N0} committed={Committed:N0} delta={Delta:N0})",
                     signal.Isin, result.SkipReason,
                     result.TargetCapital, result.CommittedCapital, result.Delta);
+
                 return null;
             }
 
