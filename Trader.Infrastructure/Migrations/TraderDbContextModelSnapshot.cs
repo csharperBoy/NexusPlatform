@@ -1508,6 +1508,153 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("RiskKillSwitches", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.RunAccountDailyEquitySnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CapturedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal>("OpeningCash")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("OpeningEquity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("OpeningPositionValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id")
+                        .HasName("PK_RunAccountDailyEquitySnapshot");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_RunAccountDailyEquitySnapshot_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_RunAccountDailyEquitySnapshot_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_RunAccountDailyEquitySnapshot_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_RunAccountDailyEquitySnapshot_ModifiedBy");
+
+                    b.HasIndex("AccountId", "TradingDate")
+                        .HasDatabaseName("IX_RunAccountDailyEquity_Account_Date");
+
+                    b.HasIndex("RunId", "AccountId", "TradingDate")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RunAccountDailyEquity_Run_Account_Date");
+
+                    b.ToTable("RunAccountDailyEquitySnapshots", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.RunAccountLossStreak", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CircuitBrokenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ConsecutiveLosses")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CooldownExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("LastLossAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastWinAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id")
+                        .HasName("PK_RunAccountLossStreak");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("IX_RunAccountLossStreak_Account");
+
+                    b.HasIndex("CircuitBrokenAt")
+                        .HasDatabaseName("IX_RunAccountLossStreak_CircuitBroken")
+                        .HasFilter("[CircuitBrokenAt] IS NOT NULL");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_RunAccountLossStreak_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_RunAccountLossStreak_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_RunAccountLossStreak_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_RunAccountLossStreak_ModifiedBy");
+
+                    b.HasIndex("RunId", "AccountId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RunAccountLossStreak_Run_Account");
+
+                    b.ToTable("RunAccountLossStreaks", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.RunDailyEquitySnapshot", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2146,6 +2293,12 @@ namespace Trader.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AllocationPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasDefaultValue(100m);
 
                     b.Property<Guid>("TraderAccountId")
                         .HasColumnType("uniqueidentifier");
