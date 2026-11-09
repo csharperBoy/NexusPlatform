@@ -38,6 +38,10 @@ export interface TradingRunSymbolDto {
   allocationPercentage: number;
 }
 
+export interface TradingRunAccountModel {
+  accountId: string;
+  allocationPercent: number;      // (0, 100]
+}
 export interface TradingRunDetailView {
   id: string;
   name: string;
@@ -53,7 +57,7 @@ export interface TradingRunDetailView {
   executionModeName: string; 
   settings: TradingRunSettingsDto;
   symbols: TradingRunSymbolDto[];
-  accountIds: string[];
+  accounts: TradingRunAccountModel[];   
   startedAt?: string | null;
   stoppedAt?: string | null;
   createdAt: string;
@@ -89,7 +93,7 @@ export interface CreateTradingRunCommand {
   executionMode: number; 
   settings: TradingRunSettingsModel;
   symbols: TradingRunSymbolModel[];
-  accountIds: string[];
+  accounts: TradingRunAccountModel[]; 
 }
 
 export interface UpdateTradingRunCommand extends CreateTradingRunCommand {

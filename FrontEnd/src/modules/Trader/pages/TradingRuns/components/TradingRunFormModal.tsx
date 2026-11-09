@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import type {
   CreateTradingRunCommand,
   UpdateTradingRunCommand,
+  TradingRunAccountModel,
   TradingRunDetailView,
   TradingRunSettingsModel,
   TradingRunSymbolModel,
@@ -24,7 +25,7 @@ import {
 } from "../../../models";
 import { StrategyConfigEditor } from "./StrategyConfigEditor";
 import { SymbolAllocationEditor } from "./SymbolAllocationEditor";
-import { AccountSelector } from "./AccountSelector";
+import { TradingRunAccountEditor } from "./TradingRunAccountEditor";
 import { currencyRateApi } from "@/modules/Trader/api";
 type SlTpMode = "none" | "percent" | "price";
 
@@ -98,7 +99,7 @@ const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
   const [onStop, setOnStop] = useState<number>(StopRunBehavior.KeepPositions);
 
   const [symbols, setSymbols] = useState<TradingRunSymbolModel[]>([]);
-  const [accountIds, setAccountIds] = useState<string[]>([]);
+  const [accounts, setAccounts] = useState<TradingRunAccountModel[]>([]);
 
   const [error, setError] = useState<string | null>(null);
 useEffect(() => {
@@ -196,7 +197,7 @@ setExecutionMode(initialDetail.executionMode);
       setOnMarketClose(initialDetail.settings.onMarketClose);
       setOnStop(initialDetail.settings.onStop);
       setSymbols(initialDetail.symbols);
-      setAccountIds(initialDetail.accountIds);
+      setAccounts(initialDetail.accounts);
       setError(null);
 
       try {
@@ -229,7 +230,7 @@ setCurrencyRateValue(null);
     setOnMarketClose(MarketCloseBehavior.KeepPositions);
     setOnStop(StopRunBehavior.KeepPositions);
     setSymbols([]);
-    setAccountIds([]);
+    setAccounts([]);
     setError(null);
   }, [isOpen, mode, initialDetail, strategies]);
 
@@ -274,8 +275,13 @@ setCurrencyRateValue(null);
     const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
     if (Math.abs(total - 100) > 0.01)
       return "مجموع درصد تخصیص نمادها باید ۱۰۰ باشد";
-    if (accountIds.length === 0)
-      return "حداقل یک حساب باید انتخاب شود";
+    if (accounts.length === 0)
+  return "حداقل یک حساب باید انتخاب شود";
+for (const a of accounts) {
+  if (a.allocationPercent <= 0 || a.allocationPercent > 100) {
+    return "درصد تخصیص هر حساب باید بین ۰ و ۱۰۰ باشد";
+  }
+}
 
     if (capitalAllocationMode === CapitalAllocationMode.Fixed) {
       const amt = Number(fixedCapitalAmount);
@@ -348,10 +354,10 @@ setCurrencyRateValue(null);
   targetCurrency: targetCurrency.trim().toUpperCase() || null,
   strengthMultiplier: Number(strengthMultiplier) || 1.5,
   minDeltaPercent: (Number(minDeltaPercent) || 0) / 100,
-  executionMode,                                          // ← NEW
+  executionMode,                                          
   settings,
   symbols,
-  accountIds,
+  accounts,
 };
 
     try {
@@ -814,9 +820,9 @@ setCurrencyRateValue(null);
 
           {/* ۷. Accounts */}
           <Section title="حساب‌های معاملاتی">
-            <AccountSelector
-              value={accountIds}
-              onChange={setAccountIds}
+            <TradingRunAccountEditor
+              value={accounts}
+              onChange={setAccounts}
             />
           </Section>
 

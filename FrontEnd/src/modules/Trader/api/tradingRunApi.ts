@@ -55,7 +55,7 @@ export const tradingRunApi = {
           onStop: 0,
         },
         symbols: [],
-        accountIds: [],
+accounts: [],   
         modifiedAt: null,
       };
     }
@@ -90,7 +90,7 @@ export const tradingRunApi = {
   executionMode: data.executionMode,                              
   executionModeName: data.executionMode === 1 ? "Paper" : "Live",
       symbolCount: data.symbols.length,
-      accountCount: data.accountIds.length,
+      accountCount: data.accounts.length,
       startedAt: null,
       stoppedAt: null,
       createdAt: new Date().toISOString(),
@@ -128,7 +128,7 @@ export const tradingRunApi = {
   executionMode: data.executionMode,                             
   executionModeName: data.executionMode === 1 ? "Paper" : "Live",
       symbolCount: data.symbols.length,
-      accountCount: data.accountIds.length,
+      accountCount: data.accounts.length,
     };
     mockSave(MOCK_KEY, items);
     return true;
