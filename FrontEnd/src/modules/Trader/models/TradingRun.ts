@@ -1,4 +1,6 @@
 //src/modules/Trader/models/TradingRun.ts
+/* ═══════════════ View Models (Response) ═══════════════ */
+
 export interface TradingRunInfoView {
   id: string;
   name: string;
@@ -7,13 +9,12 @@ export interface TradingRunInfoView {
   strategyKey: string;
   primaryTimeFrame: number;
   primaryTimeFrameName: string;
-  capitalAllocationMode: number;
-  fixedCapital?: number | null;
-  targetCurrency: string | null; 
-  strengthMultiplier: number;    
-  minDeltaPercent: number; 
-  executionMode: number;                
-  executionModeName: string;  
+  // ❌ capitalAllocationMode و fixedCapital حذف شدند — per-account در Detail
+  targetCurrency: string | null;
+  strengthMultiplier: number;
+  minDeltaPercent: number;
+  executionMode: number;
+  executionModeName: string;
   symbolCount: number;
   accountCount: number;
   startedAt?: string | null;
@@ -22,8 +23,7 @@ export interface TradingRunInfoView {
 }
 
 export interface TradingRunSettingsDto {
-  capitalAllocationMode: number;
-  fixedCapitalAmount?: number | null;
+  // ❌ capitalAllocationMode و fixedCapitalAmount حذف شدند
   stopLossPercentage?: number | null;
   stopLossPrice?: number | null;
   takeProfitPercentage?: number | null;
@@ -38,10 +38,14 @@ export interface TradingRunSymbolDto {
   allocationPercentage: number;
 }
 
-export interface TradingRunAccountModel {
+export interface TradingRunAccountDto {
   accountId: string;
-  allocationPercent: number;      // (0, 100]
+  capitalMode: number;                     // 0=Fixed, 1=Dynamic
+  fixedCapitalAmount?: number | null;
+  fixedCapitalCurrency?: string | null;
+  percentOfBuyPower?: number | null;
 }
+
 export interface TradingRunDetailView {
   id: string;
   name: string;
@@ -50,24 +54,23 @@ export interface TradingRunDetailView {
   strategyKey: string;
   strategyConfigJson: string;
   primaryTimeFrame: number;
-  targetCurrency: string | null;  
-  strengthMultiplier: number;   
+  targetCurrency: string | null;
+  strengthMultiplier: number;
   minDeltaPercent: number;
-  executionMode: number;             
-  executionModeName: string; 
+  executionMode: number;
+  executionModeName: string;
   settings: TradingRunSettingsDto;
   symbols: TradingRunSymbolDto[];
-  accounts: TradingRunAccountModel[];   
+  accounts: TradingRunAccountDto[];        // ← was accountIds: string[]
   startedAt?: string | null;
   stoppedAt?: string | null;
   createdAt: string;
   modifiedAt?: string | null;
 }
 
-/* ─── Commands ─── */
+/* ═══════════════ Command Models (Request) ═══════════════ */
+
 export interface TradingRunSettingsModel {
-  capitalAllocationMode: number;
-  fixedCapitalAmount?: number | null;
   stopLossPercentage?: number | null;
   stopLossPrice?: number | null;
   takeProfitPercentage?: number | null;
@@ -82,18 +85,25 @@ export interface TradingRunSymbolModel {
   allocationPercentage: number;
 }
 
+export interface TradingRunAccountModel {
+  accountId: string;
+  capitalMode: number;                    // 0=Fixed, 1=Dynamic
+  fixedCapitalAmount?: number | null;
+  percentOfBuyPower?: number | null;
+}
+
 export interface CreateTradingRunCommand {
   name: string;
   strategyKey: string;
   strategyConfigJson: string;
   primaryTimeFrame: number;
-  targetCurrency: string | null;  
-  strengthMultiplier: number;   
+  targetCurrency: string | null;
+  strengthMultiplier: number;
   minDeltaPercent: number;
-  executionMode: number; 
+  executionMode: number;
   settings: TradingRunSettingsModel;
   symbols: TradingRunSymbolModel[];
-  accounts: TradingRunAccountModel[]; 
+  accounts: TradingRunAccountModel[];     // ← was accountIds: string[]
 }
 
 export interface UpdateTradingRunCommand extends CreateTradingRunCommand {
@@ -102,5 +112,5 @@ export interface UpdateTradingRunCommand extends CreateTradingRunCommand {
 
 export interface StopTradingRunCommand {
   id: string;
-  behavior: number; // StopRunBehavior
+  behavior: number;
 }

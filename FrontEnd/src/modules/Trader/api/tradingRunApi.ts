@@ -44,8 +44,6 @@ export const tradingRunApi = {
         ...item,
         strategyConfigJson: "{}",
         settings: {
-          capitalAllocationMode: item.capitalAllocationMode,
-          fixedCapitalAmount: item.fixedCapital,
           stopLossPercentage: null,
           stopLossPrice: null,
           takeProfitPercentage: null,
@@ -55,7 +53,7 @@ export const tradingRunApi = {
           onStop: 0,
         },
         symbols: [],
-accounts: [],   
+        accounts: [],                        // ← was accountIds
         modifiedAt: null,
       };
     }
@@ -74,27 +72,24 @@ accounts: [],
     const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
     const id = mockUid();
     items.push({
-      id,
-      name: data.name,
-      state: 1,
-      stateName: "Ready",
-      strategyKey: data.strategyKey,
-      primaryTimeFrame: data.primaryTimeFrame,
-      primaryTimeFrameName: "1d",
-      capitalAllocationMode: data.settings.capitalAllocationMode,
-      fixedCapital: data.settings.fixedCapitalAmount ?? null,
-      targetCurrency: data.targetCurrency ?? null,
-      strengthMultiplier: data.strengthMultiplier,
-  minDeltaPercent: data.minDeltaPercent,
-  
-  executionMode: data.executionMode,                              
-  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
-      symbolCount: data.symbols.length,
-      accountCount: data.accounts.length,
-      startedAt: null,
-      stoppedAt: null,
-      createdAt: new Date().toISOString(),
-    });
+        id,
+        name: data.name,
+        state: 1,
+        stateName: "Ready",
+        strategyKey: data.strategyKey,
+        primaryTimeFrame: data.primaryTimeFrame,
+        primaryTimeFrameName: "1d",
+        targetCurrency: data.targetCurrency ?? null,
+        strengthMultiplier: data.strengthMultiplier,
+        minDeltaPercent: data.minDeltaPercent,
+        executionMode: data.executionMode,
+        executionModeName: data.executionMode === 1 ? "Paper" : "Live",
+        symbolCount: data.symbols.length,
+        accountCount: data.accounts.length,
+        startedAt: null,
+        stoppedAt: null,
+        createdAt: new Date().toISOString(),
+      });
     mockSave(MOCK_KEY, items);
     return id;
   }
@@ -115,21 +110,18 @@ accounts: [],
     const idx = items.findIndex((r) => r.id === data.id);
     if (idx < 0) throw new Error("پلن پیدا نشد");
     items[idx] = {
-      ...items[idx],
-      name: data.name,
-      strategyKey: data.strategyKey,
-      primaryTimeFrame: data.primaryTimeFrame,
-      capitalAllocationMode: data.settings.capitalAllocationMode,
-      fixedCapital: data.settings.fixedCapitalAmount ?? null,
-      targetCurrency: data.targetCurrency ?? null,
-      strengthMultiplier: data.strengthMultiplier,      
-  minDeltaPercent: data.minDeltaPercent,
-  
-  executionMode: data.executionMode,                             
-  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
-      symbolCount: data.symbols.length,
-      accountCount: data.accounts.length,
-    };
+        ...items[idx],
+        name: data.name,
+        strategyKey: data.strategyKey,
+        primaryTimeFrame: data.primaryTimeFrame,
+        targetCurrency: data.targetCurrency ?? null,
+        strengthMultiplier: data.strengthMultiplier,
+        minDeltaPercent: data.minDeltaPercent,
+        executionMode: data.executionMode,
+        executionModeName: data.executionMode === 1 ? "Paper" : "Live",
+        symbolCount: data.symbols.length,
+        accountCount: data.accounts.length,
+      };
     mockSave(MOCK_KEY, items);
     return true;
   }

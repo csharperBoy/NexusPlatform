@@ -63,7 +63,8 @@ export type {
   TradingRunDetailView,
   TradingRunSettingsDto,
   TradingRunSymbolDto,
-  TradingRunAccountModel,     
+  TradingRunAccountDto,          // ← NEW
+  TradingRunAccountModel,        // ← NEW
   TradingRunSettingsModel,
   TradingRunSymbolModel,
   CreateTradingRunCommand,

@@ -12,9 +12,7 @@ import type {
 } from "../../models";
 import {
   TradingRunState,
-  TRADING_RUN_STATE_LABELS,
-  CapitalAllocationMode,
-  CAPITAL_MODE_LABELS,
+  TRADING_RUN_STATE_LABELS,  
   TIMEFRAME_LABELS,
   TimeFrame,
   StopRunBehavior,
@@ -237,7 +235,6 @@ export const TradingRunsManagementPage: React.FC = () => {
               <th className="p-3">ارز</th>
               <th className="p-3 text-center">ضریب</th>
               <th className="p-3 text-center">آستانه</th>
-              <th className="p-3">سرمایه</th>              
               <th className="p-3 text-center">نمادها</th>
               <th className="p-3 text-center">حساب‌ها</th>
               <th className="p-3">شروع/توقف</th>
@@ -259,14 +256,7 @@ export const TradingRunsManagementPage: React.FC = () => {
               </tr>
             ) : (
               filtered.map((run) => {
-                const capMode =
-                  run.capitalAllocationMode as CapitalAllocationMode;
-                const capLabel =
-                  CAPITAL_MODE_LABELS[capMode] ?? "نامشخص";
-                const capValue =
-                  capMode === CapitalAllocationMode.Fixed && run.fixedCapital
-                    ? `${run.fixedCapital.toLocaleString("fa-IR")} ریال`
-                    : "داینامیک";
+                
                 const tf =
                   TIMEFRAME_LABELS[run.primaryTimeFrame as TimeFrame] ??
                   run.primaryTimeFrameName;
@@ -296,13 +286,7 @@ export const TradingRunsManagementPage: React.FC = () => {
 <td className="p-3 text-center font-mono text-xs">
   {(run.minDeltaPercent * 100).toFixed(1)}%
 </td>
-                    <td className="p-3">
-                      <span className="text-xs">
-                        {capLabel}
-                        <br />
-                        <span className="text-gray-500">{capValue}</span>
-                      </span>
-                    </td>
+                    
                     <td className="p-3 text-center">{run.symbolCount}</td>
                     <td className="p-3 text-center">{run.accountCount}</td>
                     <td className="p-3 text-xs">

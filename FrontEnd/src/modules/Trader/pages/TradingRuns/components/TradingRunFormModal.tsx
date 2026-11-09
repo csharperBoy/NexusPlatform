@@ -3,21 +3,19 @@ import React, { useEffect, useState } from "react";
 import type {
   CreateTradingRunCommand,
   UpdateTradingRunCommand,
-  TradingRunAccountModel,
   TradingRunDetailView,
   TradingRunSettingsModel,
   TradingRunSymbolModel,
+  TradingRunAccountModel,          // ← NEW
   StrategyInfoView,
 } from "../../../models";
 import {
   TimeFrame,
   TIMEFRAME_LABELS,
-  CapitalAllocationMode,
-  CAPITAL_MODE_LABELS,
   OrderMode,
-  ORDER_MODE_LABELS, 
+  ORDER_MODE_LABELS,
   ExecutionMode,
-   EXECUTION_MODE_LABELS,
+  EXECUTION_MODE_LABELS,
   MarketCloseBehavior,
   MARKET_CLOSE_LABELS,
   StopRunBehavior,
@@ -77,11 +75,7 @@ const [executionMode, setExecutionMode] = useState<number>(ExecutionMode.Live);
 const [currencyRateStatus, setCurrencyRateStatus] =
   useState<"idle" | "checking" | "ok" | "missing">("idle");
 const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
-  const [capitalAllocationMode, setCapitalAllocationMode] = useState<number>(
-    CapitalAllocationMode.Fixed,
-  );
-  const [fixedCapitalAmount, setFixedCapitalAmount] = useState<string>("");
-
+  
   const [slMode, setSlMode] = useState<SlTpMode>("none");
   const [slPercent, setSlPercent] = useState<string>("");
   const [slPrice, setSlPrice] = useState<string>("");
@@ -156,10 +150,7 @@ useEffect(() => {
       setStrengthMultiplier(initialDetail.strengthMultiplier.toString());
 setMinDeltaPercent((initialDetail.minDeltaPercent * 100).toString()); 
 setExecutionMode(initialDetail.executionMode);
-      setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
-      setFixedCapitalAmount(
-        initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
-      );
+      
 
       if (initialDetail.settings.stopLossPercentage != null) {
         setSlMode("percent");
@@ -197,7 +188,15 @@ setExecutionMode(initialDetail.executionMode);
       setOnMarketClose(initialDetail.settings.onMarketClose);
       setOnStop(initialDetail.settings.onStop);
       setSymbols(initialDetail.symbols);
-      setAccounts(initialDetail.accounts);
+// بعد — transform از DTO به Model (nullable fields به null normalize می‌شوند):
+setAccounts(
+  initialDetail.accounts.map((a) => ({
+    accountId: a.accountId,
+    capitalMode: a.capitalMode,
+    fixedCapitalAmount: a.fixedCapitalAmount ?? null,
+    percentOfBuyPower: a.percentOfBuyPower ?? null,
+  })),
+);
       setError(null);
 
       try {
@@ -218,8 +217,6 @@ setMinDeltaPercent("3");
 setExecutionMode(ExecutionMode.Live);
 setCurrencyRateStatus("idle");
 setCurrencyRateValue(null);
-    setCapitalAllocationMode(CapitalAllocationMode.Fixed);
-    setFixedCapitalAmount("");
     setSlMode("none");
     setSlPercent("");
     setSlPrice("");
@@ -275,19 +272,27 @@ setCurrencyRateValue(null);
     const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
     if (Math.abs(total - 100) > 0.01)
       return "مجموع درصد تخصیص نمادها باید ۱۰۰ باشد";
-    if (accounts.length === 0)
+    // بعد از چک symbols:
+if (accounts.length === 0)
   return "حداقل یک حساب باید انتخاب شود";
+
 for (const a of accounts) {
-  if (a.allocationPercent <= 0 || a.allocationPercent > 100) {
-    return "درصد تخصیص هر حساب باید بین ۰ و ۱۰۰ باشد";
+  if (a.capitalMode === 0 /* Fixed */) {
+    if (!a.fixedCapitalAmount || a.fixedCapitalAmount <= 0)
+      return "مبلغ سرمایه‌ی ثابت هر حساب باید بزرگ‌تر از صفر باشد";
+  } else if (a.capitalMode === 1 /* Dynamic */) {
+    if (
+      a.percentOfBuyPower == null ||
+      a.percentOfBuyPower <= 0 ||
+      a.percentOfBuyPower > 100
+    )
+      return "درصد BuyPower هر حساب باید بین ۰ (غیرشامل) و ۱۰۰ باشد";
+  } else {
+    return "حالت سرمایه‌ی هر حساب باید مشخص باشد";
   }
 }
 
-    if (capitalAllocationMode === CapitalAllocationMode.Fixed) {
-      const amt = Number(fixedCapitalAmount);
-      if (!amt || amt <= 0)
-        return "مبلغ سرمایه ثابت باید بزرگ‌تر از صفر باشد";
-    }
+    
     if (slMode === "percent") {
       const v = Number(slPercent);
       if (!v || v <= 0 || v > 100)
@@ -330,11 +335,7 @@ for (const a of accounts) {
       return "حداقل تغییر باید بین 0 تا 100 درصد باشد";
     }
     const settings: TradingRunSettingsModel = {
-      capitalAllocationMode,
-      fixedCapitalAmount:
-        capitalAllocationMode === CapitalAllocationMode.Fixed
-          ? Number(fixedCapitalAmount)
-          : null,
+      
       stopLossPercentage:
         slMode === "percent" ? Number(slPercent) : null,
       stopLossPrice: slMode === "price" ? Number(slPrice) : null,
@@ -619,51 +620,6 @@ for (const a of accounts) {
             )}
           </Section>
 
-          {/* ۳. Capital */}
-          <Section title="تخصیص سرمایه">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                حالت سرمایه
-              </label>
-              <select
-                value={capitalAllocationMode}
-                onChange={(e) =>
-                  setCapitalAllocationMode(Number(e.target.value))
-                }
-                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                {Object.entries(CAPITAL_MODE_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {capitalAllocationMode === CapitalAllocationMode.Fixed && (
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  مبلغ سرمایه (ریال) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  value={fixedCapitalAmount}
-                  onChange={(e) => setFixedCapitalAmount(e.target.value)}
-                  dir="ltr"
-                  min={0}
-                  step="1000"
-                  placeholder="مثلاً: 100000000"
-                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                />
-              </div>
-            )}
-
-            {capitalAllocationMode === CapitalAllocationMode.Dynamic && (
-              <p className="rounded bg-slate-100 p-2 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                سرمایه از قدرت خرید واقعی حساب در هر لحظه خوانده می‌شود.
-              </p>
-            )}
-          </Section>
 
           {/* ۴. SL/TP */}
           <Section title="حد ضرر و حد سود">
@@ -819,7 +775,7 @@ for (const a of accounts) {
           </Section>
 
           {/* ۷. Accounts */}
-          <Section title="حساب‌های معاملاتی">
+          <Section title="حساب‌های معاملاتی و سرمایه‌ی هر">
             <TradingRunAccountEditor
               value={accounts}
               onChange={setAccounts}
