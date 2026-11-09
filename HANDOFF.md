@@ -1,170 +1,201 @@
-# Handoff Document — Project NexusPlatform / Trading Module
-
-
-```markdown
-# NEXUSPLATFORM — TRADING MODULE — HANDOFF DOCUMENT
-
-> این سند وضعیت کامل پروژه را در نقطه‌ی فعلی توضیح می‌دهد.
-> برای ادامه‌ی کار در چت جدید، این فایل + فایل‌های لیست‌شده در انتها را بفرست.
-> آخرین به‌روزرسانی: ۱۴۰۵/۰۸/۱۳ (Phase A4 — Health Checks)
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۸/۲۵ — Phase D کامل شد
+> **وضعیت:** Phase A ✅ | Phase D ✅ | 158 Tests ✅ | CI ✅
 
 ---
 
 ## 1. PROJECT OVERVIEW
 
-**NexusPlatform** یک پلتفرم Modular .NET است که شامل Moduleهای زیر است:
-- Core, Event, StreamBus, Identity, Base, Audit, Navigation, Authorization, Cach (Redis), Scheduler, Trader
+**NexusPlatform** یک پلتفرم Modular .NET است شامل Moduleها:
+Core, Event, StreamBus, Identity, Base, Audit, Navigation, Authorization, Cache (Redis), Scheduler, Trader
 
-**Trading Module** یکی از Moduleهای داخل همین پلتفرم است و به‌عنوان یک Module ساخته می‌شود، نه سیستم مستقل.
+**Trading Module** یکی از Moduleهای داخل همین پلتفرم — نه سیستم مستقل.
 
-### هدف Trading Module
-یک Algorithmic Trading System برای بازار سرمایه ایران که:
-1. Market Data از Broker/TSETMC دریافت کند
-2. Strategy‌ها را روی داده اجرا کند
-3. Signal تولید کند
-4. بر اساس Account + Execution Settings سفارش بده
-5. Order Lifecycle را مدیریت کند
-6. Position/PnL را دنبال کند
-7. برای AI/ML آینده داده‌ی تاریخی جمع کند
+### هدف
+Algorithmic Trading System برای بازار سرمایه ایران:
+1. Market Data از Broker/TSETMC
+2. اجرای Strategy روی داده
+3. تولید Signal
+4. تصمیم اجرا بر اساس Account + Execution Settings + Risk
+5. مدیریت Order Lifecycle
+6. Track Position/PnL
+7. Persistence برای AI/ML آینده
 
 ### توسعه‌پذیری آینده
-- بازارها: Forex, Crypto
-- Instrumentها: Stock (فعلاً), Option (فاز ۱ باید پشتیبانی شود), Future, Bond
-- Brokerها: Mofid/EasyTrader (فعال), Agah, سایر
-- Market Data: Broker API (فعال), TSETMC, Providers دیگر
-- Strategyها: RSI (فعال), MACD, OrderBook, AI
+- **Markets:** Forex، Crypto (Enum آماده)
+- **Instruments:** Stock، Option (فعال)، Future، Bond، Fund
+- **Brokers:** Mofid/EasyTrader (فعال)، Agah
+- **Market Data:** Broker API (فعال)، TSETMC
+- **Strategies:** RSI (فعال)، MACD، OrderBook، AI، Ensemble
 
 ---
 
-## 2. TECH STACK + CONVENTIONS
+## 2. TECH STACK
 
 ### Backend
-- **.NET 8** + **ASP.NET Core**
-- **Clean Architecture** (Domain / Application / Infrastructure / Presentation)
-- **DDD** + **CQRS** (MediatR) + **Result<T>** pattern
-- **EF Core 8** + **SQL Server**
-- **Outbox Pattern** (از Event Module)
-- **Scheduler Module** (Recurring + One-Off Jobs)
-- **Redis** (Cach Module — فعلاً استفاده نمی‌شود در Trading hot path)
+- **.NET 9** + **ASP.NET Core**
+- Clean Architecture (Domain / Application / Infrastructure / Presentation)
+- DDD + CQRS (MediatR) + Result<T>
+- EF Core 9 + SQL Server
+- Outbox Pattern (از Event Module)
+- Scheduler Module (Recurring + One-Off Jobs)
+- Polly (DbRetry، DefaultRetry policies از `IReadOnlyPolicyRegistry<string>`)
+- Health Checks (Composite + per-component)
+- xUnit + FluentAssertions 6.12 + Moq + EF InMemory (تست)
 
 ### Frontend
-- **React 19** + **TypeScript** + **Vite** + **pnpm workspace**
-- **Zustand** + **TanStack Query** + **React Router 7**
-- **Tailwind CSS 4**
-- **Recharts** (backtest charts)
-- Modular Architecture (feature-based)
+- React 19 + TypeScript + Vite + pnpm workspace
+- Zustand + TanStack Query + React Router 7
+- Tailwind CSS 4
+- Recharts (backtest charts)
 
-### Conventions (CRITICAL — پایبند باش)
-1. **هر Update از الگوی `Optional<T>` استفاده کند** — فیلدهای ارسال‌نشده تغییر نمی‌کنند
-2. **Handler → CommandService/QueryService → UnitOfWork** (نه مستقیم به UoW)
-3. **هر Contract جدید:** Interface در Application، Impl در Infrastructure
-4. **هر Aggregate Root** از `BaseEntity` + `IAuditableEntity` (+ `IOwnerableEntity` اگر لازم)
-5. **Domain Events** به Outbox در `SaveChangesAsync` منتقل می‌شوند (EfUnitOfWork)
-6. **Shared Logic** (Strategy, Indicator, OrderSizeCalculator) بدون I/O است تا Backtest + Live + Paper از همان استفاده کنند
-7. **`_uow.Context` direct access** فقط در Backtest/Reconciliation (خواندن انبوه، بدون tracking)
-8. **همه‌چیز Log شود** — `ITradingEventLogger` روی Stages، `ILogger` روی Services
-9. **قبل از کد، طرح + تأیید** — Overengineering ممنوع
+### CI
+- GitHub Actions: `.github/workflows/trader-tests.yml`
+- Build + Test روی Push/PR به `master`, `Trader`, `AkSteel`
+- .NET 9.0.x، 158 Tests در ~2s
+
+### Conventions
+1. هر Update با `Optional<T>` — فیلد ارسال‌نشده تغییر نمی‌کند
+2. Handler → CommandService/QueryService → UnitOfWork
+3. هر Contract: Interface در Application، Impl در Infrastructure
+4. Aggregate Root از `BaseEntity` + `IAuditableEntity` (+ `IOwnerableEntity` اگر لازم)
+5. Domain Events → Outbox در `SaveChangesAsync` (EfUnitOfWork)
+6. Shared Logic (Strategy، Indicator، **FillMath**، OrderSizeCalculator) — بدون I/O
+7. `_uow.Context` direct فقط در Backtest/Reconciliation (خواندن انبوه)
+8. همه‌چیز Log شود — `ITradingEventLogger` روی Stages، `ILogger` روی Services
+9. قبل از کد، طرح + تأیید — Overengineering ممنوع
 
 ---
 
 ## 3. ARCHITECTURE — PIPELINE
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ TradingRuntimeWorker (BackgroundService, هر 10s)     │
-├──────────────────────────────────────────────────────┤
-│ Stage 1: MarketDataIngestionStage                    │
-│   - Snapshot از Broker → InMemoryMarketSnapshotStore │
-│                                                       │
-│ Stage 2: StrategyEvaluationStage                     │
-│   - Candle (Primary + Sub-Candle via ICandleCache)   │
-│   - Currency Transform (اگر Run.TargetCurrency set)  │
-│   - Strategy.Evaluate → Signal                       │
-│   - Save StrategyEvaluation + Signal + Channel Push  │
-│                                                       │
-│ Stage 3: ExecutionStage                              │
-│   - Channel drain (drain → ExecutionCoordinator)    │
-│   - OrderIntentBuilder (Stepped Buying + MinDelta)   │
-│   - IOrderDispatcherResolver (Live vs Paper)         │
-│   - Save OrderIntent + BrokerOrder                   │
-│                                                       │
-│ Stage 4: OrderLifecycleStage (هر 5s داخلی)          │
-│   - Poll Order History از Broker                     │
-│   - Sync Trades → PositionManager.ApplyTradeAsync    │
-│   - SL/TP Monitoring (auto-close)                    │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ TradingRuntimeWorker (BackgroundService, هر 10s)         │
+│ + Per-Stage Timing (N4)                                  │
+├──────────────────────────────────────────────────────────┤
+│ Stage 1: MarketDataIngestionStage                        │
+│   - Snapshot از Broker → InMemoryMarketSnapshotStore     │
+│                                                           │
+│ Stage 2: StrategyEvaluationStage (Orchestration فقط)     │
+│   - IStrategyEvaluationService per (Run, Symbol)          │
+│     → Load candles, Transform currency, Load extra TFs,  │
+│       Evaluate, Enrich features, Create Entities          │
+│   - Persist Evaluation + Signals + Push to Channel       │
+│                                                           │
+│ Stage 3: ExecutionStage                                  │
+│   - Channel drain → ExecutionCoordinator                 │
+│   - OrderIntentBuilder → IRiskGuardPipeline → Dispatch   │
+│   - Live: BrokerOrderDispatcher                          │
+│   - Paper: PaperBrokerOrderDispatcher (فوری Fill)        │
+│                                                           │
+│ Stage 4: OrderLifecycleStage (هر 5s داخلی)               │
+│   - Poll Order History از Broker                         │
+│   - Sync Trades → PositionManager.ApplyTradeAsync        │
+│     (Overshoot → Fault، FillMath برای PnL)               │
+│   - SL/TP Monitoring (مستقل از Order activity)           │
+└──────────────────────────────────────────────────────────┘
+```
+
+### Risk Pipeline (بین Intent و Dispatch)
+```
+OrderIntent
+    → KillSwitchGuard (Global + Per-Account)
+    → DailyLossLimitGuard (per-Account، hybrid source)
+    → CircuitBreakerGuard (per (Run, Account), lazy reset)
+    → RateLimiterGuard (per-Account sliding window)
+    → MaxPositionSize (داخل OrderSizeCalculator، نه Guard)
+    → Dispatch
 ```
 
 ### Lifecycle
-- **Startup Recovery**: Runهای `Running` را Restore می‌کند + Unconsumed Signals Re-push + Broker Reconciliation
-- **Graceful Shutdown**: (Phase A3 — پیاده نشده)
+- **Startup Recovery:** Runهای `Running` Restore + Unconsumed Signals Re-push + Broker Reconciliation
+- **Graceful Shutdown:** Polly DbRetry روی Flush
 
 ### Modes
-- **Live**: سفارش واقعی به Broker، پول واقعی
-- **Paper**: `PaperBrokerOrderDispatcher` — Fill آنی، بدون Broker، `IsPaper=1` در DB
-- **Backtest**: `BacktestEngine` — Offline replay از Candleهای DB
+- **Live:** سفارش واقعی
+- **Paper:** Fill فوری، بدون Broker، `IsPaper=1`
+- **Backtest:** Offline replay، Config Snapshot
 
 ---
 
-## 4. DOMAIN MODEL — Entities
+## 4. DOMAIN MODEL
 
-### Aggregate Roots / Entities
+### Aggregates / Entities
 | Entity | مسئولیت | وضعیت |
 |---|---|---|
-| `Instrument` | هویت نماد (ISIN, Type, Market, Commission, Min/Max Order, TradingSchedule) | ✅ |
-| `TradingRun` | Run با Strategy + Symbols + Accounts + ExecutionSettings + ExecutionMode (Live/Paper) | ✅ |
-| `Signal` | Action + Strength + StrategyKey + SourceEvaluationId | ✅ |
-| `OrderIntent` | تصمیم اجرا (Side, Price, Qty, SL/TP, IsPaper) | ✅ |
-| `BrokerOrder` | سفارش واقعی/شبیه (BrokerOrderId, State, FilledQuantity, IsPaper) | ✅ |
-| `OrderTrade` | یک Fill از BrokerOrder (TradeNumber, Price, Qty) | ✅ |
-| `Position` | موقعیت باز/بسته (AverageEntryPrice, RealizedPnL, SL/TP, IsPaper) | ✅ |
-| `StrategyEvaluation` | هر Evaluate (FeaturesJson, Action, Strength, OutcomeJson) | ✅ |
+| `Instrument` | هویت نماد + Commission + Order Limits + OptionContract (Owned) | ✅ |
+| `TradingRun` | State، Strategy، Symbols، Accounts، ExecutionSettings | ✅ |
+| `TradingRunSymbol` | (Run, Isin) + Allocation% | ✅ |
+| `TradingRunAccount` | (Run, Account) + CapitalAllocation (Owned, per-account، PR 19) | ✅ |
+| `Signal` | Action + Strength + SourceEvaluationId | ✅ |
+| `OrderIntent` | Side، Price، Quantity، SL/TP، IsPaper، State (incl. RiskBlocked) | ✅ |
+| `BrokerOrder` | BrokerOrderId، State، FilledQty، IsPaper | ✅ |
+| `OrderTrade` | Fill (TradeNumber unique، Price، Qty) | ✅ |
+| `Position` | State، Qty، AvgPrice، RealizedPnL، SL/TP، IsPaper، SourceEvaluationId | ✅ |
+| `StrategyEvaluation` | هر Evaluate (FeaturesJson، Action، Strength، OutcomeJson) | ✅ |
 | `MarketSnapshotRecord` | Snapshot تاریخی | ✅ |
-| `CandleRecord` | Candle تاریخی (per Isin, TF, OpenTime) | ✅ |
-| `CurrencyRate` | نرخ ارز (FromCurrency, ToCurrency, Rate, EffectiveAt) | ✅ |
-| `TradingSchedule` | ساعت معاملاتی (TSE-REGULAR, TSE-OPTIONS, TSE-LEVERAGED, TSE-AYAR) | ✅ |
-| `TradingEvent` | Event Logging برای Live (Stage, Type, Severity, Message, PayloadJson) | ✅ |
-| `BacktestRun` | Snapshot Config + Metrics + Status | ✅ |
-| `BacktestSymbol` | نمادهای Backtest + Allocation | ✅ |
-| `BacktestTrade` | Round-trip Trade (EntryFillsJson, NetPnL, ExitReason) | ✅ |
-| `BacktestDailyEquity` | Equity Curve روزانه | ✅ |
-| `BacktestEvent` | Event Logging برای Backtest | ✅ |
+| `CandleRecord` | Candle تاریخی (TimeFrame enum) | ✅ |
+| `CurrencyRate` | نرخ ارز (Reverse supported) | ✅ |
+| `TradingSchedule` | ساعت معاملاتی (TSE-REGULAR/OPTIONS/LEVERAGED/AYAR) | ✅ |
+| `TradingEvent` | Event Logging (Correlation IDs، Persian messages) | ✅ |
+| **`RiskKillSwitch`** | Global + Per-Account Emergency Stop (PR 14) | ✅ |
+| **`RunAccountDailyEquitySnapshot`** | Opening Equity per (Run, Account, Day) (PR 15) | ✅ |
+| **`RunAccountLossStreak`** | Consecutive Losses per (Run, Account) + Circuit state (PR 17) | ✅ |
+| `BacktestRun` | Snapshot Config + Metrics | ✅ |
+| `BacktestSymbol`/`Trade`/`DailyEquity`/`Event` | Backtest children | ✅ |
 | `HistoricalDataCollectionJob` | Job جمع‌آوری Candle تاریخی | ✅ |
-| `InstrumentOrderPreset` | تنظیمات پیش‌فرض سفارش (UI ندارد) | ✅ |
+| `InstrumentOrderPreset` | تنظیمات پیش‌فرض سفارش دستی (UI ندارد) | ✅ |
+
+### Value Objects
+- `Price` (readonly struct)، `Quantity` (readonly struct)، `Money` (class، Owned)
+- `CapitalAllocation` (Run-level، فقط در `BacktestRun` استفاده می‌شود)
+- **`AccountCapitalAllocation`** (per-account، PR 19: Fixed/Dynamic + Amount/Percent)
+- `StopLossConfig`، `TakeProfitConfig` (Percentage/AbsolutePrice)
+- `SymbolAllocation` (Percentage)
+- `SignalStrength` (0,1)
+- `OptionContract` (Type، Strike، Expiration، Underlying)
+- `CurrencyCode` (Whitelist، PR 8)
+
+### Domain Calculations
+- `Trader.Domain/Calculations/FillMath.cs` (M5)
+  - `CalculateWeightedAveragePrice` — میانگین وزن‌دار
+  - `CalculateRealizedPnL` — gross PnL
+  - `CalculateCommission` — قیمت × تعداد × نرخ
+  - `CalculateMaxBuyQuantity` — دقیق: `floor(capital / (price × (1 + c)))`
 
 ### Enums مهم
-`ExecutionMode { Live=0, Paper=1 }`, `TradingRunState`, `SignalAction { Hold=0, Buy=1, Sell=2 }`, `OrderSide`, `OrderStateKind`, `OrderIntentState`, `PositionState`, `TimeFrame`, `CapitalAllocationMode`, `OrderMode`, `MarketCloseBehavior`, `StopRunBehavior`, `TradingStage`, `TradingEventType` (~43 نوع), `TradingEventSeverity { Debug, Info, Warning, Error, Critical }`, `BacktestStatus`, `BacktestExitReason`, `CollectionJobStatus`, `InstrumentType`, `MarketType`, `BrokerType`, `OptionType`, `BacktestEventType`, `BacktestEventSeverity`
+`TradingRunState`، `ExecutionMode`، `SignalAction`، `OrderSide`، `OrderStateKind`، `OrderIntentState` (incl. `RiskBlocked=5`)، `PositionState`، `TimeFrame`، `CapitalAllocationMode`، `OrderMode`، `MarketCloseBehavior`، `StopRunBehavior`، `TradingStage` (incl. `Risk=8`)، `TradingEventType` (~52 نوع)، `TradingEventSeverity`، `BacktestStatus`، `BacktestExitReason`، `CollectionJobStatus`، `InstrumentType`، `MarketType`، `BrokerType`، `OptionType`، `BacktestEventType`، `BacktestEventSeverity`
 
 ---
 
-## 5. KEY INTERFACES (مرزها)
+## 5. KEY INTERFACES
 
-### Broker (External)
+### Broker (Capability Segregation)
 ```
 IBroker { BrokerType }
   IBrokerSessionManager     → Login, Serialize, Deserialize, MeasureLatency
-  IBrokerTradingCommands    → SendBuyOrder, SendSellOrder, BuildOrderRequest
+  IBrokerTradingCommands    → SendBuy/Sell, BuildOrderRequest
   IBrokerAccountReader      → GetCashBalance, GetPortfolioPerformance
-  IBrokerMarketDataReader   → GetSymbolInfo, GetCandles, GetCandlesUntil, GetBatchMarketData
+  IBrokerMarketDataReader   → GetSymbolInfo, GetCandles, GetBatchMarketData
   IBrokerOrderHistoryReader → GetOrderHistory, GetOrderTrades
-  IBrokerAnalysisReader     → GetTechnicalAnalysis, GetFundamentalAnalysis, ...
-  IBrokerWatchlistReader    → GetMarketWatch, GetIndustryPositiveNegative
-  IBrokerFinanceCommands    → RequestWithdrawal, CancelPayment
-IBrokerClientFactory        → T Get<T>(BrokerType)
-IBrokerSessionProvider      → GetSessionAsync(accountId), Invalidate(accountId)
+  IBrokerAnalysisReader     → Technical, Fundamental, IndInd
+  IBrokerWatchlistReader    → MarketWatch, IndustryPositiveNegative
+  IBrokerFinanceCommands    → Withdrawal, CancelPayment
+IBrokerClientFactory        → Get<T>(BrokerType) [Keyed]
+IBrokerSessionProvider      → GetSessionAsync(accountId), Invalidate
 IBrokerSessionCache         → TryGet, Set, Invalidate, AcquireLockAsync
 ```
 
 ### Market Data
 ```
-IMarketDataProvider         → GetSnapshot, GetBatchSnapshots, GetCandles(isin, tf, count, toTime?)
+IMarketDataProvider         → Snapshot/Candles (independent از Account/Broker)
 IMarketDataProviderResolver → Resolve(MarketType)
-IMarketSnapshotStore        → Upsert, GetLatest, GetLatestBatch, RetainOnly
-ICandleCache                → GetOrLoadAsync(isin, tf, requiredCount)
-ICandlePersistenceService   → PersistAsync (closed only)
-ICandleTransformer          → TransformAsync(isin, candles, targetCurrency, atTime) → CandleTransformationResult
-ICurrencyRateProvider       → GetRateAsync, GetRateHistoryAsync
-ITradingScheduleCache       → GetForIsinAsync(isin) → TradingSchedule?
+IMarketSnapshotStore        → In-memory latest snapshots
+ICandleCache                → GetOrLoadAsync (Market-Aware TTL)
+ICandlePersistenceService   → Persist closed candles only
+ICandleTransformer          → Per-Candle currency transform (D13)
+ICurrencyRateProvider       → GetRate, GetRateHistory (Reverse supported)
+ITradingScheduleCache       → GetForIsinAsync → TradingSchedule?
 IMarketSessionProvider      → IsMarketOpen, GetNextMarketOpen
 ```
 
@@ -172,73 +203,93 @@ IMarketSessionProvider      → IsMarketOpen, GetNextMarketOpen
 ```
 IStrategy {
   Key, DisplayName, RequiredCandleCount, RequiresClosedCandlesOnly,
-  ExtraCandleRequirements: IReadOnlyList<CandleRequirement>,   // ← A2
+  ExtraCandleRequirements: IReadOnlyList<CandleRequirement>,   // A2
   Evaluate(StrategyInput) → StrategyEvaluationResult
 }
 IIndicator<TConfig, TResult> { Compute(IndicatorInput, TConfig) → TResult }
-IStrategyFactory { Create(key, config), DeserializeConfig(key, json), GetRegisteredStrategies() }
-IStrategyRegistration (marker، در DI Register می‌شود)
+IStrategyFactory { Create, DeserializeConfig, GetRegisteredStrategies }
+IStrategyRegistration (marker، Assembly scan)
 StrategyInput {
-  Isin, LatestSnapshot?, Candles (primary),
-  ExtraTimeFrames: IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>?,  // ← A2
+  Isin, LatestSnapshot, Candles (primary),
+  ExtraTimeFrames: IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>?,
   Configuration, TimeFrame, EvaluatedAt
 }
-StrategyEvaluationResult { Signals, Features? }
-CandleRequirement(TimeFrame, Count, ClosedOnly=true)   // ← A2
 ```
 
 ### Execution
 ```
-IOrderSizeCalculator {
-  CalculateBuy(BuySizeInput) → OrderSizeResult
-  CalculateSell(SellSizeInput) → OrderSizeResult
-}
-ICapitalAllocator             → GetAllocatableCapitalAsync (Fixed/Dynamic/Composite)
+IOrderSizeCalculator { CalculateBuy, CalculateSell }       // Pure، uses FillMath
+  BuySizeInput: AllocatedCapital, CommittedCapital,
+                AvailableCash (decimal?، null=skip), SignalStrength,
+                StrengthMultiplier, MinDeltaPercent, Price, Commission,
+                MinOrderQuantity, MaxOrderQuantity, MinOrderValueRial,
+                MaxPositionValue (decimal?، PR 16)
+ICapitalAllocator             → GetAllocatableCapitalAsync(ctx, accountId)
 ICommittedCapitalCalculator   → CalculateForSymbolAsync
-IOrderIntentBuilder           → BuildAsync(signal, context, accountId) → OrderIntent?
-IBrokerOrderDispatcher        → DispatchAsync(intent, brokerType, session) → BrokerOrder
-IOrderDispatcherResolver      → Resolve(isPaper) → IBrokerOrderDispatcher   // ← Paper
-IExecutionCoordinator         → HandleAsync(SignalEnvelope), CloseRunPositionsAsync
+IOrderIntentBuilder           → BuildAsync(signal, context, accountId)
+IBrokerOrderDispatcher        → DispatchAsync(intent, brokerType, session)
+IOrderDispatcherResolver      → Resolve(isPaper) → Live / Paper
+IExecutionCoordinator         → HandleAsync(envelope), CloseRunPositionsAsync
 ```
 
-### Position
+### Risk (Phase D — جدید)
 ```
-IPositionManager    → ApplyTradeAsync, ApplyTradeCancelAsync, (UpdateEvaluationOutcome internal)
-IPositionCloser     → CloseRunPositionsAsync(runId), ClosePositionsAsync(ids)
+IRiskGuardPipeline            → CheckAsync(RiskCheckContext) → Allow / Block
+IRiskGuard (interface)        → CheckAsync; Guards: KillSwitch, DailyLoss,
+                                CircuitBreaker, RateLimiter (فعال‌شده‌ها)
+IRiskStateTracker             → Kill Switch (Global + Per-Account)
+  ActivateKillSwitchAsync, DeactivateKillSwitchAsync, RefreshAsync,
+  IsGlobalKillSwitchActive, IsAccountKillSwitchActive, ActiveAccountKillSwitches
+
+IAccountCashCache             → Invalidate-Driven، per-Account BuyPower
+  TryGet, RefreshAsync, GetOrRefreshAsync, Invalidate
+  Snapshot: BuyPowerT0, RefreshedAt, Source
+
+IRunDailyEquityTracker        → Per (Run, Account) Daily Opening + Current
+  GetOrCaptureOpeningAsync, GetCurrentAsync
+  RunAccountDailyEquityOpening/Current: OpeningCash، PositionValue، LossPercent
+
+IRunAccountLossStreakTracker  → Consecutive Loss per (Run, Account)
+  GetAsync، OnPositionClosedAsync، ResetAsync، ResetRunAsync، ResetAccountAsync،
+  GetActiveCircuitsAsync
+  LossStreakState: ConsecutiveLosses، CircuitBrokenAt، CooldownExpiresAt، IsCircuitActive
+
+IRateLimiterTracker           → Sliding window per-Account
+  GetCountInWindow، RecordDispatch، Reset (in-memory، Singleton)
+
+RiskCheckContext { Intent, RunContext, Account }
+RiskDecision { Kind (Allow/Block), Reason, GuardName }
 ```
 
 ### Runtime
 ```
-IMarketDataIngestionStage, IStrategyEvaluationStage, IExecutionStage, IOrderLifecycleStage
-IRunExecutionContextCache   (Singleton)
-ISignalChannel              (Singleton, Channel<SignalEnvelope>)
-ITradingRunManager          → StartAsync (Idempotent), StopAsync, IsRunning
-IRuntimeRecoveryService     → RecoverAsync
+IMarketDataIngestionStage, IStrategyEvaluationStage,
+IExecutionStage, IOrderLifecycleStage
+IStrategyEvaluationService    → EvaluateAsync (Application، M6 split)
+IRunExecutionContextCache     → Singleton، in-memory RunRuntimeContext
+ISignalChannel                → Singleton، bounded Channel<SignalEnvelope>
+ITradingRunManager            → StartAsync (Idempotent)، StopAsync، IsRunning
+IRuntimeRecoveryService       → RecoverAsync (Restore + Re-push + Reconcile)
 ```
 
-### Logging / Persistence
+### Persistence / Logging
 ```
-ITradingEventLogger         → Log(stage, type, severity, message, payload, correlations), FlushAsync
-ITradingEventQueryService   → QueryAsync(filter), GetByIdAsync
-IBacktestEventLogger        → Log(...), FlushAsync
-IBacktestEventQueryService  → QueryAsync(filter)
-IReconciliationService      → ReconcileAllAsync, ReconcileAccountAsync   // ← A1
+ITradingEventLogger           → Log + FlushAsync (buffer per tick)
+ITradingEventQueryService     → Query، GetById
+IBacktestEventLogger          → Log + FlushAsync
+IReconciliationService        → ReconcileAllAsync، ReconcileAccountAsync
 ```
 
-### UnitOfWork (الگو)
+### UnitOfWork
 ```
-ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext> {
-  // Repositories (Direct): Accounts, Instruments, InstrumentOrderPresets,
-  //   TradingRuns, Signals, OrderIntents, BrokerOrders, OrderTrades, Positions,
-  //   SchedulePlans, ScheduledOrders, ExecutionLogs, MarketSnapshots, CandleRecords,
-  //   StrategyEvaluations, TradingEvents, TradingSchedules, CurrencyRates,
-  //   BacktestRuns, BacktestSymbols, BacktestTrades, BacktestDailyEquities,
-  //   BacktestEvents, HistoricalDataCollectionJobs
-  // SpecRepositories: TradingRunSpecs, SignalSpecs, OrderIntentSpecs, BrokerOrderSpecs,
-  //   OrderTradeSpecs, PositionSpecs, InstrumentSpecs, InstrumentOrderPresetSpecs,
-  //   AccountSpecs, ExecutionLogSpecs, CandleRecordSpecs, StrategyEvaluationSpecs,
-  //   BacktestRunSpecs, BacktestTradeSpecs, CurrencyRateSpecs
-}
+ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
+  // Repositories (Direct): Accounts، Instruments، InstrumentOrderPresets،
+  //   TradingRuns، Signals، OrderIntents، BrokerOrders، OrderTrades، Positions،
+  //   MarketSnapshots، CandleRecords، StrategyEvaluations، TradingEvents،
+  //   TradingSchedules، CurrencyRates، BacktestRuns/Symbols/Trades/DailyEquities/Events،
+  //   HistoricalDataCollectionJobs، SchedulePlans، ScheduledOrders، ExecutionLogs،
+  //   RiskKillSwitches، RunAccountDailyEquitySnapshots، RunAccountLossStreaks
+  // SpecRepositories: same entities (کل 32+)
 ```
 
 ---
@@ -260,6 +311,33 @@ ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext> {
   "HistoricalData": {
     "RateLimitMs": 250,
     "MaxDaysPerJob": 730
+  },
+  "Risk": {
+    "Enabled": true,
+    "DailyLossLimit": {
+      "Enabled": true,
+      "MaxLossPercent": 5.0,
+      "Scope": "Run",
+      "BrokerRefreshInterval": "00:15:00",
+      "ApplyToPaper": false
+    },
+    "MaxPositionSize": {
+      "Enabled": true,
+      "MaxPercentPerSymbol": 30.0,
+      "ApplyToPaper": true
+    },
+    "CircuitBreaker": {
+      "Enabled": true,
+      "ConsecutiveLosses": 5,
+      "CooldownMinutes": 60,
+      "ApplyToPaper": false
+    },
+    "RateLimiter": {
+      "Enabled": true,
+      "OrdersPerMinutePerAccount": 10,
+      "WindowSeconds": 60,
+      "ApplyToPaper": false
+    }
   }
 }
 "Brokers": {
@@ -280,20 +358,21 @@ ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext> {
 
 ```
 src/modules/Trader/
-├── api/                    (one file per entity + backtest + currency + historical + events)
-├── models/                 (one file per DTO + enums + labels/colors)
+├── api/                    (account، instrument، tradingRun، currencyRate، ...)
+├── models/                 (TradingRun، Risk (pending)، enums، labels)
 ├── hooks/                  (management hooks per entity)
 ├── pages/
-│   ├── Accounts/           ✅
-│   ├── Instruments/        ✅ (with TradingSchedule, Commission, Min/Max, MinValue)
+│   ├── Accounts/           ✅ (Login-all button)
+│   ├── Instruments/        ✅ (TradingSchedule، Commission، Min/Max)
 │   ├── Strategies/         ✅
-│   ├── TradingRuns/        ✅ (with StrengthMultiplier, MinDelta, Currency, ExecutionMode)
+│   ├── TradingRuns/        ✅ (per-account capital via TradingRunAccountEditor)
 │   ├── CurrencyRates/      ✅
 │   ├── Positions/          ✅ (PAPER badge)
 │   ├── Signals/            ✅
-│   ├── Events/             ✅ (TradingEvents log viewer with filters + drawer)
+│   ├── Events/             ✅ (TradingEvents log viewer + drawer)
 │   ├── Backtests/          ✅ (Create/List/Detail/Compare + LogsTab)
 │   ├── HistoricalData/     ✅ (Collection Jobs)
+│   ├── Risk/               ⏳ Next (Kill Switch + Circuit Breaker + Active)
 │   ├── SchedulePlans/      ✅ (legacy)
 │   ├── ServerClock/        ✅ (legacy)
 │   └── Logs/               ✅ (ExecutionLog legacy)
@@ -302,157 +381,141 @@ src/modules/Trader/
 ```
 
 ### Core Components
-- `GenericCrudPage` — با `tableFeatures`: `horizontalScroll`, `stickyAction`, `classNames` (همه elementها configurable)
-- `GenericAddModal`, `useGenericCrud`, `SearchableMultiSelect`, `TagInput`
+- `GenericCrudPage` — با `tableFeatures`: `horizontalScroll`، `stickyAction`، `classNames`
+- `GenericAddModal`، `useGenericCrud`، `SearchableMultiSelect`، `TagInput`
 
 ---
-## 8. PHASE A STATUS (Foundation Hardening)
 
+## 8. PHASE STATUS
+
+### Phase A (Foundation Hardening) — ✅ COMPLETE
 | # | Feature | Status |
 |---|---|---|
-| **A1** | Broker Reconciliation | ✅ Done |
-| **A2** | Sub-Candle Strategy Support | ✅ Done |
-| **A3** | Graceful Shutdown | ✅ Done (Polly DbRetry) |
-| **A4** | Health Checks per Component | ✅ Done |
-| **A5** | Retention برای BacktestEvents | ✅ Done |
-| **A6** | Unit Tests برای Critical Logic | ✅ Done (102 tests) |
+| **A1** | Broker Reconciliation (Log-only) | ✅ |
+| **A2** | Sub-Candle Strategy Support (`ExtraCandleRequirements`) | ✅ |
+| **A3** | Graceful Shutdown (Polly DbRetry) | ✅ |
+| **A4** | Health Checks (5 Components + Composite) | ✅ |
+| **A5** | Retention (Scheduler Recurring) | ✅ |
+| **A6** | Unit Tests (158 tests) | ✅ |
 
-### Future Phases
-- **B**: Data Infrastructure (TGJU USD Import, Data Completeness)
-- **C**: Operations & Dashboard (Order Management UI, Order Preset UI, Daily PnL, Dashboard Widgets)
-- **D**: Risk & Safety (Daily Loss Limit, Max Position Size, Circuit Breaker, Rate Limiter, Consecutive Loss Guard)
-- **E**: Advanced Features (Multi-Indicator Strategies, Strategy Ensemble, Trailing Stop, Laddered Exit, AI/ML Pipeline, Multi-Instance Prep)
+### Phase D (Risk & Safety) — ✅ COMPLETE
+| # | Feature | Status |
+|---|---|---|
+| **D1** | Kill Switch (Global + Per-Account) | ✅ PR 14 |
+| **D2** | Daily Loss Limit (per-account، hybrid) | ✅ PR 15 |
+| **D3** | Max Position Size (Run-based) | ✅ PR 16 |
+| **D4** | Circuit Breaker (per (Run, Account)، lazy reset) | ✅ PR 17 |
+| **D5** | Rate Limiter (per-account sliding) | ✅ PR 18 |
+
+### Phase B/C/E — آینده
+- **B (Data):** TGJU USD Import، Data Completeness Check
+- **C (Operations):** Order Management UI، Order Preset UI، Daily PnL، Dashboard
+- **E (Advanced):** Multi-Indicator، Strategy Ensemble (D27)، Trailing Stop، Laddered Exit، AI/ML Pipeline، Multi-Instance Prep (Redis Session Cache)
 
 ---
 
 ## 9. KEY DECISIONS RECAP
 
-### از Master Prompt (اصول پایه)
+### از Master Prompt
 1. Strategy از Account جداست
 2. Market Data از Execution جداست
 3. TradingRun مسئول Execution Context است
 4. Broker پشت Abstraction با Capability Segregation
-5. Future-ready, Simple Phase 1
+5. Future-ready، Simple Phase 1
 
-### تصمیمات فنی مهم (نه در Master Prompt، ولی پذیرفته‌شده)
-- **Stepped Buying**: `targetCapital = allocated × strength × multiplier`, delta check, `MinDeltaPercent` (default 3%)
-- **Per-Candle Currency Transform**: هر Candle با نرخ تاریخی خودش (`EffectiveAt`), نه نرخ واحد
-- **Candle In-Progress Filter**: `OpenTime + tfDuration <= now` قبل از دادن به RSI
-- **Cache Expiry Market-Aware**: اگر بازار بسته → Cache تا باز شدن بعدی؛ اگر باز → هر Candle Close + buffer
-- **OrderSizing Pure Logic**: `IOrderSizeCalculator` — Live/Paper/Backtest از همان استفاده می‌کنند
-- **Paper Trading**: `PaperBrokerOrderDispatcher` — Fill آنی در `intent.Price`، بدون Slippage اضافی، `IsPaper=1`
-- **Broker Reconciliation**: فقط Quantity + Weighted Avg، بدون Auto-fix در A1 (Log-only)
-- **Sub-Candle**: Strategy declares `ExtraCandleRequirements`, run context has `StrategyInput.ExtraTimeFrames` (dictionary) — `null` = فقط Primary
-- **Backtest ≠ Paper ≠ Live**: سه Mode مستقل از یک Domain/Service استفاده می‌کنند
-- **Historical Data Collection**: On-Demand Command + Background Worker + Rate Limit
-- **Event Logging**: `TradingEvents` (Live) و `BacktestEvents` جدا + Buffer + Flush در پایان Tick
-- **Retention**: Scheduler Recurring Job روزانه (نه Hangfire مستقیم، نه Background Service داخلی)
+### تصمیمات Phase A/B/C/D (منتقل به `docs/TRADING-DECISIONS.md`)
+- **D3 (اصلاح‌شده):** Capital per (Run, Account)، نه per Run
+- **D5:** Multi-Account = Fan-Out (بدون Coordination)
+- **D6:** ویرایش Run در حالت Running ممنوع
+- **D8 (C2):** SL/TP Monitoring مستقل از Order Activity
+- **D9 (C4):** Position Overshoot → Run Faulted (نه Clamp)
+- **D10 (M5):** `FillMath` تنها منبع محاسبات Fill
+- **D13:** Currency Transform Per-Candle
+- **D18/D19:** Broker Capability Segregation + Keyed DI
+- **D22:** Backtest Config Snapshot (نه Mirror)
+- **D23:** Paper Trading = Dispatcher (نه Mode جدا)
+- **D24:** Reconciliation Log-only
+- **D29:** Capital per-account، Invariants
+- **D30:** Cash مشترک بین Runها روی یک Account
+- **D31:** Risk Guard Pipeline Fail-Safe = Block
+- **D32:** Kill Switch ۳ سطح (Global، Account، Run=Stop موجود)
+- **D33:** Cash Cache Invalidate-Driven
 
-### مشکلات شناخته‌شده (Backlog)
-- `TraderSymbol` legacy — Refactor به `Instrument` در Phase E
-- `SymbolController` legacy — حذف شده از Frontend، Backend نگه‌داری شده
-- `SchedulePlan` و `ScheduledOrder` legacy — Refactor به `InstrumentOrderPreset` در Phase C
-- `InstrumentOrderPreset` UI ندارد
-- PnL از Broker (`TotalRealizedProfitAndLoss`) هنوز در Reconciliation مقایسه نمی‌شود (Phase A1+)
-- Bonus/StockRight در Reconciliation نادیده گرفته می‌شود (ممکن است Mismatch کاذب بدهد)
-- **ExecutionLogService.GetLogsAsync** — Filter در SQL اجرا می‌شود
-  (بهبود PR 9)، ولی Skip/Take هنوز در حافظه است. اگر تعداد Log
-  از ۵۰,۰۰۰ گذشت، `GetLogsPagedAsync` با ApplyPaging به
-  IExecutionLogQueryService اضافه شود.
+### تصمیمات فنی مهم
+- **Stepped Buying:** `targetCapital = allocated × strength × multiplier`، delta check، `MinDeltaPercent` (default 3%)
+- **Exact Commission Formula (M7):** `1 / (1 + c)` نه `(1 - c)` — Qty حداکثر ۱ سهم کمتر در edge cases
+- **OrderSizing Pure Logic:** Live/Paper/Backtest از یک `IOrderSizeCalculator`
+- **Paper Trading:** Immediate Fill در `intent.Price`، بدون Slippage
+- **TargetCurrency Whitelist (M10):** `CurrencyCode.NormalizeOrNull` در Create
+- **Historical Data Collection:** On-Demand Command + Background Worker + Rate Limit
+- **Event Logging:** `TradingEvents` و `BacktestEvents` جدا + Buffer + Flush per Tick
+- **Retention:** Scheduler Recurring Job روزانه
 
-- **Resilience**: هر Retry روی Database/Callهای حساس از `IReadOnlyPolicyRegistry<string>` و Polly policies پلتفرم (`DbRetry`, `DefaultRetry`) استفاده می‌کند — نه Retry سفارشی. `RetryBehavior` فقط برای MediatR؛ BackgroundServiceها (مثل `TradingEventLogger.FlushAsync`) مستقیم از Registry می‌خوانند.
-
-- **Core.Shared/Result.cs** — `Result<T>.Fail(string)` hides `Result.Fail(string)`
-  (Warning در CI). اگر کد `Result<T>` را به `Result` upcast کند و `Fail` صدا بزند،
-  نسخه‌ی پایه اجرا می‌شود (behavior silently different). نیاز به بررسی:
-  یا `new` keyword اضافه شود (اگر hide intentional)، یا Base را virtual/override کنند،
-  یا از interface استفاده شود. Priority: Low (کار می‌کند)، Risk: Medium (اگر باگ دهد).
 ---
 
-## 10. FILES TO SEND IN NEW CHAT
+## 10. KNOWN ISSUES / BACKLOG
+
+### بدهی فنی باقی‌مانده (Prioritized)
+| # | Issue | Priority | Phase |
+|---|---|---|---|
+| 1 | `ExecutionLogService.Skip/Take` در Memory (نه SQL) | Medium | B |
+| 2 | `UseQuerySplittingBehavior` Commented → Cartesian در Run بزرگ | Medium | B |
+| 3 | Multi-Account Coordination Policy ندارد (Fan-Out فقط) | Low | C |
+| 4 | `ITraderUnitOfWork` یک Registry است، نه UoW واقعی | Low | B |
+| 5 | Bonus/StockRight در Reconciliation نادیده → Mismatch کاذب | Medium | A1+ |
+| 6 | `TraderSymbol` Legacy (Refactor به `Instrument`) | Low | E |
+| 7 | `SchedulePlan`/`ScheduledOrder` Legacy (Overlap با TradingRun) | Low | C |
+| 8 | `PaperTrading` Fill فوری، بدون Partial Fill | Low | C |
+| 9 | `Cash Cache` Manual Trade تا 30 دقیقه تأخیر | Low | B |
+| 10 | Kill Switch Run-level از `TradingRun.Stop` استفاده می‌کند | — (by design) | — |
+
+### نکات Production (پیش از Live)
+- ⚠️ **Paper Trading یک هفته** با تمام Guards فعال — قبل از پول واقعی
+- ⚠️ **Target Currency** — تست که Order با IRR ثبت می‌شود
+- ⚠️ **SL/TP** — Position باز و مصنوعی Trigger کن
+- ⚠️ **Recovery** — Restart وسط معامله
+- ⚠️ **WAF** — بعد از ۱۲:۳۵ (بازار بسته) Log چک کن
+- ⚠️ **Reconciliation** — بعد از یک هفته، `POST /api/Trader/Reconciliation/Run` بزن
+
+---
+
+## 11. FILES TO SEND IN NEW CHAT
 
 ### ضروری (با اولویت)
 1. **این فایل (`HANDOFF.md`)**
-2. **`docs/TRADING-STORY.md`** — روایت ساده‌ی Pipeline (برای context کیفی)
-3. **`docs/TRADING-ARCHITECTURE.md`** — جزئیات فنی (اگر داری)
+2. **`docs/TRADING-DECISIONS.md`** — Decision Log (D1-D33)
+3. **`docs/Backend-Architecture.md`** — Narrative
 
-### Domain (کد کامل)
-- `Trader.Domain/Enums/*.cs` (همه enumها)
-- `Trader.Domain/Entities/Instrument.cs`
-- `Trader.Domain/Entities/TradingRun.cs`
-- `Trader.Domain/Entities/Signal.cs`
-- `Trader.Domain/Entities/OrderIntent.cs`
-- `Trader.Domain/Entities/BrokerOrder.cs`
-- `Trader.Domain/Entities/OrderTrade.cs`
-- `Trader.Domain/Entities/Position.cs`
-- `Trader.Domain/Entities/TradingEvent.cs`
-- `Trader.Domain/Entities/BacktestRun.cs` (+ BacktestSymbol/Trade/DailyEquity/Event)
-- `Trader.Domain/Entities/HistoricalDataCollectionJob.cs`
-- `Trader.Domain/Entities/CurrencyRate.cs`
-- `Trader.Domain/Entities/TradingSchedule.cs`
+### اگر Modification
+- فایل‌های Domain مربوطه
+- Interfaceهای Application که مرتبط هستند
+- Impl فعلی که می‌خواهی تغییر بدهی
+- **Tests مربوطه** (از `Trader.Tests/`) — تا Reviewer بداند چه رفتار قفل شده
 
-### Application — Interfaces (الزامی)
-- `Trader.Application/Abstractions/ITraderUnitOfWork.cs`
-- `Trader.Application/Abstractions/Strategies/*.cs` (IStrategy, StrategyInput, StrategyEvaluationResult, IStrategyFactory, CandleRequirement)
-- `Trader.Application/Abstractions/Execution/*.cs` (IOrderSizeCalculator + BuySizeInput/SellSizeInput/OrderSizeResult, ICapitalAllocator, IOrderDispatcherResolver, IOrderIntentBuilder, IBrokerOrderDispatcher)
-- `Trader.Application/Abstractions/MarketData/*.cs` (IMarketDataProvider, ICandleCache, ICandleTransformer, ICurrencyRateProvider, IMarketSnapshotStore, IMarketSessionProvider, ITradingScheduleCache)
-- `Trader.Application/Abstractions/Positions/*.cs`
-- `Trader.Application/Abstractions/Runtime/*.cs`
-- `Trader.Application/Abstractions/TradingRuns/*.cs`
-- `Trader.Application/Abstractions/Backtesting/*.cs`
-- `Trader.Application/Abstractions/Logging/ITradingEventLogger.cs`
-- `Trader.Application/Abstractions/Reconciliation/IReconciliationService.cs`
-- `Trader.Application/Abstractions/Health/IRuntimeHealthState.cs`
+### اگر Migration
+- `TraderDbContext.cs` + `Configurations` مربوطه
 
-### Infrastructure — Key Implementations (فقط برای reference، نه همه فایل‌ها)
-- `Trader.Infrastructure/Runtime/Stages/StrategyEvaluationStage.cs` (بحرانی — منطق پیچیده)
-- `Trader.Infrastructure/Runtime/Stages/ExecutionStage.cs`
-- `Trader.Infrastructure/Runtime/Stages/OrderLifecycleStage.cs`
-- `Trader.Infrastructure/Execution/OrderSizeCalculator.cs`
-- `Trader.Infrastructure/Execution/OrderIntentBuilder.cs`
-- `Trader.Infrastructure/Execution/ExecutionCoordinator.cs`
-- `Trader.Infrastructure/Execution/PaperBrokerOrderDispatcher.cs`
-- `Trader.Infrastructure/Execution/BrokerOrderDispatcher.cs`
-- `Trader.Infrastructure/Positions/PositionManager.cs`
-- `Trader.Infrastructure/MarketData/CurrencyCandleTransformer.cs`
-- `Trader.Infrastructure/MarketData/InMemoryCandleCache.cs`
-- `Trader.Infrastructure/MarketData/BrokerMarketDataProvider.cs`
-- `Trader.Infrastructure/Runtime/Recovery/RuntimeRecoveryService.cs`
-- `Trader.Infrastructure/Reconciliation/ReconciliationService.cs`
-- `Trader.Infrastructure/Backtesting/BacktestEngine.cs`
-- `Trader.Infrastructure/DependencyInjection/ServiceCollectionExtensions.cs` (Registration Mapping)
-- `Trader.Infrastructure/Health/*.cs` (۵ HealthCheck + RuntimeHealthState)
-- `Trader.Infrastructure/Data/HealthCheckExtensions.cs` (Registration)
-- `Trader.Infrastructure/DependencyInjection/ApplicationBuilderExtensions.cs` (`Trader_MapHealthChecks`)
+### اگر Frontend
+- `models/*.ts` + `api/*.ts` + `pages/<feature>/` + `routes.tsx`
 
-### Application — Sample Strategy
-- `Trader.Application/Strategies/Rsi/RsiStrategy.cs` (+ Registration, Config, Calculator)
-- `Trader.Application/Indicators/Rsi/RsiIndicator.cs`
-
-### Persistence (فقط برای reference — اگر Migration جدید لازم شد)
-- `Trader.Infrastructure/Data/TraderDbContext.cs`
-- `Trader.Infrastructure/Configurations/` (اگر تعداد زیاد بود، فقط موارد اخیر)
-
-### Frontend (فقط اگر به UI مربوطه)
-- `src/modules/Trader/models/index.ts`
-- `src/modules/Trader/api/index.ts`
-- `src/core/components/crud/types.ts`
+### اگر مطمئن نیستی
+- فقط `HANDOFF.md` + `TRADING-DECISIONS.md` بفرست + اسم Feature
+- Reviewer از لیست ۳۲ Interface در Section 5 می‌پرسد
 
 ---
 
-## 11. COLLABORATION MODE
+## 12. COLLABORATION MODE
 
-### کاربر این‌ها را انتظار دارد:
-1. **قبل از کد، طرح + تأیید صریح** — اگر تصمیم معماری است، اول توضیح بده
+### کاربر انتظار دارد
+1. **قبل از کد، طرح + تأیید صریح** — اگر تصمیم معماری است
 2. **کد کامل** — نه pseudo-code
-3. **فایل‌به‌فایل** — namespace + path + DI + Migration، همه مشخص
+3. **فایل‌به‌فایل** — namespace + path + DI + Migration
 4. **پاسخ مستقیم و فنی** — بدون مقدمه‌ی طولانی
-5. **Commit Message در انتهای هر پیام** — user بعد از هر پیام commit می‌زند
-6. **این HANDOFF را هر بار update کن** — در انتهای هر پیام، اگر تغییر کرده، نسخه‌ی به‌روز را کوتاه کن (یا فقط diff را بگو)
-7. **Python/PowerShell test snippets** — اگر Diagnostic لازم بود
-8. **Backward Compat**: هیچ Refactor بدون دلیل، هیچ Feature بدون نیاز
+5. **Commit Message در انتهای هر پیام**
+6. **این HANDOFF را در انتهای هر Phase به‌روز کن**
+7. **Backward Compat** — بدون Refactor بدون دلیل
 
-### کاربر تجربه دارد (۱۲ سال) — مثل Junior توضیح نده
+### کاربر تجربه دارد (۱۲ سال) — Junior نباش
 - روی تصمیمات معماری مستقیم بحث کن
 - اگر پیشنهاد کاربر بهینه نیست، صریح بگو چرا
 - اگر Overengineering است، بگو
@@ -460,120 +523,29 @@ src/modules/Trader/
 
 ---
 
-## 12. NEXT STEPS (بعد از A2)
+## 13. NEXT STEPS
 
-### A3 — Graceful Shutdown (بعدی)
-- `IHostedService.StopAsync` روی `TradingRuntimeWorker`
-- ترتیب: Stop Heartbeat → Wait Running Tick → Flush Events → Persist Paper Positions (اگر in-memory) → Save Broker Sessions
-- Outcome: بدون از دست دادن Signal/Order در Shutdown
+### بلافاصله (بعد از این PR)
+1. **Risk Dashboard UI** (Frontend Batch 2) — Kill Switch + Circuit Breaker + Active Circuits
+   - `models/Risk.ts` + `api/riskApi.ts`
+   - `pages/Risk/RiskDashboardPage.tsx`
+   - Add route در `routes.tsx` + export در `pages/index.ts`
 
-### A4 — Health Checks
-- `/health/trader` composite
-- Per-component: DB, Broker Session, Market Data, Runtime Worker
+### کوتاه‌مدت
+2. **Paper Trading Week** — یک هفته Paper با تمام Guards فعال، قبل از Phase B/C/D
+3. **Bug bash** — هر Issue که در Paper هفته کشف شد
 
-### A5 — Retention برای BacktestEvents
-- گسترش `TradingEventRetentionService` به `BacktestEvents` هم
-- Retention جدا در Config: `Trader:Logging:BacktestEventsRetentionDays` (default 90)
-
-### A6 — Unit Tests
-- `OrderSizeCalculator` (بحرانی — Stepped Buy + MinDelta + Min/Max + Commission)
-- `RsiCalculator`
-- `SubCandleResolver`
-- `PositionManager` (Apply Trade/Close)
-- `CurrencyCandleTransformer` (Per-Candle)
-- `BacktestEngine` (Simulation Loop)
+### میان‌مدت
+4. **Phase B:** TGJU USD Import، Data Completeness
+5. **Phase C:** Order Management UI، Order Preset UI، Daily PnL
+6. **Phase E:** Strategy Ensemble، Trailing Stop، AI/ML Pipeline
 
 ---
-
-## 13. CONTACT POINTS (اگر چت جدید)
-
-**اگر کاربر چت جدید باز کرد و این فایل را داد:**
-1. این کل context را دارد — نیاز به توضیح اضافه نیست
-2. اگر فایلی کم است، از لیست بخش ۱۰ درخواست کن
-3. از کاربر بپرس: **«الآن در کدام مرحله هستیم؟»** — اگر در A3، شروع کن به طراحی
-4. اگر کاربر گفت «ادامه بده»، ببین `PHASE A STATUS` — اولین ⏳ = نقطه‌ی شروع
-5. **قبل از هر کد، طرح کوتاه + تأیید بگیر**
-
----
-
-## 14. RECENT COMPLETED WORK (آخرین ۵ پیام)
-
-1. **A4 Health Checks** — `IRuntimeHealthState` (Singleton, Interlocked) + 5 Custom `IHealthCheck` (RuntimeWorker, BacktestWorker, HistoricalWorker, BrokerSession, MarketDataFreshness) + reuse `AddDbContextCheck<TraderDbContext>` با tags + endpointهای `/health/trader`, `/health/trader/db`, `/health/trader/runtime`, ... . Workers با `MarkTickNow/MarkBacktestPollNow/MarkHistoricalPollNow` state را Update می‌کنند. Broker/MarketData → Degraded (transient), Worker stalls → Unhealthy.
-2. **A3 Graceful Shutdown** — `TradingRuntimeWorker.StopAsync` override + 3 shutdown event types (64/65/66). `FlushAsync` از Polly `IReadOnlyPolicyRegistry<string>.Get<IAsyncPolicy>("DbRetry")` (fallback: DefaultRetry → NoOp).
-3. **A1 Reconciliation** — `ReconciliationService` + `IReconciliationService` + Command/Controller + Integration در `RuntimeRecoveryService`. Direct access به `PortfolioPerformanceDto.SymbolIsin` و `.Asset`.
-4. **A2 Sub-Candle** — `CandleRequirement` + `IStrategy.ExtraCandleRequirements` + `StrategyInput.ExtraTimeFrames` (dict).
-5. **Backtest Currency** — فقط در Virtual Mode.
 
 ## 14. RECENT COMPLETED WORK
 
-1. **M6 Refactor** — `StrategyEvaluationStage` split: `IStrategyEvaluationService`
-   (Application) برای منطق ارزیابی، Stage فقط Orchestration.
-   480 LOC → 140 LOC. 7 integration tests قبل از Refactor نوشته شد،
-   صفر تغییر در Assertions بعد از Refactor.
-2. **M5 Refactor** — `FillMath` extraction (Domain.Calculations).
-   Single source of truth برای Weighted Average، RealizedPnL، Commission.
-   Live/Paper/Backtest همه از همان فرمول استفاده می‌کنند.
-3. **M7 + M9 Fix** — Commission exact formula در `OrderSizeCalculator`
-   (`1/(1+c)` نه `(1-c)`), حذف Double Cash Check در `BacktestEngine`.
-   رفتار: Qty حداکثر ۱ سهم کمتر در edge cases.
-4. **C2 + C4 Fix** — SL/TP مستقل از Order Activity، Position Overshoot
-   → Run Faulted (نه Clamp). هر دو با Integration Test قفل شده‌اند.
-5. **M1 Batch 1-3 + M2 + M3 + M10 + N1 + N4 + N5** — Performance + Hygiene:
-   SQL-side Spec queries در Workerها/Services، Per-Stage Timing،
-   Whitelist TargetCurrency، CandleRecord TimeFrame enum.
-
-برای جزئیات هر تصمیم، به `docs/TRADING-ARCHITECTURE.md` (Decision Log) مراجعه کن.
----
-
-**پایان سند**
-
----
-
-## هر بار این سند به‌روز می‌شود
-- **`Last Updated`** در ابتدای فایل
-- **بخش ۸ (Phase Status)**
-- **بخش ۱۴ (Recent Work)** — ۵ مورد آخر
-- **بخش ۱۰ (Files List)** — اگر فایل کلیدی جدید اضافه شد
-```
-
----
-
-## فایل‌هایی که باید در چت جدید بفرستی (خلاصه)
-
-**همیشه:**
-1. `docs/HANDOFF.md` (این سند)
-
-**اگر Phase جدید شروع کردی:**
-2. فایل‌های Domain مربوطه (اگر تغییر کرده)
-3. Interfaceهای Application که مرتبط هستند
-4. Impl فعلی که می‌خواهی تغییر بدهی
-
-**اگر Migration لازم شد:**
-5. `TraderDbContext.cs` + `Configurations` مربوطه
-
-**اگر Frontend مربوطه:**
-6. `models/index.ts` + `api/index.ts` + `types.ts` (Core)
-
-**اگر مطمئن نیستی:**
-- فقط `HANDOFF.md` بفرست + اسم فایل/قابلیت مورد نظر
-- من از لیست بخش ۱۰ می‌پرسم کدام را لازم دارم
-
----
-
-## نکته‌ی مهم برای چت جدید
-
-**در پیام اول چت جدید بنویس:**
-
-> «فایل HANDOFF.md را می‌فرستم. وضعیت کامل پروژه در آن است. الآن در Phase A هستیم. [اسم مرحله‌ی بعدی که در HANDOFF بخش ۸ مشخص است] ادامه بده.»
-
-اگر مطمئن نیستی مرحله‌ی بعدی چیست، فقط بگو: «از HANDOFF ادامه بده» — من از `PHASE A STATUS` می‌بینم.
-
----
-
-## از اینجا به بعد
-
-**اعمال A1 + تست → A3 (Graceful Shutdown)**
-
-بعد از Build + Restart، `POST /api/Trader/Reconciliation/Run` بزن و `TradingEvents` را چک کن. اگر Match/Mismatch درست Log شد → A1 تأیید. پیام بعدی: A3.
-
-**بگو ادامه دهیم یا اول تست A1؟**
+1. **PR 19** — Per-Account Capital Allocation (Backend + Migration + Tests). `AccountCapitalAllocation` VO، `TradingRun` بدون CapitalAllocation، `FixedCapitalAllocator` per-account. 158 tests.
+2. **PR 19 Frontend** — Trading Runs sync با per-account capital، `TradingRunAccountEditor` بازنویسی، حذف Run-level column.
+3. **PR 18** — RateLimiterGuard (per-account sliding window). `InMemoryRateLimiterTracker` Singleton، `RecordDispatch` بعد از Dispatch موفق. 145→158 tests.
+4. **PR 17** — ConsecutiveLossGuard (Circuit Breaker). `RunAccountLossStreak` Entity، Lazy Reset on Cooldown Expiry. DI fix: `RunAccountLossStreakTracker` Singleton با IServiceScopeFactory برای Logger Scoped.
+5. **PR 20** — Kill Switch Events hotfix (TradingEvent از Command Handler) + HANDOFF Rewrite.
