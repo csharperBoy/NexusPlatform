@@ -13,7 +13,7 @@ namespace Trader.Presentation.Controller;
 public class RiskController : BaseController
 {
     [HttpPost("CircuitBreaker/Reset")]
-    [AuthorizeResource("trader.tradingrun", "Edit")]
+    [AuthorizeResource("trader.risk", "Edit")]
     public async Task<IActionResult> ResetCircuitBreaker(
     [FromBody] ResetCircuitBreakerCommand command)
     {
@@ -22,7 +22,7 @@ public class RiskController : BaseController
     }
 
     [HttpGet("CircuitBreaker/Active")]
-    [AuthorizeResource("trader.tradingrun", "View")]
+    [AuthorizeResource("trader.risk", "View")]
     public async Task<IActionResult> GetActiveCircuits(
         [FromServices] IRunAccountLossStreakTracker tracker,
         CancellationToken ct)
@@ -33,7 +33,7 @@ public class RiskController : BaseController
     /* ═══════════ Kill Switch ═══════════ */
 
     [HttpPost("Kill-Switch/Activate")]
-    [AuthorizeResource("trader.tradingrun", "Edit")]
+    [AuthorizeResource("trader.risk", "Edit")]
     public async Task<IActionResult> Activate([FromBody] ActivateKillSwitchCommand command)
     {
         var result = await Mediator.Send(command);
@@ -41,7 +41,7 @@ public class RiskController : BaseController
     }
 
     [HttpPost("Kill-Switch/Deactivate")]
-    [AuthorizeResource("trader.tradingrun", "Edit")]
+    [AuthorizeResource("trader.risk", "Edit")]
     public async Task<IActionResult> Deactivate([FromBody] DeactivateKillSwitchCommand command)
     {
         var result = await Mediator.Send(command);
@@ -49,7 +49,7 @@ public class RiskController : BaseController
     }
 
     [HttpGet("Kill-Switch/Status")]
-    [AuthorizeResource("trader.tradingrun", "View")]
+    [AuthorizeResource("trader.risk", "View")]
     public async Task<IActionResult> Status()
     {
         var result = await Mediator.Send(new GetKillSwitchStatusQuery());

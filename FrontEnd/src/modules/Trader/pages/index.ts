@@ -27,3 +27,4 @@ export { CollectionStatusBadge } from "./HistoricalData/CollectionStatusBadge";
 export { CreateCollectionModal } from "./HistoricalData/CreateCollectionModal";
 
 export { HistoricalDataCollectionPage } from "./HistoricalData/HistoricalDataCollectionPage";
+export { RiskDashboardPage } from "./Risk/RiskDashboardPage";

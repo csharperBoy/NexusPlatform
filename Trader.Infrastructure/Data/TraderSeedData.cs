@@ -193,6 +193,16 @@ namespace Trader.Infrastructure.Data
                             DisplayOrder = 3016,
                             Icon = "database",
                         },
+                        new()
+                        {
+                            Key = "trader.risk",
+                            Name = "Risk Management",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Kill Switch, Circuit Breaker, and Risk Events",
+                            DisplayOrder = 3017,
+                            Icon = "shield",
+                        },
                     }
                 }
             };
@@ -236,6 +246,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.tradingevent", roleId, "View trading events"),
                 FullAccess("trader.backtest", roleId, "Full access to Backtest"),
                 FullAccess("trader.historicaldata", roleId, "Full access to Historical Data Collection"),
+                FullAccess("trader.risk", roleId, "Full access to Risk Management"),
             };
         }
 
@@ -430,6 +441,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.historicaldata",
                             ParentKey = "trader",
                             Path = "/trader/historical-data"
+                        },new()
+                        {
+                            Title = "مدیریت ریسک",
+                            Description = "Kill Switch، Circuit Breaker، وضعیت Risk Guards",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 115,
+                            Key = "trader.risk",
+                            ParentKey = "trader",
+                            Path = "/trader/risk"
                         },
                     }
                 }

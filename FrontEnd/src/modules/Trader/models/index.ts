@@ -165,3 +165,18 @@ export {
   EXECUTION_MODE_LABELS,
   EXECUTION_MODE_COLORS,
 } from "./TradingRunEnums";
+
+// ─── Risk (Phase D — PR 14-20) ───
+export type {
+  KillSwitchStatusView,
+  LossStreakState,
+  ActivateKillSwitchCommand,
+  DeactivateKillSwitchCommand,
+  ResetCircuitBreakerCommand,
+} from "./Risk";
+
+export {
+  KillSwitchScope,
+  isCircuitActive,
+  formatCooldown,
+} from "./Risk";
