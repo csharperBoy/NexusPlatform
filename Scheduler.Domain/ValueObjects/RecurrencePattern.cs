@@ -1,11 +1,19 @@
 ﻿using System.Text.Json.Serialization;
+using Cronos;
 using Scheduler.Domain.Enums;
 
 namespace Scheduler.Domain.ValueObjects;
 
 /// <summary>
 /// الگوی تکرار. Pure Value Object — هیچ I/O.
-/// ذخیره می‌شود به‌صورت JSON در RecurringJob.RecurrencePatternJson.
+/// ذخیره می‌شود به‌صورت JSON در RecurringSchedule.RecurrencePatternJson.
+///
+/// انواع:
+///   • Minutely/Houly  — Interval به دقیقه/ساعت (Real-time, DST-free)
+///   • Daily/Weekly/Monthly — Anchor time-of-day + tz (DST-aware)
+///   • Cron — Cron expression (5-field standard, via Cronos)
+///
+/// Backward Compat: enum values 0/1/2 برای Daily/Weekly/Monthly بدون تغییر.
 /// </summary>
 public sealed class RecurrencePattern
 {
@@ -14,23 +22,60 @@ public sealed class RecurrencePattern
     public DayOfWeek[]? DaysOfWeek { get; }
     public int[]? DaysOfMonth { get; }
 
+    /// <summary>فقط برای Type=Cron. 5-field expression (minute hour day month weekday).</summary>
+    public string? CronExpression { get; }
+
     [JsonConstructor]
     public RecurrencePattern(
         RecurrenceType type,
         int interval,
         DayOfWeek[]? daysOfWeek,
-        int[]? daysOfMonth)
+        int[]? daysOfMonth,
+        string? cronExpression = null)
     {
         if (interval <= 0)
             throw new ArgumentOutOfRangeException(nameof(interval), "Interval must be > 0.");
+
+        // ─── Cron validation ───
+        if (type == RecurrenceType.Cron)
+        {
+            if (string.IsNullOrWhiteSpace(cronExpression))
+                throw new ArgumentException(
+                    "CronExpression is required when Type = Cron.",
+                    nameof(cronExpression));
+
+            try
+            {
+                Cronos.CronExpression.Parse(cronExpression);
+            }
+            catch (CronFormatException ex)
+            {
+                throw new ArgumentException(
+                    $"Invalid cron expression '{cronExpression}': {ex.Message}",
+                    nameof(cronExpression), ex);
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(cronExpression))
+        {
+            throw new ArgumentException(
+                $"CronExpression is only valid when Type = Cron (got {type}).",
+                nameof(cronExpression));
+        }
 
         Type = type;
         Interval = interval;
         DaysOfWeek = daysOfWeek;
         DaysOfMonth = daysOfMonth;
+        CronExpression = cronExpression?.Trim();
     }
 
     /* ═══════════════════ Factories ═══════════════════ */
+
+    public static RecurrencePattern Minutely(int interval = 1)
+        => new(RecurrenceType.Minutely, interval, null, null);
+
+    public static RecurrencePattern Hourly(int interval = 1)
+        => new(RecurrenceType.Hourly, interval, null, null);
 
     public static RecurrencePattern Daily(int interval = 1)
         => new(RecurrenceType.Daily, interval, null, null);
@@ -72,20 +117,56 @@ public sealed class RecurrencePattern
             daysOfMonth.Distinct().OrderBy(d => d).ToArray());
     }
 
+    /// <summary>
+    /// Cron expression (5-field standard: minute hour day-of-month month day-of-week).
+    /// مثال‌ها: "*/5 * * * *" (هر ۵ دقیقه), "0 9 * * 1-5" (روزهای هفته ۹:۰۰), "0 23 1 * *" (روز اول هر ماه ۲۳:۰۰).
+    /// </summary>
+    public static RecurrencePattern Cron(string expression)
+    {
+        if (string.IsNullOrWhiteSpace(expression))
+            throw new ArgumentException("Cron expression is required.", nameof(expression));
+
+        return new(RecurrenceType.Cron, interval: 1, null, null, expression);
+    }
+
     /* ═══════════════════ Core Logic ═══════════════════ */
 
     /// <summary>
-    /// زمان رخداد بعدی، بر اساس:
-    /// - anchorUtc: StartAt پلن (زمان رخداد اول + time-of-day مرجع)
-    /// - afterUtc: الان (بعد از اجرای قبلی)
-    /// - tz: timezone پلن (پیش‌فرض Asia/Tehran)
-    /// خروجی: UTC
+    /// زمان رخداد بعدی.
+    /// Semantics: strictly after afterUtc؛ اگر afterUtc قبل از anchorUtc باشد،
+    /// اولین رخداد همان anchorUtc است (به‌جز Cron که anchor معنایی ندارد و از anchor - 1 tick
+    /// شروع می‌کند تا اولین Cron match بعد از anchor پیدا شود).
     /// </summary>
     public DateTimeOffset GetNextOccurrence(
         DateTimeOffset anchorUtc,
         DateTimeOffset afterUtc,
         TimeZoneInfo tz)
     {
+        // ─── Minutely / Hourly: Interval-based، بدون tz ───
+        if (Type == RecurrenceType.Minutely)
+            return GetNextSubDaily(anchorUtc, afterUtc, TimeSpan.FromMinutes(Interval));
+
+        if (Type == RecurrenceType.Hourly)
+            return GetNextSubDaily(anchorUtc, afterUtc, TimeSpan.FromHours(Interval));
+
+        // ─── Cron: via Cronos ───
+        if (Type == RecurrenceType.Cron)
+        {
+            var cron = Cronos.CronExpression.Parse(CronExpression!);
+
+            // اگر after < anchor → اولین match بعد از anchor - 1tick (تا anchor هم قابل پیدا شدن باشد)
+            DateTime fromUtc = afterUtc.UtcDateTime;
+            if (afterUtc < anchorUtc)
+                fromUtc = anchorUtc.UtcDateTime.AddTicks(-1);
+
+            var next = cron.GetNextOccurrence(fromUtc, tz)
+                ?? throw new InvalidOperationException(
+                    $"Cron expression '{CronExpression}' has no next occurrence after {afterUtc:O} (tz={tz.Id}).");
+
+            return new DateTimeOffset(next, TimeSpan.Zero);
+        }
+
+        // ─── Daily / Weekly / Monthly (منطق موجود) ───
         var anchorLocal = TimeZoneInfo.ConvertTime(anchorUtc, tz);
         var afterLocal = TimeZoneInfo.ConvertTime(afterUtc, tz);
 
@@ -105,6 +186,29 @@ public sealed class RecurrencePattern
     }
 
     /* ═══════════════════ Private Helpers ═══════════════════ */
+
+    /// <summary>
+    /// Next Occurrence برای Minutely/Hourly — Strictly-After semantic،
+    /// هم‌راستا با Daily (اگر after == anchor + k*interval، next = anchor + (k+1)*interval).
+    /// </summary>
+    private static DateTimeOffset GetNextSubDaily(
+        DateTimeOffset anchorUtc,
+        DateTimeOffset afterUtc,
+        TimeSpan interval)
+    {
+        if (interval <= TimeSpan.Zero)
+            throw new InvalidOperationException("Interval must be positive.");
+
+        if (afterUtc < anchorUtc)
+            return anchorUtc;
+
+        var elapsedTicks = (afterUtc - anchorUtc).Ticks;
+        var intervalTicks = interval.Ticks;
+
+        // elapsedTicks >= 0 پس / = floor. +1 = strictly-after.
+        var k = (elapsedTicks / intervalTicks) + 1;
+        return anchorUtc.AddTicks(k * intervalTicks);
+    }
 
     private DateTime GetNextDailyLocal(DateTime anchor, DateTime after)
     {
