@@ -78,6 +78,5 @@ public enum TradingEventType
     MaxPositionSizeReached = 93,
     CircuitBreakerTriggered = 94,
     CircuitBreakerReset = 95,
-    // رزرو:
-    // RateLimitExceeded = 96,
+    RateLimitExceeded = 96,         
 }

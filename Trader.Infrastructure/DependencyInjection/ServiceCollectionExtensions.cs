@@ -215,7 +215,8 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddScoped<FixedCapitalAllocator>();
             services.AddScoped<DynamicCapitalAllocator>();
             services.AddScoped<ICapitalAllocator, CompositeCapitalAllocator>();
-
+            services.AddSingleton<IRateLimiterTracker, InMemoryRateLimiterTracker>();
+            services.AddScoped<IRiskGuard, RateLimiterGuard>();
             // ─── Execution ───
             services.AddScoped<IOrderIntentBuilder, OrderIntentBuilder>();
             // Live + Paper dispatchers (concrete types for Resolver)

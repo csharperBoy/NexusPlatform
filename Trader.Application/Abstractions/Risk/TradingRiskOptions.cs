@@ -64,4 +64,10 @@ public sealed class RateLimiterOptions
 {
     public bool Enabled { get; set; } = true;
     public int OrdersPerMinutePerAccount { get; set; } = 10;
+
+    /// <summary>پنجره‌ی rate limit (پیش‌فرض ۶۰ ثانیه). برای تست قابل تنظیم است.</summary>
+    public int WindowSeconds { get; set; } = 60;
+
+    /// <summary>Paper Mode: پیش‌فرض false — Paper broker API ندارد.</summary>
+    public bool ApplyToPaper { get; set; } = false;
 }

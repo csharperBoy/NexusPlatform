@@ -20,6 +20,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
     private readonly IRunExecutionContextCache _runCache;
     private readonly IOrderIntentBuilder _intentBuilder;
 
+    private readonly IRateLimiterTracker _rateLimiter;
     private readonly IRiskGuardPipeline _riskPipeline;
     //private readonly IBrokerOrderDispatcher _dispatcher;
     private readonly IOrderDispatcherResolver _dispatcherResolver;
@@ -37,7 +38,8 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         IRunExecutionContextCache runCache,
         IOrderIntentBuilder intentBuilder,
 
-        //IBrokerOrderDispatcher dispatcher,
+    IRateLimiterTracker rateLimiter,   
+                                       //IBrokerOrderDispatcher dispatcher,
     IOrderDispatcherResolver dispatcherResolver,
 
         IBrokerSessionProvider sessionProvider,
@@ -53,6 +55,7 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
         _runCache = runCache;
         _intentBuilder = intentBuilder;
 
+        _rateLimiter = rateLimiter;
         //_dispatcher = dispatcher;
         _dispatcherResolver = dispatcherResolver;
 
@@ -257,6 +260,9 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             var dispatcher = _dispatcherResolver.Resolve(intent.IsPaper);
             var brokerOrder = await dispatcher.DispatchAsync(
                 intent, account.Broker, session, ct);
+
+            // ── ثبت dispatch موفق برای rate limit ──
+            _rateLimiter.RecordDispatch(accountId);
 
             // ── Cash تغییر کرده — Invalidate برای refresh بعدی ──
             _cashCache.Invalidate(accountId);
