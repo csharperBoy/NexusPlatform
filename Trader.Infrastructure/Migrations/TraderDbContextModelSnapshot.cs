@@ -2294,12 +2294,6 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("AllocationPercent")
-                        .ValueGeneratedOnAdd()
-                        .HasPrecision(9, 4)
-                        .HasColumnType("decimal(9,4)")
-                        .HasDefaultValue(100m);
-
                     b.Property<Guid>("TraderAccountId")
                         .HasColumnType("uniqueidentifier");
 
@@ -2541,49 +2535,6 @@ namespace Trader.Infrastructure.Migrations
 
             modelBuilder.Entity("Trader.Domain.Entities.TradingRun", b =>
                 {
-                    b.OwnsOne("Trader.Domain.ValueObjects.CapitalAllocation", "CapitalAllocation", b1 =>
-                        {
-                            b1.Property<Guid>("TradingRunId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<int>("Mode")
-                                .HasColumnType("int")
-                                .HasColumnName("CapitalAllocationMode");
-
-                            b1.HasKey("TradingRunId");
-
-                            b1.ToTable("TradingRuns", "trader");
-
-                            b1.WithOwner()
-                                .HasForeignKey("TradingRunId");
-
-                            b1.OwnsOne("Trader.Domain.ValueObjects.Money", "FixedAmount", b2 =>
-                                {
-                                    b2.Property<Guid>("CapitalAllocationTradingRunId")
-                                        .HasColumnType("uniqueidentifier");
-
-                                    b2.Property<decimal>("Amount")
-                                        .HasPrecision(18, 4)
-                                        .HasColumnType("decimal(18,4)")
-                                        .HasColumnName("FixedCapitalAmount");
-
-                                    b2.Property<string>("Currency")
-                                        .IsRequired()
-                                        .HasMaxLength(10)
-                                        .HasColumnType("nvarchar(10)")
-                                        .HasColumnName("FixedCapitalCurrency");
-
-                                    b2.HasKey("CapitalAllocationTradingRunId");
-
-                                    b2.ToTable("TradingRuns", "trader");
-
-                                    b2.WithOwner()
-                                        .HasForeignKey("CapitalAllocationTradingRunId");
-                                });
-
-                            b1.Navigation("FixedAmount");
-                        });
-
                     b.OwnsOne("Trader.Domain.ValueObjects.StopLossConfig", "StopLoss", b1 =>
                         {
                             b1.Property<Guid>("TradingRunId")
@@ -2630,9 +2581,6 @@ namespace Trader.Infrastructure.Migrations
                                 .HasForeignKey("TradingRunId");
                         });
 
-                    b.Navigation("CapitalAllocation")
-                        .IsRequired();
-
                     b.Navigation("StopLoss");
 
                     b.Navigation("TakeProfit");
@@ -2644,6 +2592,57 @@ namespace Trader.Infrastructure.Migrations
                         .WithMany("Accounts")
                         .HasForeignKey("TradingRunId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Trader.Domain.ValueObjects.AccountCapitalAllocation", "CapitalAllocation", b1 =>
+                        {
+                            b1.Property<Guid>("TradingRunAccountId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int>("Mode")
+                                .HasColumnType("int")
+                                .HasColumnName("CapitalMode");
+
+                            b1.Property<decimal?>("PercentOfBuyPower")
+                                .HasPrecision(9, 4)
+                                .HasColumnType("decimal(9,4)")
+                                .HasColumnName("PercentOfBuyPower");
+
+                            b1.HasKey("TradingRunAccountId");
+
+                            b1.ToTable("TradingRunAccounts", "trader");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TradingRunAccountId");
+
+                            b1.OwnsOne("Trader.Domain.ValueObjects.Money", "FixedAmount", b2 =>
+                                {
+                                    b2.Property<Guid>("AccountCapitalAllocationTradingRunAccountId")
+                                        .HasColumnType("uniqueidentifier");
+
+                                    b2.Property<decimal>("Amount")
+                                        .HasPrecision(18, 4)
+                                        .HasColumnType("decimal(18,4)")
+                                        .HasColumnName("FixedCapitalAmount");
+
+                                    b2.Property<string>("Currency")
+                                        .IsRequired()
+                                        .HasMaxLength(10)
+                                        .HasColumnType("nvarchar(10)")
+                                        .HasColumnName("FixedCapitalCurrency");
+
+                                    b2.HasKey("AccountCapitalAllocationTradingRunAccountId");
+
+                                    b2.ToTable("TradingRunAccounts", "trader");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("AccountCapitalAllocationTradingRunAccountId");
+                                });
+
+                            b1.Navigation("FixedAmount");
+                        });
+
+                    b.Navigation("CapitalAllocation")
                         .IsRequired();
                 });
 

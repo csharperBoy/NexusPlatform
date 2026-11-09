@@ -23,20 +23,21 @@ public sealed class DynamicCapitalAllocator : ICapitalAllocator
         Guid accountId,
         CancellationToken ct = default)
     {
-        // ── 1. BuyPower از Cache (یا Broker اگر invalidated/miss) ──
+        var allocation = context.GetAllocationFor(accountId).CapitalAllocation;
+
+        if (!allocation.IsDynamic)
+            throw new InvalidOperationException(
+                $"DynamicCapitalAllocator called for account {accountId} " +
+                $"with mode {allocation.Mode}. Expected Dynamic.");
+
         var cash = await _cashCache.GetOrRefreshAsync(accountId, ct);
-
-        // ── 2. درصد این Account در این Run ──
-        var percent = context.GetAllocationFor(accountId);
-
-        // ── 3. Allocated ──
+        var percent = allocation.PercentOfBuyPower!.Value;
         var allocated = cash.BuyPowerT0 * (percent / 100m);
 
         _logger.LogDebug(
-            "Allocated {Allocated:N0} for (run={RunId}, account={AccountId}): " +
-            "BuyPower={BuyPower:N0} × {Percent}%",
-            allocated, context.RunId, accountId,
-            cash.BuyPowerT0, percent);
+            "Dynamic capital for (run={RunId}, account={AccountId}): " +
+            "BuyPower={BuyPower:N0} × {Percent}% = {Allocated:N0}",
+            context.RunId, accountId, cash.BuyPowerT0, percent, allocated);
 
         return allocated;
     }

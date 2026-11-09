@@ -15,10 +15,30 @@ public class TradingRunAccountConfiguration : BaseConfiguration<TradingRunAccoun
         builder.Property(x => x.TradingRunId).IsRequired();
         builder.Property(x => x.TraderAccountId).IsRequired();
 
-        builder.Property(x => x.AllocationPercent)
-            .HasPrecision(9, 4)
-            .IsRequired()
-            .HasDefaultValue(100m);   // برای رکوردهای موجود
+        // ─── CapitalAllocation (Owned) ───
+        builder.OwnsOne(x => x.CapitalAllocation, ab =>
+        {
+            ab.Property(p => p.Mode)
+                .HasConversion<int>()
+                .HasColumnName("CapitalMode")
+                .IsRequired();
+
+            ab.OwnsOne(p => p.FixedAmount, mb =>
+            {
+                mb.Property(m => m.Amount)
+                    .HasColumnName("FixedCapitalAmount")
+                    .HasPrecision(18, 4);
+                mb.Property(m => m.Currency)
+                    .HasColumnName("FixedCapitalCurrency")
+                    .HasMaxLength(10);
+            });
+            ab.Navigation(p => p.FixedAmount).IsRequired(false);
+
+            ab.Property(p => p.PercentOfBuyPower)
+                .HasColumnName("PercentOfBuyPower")
+                .HasPrecision(9, 4)
+                .IsRequired(false);
+        });
 
         builder.HasIndex(x => new { x.TradingRunId, x.TraderAccountId })
             .IsUnique()

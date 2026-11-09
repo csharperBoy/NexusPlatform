@@ -97,14 +97,14 @@ public class KillSwitchGuardTests
             strategyKey: "rsi",
             strategyConfigJson: "{}",
             timeFrame: TimeFrame.D1,
-            capitalAllocation: CapitalAllocation.Dynamic(),
             stopLoss: null,
             takeProfit: null,
             defaultOrderMode: OrderMode.Quantity,
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
             symbols: new[] { ("TEST", new SymbolAllocation(100m)) },
-    accounts: new[] { (account.Id, 100m) });  
+
+    accounts: new[] { (account.Id, AccountCapitalAllocation.Dynamic(100m)) });  
 
         var runContext = new RunRuntimeContext(
             RunId: run.Id,
@@ -119,14 +119,13 @@ public class KillSwitchGuardTests
             StrengthMultiplier: 1.0m,
             MinDeltaPercent: 0.03m,
             ExecutionMode: ExecutionMode.Paper,
-            CapitalAllocation: run.CapitalAllocation,
             StopLoss: null,
             TakeProfit: null,
             DefaultOrderMode: OrderMode.Quantity,
             OnMarketClose: MarketCloseBehavior.KeepPositions,
             OnStop: StopRunBehavior.KeepPositions,
             Symbols: new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-    AccountAllocations: new[] { new RunAccountAllocation(account.Id, 100m) });
+AccountAllocations: new[] { new RunAccountAllocation(account.Id, AccountCapitalAllocation.Dynamic(100m)) });
 
         var intent = OrderIntent.Create(
             runId: run.Id,

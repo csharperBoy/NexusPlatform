@@ -43,7 +43,6 @@ public class TradingRunTests
             strategyKey: run.StrategyKey,
             strategyConfigJson: run.StrategyConfigJson,
             timeFrame: run.PrimaryTimeFrame,
-            capitalAllocation: run.CapitalAllocation,
             stopLoss: null,
             takeProfit: null,
             defaultOrderMode: run.DefaultOrderMode,
@@ -70,14 +69,13 @@ public class TradingRunTests
             strategyKey: "rsi",
             strategyConfigJson: "{\"period\":14}",
             timeFrame: TimeFrame.D1,
-            capitalAllocation: CapitalAllocation.Dynamic(),
             stopLoss: null,
             takeProfit: null,
             defaultOrderMode: OrderMode.Quantity,
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
             symbols: new[] { ("TEST", new SymbolAllocation(100m)) }, 
-            accounts: new[] { (Guid.NewGuid(), 100m) },
+            accounts: new[] { (Guid.NewGuid(), AccountCapitalAllocation.Dynamic(100m)) },
             targetCurrency: targetCurrency);
     }
 }

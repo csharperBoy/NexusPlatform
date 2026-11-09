@@ -172,14 +172,13 @@ public class OrderIntentBuilderTests
             StrengthMultiplier: 1.0m,
             MinDeltaPercent: 0.03m,
             ExecutionMode: ExecutionMode.Live,
-            CapitalAllocation: CapitalAllocation.Dynamic(),
             StopLoss: null,
             TakeProfit: null,
             DefaultOrderMode: OrderMode.Quantity,
             OnMarketClose: MarketCloseBehavior.KeepPositions,
             OnStop: StopRunBehavior.KeepPositions,
             Symbols: new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            AccountAllocations: new[] { new RunAccountAllocation(Guid.NewGuid(), 100m) });
+            AccountAllocations: new[] { new RunAccountAllocation(Guid.NewGuid(), AccountCapitalAllocation.Dynamic(100m)) });
     }
 
     private static MarketSnapshot MakeSnapshot(string isin) => new(

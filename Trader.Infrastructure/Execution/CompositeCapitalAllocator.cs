@@ -4,7 +4,8 @@ using Trader.Application.Runtime;
 namespace Trader.Infrastructure.Execution;
 
 /// <summary>
-/// بر اساس Mode از Run، به Allocator مناسب Delegate می‌کند.
+/// از بین Fixed و Dynamic per-account تصمیم می‌گیرد.
+/// (قبلاً per-run بود — حالا per-account.)
 /// </summary>
 public sealed class CompositeCapitalAllocator : ICapitalAllocator
 {
@@ -24,7 +25,9 @@ public sealed class CompositeCapitalAllocator : ICapitalAllocator
         Guid accountId,
         CancellationToken ct = default)
     {
-        return context.CapitalAllocation.IsFixed
+        var allocation = context.GetAllocationFor(accountId).CapitalAllocation;
+
+        return allocation.IsFixed
             ? _fixed.GetAllocatableCapitalAsync(context, accountId, ct)
             : _dynamic.GetAllocatableCapitalAsync(context, accountId, ct);
     }

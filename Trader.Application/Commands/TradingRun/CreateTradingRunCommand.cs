@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos.TradingRuns;
-using Trader.Domain.Enums;
 
 namespace Trader.Application.Commands.TradingRun;
 
@@ -18,8 +17,8 @@ public record CreateTradingRunCommand(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<TradingRunAccountModel> Accounts   // ← changed
-) : IRequest<Result<Guid>>;
+    IReadOnlyList<TradingRunAccountModel> Accounts)   // ← accounts
+    : IRequest<Result<Guid>>;
 
 public class CreateTradingRunCommandHandler
     : IRequestHandler<CreateTradingRunCommand, Result<Guid>>
@@ -36,8 +35,7 @@ public class CreateTradingRunCommandHandler
     }
 
     public async Task<Result<Guid>> Handle(
-        CreateTradingRunCommand request,
-        CancellationToken cancellationToken)
+        CreateTradingRunCommand request, CancellationToken ct)
     {
         try
         {
@@ -46,10 +44,10 @@ public class CreateTradingRunCommandHandler
                 request.StrategyKey,
                 request.StrategyConfigJson,
                 request.PrimaryTimeFrame,
-    request.TargetCurrency,
+                request.TargetCurrency,
                 request.StrengthMultiplier,
-    request.MinDeltaPercent,
-    request.ExecutionMode,
+                request.MinDeltaPercent,
+                request.ExecutionMode,
                 request.Settings,
                 request.Symbols,
                 request.Accounts);

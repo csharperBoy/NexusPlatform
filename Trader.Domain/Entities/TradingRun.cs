@@ -23,7 +23,6 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
     public TimeFrame PrimaryTimeFrame { get; private set; }
 
     // Execution
-    public CapitalAllocation CapitalAllocation { get; private set; } = default!;
     public StopLossConfig? StopLoss { get; private set; }
     public TakeProfitConfig? TakeProfit { get; private set; }
     public OrderMode DefaultOrderMode { get; private set; }
@@ -77,14 +76,13 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         string strategyKey,
         string strategyConfigJson,
         TimeFrame timeFrame,
-        CapitalAllocation capitalAllocation,
         StopLossConfig? stopLoss,
         TakeProfitConfig? takeProfit,
         OrderMode defaultOrderMode,
         MarketCloseBehavior onMarketClose,
         StopRunBehavior onStop,
         IEnumerable<(string Isin, SymbolAllocation Allocation)> symbols,
-        IEnumerable<(Guid AccountId, decimal AllocationPercent)> accounts,  
+    IEnumerable<(Guid AccountId, AccountCapitalAllocation Allocation)> accounts,  
     string? targetCurrency = null,
     decimal strengthMultiplier = 1.5m,
     decimal minDeltaPercent = 0.03m,
@@ -98,6 +96,7 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         ValidateStrengthMultiplier(strengthMultiplier);
         ValidateMinDeltaPercent(minDeltaPercent);
 
+
         var run = new TradingRun
         {
             Name = name.Trim(),
@@ -106,7 +105,6 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             StrategyKey = strategyKey.Trim(),
             StrategyConfigJson = strategyConfigJson,
             PrimaryTimeFrame = timeFrame,
-            CapitalAllocation = capitalAllocation,
             StopLoss = stopLoss,
             TakeProfit = takeProfit,
             DefaultOrderMode = defaultOrderMode,
@@ -122,8 +120,8 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         foreach (var (isin, allocation) in symbols)
             run.AddSymbolInternal(isin, allocation);
 
-        foreach (var (accountId, percent) in accounts)
-            run.AddAccountInternal(accountId, percent);
+        foreach (var (accountId, capitalAllocation) in accounts)
+            run.AddAccountInternal(accountId, capitalAllocation);
 
         run.RecomputeReadiness();
         return run;
@@ -153,7 +151,6 @@ public class TradingRun : BaseEntity, IAuditableEntity, IOwnerableEntity
         string strategyKey,
         string strategyConfigJson,
         TimeFrame timeFrame,
-        CapitalAllocation capitalAllocation,
         StopLossConfig? stopLoss,
         TakeProfitConfig? takeProfit,
         OrderMode defaultOrderMode,
@@ -173,7 +170,6 @@ ExecutionMode executionMode)
         StrategyKey = strategyKey.Trim();
         StrategyConfigJson = strategyConfigJson;
         PrimaryTimeFrame = timeFrame;
-        CapitalAllocation = capitalAllocation;
         StopLoss = stopLoss;
         TakeProfit = takeProfit;
         DefaultOrderMode = defaultOrderMode;
@@ -225,27 +221,12 @@ ExecutionMode executionMode)
     // ─────────────── Accounts ───────────────
 
 
-    public void AddAccount(Guid accountId, decimal allocationPercent = 100m)
+    public void AddAccount(Guid accountId, AccountCapitalAllocation allocation)
     {
         EnsureNotRunning();
-        AddAccountInternal(accountId, allocationPercent);
+        AddAccountInternal(accountId, allocation);
         Touch();
         RecomputeReadiness();
-    }
-
-    public void UpdateAccountAllocation(Guid accountId, decimal allocationPercent)
-    {
-        EnsureNotRunning();
-        var acc = _accounts.FirstOrDefault(a => a.TraderAccountId == accountId)
-            ?? throw new InvalidOperationException($"Account {accountId} not in run.");
-        acc.UpdateAllocation(allocationPercent);
-        Touch();
-    }
-
-    private void AddAccountInternal(Guid accountId, decimal allocationPercent)
-    {
-        if (_accounts.Any(a => a.TraderAccountId == accountId)) return;
-        _accounts.Add(TradingRunAccount.Create(Id, accountId, allocationPercent));
     }
 
     public void RemoveAccount(Guid accountId)
@@ -256,6 +237,21 @@ ExecutionMode executionMode)
         _accounts.Remove(acc);
         Touch();
         RecomputeReadiness();
+    }
+
+    public void UpdateAccountCapital(Guid accountId, AccountCapitalAllocation allocation)
+    {
+        EnsureNotRunning();
+        var acc = _accounts.FirstOrDefault(a => a.TraderAccountId == accountId)
+            ?? throw new InvalidOperationException($"Account {accountId} not in run.");
+        acc.UpdateCapitalAllocation(allocation);
+        Touch();
+    }
+
+    private void AddAccountInternal(Guid accountId, AccountCapitalAllocation allocation)
+    {
+        if (_accounts.Any(a => a.TraderAccountId == accountId)) return;
+        _accounts.Add(TradingRunAccount.Create(Id, accountId, allocation));
     }
 
 

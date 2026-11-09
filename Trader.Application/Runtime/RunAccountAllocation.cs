@@ -1,6 +1,8 @@
-﻿namespace Trader.Application.Runtime;
+﻿using Trader.Domain.ValueObjects;
 
-/// <summary>درصد تخصیص یک Account در یک Run.</summary>
+namespace Trader.Application.Runtime;
+
+/// <summary>تخصیص سرمایه‌ی یک Account در یک Run.</summary>
 public sealed record RunAccountAllocation(
     Guid AccountId,
-    decimal Percent);
+    AccountCapitalAllocation CapitalAllocation);

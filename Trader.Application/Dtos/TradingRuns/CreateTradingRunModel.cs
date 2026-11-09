@@ -1,9 +1,10 @@
 ﻿namespace Trader.Application.Dtos.TradingRuns;
 
-
 public sealed record TradingRunAccountModel(
     Guid AccountId,
-    decimal AllocationPercent = 100m);
+    int CapitalMode,           // 0=Fixed, 1=Dynamic
+    decimal? FixedCapitalAmount = null,
+    decimal? PercentOfBuyPower = null);
 
 public sealed record CreateTradingRunModel(
     string Name,
@@ -16,11 +17,9 @@ public sealed record CreateTradingRunModel(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<TradingRunAccountModel> Accounts);   
+    IReadOnlyList<TradingRunAccountModel> Accounts);
 
 public sealed record TradingRunSettingsModel(
-    int CapitalAllocationMode,
-    decimal? FixedCapitalAmount,
     decimal? StopLossPercentage,
     decimal? StopLossPrice,
     decimal? TakeProfitPercentage,

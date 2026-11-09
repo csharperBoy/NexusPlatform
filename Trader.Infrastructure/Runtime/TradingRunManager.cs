@@ -60,33 +60,30 @@ public sealed class TradingRunManager : ITradingRunManager
             .Select(s => new RunSymbolContext(s.Isin, s.Allocation))
             .ToList();
 
-        //var accountIds = run.Accounts
-        //    .Select(a => a.TraderAccountId)
-        //    .ToList();
         var accountAllocations = run.Accounts
-    .Select(a => new RunAccountAllocation(a.TraderAccountId, a.AllocationPercent))
+    .Select(a => new RunAccountAllocation(
+        a.TraderAccountId, a.CapitalAllocation))
     .ToList();
 
         var context = new RunRuntimeContext(
-                        RunId: run.Id,
-                        Name: run.Name,
-                        OwnerPersonId: run.OwnerPersonId ?? Guid.Empty,
-                        OwnerUserId: run.OwnerUserId.Value,
-                        StrategyKey: run.StrategyKey,
-                        Strategy: strategy,
-                        StrategyConfig: config,
-                        PrimaryTimeFrame: run.PrimaryTimeFrame,
-                        TargetCurrency: run.TargetCurrency,
-                        StrengthMultiplier: run.StrengthMultiplier,
-    MinDeltaPercent: run.MinDeltaPercent,
-ExecutionMode: run.ExecutionMode,
-                        CapitalAllocation: run.CapitalAllocation,
-                        StopLoss: run.StopLoss,
-                        TakeProfit: run.TakeProfit,
-                        DefaultOrderMode: run.DefaultOrderMode,
-                        OnMarketClose: run.OnMarketClose,
-                        OnStop: run.OnStop,
-                        Symbols: symbols,
+            RunId: run.Id,
+            Name: run.Name,
+            OwnerPersonId: run.OwnerPersonId ?? Guid.Empty,
+            OwnerUserId: run.OwnerUserId.Value,
+            StrategyKey: run.StrategyKey,
+            Strategy: strategy,
+            StrategyConfig: config,
+            PrimaryTimeFrame: run.PrimaryTimeFrame,
+            TargetCurrency: run.TargetCurrency,
+            StrengthMultiplier: run.StrengthMultiplier,
+            MinDeltaPercent: run.MinDeltaPercent,
+            ExecutionMode: run.ExecutionMode,
+            StopLoss: run.StopLoss,
+            TakeProfit: run.TakeProfit,
+            DefaultOrderMode: run.DefaultOrderMode,
+            OnMarketClose: run.OnMarketClose,
+            OnStop: run.OnStop,
+            Symbols: symbols,
             AccountAllocations: accountAllocations);
 
         _cache.Set(context);

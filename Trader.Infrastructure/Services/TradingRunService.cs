@@ -33,33 +33,31 @@ public class TradingRunService : ITradingRunCommandService, ITradingRunQueryServ
     public async Task<Guid> CreateAsync(CreateTradingRunModel model)
     {
         var run = TradingRun.Create(
-    model.Name,
-    ownerPersonId: Guid.Empty,
-    strategyKey: model.StrategyKey,
-    strategyConfigJson: model.StrategyConfigJson,
-    timeFrame: (TimeFrame)model.PrimaryTimeFrame,
-    capitalAllocation: BuildCapitalAllocation(model.Settings),
-    stopLoss: BuildStopLoss(model.Settings),
-    takeProfit: BuildTakeProfit(model.Settings),
-    defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
-    onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
-    onStop: (StopRunBehavior)model.Settings.OnStop,
-     symbols: model.Symbols.Select(s =>
-        (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
-    accounts: model.Accounts.Select(a =>
-        (a.AccountId, a.AllocationPercent)),
-    targetCurrency: model.TargetCurrency,
-    strengthMultiplier: model.StrengthMultiplier,
-    minDeltaPercent: model.MinDeltaPercent,
-
-executionMode: (ExecutionMode)model.ExecutionMode);
+            model.Name,
+            ownerPersonId: Guid.Empty,
+            strategyKey: model.StrategyKey,
+            strategyConfigJson: model.StrategyConfigJson,
+            timeFrame: (TimeFrame)model.PrimaryTimeFrame,
+            stopLoss: BuildStopLoss(model.Settings),
+            takeProfit: BuildTakeProfit(model.Settings),
+            defaultOrderMode: (OrderMode)model.Settings.DefaultOrderMode,
+            onMarketClose: (MarketCloseBehavior)model.Settings.OnMarketClose,
+            onStop: (StopRunBehavior)model.Settings.OnStop,
+            symbols: model.Symbols.Select(s =>
+                (s.Isin, new SymbolAllocation(s.AllocationPercentage))),
+            accounts: model.Accounts.Select(a =>
+                (a.AccountId, BuildAccountCapital(a))),     // ← NEW
+            targetCurrency: model.TargetCurrency,
+            strengthMultiplier: model.StrengthMultiplier,
+            minDeltaPercent: model.MinDeltaPercent,
+            executionMode: (ExecutionMode)model.ExecutionMode);
 
         await _uow.TradingRuns.AddAsync(run);
         await _uow.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Created TradingRun {Id} name={Name} strategy={Strategy}",
-            run.Id, run.Name, run.StrategyKey);
+            "Created TradingRun {Id} name={Name} strategy={Strategy} accounts={Count}",
+            run.Id, run.Name, run.StrategyKey, run.Accounts.Count);
 
         return run.Id;
     }
@@ -70,15 +68,11 @@ executionMode: (ExecutionMode)model.ExecutionMode);
         var run = await _uow.TradingRunSpecs.GetBySpecAsync(spec)
             ?? throw new InvalidOperationException($"TradingRun {id} not found.");
 
-        // Domain invariant: Run در حال اجرا قابل ویرایش نیست.
-        // UpdateSettings() در صورت Running بودن throw می‌کند.
-        // برای تغییر Config، ابتدا Stop کنید، ویرایش کنید، سپس Start.
         run.UpdateSettings(
             model.Name,
             model.StrategyKey,
             model.StrategyConfigJson,
             (TimeFrame)model.PrimaryTimeFrame,
-            BuildCapitalAllocation(model.Settings),
             BuildStopLoss(model.Settings),
             BuildTakeProfit(model.Settings),
             (OrderMode)model.Settings.DefaultOrderMode,
@@ -89,7 +83,7 @@ executionMode: (ExecutionMode)model.ExecutionMode);
             model.MinDeltaPercent,
             (ExecutionMode)model.ExecutionMode);
 
-        // Sync Symbols
+        // ─── Sync Symbols (بدون تغییر) ───
         var incomingIsins = model.Symbols.Select(s => s.Isin).ToHashSet();
         foreach (var existing in run.Symbols.ToList())
         {
@@ -105,25 +99,24 @@ executionMode: (ExecutionMode)model.ExecutionMode);
                 run.UpdateSymbolAllocation(s.Isin, new SymbolAllocation(s.AllocationPercentage));
         }
 
-        // Sync Accounts
-        var incomingAccounts = model.Accounts.ToDictionary(
-    a => a.AccountId, a => a.AllocationPercent);
+        // ─── Sync Accounts (per-account Capital) ───
+        var incomingAccounts = model.Accounts
+            .ToDictionary(a => a.AccountId, a => BuildAccountCapital(a));
 
-        // حذف Accountهایی که در model نیستند
         foreach (var existing in run.Accounts.ToList())
         {
             if (!incomingAccounts.ContainsKey(existing.TraderAccountId))
                 run.RemoveAccount(existing.TraderAccountId);
         }
 
-        // اضافه یا update
-        foreach (var (accountId, percent) in incomingAccounts)
+        foreach (var (accountId, allocation) in incomingAccounts)
         {
-            var existing = run.Accounts.FirstOrDefault(a => a.TraderAccountId == accountId);
+            var existing = run.Accounts
+                .FirstOrDefault(a => a.TraderAccountId == accountId);
             if (existing is null)
-                run.AddAccount(accountId, percent);
-            else if (existing.AllocationPercent != percent)
-                run.UpdateAccountAllocation(accountId, percent);
+                run.AddAccount(accountId, allocation);
+            else if (!Equals(existing.CapitalAllocation, allocation))
+                run.UpdateAccountCapital(accountId, allocation);
         }
 
         await _uow.TradingRuns.UpdateAsync(run);
@@ -218,18 +211,32 @@ executionMode: (ExecutionMode)model.ExecutionMode);
     }
 
     /* ═══════════════════ Helpers ═══════════════════ */
-
-    private static CapitalAllocation BuildCapitalAllocation(TradingRunSettingsModel s)
+    private static AccountCapitalAllocation BuildAccountCapital(TradingRunAccountModel model)
     {
-        if (s.CapitalAllocationMode == (int)CapitalAllocationMode.Fixed)
+        if (model.CapitalMode == (int)CapitalAllocationMode.Fixed)
         {
-            if (!s.FixedCapitalAmount.HasValue)
+            if (!model.FixedCapitalAmount.HasValue || model.FixedCapitalAmount.Value <= 0m)
                 throw new InvalidOperationException(
-                    "FixedCapitalAmount is required when CapitalAllocationMode is Fixed.");
-            return CapitalAllocation.Fixed(new Money(s.FixedCapitalAmount.Value));
+                    $"FixedCapitalAmount is required and must be > 0 for account {model.AccountId}.");
+            return AccountCapitalAllocation.Fixed(new Money(model.FixedCapitalAmount.Value));
         }
-        return CapitalAllocation.Dynamic();
+
+        if (model.CapitalMode == (int)CapitalAllocationMode.Dynamic)
+        {
+            if (!model.PercentOfBuyPower.HasValue
+                || model.PercentOfBuyPower.Value <= 0m
+                || model.PercentOfBuyPower.Value > 100m)
+            {
+                throw new InvalidOperationException(
+                    $"PercentOfBuyPower is required and must be in (0,100] for account {model.AccountId}.");
+            }
+            return AccountCapitalAllocation.Dynamic(model.PercentOfBuyPower.Value);
+        }
+
+        throw new InvalidOperationException(
+            $"Invalid CapitalMode {model.CapitalMode} for account {model.AccountId}.");
     }
+    
 
     private static StopLossConfig? BuildStopLoss(TradingRunSettingsModel s)
     {
@@ -252,12 +259,11 @@ executionMode: (ExecutionMode)model.ExecutionMode);
     private static TradingRunInfoView MapToInfoView(TradingRun r) => new(
     r.Id, r.Name, (int)r.State, r.State.ToString(),
     r.StrategyKey, (int)r.PrimaryTimeFrame, r.PrimaryTimeFrame.ToCode(),
-    (int)r.CapitalAllocation.Mode, r.CapitalAllocation.FixedAmount?.Amount,
     r.TargetCurrency,
     r.StrengthMultiplier,
     r.MinDeltaPercent,
     (int)r.ExecutionMode,
-r.ExecutionMode.ToString(),
+    r.ExecutionMode.ToString(),
     r.Symbols.Count, r.Accounts.Count,
     r.StartedAt, r.StoppedAt, r.CreatedAt);
 
@@ -269,14 +275,22 @@ r.ExecutionMode.ToString(),
     r.StrengthMultiplier,
     r.MinDeltaPercent,
     (int)r.ExecutionMode,
-r.ExecutionMode.ToString(),
+    r.ExecutionMode.ToString(),
     new TradingRunSettingsDto(
-        (int)r.CapitalAllocation.Mode,
-        r.CapitalAllocation.FixedAmount?.Amount,
-        r.StopLoss?.Percentage, r.StopLoss?.AbsolutePrice?.Value,
-        r.TakeProfit?.Percentage, r.TakeProfit?.AbsolutePrice?.Value,
-        (int)r.DefaultOrderMode, (int)r.OnMarketClose, (int)r.OnStop),
-    r.Symbols.Select(s => new TradingRunSymbolDto(s.Isin, s.Allocation.Percentage)).ToList(),
-    r.Accounts.Select(a => new TradingRunAccountDto(a.TraderAccountId, a.AllocationPercent)).ToList(),
+        r.StopLoss?.Percentage,
+        r.StopLoss?.AbsolutePrice?.Value,
+        r.TakeProfit?.Percentage,
+        r.TakeProfit?.AbsolutePrice?.Value,
+        (int)r.DefaultOrderMode,
+        (int)r.OnMarketClose,
+        (int)r.OnStop),
+    r.Symbols.Select(s => new TradingRunSymbolDto(
+        s.Isin, s.Allocation.Percentage)).ToList(),
+    r.Accounts.Select(a => new TradingRunAccountDto(
+        a.TraderAccountId,
+        (int)a.CapitalAllocation.Mode,
+        a.CapitalAllocation.FixedAmount?.Amount,
+        a.CapitalAllocation.FixedAmount?.Currency,
+        a.CapitalAllocation.PercentOfBuyPower)).ToList(),
     r.StartedAt, r.StoppedAt, r.CreatedAt, r.ModifiedAt);
 }

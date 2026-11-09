@@ -10,11 +10,13 @@ public sealed class FixedCapitalAllocator : ICapitalAllocator
         Guid accountId,
         CancellationToken ct = default)
     {
-        if (!context.CapitalAllocation.IsFixed)
-            throw new InvalidOperationException(
-                "FixedCapitalAllocator called for dynamic allocation.");
+        var allocation = context.GetAllocationFor(accountId).CapitalAllocation;
 
-        var amount = context.CapitalAllocation.FixedAmount?.Amount ?? 0m;
-        return Task.FromResult(amount);
+        if (!allocation.IsFixed)
+            throw new InvalidOperationException(
+                $"FixedCapitalAllocator called for account {accountId} " +
+                $"with mode {allocation.Mode}. Expected Fixed.");
+
+        return Task.FromResult(allocation.FixedAmount!.Amount);
     }
 }

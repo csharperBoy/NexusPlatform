@@ -1,5 +1,12 @@
 ﻿namespace Trader.Application.Dtos.TradingRuns;
 
+public sealed record TradingRunAccountDto(
+    Guid AccountId,
+    int CapitalMode,
+    decimal? FixedCapitalAmount,
+    string? FixedCapitalCurrency,
+    decimal? PercentOfBuyPower);
+
 public sealed record TradingRunDetailView(
     Guid Id,
     string Name,
@@ -11,7 +18,7 @@ public sealed record TradingRunDetailView(
     string? TargetCurrency,
     decimal StrengthMultiplier,
     decimal MinDeltaPercent,
-    int ExecutionMode,                       
+    int ExecutionMode,
     string ExecutionModeName,
     TradingRunSettingsDto Settings,
     IReadOnlyList<TradingRunSymbolDto> Symbols,
@@ -20,8 +27,3 @@ public sealed record TradingRunDetailView(
     DateTime? StoppedAt,
     DateTime CreatedAt,
     DateTime? ModifiedAt);
-
-
-public sealed record TradingRunAccountDto(
-    Guid AccountId,
-    decimal AllocationPercent);

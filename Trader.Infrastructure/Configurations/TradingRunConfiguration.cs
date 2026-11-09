@@ -21,28 +21,6 @@ public class TradingRunConfiguration : BaseConfiguration<TradingRun>
         builder.Property(x => x.StrategyConfigJson).IsRequired().HasColumnType("nvarchar(max)");
         builder.Property(x => x.PrimaryTimeFrame).HasConversion<int>().IsRequired();
 
-        // ─── CapitalAllocation (Owned) ───
-        builder.OwnsOne(x => x.CapitalAllocation, cb =>
-        {
-            cb.Property(p => p.Mode)
-                .HasConversion<int>()
-                .HasColumnName("CapitalAllocationMode")
-                .IsRequired();
-
-            // FixedAmount (Money?) — columns داخل این block
-            cb.OwnsOne(p => p.FixedAmount, mb =>
-            {
-                mb.Property(m => m.Amount)
-                    .HasColumnName("FixedCapitalAmount")
-                    .HasPrecision(18, 4);
-                mb.Property(m => m.Currency)
-                    .HasColumnName("FixedCapitalCurrency")
-                    .HasMaxLength(10);
-            });
-
-            // FixedAmount کل اختیاری است — نه Propertyها
-            cb.Navigation(p => p.FixedAmount).IsRequired(false);
-        });
 
         // ─── StopLoss (Owned) ───
         builder.OwnsOne(x => x.StopLoss, sb =>

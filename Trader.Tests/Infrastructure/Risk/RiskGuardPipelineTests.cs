@@ -99,19 +99,21 @@ public class RiskGuardPipelineTests
         var account = TraderAccount.Create(BrokerType.EasyTrader, "x", "u", "p");
         var run = TradingRun.Create(
             "test", Guid.NewGuid(), "rsi", "{}", TimeFrame.D1,
-            CapitalAllocation.Dynamic(), null, null,
+            null, null,
             OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
             new[] { ("TEST", new SymbolAllocation(100m)) },
-    new[] { (account.Id, 100m) },  
+
+     new[] { (account.Id, AccountCapitalAllocation.Dynamic(100m)) },
     executionMode: ExecutionMode.Paper);
 
         var ctx = new RunRuntimeContext(
             run.Id, run.Name, Guid.Empty, Guid.NewGuid(), "rsi", null!, null!,
             TimeFrame.D1, null, 1.0m, 0.03m, ExecutionMode.Paper,
-            run.CapitalAllocation, null, null,
+             null, null,
             OrderMode.Quantity, MarketCloseBehavior.KeepPositions, StopRunBehavior.KeepPositions,
             new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-    new[] { new RunAccountAllocation(account.Id, 100m) });  
+
+ new[] { new RunAccountAllocation(account.Id, AccountCapitalAllocation.Dynamic(100m)) });  
 
         var intent = OrderIntent.Create(
             run.Id, account.Id, null, "TEST", OrderSide.Buy,

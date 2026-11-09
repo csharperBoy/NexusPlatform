@@ -1,52 +1,47 @@
 ﻿using Core.Domain.Common.EntityProperties;
+using Trader.Domain.ValueObjects;
 
 namespace Trader.Domain.Entities;
 
 /// <summary>
-/// اتصال یک TradingAccount به یک TradingRun با درصد تخصیص از BuyPower.
+/// اتصال یک TraderAccount به یک TradingRun.
 ///
-/// AllocationPercent معنایش: «حداکثر این درصد از BuyPower موجود در لحظه‌ی Order».
-/// این درصد رزرو نمی‌شود. اگر Run دیگری از همین Account استفاده کند،
-/// BuyPower موجود در لحظه‌ی Order دیده می‌شود.
+/// CapitalAllocation حالا per-account است (Phase D):
+///   • Mode: Fixed یا Dynamic (مستقل برای هر Account)
+///   • Fixed: مقدار ثابت (ریال)
+///   • Dynamic: درصدی از BuyPower لحظه‌ی Order (0, 100]
 ///
-/// مثال: Account با BuyPower = 200M.
-///   R1 (50%) + R2 (100%) — جمع = 150%.
-///   R1 اول 60M خرید → BuyPower = 140M.
-///   R2 (100%) → می‌تواند تا 140M خرید کند.
+/// یک Account می‌تواند در چند Run باشد — هر Run سهم خودش را از
+/// BuyPower آن Account می‌بیند (بدون رزرو).
 /// </summary>
 public class TradingRunAccount : BaseEntity
 {
     public Guid TradingRunId { get; private set; }
     public Guid TraderAccountId { get; private set; }
-
-    /// <summary>درصد از BuyPower موجود در لحظه‌ی Order. Range: (0, 100].</summary>
-    public decimal AllocationPercent { get; private set; }
+    public AccountCapitalAllocation CapitalAllocation { get; private set; } = default!;
 
     private TradingRunAccount() { } // EF
 
     internal static TradingRunAccount Create(
         Guid runId,
         Guid accountId,
-        decimal allocationPercent = 100m)
+        AccountCapitalAllocation allocation)
     {
-        if (allocationPercent <= 0m || allocationPercent > 100m)
-            throw new ArgumentOutOfRangeException(nameof(allocationPercent),
-                "AllocationPercent must be in (0, 100].");
+        if (allocation is null)
+            throw new ArgumentNullException(nameof(allocation));
 
         return new TradingRunAccount
         {
             TradingRunId = runId,
             TraderAccountId = accountId,
-            AllocationPercent = allocationPercent,
+            CapitalAllocation = allocation,
         };
     }
 
-    internal void UpdateAllocation(decimal allocationPercent)
+    internal void UpdateCapitalAllocation(AccountCapitalAllocation allocation)
     {
-        if (allocationPercent <= 0m || allocationPercent > 100m)
-            throw new ArgumentOutOfRangeException(nameof(allocationPercent),
-                "AllocationPercent must be in (0, 100].");
-
-        AllocationPercent = allocationPercent;
+        if (allocation is null)
+            throw new ArgumentNullException(nameof(allocation));
+        CapitalAllocation = allocation;
     }
 }

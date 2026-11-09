@@ -21,7 +21,6 @@ public class DynamicCapitalAllocatorTests
             .ReturnsAsync(new AccountCashSnapshot(accountId, 200_000_000m, DateTime.UtcNow, "Broker"));
 
         var ctx = BuildContext(accountId, 100m);
-
         var capital = await sut.GetAllocatableCapitalAsync(ctx, accountId);
 
         capital.Should().Be(200_000_000m);
@@ -36,10 +35,22 @@ public class DynamicCapitalAllocatorTests
             .ReturnsAsync(new AccountCashSnapshot(accountId, 200_000_000m, DateTime.UtcNow, "Broker"));
 
         var ctx = BuildContext(accountId, 50m);
-
         var capital = await sut.GetAllocatableCapitalAsync(ctx, accountId);
 
         capital.Should().Be(100_000_000m);
+    }
+
+    [Fact]
+    public async Task GetAllocatableCapital_FixedMode_Throws()
+    {
+        var accountId = Guid.NewGuid();
+        var (sut, _) = CreateSut();
+        var ctx = BuildContextFixed(accountId);
+
+        var act = () => sut.GetAllocatableCapitalAsync(ctx, accountId);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Expected Dynamic*");
     }
 
     [Fact]
@@ -47,19 +58,15 @@ public class DynamicCapitalAllocatorTests
     {
         var runAccountId = Guid.NewGuid();
         var unknownAccountId = Guid.NewGuid();
-
         var (sut, cashCache) = CreateSut();
         cashCache.Setup(x => x.GetOrRefreshAsync(unknownAccountId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AccountCashSnapshot(unknownAccountId, 100m, DateTime.UtcNow, "Broker"));
 
-        var ctx = BuildContext(runAccountId, 100m);   // Context فقط runAccountId را دارد
-
+        var ctx = BuildContext(runAccountId, 100m);
         var act = () => sut.GetAllocatableCapitalAsync(ctx, unknownAccountId);
 
         await act.Should().ThrowAsync<InvalidOperationException>();
     }
-
-    // ─── Helpers ───
 
     private static (DynamicCapitalAllocator Sut, Mock<IAccountCashCache> CashCache) CreateSut()
     {
@@ -70,6 +77,17 @@ public class DynamicCapitalAllocatorTests
     }
 
     private static RunRuntimeContext BuildContext(Guid accountId, decimal percent)
+    {
+        return CreateContext(accountId, AccountCapitalAllocation.Dynamic(percent));
+    }
+
+    private static RunRuntimeContext BuildContextFixed(Guid accountId)
+    {
+        return CreateContext(accountId, AccountCapitalAllocation.Fixed(new Money(100m)));
+    }
+
+    private static RunRuntimeContext CreateContext(
+        Guid accountId, AccountCapitalAllocation allocation)
     {
         return new RunRuntimeContext(
             RunId: Guid.NewGuid(),
@@ -84,13 +102,15 @@ public class DynamicCapitalAllocatorTests
             StrengthMultiplier: 1.0m,
             MinDeltaPercent: 0.03m,
             ExecutionMode: ExecutionMode.Live,
-            CapitalAllocation: CapitalAllocation.Dynamic(),
             StopLoss: null,
             TakeProfit: null,
             DefaultOrderMode: OrderMode.Quantity,
             OnMarketClose: MarketCloseBehavior.KeepPositions,
             OnStop: StopRunBehavior.KeepPositions,
             Symbols: new[] { new RunSymbolContext("TEST", new SymbolAllocation(100m)) },
-            AccountAllocations: new[] { new RunAccountAllocation(accountId, percent) });
+            AccountAllocations: new[]
+            {
+                new RunAccountAllocation(accountId, allocation)
+            });
     }
 }

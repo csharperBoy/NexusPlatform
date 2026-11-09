@@ -18,8 +18,8 @@ public record UpdateTradingRunCommand(
     int ExecutionMode,
     TradingRunSettingsModel Settings,
     IReadOnlyList<TradingRunSymbolModel> Symbols,
-    IReadOnlyList<TradingRunAccountModel> Accounts
-) : IRequest<Result<bool>>;
+    IReadOnlyList<TradingRunAccountModel> Accounts)
+    : IRequest<Result<bool>>;
 
 public class UpdateTradingRunCommandHandler
     : IRequestHandler<UpdateTradingRunCommand, Result<bool>>

@@ -46,8 +46,7 @@ public sealed class BacktestRunService
         var effectiveConfig = await BuildEffectiveConfigAsync(model, ct);
 
         // ─── ۲. Initial Capital ───
-        var initialCapital = model.InitialCapital
-            ?? effectiveConfig.SuggestedInitialCapital;
+        var initialCapital = model.InitialCapital;
 
         if (!initialCapital.HasValue || initialCapital.Value <= 0m)
             throw new InvalidOperationException(
@@ -232,7 +231,6 @@ public sealed class BacktestRunService
         int DefaultOrderMode,
         int OnMarketClose,
         int OnStop,
-        decimal? SuggestedInitialCapital,
         List<BacktestSymbolModel> Symbols);
 
     private async Task<EffectiveConfig> BuildEffectiveConfigAsync(
@@ -250,11 +248,29 @@ public sealed class BacktestRunService
                 .Select(s => new BacktestSymbolModel(s.Isin, s.Allocation.Percentage))
                 .ToList();
 
-            var suggestedCapital = sourceRun.CapitalAllocation.IsFixed
-                ? sourceRun.CapitalAllocation.FixedAmount?.Amount
-                : null;
+            // ═══════════════════════════════════════════════════════════════
+            // Capital Suggestion: اگر همه‌ی Accountها Fixed بودند، جمعشان.
+            // اگر حداقل یکی Dynamic بود، null (کاربر باید خودش سرمایه‌ی
+            // Backtest را وارد کند — چون Dynamic در Backtest معنی ندارد).
+            // ═══════════════════════════════════════════════════════════════
+            var allAccountsFixed = sourceRun.Accounts.Count > 0
+                && sourceRun.Accounts.All(a => a.CapitalAllocation.IsFixed);
 
-            // Config Override روی Run اعمال می‌شود (اختیاری)
+            var suggestedCapital = allAccountsFixed
+                ? sourceRun.Accounts.Sum(a => a.CapitalAllocation.FixedAmount!.Amount)
+                : (decimal?)null;
+
+            // اگر suggestion موجود بود، در model.InitialCapital پیشنهاد می‌شود.
+            // اما از آنجایی که field از EffectiveConfig حذف شده، از model استفاده می‌کنیم:
+            if (!model.InitialCapital.HasValue && suggestedCapital.HasValue)
+            {
+                // Silent — یا throw کن یا model.InitialCapital را در caller set کن.
+                // راه بهتر: throw تا caller آگاهانه مقدار بدهد.
+                throw new InvalidOperationException(
+                    $"InitialCapital is required for backtest. " +
+                    $"Suggested value based on Run's fixed accounts: {suggestedCapital.Value:N0}.");
+            }
+
             var ov = model.ConfigOverride;
 
             return new EffectiveConfig(
@@ -262,8 +278,9 @@ public sealed class BacktestRunService
                 StrategyConfigJson: ov?.StrategyConfigJson ?? sourceRun.StrategyConfigJson,
                 PrimaryTimeFrame: ov?.PrimaryTimeFrame ?? (int)sourceRun.PrimaryTimeFrame,
                 TargetCurrency: ov is not null ? ov.TargetCurrency : sourceRun.TargetCurrency,
-                CapitalAllocationMode: (int)sourceRun.CapitalAllocation.Mode,
-                FixedCapitalAmount: sourceRun.CapitalAllocation.FixedAmount?.Amount,
+                // CapitalAllocationMode و FixedCapitalAmount از ConfigOverride یا پیش‌فرض:
+                CapitalAllocationMode: (int)CapitalAllocationMode.Fixed,
+                FixedCapitalAmount: suggestedCapital,
                 StrengthMultiplier: ov?.StrengthMultiplier ?? sourceRun.StrengthMultiplier,
                 MinDeltaPercent: ov?.MinDeltaPercent ?? sourceRun.MinDeltaPercent,
                 StopLossPercentage: ov is not null
@@ -281,7 +298,6 @@ public sealed class BacktestRunService
                 DefaultOrderMode: ov?.DefaultOrderMode ?? (int)sourceRun.DefaultOrderMode,
                 OnMarketClose: ov?.OnMarketClose ?? (int)sourceRun.OnMarketClose,
                 OnStop: ov?.OnStop ?? (int)sourceRun.OnStop,
-                SuggestedInitialCapital: suggestedCapital,
                 Symbols: symbols);
         }
 
@@ -317,7 +333,6 @@ public sealed class BacktestRunService
             DefaultOrderMode: c.DefaultOrderMode,
             OnMarketClose: c.OnMarketClose,
             OnStop: c.OnStop,
-            SuggestedInitialCapital: null,   // user must provide
             Symbols: c.Symbols);
     }
 

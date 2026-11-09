@@ -469,14 +469,13 @@ public class PositionManagerTests
             strategyKey: "rsi",
             strategyConfigJson: "{\"period\":14}",
             timeFrame: TimeFrame.D1,
-            capitalAllocation: CapitalAllocation.Dynamic(),
             stopLoss: null,
             takeProfit: null,
             defaultOrderMode: OrderMode.Quantity,
             onMarketClose: MarketCloseBehavior.KeepPositions,
             onStop: StopRunBehavior.KeepPositions,
             symbols: new[] { ("TEST", new SymbolAllocation(100m)) },
-            accounts: new[] { (accountId , 100m) });
+            accounts: new[] { (accountId, AccountCapitalAllocation.Dynamic(100m)) });
 
         run.Start();   // Created → Ready → Running
         return run;
