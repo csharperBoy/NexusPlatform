@@ -350,6 +350,159 @@
 
 **پیامد:** اگر کاربر Manual Trade در Broker انجام دهد، تا MaxAge (30 دقیقه) در Cache دیده نمی‌شود. در Phase B: WebSocket Broker Events یا `POST /Risk/Refresh-Cash/{accountId}` Endpoint برای دستی.
 
+### D34 — PriceSource به عنوان Entity، نه فقط enum
+
+**تصمیم:** `PriceSource` یک Entity است — هر Source یک instance پیکربندی‌شده با `Code` یکتا (مثلاً `tgju-usd`, `tgju-gold`, `telegram-channelX`), `Type` (enum محدود)، `ConfigJson` (provider-specific)، `FromAsset`/`ToAsset` پیش‌فرض.
+
+**دلیل:**
+- TGJU چندین indicator دارد (`price_dollar_rl`، `price_eur`، `gold_gram`، ...). هر کدام یک Source Instance است، نه یک enum value.
+- افزودن Source جدید (Indicator جدید یا Provider جدید) → یک رکورد در DB، **صفر تغییر کد**.
+- `ConfigJson` برای Provider-specific settings (نام indicator، کانال تلگرام، ...) — بدون schema change.
+
+**Seed اولیه:** `ModuleInitializer` یک `tgju-usd` Sample را Seed می‌کند (فقط در DB خالی).
+
+**Phase 2 trigger:** اگر تعداد Sourceها به ۵۰۰+ رسید و ConfigJson Query لازم شد، ستون‌های کلیدی را Denormalize می‌کنیم.
+
+---
+
+### D35 — PriceCollectionJob به عنوان Entity شبیه TradingRun
+
+**تصمیم:** `PriceCollectionJob` یک Entity مستقل با Lifecycle شبیه `TradingRun` است:
+- State: Created / Ready / Running / Stopped / Faulted
+- Start / Stop از API
+- `OwnerPersonId`/`OwnerUserId` (Multi-user آینده)
+- Stats: `LastRunAt`, `LastRunInserted`, `TotalInserted`
+
+**دلیل:** دقیقاً همان مسئله‌ی TradingRun — کاربر می‌خواهد «یک Job بسازم، Start/Stop کنم، ببینم چه شد». مقایسه:
+
+┌──────────────────────┬─────────────────────┐
+│ TradingRun │ PriceCollectionJob │
+├──────────────────────┼─────────────────────┤
+│ Strategy + Symbols │ Source + Pair │
+│ Accounts │ (نمی‌خواهد) │
+│ ExecutionSettings │ Schedule │
+│ Start/Stop │ Start/Stop │
+│ Recurring تا Stop │ Recurring + Backfill│
+└──────────────────────┴─────────────────────┘
+
+text
+
+**چرا Entity جدا و نه "Source + Schedule" روی یک رکورد:** یک Source می‌تواند چند Job داشته باشد — مثلاً `tgju-usd` با «روزانه» و «هفتگی Backfill». Job جداست که هر کدام Lifecycle مستقل داشته باشد.
+
+---
+
+### D36 — CurrencyRate rename نشود (Phase C)
+
+**تصمیم:** جدول `CurrencyRates` Rename نمی‌شود به `AssetPrices`، حتی با وجود `GOLD/USD` که «ارز نیست».
+
+**دلیل:**
+- ۱۰+ فایل به `CurrencyRate` وابسته‌اند: `DbCurrencyRateProvider`، `CurrencyCandleTransformer`، `LatestCurrencyRateSpec`، `CurrencyRateSpecs`, `ICurrencyRateProvider`, `CurrencyRateCache`، ...
+- Semantic «Rate = چند ToAsset برای ۱ FromAsset» برای `GOLD/USD`، `COPPER/IRR` هم کاملاً کار می‌کند.
+- Rename = ۳۰+ فایل + Migration + Risk نامه — بدون منفعت فنی.
+
+**Phase C trigger:** اگر واقعاً مدل «Asset Price» لازم شد (مثلاً Multi-hop Transform: GOLD→USD→IRR)، آن‌وقت Rename + Refactor.
+
+---
+
+### D37 — CurrencyCode whitelist گسترش با کالاها
+
+**تصمیم:** `CurrencyCode.Supported` حالا شامل Commodityها هم هست:
+IRR, USD, EUR, GBP, AED, TRY, CNY, JPY, CHF,
+GOLD, SILVER, COPPER, PLATINUM, OIL
+
+text
+
+**دلیل:** `CurrencyCandleTransformer` در هر tick با `CurrencyCode.NormalizeOrNull(TargetCurrency)` چک می‌کند. اگر GOLD در Whitelist نباشد، `TradingRun` با `TargetCurrency="GOLD"` ایجاد نمی‌شود (که غلط است — کاربر می‌خواهد قیمت سهم را به گرم طلا ببیند).
+
+**Trade-off:** Semantics «Currency» برای GOLD دقیق نیست. ولی `CurrencyCode` یک Helper نازک است، نه یک VO با Invariantهای دقیق. Rename → Phase C.
+
+---
+
+### D38 — PriceSourceType = enum + Provider pattern
+
+**تصمیم:** `PriceSourceType` یک enum محدود است (Tgju، TelegramChannel، CustomApi، ...)، و هر Type یک `IPriceSourceProvider` Implementation دارد. `IPriceSourceProviderResolver` مشابه `IMarketDataProviderResolver` آن را Resolve می‌کند.
+
+**دلیل:** دقیقاً همان الگوی Broker Capability Segregation (D18):
+- `TgjuPriceSourceProvider` فقط `ITgjuClient` را می‌شناسد
+- `TelegramPriceSourceProvider` (Phase B2) فقط `ITelegramClient` را
+- `PriceCollectionService` **هیچ switch روی Type ندارد** — Provider Resolver تصمیم می‌گیرد
+- افزودن Provider جدید = پیاده‌سازی جدید + ثبت در DI، بدون تغییر Service
+
+**Phase B1:** فقط `TgjuPriceSourceProvider`. `TelegramChannel` enum value وجود دارد (reserved) ولی Provider ندارد — اگر کسی `Type=TelegramChannel` بسازد، `Resolver` خطا می‌دهد.
+
+---
+
+### D39 — Scheduler Module برای هر دو Recurring و Backfill
+
+**تصمیم:** Collection Jobs از `ISchedulerService` پلتفرم استفاده می‌کنند — نه BackgroundService جدید.
+
+- **Recurring Job:** `ScheduleRecurringAsync(payload, pattern, startAt, tz)` — الگوی `ModuleInitializer` موجود
+- **Backfill Job:** `ScheduleAsync(payload, fireAt: now, queue)` — یک‌بار اجرا، تمام
+
+**دلیل:**
+- Scheduler پلتفرم از قبل Retry، Persistence، TimeZone، QueryRecurring را دارد
+- BackgroundService دوم = duplicate infrastructure
+- Job Handler (`CollectPriceJobHandler`) همان الگوی `RetentionCleanupHandler` را دنبال می‌کند
+
+**Stop:** `ISchedulerService.<Unschedule>(job.SchedulerRecurringId)`. اگر API اسمش متفاوت است (Cancel/Pause)، از همان استفاده می‌کنیم — به کد Scheduler وابسته است.
+
+---
+
+### D40 — Multi-source برای یک Pair: Transformer از Most Recent استفاده می‌کند
+
+**تصمیم:** اگر برای یک `(From, To)` چند Source باشد (مثلاً USD/IRR از TGJU روزانه + از Telegram دقیقه‌ای)، `DbCurrencyRateProvider.GetRateAsync` نرخ را بر اساس `EffectiveAt DESC LIMIT 1` می‌خواند — **بدون فیلتر Source**.
+
+**دلیل:**
+- کاربر می‌خواهد «آخرین نرخ» را داشته باشد، نه «نرخ از Source مشخص»
+- Canonical `LatestCurrencyRateSpec` از قبل همین است — بدون تغییر
+- فیلتر Source در Backtest Config → Phase C (اگر کسی خواست Simulation با «نرخ از TGJU فقط» اجرا شود)
+
+**Implied behavior:** اگر Telegram دقیقه‌ای نرخ بدهد و TGJU روزانه، `CurrencyCandleTransformer` در هر Candle از Telegram استفاده می‌کند — که دقیق‌تر است. این **تصادفی مطلوب** است.
+
+---
+
+### D41 — Sanity: Skip + Log Warning (نه Reject)
+
+**تصمیم:** قبل از Persist، `PriceCollectionService` چک می‌کند:
+- `rate > 0` — Skip اگر صفر یا منفی
+- `rate` در بازه‌ی `[MinRate, MaxRate]` config — Skip اگر خارج
+- جهش روزانه > `MaxDailyChangePercent` (default 20%) نسبت به نرخ آخر — **Skip + Warning، نه Reject**
+
+**دلیل:**
+- TGJU داده‌ی مشکل‌دار دارد (typo، اعداد صفر، field swap)
+- ولی جهش واقعی > 20% هم ممکن است (خبر سیاسی، تحریم)
+- Skip + Warning: کاربر در Events می‌بیند، خودش تصمیم می‌گیرد (اگر واقعی بود، دستی اضافه کند)
+
+**Trade-off:** اگر TGJU یک روز ۳۰% جهش کند (واقعی)، آن روز Import نمی‌شود و کاربر باید دستی اضافه کند. Acceptable — چون Rare Event است و Audit Trail روشن است.
+
+---
+
+### D42 — Collection Idempotent با Unique Index
+
+**تصمیم:** `CurrencyRate` از قبل `UX_CurrencyRate_Pair_EffectiveAt` دارد — Re-import همان روز، **همان EffectiveAt را Duplicate نمی‌کند**، بلکه Skip.
+
+**Implied:** `ImportResult.Inserted` + `ImportResult.Skipped` هر دو در Response.
+
+**دلیل:**
+- Backfillهای جزئی (crash وسط) → Retry امن
+- چند Source که همان `(From, To, EffectiveAt)` را بدهند → اول Persist می‌شود، دوم Skip (نه override)
+- `Source` column فقط در **اولین** Persist ست می‌شود؛ نمی‌شود بعداً Override کرد. اگر لازم شد، Phase C: `UpsertRateCommand`.
+
+---
+
+## خلاصه D34-D42
+
+| ID | موضوع | Type |
+|---|---|---|
+| D34 | PriceSource Entity (نه enum) | Phase B1 |
+| D35 | PriceCollectionJob Entity (شبیه TradingRun) | Phase B1 |
+| D36 | CurrencyRate rename نمی‌شود | Design |
+| D37 | CurrencyCode Extended (GOLD، ...) | Phase B1 |
+| D38 | PriceSourceType enum + Provider Pattern | Phase B1 |
+| D39 | Scheduler Module برای Recurring + Backfill | Phase B1 |
+| D40 | Most Recent Rate (Source-agnostic) | Design |
+| D41 | Sanity = Skip + Warning (نه Reject) | Phase B1 |
+| D42 | Collection Idempotent (UX already) | Design |
 ---
 
 ## Known Debt (اولویت Phase B)

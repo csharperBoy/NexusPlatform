@@ -251,6 +251,28 @@ IBrokerAccountReader    ──→ Cash Balance
 - Source, FetchedAt
 ```
 
+| **`PriceSources`** | منابع قیمت پیکربندی‌شده (TGJU، Telegram، ...) — Phase B1 | ثابت (Seed) |
+| **`PriceCollectionJobs`** | Jobهای جمع‌آوری قیمت (شبیه TradingRun) — Phase B1 | کم |
+
+#### `PriceSources` (Phase B1)
+
+- Code (unique), DisplayName, Type (enum: Tgju/TelegramChannel/CustomApi)
+- ConfigJson (provider-specific: {"indicator":"price_dollar_rl"})
+- DefaultFromAsset, DefaultToAsset
+- IsActive
+
+#### `PriceCollectionJobs` (Phase B1)
+
+- Name, State (Created/Ready/Running/Stopped/Faulted), Mode (Recurring/Backfill)
+- PriceSourceId, FromAsset, ToAsset
+- CronExpression یا IntervalValue + IntervalUnit (Recurring)
+- BackfillFromUtc, BackfillToUtc (Backfill)
+- SchedulerRecurringId (برای Unschedulable)
+- StartedAt, StoppedAt
+- LastRunAt, LastRunInserted, LastRunSkipped, TotalInserted, BackfillProgressPercent
+- LastError
+- OwnerPersonId/OwnerUserId (Multi-user آینده)
+- 
 ### روابط کلیدی
 
 ```
@@ -423,6 +445,15 @@ if (openIsins.Count == 0)
 |---|---|
 | `StrategyEvaluationService` (Infra) | Load candles، Currency transform، Extra TF، Evaluate، Enrich features، ساخت `StrategyEvaluation` + `Signal`ها |
 | `StrategyEvaluationStage` (Infra) | User Context، فراخوانی Service per (Run, Symbol)، Persist، Push به Channel، Logging |
+
+### Price Collection (Phase B1 — جدید)
+IPriceCollectionJobService → Create/Update/Delete/Start/Stop/GetList/GetById
+IPriceCollectionService → CollectOnceAsync، CollectBackfillAsync
+IPriceSourceProvider → FetchCurrentAsync، FetchHistoricalAsync
+IPriceSourceProviderResolver → Resolve(PriceSourceType) → IPriceSourceProvider?
+ITgjuClient → GetCurrentRateAsync، GetHistoricalRatesAsync
+CollectPricePayload : IScheduledJobPayload
+Key = "trader.price-collect"
 
 **مرز (D-list):** Service به UoW و Channel دسترسی ندارد. فقط از Cacheها و Transformer استفاده می‌کند.
 
@@ -1592,73 +1623,69 @@ Action: 1. Fill اعمال نمی‌شود (Position در known good state)
 
 ## 20. نکات مهم و محدودیت‌ها
 
-### آنچه در Phase A پیاده شد (تکمیل‌شده)
+### Phase A (Foundation Hardening) — ✅ Complete
 
-✅ Domain Model کامل (Instrument با OptionContract، TradingRun، Signal، Order، Position)
-✅ Multi-Broker با Capability Segregation (D18)
-✅ Keyed DI برای Broker Capabilities (D19)
-✅ Session Management (Auto-Relogin)
-✅ Market Data با Deduplication
-✅ Candle Cache هوشمند (بسته شدن کندل، Market-Aware TTL — D12)
-✅ Strategy Framework + RSI
-✅ Indicator Abstraction (جدا از Strategy)
-✅ TradingSchedule per Instrument
-✅ Currency Transformation (Per-Candle — D13)
-✅ Currency Whitelist (M10 — D4)
-✅ Signal → OrderIntent → BrokerOrder → OrderTrade → Position
-✅ **FillMath** — Single source for Fill arithmetic (M5 — D10)
-✅ **Stepped Buying** — StrengthMultiplier + MinDeltaPercent (M7)
-✅ **Exact Commission Formula** — `1/(1+c)` نه `(1-c)` (M7)
-✅ SL/TP Monitoring **مستقل از Order Activity** (C2 — D8)
-✅ **Position Overshoot → Run Faulted** (C4 — D9)
-✅ **Paper Trading** — `IsPaper` flag، Immediate Fill Dispatcher (D23)
-✅ **Backtesting Engine** — Config Snapshot (D22)، Sub-Candle Resolution
-✅ **Sub-Candle Strategy Support** (A2 — D26)
-✅ **Multi-Account Fan-Out** — یک Signal روی همه Accounts (D5)
-✅ **Startup Recovery** — Restore Running + Re-Push Signals
-✅ **Broker Reconciliation** — Log-only (A1 — D24)
-✅ **Retention** — Scheduler Recurring Job
-✅ **Health Checks** — ۵ Component (DB, Runtime, Backtest, Historical, Broker, MarketData)
-✅ **Graceful Shutdown** — Polly DbRetry
-✅ **Trading Events** — Buffer + Flush per Tick
-✅ **StrategyEvaluationStage Refactor** — `IStrategyEvaluationService` (M6 — ~140 LOC Stage)
-✅ **SQL-side Spec Queries** — Workerها و Services (M1)
-✅ **Per-Stage Timing** — Slow Tick breakdown (N4)
-✅ **CandleRecord.TimeFrame** — enum نه int (N5)
-✅ **Persistence برای AI/ML** — Snapshot، Evaluation، Candle
-✅ **Unit Tests** — 145 tests (Domain، Application، Infrastructure، Integration)
-✅ **CI** — GitHub Actions (Build + Test on push/PR)
-✅ **Risk Layer — Kill Switch** — Global + Per-Account (PR 14)
-✅ **Risk Layer — Daily Loss Limit** — Per-Account (PR 15, updated)
-✅ **Risk Layer — Max Position Size** — Cap در OrderSizeCalculator (PR 16)
-✅ **Risk Layer — Circuit Breaker** — Per (Run, Account), Lazy Reset (PR 17)
-✅ **Per-Account Capital Allocation** — Fixed/Dynamic per (Run, Account) (PR 19)
-✅ **Cash Cache Invalidate-Driven** — Not TTL-based (PR 15)
-### آنچه در Phase B/C/D آینده
+✅ Broker Reconciliation (Log-only, A1)
+✅ Sub-Candle Strategy Support (A2)
+✅ Graceful Shutdown (A3, Polly DbRetry)
+✅ Health Checks (5 Components, A4)
+✅ Retention (Scheduler Recurring, A5)
+✅ Unit Tests (163 tests, A6)
 
-🔲 **Data Infrastructure (B)** — TGJU USD Import، Data Completeness Check
-🔲 **Operations & Dashboard (C)** — Order Management UI، Order Preset UI، Daily PnL
-🔲 **Risk & Safety (D)** — Rate Limiter (PR 18 pending)، Risk Dashboard UI
-🔲 **Advanced (E)** — Multi-Indicator، Strategy Ensemble (D27)، Trailing Stop، AI/ML Pipeline (D28)
-🔲 **Multi-Instance Prep** — Redis BrokerSessionCache (D20), Distributed Lock
-🔲 **Broker Expansion** — Agah Adapter
-🔲 **Market Expansion** — Forex، Crypto (Market Type در Enum آماده)
-✅ **Frontend Dashboard** — چندین Page (Accounts، Instruments، Strategies، TradingRuns، Positions، Signals، Events، Backtests، HistoricalData، CurrencyRates)
+### Phase D (Risk & Safety) — ✅ Complete
+
+✅ Kill Switch (Global + Per-Account, PR 14) — Events emit شد (PR 20)
+✅ Daily Loss Limit (per-account, hybrid, PR 15)
+✅ Max Position Size (Run-based, in OrderSizeCalculator, PR 16)
+✅ Circuit Breaker (per (Run, Account), lazy reset, PR 17)
+✅ Rate Limiter (per-account sliding, PR 18)
+✅ Per-Account Capital Allocation (PR 19) — Fixed/Dynamic per TradingRunAccount
+✅ Risk Dashboard UI (PR 21) — Kill Switch + Circuit Breaker + Active Circuits
+✅ Risk Resource Seed (Resource + Permission + Menu)
+
+### Phase B — 🚧 In Progress
+
+**B1 (TGJU Import) — Design Approved, Code Pending**
+
+- `PriceSource` Entity (D34): هر TGJU indicator یک Instance
+- `PriceCollectionJob` Entity (D35): شبیه TradingRun با Start/Stop
+- Scheduler Module (D39): Recurring + Backfill
+- Provider pattern (D38): `TgjuPriceSourceProvider` در B1
+- Sanity skip+log (D41)، Most Recent (D40)، Idempotent (D42)
+
+Scope B1:
+- فقط `TgjuPriceSourceProvider` (Telegram/Custom API در B2)
+- فقط USD (بقیه در B2 با Config)
+- هر دو Mode: Recurring + Backfill
+- Endpoints: CRUD PriceSource/Job + Start/Stop + Status
+- ۲۰+ تست
+
+**B2 (B3 — آینده):**
+- Telegram Channel Provider
+- EUR، AED، GOLD، SILVER، COPPER
+- Data Completeness Monitoring
+- Frontend UI (Price Sources + Jobs)
+
+### Phase C — آینده
+- Order Management UI، Order Preset UI
+- Daily PnL Widget، Dashboard
+- Source Filter در Backtest (D40 extension)
+- `AssetPrice` rename (D36 extension)
+
+### Phase E — آینده
+- Multi-Indicator Strategies، Strategy Ensemble (D27)
+- Trailing Stop، Laddered Exit
+- AI/ML Pipeline (D28)
+- Multi-Instance Prep (Redis BrokerSessionCache، D20)
 
 ### محدودیت‌های فعلی
 
-⚠️ **H4 پشتیبانی نمی‌شود** — EasyTrader `resolution` فقط 1، 5، 15، 30، 60، 1D، 1W، 1M
-⚠️ **Concurrent Login** — اگر چند Instance، Broker ممکن است قبول نکند (Phase 2: Redis)
-⚠️ **Multi-Currency Pairs** — Pair مستقیم یا معکوس فقط. Triangulation (USD→EUR via IRR) پشتیبانی نمی‌شود
-⚠️ **Cache Invalidation** — ویرایش Run در Running ممنوع (D6). برای تغییر Config: Stop → Edit → Start
-⚠️ **Paper Trading Fill** — Immediate در `intent.Price`، بدون Slippage یا Partial Fill (D23)
-⚠️ **No Fill Handling** — اگر سفارش Fill نشد، در Tick بعدی دوباره بررسی می‌شود (نه Cancel)
-⚠️ **Multi-Account Coordination** — Fan-Out بدون Policy (D5). اگر Run با ۳ Account باشد، هر سه مستقل تصمیم می‌گیرند
-⚠️ **Position Overshoot** — نیاز به بررسی دستی بعد از Fault (C4 — D9)
-⚠️ **Reconciliation** — Log-only (D24)، Bonus/StockRight نادیده (Mismatch کاذب ممکن است)
 ⚠️ **Cash مشترک بین Runها** — یک Account در چند Run، BuyPower مشترک است (D30)
-⚠️ **Kill Switch Audit Events** — فعال/غیرفعال در TradingEvents ثبت نمی‌شود (Hotfix pending)
 ⚠️ **Cash Cache Manual Trade** — تا ۳۰ دقیقه تأخیر (D33)
+⚠️ **Multi-Currency Triangulation** — Pair مستقیم یا معکوس فقط (USD→EUR via IRR پشتیبانی نمی‌شود)
+⚠️ **Bonus/StockRight در Reconciliation** — نادیده (Mismatch کاذب)
+⚠️ **Paper Trading Fill** — فوری، بدون Partial Fill (D23)
+⚠️ **PriceCollection بدون Source Filter در Transformer** — D40 (Source filter → Phase C)
 
 ### نکات مهم عملیاتی
 

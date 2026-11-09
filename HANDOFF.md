@@ -1,6 +1,6 @@
-> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۸/۲۵ — Phase D کامل شد
-> **وضعیت:** Phase A ✅ | Phase D ✅ | 158 Tests ✅ | CI ✅
-
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۱۹ — Phase B1 Design Approved
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Phase B1 🚧 (Design) | 163 Tests ✅ | CI ✅
+> **گام بعدی:** PR B1 — TGJU Import (code pending on PriceSource design D34-D42)
 ---
 
 ## 1. PROJECT OVERVIEW
@@ -392,25 +392,43 @@ src/modules/Trader/
 | # | Feature | Status |
 |---|---|---|
 | **A1** | Broker Reconciliation (Log-only) | ✅ |
-| **A2** | Sub-Candle Strategy Support (`ExtraCandleRequirements`) | ✅ |
+| **A2** | Sub-Candle Strategy Support | ✅ |
 | **A3** | Graceful Shutdown (Polly DbRetry) | ✅ |
-| **A4** | Health Checks (5 Components + Composite) | ✅ |
+| **A4** | Health Checks (5 Components) | ✅ |
 | **A5** | Retention (Scheduler Recurring) | ✅ |
-| **A6** | Unit Tests (158 tests) | ✅ |
+| **A6** | Unit Tests | ✅ (163 tests) |
 
 ### Phase D (Risk & Safety) — ✅ COMPLETE
 | # | Feature | Status |
 |---|---|---|
 | **D1** | Kill Switch (Global + Per-Account) | ✅ PR 14 |
-| **D2** | Daily Loss Limit (per-account، hybrid) | ✅ PR 15 |
+| **D2** | Daily Loss Limit (per-account) | ✅ PR 15 |
 | **D3** | Max Position Size (Run-based) | ✅ PR 16 |
-| **D4** | Circuit Breaker (per (Run, Account)، lazy reset) | ✅ PR 17 |
-| **D5** | Rate Limiter (per-account sliding) | ✅ PR 18 |
+| **D4** | Circuit Breaker | ✅ PR 17 |
+| **D5** | Rate Limiter | ✅ PR 18 |
+| **D6** | Per-Account Capital | ✅ PR 19 |
+| **D7** | Kill Switch Events | ✅ PR 20 |
+| **D8** | Risk Dashboard UI | ✅ PR 21 |
+| **D9** | Risk Seed (Resource/Permission/Menu) | ✅ |
 
-### Phase B/C/E — آینده
-- **B (Data):** TGJU USD Import، Data Completeness Check
-- **C (Operations):** Order Management UI، Order Preset UI، Daily PnL، Dashboard
-- **E (Advanced):** Multi-Indicator، Strategy Ensemble (D27)، Trailing Stop، Laddered Exit، AI/ML Pipeline، Multi-Instance Prep (Redis Session Cache)
+### Phase B1 (Price Collection / TGJU Import) — 🚧 DESIGN APPROVED, CODE PENDING
+
+**Approved Design: D34-D42 in `TRADING-DECISIONS.md`**
+
+**Scope:**
+- `PriceSource` Entity + `PriceCollectionJob` Entity
+- `TgjuPriceSourceProvider` (B1 = only provider)
+- Scheduler Module (Recurring + Backfill)
+- USD/IRR only (B2 = more assets)
+- Endpoints: PriceSource CRUD + Job CRUD + Start/Stop + Status
+- 20+ tests
+
+**Dependencies needed before code:**
+- `Scheduler` Module code (for D12/D39 clarification)
+- Confirmations on `RecurringPattern` API
+
+### Phase B2/B3, Phase C, Phase E — آینده
+(B2: Telegram + more assets + Frontend; C: Operations; E: Advanced)
 
 ---
 
@@ -455,27 +473,48 @@ src/modules/Trader/
 
 ## 10. KNOWN ISSUES / BACKLOG
 
-### بدهی فنی باقی‌مانده (Prioritized)
-| # | Issue | Priority | Phase |
-|---|---|---|---|
-| 1 | `ExecutionLogService.Skip/Take` در Memory (نه SQL) | Medium | B |
-| 2 | `UseQuerySplittingBehavior` Commented → Cartesian در Run بزرگ | Medium | B |
-| 3 | Multi-Account Coordination Policy ندارد (Fan-Out فقط) | Low | C |
-| 4 | `ITraderUnitOfWork` یک Registry است، نه UoW واقعی | Low | B |
-| 5 | Bonus/StockRight در Reconciliation نادیده → Mismatch کاذب | Medium | A1+ |
-| 6 | `TraderSymbol` Legacy (Refactor به `Instrument`) | Low | E |
-| 7 | `SchedulePlan`/`ScheduledOrder` Legacy (Overlap با TradingRun) | Low | C |
-| 8 | `PaperTrading` Fill فوری، بدون Partial Fill | Low | C |
-| 9 | `Cash Cache` Manual Trade تا 30 دقیقه تأخیر | Low | B |
-| 10 | Kill Switch Run-level از `TradingRun.Stop` استفاده می‌کند | — (by design) | — |
+### Known Issues / Backlog
 
-### نکات Production (پیش از Live)
-- ⚠️ **Paper Trading یک هفته** با تمام Guards فعال — قبل از پول واقعی
-- ⚠️ **Target Currency** — تست که Order با IRR ثبت می‌شود
-- ⚠️ **SL/TP** — Position باز و مصنوعی Trigger کن
-- ⚠️ **Recovery** — Restart وسط معامله
-- ⚠️ **WAF** — بعد از ۱۲:۳۵ (بازار بسته) Log چک کن
-- ⚠️ **Reconciliation** — بعد از یک هفته، `POST /api/Trader/Reconciliation/Run` بزن
+#### Phase B1 (Code Pending)
+| # | Item | Priority |
+|---|---|---|
+| 1 | TGJU Import — code (D34-D42 approved) | **In Progress** |
+
+#### Phase B2 (Future)
+| # | Item | Priority |
+|---|---|---|
+| 1 | Telegram Channel PriceSourceProvider | High |
+| 2 | Multi-asset (EUR/AED/GOLD/SILVER/COPPER) | High |
+| 3 | Frontend UI (Price Sources + Jobs) | Medium |
+| 4 | Data Completeness Monitoring | Medium |
+| 5 | `ExecutionLogService.Skip/Take` → SQL | Medium |
+
+#### Phase C (Operations)
+| # | Item | Priority |
+|---|---|---|
+| 1 | Order Management UI | High |
+| 2 | Order Preset UI | High |
+| 3 | Daily PnL Widget، Dashboard | Medium |
+| 4 | Source Filter در Currency Transform (D40 ext) | Medium |
+| 5 | `AssetPrice` rename if needed (D36 ext) | Low |
+| 6 | Multi-Account Coordination Policy | Low |
+
+#### Phase E (Advanced)
+| # | Item | Priority |
+|---|---|---|
+| 1 | Strategy Ensemble (D27) | High |
+| 2 | Trailing Stop / Laddered Exit | Medium |
+| 3 | AI/ML Pipeline (D28) | Medium |
+| 4 | Multi-Instance Prep (Redis, D20) | Low |
+
+#### Technical Debt (Low Priority)
+| # | Item |
+|---|---|
+| 1 | `UseQuerySplittingBehavior` commented |
+| 2 | `ITraderUnitOfWork` = Registry نه UoW واقعی |
+| 3 | Bonus/StockRight در Reconciliation نادیده |
+| 4 | `TraderSymbol` Legacy (Refactor به Instrument) |
+| 5 | `SchedulePlan`/`ScheduledOrder` Legacy |
 
 ---
 
@@ -544,8 +583,10 @@ src/modules/Trader/
 
 ## 14. RECENT COMPLETED WORK
 
-1. **PR 19** — Per-Account Capital Allocation (Backend + Migration + Tests). `AccountCapitalAllocation` VO، `TradingRun` بدون CapitalAllocation، `FixedCapitalAllocator` per-account. 158 tests.
-2. **PR 19 Frontend** — Trading Runs sync با per-account capital، `TradingRunAccountEditor` بازنویسی، حذف Run-level column.
-3. **PR 18** — RateLimiterGuard (per-account sliding window). `InMemoryRateLimiterTracker` Singleton، `RecordDispatch` بعد از Dispatch موفق. 145→158 tests.
-4. **PR 17** — ConsecutiveLossGuard (Circuit Breaker). `RunAccountLossStreak` Entity، Lazy Reset on Cooldown Expiry. DI fix: `RunAccountLossStreakTracker` Singleton با IServiceScopeFactory برای Logger Scoped.
-5. **PR 20** — Kill Switch Events hotfix (TradingEvent از Command Handler) + HANDOFF Rewrite.
+1. **PR 21** — Risk Dashboard UI (`/trader/risk`). Kill Switch Card (Global + per-Account با ConfirmActionModal + reason)، CircuitBreaker Card (Active list + Reset per-row + Reset All)، Auto-refresh 15s. Frontend-only.
+2. **Risk Seed** — `TraderSeedData` اضافه شد: `trader.risk` Resource (DisplayOrder 3017, Icon shield) + FullAccess Permission + "مدیریت ریسک" Menu (Order 115, Path `/trader/risk`). `RiskController` از `trader.tradingrun` به `trader.risk` منتقل شد (RBAC دقیق).
+3. **PR 20** — Kill Switch Events Hotfix. `ActivateKillSwitchCommandHandler` و `DeactivateKillSwitchCommandHandler` حالا `ITradingEventLogger` تزریق می‌کنند و بعد از state change، `KillSwitchActivated`/`KillSwitchDeactivated` emit + Flush می‌کنند. +۵ تست.
+4. **PR 19 (Frontend)** — Trading Runs sync با per-account capital. `TradingRunAccountEditor` بازنویسی (checkbox + mode toggle + amount/percent)، حذف `Section تخصیص سرمایه`، حذف Run-level capital column.
+5. **PR 19 (Backend)** — Per-Account Capital Allocation. `AccountCapitalAllocation` VO (Fixed/Dynamic)، `TradingRunAccount.CapitalAllocation` (Owned)، حذف `TradingRun.CapitalAllocation`، Migration با Data copy. `FixedCapitalAllocator` per-account (رفع باگ "100M per Account"). 158 tests.
+
+**Next:** PR B1 (TGJU Import) — code pending on Scheduler module API confirmation.
