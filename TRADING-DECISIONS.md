@@ -26,13 +26,13 @@
 
 **محدودیت:** در Phase 1، اگر هیچ Account با Session معتبر نباشد، Market Data دریافت نمی‌شود (Broker API نیاز به Auth دارد). در Phase 2 با Provider مستقیم TSETMC این محدودیت رفع می‌شود.
 
-### D3 — `TradingRun` مالک Execution Context است
+### D3 — TradingRun مالک Execution Context است (اصلاح‌شده در PR 19)
 
-**تصمیم:** `ExecutionSettings` (Capital Allocation، StopLoss، TakeProfit، Order Mode) روی `TradingRun` هستند، نه روی `TraderAccount`.
+**تصمیم:** `ExecutionSettings` (StopLoss، TakeProfit، DefaultOrderMode، OnMarketClose، OnStop) روی `TradingRun` هستند. **Capital Allocation اما per (Run, Account)** است — هر `TradingRunAccount` خودش Mode (Fixed/Dynamic) و مقدار دارد.
 
-**دلیل:** یک Account می‌تواند در چند Run با Strategyهای مختلف باشد (Run1 = Scalping با TP=2%، Run2 = Long Term با TP=15%). Settings باید در سطح Run باشند.
+**دلیل اصلاح:** باگ قبلی در `FixedCapitalAllocator` (قبل از PR 19) — Run با `FixedAmount=100M` و ۲ Account، برای هر دو Account همان 100M را برمی‌گرداند. Run عملاً 200M پخش می‌کرد، نه 100M. همچنین با اصل «پول هر Account برای خودش»، Capital باید per-account باشد.
 
-**محدودیت:** اگر دو Run روی یک Account همزمان باز باشند و هر دو Buy کنند، Positionها در Broker مخلوط می‌شوند. `PositionManager.FindPositionAsync` با `(RunId, AccountId, Isin)` جستجو می‌کند، پس Positionها به درستی تفکیک می‌شوند. اما در **Broker** (Portfolio) تفکیک وجود ندارد. Reconciliation این را نشان می‌دهد.
+**محدودیت:** اگر یک Account در چند Run باشد و دو Run هر دو Fixed مبلغ دارند، هر کدام مبلغ خودش را مستقل می‌خواهد — اما Cash مشترک است. اگر Run R1 اول مصرف کند، R2 مبلغ کمتری می‌بیند (D30).
 
 ### D4 — Instrument، Options را با Owned Type مدل می‌کند
 
@@ -279,6 +279,76 @@
 **دلیل:** Training Dataset آینده = `StrategyEvaluation` + `MarketSnapshotRecord` + Candle History. بدون Schema تغییر، ML می‌تواند Featureها را Reconstruct کند.
 
 **محدودیت:** `FeaturesJson` یک Blob است. اگر Feature Vector از ۵۰ فیلد بیشتر شود، Query مستقیم روی JSON کند می‌شود. `Partial Index` روی `Action <> 0` برای Non-Holdها هست، ولی برای Feature-specific Queries باید Denormalize شود.
+
+### D29 — Capital Allocation per (Run, Account)، نه per Run
+
+**تصمیم:** `TradingRunAccount.CapitalAllocation: AccountCapitalAllocation` (Owned Type). دو حالت:
+- `Fixed(Money)`: مقدار ثابت > 0
+- `Dynamic(PercentOfBuyPower)`: درصد در (0, 100]
+- Invariant: دقیقاً یکی از دو فیلد Set
+
+**دلیل:**
+1. اصل «پول هر Account برای خودش»
+2. امکان ترکیب در یک Run: Account A Fixed 50M، Account B Dynamic 100%
+3. هم‌راستا با per-account Cash Cache (D33)، DailyLoss (D8 اصلاح‌شده)، CircuitBreaker
+
+**Trade-off:** Migration از Run-level به per-account، داده را Copy می‌کند. Runهایی که Fixed با ۲ Account داشتند، بعد از Migration هر Account جدا 100M دارد — همان رفتار واقعی قبلی، فقط شفاف.
+
+**پیامد:** Run-level `CapitalAllocation` از `TradingRun` حذف شد. `BacktestRun` سرمایه‌ی خودش را دارد (Simulation یک Pool واحد است).
+
+---
+
+### D30 — Cash مشترک است بین Runها روی یک Account
+
+**تصمیم:** `IAccountCashCache` یک `BuyPowerT0` per Account نگه می‌دارد — نه per (Run, Account).
+
+**پیامد:**
+- Run R1 (Dynamic 50% از A) + R2 (Dynamic 100% از A)
+- اگر R1 اول 60M از 200M موجود A مصرف کند، R2 در Order بعدی 140M می‌بیند × 100% = 140M
+- ضرر روزانه در R1 روی Cash همان Account اثر می‌گذارد، پس DailyLoss R2 هم آن را می‌بیند (ضرر واقعی است، نه اجتناب‌پذیر)
+
+**Phase B trigger:** اگر Loss per-run جدا لازم شد (مثلاً R1 می‌خواهد بداند خودش چقدر ضرر داده)، باید `CashLedger` per (Run, Account) بسازیم. Design بزرگ‌تر — فعلاً Skip.
+
+---
+
+### D31 — Risk Guard Pipeline: Fail-Safe = Block
+
+**تصمیم:** `IRiskGuardPipeline` Guards را به ترتیب اجرا می‌کند. اگر Guard خطا داد (Exception)، نتیجه **Block** است — نه Allow.
+
+**دلیل:** اصل «در شک، اجازه نده». اگر Broker Down است یا Tracker Bug دارد، Block امن‌تر از Allow است — هزینه‌ی Skip یک Order بسیار کمتر از هزینه‌ی اجرای یک Order در وضعیت نامطمئن است.
+
+**پیامد:** اگر یک Guard به‌طور مزمن Bug بدهد، Run کاملاً متوقف می‌شود (TradingEvent Critical) — که Signal واضح برای رفع فوری است.
+
+---
+
+### D32 — Kill Switch: Global + Per-Account (Run = Stop موجود)
+
+**تصمیم:** سه سطح Emergency Stop:
+- **Global** — همه‌ی Runها و Accountها. `POST /api/Trader/Risk/Kill-Switch/Activate {scope:0}`
+- **Per-Account** — فقط آن Account. `{scope:1, accountId}`
+- **Per-Run** — `TradingRunController.Stop` موجود (بدون Endpoint جدید)
+
+**دلیل:** Run-level Stop از قبل وجود دارد — استفاده‌ی مجدد، نه Endpoint جدید. Global و Account-level نیاز به Endpoint جدید دارند چون قبلاً نبودند.
+
+**Action:** همه = Block Order جدید (نه Close، نه Fault). Positionهای باز با SL/TP محافظت می‌شوند. `Deactivate` برای بازیابی.
+
+**یک limitation مستند:** در PR 14-17، `KillSwitchActivated`/`KillSwitchDeactivated` Events در Enum تعریف شدند ولی emit نمی‌شوند (TradingEvent جدول خالی برای این Types). Hotfix در PR بعدی: emit از Command Handlers.
+
+---
+
+### D33 — Cash Cache Invalidate-Driven (نه TTL-First)
+
+**تصمیم:** `IAccountCashCache`:
+- `RefreshAsync`: همیشه از Broker می‌خواند (~1s)
+- `GetOrRefreshAsync`: از Cache اگر RefreshedAt < MaxAge (30 دقیقه)، وگرنه Refresh
+- `Invalidate`: در `ExecutionCoordinator` بعد از Dispatch موفق، و در `OrderLifecycleStage` بعد از هر Fill
+
+**دلیل:**
+- قبل (`IAccountBalanceCache` با TTL 5s): هر tick پس از TTL، Broker Call → WAF risk + کند
+- حالا: Refresh فقط هنگام تغییر واقعی Cash (Dispatch / Fill)
+- MaxAge (30 min) Fail-Safe است اگر Invalidate از دست رفت (Bug)
+
+**پیامد:** اگر کاربر Manual Trade در Broker انجام دهد، تا MaxAge (30 دقیقه) در Cache دیده نمی‌شود. در Phase B: WebSocket Broker Events یا `POST /Risk/Refresh-Cash/{accountId}` Endpoint برای دستی.
 
 ---
 

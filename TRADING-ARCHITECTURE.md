@@ -188,7 +188,6 @@ IBrokerAccountReader    ──→ Cash Balance
 - State: Created / Ready / Running / Stopped / Faulted
 - StrategyKey, StrategyConfigJson
 - PrimaryTimeFrame (enum)
-- CapitalAllocation (Owned: Mode Fixed/Dynamic + FixedAmount)
 - StopLoss (Owned: Percentage یا AbsolutePrice)
 - TakeProfit (Owned: Percentage یا AbsolutePrice)
 - DefaultOrderMode: Quantity / TotalValue
@@ -199,7 +198,14 @@ IBrokerAccountReader    ──→ Cash Balance
 - MinDeltaPercent: decimal (default 0.03)         ← Stepped Buying
 - ExecutionMode: Live / Paper                     ← Paper Trading
 ```
+### `TradingRunAccounts`
 
+- TradingRunId, TraderAccountId
+- CapitalAllocation (Owned):
+    - Mode: Fixed / Dynamic
+    - FixedAmount: Money? (فقط Fixed)
+    - PercentOfBuyPower: decimal? (فقط Dynamic، (0, 100])
+    - Invariant: دقیقاً یکی Set
 #### `OrderIntents`
 
 ```
@@ -255,6 +261,11 @@ TradingRun ──→ Signal (N) ──→ OrderIntent (N) ──→ BrokerOrder 
                                                                           │
                                                                           ▼
                                                                       Position
+
+                                                                      // Run با ۳ Account:
+TradingRunAccount 1: Account A, Fixed(50_000_000 IRR)
+TradingRunAccount 2: Account B, Dynamic(100%)   // از BuyPower B
+TradingRunAccount 3: Account C, Dynamic(50%)    // از BuyPower C
 
 Signal ──→ StrategyEvaluation (1:1 از طریق SourceEvaluationId)
 OrderIntent ──→ StrategyEvaluation (N:1)
@@ -578,13 +589,24 @@ for each SignalEnvelope:
         SaveChanges یک بار در پایان Handle
 ```
 
-### Capital Allocation
+### Capital Allocation (per-account, PR 19)
+
+هر `TradingRunAccount` مستقل تصمیم می‌گیرد:
 
 | Mode | منبع |
 |---|---|
-| **Fixed** | `Run.CapitalAllocation.FixedAmount` (مقدار ثابت) |
-| **Dynamic** | `Broker.GetCashBalanceAsync().BuyPowerT0` (با Cache ۵ ثانیه) |
+| **Fixed** | `TradingRunAccount.CapitalAllocation.FixedAmount` (مقدار ثابت ریالی) |
+| **Dynamic** | `IAccountCashCache.BuyPowerT0 × PercentOfBuyPower / 100` |
 
+`IAccountCashCache` Invalidate-Driven است:
+- Refresh از Broker فقط بعد از Dispatch موفق یا Fill
+- `GetOrRefreshAsync` اگر Cache Miss یا RefreshedAt > 30 دقیقه
+- یک Account می‌تواند در چند Run باشد — Cash مشترک (D30)
+
+`CompositeCapitalAllocator` per-account تصمیم می‌گیرد (نه per-run):
+- Account A Fixed → `FixedCapitalAllocator`
+- Account B Dynamic → `DynamicCapitalAllocator`
+- 
 ### Order Sizing (D10 + M7)
 
 **فرمول دقیق (PR 6):**
@@ -1603,14 +1625,20 @@ Action: 1. Fill اعمال نمی‌شود (Position در known good state)
 ✅ **SQL-side Spec Queries** — Workerها و Services (M1)
 ✅ **Per-Stage Timing** — Slow Tick breakdown (N4)
 ✅ **CandleRecord.TimeFrame** — enum نه int (N5)
-✅ **Unit Tests** — 102 tests (Domain، Application، Infrastructure، Integration)
 ✅ **Persistence برای AI/ML** — Snapshot، Evaluation، Candle
-
+✅ **Unit Tests** — 145 tests (Domain، Application، Infrastructure، Integration)
+✅ **CI** — GitHub Actions (Build + Test on push/PR)
+✅ **Risk Layer — Kill Switch** — Global + Per-Account (PR 14)
+✅ **Risk Layer — Daily Loss Limit** — Per-Account (PR 15, updated)
+✅ **Risk Layer — Max Position Size** — Cap در OrderSizeCalculator (PR 16)
+✅ **Risk Layer — Circuit Breaker** — Per (Run, Account), Lazy Reset (PR 17)
+✅ **Per-Account Capital Allocation** — Fixed/Dynamic per (Run, Account) (PR 19)
+✅ **Cash Cache Invalidate-Driven** — Not TTL-based (PR 15)
 ### آنچه در Phase B/C/D آینده
 
 🔲 **Data Infrastructure (B)** — TGJU USD Import، Data Completeness Check
 🔲 **Operations & Dashboard (C)** — Order Management UI، Order Preset UI، Daily PnL
-🔲 **Risk & Safety (D)** — Daily Loss Limit، Max Position Size، Circuit Breaker، Rate Limiter
+🔲 **Risk & Safety (D)** — Rate Limiter (PR 18 pending)، Risk Dashboard UI
 🔲 **Advanced (E)** — Multi-Indicator، Strategy Ensemble (D27)، Trailing Stop، AI/ML Pipeline (D28)
 🔲 **Multi-Instance Prep** — Redis BrokerSessionCache (D20), Distributed Lock
 🔲 **Broker Expansion** — Agah Adapter
@@ -1628,6 +1656,9 @@ Action: 1. Fill اعمال نمی‌شود (Position در known good state)
 ⚠️ **Multi-Account Coordination** — Fan-Out بدون Policy (D5). اگر Run با ۳ Account باشد، هر سه مستقل تصمیم می‌گیرند
 ⚠️ **Position Overshoot** — نیاز به بررسی دستی بعد از Fault (C4 — D9)
 ⚠️ **Reconciliation** — Log-only (D24)، Bonus/StockRight نادیده (Mismatch کاذب ممکن است)
+⚠️ **Cash مشترک بین Runها** — یک Account در چند Run، BuyPower مشترک است (D30)
+⚠️ **Kill Switch Audit Events** — فعال/غیرفعال در TradingEvents ثبت نمی‌شود (Hotfix pending)
+⚠️ **Cash Cache Manual Trade** — تا ۳۰ دقیقه تأخیر (D33)
 
 ### نکات مهم عملیاتی
 
