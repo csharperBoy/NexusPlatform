@@ -1,3 +1,4 @@
+//src/modules/Trader/models/TradingEventView.ts
 export interface TradingEventView {
   id: string;
   runId: string | null;

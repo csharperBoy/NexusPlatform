@@ -1,0 +1,2008 @@
+//src/modules/Trader/pages/index.ts
+export { AccountsManagementPage } from "./Accounts/AccountsManagementPage";
+export { SymbolsManagementPage } from "./Symbols/SymbolsManagementPage";
+export { SchedulePlansManagementPage } from "./SchedulePlans/SchedulePlansManagementPage";
+export { ServerClockPage } from "./ServerClock/ServerClockPage";
+export { LogViewerPage } from "./Logs/LogViewerPage";
+
+export { InstrumentsManagementPage } from "./Instruments/InstrumentsManagementPage";
+export { TradingRunsManagementPage } from "./TradingRuns/TradingRunsManagementPage";
+export { StrategiesListPage } from "./Strategies/StrategiesListPage";
+
+export { PositionsPage } from "./Positions/PositionsPage";
+export { SignalsPage } from "./Signals/SignalsPage";
+
+export { CurrencyRatesManagementPage } from "./CurrencyRates/CurrencyRatesManagementPage";
+
+export { TradingEventsPage } from "./Events/TradingEventsPage";
+
+export { BacktestDetailPage } from "./Backtests/BacktestDetailPage";
+
+export { BacktestsListPage } from "./Backtests/BacktestsListPage";
+
+export { BacktestComparePage } from "./Backtests/BacktestComparePage";
+
+export { CollectionStatusBadge } from "./HistoricalData/CollectionStatusBadge";
+
+export { CreateCollectionModal } from "./HistoricalData/CreateCollectionModal";
+
+export { HistoricalDataCollectionPage } from "./HistoricalData/HistoricalDataCollectionPage";
+
+
+//src/modules/Trader/pages/TradingRuns/TradingRunsManagementPage.tsx
+import React, { useEffect, useMemo, useState } from "react";
+import { useTradingRunManagement } from "../../hooks/useTradingRunManagement";
+import { strategyApi } from "../../api/strategyApi";
+import { tradingRunApi } from "../../api/tradingRunApi";
+import type {
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+  TradingRunInfoView,
+  TradingRunDetailView,
+  StrategyInfoView,
+} from "../../models";
+import {
+  TradingRunState,
+  TRADING_RUN_STATE_LABELS,
+  CapitalAllocationMode,
+  CAPITAL_MODE_LABELS,
+  TIMEFRAME_LABELS,
+  TimeFrame,
+  StopRunBehavior,
+  ExecutionMode,
+  EXECUTION_MODE_LABELS,
+  EXECUTION_MODE_COLORS,
+} from "../../models";
+import { RunStateBadge } from "./components/RunStateBadge";
+import { RunActions } from "./components/RunActions";
+import { StopRunConfirmModal } from "./components/StopRunConfirmModal";
+import { TradingRunFormModal } from "./components/TradingRunFormModal";
+
+const ExecutionModeBadge: React.FC<{ mode: number }> = ({ mode }) => {
+  const m = mode as ExecutionMode;
+  const label = EXECUTION_MODE_LABELS[m] ?? "—";
+  const colors = EXECUTION_MODE_COLORS[m] ?? "bg-slate-700 text-slate-300";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap ${colors}`}
+    >
+      {m === ExecutionMode.Paper ? "📄 " : "🔴 "}
+      {label}
+    </span>
+  );
+};
+
+export const TradingRunsManagementPage: React.FC = () => {
+  const {
+    runs,
+    loading,
+    busyId,
+    error,
+    refresh,
+    handleCreate,
+    handleUpdate,
+    handleStart,
+    handleStop,
+    handleDelete,
+  } = useTradingRunManagement();
+
+  const [strategies, setStrategies] = useState<StrategyInfoView[]>([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [formDetail, setFormDetail] =
+    useState<TradingRunDetailView | null>(null);
+  const [formSaving, setFormSaving] = useState(false);
+
+  const [stopTarget, setStopTarget] =
+    useState<TradingRunInfoView | null>(null);
+  const [stopSaving, setStopSaving] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] =
+    useState<TradingRunInfoView | null>(null);
+  const [deleteSaving, setDeleteSaving] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [stateFilter, setStateFilter] = useState<string>("");
+
+  /* ─── Load strategies once ─── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await strategyApi.GetList();
+        setStrategies(data);
+      } catch {
+        setStrategies([]);
+      }
+    })();
+  }, []);
+
+  /* ─── Filtered runs ─── */
+  const filtered = useMemo(() => {
+    return runs.filter((r) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const match =
+          r.name.toLowerCase().includes(q) ||
+          r.strategyKey.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      if (stateFilter !== "" && r.state !== Number(stateFilter)) {
+        return false;
+      }
+      return true;
+    });
+  }, [runs, search, stateFilter]);
+
+  /* ─── Handlers ─── */
+  const openCreate = () => {
+    setFormMode("create");
+    setFormDetail(null);
+    setFormOpen(true);
+  };
+
+  const openEdit = async (run: TradingRunInfoView) => {
+    try {
+      const detail = await tradingRunApi.GetById(run.id);
+      setFormDetail(detail);
+      setFormMode("edit");
+      setFormOpen(true);
+    } catch (e) {
+      alert(
+        "خطا در دریافت جزئیات: " +
+          (e instanceof Error ? e.message : "نامشخص"),
+      );
+    }
+  };
+
+  const submitForm = async (
+    cmd: CreateTradingRunCommand | UpdateTradingRunCommand,
+  ) => {
+    setFormSaving(true);
+    try {
+      if ("id" in cmd) {
+        await handleUpdate(cmd);
+      } else {
+        await handleCreate(cmd);
+      }
+      setFormOpen(false);
+    } finally {
+      setFormSaving(false);
+    }
+  };
+
+  const confirmStop = async (behavior: StopRunBehavior) => {
+    if (!stopTarget) return;
+    setStopSaving(true);
+    try {
+      await handleStop(stopTarget.id, behavior);
+      setStopTarget(null);
+    } finally {
+      setStopSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteSaving(true);
+    try {
+      await handleDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } finally {
+      setDeleteSaving(false);
+    }
+  };
+
+  /* ─── Render ─── */
+  return (
+    <div className="space-y-4 p-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            پلن‌های معاملاتی
+          </h1>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            {runs.length} پلن · {filtered.length} نمایش داده شده
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={loading}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            🔄 بروزرسانی
+          </button>
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            ➕ پلن جدید
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="جستجو (نام یا استراتژی)..."
+          className="flex-1 min-w-[200px] rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+        <select
+          value={stateFilter}
+          onChange={(e) => setStateFilter(e.target.value)}
+          className="rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="">همه‌ی وضعیت‌ها</option>
+          {Object.entries(TRADING_RUN_STATE_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+          ⚠️ {error}
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm dark:border-gray-700">
+        <table className="w-full text-right text-sm text-gray-700 dark:text-gray-300">
+          <thead className="bg-gray-50 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+            <tr>
+              <th className="p-3">نام</th>
+              <th className="p-3">وضعیت</th>
+              <th className="p-3">حالت</th>
+              <th className="p-3">استراتژی</th>
+              <th className="p-3">تایم‌فریم</th>
+              <th className="p-3">ارز</th>
+              <th className="p-3 text-center">ضریب</th>
+              <th className="p-3 text-center">آستانه</th>
+              <th className="p-3">سرمایه</th>              
+              <th className="p-3 text-center">نمادها</th>
+              <th className="p-3 text-center">حساب‌ها</th>
+              <th className="p-3">شروع/توقف</th>
+              <th className="p-3 text-center">عملیات</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {loading ? (
+              <tr>
+                <td colSpan={12} className="p-6 text-center">
+                  در حال بارگذاری...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={12} className="p-6 text-center">
+                  هیچ پلنی یافت نشد.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((run) => {
+                const capMode =
+                  run.capitalAllocationMode as CapitalAllocationMode;
+                const capLabel =
+                  CAPITAL_MODE_LABELS[capMode] ?? "نامشخص";
+                const capValue =
+                  capMode === CapitalAllocationMode.Fixed && run.fixedCapital
+                    ? `${run.fixedCapital.toLocaleString("fa-IR")} ریال`
+                    : "داینامیک";
+                const tf =
+                  TIMEFRAME_LABELS[run.primaryTimeFrame as TimeFrame] ??
+                  run.primaryTimeFrameName;
+
+                return (
+                  <tr
+                    key={run.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  >
+                    <td className="p-3 font-medium">{run.name}</td>
+                    <td className="p-3">
+                      <RunStateBadge state={run.state} />
+                    </td>
+                    <td className="p-3">
+                      <ExecutionModeBadge mode={run.executionMode} />
+                    </td>
+                    <td className="p-3 font-mono text-xs">
+                      {run.strategyKey}
+                    </td>
+                    <td className="p-3">{tf}</td>
+                    <td className="p-3 font-mono text-xs">
+                      {run.targetCurrency ?? "IRR"}
+                    </td>
+                    <td className="p-3 text-center font-mono text-xs">
+  {run.strengthMultiplier.toFixed(1)}×
+</td>
+<td className="p-3 text-center font-mono text-xs">
+  {(run.minDeltaPercent * 100).toFixed(1)}%
+</td>
+                    <td className="p-3">
+                      <span className="text-xs">
+                        {capLabel}
+                        <br />
+                        <span className="text-gray-500">{capValue}</span>
+                      </span>
+                    </td>
+                    <td className="p-3 text-center">{run.symbolCount}</td>
+                    <td className="p-3 text-center">{run.accountCount}</td>
+                    <td className="p-3 text-xs">
+                      {run.startedAt && (
+                        <div className="text-emerald-600 dark:text-emerald-400">
+                          ▶ {new Date(run.startedAt).toLocaleString("fa-IR")}
+                        </div>
+                      )}
+                      {run.stoppedAt && (
+                        <div className="text-amber-600 dark:text-amber-400">
+                          ⏹ {new Date(run.stoppedAt).toLocaleString("fa-IR")}
+                        </div>
+                      )}
+                      {!run.startedAt && !run.stoppedAt && "—"}
+                    </td>
+                    <td className="p-3">
+                      <RunActions
+                        run={run}
+                        busy={busyId === run.id}
+                        onStart={() => handleStart(run.id)}
+                        onStop={() => setStopTarget(run)}
+                        onEdit={() => openEdit(run)}
+                        onDelete={() => setDeleteTarget(run)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Create / Edit Modal */}
+      <TradingRunFormModal
+        isOpen={formOpen}
+        mode={formMode}
+        initialDetail={formDetail}
+        strategies={strategies}
+        onClose={() => setFormOpen(false)}
+        onSubmit={submitForm}
+        saving={formSaving}
+      />
+
+      {/* Stop Confirm */}
+      <StopRunConfirmModal
+        isOpen={stopTarget !== null}
+        runName={stopTarget?.name ?? ""}
+        onCancel={() => setStopTarget(null)}
+        onConfirm={confirmStop}
+        saving={stopSaving}
+      />
+
+      {/* Delete Confirm */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+            <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
+              تایید حذف
+            </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              آیا از حذف پلن{" "}
+              <strong className="text-gray-900 dark:text-white">
+                {deleteTarget.name}
+              </strong>{" "}
+              اطمینان دارید؟
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteSaving}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteSaving ? "در حال حذف..." : "حذف قطعی"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/AccountSelector.tsx
+import React, { useEffect, useState } from "react";
+import { accountApi } from "../../../api/accountApi";
+import { SearchableMultiSelect } from "@/core/components/Selection/SearchableMultiSelect";
+import type { SelectionListDto } from "@/core/models/SelectionListDto";
+
+interface Props {
+  value: string[];
+  onChange: (ids: string[]) => void;
+}
+
+export const AccountSelector: React.FC<Props> = ({ value, onChange }) => {
+  const [options, setOptions] = useState<SelectionListDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await accountApi.GetSelectionList();
+        setOptions(list);
+      } catch {
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <p className="text-xs text-gray-500">در حال بارگذاری حساب‌ها...</p>
+    );
+  }
+
+  if (options.length === 0) {
+    return (
+      <p className="rounded border border-dashed border-amber-500 p-3 text-xs text-amber-600 dark:border-amber-600">
+        هیچ حساب معاملاتی ثبت نشده است. ابتدا از صفحه‌ی حساب‌ها یک حساب
+        اضافه کنید.
+      </p>
+    );
+  }
+
+  return (
+    <SearchableMultiSelect
+      options={options}
+      value={value}
+      onChange={onChange}
+    />
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/RunActions.tsx
+import React from "react";
+import { TradingRunState, type TradingRunInfoView } from "../../../models";
+
+interface Props {
+  run: TradingRunInfoView;
+  busy: boolean;
+  onStart: () => void;
+  onStop: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+export const RunActions: React.FC<Props> = ({
+  run,
+  busy,
+  onStart,
+  onStop,
+  onEdit,
+  onDelete,
+}) => {
+  const state = run.state as TradingRunState;
+  const canStart =
+    state === TradingRunState.Ready || state === TradingRunState.Stopped;
+  const canStop = state === TradingRunState.Running;
+  const canEdit = state !== TradingRunState.Running;
+  const canDelete = state !== TradingRunState.Running;
+
+  const btn =
+    "rounded px-2.5 py-1 text-xs font-medium disabled:opacity-40 whitespace-nowrap";
+
+  return (
+    <div className="flex flex-wrap justify-end gap-1">
+      {canStart && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onStart}
+          className={`${btn} bg-emerald-600 text-white hover:bg-emerald-700`}
+          title="شروع"
+        >
+          ▶ شروع
+        </button>
+      )}
+      {canStop && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onStop}
+          className={`${btn} bg-amber-600 text-white hover:bg-amber-700`}
+          title="توقف"
+        >
+          ⏹ توقف
+        </button>
+      )}
+      {canEdit && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onEdit}
+          className={`${btn} border border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700`}
+          title="ویرایش"
+        >
+          ✏ ویرایش
+        </button>
+      )}
+      {canDelete && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onDelete}
+          className={`${btn} bg-red-600 text-white hover:bg-red-700`}
+          title="حذف"
+        >
+          🗑 حذف
+        </button>
+      )}
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/RunStateBadge.tsx
+import React from "react";
+import {
+  TradingRunState,
+  TRADING_RUN_STATE_LABELS,
+  TRADING_RUN_STATE_COLORS,
+} from "../../../models";
+
+interface Props {
+  state: number;
+}
+
+export const RunStateBadge: React.FC<Props> = ({ state }) => {
+  const s = state as TradingRunState;
+  const label = TRADING_RUN_STATE_LABELS[s] ?? "نامشخص";
+  const colors = TRADING_RUN_STATE_COLORS[s] ?? "bg-slate-700 text-slate-300";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${colors}`}
+    >
+      {label}
+    </span>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/StopRunConfirmModal.tsx
+import React, { useEffect, useState } from "react";
+import { StopRunBehavior, STOP_BEHAVIOR_LABELS } from "../../../models";
+
+interface Props {
+  isOpen: boolean;
+  runName: string;
+  onCancel: () => void;
+  onConfirm: (behavior: StopRunBehavior) => void;
+  saving: boolean;
+}
+
+export const StopRunConfirmModal: React.FC<Props> = ({
+  isOpen,
+  runName,
+  onCancel,
+  onConfirm,
+  saving,
+}) => {
+  const [behavior, setBehavior] = useState<StopRunBehavior>(
+    StopRunBehavior.KeepPositions,
+  );
+
+  useEffect(() => {
+    if (isOpen) setBehavior(StopRunBehavior.KeepPositions);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+        <h3 className="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+          توقف پلن معاملاتی
+        </h3>
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+          پلن <strong className="text-gray-900 dark:text-white">{runName}</strong>{" "}
+          متوقف خواهد شد. تکلیف موقعیت‌های باز چیست؟
+        </p>
+
+        <div className="mb-4 space-y-2">
+          {Object.entries(STOP_BEHAVIOR_LABELS).map(([k, v]) => {
+            const val = Number(k) as StopRunBehavior;
+            return (
+              <label
+                key={k}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${
+                  behavior === val
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                    : "border-gray-200 dark:border-gray-700"
+                }`}
+              >
+                <input
+                  type="radio"
+                  checked={behavior === val}
+                  onChange={() => setBehavior(val)}
+                  className="mt-1"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {v}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {val === StopRunBehavior.KeepPositions
+                      ? "موقعیت‌های باز باقی می‌مانند و می‌توانید بعداً مدیریت کنید."
+                      : "سفارش فروش فوری برای همه‌ی موقعیت‌های باز ارسال می‌شود."}
+                  </p>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            انصراف
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(behavior)}
+            disabled={saving}
+            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+          >
+            {saving ? "در حال توقف..." : "توقف پلن"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/StrategyConfigEditor.tsx
+import React from "react";
+import type { StrategyConfigFieldView } from "../../../models";
+
+interface Props {
+  fields: StrategyConfigFieldView[];
+  values: Record<string, any>;
+  onChange: (name: string, value: any) => void;
+}
+
+type InputKind = "number" | "text" | "boolean";
+
+function getInputKind(typeName: string): InputKind {
+  const t = typeName.toLowerCase();
+  if (
+    t.includes("int") ||
+    t.includes("decimal") ||
+    t.includes("double") ||
+    t.includes("float") ||
+    t.includes("long")
+  ) return "number";
+  if (t === "boolean" || t === "bool") return "boolean";
+  return "text";
+}
+
+function isDecimal(typeName: string): boolean {
+  const t = typeName.toLowerCase();
+  return t.includes("decimal") || t.includes("double") || t.includes("float");
+}
+
+export const StrategyConfigEditor: React.FC<Props> = ({
+  fields,
+  values,
+  onChange,
+}) => {
+  if (fields.length === 0) {
+    return (
+      <p className="rounded bg-slate-100 p-3 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+        این استراتژی پارامتر قابل تنظیمی ندارد
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      {fields.map((f) => {
+        const kind = getInputKind(f.typeName);
+        const raw = values[f.name];
+        const current = raw ?? f.defaultValue ?? "";
+
+        return (
+          <div key={f.name} className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              <span className="font-mono">{f.name}</span>
+              {f.isRequired && <span className="mr-1 text-red-500">*</span>}
+              <span className="mr-1 text-[10px] font-normal text-gray-500">
+                ({f.typeName})
+              </span>
+            </label>
+
+            {kind === "boolean" ? (
+              <input
+                type="checkbox"
+                checked={!!current}
+                onChange={(e) => onChange(f.name, e.target.checked)}
+                className="h-5 w-5 rounded border-gray-300 text-blue-600"
+              />
+            ) : (
+              <input
+                type={kind === "number" ? "number" : "text"}
+                value={String(current)}
+                step={
+                  kind === "number" && isDecimal(f.typeName) ? "0.01" : "1"
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onChange(f.name, kind === "number" ? Number(v) : v);
+                }}
+                dir="ltr"
+                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/SymbolAllocationEditor.tsx
+import React, { useEffect, useState } from "react";
+import { instrumentApi } from "../../../api/instrumentApi";
+import type { TradingRunSymbolModel } from "../../../models";
+import type { SelectionListDto } from "@/core/models/SelectionListDto";
+
+interface Props {
+  symbols: TradingRunSymbolModel[];
+  onChange: (symbols: TradingRunSymbolModel[]) => void;
+}
+
+export const SymbolAllocationEditor: React.FC<Props> = ({
+  symbols,
+  onChange,
+}) => {
+  const [options, setOptions] = useState<SelectionListDto[]>([]);
+  const [selectedIsin, setSelectedIsin] = useState<string>("");
+  const [percentage, setPercentage] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const list = await instrumentApi.GetSelectionList();
+        setOptions(list);
+      } catch {
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const add = () => {
+    if (!selectedIsin) return;
+    const pct = Number(percentage);
+    if (isNaN(pct) || pct <= 0) {
+      alert("درصد باید بزرگ‌تر از صفر باشد");
+      return;
+    }
+    if (symbols.some((s) => s.isin === selectedIsin)) {
+      alert("این نماد قبلاً اضافه شده است");
+      return;
+    }
+    onChange([...symbols, { isin: selectedIsin, allocationPercentage: pct }]);
+    setSelectedIsin("");
+    setPercentage("");
+  };
+
+  const remove = (isin: string) => {
+    onChange(symbols.filter((s) => s.isin !== isin));
+  };
+
+  const update = (isin: string, pct: number) => {
+    onChange(
+      symbols.map((s) =>
+        s.isin === isin ? { ...s, allocationPercentage: pct } : s,
+      ),
+    );
+  };
+
+  const labelFor = (isin: string): string => {
+    const opt = options.find((o) => o.value === isin);
+    return opt ? opt.display || opt.label : isin;
+  };
+
+  const total = symbols.reduce((sum, s) => sum + s.allocationPercentage, 0);
+  const totalOk = Math.abs(total - 100) < 0.01;
+
+  const availableOptions = options.filter(
+    (o) => !symbols.some((s) => s.isin === o.value),
+  );
+
+  return (
+    <div className="space-y-3">
+      {/* ─── افزودن ─── */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <select
+          value={selectedIsin}
+          onChange={(e) => setSelectedIsin(e.target.value)}
+          disabled={loading}
+          className="flex-1 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        >
+          <option value="">
+            {loading ? "در حال بارگذاری..." : "انتخاب نماد..."}
+          </option>
+          {availableOptions.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.display || o.label}
+            </option>
+          ))}
+        </select>
+        <input
+          type="number"
+          placeholder="درصد"
+          value={percentage}
+          onChange={(e) => setPercentage(e.target.value)}
+          min={0}
+          max={100}
+          step="0.01"
+          dir="ltr"
+          className="w-full rounded border border-gray-300 p-2 text-sm sm:w-24 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+        />
+        <button
+          type="button"
+          onClick={add}
+          disabled={!selectedIsin || !percentage}
+          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          افزودن
+        </button>
+      </div>
+
+      {/* ─── لیست ─── */}
+      {symbols.length === 0 ? (
+        <p className="rounded border border-dashed border-gray-300 p-4 text-center text-xs text-gray-500 dark:border-gray-600">
+          هیچ نمادی اضافه نشده است
+        </p>
+      ) : (
+        <div className="overflow-hidden rounded border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between bg-slate-100 px-3 py-2 text-xs font-medium dark:bg-slate-700">
+            <span>جمع تخصیص:</span>
+            <span className={totalOk ? "text-emerald-600" : "text-red-600"}>
+              {total.toFixed(2)}%{" "}
+              {totalOk ? "✅" : "⚠️ باید ۱۰۰٪ باشد"}
+            </span>
+          </div>
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {symbols.map((s) => (
+              <div key={s.isin} className="flex items-center gap-2 p-2">
+                <span className="flex-1 text-sm">
+                  {labelFor(s.isin)}
+                  <span className="mr-1 font-mono text-[10px] text-gray-400">
+                    ({s.isin})
+                  </span>
+                </span>
+                <input
+                  type="number"
+                  value={s.allocationPercentage}
+                  onChange={(e) => update(s.isin, Number(e.target.value))}
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  dir="ltr"
+                  className="w-24 rounded border border-gray-300 p-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+                <span className="text-xs text-gray-500">%</span>
+                <button
+                  type="button"
+                  onClick={() => remove(s.isin)}
+                  className="rounded p-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                >
+                  حذف
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/TradingRuns/components/TradingRunFormModal.tsx
+import React, { useEffect, useState } from "react";
+import type {
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+  TradingRunDetailView,
+  TradingRunSettingsModel,
+  TradingRunSymbolModel,
+  StrategyInfoView,
+} from "../../../models";
+import {
+  TimeFrame,
+  TIMEFRAME_LABELS,
+  CapitalAllocationMode,
+  CAPITAL_MODE_LABELS,
+  OrderMode,
+  ORDER_MODE_LABELS, 
+  ExecutionMode,
+   EXECUTION_MODE_LABELS,
+  MarketCloseBehavior,
+  MARKET_CLOSE_LABELS,
+  StopRunBehavior,
+  STOP_BEHAVIOR_LABELS,
+} from "../../../models";
+import { StrategyConfigEditor } from "./StrategyConfigEditor";
+import { SymbolAllocationEditor } from "./SymbolAllocationEditor";
+import { AccountSelector } from "./AccountSelector";
+import { currencyRateApi } from "@/modules/Trader/api";
+type SlTpMode = "none" | "percent" | "price";
+
+interface Props {
+  isOpen: boolean;
+  mode: "create" | "edit";
+  initialDetail?: TradingRunDetailView | null;
+  strategies: StrategyInfoView[];
+  onClose: () => void;
+  onSubmit: (
+    cmd: CreateTradingRunCommand | UpdateTradingRunCommand,
+  ) => Promise<void>;
+  saving: boolean;
+}
+
+/* ─── Section wrapper ─── */
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
+  <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">
+      {title}
+    </h4>
+    {children}
+  </div>
+);
+
+export const TradingRunFormModal: React.FC<Props> = ({
+  isOpen,
+  mode,
+  initialDetail,
+  strategies,
+  onClose,
+  onSubmit,
+  saving,
+}) => {
+  /* ─── State ─── */
+  const [name, setName] = useState("");
+  const [strategyKey, setStrategyKey] = useState("");
+  const [strategyConfig, setStrategyConfig] = useState<Record<string, any>>({});
+  const [primaryTimeFrame, setPrimaryTimeFrame] = useState<number>(
+    TimeFrame.D1,
+  );
+const [targetCurrency, setTargetCurrency] = useState<string>("");
+const [strengthMultiplier, setStrengthMultiplier] = useState<string>("1.5");
+const [minDeltaPercent, setMinDeltaPercent] = useState<string>("3");  
+const [executionMode, setExecutionMode] = useState<number>(ExecutionMode.Live); 
+const [currencyRateStatus, setCurrencyRateStatus] =
+  useState<"idle" | "checking" | "ok" | "missing">("idle");
+const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
+  const [capitalAllocationMode, setCapitalAllocationMode] = useState<number>(
+    CapitalAllocationMode.Fixed,
+  );
+  const [fixedCapitalAmount, setFixedCapitalAmount] = useState<string>("");
+
+  const [slMode, setSlMode] = useState<SlTpMode>("none");
+  const [slPercent, setSlPercent] = useState<string>("");
+  const [slPrice, setSlPrice] = useState<string>("");
+
+  const [tpMode, setTpMode] = useState<SlTpMode>("none");
+  const [tpPercent, setTpPercent] = useState<string>("");
+  const [tpPrice, setTpPrice] = useState<string>("");
+
+  const [defaultOrderMode, setDefaultOrderMode] = useState<number>(
+    OrderMode.Quantity,
+  );
+  const [onMarketClose, setOnMarketClose] = useState<number>(
+    MarketCloseBehavior.KeepPositions,
+  );
+  const [onStop, setOnStop] = useState<number>(StopRunBehavior.KeepPositions);
+
+  const [symbols, setSymbols] = useState<TradingRunSymbolModel[]>([]);
+  const [accountIds, setAccountIds] = useState<string[]>([]);
+
+  const [error, setError] = useState<string | null>(null);
+useEffect(() => {
+  if (!isOpen) return;
+
+  const cur = targetCurrency.trim().toUpperCase();
+  if (!cur || cur === "IRR") {
+    setCurrencyRateStatus("idle");
+    setCurrencyRateValue(null);
+    return;
+  }
+
+  let cancelled = false;
+  setCurrencyRateStatus("checking");
+  setCurrencyRateValue(null);
+
+  (async () => {
+    try {
+      const rate = await currencyRateApi.GetLatest(cur, "IRR");
+      if (cancelled) return;
+      if (rate != null && rate > 0) {
+        setCurrencyRateStatus("ok");
+        setCurrencyRateValue(rate);
+      } else {
+        // Try reverse direction (IRR→cur) in case only that exists
+        const reverseRate = await currencyRateApi.GetLatest("IRR", cur);
+        if (cancelled) return;
+        if (reverseRate != null && reverseRate > 0) {
+          setCurrencyRateStatus("ok");
+          setCurrencyRateValue(1 / reverseRate);
+        } else {
+          setCurrencyRateStatus("missing");
+        }
+      }
+    } catch {
+      if (!cancelled) setCurrencyRateStatus("missing");
+    }
+  })();
+
+  return () => {
+    cancelled = true;
+  };
+}, [targetCurrency, isOpen]);
+
+  /* ─── Init: Edit ─── */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (mode === "edit" && initialDetail) {
+      setName(initialDetail.name);
+      setStrategyKey(initialDetail.strategyKey);
+      setPrimaryTimeFrame(initialDetail.primaryTimeFrame);
+      setTargetCurrency(initialDetail.targetCurrency ?? "");
+      setStrengthMultiplier(initialDetail.strengthMultiplier.toString());
+setMinDeltaPercent((initialDetail.minDeltaPercent * 100).toString()); 
+setExecutionMode(initialDetail.executionMode);
+      setCapitalAllocationMode(initialDetail.settings.capitalAllocationMode);
+      setFixedCapitalAmount(
+        initialDetail.settings.fixedCapitalAmount?.toString() ?? "",
+      );
+
+      if (initialDetail.settings.stopLossPercentage != null) {
+        setSlMode("percent");
+        setSlPercent(
+          initialDetail.settings.stopLossPercentage.toString(),
+        );
+        setSlPrice("");
+      } else if (initialDetail.settings.stopLossPrice != null) {
+        setSlMode("price");
+        setSlPercent("");
+        setSlPrice(initialDetail.settings.stopLossPrice.toString());
+      } else {
+        setSlMode("none");
+        setSlPercent("");
+        setSlPrice("");
+      }
+
+      if (initialDetail.settings.takeProfitPercentage != null) {
+        setTpMode("percent");
+        setTpPercent(
+          initialDetail.settings.takeProfitPercentage.toString(),
+        );
+        setTpPrice("");
+      } else if (initialDetail.settings.takeProfitPrice != null) {
+        setTpMode("price");
+        setTpPercent("");
+        setTpPrice(initialDetail.settings.takeProfitPrice.toString());
+      } else {
+        setTpMode("none");
+        setTpPercent("");
+        setTpPrice("");
+      }
+
+      setDefaultOrderMode(initialDetail.settings.defaultOrderMode);
+      setOnMarketClose(initialDetail.settings.onMarketClose);
+      setOnStop(initialDetail.settings.onStop);
+      setSymbols(initialDetail.symbols);
+      setAccountIds(initialDetail.accountIds);
+      setError(null);
+
+      try {
+        setStrategyConfig(JSON.parse(initialDetail.strategyConfigJson));
+      } catch {
+        setStrategyConfig({});
+      }
+      return;
+    }
+
+    /* ─── Create ─── */
+    setName("");
+    setStrategyKey(strategies[0]?.key ?? "");
+    setPrimaryTimeFrame(TimeFrame.D1);
+    setTargetCurrency("");
+    setStrengthMultiplier("1.5");
+setMinDeltaPercent("3");   
+setExecutionMode(ExecutionMode.Live);
+setCurrencyRateStatus("idle");
+setCurrencyRateValue(null);
+    setCapitalAllocationMode(CapitalAllocationMode.Fixed);
+    setFixedCapitalAmount("");
+    setSlMode("none");
+    setSlPercent("");
+    setSlPrice("");
+    setTpMode("none");
+    setTpPercent("");
+    setTpPrice("");
+    setDefaultOrderMode(OrderMode.Quantity);
+    setOnMarketClose(MarketCloseBehavior.KeepPositions);
+    setOnStop(StopRunBehavior.KeepPositions);
+    setSymbols([]);
+    setAccountIds([]);
+    setError(null);
+  }, [isOpen, mode, initialDetail, strategies]);
+
+  /* ─── Strategy config: init from defaults when strategy changes (Create) ─── */
+  useEffect(() => {
+    if (!isOpen || mode !== "create") return;
+    const strategy = strategies.find((s) => s.key === strategyKey);
+    if (!strategy) {
+      setStrategyConfig({});
+      return;
+    }
+    const init: Record<string, any> = {};
+    strategy.configFields.forEach((f) => {
+      if (f.defaultValue == null) return;
+      const t = f.typeName.toLowerCase();
+      if (
+        t.includes("int") ||
+        t.includes("decimal") ||
+        t.includes("double") ||
+        t.includes("float") ||
+        t.includes("long")
+      ) {
+        init[f.name] = Number(f.defaultValue);
+      } else if (t === "boolean" || t === "bool") {
+        init[f.name] = f.defaultValue === "true";
+      } else {
+        init[f.name] = f.defaultValue;
+      }
+    });
+    setStrategyConfig(init);
+  }, [strategyKey, strategies, isOpen, mode]);
+
+  if (!isOpen) return null;
+
+  const selectedStrategy = strategies.find((s) => s.key === strategyKey);
+
+  /* ─── Validation ─── */
+  const validate = (): string | null => {
+    if (!name.trim()) return "نام پلن الزامی است";
+    if (!strategyKey) return "انتخاب استراتژی الزامی است";
+    if (symbols.length === 0) return "حداقل یک نماد باید انتخاب شود";
+    const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
+    if (Math.abs(total - 100) > 0.01)
+      return "مجموع درصد تخصیص نمادها باید ۱۰۰ باشد";
+    if (accountIds.length === 0)
+      return "حداقل یک حساب باید انتخاب شود";
+
+    if (capitalAllocationMode === CapitalAllocationMode.Fixed) {
+      const amt = Number(fixedCapitalAmount);
+      if (!amt || amt <= 0)
+        return "مبلغ سرمایه ثابت باید بزرگ‌تر از صفر باشد";
+    }
+    if (slMode === "percent") {
+      const v = Number(slPercent);
+      if (!v || v <= 0 || v > 100)
+        return "درصد حد ضرر باید بین ۰ و ۱۰۰ باشد";
+    }
+    if (slMode === "price") {
+      const v = Number(slPrice);
+      if (!v || v <= 0) return "قیمت حد ضرر باید بزرگ‌تر از صفر باشد";
+    }
+    if (tpMode === "percent") {
+      const v = Number(tpPercent);
+      if (!v || v <= 0) return "درصد حد سود باید بزرگ‌تر از صفر باشد";
+    }
+    if (tpMode === "price") {
+      const v = Number(tpPrice);
+      if (!v || v <= 0) return "قیمت حد سود باید بزرگ‌تر از صفر باشد";
+    }
+    if (targetCurrency.trim() && currencyRateStatus === "missing") 
+      {
+        return "نرخ ارز این Currency در سیستم موجود نیست. ابتدا از صفحه‌ی «نرخ‌های ارز» ثبت کنید.";
+      }
+    return null;
+  };
+
+  /* ─── Submit ─── */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const err = validate();
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    const sm = Number(strengthMultiplier);
+    if (isNaN(sm) || sm < 0.1 || sm > 5) {
+      return "ضریب قدرت باید بین 0.1 تا 5 باشد";
+    }
+    const md = Number(minDeltaPercent);
+    if (isNaN(md) || md < 0 || md > 100) {
+      return "حداقل تغییر باید بین 0 تا 100 درصد باشد";
+    }
+    const settings: TradingRunSettingsModel = {
+      capitalAllocationMode,
+      fixedCapitalAmount:
+        capitalAllocationMode === CapitalAllocationMode.Fixed
+          ? Number(fixedCapitalAmount)
+          : null,
+      stopLossPercentage:
+        slMode === "percent" ? Number(slPercent) : null,
+      stopLossPrice: slMode === "price" ? Number(slPrice) : null,
+      takeProfitPercentage:
+        tpMode === "percent" ? Number(tpPercent) : null,
+      takeProfitPrice: tpMode === "price" ? Number(tpPrice) : null,
+      defaultOrderMode,
+      onMarketClose,
+      onStop,
+    };
+
+    const base: CreateTradingRunCommand = {
+  name: name.trim(),
+  strategyKey,
+  strategyConfigJson: JSON.stringify(strategyConfig),
+  primaryTimeFrame,
+  targetCurrency: targetCurrency.trim().toUpperCase() || null,
+  strengthMultiplier: Number(strengthMultiplier) || 1.5,
+  minDeltaPercent: (Number(minDeltaPercent) || 0) / 100,
+  executionMode,                                          // ← NEW
+  settings,
+  symbols,
+  accountIds,
+};
+
+    try {
+      if (mode === "edit" && initialDetail) {
+        await onSubmit({ id: initialDetail.id, ...base });
+      } else {
+        await onSubmit(base);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطای نامشخص");
+    }
+  };
+
+  /* ─── Render ─── */
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4">
+      <div className="my-8 w-full max-w-3xl rounded-xl bg-white shadow-xl dark:bg-gray-800">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+            {mode === "edit" ? "ویرایش پلن معاملاتی" : "ایجاد پلن معاملاتی جدید"}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-2xl leading-none text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+              ⚠️ {error}
+            </div>
+          )}
+
+          {/* ۱. Basic */}
+          <Section title="اطلاعات پایه">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                نام پلن <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="مثلاً: RSI Daily فولاد و شپنا"
+                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </Section>
+{/* ۱.۵ Execution Mode */}
+<Section title="حالت اجرا">
+  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+    {[ExecutionMode.Live, ExecutionMode.Paper].map((mode) => {
+      const isSelected = executionMode === mode;
+      const isLive = mode === ExecutionMode.Live;
+
+      return (
+        <label
+          key={mode}
+          className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+            isSelected
+              ? isLive
+                ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                : "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
+              : "border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/30"
+          }`}
+        >
+          <input
+            type="radio"
+            name="executionMode"
+            checked={isSelected}
+            onChange={() => setExecutionMode(mode)}
+            className="mt-1"
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {EXECUTION_MODE_LABELS[mode]}
+            </p>
+            <p className="mt-0.5 text-[10px] text-gray-500 dark:text-gray-400">
+              {isLive
+                ? "سفارش واقعی به کارگزاری ارسال می‌شود. سرمایه‌ی واقعی در ریسک است."
+                : "سفارش فقط شبیه‌سازی می‌شود. بدون ارتباط با کارگزاری، بدون ریسک پول واقعی."}
+            </p>
+          </div>
+        </label>
+      );
+    })}
+  </div>
+
+  {executionMode === ExecutionMode.Paper && (
+    <div className="mt-2 rounded-lg border border-cyan-700 bg-cyan-900/20 p-3 text-xs text-cyan-300">
+      ℹ️ در حالت Paper، سفارش‌ها بلافاصله در قیمت Best Ask/Bid پر می‌شوند.
+      Commission و Slippage روی حساب مجازی محاسبه می‌شوند ولی پول واقعی خارج
+      نمی‌شود. تمام Orderها/Positionها با تگ <strong>Paper</strong> در DB ثبت
+      می‌شوند.
+    </div>
+  )}
+</Section>
+          {/* ۲. Strategy */}
+          <Section title="استراتژی">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {/* Currency */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    ارز تحلیل (اختیاری)
+  </label>
+  <div className="flex items-center gap-2">
+    <select
+      value={targetCurrency || ""}
+      onChange={(e) => setTargetCurrency(e.target.value)}
+      className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    >
+      <option value="">— بدون تبدیل (ریال) —</option>
+      <option value="USD">دلار آمریکا (USD)</option>
+      <option value="EUR">یورو (EUR)</option>
+      <option value="GBP">پوند انگلیس (GBP)</option>
+      <option value="AED">درهم امارات (AED)</option>
+      <option value="TRY">لیر ترکیه (TRY)</option>
+      <option value="CNY">یوان چین (CNY)</option>
+      <option value="JPY">ین ژاپن (JPY)</option>
+      <option value="CHF">فرانک سوئیس (CHF)</option>
+      <option value="GOLD">طلا (GOLD)</option>
+    </select>
+    {currencyRateStatus === "checking" && (
+      <span className="whitespace-nowrap text-xs text-gray-500">
+        ⏳ بررسی...
+      </span>
+    )}
+    {currencyRateStatus === "ok" && currencyRateValue != null && (
+      <span className="whitespace-nowrap text-xs text-emerald-500">
+        ✓ {currencyRateValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+      </span>
+    )}
+    {currencyRateStatus === "missing" && (
+      <span className="whitespace-nowrap text-xs text-red-500">
+        ❌ نرخ ثبت نشده
+      </span>
+    )}
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    اگر خالی باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
+    برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
+  </p>
+</div>
+{/* Strength Multiplier */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    ضریب قدرت سیگنال (Stepped Buying)
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      type="number"
+      value={strengthMultiplier}
+      onChange={(e) => setStrengthMultiplier(e.target.value)}
+      dir="ltr"
+      min={0.1}
+      max={5}
+      step={0.1}
+      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    />
+    <span className="text-xs text-gray-500">
+      {Number(strengthMultiplier) > 0
+        ? `مثال: RSI=36 → ${(
+            Number(strengthMultiplier) *
+            0.1 *
+            100
+          ).toFixed(1)}% سرمایه`
+        : "—"}
+    </span>
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    سرمایه‌ی هدف = سرمایه‌ی Symbol × قدرت سیگنال × این ضریب.
+    مقدار بالاتر → خرید بزرگ‌تر. پیش‌فرض ۱.۵.
+  </p>
+</div>
+{/* Min Delta Percent */}
+<div className="mt-3">
+  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+    حداقل تغییر سرمایه برای خرید مجدد (%)
+  </label>
+  <div className="flex items-center gap-2">
+    <input
+      type="number"
+      value={minDeltaPercent}
+      onChange={(e) => setMinDeltaPercent(e.target.value)}
+      dir="ltr"
+      min={0}
+      max={100}
+      step={0.5}
+      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    />
+    <span className="text-xs text-gray-500">
+      {Number(minDeltaPercent) > 0
+        ? `خرید مجدد فقط وقتی سهمی از سرمایه‌ی نماد بیش از ${Number(minDeltaPercent).toFixed(1)}٪ تغییر کند`
+        : "بدون آستانه — هر افت کوچک باعث خرید می‌شود"}
+    </span>
+  </div>
+  <p className="mt-1 text-[10px] text-gray-500">
+    مثال: با ۳٪، در سرمایه‌ی ۱۰ میلیون ریالی، فقط خریدهای بیش از ۳۰۰٬۰۰۰ ریال
+    اجرا می‌شوند. از خریدهای کوچک پشت‌سرهم جلوگیری می‌کند.
+  </p>
+</div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  استراتژی <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={strategyKey}
+                  onChange={(e) => setStrategyKey(e.target.value)}
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">انتخاب کنید...</option>
+                  {strategies.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  تایم‌فریم
+                </label>
+                <select
+                  value={primaryTimeFrame}
+                  onChange={(e) =>
+                    setPrimaryTimeFrame(Number(e.target.value))
+                  }
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  {Object.entries(TIMEFRAME_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedStrategy && (
+              <div className="mt-3">
+                <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                  پارامترهای {selectedStrategy.displayName}
+                </p>
+                <StrategyConfigEditor
+                  fields={selectedStrategy.configFields}
+                  values={strategyConfig}
+                  onChange={(n, v) =>
+                    setStrategyConfig((prev) => ({ ...prev, [n]: v }))
+                  }
+                />
+              </div>
+            )}
+          </Section>
+
+          {/* ۳. Capital */}
+          <Section title="تخصیص سرمایه">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                حالت سرمایه
+              </label>
+              <select
+                value={capitalAllocationMode}
+                onChange={(e) =>
+                  setCapitalAllocationMode(Number(e.target.value))
+                }
+                className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                {Object.entries(CAPITAL_MODE_LABELS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {capitalAllocationMode === CapitalAllocationMode.Fixed && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  مبلغ سرمایه (ریال) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={fixedCapitalAmount}
+                  onChange={(e) => setFixedCapitalAmount(e.target.value)}
+                  dir="ltr"
+                  min={0}
+                  step="1000"
+                  placeholder="مثلاً: 100000000"
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            )}
+
+            {capitalAllocationMode === CapitalAllocationMode.Dynamic && (
+              <p className="rounded bg-slate-100 p-2 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                سرمایه از قدرت خرید واقعی حساب در هر لحظه خوانده می‌شود.
+              </p>
+            )}
+          </Section>
+
+          {/* ۴. SL/TP */}
+          <Section title="حد ضرر و حد سود">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {/* SL */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  حد ضرر (Stop Loss)
+                </label>
+                <select
+                  value={slMode}
+                  onChange={(e) => setSlMode(e.target.value as SlTpMode)}
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="none">بدون حد ضرر</option>
+                  <option value="percent">درصدی</option>
+                  <option value="price">قیمت مطلق</option>
+                </select>
+                {slMode === "percent" && (
+                  <input
+                    type="number"
+                    value={slPercent}
+                    onChange={(e) => setSlPercent(e.target.value)}
+                    dir="ltr"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    placeholder="درصد (مثلاً 5)"
+                    className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                )}
+                {slMode === "price" && (
+                  <input
+                    type="number"
+                    value={slPrice}
+                    onChange={(e) => setSlPrice(e.target.value)}
+                    dir="ltr"
+                    min={0}
+                    step="1"
+                    placeholder="قیمت (ریال)"
+                    className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                )}
+              </div>
+
+              {/* TP */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  حد سود (Take Profit)
+                </label>
+                <select
+                  value={tpMode}
+                  onChange={(e) => setTpMode(e.target.value as SlTpMode)}
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="none">بدون حد سود</option>
+                  <option value="percent">درصدی</option>
+                  <option value="price">قیمت مطلق</option>
+                </select>
+                {tpMode === "percent" && (
+                  <input
+                    type="number"
+                    value={tpPercent}
+                    onChange={(e) => setTpPercent(e.target.value)}
+                    dir="ltr"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    placeholder="درصد (مثلاً 10)"
+                    className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                )}
+                {tpMode === "price" && (
+                  <input
+                    type="number"
+                    value={tpPrice}
+                    onChange={(e) => setTpPrice(e.target.value)}
+                    dir="ltr"
+                    min={0}
+                    step="1"
+                    placeholder="قیمت (ریال)"
+                    className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  />
+                )}
+              </div>
+            </div>
+          </Section>
+
+          {/* ۵. Behavior */}
+          <Section title="رفتار اجرا">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  نوع سفارش
+                </label>
+                <select
+                  value={defaultOrderMode}
+                  onChange={(e) =>
+                    setDefaultOrderMode(Number(e.target.value))
+                  }
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  {Object.entries(ORDER_MODE_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  پایان بازار
+                </label>
+                <select
+                  value={onMarketClose}
+                  onChange={(e) => setOnMarketClose(Number(e.target.value))}
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  {Object.entries(MARKET_CLOSE_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  هنگام توقف
+                </label>
+                <select
+                  value={onStop}
+                  onChange={(e) => setOnStop(Number(e.target.value))}
+                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  {Object.entries(STOP_BEHAVIOR_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </Section>
+
+          {/* ۶. Symbols */}
+          <Section title="نمادها و تخصیص سرمایه">
+            <SymbolAllocationEditor
+              symbols={symbols}
+              onChange={setSymbols}
+            />
+          </Section>
+
+          {/* ۷. Accounts */}
+          <Section title="حساب‌های معاملاتی">
+            <AccountSelector
+              value={accountIds}
+              onChange={setAccountIds}
+            />
+          </Section>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              انصراف
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {saving
+                ? "در حال ذخیره..."
+                : mode === "edit"
+                  ? "ذخیره تغییرات"
+                  : "ایجاد پلن"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+//src/modules/Trader/pages/Accounts/AccountsManagementPage.tsx
+import React, { useState } from "react";
+import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
+import { GenericColumnDef } from "@/core/components/crud/types";
+import { accountCrudApi } from "../../hooks/useAccountManagement";
+import { accountApi } from "../../api/accountApi";
+import type {
+  AccountInfoView,
+  CreateAccountCommand,
+  UpdateAccountCommand,
+} from "../../models";
+import { TokenStatusBadge } from "../SchedulePlans/components/TokenStatusBadge";
+
+const columns: GenericColumnDef<AccountInfoView>[] = [
+  { key: "name", label: "نام حساب", type: "text", required: true },
+  {
+    key: "username",
+    label: "نام کاربری (کد ملی)",
+    type: "text",
+    dir: "ltr",
+    required: true,
+  },
+  {
+    key: "password",
+    label: "رمز عبور",
+    type: "text",
+    required: true,
+    render: () => "••••••",
+  },
+  {
+    key: "sessionStatus",
+    label: "وضعیت نشست",
+    editable: false,
+    render: (_v, item) => <TokenStatusBadge status={item.sessionStatus} />,
+  },
+];
+
+/* ═══════════════════════════════════════════════════════
+   دکمه‌ی لاگین همه
+   ═══════════════════════════════════════════════════════ */
+interface LoginAllResult {
+  accountId: string;
+  accountName: string;
+  ok: boolean;
+  error?: string;
+}
+
+const LoginAllButton: React.FC<{
+  accounts: AccountInfoView[];
+  onComplete: () => void;
+}> = ({ accounts, onComplete }) => {
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<LoginAllResult[] | null>(null);
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const handleLoginAll = async () => {
+    if (accounts.length === 0) {
+      alert("هیچ حسابی وجود ندارد");
+      return;
+    }
+
+    if (!confirm(`لاگین همه‌ی ${accounts.length} حساب؟`)) return;
+
+    setBusy(true);
+    setResults(null);
+    setProgress({ current: 0, total: accounts.length });
+
+    const list: LoginAllResult[] = [];
+
+    /* ─── لوپ سریال — چون هر login سنگین است (OIDC flow) ─── */
+    for (let i = 0; i < accounts.length; i++) {
+      const acc = accounts[i];
+      setProgress({ current: i + 1, total: accounts.length });
+
+      try {
+        await accountApi.login(acc.id);
+        list.push({
+          accountId: acc.id,
+          accountName: acc.name,
+          ok: true,
+        });
+      } catch (e) {
+        list.push({
+          accountId: acc.id,
+          accountName: acc.name,
+          ok: false,
+          error: e instanceof Error ? e.message : "خطای نامشخص",
+        });
+      }
+    }
+
+    setResults(list);
+    setBusy(false);
+    setProgress(null);
+    onComplete();
+  };
+
+  const successCount = results?.filter((r) => r.ok).length ?? 0;
+  const failCount = results?.filter((r) => !r.ok).length ?? 0;
+
+  return (
+    <div className="mb-4 rounded-xl border border-slate-700 bg-slate-900 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleLoginAll}
+            disabled={busy || accounts.length === 0}
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+          >
+            {busy
+              ? `⏳ در حال لاگین... (${progress?.current}/${progress?.total})`
+              : "🔐 لاگین همه"}
+          </button>
+
+          <span className="text-xs text-slate-400">
+            {accounts.length} حساب
+          </span>
+        </div>
+
+        {results && (
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded bg-emerald-900/40 px-2 py-1 text-emerald-300">
+              ✅ {successCount} موفق
+            </span>
+            {failCount > 0 && (
+              <span className="rounded bg-red-900/40 px-2 py-1 text-red-300">
+                ❌ {failCount} ناموفق
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ─── گزارش نتیجه ─── */}
+      {results && results.length > 0 && (
+        <div className="mt-3 space-y-1 border-t border-slate-700 pt-3">
+          {results.map((r) => (
+            <div
+              key={r.accountId}
+              className={`flex items-center justify-between rounded px-2 py-1 text-xs ${
+                r.ok
+                  ? "bg-emerald-950/20 text-emerald-300"
+                  : "bg-red-950/20 text-red-300"
+              }`}
+            >
+              <span className="font-medium">{r.accountName}</span>
+              <span className="font-mono text-[11px]">
+                {r.ok ? "✅ موفق" : `❌ ${r.error}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════
+   صفحه‌ی اصلی
+   ═══════════════════════════════════════════════════════ */
+export const AccountsManagementPage: React.FC = () => {
+  /* برای گرفتن لیست حساب‌ها قبل از رندر دکمه */
+  const [accounts, setAccounts] = useState<AccountInfoView[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const loadAccounts = React.useCallback(async () => {
+    try {
+      const list = await accountApi.GetList();
+      setAccounts(list);
+    } catch {
+      setAccounts([]);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadAccounts();
+  }, [loadAccounts, reloadKey]);
+
+  const handleLoginComplete = () => {
+    /* بعد از لاگین همه، لیست رو refresh کن (sessionStatus عوض شده) */
+    void loadAccounts();
+    /* و GenericCrudPage رو هم مجبور به refresh کن */
+    setReloadKey((k) => k + 1);
+  };
+
+  return (
+    <div>
+      <LoginAllButton accounts={accounts} onComplete={handleLoginComplete} />
+
+      <GenericCrudPage<
+        AccountInfoView,
+        CreateAccountCommand,
+        UpdateAccountCommand
+      >
+        key={reloadKey}
+        title="مدیریت حساب‌ها"
+        columns={columns}
+        crudOptions={{
+          api: accountCrudApi,
+          columns,
+          mapToUpdateCommand: (item) => ({
+            id: item.id,
+            name: item.name,
+            username: item.username,
+            password: undefined,
+          }),
+          mapToCreateCommand: (formData) => ({
+            broker: 1,
+            name: formData.name,
+            username: formData.username,
+            password: formData.password ?? "",
+          }),
+          tableFeatures: {
+            enableSearch: true,
+            enableDelete: true,
+            enableColumnFilter: false,
+          },
+          pageFeatures: {
+            enableAdd: true,
+          },
+        }}
+      />
+    </div>
+  );
+};

@@ -1,0 +1,747 @@
+//src/modules/Trader/models/index.ts
+export type {
+  CreateAccountCommand,
+  UpdateAccountCommand,
+  LoginAccountCommand,
+  ActivateAccountCommand,
+} from "./AccountCommand";
+export type { AccountInfoView, TokenStatus } from "./AccountInfoView";
+
+// ─── Instrument (NEW) ───
+export type {
+  InstrumentInfoView,
+} from "./InstrumentInfoView";
+export type {
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand,
+  OptionContractModel,
+} from "./InstrumentCommand";
+export { InstrumentType, MarketType, OPTION_TYPE_OPTIONS } from "./InstrumentType";
+export type { OptionTypeOption } from "./InstrumentType";
+
+// ─── Legacy Symbol (نگه‌داری برای سازگاری، حذف در Phase 2) ───
+export type {
+  CreateSymbolCommand,
+  UpdateSymbolCommand,
+  GetSymbolMarketInfoQuery,
+} from "./SymbolCommand";
+export type { SymbolInfoView, MarketSymbolInfoView } from "./SymbolInfoView";
+
+export type {
+  ScheduleOrderMode,
+  ScheduledOrderCommand,
+  CreateSchedulePlanCommand,
+  UpdateSchedulePlanCommand,
+  EnableSchedulePlanCommand,
+  DisableSchedulePlanCommand,
+} from "./SchedulePlanCommand";
+export type {
+  ScheduledOrderInfoView,
+  SchedulePlanInfoView,
+  SchedulePlanStatus,
+} from "./SchedulePlanInfoView";
+
+export type {
+  ServerClockInfoView,
+  SyncServerClockCommand,
+} from "./ServerClockInfoView";
+
+export type {
+  ExecutionLogInfoView,
+  ExecutionLogQueryResult,
+} from "./ExecutionLogInfoView";
+
+// ─── Strategy ───
+export type {
+  StrategyInfoView,
+  StrategyConfigFieldView,
+} from "./StrategyInfoView";
+
+// ─── TradingRun (NEW) ───
+export type {
+  TradingRunInfoView,
+  TradingRunDetailView,
+  TradingRunSettingsDto,
+  TradingRunSymbolDto,
+  TradingRunSettingsModel,
+  TradingRunSymbolModel,
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+  StopTradingRunCommand,
+} from "./TradingRun";
+
+export {
+  TradingRunState,
+  CapitalAllocationMode,
+  StopRunBehavior,
+  MarketCloseBehavior,
+  OrderMode,
+  TimeFrame,
+  TRADING_RUN_STATE_LABELS,
+  TRADING_RUN_STATE_COLORS,
+  CAPITAL_MODE_LABELS,
+  TIMEFRAME_LABELS,
+  STOP_BEHAVIOR_LABELS,
+  MARKET_CLOSE_LABELS,
+  ORDER_MODE_LABELS,
+} from "./TradingRunEnums";
+
+// ─── Position (NEW) ───
+export type { PositionView } from "./PositionView";
+export {
+  PositionState,
+  POSITION_STATE_LABELS,
+  POSITION_STATE_COLORS,
+} from "./PositionView";
+
+// ─── Signal (NEW) ───
+export type { SignalView } from "./SignalView";
+export {
+  SignalAction,
+  SIGNAL_ACTION_LABELS,
+  SIGNAL_ACTION_COLORS,
+} from "./SignalView";
+
+export type { TradingScheduleInfoView } from "./TradingScheduleInfoView";
+
+export type { CurrencyRateView } from "./CurrencyRateView";
+export type { CreateCurrencyRateCommand } from "./CreateCurrencyRateCommand";
+
+export type {
+  TradingEventView,
+  TradingEventQuery,
+} from "./TradingEventView";
+
+export {
+  STAGE_LABELS,
+  SEVERITY_LABELS,
+  SEVERITY_COLORS,
+} from "./TradingEventView";
+
+export type {
+  BacktestSymbolModel,
+  RunBacktestConfigModel,
+  RunBacktestModel,
+  BacktestRunSummaryView,
+  BacktestRunDetailView,
+  BacktestTradeView,
+  BacktestDailyEquityView,
+} from "./Backtest";
+
+export {
+  BacktestStatus,
+  BacktestExitReason,
+  BACKTEST_STATUS_LABELS,
+  BACKTEST_STATUS_COLORS,
+  EXIT_REASON_LABELS,
+} from "./Backtest";
+
+export type {
+  HistoricalDataCollectionJobSummaryView,
+  HistoricalDataCollectionJobDetailView,
+  CollectHistoricalDataCommand,
+} from "./HistoricalDataCollection";
+
+export {
+  CollectionJobStatus,
+  COLLECTION_STATUS_LABELS,
+  COLLECTION_STATUS_COLORS,
+  COLLECTION_TIMEFRAME_OPTIONS,
+  TIMEFRAME_LABEL_MAP,
+} from "./HistoricalDataCollection";
+export type { BacktestEventView, BacktestEventQuery } from "./BacktestEvent";
+export {
+  BacktestEventType,
+  BacktestEventSeverity,
+  BACKTEST_EVENT_TYPE_LABELS,
+  BACKTEST_EVENT_TYPE_COLORS,
+  BACKTEST_EVENT_SEVERITY_LABELS,
+} from "./BacktestEvent";
+
+export {
+  ExecutionMode,
+  EXECUTION_MODE_LABELS,
+  EXECUTION_MODE_COLORS,
+} from "./TradingRunEnums";
+
+//src/modules/Trader/models/Backtest.ts
+/* ═══════════════════ Enums ═══════════════════ */
+
+export enum BacktestStatus {
+  Pending = 0,
+  Running = 1,
+  Completed = 2,
+  Failed = 3,
+  Cancelled = 4,
+}
+
+export enum BacktestExitReason {
+  Signal = 0,
+  StopLoss = 1,
+  TakeProfit = 2,
+  EndOfBacktest = 3,
+  ManualClose = 4,
+}
+
+export const BACKTEST_STATUS_LABELS: Record<BacktestStatus, string> = {
+  [BacktestStatus.Pending]: "در انتظار",
+  [BacktestStatus.Running]: "در حال اجرا",
+  [BacktestStatus.Completed]: "تکمیل شده",
+  [BacktestStatus.Failed]: "خطا",
+  [BacktestStatus.Cancelled]: "لغو شده",
+};
+
+export const BACKTEST_STATUS_COLORS: Record<BacktestStatus, string> = {
+  [BacktestStatus.Pending]: "bg-slate-700 text-slate-300",
+  [BacktestStatus.Running]: "bg-blue-900/40 text-blue-300",
+  [BacktestStatus.Completed]: "bg-emerald-900/40 text-emerald-300",
+  [BacktestStatus.Failed]: "bg-red-900/40 text-red-300",
+  [BacktestStatus.Cancelled]: "bg-amber-900/40 text-amber-300",
+};
+
+export const EXIT_REASON_LABELS: Record<BacktestExitReason, string> = {
+  [BacktestExitReason.Signal]: "سیگنال",
+  [BacktestExitReason.StopLoss]: "حد ضرر",
+  [BacktestExitReason.TakeProfit]: "حد سود",
+  [BacktestExitReason.EndOfBacktest]: "پایان بکتست",
+  [BacktestExitReason.ManualClose]: "دستی",
+};
+
+/* ═══════════════════ DTOs ═══════════════════ */
+
+export interface BacktestSymbolModel {
+  isin: string;
+  allocationPercentage: number;
+}
+
+export interface RunBacktestConfigModel {
+  strategyKey: string;
+  strategyConfigJson: string;
+  primaryTimeFrame: number;
+  targetCurrency: string | null;
+  strengthMultiplier: number;
+  minDeltaPercent: number;
+  stopLossPercentage: number | null;
+  stopLossPrice: number | null;
+  takeProfitPercentage: number | null;
+  takeProfitPrice: number | null;
+  defaultOrderMode: number;
+  onMarketClose: number;
+  onStop: number;
+  symbols: BacktestSymbolModel[];
+}
+
+export interface RunBacktestModel {
+  name: string;
+  sourceRunId: string | null;
+  configOverride: RunBacktestConfigModel | null;
+  dateFrom: string;   // ISO
+  dateTo: string;     // ISO
+  initialCapital: number | null;
+  slippagePercent: number | null;
+  subCandleTimeFrame: number | null;
+  timeZoneId: string | null;
+}
+
+export interface BacktestRunSummaryView {
+  id: string;
+  name: string;
+  status: number;
+  statusName: string;
+  strategyKey: string;
+  primaryTimeFrame: number;
+  targetCurrency: string | null;
+  initialCapital: number;
+  finalEquity: number;
+  totalReturnPct: number;
+  maxDrawdownPct: number;
+  sharpeRatio: number;
+  winRate: number;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  dateFrom: string;
+  dateTo: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  durationMs: number | null;
+  createdAt: string;
+}
+
+export interface BacktestRunDetailView extends BacktestRunSummaryView {
+  sourceRunId: string | null;
+  strategyConfigJson: string;
+  capitalAllocationMode: number;
+  fixedCapitalAmount: number | null;
+  strengthMultiplier: number;
+  minDeltaPercent: number;
+  stopLossPercentage: number | null;
+  stopLossPrice: number | null;
+  takeProfitPercentage: number | null;
+  takeProfitPrice: number | null;
+  defaultOrderMode: number;
+  onMarketClose: number;
+  onStop: number;
+  configSnapshotJson: string;
+  slippagePercent: number;
+  subCandleTimeFrame: number | null;
+  timeZoneId: string;
+  profitFactor: number;
+  avgWin: number;
+  avgLoss: number;
+  totalCommission: number;
+  totalSlippage: number;
+  symbols: BacktestSymbolModel[];
+  errorMessage: string | null;
+}
+
+export interface BacktestTradeView {
+  id: string;
+  isin: string;
+  entryTime: string;
+  lastEntryTime: string;
+  totalEntryQuantity: number;
+  weightedAvgEntryPrice: number;
+  totalBuyCommission: number;
+  exitTime: string;
+  exitPrice: number;
+  exitQuantity: number;
+  totalSellCommission: number;
+  exitReason: number;
+  exitReasonName: string;
+  grossPnL: number;
+  netPnL: number;
+  netPnLPct: number;
+  holdingDurationSeconds: number;
+  entryFillsJson: string;
+}
+
+export interface BacktestDailyEquityView {
+  date: string;
+  equity: number;
+  cash: number;
+  positionValue: number;
+  dailyReturnPct: number;
+}
+
+//src/modules/Trader/models/AccountCommand.ts
+export interface CreateAccountCommand {
+  broker: number;      // ← جدید
+  name: string;
+  username: string;
+  password: string;
+}
+
+export interface UpdateAccountCommand {
+  id: string;
+  name: string;
+  username: string;
+  password?: string;
+}
+export interface LoginAccountCommand {
+  id: string;
+}
+
+export interface ActivateAccountCommand {
+  id: string;
+}
+
+//src/modules/Trader/models/AccountInfoView.ts
+export type TokenStatus = "empty" | "invalid" | "expired" | "valid";
+
+export interface AccountInfoView {
+  id: string;
+   broker: number;  
+  name: string;
+  username: string;
+  
+  sessionStatus: "empty" | "valid" | "expired" | "invalid";  // ← rename
+  sessionExp?: number | null;        // ← rename از tokenExp
+}
+
+//src/modules/Trader/models/CreateCurrencyRateCommand.ts
+export interface CreateCurrencyRateCommand {
+  fromCurrency: string;
+  toCurrency: string;
+  rate: number;
+  effectiveAt: string;        // ISO
+  source?: string;            // default "Manual"
+}
+
+//src/modules/Trader/models/InstrumentCommand.ts
+export interface OptionContractModel {
+  optionType: number;
+  strikePrice: number;
+  expirationDate: string;
+  underlyingIsin: string;
+}
+
+export interface CreateInstrumentCommand {
+  isin: string;
+  symbolName: string;
+  displayName: string;
+  type: number;
+  market: number;
+  boardCode?: string | null;
+  tradingScheduleId?: string | null;
+
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+
+  optionContract?: OptionContractModel | null;
+}
+
+export interface UpdateInstrumentCommand {
+  id: string;
+  symbolName: string;
+  displayName: string;
+  boardCode?: string | null;
+  tradingScheduleId?: string | null;
+
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+}
+
+//src/modules/Trader/models/InstrumentInfoView.ts
+export interface InstrumentInfoView {
+  id: string;
+  isin: string;
+  symbolName: string;
+  displayName: string;
+  type: number;
+  typeName: string;
+  market: number;
+  marketName: string;
+  boardCode?: string | null;
+  tradingScheduleId?: string | null;
+  tradingScheduleCode?: string | null;
+  tradingScheduleName?: string | null;
+
+  // NEW — Commission + Order Limits
+  buyCommissionRate: number;      // 0.0037 = 0.37%
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+
+  isActive: boolean;
+  createdAt: string;
+}
+
+//src/modules/Trader/models/InstrumentType.ts
+/**
+ * Mirrors Trader.Domain.Enums.InstrumentType
+ */
+export enum InstrumentType {
+  Stock = 0,
+  Option = 1,
+  Future = 2,
+  Bond = 3,
+  Fund = 4,
+  Currency = 5,
+  Crypto = 6,
+}
+
+/**
+ * Mirrors Trader.Domain.Enums.MarketType
+ */
+export enum MarketType {
+  IranStock = 0,
+  IranOption = 1,
+  IranFuture = 2,
+  Forex = 10,
+  Crypto = 20,
+}
+
+export interface OptionTypeOption {
+  value: number;
+  label: string;
+  display: string;
+}
+
+export const OPTION_TYPE_OPTIONS: OptionTypeOption[] = [
+  { value: 0, label: "خرید (Call)", display: "خرید (Call)" },
+  { value: 1, label: "فروش (Put)", display: "فروش (Put)" },
+];
+//src/modules/Trader/models/TradingEventView.ts
+export interface TradingEventView {
+  id: string;
+  runId: string | null;
+  isin: string | null;
+  accountId: string | null;
+  signalId: string | null;
+  orderIntentId: string | null;
+  brokerOrderId: string | null;
+  tradeId: string | null;
+  positionId: string | null;
+  stage: number;
+  stageName: string;
+  type: number;
+  typeName: string;
+  severity: number;
+  severityName: string;
+  occurredAt: string;
+  message: string;
+  payloadJson: string | null;
+}
+
+export interface TradingEventQuery {
+  runId?: string | null;
+  isin?: string | null;
+  accountId?: string | null;
+  stage?: number | null;
+  severity?: number | null;
+  minSeverity?: number | null;
+  from?: string | null;
+  to?: string | null;
+  search?: string | null;
+  skip?: number;
+  take?: number;
+}
+
+export interface PagedResult<T> {
+  items: T[];
+  totalCount: number;
+  skip: number;
+  take: number;
+}
+
+/* ─── Labels ─── */
+export const STAGE_LABELS: Record<number, string> = {
+  0: "چرخه",
+  1: "داده بازار",
+  2: "تحلیل",
+  3: "اجرا",
+  4: "سفارش‌ها",
+  5: "بازیابی",
+  6: "سیستم",
+};
+
+export const SEVERITY_LABELS: Record<number, string> = {
+  0: "اشکال‌زدایی",
+  1: "اطلاع",
+  2: "هشدار",
+  3: "خطا",
+  4: "بحرانی",
+};
+
+export const SEVERITY_COLORS: Record<number, string> = {
+  0: "bg-slate-700 text-slate-300",
+  1: "bg-blue-900/40 text-blue-300",
+  2: "bg-amber-900/40 text-amber-300",
+  3: "bg-red-900/40 text-red-300",
+  4: "bg-red-950/60 text-red-200 border border-red-500",
+};
+
+//src/modules/Trader/models/TradingRun.ts
+export interface TradingRunInfoView {
+  id: string;
+  name: string;
+  state: number;
+  stateName: string;
+  strategyKey: string;
+  primaryTimeFrame: number;
+  primaryTimeFrameName: string;
+  capitalAllocationMode: number;
+  fixedCapital?: number | null;
+  targetCurrency: string | null; 
+  strengthMultiplier: number;    
+  minDeltaPercent: number; 
+  executionMode: number;                
+  executionModeName: string;  
+  symbolCount: number;
+  accountCount: number;
+  startedAt?: string | null;
+  stoppedAt?: string | null;
+  createdAt: string;
+}
+
+export interface TradingRunSettingsDto {
+  capitalAllocationMode: number;
+  fixedCapitalAmount?: number | null;
+  stopLossPercentage?: number | null;
+  stopLossPrice?: number | null;
+  takeProfitPercentage?: number | null;
+  takeProfitPrice?: number | null;
+  defaultOrderMode: number;
+  onMarketClose: number;
+  onStop: number;
+}
+
+export interface TradingRunSymbolDto {
+  isin: string;
+  allocationPercentage: number;
+}
+
+export interface TradingRunDetailView {
+  id: string;
+  name: string;
+  state: number;
+  stateName: string;
+  strategyKey: string;
+  strategyConfigJson: string;
+  primaryTimeFrame: number;
+  targetCurrency: string | null;  
+  strengthMultiplier: number;   
+  minDeltaPercent: number;
+  executionMode: number;             
+  executionModeName: string; 
+  settings: TradingRunSettingsDto;
+  symbols: TradingRunSymbolDto[];
+  accountIds: string[];
+  startedAt?: string | null;
+  stoppedAt?: string | null;
+  createdAt: string;
+  modifiedAt?: string | null;
+}
+
+/* ─── Commands ─── */
+export interface TradingRunSettingsModel {
+  capitalAllocationMode: number;
+  fixedCapitalAmount?: number | null;
+  stopLossPercentage?: number | null;
+  stopLossPrice?: number | null;
+  takeProfitPercentage?: number | null;
+  takeProfitPrice?: number | null;
+  defaultOrderMode: number;
+  onMarketClose: number;
+  onStop: number;
+}
+
+export interface TradingRunSymbolModel {
+  isin: string;
+  allocationPercentage: number;
+}
+
+export interface CreateTradingRunCommand {
+  name: string;
+  strategyKey: string;
+  strategyConfigJson: string;
+  primaryTimeFrame: number;
+  targetCurrency: string | null;  
+  strengthMultiplier: number;   
+  minDeltaPercent: number;
+  executionMode: number; 
+  settings: TradingRunSettingsModel;
+  symbols: TradingRunSymbolModel[];
+  accountIds: string[];
+}
+
+export interface UpdateTradingRunCommand extends CreateTradingRunCommand {
+  id: string;
+}
+
+export interface StopTradingRunCommand {
+  id: string;
+  behavior: number; // StopRunBehavior
+}
+
+//src/modules/Trader/models/TradingRunEnums.ts
+export enum TradingRunState {
+  Created = 0,
+  Ready = 1,
+  Running = 2,
+  Stopped = 3,
+  Faulted = 4,
+}
+
+export enum CapitalAllocationMode {
+  Fixed = 0,
+  Dynamic = 1,
+}
+
+export enum StopRunBehavior {
+  KeepPositions = 0,
+  ClosePositions = 1,
+}
+
+export enum MarketCloseBehavior {
+  KeepPositions = 0,
+  ClosePositions = 1,
+}
+
+export enum OrderMode {
+  Quantity = 0,
+  TotalValue = 1,
+}
+
+export enum TimeFrame {
+  M1 = 1,
+  M5 = 5,
+  M15 = 15,
+  M30 = 30,
+  H1 = 60,
+  H4 = 240,
+  D1 = 1440,
+  W1 = 10080,
+}
+
+/* ─── Label maps ─── */
+export const TRADING_RUN_STATE_LABELS: Record<TradingRunState, string> = {
+  [TradingRunState.Created]: "ایجاد شده",
+  [TradingRunState.Ready]: "آماده",
+  [TradingRunState.Running]: "در حال اجرا",
+  [TradingRunState.Stopped]: "متوقف",
+  [TradingRunState.Faulted]: "خطا",
+};
+
+export const TRADING_RUN_STATE_COLORS: Record<TradingRunState, string> = {
+  [TradingRunState.Created]: "bg-slate-700 text-slate-300",
+  [TradingRunState.Ready]: "bg-blue-900/40 text-blue-300",
+  [TradingRunState.Running]: "bg-emerald-900/40 text-emerald-300",
+  [TradingRunState.Stopped]: "bg-amber-900/40 text-amber-300",
+  [TradingRunState.Faulted]: "bg-red-900/40 text-red-300",
+};
+
+export const CAPITAL_MODE_LABELS: Record<CapitalAllocationMode, string> = {
+  [CapitalAllocationMode.Fixed]: "ثابت",
+  [CapitalAllocationMode.Dynamic]: "داینامیک (موجودی حساب)",
+};
+
+export const TIMEFRAME_LABELS: Record<TimeFrame, string> = {
+  [TimeFrame.M1]: "۱ دقیقه",
+  [TimeFrame.M5]: "۵ دقیقه",
+  [TimeFrame.M15]: "۱۵ دقیقه",
+  [TimeFrame.M30]: "۳۰ دقیقه",
+  [TimeFrame.H1]: "۱ ساعت",
+  [TimeFrame.H4]: "۴ ساعت",
+  [TimeFrame.D1]: "روزانه",
+  [TimeFrame.W1]: "هفتگی",
+};
+
+export const STOP_BEHAVIOR_LABELS: Record<StopRunBehavior, string> = {
+  [StopRunBehavior.KeepPositions]: "حفظ موقعیت‌های باز",
+  [StopRunBehavior.ClosePositions]: "بستن موقعیت‌های باز",
+};
+
+export const MARKET_CLOSE_LABELS: Record<MarketCloseBehavior, string> = {
+  [MarketCloseBehavior.KeepPositions]: "حفظ موقعیت‌ها در پایان بازار",
+  [MarketCloseBehavior.ClosePositions]: "بستن موقعیت‌ها در پایان بازار",
+};
+
+export const ORDER_MODE_LABELS: Record<OrderMode, string> = {
+  [OrderMode.Quantity]: "بر اساس تعداد",
+  [OrderMode.TotalValue]: "بر اساس ارزش کل",
+};
+
+
+export enum ExecutionMode {
+  Live = 0,
+  Paper = 1,
+}
+
+export const EXECUTION_MODE_LABELS: Record<ExecutionMode, string> = {
+  [ExecutionMode.Live]: "واقعی (Live)",
+  [ExecutionMode.Paper]: "شبیه‌سازی (Paper)",
+};
+
+export const EXECUTION_MODE_COLORS: Record<ExecutionMode, string> = {
+  [ExecutionMode.Live]: "bg-red-900/40 text-red-300",
+  [ExecutionMode.Paper]: "bg-cyan-900/40 text-cyan-300",
+};

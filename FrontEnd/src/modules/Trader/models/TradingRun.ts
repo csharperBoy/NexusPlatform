@@ -1,3 +1,4 @@
+//src/modules/Trader/models/TradingRun.ts
 export interface TradingRunInfoView {
   id: string;
   name: string;

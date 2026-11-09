@@ -1,0 +1,221 @@
+//src/modules/Trader/hooks/index.ts
+export { useAccountManagement, accountCrudApi } from "./useAccountManagement";
+export { useSymbolManagement, symbolCrudApi } from "./useSymbolManagement";
+export { useSchedulePlansPage, } from "./useSchedulePlansPage";
+export { useInstrumentManagement,instrumentCrudApi } from "./useInstrumentManagement";
+export { useTradingRunManagement } from "./useTradingRunManagement";
+export { useCurrencyRateManagement } from "./useCurrencyRateManagement";
+export { useBacktestManagement } from "./useBacktestManagement";
+
+//src/modules/Trader/hooks/useAccountManagement.ts
+import { accountApi } from "../api/accountApi";
+import type {
+  AccountInfoView,
+  CreateAccountCommand,
+  UpdateAccountCommand,
+} from "../models";
+import { GenericCrudApi } from "@/core/components/crud/types";
+
+/**
+ * آداپتور accountApi برای GenericCrudPage
+ * همه‌ی متدهای GenericCrudApi رو فراهم می‌کنه.
+ */
+export const accountCrudApi: GenericCrudApi<
+  AccountInfoView,
+  CreateAccountCommand,
+  UpdateAccountCommand
+> = {
+  getList: accountApi.GetList,
+  getSelectionList: accountApi.GetSelectionList,
+  create: accountApi.create,
+  batchUpdate: async (cmds) => {
+    // بک‌اند batchUpdate نداره → تک‌تک می‌زنیم
+    for (const cmd of cmds) await accountApi.update(cmd);
+    return true;
+  },
+  delete: accountApi.delete,
+};
+
+export function useAccountManagement() {
+  return { accountCrudApi };
+}
+
+
+//src/modules/Trader/hooks/useCurrencyRateManagement.ts
+import { useCallback, useEffect, useState } from "react";
+import { currencyRateApi } from "../api/currencyRateApi";
+import type { CurrencyRateView, CreateCurrencyRateCommand } from "../models";
+
+export function useCurrencyRateManagement() {
+  const [rates, setRates] = useState<CurrencyRateView[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(
+    async (fromCurrency?: string, toCurrency?: string) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await currencyRateApi.GetList(fromCurrency, toCurrency);
+        setRates(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "خطا در دریافت نرخ‌ها");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleCreate = useCallback(
+    async (cmd: CreateCurrencyRateCommand): Promise<string> => {
+      const id = await currencyRateApi.create(cmd);
+      await load();
+      return id;
+    },
+    [load],
+  );
+
+  return {
+    rates,
+    loading,
+    error,
+    refresh: load,
+    handleCreate,
+  };
+}
+
+//src/modules/Trader/hooks/useInstrumentManagement.ts
+import { instrumentApi } from "../api/instrumentApi";
+import type {
+  InstrumentInfoView,
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand,
+} from "../models";
+import { GenericCrudApi } from "@/core/components/crud/types";
+
+export const instrumentCrudApi: GenericCrudApi<
+  InstrumentInfoView,
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand
+> = {
+  getList: instrumentApi.GetList,
+  getSelectionList: instrumentApi.GetSelectionList,
+  create: instrumentApi.create,
+  batchUpdate: async (cmds) => {
+    for (const cmd of cmds) await instrumentApi.update(cmd);
+    return true;
+  },
+  delete: instrumentApi.delete,
+};
+
+export function useInstrumentManagement() {
+  return { instrumentCrudApi };
+}
+
+//src/modules/Trader/hooks/useTradingRunManagement.ts
+import { useCallback, useEffect, useState } from "react";
+import { tradingRunApi } from "../api/tradingRunApi";
+import type {
+  TradingRunInfoView,
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+} from "../models";
+import { StopRunBehavior } from "../models";
+
+export function useTradingRunManagement() {
+  const [runs, setRuns] = useState<TradingRunInfoView[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await tradingRunApi.GetList();
+      setRuns(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطا در دریافت لیست");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const handleCreate = useCallback(
+    async (cmd: CreateTradingRunCommand): Promise<string> => {
+      const id = await tradingRunApi.create(cmd);
+      await load();
+      return id;
+    },
+    [load],
+  );
+
+  const handleUpdate = useCallback(
+    async (cmd: UpdateTradingRunCommand): Promise<void> => {
+      await tradingRunApi.update(cmd);
+      await load();
+    },
+    [load],
+  );
+
+  const handleStart = useCallback(
+    async (id: string): Promise<void> => {
+      setBusyId(id);
+      try {
+        await tradingRunApi.start(id);
+        await load();
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [load],
+  );
+
+  const handleStop = useCallback(
+    async (id: string, behavior: StopRunBehavior): Promise<void> => {
+      setBusyId(id);
+      try {
+        await tradingRunApi.stop(id, behavior);
+        await load();
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [load],
+  );
+
+  const handleDelete = useCallback(
+    async (id: string): Promise<void> => {
+      setBusyId(id);
+      try {
+        await tradingRunApi.delete(id);
+        await load();
+      } finally {
+        setBusyId(null);
+      }
+    },
+    [load],
+  );
+
+  return {
+    runs,
+    loading,
+    busyId,
+    error,
+    refresh: load,
+    handleCreate,
+    handleUpdate,
+    handleStart,
+    handleStop,
+    handleDelete,
+  };
+}

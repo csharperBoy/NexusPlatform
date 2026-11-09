@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Accounts/AccountsManagementPage.tsx
 import React, { useState } from "react";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
 import { GenericColumnDef } from "@/core/components/crud/types";

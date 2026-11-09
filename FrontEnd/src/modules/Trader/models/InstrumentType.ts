@@ -1,3 +1,4 @@
+//src/modules/Trader/models/InstrumentType.ts
 /**
  * Mirrors Trader.Domain.Enums.InstrumentType
  */

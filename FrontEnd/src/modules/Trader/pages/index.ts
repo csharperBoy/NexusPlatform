@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/index.ts
 export { AccountsManagementPage } from "./Accounts/AccountsManagementPage";
 export { SymbolsManagementPage } from "./Symbols/SymbolsManagementPage";
 export { SchedulePlansManagementPage } from "./SchedulePlans/SchedulePlansManagementPage";

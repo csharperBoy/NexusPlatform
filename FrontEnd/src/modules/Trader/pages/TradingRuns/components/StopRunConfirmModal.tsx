@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/TradingRuns/components/StopRunConfirmModal.tsx
 import React, { useEffect, useState } from "react";
 import { StopRunBehavior, STOP_BEHAVIOR_LABELS } from "../../../models";
 

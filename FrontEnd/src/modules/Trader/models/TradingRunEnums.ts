@@ -1,3 +1,4 @@
+//src/modules/Trader/models/TradingRunEnums.ts
 export enum TradingRunState {
   Created = 0,
   Ready = 1,

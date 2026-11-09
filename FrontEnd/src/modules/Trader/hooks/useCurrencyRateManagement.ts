@@ -1,3 +1,4 @@
+//src/modules/Trader/hooks/useCurrencyRateManagement.ts
 import { useCallback, useEffect, useState } from "react";
 import { currencyRateApi } from "../api/currencyRateApi";
 import type { CurrencyRateView, CreateCurrencyRateCommand } from "../models";

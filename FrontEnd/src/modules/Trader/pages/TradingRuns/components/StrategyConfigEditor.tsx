@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/TradingRuns/components/StrategyConfigEditor.tsx
 import React from "react";
 import type { StrategyConfigFieldView } from "../../../models";
 

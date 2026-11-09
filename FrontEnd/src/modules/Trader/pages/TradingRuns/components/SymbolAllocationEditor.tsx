@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/TradingRuns/components/SymbolAllocationEditor.tsx
 import React, { useEffect, useState } from "react";
 import { instrumentApi } from "../../../api/instrumentApi";
 import type { TradingRunSymbolModel } from "../../../models";

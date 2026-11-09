@@ -1,0 +1,1034 @@
+//src/modules/Trader/api/index.ts
+
+export { accountApi } from "./accountApi";
+export { instrumentApi } from "./instrumentApi";   // ← NEW
+export { symbolApi } from "./symbolApi";           // Legacy — حذف در Phase 2
+export { schedulePlanApi } from "./schedulePlanApi";
+export { serverClockApi } from "./serverClockApi";
+export { executionLogApi } from "./executionLogApi";
+export { strategyApi } from "./strategyApi";       // ← NEW
+export { tradingRunApi } from "./tradingRunApi";   // ← NEW
+export { positionApi } from "./positionApi";
+export { signalApi } from "./signalApi";
+export { tradingScheduleApi } from "./tradingScheduleApi";
+
+export { currencyRateApi } from "./currencyRateApi";
+export { tradingEventApi } from "./tradingEventApi";
+export { backtestApi } from "./backtestApi";
+export { historicalDataCollectionApi } from "./historicalDataCollectionApi";
+
+//src/modules/Trader/api/_mockStorage.ts
+/* ─── helper برای mock با localStorage ─── */
+export function mockLoad<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function mockSave<T>(key: string, value: T): void {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+export const mockDelay = (ms: number) =>
+  new Promise((r) => setTimeout(r, ms));
+
+export const mockUid = (): string => crypto.randomUUID();
+
+
+//src/modules/Trader/api/accountApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type {
+  AccountInfoView,
+  CreateAccountCommand,
+  UpdateAccountCommand,
+} from "../models";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
+import {
+  mockLoad,
+  mockSave,
+  mockDelay,
+  mockUid,
+} from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+const MOCK_KEY = "mock:trader:accounts";
+
+interface MockAccount {
+  id: string;
+   broker: number; 
+  name: string;
+  username: string;
+  password: string;
+  token: string;
+  tokenExp: number | null;
+}
+
+function toView(a: MockAccount): AccountInfoView {
+  let tokenStatus: AccountInfoView["sessionStatus"] = "empty";
+  if (a.token) {
+    if (!a.tokenExp) tokenStatus = "invalid";
+    else if (a.tokenExp < Date.now()) tokenStatus = "expired";
+    else tokenStatus = "valid";
+  }
+  return {
+    id: a.id,
+     broker: a.broker,
+    name: a.name,
+    username: a.username,
+  
+    sessionStatus: tokenStatus, // ← rename از tokenStatus
+    sessionExp: a.tokenExp,
+  };
+}
+
+export const accountApi = {
+  /* ─── دریافت لیست ─── */
+  GetList: async (): Promise<AccountInfoView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return mockLoad<MockAccount[]>(MOCK_KEY, []).map(toView);
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<AccountInfoView[]>(
+      "/api/Trader/Account/GetList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── لیست انتخابی ─── */
+  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return mockLoad<MockAccount[]>(MOCK_KEY, []).map((a) => ({
+        value: a.id,
+        label: a.name,
+        display: a.name,
+      }));
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/Trader/Account/GetSelectionList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── ایجاد ─── */
+  create: async (data: CreateAccountCommand): Promise<string> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      const items = mockLoad<MockAccount[]>(MOCK_KEY, []);
+      const acc: MockAccount = {
+        id: mockUid(),
+        broker: data.broker,   
+        name: data.name,
+        username: data.username,
+        password: data.password,
+        token: "",
+        tokenExp: null,
+      };
+      items.push(acc);
+      mockSave(MOCK_KEY, items);
+      return acc.id;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<string>(
+      "/api/Trader/Account/create",
+      data,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── ویرایش ─── */
+  update: async (data: UpdateAccountCommand): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      const items = mockLoad<MockAccount[]>(MOCK_KEY, []);
+      const idx = items.findIndex((a) => a.id === data.id);
+      if (idx < 0) throw new Error("حساب پیدا نشد");
+      items[idx] = {
+        ...items[idx],
+        name: data.name,
+        username: data.username,
+        ...(data.password ? { password: data.password } : {}),
+      };
+      mockSave(MOCK_KEY, items);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.put<boolean>(
+      `/api/Trader/Account/${data.id}`,
+      data,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── حذف ─── */
+  delete: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const items = mockLoad<MockAccount[]>(MOCK_KEY, []);
+      mockSave(
+        MOCK_KEY,
+        items.filter((a) => a.id !== id),
+      );
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.delete<boolean>(
+      `/api/Trader/Account/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── لاگین ─── */
+  login: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(800);
+      const items = mockLoad<MockAccount[]>(MOCK_KEY, []);
+      const idx = items.findIndex((a) => a.id === id);
+      if (idx < 0) throw new Error("حساب پیدا نشد");
+      if (!items[idx].username || !items[idx].password)
+        throw new Error("نام‌کاربری یا رمز خالیه");
+      items[idx].token = `mock-jwt-${mockUid()}`;
+      items[idx].tokenExp = Date.now() + 12 * 3600 * 1000;
+      mockSave(MOCK_KEY, items);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      "/api/Trader/Account/login",
+      { id },
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── فعال‌سازی (same-login) ─── */
+  activate: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      "/api/Trader/Account/activate",
+      { id },
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};
+
+
+import getAPI from "@/core/api/axiosClient";
+import type {
+  RunBacktestModel,
+  BacktestRunSummaryView,
+  BacktestRunDetailView,
+  BacktestTradeView,
+  BacktestDailyEquityView,
+} from "../models";
+import { mockDelay } from "./_mockStorage";
+import type { BacktestEventView, BacktestEventQuery } from "../models";
+
+export interface PagedResult<T> {
+  items: T[];
+  totalRecords: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+
+export const backtestApi = {
+  Run: async (model: RunBacktestModel): Promise<string> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return crypto.randomUUID();
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<string>(
+      "/api/Trader/Backtest/Run",
+      { model },
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  Cancel: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      `/api/Trader/Backtest/Cancel/${id}`,
+      {},
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetList: async (
+    sourceRunId?: string,
+    take = 100,
+  ): Promise<BacktestRunSummaryView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return [];
+    }
+    const api = getAPI(API_MODULE);
+    const params = new URLSearchParams();
+    if (sourceRunId) params.set("sourceRunId", sourceRunId);
+    params.set("take", String(take));
+
+    const response = await api.get<BacktestRunSummaryView[]>(
+      `/api/Trader/Backtest/GetList?${params}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetById: async (id: string): Promise<BacktestRunDetailView> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      throw new Error("Mock not implemented for detail");
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<BacktestRunDetailView>(
+      `/api/Trader/Backtest/GetById/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetTrades: async (id: string): Promise<BacktestTradeView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return [];
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<BacktestTradeView[]>(
+      `/api/Trader/Backtest/GetTrades/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetEquityCurve: async (id: string): Promise<BacktestDailyEquityView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return [];
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<BacktestDailyEquityView[]>(
+      `/api/Trader/Backtest/GetEquityCurve/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  Compare: async (ids: string[]): Promise<BacktestRunSummaryView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return [];
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<BacktestRunSummaryView[]>(
+      "/api/Trader/Backtest/Compare",
+      ids,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+  
+QueryEvents: async (
+  query: BacktestEventQuery,
+): Promise<PagedResult<BacktestEventView>> => {
+  if (USE_MOCK) {
+    await mockDelay(150);
+    return {
+      items: [],
+      totalRecords: 0,
+      page: 1,
+      pageSize: 500,
+      totalPages: 0,
+    };
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.post<PagedResult<BacktestEventView>>(
+    "/api/Trader/Backtest/QueryEvents",
+    query,
+    { withCredentials: true },
+  );
+  return response.data;
+},
+};
+
+//src/modules/Trader/api/currencyRateApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type { CurrencyRateView, CreateCurrencyRateCommand } from "../models";
+import {
+  mockLoad,
+  mockSave,
+  mockDelay,
+  mockUid,
+} from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+const MOCK_KEY = "mock:trader:currency-rates";
+
+export const currencyRateApi = {
+  GetList: async (
+    fromCurrency?: string,
+    toCurrency?: string,
+    limit = 100,
+  ): Promise<CurrencyRateView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return mockLoad<CurrencyRateView[]>(MOCK_KEY, [])
+        .filter((r) => !fromCurrency || r.fromCurrency === fromCurrency)
+        .filter((r) => !toCurrency || r.toCurrency === toCurrency)
+        .slice(0, limit);
+    }
+    const api = getAPI(API_MODULE);
+    const params = new URLSearchParams();
+    if (fromCurrency) params.set("fromCurrency", fromCurrency);
+    if (toCurrency) params.set("toCurrency", toCurrency);
+    params.set("limit", String(limit));
+
+    const response = await api.get<CurrencyRateView[]>(
+      `/api/Trader/CurrencyRate/GetList?${params}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetLatest: async (
+    fromCurrency: string,
+    toCurrency: string,
+    atTime?: string,
+  ): Promise<number | null> => {
+    if (USE_MOCK) {
+      await mockDelay(100);
+      const list = mockLoad<CurrencyRateView[]>(MOCK_KEY, [])
+        .filter((r) => r.fromCurrency === fromCurrency && r.toCurrency === toCurrency)
+        .sort((a, b) => b.effectiveAt.localeCompare(a.effectiveAt));
+      return list[0]?.rate ?? null;
+    }
+    const api = getAPI(API_MODULE);
+    const params = new URLSearchParams({ fromCurrency, toCurrency });
+    if (atTime) params.set("atTime", atTime);
+
+    const response = await api.get<number | null>(
+      `/api/Trader/CurrencyRate/GetLatest?${params}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  create: async (data: CreateCurrencyRateCommand): Promise<string> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      const list = mockLoad<CurrencyRateView[]>(MOCK_KEY, []);
+      const item: CurrencyRateView = {
+        id: mockUid(),
+        fromCurrency: data.fromCurrency.toUpperCase(),
+        toCurrency: data.toCurrency.toUpperCase(),
+        rate: data.rate,
+        effectiveAt: data.effectiveAt,
+        source: data.source ?? "Manual",
+        createdAt: new Date().toISOString(),
+      };
+      list.push(item);
+      mockSave(MOCK_KEY, list);
+      return item.id;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<string>(
+      "/api/Trader/CurrencyRate/Create",
+      data,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};
+
+//src/modules/Trader/api/executionLogApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type { ExecutionLogQueryResult } from "../models";
+
+const API_MODULE = "trader";
+
+export const executionLogApi = {
+  GetLogs: async (params: {
+    planId?: string;
+    level?: string;
+    search?: string;
+    skip?: number;
+    take?: number;
+  }): Promise<ExecutionLogQueryResult> => {
+    const api = getAPI(API_MODULE);
+    const searchParams = new URLSearchParams();
+
+    if (params.planId) searchParams.set("planId", params.planId);
+    if (params.level && params.level !== "all")
+      searchParams.set("level", params.level);
+    if (params.search) searchParams.set("search", params.search);
+    searchParams.set("skip", String(params.skip ?? 0));
+    searchParams.set("take", String(params.take ?? 200));
+
+    const response = await api.get<ExecutionLogQueryResult>(
+      `/api/Trader/ExecutionLog/GetLogs?${searchParams}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};
+
+
+//src/modules/Trader/api/historicalDataCollectionApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type {
+  CollectHistoricalDataCommand,
+  HistoricalDataCollectionJobSummaryView,
+  HistoricalDataCollectionJobDetailView,
+} from "../models";
+import { mockDelay } from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+
+export const historicalDataCollectionApi = {
+  Collect: async (cmd: CollectHistoricalDataCommand): Promise<string> => {
+    if (USE_MOCK) {
+      await mockDelay(300);
+      return crypto.randomUUID();
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<string>(
+      "/api/Trader/HistoricalDataCollection/Collect",
+      cmd,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  Cancel: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      `/api/Trader/HistoricalDataCollection/Cancel/${id}`,
+      {},
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetList: async (
+    take = 50,
+  ): Promise<HistoricalDataCollectionJobSummaryView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return [];
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<HistoricalDataCollectionJobSummaryView[]>(
+      `/api/Trader/HistoricalDataCollection/GetList?take=${take}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetById: async (
+    id: string,
+  ): Promise<HistoricalDataCollectionJobDetailView> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      throw new Error("Mock not implemented for detail");
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<HistoricalDataCollectionJobDetailView>(
+      `/api/Trader/HistoricalDataCollection/GetById/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};
+
+import getAPI from "@/core/api/axiosClient";
+import type {
+  InstrumentInfoView,
+  CreateInstrumentCommand,
+  UpdateInstrumentCommand,
+} from "../models";
+import { SelectionListDto } from "@/core/models/SelectionListDto";
+import {
+  mockLoad,
+  mockSave,
+  mockDelay,
+  mockUid,
+} from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+const MOCK_KEY = "mock:trader:instruments";
+
+interface MockInstrument {
+  id: string;
+  isin: string;
+  symbolName: string;
+  displayName: string;
+  type: number;
+  market: number;
+  boardCode?: string | null;
+  tradingScheduleId?: string | null;
+  buyCommissionRate: number;
+  sellCommissionRate: number;
+  minOrderQuantity: number;
+  maxOrderQuantity: number;
+  minOrderValueRial?: number | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+function toView(m: MockInstrument): InstrumentInfoView {
+  return {
+    id: m.id,
+    isin: m.isin,
+    symbolName: m.symbolName,
+    displayName: m.displayName,
+    type: m.type,
+    typeName: typeNameOf(m.type),
+    market: m.market,
+    marketName: marketNameOf(m.market),
+    boardCode: m.boardCode ?? null,
+    tradingScheduleId: m.tradingScheduleId ?? null,
+    tradingScheduleCode: null,
+    tradingScheduleName: null,
+    buyCommissionRate: m.buyCommissionRate,
+    sellCommissionRate: m.sellCommissionRate,
+    minOrderQuantity: m.minOrderQuantity,
+    maxOrderQuantity: m.maxOrderQuantity,
+    minOrderValueRial: m.minOrderValueRial ?? null,
+    isActive: m.isActive,
+    createdAt: m.createdAt,
+  };
+}
+
+function typeNameOf(type: number): string {
+  switch (type) {
+    case 0: return "سهام";
+    case 1: return "اختیار معامله";
+    case 2: return "آتی";
+    case 3: return "اوراق";
+    case 4: return "صندوق";
+    case 5: return "ارز";
+    case 6: return "رمزارز";
+    default: return "نامشخص";
+  }
+}
+
+function marketNameOf(market: number): string {
+  switch (market) {
+    case 0: return "بورس تهران";
+    case 1: return "بورس آپشن";
+    case 2: return "بورس آتی";
+    case 10: return "فارکس";
+    case 20: return "کریپتو";
+    default: return "نامشخص";
+  }
+}
+
+export const instrumentApi = {
+  /* ─── لیست ─── */
+  GetList: async (): Promise<InstrumentInfoView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return mockLoad<MockInstrument[]>(MOCK_KEY, []).map(toView);
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<InstrumentInfoView[]>(
+      "/api/Trader/Instrument/GetList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── لیست انتخابی ─── */
+  GetSelectionList: async (): Promise<SelectionListDto[]> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      return mockLoad<MockInstrument[]>(MOCK_KEY, [])
+        .filter((m) => m.isActive)
+        .map((m) => ({
+          value: m.isin,
+          label: m.symbolName,
+          display: m.displayName,
+        }));
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<SelectionListDto[]>(
+      "/api/Trader/Instrument/GetSelectionList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── ایجاد ─── */
+ create: async (data: CreateInstrumentCommand): Promise<string> => {
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
+    const inst: MockInstrument = {
+      id: mockUid(),
+      isin: data.isin,
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      type: data.type,
+      market: data.market,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    items.push(inst);
+    mockSave(MOCK_KEY, items);
+    return inst.id;
+  }
+
+  const api = getAPI(API_MODULE);
+  const response = await api.post<string>(
+    "/api/Trader/Instrument/Create",
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
+
+  /* ─── ویرایش ─── */
+  update: async (data: UpdateInstrumentCommand): Promise<boolean> => {
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
+    const idx = items.findIndex((i) => i.id === data.id);
+    if (idx < 0) throw new Error("نماد پیدا نشد");
+    items[idx] = {
+      ...items[idx],
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+    };
+    mockSave(MOCK_KEY, items);
+    return true;
+  }
+
+  const api = getAPI(API_MODULE);
+  const response = await api.put<boolean>(
+    `/api/Trader/Instrument/${data.id}`,
+    {
+      id: data.id,
+      symbolName: data.symbolName,
+      displayName: data.displayName,
+      boardCode: data.boardCode ?? null,
+      tradingScheduleId: data.tradingScheduleId ?? null,
+      buyCommissionRate: data.buyCommissionRate,
+      sellCommissionRate: data.sellCommissionRate,
+      minOrderQuantity: data.minOrderQuantity,
+      maxOrderQuantity: data.maxOrderQuantity,
+      minOrderValueRial: data.minOrderValueRial ?? null,
+    },
+    { withCredentials: true },
+  );
+  return response.data;
+},
+
+  /* ─── غیرفعال‌سازی (soft delete) ─── */
+  delete: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const items = mockLoad<MockInstrument[]>(MOCK_KEY, []);
+      const idx = items.findIndex((i) => i.id === id);
+      if (idx >= 0) {
+        items[idx].isActive = false;
+        mockSave(MOCK_KEY, items);
+      }
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.delete<boolean>(
+      `/api/Trader/Instrument/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};//src/modules/Trader/api/positionApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type { PositionView } from "../models";
+import { mockLoad, mockDelay } from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+const MOCK_KEY = "mock:trader:positions";
+
+export const positionApi = {
+  GetByRun: async (runId: string): Promise<PositionView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return mockLoad<PositionView[]>(MOCK_KEY, []).filter(
+        (p) => p.runId === runId,
+      );
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<PositionView[]>(
+      `/api/Trader/Position/GetByRun/${runId}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  GetByAccount: async (accountId: string): Promise<PositionView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return mockLoad<PositionView[]>(MOCK_KEY, []).filter(
+        (p) => p.traderAccountId === accountId,
+      );
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<PositionView[]>(
+      `/api/Trader/Position/GetByAccount/${accountId}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};
+
+//src/modules/Trader/api/tradingRunApi.ts
+import getAPI from "@/core/api/axiosClient";
+import type {
+  TradingRunInfoView,
+  TradingRunDetailView,
+  CreateTradingRunCommand,
+  UpdateTradingRunCommand,
+} from "../models";
+import {
+  mockLoad,
+  mockSave,
+  mockDelay,
+  mockUid,
+} from "./_mockStorage";
+
+const API_MODULE = "trader";
+const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
+const MOCK_KEY = "mock:trader:trading-runs";
+
+export const tradingRunApi = {
+  /* ─── لیست ─── */
+  GetList: async (): Promise<TradingRunInfoView[]> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<TradingRunInfoView[]>(
+      "/api/Trader/TradingRun/GetList",
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── جزئیات ─── */
+  GetById: async (id: string): Promise<TradingRunDetailView> => {
+    if (USE_MOCK) {
+      await mockDelay(150);
+      const list = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+      const item = list.find((r) => r.id === id);
+      if (!item) throw new Error("پلن پیدا نشد");
+      // جزئیات ساده در mock
+      return {
+        ...item,
+        strategyConfigJson: "{}",
+        settings: {
+          capitalAllocationMode: item.capitalAllocationMode,
+          fixedCapitalAmount: item.fixedCapital,
+          stopLossPercentage: null,
+          stopLossPrice: null,
+          takeProfitPercentage: null,
+          takeProfitPrice: null,
+          defaultOrderMode: 0,
+          onMarketClose: 0,
+          onStop: 0,
+        },
+        symbols: [],
+        accountIds: [],
+        modifiedAt: null,
+      };
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.get<TradingRunDetailView>(
+      `/api/Trader/TradingRun/GetById/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── ایجاد ─── */
+  create: async (data: CreateTradingRunCommand): Promise<string> => {
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+    const id = mockUid();
+    items.push({
+      id,
+      name: data.name,
+      state: 1,
+      stateName: "Ready",
+      strategyKey: data.strategyKey,
+      primaryTimeFrame: data.primaryTimeFrame,
+      primaryTimeFrameName: "1d",
+      capitalAllocationMode: data.settings.capitalAllocationMode,
+      fixedCapital: data.settings.fixedCapitalAmount ?? null,
+      targetCurrency: data.targetCurrency ?? null,
+      strengthMultiplier: data.strengthMultiplier,
+  minDeltaPercent: data.minDeltaPercent,
+  
+  executionMode: data.executionMode,                              
+  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
+      symbolCount: data.symbols.length,
+      accountCount: data.accountIds.length,
+      startedAt: null,
+      stoppedAt: null,
+      createdAt: new Date().toISOString(),
+    });
+    mockSave(MOCK_KEY, items);
+    return id;
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.post<string>(
+    "/api/Trader/TradingRun/Create",
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
+
+  /* ─── ویرایش ─── */
+  update: async (data: UpdateTradingRunCommand): Promise<boolean> => {
+  if (USE_MOCK) {
+    await mockDelay(300);
+    const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+    const idx = items.findIndex((r) => r.id === data.id);
+    if (idx < 0) throw new Error("پلن پیدا نشد");
+    items[idx] = {
+      ...items[idx],
+      name: data.name,
+      strategyKey: data.strategyKey,
+      primaryTimeFrame: data.primaryTimeFrame,
+      capitalAllocationMode: data.settings.capitalAllocationMode,
+      fixedCapital: data.settings.fixedCapitalAmount ?? null,
+      targetCurrency: data.targetCurrency ?? null,
+      strengthMultiplier: data.strengthMultiplier,      
+  minDeltaPercent: data.minDeltaPercent,
+  
+  executionMode: data.executionMode,                             
+  executionModeName: data.executionMode === 1 ? "Paper" : "Live",
+      symbolCount: data.symbols.length,
+      accountCount: data.accountIds.length,
+    };
+    mockSave(MOCK_KEY, items);
+    return true;
+  }
+  const api = getAPI(API_MODULE);
+  const response = await api.put<boolean>(
+    `/api/Trader/TradingRun/${data.id}`,
+    data,
+    { withCredentials: true },
+  );
+  return response.data;
+},
+
+  /* ─── حذف ─── */
+  delete: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+      mockSave(MOCK_KEY, items.filter((r) => r.id !== id));
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.delete<boolean>(
+      `/api/Trader/TradingRun/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── Start ─── */
+  start: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(500);
+      const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+      const idx = items.findIndex((r) => r.id === id);
+      if (idx < 0) throw new Error("پلن پیدا نشد");
+      items[idx].state = 2;
+      items[idx].stateName = "Running";
+      items[idx].startedAt = new Date().toISOString();
+      mockSave(MOCK_KEY, items);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      `/api/Trader/TradingRun/Start/${id}`,
+      {},
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ─── Stop ─── */
+  stop: async (id: string, behavior: number): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(500);
+      const items = mockLoad<TradingRunInfoView[]>(MOCK_KEY, []);
+      const idx = items.findIndex((r) => r.id === id);
+      if (idx < 0) throw new Error("پلن پیدا نشد");
+      items[idx].state = 3;
+      items[idx].stateName = "Stopped";
+      items[idx].stoppedAt = new Date().toISOString();
+      mockSave(MOCK_KEY, items);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      `/api/Trader/TradingRun/Stop/${id}?behavior=${behavior}`,
+      {},
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+};

@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/TradingRuns/components/RunStateBadge.tsx
 import React from "react";
 import {
   TradingRunState,

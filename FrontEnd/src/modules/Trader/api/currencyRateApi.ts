@@ -1,3 +1,4 @@
+//src/modules/Trader/api/currencyRateApi.ts
 import getAPI from "@/core/api/axiosClient";
 import type { CurrencyRateView, CreateCurrencyRateCommand } from "../models";
 import {

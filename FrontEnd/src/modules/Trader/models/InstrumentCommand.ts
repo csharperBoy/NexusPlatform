@@ -1,3 +1,4 @@
+//src/modules/Trader/models/InstrumentCommand.ts
 export interface OptionContractModel {
   optionType: number;
   strikePrice: number;

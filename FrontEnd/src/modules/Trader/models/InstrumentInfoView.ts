@@ -1,3 +1,4 @@
+//src/modules/Trader/models/InstrumentInfoView.ts
 export interface InstrumentInfoView {
   id: string;
   isin: string;

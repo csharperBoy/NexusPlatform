@@ -1,3 +1,4 @@
+//src/modules/Trader/hooks/useInstrumentManagement.ts
 import { instrumentApi } from "../api/instrumentApi";
 import type {
   InstrumentInfoView,
