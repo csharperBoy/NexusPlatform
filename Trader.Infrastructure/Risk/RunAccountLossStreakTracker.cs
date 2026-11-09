@@ -12,11 +12,22 @@ using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Risk;
 
+/// <summary>
+/// Singleton. Cache in-memory از LossStreakState per (Run, Account).
+///
+/// Lifetime note:
+///   • ITradingEventLogger Scoped است (per-tick buffer, FlushAsync persists).
+///   • این کلاس Singleton است.
+///   • برای emit رویدادهای Circuit (که نادرند — یک‌بار در هر activation)،
+///     از IServiceScopeFactory یک scope جدید می‌سازیم، Logger Scoped را
+///     Resolve می‌کنیم، Log می‌کنیم و همان‌جا FlushAsync می‌کنیم.
+///     این الگو دقیقاً همان است که TradingRuntimeWorker.TickAsync در پایان
+///     هر tick انجام می‌دهد، فقط با scope مستقل.
+/// </summary>
 public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IOptionsMonitor<TradingRiskOptions> _options;
-    private readonly ITradingEventLogger _eventLogger;
     private readonly ILogger<RunAccountLossStreakTracker> _logger;
 
     private readonly ConcurrentDictionary<(Guid RunId, Guid AccountId), LossStreakState> _cache = new();
@@ -25,12 +36,10 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
     public RunAccountLossStreakTracker(
         IServiceScopeFactory scopeFactory,
         IOptionsMonitor<TradingRiskOptions> options,
-        ITradingEventLogger eventLogger,
         ILogger<RunAccountLossStreakTracker> logger)
     {
         _scopeFactory = scopeFactory;
         _options = options;
-        _eventLogger = eventLogger;
         _logger = logger;
     }
 
@@ -41,7 +50,7 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
 
         if (_cache.TryGetValue(key, out var cached))
         {
-            // ── Lazy reset روی Cooldown expiry ──
+            // Lazy reset روی Cooldown expiry
             if (cached.CircuitBrokenAt.HasValue
                 && cached.CooldownExpiresAt.HasValue
                 && DateTime.UtcNow >= cached.CooldownExpiresAt.Value)
@@ -57,20 +66,18 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
             return cached;
         }
 
-        // Cache miss → load از DB
         var loaded = await LoadFromDbAsync(runId, accountId, ct);
         if (loaded is not null)
         {
             _cache[key] = loaded;
-            return await GetAsync(runId, accountId, ct);   // بازگشتی برای lazy reset
+            return await GetAsync(runId, accountId, ct);
         }
 
-        // هیچ رکوردی نیست → state پیش‌فرض
         return new LossStreakState(runId, accountId, 0, null, null, null, null);
     }
 
     public async Task OnPositionClosedAsync(
-    Position position, CancellationToken ct = default)
+        Position position, CancellationToken ct = default)
     {
         var opts = _options.CurrentValue.CircuitBreaker;
         if (!opts.Enabled) return;
@@ -82,6 +89,11 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
 
         var key = (position.RunId, position.TraderAccountId);
         var lockObj = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+
+        var justBroke = false;
+        int brokenCount = 0;
+        DateTime? brokenExpiresAt = null;
+
         await lockObj.WaitAsync(ct);
         try
         {
@@ -89,14 +101,30 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
             var uow = scope.ServiceProvider
                 .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
 
-            var (entity, _) = await LoadOrCreateInScopeAsync(
-                position.RunId, position.TraderAccountId, uow, ct);
+            var existing = await uow.RunAccountLossStreakSpecs.GetBySpecAsync(
+                new RunAccountLossStreakByRunAccountSpec(
+                    position.RunId, position.TraderAccountId));
+
+            RunAccountLossStreak entity;
+            if (existing is null)
+            {
+                entity = RunAccountLossStreak.Create(
+                    position.RunId, position.TraderAccountId);
+                await uow.RunAccountLossStreaks.AddAsync(entity);
+            }
+            else
+            {
+                entity = existing;
+            }
 
             var wasActive = entity.CircuitBrokenAt.HasValue;
 
             if (pnl > 0m)
             {
                 entity.RecordWin(DateTime.UtcNow);
+                _logger.LogDebug(
+                    "Recorded Win for (run={RunId}, account={AccountId}). Streak reset.",
+                    position.RunId, position.TraderAccountId);
             }
             else
             {
@@ -104,6 +132,11 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
                     DateTime.UtcNow,
                     opts.ConsecutiveLosses,
                     TimeSpan.FromMinutes(opts.CooldownMinutes));
+                _logger.LogInformation(
+                    "Recorded Loss for (run={RunId}, account={AccountId}). " +
+                    "Streak={Count}/{Threshold}",
+                    position.RunId, position.TraderAccountId,
+                    entity.ConsecutiveLosses, opts.ConsecutiveLosses);
             }
 
             await uow.SaveChangesAsync(ct);
@@ -111,38 +144,49 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
 
             if (!wasActive && entity.CircuitBrokenAt.HasValue)
             {
-                _eventLogger.Log(
-                    stage: TradingStage.Risk,
-                    type: TradingEventType.CircuitBreakerTriggered,
-                    severity: TradingEventSeverity.Warning,
-                    message: $"Circuit Breaker فعال شد: {entity.ConsecutiveLosses} " +
-                             $"ضرر متوالی برای (run, account={position.TraderAccountId}). " +
-                             $"Cooldown: {opts.CooldownMinutes} دقیقه.",
-                    payload: new
-                    {
-                        consecutiveLosses = entity.ConsecutiveLosses,
-                        threshold = opts.ConsecutiveLosses,
-                        cooldownMinutes = opts.CooldownMinutes,
-                        cooldownExpiresAt = entity.CooldownExpiresAt,
-                    },
-                    runId: position.RunId,
-                    isin: position.Isin,
-                    accountId: position.TraderAccountId,
-                    positionId: position.Id);
+                justBroke = true;
+                brokenCount = entity.ConsecutiveLosses;
+                brokenExpiresAt = entity.CooldownExpiresAt;
             }
         }
         finally
         {
             lockObj.Release();
         }
-    }
 
+        // Emit OUTSIDE lock (لاگ نباید lock را نگه دارد)
+        if (justBroke)
+        {
+            await LogEventAsync(
+                stage: TradingStage.Risk,
+                type: TradingEventType.CircuitBreakerTriggered,
+                severity: TradingEventSeverity.Warning,
+                message: $"Circuit Breaker فعال شد: {brokenCount} " +
+                         $"ضرر متوالی برای (run, account={position.TraderAccountId}). " +
+                         $"Cooldown: {opts.CooldownMinutes} دقیقه.",
+                payload: new
+                {
+                    consecutiveLosses = brokenCount,
+                    threshold = opts.ConsecutiveLosses,
+                    cooldownMinutes = opts.CooldownMinutes,
+                    cooldownExpiresAt = brokenExpiresAt,
+                },
+                runId: position.RunId,
+                isin: position.Isin,
+                accountId: position.TraderAccountId,
+                positionId: position.Id,
+                ct: ct);
+        }
+    }
 
     public async Task ResetAsync(
         Guid runId, Guid accountId, string? reason, CancellationToken ct = default)
     {
         var key = (runId, accountId);
         var lockObj = _locks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+
+        var wasActive = false;
+
         await lockObj.WaitAsync(ct);
         try
         {
@@ -152,24 +196,13 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
 
             var existing = await uow.RunAccountLossStreakSpecs.GetBySpecAsync(
                 new RunAccountLossStreakByRunAccountSpec(runId, accountId));
+
             if (existing is null) return;
 
-            var wasActive = existing.CircuitBrokenAt.HasValue;
+            wasActive = existing.CircuitBrokenAt.HasValue;
             existing.Reset();
             await uow.SaveChangesAsync(ct);
             _cache[key] = MapToState(existing);
-
-            if (wasActive)
-            {
-                _eventLogger.Log(
-                    stage: TradingStage.Risk,
-                    type: TradingEventType.CircuitBreakerReset,
-                    severity: TradingEventSeverity.Info,
-                    message: $"Circuit Breaker reset شد. دلیل: {reason ?? "manual"}.",
-                    payload: new { reason },
-                    runId: runId,
-                    accountId: accountId);
-            }
 
             _logger.LogInformation(
                 "Reset loss streak for (run={RunId}, account={AccountId}). Reason: {Reason}",
@@ -178,6 +211,19 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
         finally
         {
             lockObj.Release();
+        }
+
+        if (wasActive)
+        {
+            await LogEventAsync(
+                stage: TradingStage.Risk,
+                type: TradingEventType.CircuitBreakerReset,
+                severity: TradingEventSeverity.Info,
+                message: $"Circuit Breaker reset شد. دلیل: {reason ?? "manual"}.",
+                payload: new { reason },
+                runId: runId,
+                accountId: accountId,
+                ct: ct);
         }
     }
 
@@ -236,7 +282,52 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
         return active.Select(MapToState).ToList();
     }
 
-    /* ═══════════════ DB Helpers ═══════════════ */
+    /* ═══════════════ Helpers ═══════════════ */
+
+    /// <summary>
+    /// Scope مخصوص لاگ — چون ITradingEventLogger Scoped است و این کلاس Singleton.
+    /// Log + Flush در همان Scope → رویداد بلافاصله Persist می‌شود.
+    /// فرکانس: فقط هنگام Circuit transition (نادر). هزینه‌ی ساخت Scope قابل قبول.
+    /// </summary>
+    private async Task LogEventAsync(
+        TradingStage stage,
+        TradingEventType type,
+        TradingEventSeverity severity,
+        string message,
+        object? payload = null,
+        Guid? runId = null,
+        string? isin = null,
+        Guid? accountId = null,
+        Guid? positionId = null,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            using var logScope = _scopeFactory.CreateScope();
+            var logger = logScope.ServiceProvider
+                .GetRequiredService<ITradingEventLogger>();
+
+            logger.Log(
+                stage: stage,
+                type: type,
+                severity: severity,
+                message: message,
+                payload: payload,
+                runId: runId,
+                isin: isin,
+                accountId: accountId,
+                positionId: positionId);
+
+            await logger.FlushAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            // لاگ رویداد نباید منطق Circuit Breaker را بشکند
+            _logger.LogError(ex,
+                "Failed to persist {Type} event for (run={RunId}, account={AccountId}).",
+                type, runId, accountId);
+        }
+    }
 
     private async Task<LossStreakState?> LoadFromDbAsync(
         Guid runId, Guid accountId, CancellationToken ct)
@@ -249,33 +340,6 @@ public sealed class RunAccountLossStreakTracker : IRunAccountLossStreakTracker
             new RunAccountLossStreakByRunAccountSpec(runId, accountId));
 
         return entity is null ? null : MapToState(entity);
-    }
-
-    private async Task<(RunAccountLossStreak Entity, bool IsNew)> LoadOrCreateInScopeAsync(
-    Guid runId, Guid accountId,
-    ITraderUnitOfWork<TraderDbContext> uow,
-    CancellationToken ct)
-    {
-        var existing = await uow.RunAccountLossStreakSpecs.GetBySpecAsync(
-            new RunAccountLossStreakByRunAccountSpec(runId, accountId));
-
-        if (existing is not null)
-            return (existing, false);
-
-        var created = RunAccountLossStreak.Create(runId, accountId);
-        await uow.RunAccountLossStreaks.AddAsync(created);
-        return (created, true);
-    }
-
-    private async Task UpdateEntityAsync(
-        RunAccountLossStreak entity, CancellationToken ct)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var uow = scope.ServiceProvider
-            .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-
-        await uow.RunAccountLossStreaks.UpdateAsync(entity);
-        await uow.SaveChangesAsync(ct);
     }
 
     private static LossStreakState MapToState(RunAccountLossStreak e) => new(
