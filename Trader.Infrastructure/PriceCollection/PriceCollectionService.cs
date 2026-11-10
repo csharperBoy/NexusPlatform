@@ -1,13 +1,14 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Scheduler.Application.Abstractions;
 using Scheduler.Domain.ValueObjects;
+using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.PriceCollection;
 using Trader.Application.Dtos.PriceCollection;
 using Trader.Application.Scheduler;
 using Trader.Application.Specifications.CurrencyRates;
+using Trader.Application.Specifications.PriceCollection;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -47,9 +48,9 @@ public sealed class PriceCollectionService
 
     public async Task<Guid> CreateSourceAsync(CreatePriceSourceModel model)
     {
-        var existing = await _uow.PriceSources.GetAllAsync(
-            q => q.Where(s => s.Code == model.Code.ToLowerInvariant()));
-        if (existing.Count() > 0)
+        var existing = await _uow.PriceSourceSpecs.GetBySpecAsync(
+    new PriceSourceByCodeSpec(model.Code.ToLowerInvariant()));
+        if (existing is not null)
             throw new InvalidOperationException(
                 $"PriceSource with Code '{model.Code}' already exists.");
 

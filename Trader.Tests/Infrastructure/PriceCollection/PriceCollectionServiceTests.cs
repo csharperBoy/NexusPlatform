@@ -12,7 +12,6 @@ using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.PriceCollection;
 using Trader.Application.Dtos.PriceCollection;
 using Trader.Application.Scheduler;
-using Trader.Application.Specifications.CurrencyRates;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
@@ -48,7 +47,7 @@ public class PriceCollectionServiceTests
     public async Task CreateSourceAsync_DuplicateCode_Throws()
     {
         var (sut, deps) = CreateSut();
-        deps.SetSourcesResponse(PriceSource.Create(
+        deps.SetExistingSource(PriceSource.Create(
             "dup", "Existing", PriceSourceType.Tgju,
             "{}", "USD", "IRR"));
 
@@ -350,13 +349,13 @@ public class PriceCollectionServiceTests
 
     private static (PriceCollectionService Sut, TestDeps Deps) CreateSut()
     {
-        // TraderDbContext واقعی InMemory — فقط برای _uow.Context.CurrencyRates.AddRangeAsync
         var db = new TraderDbContext(
             new DbContextOptionsBuilder<TraderDbContext>()
                 .UseInMemoryDatabase(Guid.NewGuid().ToString())
                 .Options);
 
         var sources = new Mock<IRepository<TraderDbContext, PriceSource, Guid>>();
+        var sourceSpecs = new Mock<ISpecificationRepository<PriceSource, Guid>>();
         var jobs = new Mock<IRepository<TraderDbContext, PriceCollectionJob, Guid>>();
         var currencyRateSpecs = new Mock<ISpecificationRepository<CurrencyRate, Guid>>();
 
@@ -364,12 +363,20 @@ public class PriceCollectionServiceTests
         jobs.Setup(x => x.AddAsync(It.IsAny<PriceCollectionJob>())).Returns(Task.CompletedTask);
         jobs.Setup(x => x.UpdateAsync(It.IsAny<PriceCollectionJob>())).Returns(Task.CompletedTask);
 
+        // Default: source lookup by spec returns null (no duplicate)
+        sourceSpecs.Setup(x => x.GetBySpecAsync(It.IsAny<ISpecification<PriceSource>>()))
+            .ReturnsAsync((PriceSource?)null);
+
         var uow = new Mock<ITraderUnitOfWork<TraderDbContext>>();
         uow.SetupGet(x => x.Context).Returns(db);
         uow.SetupGet(x => x.PriceSources).Returns(sources.Object);
+        uow.SetupGet(x => x.PriceSourceSpecs).Returns(sourceSpecs.Object);
         uow.SetupGet(x => x.PriceCollectionJobs).Returns(jobs.Object);
         uow.SetupGet(x => x.CurrencyRateSpecs).Returns(currencyRateSpecs.Object);
-        uow.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        // Forward to real DbContext for actual persistence in Collect tests
+        uow.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Returns<CancellationToken>(async ct => await db.SaveChangesAsync(ct));
 
         var provider = new Mock<IPriceSourceProvider>();
         provider.SetupGet(x => x.SourceType).Returns(PriceSourceType.Tgju);
@@ -394,12 +401,13 @@ public class PriceCollectionServiceTests
             NullLogger<PriceCollectionService>.Instance);
 
         return (sut, new TestDeps(
-            sources, jobs, currencyRateSpecs, scheduler,
+            sources, sourceSpecs, jobs, currencyRateSpecs, scheduler,
             providerResolver, new[] { provider }, db));
     }
 
     private sealed record TestDeps(
         Mock<IRepository<TraderDbContext, PriceSource, Guid>> Sources,
+        Mock<ISpecificationRepository<PriceSource, Guid>> SourceSpecs,
         Mock<IRepository<TraderDbContext, PriceCollectionJob, Guid>> Jobs,
         Mock<ISpecificationRepository<CurrencyRate, Guid>> CurrencyRateSpecs,
         Mock<ISchedulerService> Scheduler,
@@ -407,17 +415,11 @@ public class PriceCollectionServiceTests
         Mock<IPriceSourceProvider>[] Providers,
         TraderDbContext Db)
     {
-        /// <summary>
-        /// Default response برای GetAllAsync با queryOptions.
-        /// نکته: در Service، CreateSourceAsync از GetAllAsync استفاده می‌کند.
-        /// </summary>
-        public void SetSourcesResponse(params PriceSource[] existing)
+        /// <summary>Setup duplicate-check Spec to return an existing source.</summary>
+        public void SetExistingSource(PriceSource source)
         {
-            var list = existing.ToList();
-            Sources.Setup(x => x.GetAllAsync(
-                    It.IsAny<Func<IQueryable<PriceSource>, IOrderedQueryable<PriceSource>>>(),
-                    It.IsAny<Expression<Func<PriceSource, object>>[]>()))
-                .ReturnsAsync(list);
+            SourceSpecs.Setup(x => x.GetBySpecAsync(It.IsAny<ISpecification<PriceSource>>()))
+                .ReturnsAsync(source);
         }
     }
 }
