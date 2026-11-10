@@ -57,6 +57,9 @@ public class TraderDbContext : Base_DbContext
     public virtual DbSet<RunDailyEquitySnapshot> RunDailyEquitySnapshots { get; set; }
     public virtual DbSet<RunAccountDailyEquitySnapshot> RunAccountDailyEquitySnapshots { get; set; }
     public virtual DbSet<RunAccountLossStreak> RunAccountLossStreaks { get; set; }
+    /* ═══════════ Price Collection (B1) ═══════════ */
+    public virtual DbSet<PriceSource> PriceSources { get; set; } = default!;
+    public virtual DbSet<PriceCollectionJob> PriceCollectionJobs { get; set; } = default!;
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -105,5 +108,7 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new RunDailyEquitySnapshotConfiguration());
         modelBuilder.ApplyConfiguration(new RunAccountDailyEquitySnapshotConfiguration());
         modelBuilder.ApplyConfiguration(new RunAccountLossStreakConfiguration());
+        modelBuilder.ApplyConfiguration(new PriceSourceConfiguration());
+        modelBuilder.ApplyConfiguration(new PriceCollectionJobConfiguration());
     }
 }

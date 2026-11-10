@@ -55,7 +55,7 @@ public class ModuleInitializer : IHostedService
             // ─── Trading Schedules Seed ───
             var uow = services.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
             await TraderSeedData.SeedTradingSchedulesAsync(uow, _logger, cancellationToken);
-
+            await TraderSeedData.SeedPriceSourcesAsync(uow, _logger, cancellationToken);
             // ─── NEW: Register Retention Recurring Schedule ───
             await EnsureRetentionRecurringScheduleAsync(services, cancellationToken);
 

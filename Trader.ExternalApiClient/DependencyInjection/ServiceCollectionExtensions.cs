@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Trader.ExternalApiClient.EasyTrader;
+using Trader.ExternalApiClient.Tgju;
 
 namespace Trader.ExternalApiClient.DependencyInjection
 {
@@ -41,6 +43,24 @@ namespace Trader.ExternalApiClient.DependencyInjection
 
             services.AddSingleton<EasyTraderApiClient>();
 
+            //***********************************************//
+
+            // ─── TGJU ───
+            services.Configure<TgjuOptions>(
+                configuration.GetSection(TgjuOptions.SectionName));
+
+            services.AddHttpClient("Tgju", (sp, client) =>
+            {
+                var tgju = sp.GetRequiredService<IOptions<TgjuOptions>>().Value;
+                client.BaseAddress = new Uri(tgju.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(tgju.TimeoutSeconds);
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(tgju.UserAgent);
+                client.DefaultRequestHeaders.Accept
+                    .ParseAdd("application/json, text/javascript, */*; q=0.01");
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "fa");
+            });
+
+            services.AddSingleton<TgjuApiClient>();
             return services;
         }
     }

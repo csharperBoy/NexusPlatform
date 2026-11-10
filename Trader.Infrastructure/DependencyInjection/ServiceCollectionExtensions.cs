@@ -15,6 +15,7 @@ using Trader.Application.Abstractions.Indicators;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Positions;
+using Trader.Application.Abstractions.PriceCollection;
 using Trader.Application.Abstractions.Reconciliation;
 using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.Runtime;
@@ -40,6 +41,8 @@ using Trader.Infrastructure.HistoricalData;
 using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
 using Trader.Infrastructure.Positions;
+using Trader.Infrastructure.PriceCollection;
+using Trader.Infrastructure.PriceCollection.Tgju;
 using Trader.Infrastructure.Reconciliation;
 using Trader.Infrastructure.Risk;
 using Trader.Infrastructure.Risk.Guards;
@@ -217,6 +220,30 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddScoped<ICapitalAllocator, CompositeCapitalAllocator>();
             services.AddSingleton<IRateLimiterTracker, InMemoryRateLimiterTracker>();
             services.AddScoped<IRiskGuard, RateLimiterGuard>();
+            /* ═══════════ Price Collection (B1) ═══════════ */
+            services.Configure<PriceCollectionOptions>(
+                configuration.GetSection(PriceCollectionOptions.SectionName));
+            services.Configure<PriceCollectionOptions>(
+      configuration.GetSection(PriceCollectionOptions.SectionName));
+
+            services.AddSingleton<IPriceSourceProvider, TgjuPriceSourceProvider>();
+            services.AddSingleton<IPriceSourceProviderResolver, PriceSourceProviderResolver>();
+
+            services.AddScoped<PriceCollectionService>();
+            services.AddScoped<IPriceCollectionService>(sp => sp.GetRequiredService<PriceCollectionService>());
+            services.AddScoped<IPriceSourceQueryService>(sp => sp.GetRequiredService<PriceCollectionService>());
+            services.AddScoped<IPriceCollectionJobQueryService>(sp => sp.GetRequiredService<PriceCollectionService>());
+
+            services.AddScheduledJobHandler<CollectPricePayload, CollectPriceJobHandler>();
+
+            services.AddScoped<IRepository<TraderDbContext, PriceSource, Guid>,
+                EfRepository<TraderDbContext, PriceSource, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, PriceCollectionJob, Guid>,
+                EfRepository<TraderDbContext, PriceCollectionJob, Guid>>();
+            services.AddScoped<ISpecificationRepository<PriceSource, Guid>,
+                EfSpecificationRepository<TraderDbContext, PriceSource, Guid>>();
+            services.AddScoped<ISpecificationRepository<PriceCollectionJob, Guid>,
+                EfSpecificationRepository<TraderDbContext, PriceCollectionJob, Guid>>();
             // ─── Execution ───
             services.AddScoped<IOrderIntentBuilder, OrderIntentBuilder>();
             // Live + Paper dispatchers (concrete types for Resolver)

@@ -2,67 +2,80 @@
 using Trader.Domain.ValueObjects;
 using Xunit;
 
-namespace Trader.Tests.Domain;
+namespace Trader.Tests.Domain.ValueObjects;
 
 public class CurrencyCodeTests
 {
     [Theory]
-    [InlineData("USD")]
-    [InlineData("IRR")]
-    [InlineData("GOLD")]
-    [InlineData("SILVER")]
-    [InlineData("COPPER")]
-    [InlineData("PLATINUM")]
-    [InlineData("OIL")]
-    public void RequireValid_AcceptsWhitelisted(string code)
-    {
-        var result = CurrencyCode.RequireValid(code, "targetCurrency");
-        result.Should().Be(code.ToUpperInvariant());
-    }
-
-    [Theory]
+    [InlineData("IRR", "IRR")]
     [InlineData("usd", "USD")]
+    [InlineData("  USD  ", "USD")]
+    [InlineData("EUR", "EUR")]
+    [InlineData("AED", "AED")]
     [InlineData("gold", "GOLD")]
-    [InlineData("  PlAtInUm  ", "PLATINUM")]
-    public void RequireValid_NormalizesCaseAndWhitespace(string input, string expected)
+    [InlineData("SILVER", "SILVER")]
+    [InlineData("copper", "COPPER")]
+    [InlineData("Platinum", "PLATINUM")]
+    [InlineData("OIL", "OIL")]
+    public void RequireValid_WithSupportedCurrency_ReturnsNormalized(
+        string input, string expected)
     {
-        CurrencyCode.RequireValid(input, "targetCurrency").Should().Be(expected);
+        CurrencyCode.RequireValid(input, "test").Should().Be(expected);
     }
 
     [Theory]
-    [InlineData("USDD")]
-    [InlineData("XAU")]
-    [InlineData("")]
-    [InlineData("A")]
-    public void RequireValid_RejectsInvalid(string code)
+    [InlineData("USDD")]      // typo
+    [InlineData("XYZ")]       // unknown
+    [InlineData("A")]         // too short
+    [InlineData("ABCDEFGHIJK")] // too long
+    public void RequireValid_WithInvalidCurrency_Throws(string input)
     {
-        Action act = () => CurrencyCode.RequireValid(code, "targetCurrency");
-        act.Should().Throw<ArgumentException>();
+        var act = () => CurrencyCode.RequireValid(input, "test");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("test");
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void NormalizeOrNull_ReturnsNullForEmpty(string? code)
+    public void RequireValid_WithNullOrEmpty_Throws(string? input)
     {
-        CurrencyCode.NormalizeOrNull(code, "targetCurrency").Should().BeNull();
+        var act = () => CurrencyCode.RequireValid(input, "test");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("test");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void NormalizeOrNull_WithNullOrEmpty_ReturnsNull(string? input)
+    {
+        CurrencyCode.NormalizeOrNull(input, "test").Should().BeNull();
     }
 
     [Fact]
-    public void NormalizeOrNull_ValidatesWhenProvided()
+    public void NormalizeOrNull_WithValidCurrency_ReturnsNormalized()
     {
-        CurrencyCode.NormalizeOrNull("gold", "x").Should().Be("GOLD");
-
-        Action act = () => CurrencyCode.NormalizeOrNull("XAU", "x");
-        act.Should().Throw<ArgumentException>();
+        CurrencyCode.NormalizeOrNull("usd", "test").Should().Be("USD");
     }
 
+    [Fact]
+    public void NormalizeOrNull_WithInvalidCurrency_Throws()
+    {
+        var act = () => CurrencyCode.NormalizeOrNull("USDD", "test");
+
+        act.Should().Throw<ArgumentException>();
+    }
     [Fact]
     public void All_ContainsBothFiatAndCommodities()
     {
         var all = CurrencyCode.All;
-        all.Should().Contain(new[] { "IRR", "USD", "EUR" });
+
+        all.Should().Contain(new[] { "IRR", "USD", "EUR", "AED" });
         all.Should().Contain(new[] { "GOLD", "SILVER", "COPPER", "PLATINUM", "OIL" });
     }
 }

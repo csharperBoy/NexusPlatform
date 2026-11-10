@@ -65,7 +65,11 @@ ISpecificationRepository<CandleRecord, Guid> candleRecordSpecs,
 IRepository<TraderDbContext, CurrencyRate, Guid> currencyRates,
 IRepository<TraderDbContext, TradingEvent, Guid> tradingEvents,
 ISpecificationRepository<CurrencyRate, Guid> currencyRateSpecs,
-ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
+ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs, 
+IRepository<TraderDbContext, PriceSource, Guid> priceSources,
+IRepository<TraderDbContext, PriceCollectionJob, Guid> priceCollectionJobs,
+ISpecificationRepository<PriceSource, Guid> priceSourceSpecs,
+ISpecificationRepository<PriceCollectionJob, Guid> priceCollectionJobSpecs,
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -100,6 +104,10 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
         OrderTrades = orderTrades;
         OrderTradeSpecs = orderTradeSpecs;
         StrategyEvaluations = strategyEvaluations;
+        PriceSources = priceSources;
+        PriceCollectionJobs = priceCollectionJobs;
+        PriceSourceSpecs = priceSourceSpecs;
+        PriceCollectionJobSpecs = priceCollectionJobSpecs;
         StrategyEvaluationSpecs = strategyEvaluationSpecs;
         MarketSnapshots = marketSnapshots;
         MarketSnapshotSpecs = marketSnapshotSpecs;
@@ -125,6 +133,10 @@ ISpecificationRepository<TradingEvent, Guid> tradingEventSpecs,
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     public IRepository<TraderDbContext, TraderAccount, Guid> Accounts { get; }
     public IRepository<TraderDbContext, Instrument, Guid> Instruments { get; }
+    public IRepository<TraderDbContext, PriceSource, Guid> PriceSources { get; }
+    public IRepository<TraderDbContext, PriceCollectionJob, Guid> PriceCollectionJobs { get; }
+    public ISpecificationRepository<PriceSource, Guid> PriceSourceSpecs { get; }
+    public ISpecificationRepository<PriceCollectionJob, Guid> PriceCollectionJobSpecs { get; }
     public IRepository<TraderDbContext, InstrumentOrderPreset, Guid> InstrumentOrderPresets { get; }
     public IRepository<TraderDbContext, TradingRun, Guid> TradingRuns { get; }
     public IRepository<TraderDbContext, Signal, Guid> Signals { get; }

@@ -202,6 +202,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Kill Switch, Circuit Breaker, and Risk Events",
                             DisplayOrder = 3017,
                             Icon = "shield",
+                        },new()
+                        {
+                            Key = "trader.pricecollection",
+                            Name = "Price Collection",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Price source management and collection jobs",
+                            DisplayOrder = 3018,
+                            Icon = "dollar-sign",
                         },
                     }
                 }
@@ -247,6 +256,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.backtest", roleId, "Full access to Backtest"),
                 FullAccess("trader.historicaldata", roleId, "Full access to Historical Data Collection"),
                 FullAccess("trader.risk", roleId, "Full access to Risk Management"),
+                FullAccess("trader.pricecollection", roleId, "Full access to Price Collection"),
             };
         }
 
@@ -450,6 +460,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.risk",
                             ParentKey = "trader",
                             Path = "/trader/risk"
+                        },new()
+                        {
+                            Title = "جمع‌آوری قیمت",
+                            Description = "Price Source و Jobهای جمع‌آوری نرخ",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 116,
+                            Key = "trader.pricecollection",
+                            ParentKey = "trader",
+                            Path = "/trader/price-collection"
                         },
                     }
                 }
@@ -484,7 +503,34 @@ namespace Trader.Infrastructure.Data
         }
 
         /* ═══════════════════ Trading Schedules ═══════════════════ */
+        public static async Task SeedPriceSourcesAsync(
+    ITraderUnitOfWork<TraderDbContext> uow,
+    ILogger logger,
+    CancellationToken ct = default)
+        {
+            var existing = await uow.PriceSources.GetAllAsync(
+                q => q.Where(s => s.Code == "tgju-usd"));
 
+            if (existing.Count() > 0)
+            {
+                logger.LogDebug("tgju-usd PriceSource exists; skipping.");
+                return;
+            }
+
+            var source = PriceSource.Create(
+                code: "tgju-usd",
+                name: "TGJU USD/IRR",
+                type: Trader.Domain.Enums.PriceSourceType.Tgju,
+                configJson: """{"indicator":"price_dollar_rl","minRate":100000,"maxRate":10000000,"maxDailyChangePct":20}""",
+                fromAsset: "USD",
+                toAsset: "IRR");
+
+            await uow.PriceSources.AddAsync(source);
+            await uow.SaveChangesAsync(ct);
+
+            logger.LogInformation(
+                "Seeded PriceSource: tgju-usd (indicator=price_dollar_rl)");
+        }
         public static async Task SeedTradingSchedulesAsync(
             ITraderUnitOfWork<TraderDbContext> uow,
             ILogger logger,
