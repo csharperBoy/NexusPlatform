@@ -1736,6 +1736,35 @@ ORDER BY OccurredAt DESC;
 ⚠️ **Reconciliation** — بعد از یک هفته، `POST /api/Trader/Reconciliation/Run` بزن و Mismatchها را بررسی کن
 
 ---
+---
+
+## Appendix — Platform Dependencies
+
+### Scheduler Module Capabilities
+
+Trader از `Scheduler` Module برای Recurring Jobها استفاده می‌کند. Capabilityهای آن:
+
+| Capability | Status | Used In Trader |
+|---|---|---|
+| `ScheduleRecurringAsync(payload, pattern, startAt, tz, maxFailures)` | ✅ | A5 (Retention), B1 (PriceCollection) |
+| `ScheduleAsync(payload, fireAt, queue)` (One-off) | ✅ | B1 (Backfill) |
+| `Pause/Resume/Cancel RecurringAsync(id)` | ✅ | B1 (Job Start/Stop) |
+| `QueryRecurringAsync(filter)` | ✅ | B1 (Job List) |
+| `RecurrencePattern.Daily/Weekly/Monthly` | ✅ | A5 |
+| **`RecurrencePattern.Minutely/Hourly`** | ✅ (2026-11-09) | B1 (Telegram polling، Live rates) |
+| **`RecurrencePattern.Cron(expression)`** | ✅ (Cronos 0.8.4, 2026-11-09) | B1+ (Complex schedules) |
+| Pre-fire buffer (default 15s) + PreciseDelay | ✅ | تمام Recurring |
+| Auto-reschedule بعد از success/failure | ✅ | تمام Recurring |
+| Max failures (default 10) → auto Pause | ✅ | تمام Recurring |
+
+**Semantics:**
+- **Minutely/Houly:** Real-time interval، DST-free (anchor + k×interval in UTC)
+- **Daily/Weekly/Monthly:** Time-of-day anchor، DST-aware (local time preserved)
+- **Cron:** Cronos-based، DST-aware، 5-field (minute hour day-of-month month day-of-week)
+
+**Backward Compat:** enum values 0/1/2 (Daily/Weekly/Monthly) بدون تغییر. ردیف‌های DB بدون Migration Parse می‌شوند.
+
+**Scheduler.Tests:** 28 تست (Minutely/Hourly/Cron + Daily/Weekly/Monthly regression + JSON compat).
 
 ## پیوست: فایل‌های کلیدی
 

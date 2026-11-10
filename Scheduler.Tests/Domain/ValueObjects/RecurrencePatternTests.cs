@@ -186,8 +186,8 @@ public class RecurrencePatternTests
     {
         var anchor = new DateTimeOffset(2026, 1, 15, 10, 0, 0, TimeSpan.Zero);
         var after = new DateTimeOffset(2026, 1, 20, 0, 0, 0, TimeSpan.Zero);
-        var p = RecurrencePattern.Monthly(15);
-
+        
+        var p = RecurrencePattern.Monthly(1, 15);
         p.GetNextOccurrence(anchor, after, UtcTz)
             .Should().Be(new DateTimeOffset(2026, 2, 15, 10, 0, 0, TimeSpan.Zero));
     }

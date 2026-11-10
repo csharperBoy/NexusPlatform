@@ -95,9 +95,6 @@ public sealed class RecurrencePattern
             null);
     }
 
-    public static RecurrencePattern Monthly(params int[] daysOfMonth)
-        => Monthly(1, daysOfMonth);
-
     public static RecurrencePattern Monthly(int interval, params int[] daysOfMonth)
     {
         if (daysOfMonth is null || daysOfMonth.Length == 0)

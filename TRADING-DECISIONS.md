@@ -488,6 +488,150 @@ text
 - چند Source که همان `(From, To, EffectiveAt)` را بدهند → اول Persist می‌شود، دوم Skip (نه override)
 - `Source` column فقط در **اولین** Persist ست می‌شود؛ نمی‌شود بعداً Override کرد. اگر لازم شد، Phase C: `UpsertRateCommand`.
 
+### D43 — SchedulerRecurringId روی PriceCollectionJob
+
+**تصمیم:** `PriceCollectionJob.SchedulerRecurringId` (Guid?, nullable) — در `Start` (Recurring) از `ScheduleRecurringAsync` پر می‌شود؛ در `Stop` با `CancelRecurringAsync(id)` صفر می‌شود.
+
+**دلیل:** `QueryRecurringAsync` فیلتر Name ندارد. ذخیره ID بهترین راه برای Stop دقیق.
+
+**Fallback (B2):** اگر DB از دست رفت، `QueryRecurringAsync(JobType="trader.price-collect")` + Parse PayloadJson + match با JobId — Recovery روی `ModuleInitializer`.
+
+---
+
+### D44 — Handler: Polly 3× → Throw → Scheduler Fail → Pause @ 10
+
+**تصمیم:** `CollectPriceJobHandler.ExecuteAsync`:
+1. Polly Retry 3× (1s, 3s, 9s backoff) روی `ITgjuClient` call
+2. Transient error (5xx, timeout, network) → after 3 tries → **Throw**
+3. Structural error (parse, schema, config invalid) → بدون Retry، فوری Throw
+
+**Implied:** `PriceCollectionJob.LastError` پر می‌شود. بعد از 10 fail، Scheduler خودش Pause می‌کند؛ Handler تشخیص می‌دهد و `Job.MarkFaulted()` هم می‌زند.
+
+**دلیل:**
+- Silent skip در Daily Job = 24h تأخیر — غیرقابل قبول
+- Polly 3× پوشش ~90% transient errors
+- Pause @ 10 = Signal واضح برای کاربر در UI
+
+---
+
+### D45 — Handler Dispatch بر اساس Mode، Idempotent Guard
+
+**تصمیم:** `ExecuteAsync`:
+```csharp
+var job = await _uow.PriceCollectionJobs.GetByIdAsync(payload.JobId);
+if (job is null || job.State != Running) return;   // idempotent
+
+if (job.Mode == Recurring) await _collectionService.CollectOnceAsync(job.Id, ct);
+else                       await _collectionService.CollectBackfillAsync(job.Id, ct);
+دلیل Idempotent: اگر Job در DB Stopped/Faulted است (کاربر Stop کرده)، Handler پیام را نادیده می‌گیرد. Race Safe.
+
+D46 — Start/Stop Flow + State Mirror
+Start (Recurring):
+
+text
+1. Validate: Source exists، Active، FromAsset/ToAsset set
+2. Parse RecurrencePatternJson
+3. SchedulerRecurringId = ScheduleRecurringAsync(
+       name: $"price-collect-{job.Id}",
+       pattern, startAt=now+1min, maxFailures=10, tz=Asia/Tehran)
+4. Job.MarkRunning(SchedulerRecurringId, StartedAt=now)
+5. SaveChanges
+Stop (Recurring):
+
+text
+1. CancelRecurringAsync(job.SchedulerRecurringId)
+2. Job.MarkStopped(StoppedAt=now, SchedulerRecurringId=null)
+3. SaveChanges
+Start (Backfill): ScheduleAsync(payload, fireAt=now, queue="scheduler") → Job.MarkRunning(SchedulerJobId, StartedAt).
+
+State Mirror:
+
+On Handler success → LastRunAt=now, LastRunInserted=N, TotalInserted += N
+
+On Backfill success → MarkCompleted() (State=Stopped، BackfillProgressPercent=100)
+
+On Recurring success → Job stays Running
+
+On Handler throw + Scheduler paused → MarkFaulted()
+
+D47 — AddScheduledJobHandler
+تصمیم: services.AddScheduledJobHandler<CollectPricePayload, CollectPriceJobHandler>(); در Trader_AddInfrastructure.
+
+CollectPricePayload در Trader.Application (که JobTypeRegistry.ScanAllAssemblies پیدا کند). [ScheduledJob("trader.price-collect")] روی Record.
+
+D48 — Scheduler Extension: Minutely / Hourly / Cron
+تصمیم: Scheduler.Domain.RecurrenceType اضافه شد:
+
+Minutely = 3 (append)
+
+Hourly = 4
+
+Cron = 5
+
+RecurrencePattern Factories جدید: Minutely(interval), Hourly(interval), Cron(expression). CronExpression field (nullable، فقط برای Type=Cron). GetNextOccurrence پیاده‌سازی Sub-Daily (interval-based، DST-free) + Cron (via Cronos 0.8.4، DST-aware).
+
+دلیل: Sub-Daily native در Scheduler، نه Workaround در Trader. Scenarios: هر ۵ دقیقه Telegram، هر ۳۰ دقیقه USD Live، هر ساعت Cache Refresh، هر ۵ دقیقه Session Refresh. هر Module آینده از این مزیت بهره‌مند می‌شود.
+
+Backward Compat: enum values appended (0/1/2 = Daily/Weekly/Monthly بدون تغییر). ردیف‌های موجود {"type":0|1|2} در DB بدون Migration Parse می‌شوند. Constructor [JsonConstructor] با cronExpression: string? = null optional — JSON قدیمی بدون این فیلد Parse می‌شود.
+
+Cron Library: Cronos 0.8.4 (MIT، used by Hangfire itself، DST-aware).
+
+Superseded: پیشنهاد قبلی D48 ("Sub-Daily در B2 via BackgroundService جدا") — Void. Sub-Daily native در Scheduler.
+
+text
+
+### C2 — `docs/HANDOFF.md`
+
+**تغییر ۱ — Header (بالای فایل):**
+
+```markdown
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۱۹ — Scheduler Extension (Minutely/Hourly/Cron) + Scheduler.Tests
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler Extension ✅ | Phase B1 🚧 (Design) | 163 + 28 Tests ✅ | CI ✅
+> **گام بعدی:** PR B1 — PriceCollection (design D34-D48 locked, ready to code)
+تغییر ۲ — Section 8 (Phase Status):
+
+بعد از D9 (Risk Seed) در Phase D، یک Section جدید اضافه کن:
+
+markdown
+### Phase B1 Pre-work — ✅ COMPLETE
+
+**Scheduler Extension (D48)** — Minutely/Houly/Cron native.
+
+| # | Feature | Status |
+|---|---|---|
+| **B1.0** | `RecurrenceType.Minutely/Houly/Cron` | ✅ |
+| **B1.0** | `RecurrencePattern.Minutely/Hourly/Cron` factories | ✅ |
+| **B1.0** | Cron via Cronos 0.8.4 (DST-aware) | ✅ |
+| **B1.0** | `Scheduler.Tests` project (28 tests) | ✅ |
+
+**چرا Sub-Daily native:**
+- Trader (B1) به Pollingهای دقیقه‌ای نیاز دارد (Telegram، USD Live، Cache Refresh)
+- Scheduler Platform باید این را بومی بدهد، نه هر Module با BackgroundService جدا
+- Backward-compatible: enum values 0/1/2 حفظ شدند، ردیف‌های DB بدون Migration
+
+### Phase B1 (PriceCollection / TGJU) — 🚧 DESIGN LOCKED, CODE PENDING
+
+**Approved: D34-D42 + D43-D48**
+
+**Scope:**
+- `PriceSource` Entity + `PriceCollectionJob` Entity (D34, D35)
+- `TgjuPriceSourceProvider` (B1 = only provider)
+- Scheduler Module (Recurring: Minutely/Hourly/Daily/Weekly/Cron، D48)
+- USD/IRR only (B2 = more assets)
+- Endpoints: PriceSource CRUD + Job CRUD + Start/Stop + Status
+- 25+ tests
+تغییر ۳ — Section 14 (Recent Work):
+
+markdown
+## 14. RECENT COMPLETED WORK
+
+1. **Scheduler Extension** — `RecurrenceType.Minutely=3, Hourly=4, Cron=5` + Factories + `GetNextOccurrence` handling. Cronos 0.8.4. Backward compat (enum append). 28 tests در `Scheduler.Tests`. ⭐ New project.
+2. **Docs Update (B1)** — `TRADING-DECISIONS.md` D34-D48 (PriceSource، Job، Cash، Scheduler، Cron)، `Backend-Architecture.md` Appendix (Scheduler capabilities)، `HANDOFF.md` Phase B1 status.
+3. **PR 21** — Risk Dashboard UI (`/trader/risk`). Kill Switch Card + CircuitBreaker Card + Auto-refresh 15s.
+4. **Risk Seed** — `trader.risk` Resource + Permission + Menu. `RiskController` به `trader.risk` منتقل شد.
+5. **PR 20** — Kill Switch Events Hotfix. `ActivateKillSwitchCommandHandler`/`DeactivateKillSwitchCommandHandler` حالا `KillSwitchActivated`/`KillSwitchDeactivated` emit می‌کنند + Flush. +۵ تست.
+
+**Next:** PR B1 — TGJU Import (design locked D34-D48).
 ---
 
 ## خلاصه D34-D42
