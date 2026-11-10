@@ -243,7 +243,7 @@ public sealed class PriceCollectionService
                 $"No Provider for SourceType={source.Type}.");
 
         // Determine max(EffectiveAt) برای boundary
-        var maxDb = await GetMaxEffectiveAtAsync(source.FromAsset, source.ToAsset);
+        var maxDb = await GetMaxEffectiveAtAsync(source.FromAsset, source.ToAsset, source.Code);
 
         var fetch = await provider.FetchAsync(source, maxDb, maxPages, ct);
 
@@ -370,10 +370,11 @@ public sealed class PriceCollectionService
         return (minRate, maxRate, maxDailyChangePct);
     }
 
-    private async Task<DateTime?> GetMaxEffectiveAtAsync(string from, string to)
+    private async Task<DateTime?> GetMaxEffectiveAtAsync(
+    string from, string to, string sourceCode)
     {
         var latest = await _uow.CurrencyRateSpecs.GetBySpecAsync(
-            new LatestCurrencyRateSpec(from, to, DateTime.UtcNow));
+            new LatestCurrencyRateBySourceSpec(from, to, sourceCode, DateTime.UtcNow));
         return latest?.EffectiveAt;
     }
 

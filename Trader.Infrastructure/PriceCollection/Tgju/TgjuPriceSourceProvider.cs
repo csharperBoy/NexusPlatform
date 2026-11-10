@@ -38,16 +38,19 @@ public sealed class TgjuPriceSourceProvider : IPriceSourceProvider
     public PriceSourceType SourceType => PriceSourceType.Tgju;
 
     public async Task<PriceFetchResult> FetchAsync(
-        PriceSource source,
-        DateTime? sinceEffectiveAt,
-        int maxPages,
-        CancellationToken ct = default)
+     PriceSource source,
+     DateTime? sinceEffectiveAt,
+     int maxPages,
+     CancellationToken ct = default)
     {
         var config = ParseConfig(source.ConfigJson);
-        var allPoints = new List<PricePoint>();
+        var rawPoints = new List<PricePoint>();
         var pagesFetched = 0;
-        var hitBoundary = false;
         var start = 0;
+
+        _logger.LogInformation(
+            "Tgju fetch start: source={Code} sinceEffectiveAt={Since} maxPages={MaxPages}",
+            source.Code, sinceEffectiveAt, maxPages);
 
         while (pagesFetched < maxPages)
         {
@@ -57,27 +60,49 @@ public sealed class TgjuPriceSourceProvider : IPriceSourceProvider
                 config.Indicator, start, PageSize, ct);
             pagesFetched++;
 
-            if (wire.Data.Count == 0) break;
+            _logger.LogInformation(
+                "Tgju page {Page}: fetched={Count} recordsTotal={Total} start={Start}",
+                pagesFetched, wire.Data.Count, wire.RecordsTotal, start);
+
+            if (wire.Data.Count == 0)
+            {
+                _logger.LogWarning(
+                    "Tgju page {Page} returned empty data array.", pagesFetched);
+                break;
+            }
+
+            var parsedOk = 0;
+            var parsedFail = 0;
 
             foreach (var cells in wire.Data)
             {
                 var parsed = ParseRow(cells);
-                if (parsed is null) continue; // malformed — skip silently
-
-                if (sinceEffectiveAt.HasValue
-                    && parsed.Value.EffectiveAt <= sinceEffectiveAt.Value)
+                if (parsed is null)
                 {
-                    hitBoundary = true;
-                    break;
+                    parsedFail++;
+                    // لاگ ۳ نمونه اول برای دیباگ
+                    if (parsedFail <= 3)
+                    {
+                        _logger.LogWarning(
+                            "ParseRow failed: length={Len} c0='{C0}' c6='{C6}'",
+                            cells.Length,
+                            cells.Length > 0 ? cells[0] : "<n/a>",
+                            cells.Length > 6 ? cells[6] : "<n/a>");
+                    }
+                    continue;
                 }
 
-                allPoints.Add(new PricePoint(
+                parsedOk++;
+                rawPoints.Add(new PricePoint(
                     Rate: parsed.Value.Close,
                     EffectiveAt: parsed.Value.EffectiveAt,
                     Source: source.Code));
             }
 
-            if (hitBoundary) break;
+            _logger.LogInformation(
+                "Tgju page {Page} parsed: ok={Ok} fail={Fail} rawSoFar={Total}",
+                pagesFetched, parsedOk, parsedFail, rawPoints.Count);
+
             if (wire.Data.Count < PageSize) break;
 
             start += PageSize;
@@ -86,11 +111,33 @@ public sealed class TgjuPriceSourceProvider : IPriceSourceProvider
                 await Task.Delay(_opts.RateLimitMsBetweenPages, ct);
         }
 
-        _logger.LogDebug(
-            "Tgju fetch complete: source={Code} pages={Pages} points={Count} hitBoundary={Hit}",
-            source.Code, pagesFetched, allPoints.Count, hitBoundary);
+        // ─── Sort by EffectiveAt descending (newest first), regardless of API order ───
+        rawPoints.Sort((a, b) => b.EffectiveAt.CompareTo(a.EffectiveAt));
 
-        return new PriceFetchResult(allPoints, pagesFetched, hitBoundary);
+        // ─── Filter: keep only STRICTLY NEWER than sinceEffectiveAt ───
+        IReadOnlyList<PricePoint> finalPoints;
+        bool hitBoundary;
+
+        if (sinceEffectiveAt.HasValue)
+        {
+            finalPoints = rawPoints
+                .Where(p => p.EffectiveAt > sinceEffectiveAt.Value)
+                .ToList();
+            hitBoundary = finalPoints.Count < rawPoints.Count;
+        }
+        else
+        {
+            finalPoints = rawPoints;
+            hitBoundary = false;
+        }
+
+        _logger.LogInformation(
+            "Tgju fetch done: source={Code} pages={Pages} raw={Raw} final={Final} " +
+            "hitBoundary={Hit} sinceEffectiveAt={Since}",
+            source.Code, pagesFetched, rawPoints.Count, finalPoints.Count,
+            hitBoundary, sinceEffectiveAt);
+
+        return new PriceFetchResult(finalPoints, pagesFetched, hitBoundary);
     }
 
     /* ═══════════════════ Parse ═══════════════════ */
