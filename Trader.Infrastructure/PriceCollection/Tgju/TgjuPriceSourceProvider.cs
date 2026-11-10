@@ -38,83 +38,87 @@ public sealed class TgjuPriceSourceProvider : IPriceSourceProvider
     public PriceSourceType SourceType => PriceSourceType.Tgju;
 
     public async Task<PriceFetchResult> FetchAsync(
-     PriceSource source,
-     DateTime? sinceEffectiveAt,
-     int maxPages,
-     CancellationToken ct = default)
+      PriceSource source,
+      DateTime? sinceEffectiveAt,
+      bool fetchAllPages,
+      CancellationToken ct = default)
     {
         var config = ParseConfig(source.ConfigJson);
         var rawPoints = new List<PricePoint>();
         var pagesFetched = 0;
-        var start = 0;
 
-        _logger.LogInformation(
-            "Tgju fetch start: source={Code} sinceEffectiveAt={Since} maxPages={MaxPages}",
-            source.Code, sinceEffectiveAt, maxPages);
-
-        while (pagesFetched < maxPages)
+        if (fetchAllPages)
         {
-            ct.ThrowIfCancellationRequested();
-
-            var wire = await _client.FetchPageAsync(
-                config.Indicator, start, PageSize, ct);
-            pagesFetched++;
-
-            _logger.LogInformation(
-                "Tgju page {Page}: fetched={Count} recordsTotal={Total} start={Start}",
-                pagesFetched, wire.Data.Count, wire.RecordsTotal, start);
-
-            if (wire.Data.Count == 0)
+            // ─── Backfill: از start=0 تا انتها ───
+            var start = 0;
+            while (true)
             {
-                _logger.LogWarning(
-                    "Tgju page {Page} returned empty data array.", pagesFetched);
-                break;
-            }
+                ct.ThrowIfCancellationRequested();
 
-            var parsedOk = 0;
-            var parsedFail = 0;
+                var wire = await _client.FetchPageAsync(
+                    config.Indicator, start, PageSize, ct);
+                pagesFetched++;
 
-            foreach (var cells in wire.Data)
-            {
-                var parsed = ParseRow(cells);
-                if (parsed is null)
+                if (wire.Data.Count == 0) break;
+
+                foreach (var cells in wire.Data)
                 {
-                    parsedFail++;
-                    // لاگ ۳ نمونه اول برای دیباگ
-                    if (parsedFail <= 3)
-                    {
-                        _logger.LogWarning(
-                            "ParseRow failed: length={Len} c0='{C0}' c6='{C6}'",
-                            cells.Length,
-                            cells.Length > 0 ? cells[0] : "<n/a>",
-                            cells.Length > 6 ? cells[6] : "<n/a>");
-                    }
-                    continue;
+                    var parsed = ParseRow(cells);
+                    if (parsed is null) continue;
+                    rawPoints.Add(new PricePoint(
+                        Rate: parsed.Value.Close,
+                        EffectiveAt: parsed.Value.EffectiveAt,
+                        Source: source.Code));
                 }
 
-                parsedOk++;
-                rawPoints.Add(new PricePoint(
-                    Rate: parsed.Value.Close,
-                    EffectiveAt: parsed.Value.EffectiveAt,
-                    Source: source.Code));
+                if (wire.Data.Count < PageSize) break;
+                start += PageSize;
+
+                if (_opts.RateLimitMsBetweenPages > 0)
+                    await Task.Delay(_opts.RateLimitMsBetweenPages, ct);
             }
+        }
+        else
+        {
+            // ─── Recurring: فقط آخرین صفحه (جدیدترین رکوردها) ───
+            // علت: API صفحه ۱ = قدیمی‌ترین رکوردها (ascending).
+            //       بدون این fix، Recurring همیشه 0 نتیجه می‌گیرد.
+            //
+            // گام ۱: probe برای گرفتن recordsTotal (۱ رکورد)
+            var probe = await _client.FetchPageAsync(config.Indicator, 0, 1, ct);
+            pagesFetched++;
 
-            _logger.LogInformation(
-                "Tgju page {Page} parsed: ok={Ok} fail={Fail} rawSoFar={Total}",
-                pagesFetched, parsedOk, parsedFail, rawPoints.Count);
+            var total = probe.RecordsTotal;
+            if (total <= 0)
+            {
+                _logger.LogWarning(
+                    "Tgju returned recordsTotal={Total} for {Code}; cannot compute last page.",
+                    total, source.Code);
+            }
+            else
+            {
+                // گام ۲: fetch آخرین صفحه (start = total - PageSize)
+                var lastPageStart = Math.Max(0, total - PageSize);
+                var wire = await _client.FetchPageAsync(
+                    config.Indicator, lastPageStart, PageSize, ct);
+                pagesFetched++;
 
-            if (wire.Data.Count < PageSize) break;
-
-            start += PageSize;
-
-            if (_opts.RateLimitMsBetweenPages > 0)
-                await Task.Delay(_opts.RateLimitMsBetweenPages, ct);
+                foreach (var cells in wire.Data)
+                {
+                    var parsed = ParseRow(cells);
+                    if (parsed is null) continue;
+                    rawPoints.Add(new PricePoint(
+                        Rate: parsed.Value.Close,
+                        EffectiveAt: parsed.Value.EffectiveAt,
+                        Source: source.Code));
+                }
+            }
         }
 
-        // ─── Sort by EffectiveAt descending (newest first), regardless of API order ───
+        // ─── Sort descending (newest first) بلا‌شرط ترتیب API ───
         rawPoints.Sort((a, b) => b.EffectiveAt.CompareTo(a.EffectiveAt));
 
-        // ─── Filter: keep only STRICTLY NEWER than sinceEffectiveAt ───
+        // ─── Filter > sinceEffectiveAt ───
         IReadOnlyList<PricePoint> finalPoints;
         bool hitBoundary;
 
@@ -132,9 +136,11 @@ public sealed class TgjuPriceSourceProvider : IPriceSourceProvider
         }
 
         _logger.LogInformation(
-            "Tgju fetch done: source={Code} pages={Pages} raw={Raw} final={Final} " +
-            "hitBoundary={Hit} sinceEffectiveAt={Since}",
-            source.Code, pagesFetched, rawPoints.Count, finalPoints.Count,
+            "Tgju fetch done: source={Code} mode={Mode} pages={Pages} " +
+            "raw={Raw} final={Final} hitBoundary={Hit} sinceEffectiveAt={Since}",
+            source.Code,
+            fetchAllPages ? "Backfill" : "Recurring",
+            pagesFetched, rawPoints.Count, finalPoints.Count,
             hitBoundary, sinceEffectiveAt);
 
         return new PriceFetchResult(finalPoints, pagesFetched, hitBoundary);

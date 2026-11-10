@@ -521,7 +521,7 @@ namespace Trader.Infrastructure.Data
                 code: "tgju-usd",
                 name: "TGJU USD/IRR",
                 type: Trader.Domain.Enums.PriceSourceType.Tgju,
-                configJson: """{"indicator":"price_dollar_rl","minRate":100000,"maxRate":10000000,"maxDailyChangePct":20}""",
+                configJson: """{"indicator":"price_dollar_rl","minRate":1,"maxRate":500000000,"maxDailyChangePct":20}""",
                 fromAsset: "USD",
                 toAsset: "IRR");
 

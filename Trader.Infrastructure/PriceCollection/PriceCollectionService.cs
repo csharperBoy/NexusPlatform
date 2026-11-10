@@ -212,19 +212,15 @@ public sealed class PriceCollectionService
 
     /* ═══════════════════ Collect — called from Handler ═══════════════════ */
 
-    public async Task CollectOnceAsync(Guid jobId, CancellationToken ct = default)
-    {
-        // Recurring: page 1 only
-        await CollectInternalAsync(jobId, maxPages: 1, isBackfill: false, ct);
-    }
+    public Task CollectOnceAsync(Guid jobId, CancellationToken ct = default)
+    => CollectInternalAsync(jobId, fetchAllPages: false, isBackfill: false, ct);
 
-    public async Task CollectBackfillAsync(Guid jobId, CancellationToken ct = default)
-    {
-        await CollectInternalAsync(jobId, maxPages: int.MaxValue, isBackfill: true, ct);
-    }
+    public Task CollectBackfillAsync(Guid jobId, CancellationToken ct = default)
+        => CollectInternalAsync(jobId, fetchAllPages: true, isBackfill: true, ct);
+
 
     private async Task CollectInternalAsync(
-        Guid jobId, int maxPages, bool isBackfill, CancellationToken ct)
+        Guid jobId, bool fetchAllPages, bool isBackfill, CancellationToken ct)
     {
         var job = await _uow.PriceCollectionJobs.GetByIdAsync(jobId)
             ?? throw new InvalidOperationException($"Job {jobId} not found.");
@@ -245,7 +241,7 @@ public sealed class PriceCollectionService
         // Determine max(EffectiveAt) برای boundary
         var maxDb = await GetMaxEffectiveAtAsync(source.FromAsset, source.ToAsset, source.Code);
 
-        var fetch = await provider.FetchAsync(source, maxDb, maxPages, ct);
+        var fetch = await provider.FetchAsync(source, maxDb, fetchAllPages, ct);
 
         if (fetch.Points.Count == 0)
         {

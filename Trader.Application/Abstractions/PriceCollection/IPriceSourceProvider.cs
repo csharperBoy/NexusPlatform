@@ -11,14 +11,14 @@ public interface IPriceSourceProvider
     PriceSourceType SourceType { get; }
 
     /// <summary>
-    /// دریافت رکوردها. اگر sinceEffectiveAt != null، فقط رکوردهای جدیدتر برگردانده می‌شوند (short-circuit).
-    /// maxPages=1 → فقط صفحه اول (Recurring). maxPages=int.MaxValue → تا boundary (Backfill).
+    /// fetchAllPages = true → Backfill — همه صفحات از start=0 تا انتها
+    ///fetchAllPages = false → Recurring — فقط آخرین صفحه(پروب recordsTotal + fetch از start = total - PageSize)
     /// </summary>
     Task<PriceFetchResult> FetchAsync(
-        PriceSource source,
-        DateTime? sinceEffectiveAt,
-        int maxPages,
-        CancellationToken ct = default);
+    PriceSource source,
+    DateTime? sinceEffectiveAt,
+    bool fetchAllPages,          // ← جایگزین int maxPages
+    CancellationToken ct = default);
 }
 
 public sealed record PriceFetchResult(
