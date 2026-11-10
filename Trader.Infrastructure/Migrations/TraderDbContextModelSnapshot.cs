@@ -1439,6 +1439,185 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("Positions", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.PriceCollectionJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("BackfillProgressPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LastRunInserted")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LastRunSkipped")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid>("PriceSourceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RecurrencePatternJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("SchedulerJobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SchedulerRecurringId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("StoppedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TotalInserted")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_PriceCollectionJob");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_PriceCollectionJob_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_PriceCollectionJob_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Mode")
+                        .HasDatabaseName("IX_PriceCollectionJob_Mode");
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_PriceCollectionJob_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_PriceCollectionJob_ModifiedBy");
+
+                    b.HasIndex("PriceSourceId")
+                        .HasDatabaseName("IX_PriceCollectionJob_Source");
+
+                    b.HasIndex("State")
+                        .HasDatabaseName("IX_PriceCollectionJob_State");
+
+                    b.ToTable("PriceCollectionJobs", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.PriceSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ConfigJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("FromAsset")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("ToAsset")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id")
+                        .HasName("PK_PriceSource");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_PriceSource_Code");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_PriceSource_CreatedAt");
+
+                    b.HasIndex("CreatedBy")
+                        .HasDatabaseName("IX_PriceSource_CreatedBy");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_PriceSource_IsActive");
+
+                    b.HasIndex("ModifiedAt")
+                        .HasDatabaseName("IX_PriceSource_ModifiedAt");
+
+                    b.HasIndex("ModifiedBy")
+                        .HasDatabaseName("IX_PriceSource_ModifiedBy");
+
+                    b.HasIndex("FromAsset", "ToAsset")
+                        .HasDatabaseName("IX_PriceSource_Pair");
+
+                    b.ToTable("PriceSources", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.RiskKillSwitch", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2521,6 +2700,15 @@ namespace Trader.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("UnrealizedPnL");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.PriceCollectionJob", b =>
+                {
+                    b.HasOne("Trader.Domain.Entities.PriceSource", null)
+                        .WithMany()
+                        .HasForeignKey("PriceSourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Trader.Domain.Entities.ScheduledOrder", b =>

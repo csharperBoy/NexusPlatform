@@ -11,23 +11,12 @@ namespace Trader.Tests.Infrastructure.Tgju;
 
 public class TgjuApiClientTests
 {
-    private static TgjuApiClient CreateClient(HttpMessageHandler handler)
-    {
-        var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.tgju.org") };
-        var factory = new Mock<IHttpClientFactory>();
-        factory.Setup(f => f.CreateClient("Tgju")).Returns(http);
-
-        var options = Options.Create(new TgjuOptions
-        {
-            BaseUrl = "https://api.tgju.org",
-            TimeoutSeconds = 10,
-        });
-
-        return new TgjuApiClient(factory.Object, options, Mock.Of<ILogger<TgjuApiClient>>());
-    }
+    // ═══════════════════════════════════════════════════════════════
+    // Parse — response valid
+    // ═══════════════════════════════════════════════════════════════
 
     [Fact]
-    public async Task FetchPageAsync_ParsesDataTablesResponse()
+    public async Task FetchPageAsync_ValidResponse_ParsesData()
     {
         const string json = """
         {
@@ -40,74 +29,115 @@ public class TgjuApiClientTests
           ]
         }
         """;
+        var (sut, _) = CreateSut(json);
 
-        var client = CreateClient(new FakeHandler(json));
-        var wire = await client.FetchPageAsync("price_dollar_rl", 0, 30);
+        var wire = await sut.FetchPageAsync("price_dollar_rl", 0, 30);
 
         wire.Data.Should().HaveCount(2);
         wire.Data[0][0].Should().Be("2,730,050");
         wire.Data[0][6].Should().Be("2026/11/02");
+        wire.RecordsTotal.Should().Be(2);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Error paths
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public async Task FetchPageAsync_NonSuccessStatus_ThrowsTgjuException()
+    {
+        var (sut, _) = CreateSut("err", HttpStatusCode.InternalServerError);
+
+        var act = () => sut.FetchPageAsync("x", 0, 30);
+
+        await act.Should().ThrowAsync<TgjuException>()
+            .WithMessage("*500*");
     }
 
     [Fact]
-    public async Task FetchPageAsync_NonSuccess_ThrowsTgjuException()
+    public async Task FetchPageAsync_EmptyBody_ThrowsTgjuException()
     {
-        var client = CreateClient(new FakeHandler("err", HttpStatusCode.InternalServerError));
+        var (sut, _) = CreateSut("");
 
-        var act = () => client.FetchPageAsync("x", 0, 30);
+        var act = () => sut.FetchPageAsync("x", 0, 30);
 
-        await act.Should().ThrowAsync<TgjuException>();
-    }
-
-    [Fact]
-    public async Task FetchPageAsync_EmptyBody_Throws()
-    {
-        var client = CreateClient(new FakeHandler(""));
-
-        var act = () => client.FetchPageAsync("x", 0, 30);
-
-        await act.Should().ThrowAsync<TgjuException>();
+        await act.Should().ThrowAsync<TgjuException>()
+            .WithMessage("*empty*");
     }
 
     [Fact]
     public async Task FetchPageAsync_InvalidJson_ThrowsTgjuException()
     {
-        var client = CreateClient(new FakeHandler("not-json-at-all"));
+        var (sut, _) = CreateSut("not-json-at-all");
 
-        var act = () => client.FetchPageAsync("x", 0, 30);
+        var act = () => sut.FetchPageAsync("x", 0, 30);
 
-        await act.Should().ThrowAsync<TgjuException>();
+        await act.Should().ThrowAsync<TgjuException>()
+            .WithMessage("*parse failed*");
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Argument validation
+    // ═══════════════════════════════════════════════════════════════
 
     [Theory]
     [InlineData("", 0, 30)]
+    [InlineData("  ", 0, 30)]
     [InlineData("x", -1, 30)]
     [InlineData("x", 0, 0)]
-    public async Task FetchPageAsync_InvalidArguments_Throws(
+    public async Task FetchPageAsync_InvalidArguments_ThrowsArgumentException(
         string indicator, int start, int length)
     {
-        var client = CreateClient(new FakeHandler("{}"));
+        var (sut, _) = CreateSut("{}");
 
-        var act = () => client.FetchPageAsync(indicator, start, length);
+        var act = () => sut.FetchPageAsync(indicator, start, length);
 
         await act.Should().ThrowAsync<ArgumentException>();
     }
 
-    /* ═══════════════════ Fake Handler ═══════════════════ */
+    // ═══════════════════════════════════════════════════════════════
+    // Helpers
+    // ═══════════════════════════════════════════════════════════════
 
-    private sealed class FakeHandler : HttpMessageHandler
+    private static (TgjuApiClient Sut, FakeHttpHandler Handler) CreateSut(
+        string body = "{}", HttpStatusCode status = HttpStatusCode.OK)
+    {
+        var handler = new FakeHttpHandler(body, status);
+        var http = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://api.tgju.org"),
+        };
+
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient("Tgju")).Returns(http);
+
+        var options = Options.Create(new TgjuOptions
+        {
+            BaseUrl = "https://api.tgju.org",
+            TimeoutSeconds = 10,
+        });
+
+        var sut = new TgjuApiClient(
+            factory.Object, options, Mock.Of<ILogger<TgjuApiClient>>());
+
+        return (sut, handler);
+    }
+
+    // ─── Nested fake (per project convention: FakeGuard/ThrowingGuard) ───
+
+    private sealed class FakeHttpHandler : HttpMessageHandler
     {
         private readonly string _body;
         private readonly HttpStatusCode _status;
 
-        public FakeHandler(string body, HttpStatusCode status = HttpStatusCode.OK)
+        public FakeHttpHandler(string body, HttpStatusCode status)
         {
             _body = body;
             _status = status;
         }
 
         protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request, CancellationToken ct)
+            HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var res = new HttpResponseMessage(_status)
             {
