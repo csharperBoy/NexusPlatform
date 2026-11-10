@@ -6,3 +6,6 @@ export { useInstrumentManagement,instrumentCrudApi } from "./useInstrumentManage
 export { useTradingRunManagement } from "./useTradingRunManagement";
 export { useCurrencyRateManagement } from "./useCurrencyRateManagement";
 export { useBacktestManagement } from "./useBacktestManagement";
+
+export { usePriceSourceManagement, priceSourceCrudApi } from "./usePriceSourceManagement";
+export { usePriceCollectionJobManagement } from "./usePriceCollectionJobManagement";

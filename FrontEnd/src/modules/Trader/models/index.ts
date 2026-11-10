@@ -180,3 +180,27 @@ export {
   isCircuitActive,
   formatCooldown,
 } from "./Risk";
+
+// ─── Price Collection (B1) ───
+export type {
+  PriceSourceView,
+  CreatePriceSourceCommand,
+  UpdatePriceSourceCommand,
+  PriceCollectionJobView,
+  CreatePriceCollectionJobCommand,
+  RecurrencePatternJson,
+} from "./PriceCollection";
+export {
+  PriceSourceType,
+  PRICE_SOURCE_TYPE_LABELS,
+  PriceCollectionMode,
+  PRICE_COLLECTION_MODE_LABELS,
+  PRICE_COLLECTION_MODE_COLORS,
+  PriceCollectionJobState,
+  PRICE_COLLECTION_JOB_STATE_LABELS,
+  PRICE_COLLECTION_JOB_STATE_COLORS,
+  RecurrenceType,
+  RECURRENCE_TYPE_LABELS,
+  buildRecurrencePattern,
+  formatRecurrencePattern,
+} from "./PriceCollection";

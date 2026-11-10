@@ -16,7 +16,9 @@ import {
   TradingEventsPage,
   HistoricalDataCollectionPage,
   BacktestComparePage,
-  RiskDashboardPage} from "./pages";
+  RiskDashboardPage,
+  PriceSourcesManagementPage,
+  PriceCollectionJobsPage} from "./pages";
 
 export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/accounts",       element: <AccountsManagementPage /> },
@@ -35,7 +37,9 @@ export const TraderShotgunRoutes: RouteObject[] = [
 { path: "trader/backtests/compare", element: <BacktestComparePage /> },
   { path: "trader/backtests/:id", element: <BacktestDetailPage /> },
 { path: "trader/historical-data", element: <HistoricalDataCollectionPage /> },
-{ path: "trader/risk", element: <RiskDashboardPage /> },
+{ path: "trader/risk", element: <RiskDashboardPage /> },  
+{ path: "trader/price-sources",  element: <PriceSourcesManagementPage /> },
+  { path: "trader/price-jobs",     element: <PriceCollectionJobsPage /> },
 ];
 
 export const traderPanelRoutes: RouteObject[] = [

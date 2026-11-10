@@ -17,3 +17,4 @@ export { tradingEventApi } from "./tradingEventApi";
 export { backtestApi } from "./backtestApi";
 export { historicalDataCollectionApi } from "./historicalDataCollectionApi";
 export { riskApi } from "./riskApi";
+export { priceSourceApi, priceCollectionJobApi } from "./priceCollectionApi";

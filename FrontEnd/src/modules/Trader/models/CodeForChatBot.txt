@@ -63,6 +63,8 @@ export type {
   TradingRunDetailView,
   TradingRunSettingsDto,
   TradingRunSymbolDto,
+  TradingRunAccountDto,          // ← NEW
+  TradingRunAccountModel,        // ← NEW
   TradingRunSettingsModel,
   TradingRunSymbolModel,
   CreateTradingRunCommand,
@@ -163,6 +165,21 @@ export {
   EXECUTION_MODE_LABELS,
   EXECUTION_MODE_COLORS,
 } from "./TradingRunEnums";
+
+// ─── Risk (Phase D — PR 14-20) ───
+export type {
+  KillSwitchStatusView,
+  LossStreakState,
+  ActivateKillSwitchCommand,
+  DeactivateKillSwitchCommand,
+  ResetCircuitBreakerCommand,
+} from "./Risk";
+
+export {
+  KillSwitchScope,
+  isCircuitActive,
+  formatCooldown,
+} from "./Risk";
 
 //src/modules/Trader/models/Backtest.ts
 /* ═══════════════════ Enums ═══════════════════ */
@@ -540,6 +557,8 @@ export const SEVERITY_COLORS: Record<number, string> = {
 };
 
 //src/modules/Trader/models/TradingRun.ts
+/* ═══════════════ View Models (Response) ═══════════════ */
+
 export interface TradingRunInfoView {
   id: string;
   name: string;
@@ -548,13 +567,11 @@ export interface TradingRunInfoView {
   strategyKey: string;
   primaryTimeFrame: number;
   primaryTimeFrameName: string;
-  capitalAllocationMode: number;
-  fixedCapital?: number | null;
-  targetCurrency: string | null; 
-  strengthMultiplier: number;    
-  minDeltaPercent: number; 
-  executionMode: number;                
-  executionModeName: string;  
+  targetCurrency: string | null;
+  strengthMultiplier: number;
+  minDeltaPercent: number;
+  executionMode: number;
+  executionModeName: string;
   symbolCount: number;
   accountCount: number;
   startedAt?: string | null;
@@ -563,8 +580,6 @@ export interface TradingRunInfoView {
 }
 
 export interface TradingRunSettingsDto {
-  capitalAllocationMode: number;
-  fixedCapitalAmount?: number | null;
   stopLossPercentage?: number | null;
   stopLossPrice?: number | null;
   takeProfitPercentage?: number | null;
@@ -579,6 +594,14 @@ export interface TradingRunSymbolDto {
   allocationPercentage: number;
 }
 
+export interface TradingRunAccountDto {
+  accountId: string;
+  capitalMode: number;                     // 0=Fixed, 1=Dynamic
+  fixedCapitalAmount?: number | null;
+  fixedCapitalCurrency?: string | null;
+  percentOfBuyPower?: number | null;
+}
+
 export interface TradingRunDetailView {
   id: string;
   name: string;
@@ -587,24 +610,23 @@ export interface TradingRunDetailView {
   strategyKey: string;
   strategyConfigJson: string;
   primaryTimeFrame: number;
-  targetCurrency: string | null;  
-  strengthMultiplier: number;   
+  targetCurrency: string | null;
+  strengthMultiplier: number;
   minDeltaPercent: number;
-  executionMode: number;             
-  executionModeName: string; 
+  executionMode: number;
+  executionModeName: string;
   settings: TradingRunSettingsDto;
   symbols: TradingRunSymbolDto[];
-  accountIds: string[];
+  accounts: TradingRunAccountDto[];        // ← was accountIds: string[]
   startedAt?: string | null;
   stoppedAt?: string | null;
   createdAt: string;
   modifiedAt?: string | null;
 }
 
-/* ─── Commands ─── */
+/* ═══════════════ Command Models (Request) ═══════════════ */
+
 export interface TradingRunSettingsModel {
-  capitalAllocationMode: number;
-  fixedCapitalAmount?: number | null;
   stopLossPercentage?: number | null;
   stopLossPrice?: number | null;
   takeProfitPercentage?: number | null;
@@ -619,18 +641,25 @@ export interface TradingRunSymbolModel {
   allocationPercentage: number;
 }
 
+export interface TradingRunAccountModel {
+  accountId: string;
+  capitalMode: number;                    // 0=Fixed, 1=Dynamic
+  fixedCapitalAmount?: number | null;
+  percentOfBuyPower?: number | null;
+}
+
 export interface CreateTradingRunCommand {
   name: string;
   strategyKey: string;
   strategyConfigJson: string;
   primaryTimeFrame: number;
-  targetCurrency: string | null;  
-  strengthMultiplier: number;   
+  targetCurrency: string | null;
+  strengthMultiplier: number;
   minDeltaPercent: number;
-  executionMode: number; 
+  executionMode: number;
   settings: TradingRunSettingsModel;
   symbols: TradingRunSymbolModel[];
-  accountIds: string[];
+  accounts: TradingRunAccountModel[];     // ← was accountIds: string[]
 }
 
 export interface UpdateTradingRunCommand extends CreateTradingRunCommand {
@@ -639,7 +668,7 @@ export interface UpdateTradingRunCommand extends CreateTradingRunCommand {
 
 export interface StopTradingRunCommand {
   id: string;
-  behavior: number; // StopRunBehavior
+  behavior: number;
 }
 
 //src/modules/Trader/models/TradingRunEnums.ts

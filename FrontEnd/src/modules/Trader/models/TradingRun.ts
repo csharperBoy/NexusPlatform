@@ -9,7 +9,6 @@ export interface TradingRunInfoView {
   strategyKey: string;
   primaryTimeFrame: number;
   primaryTimeFrameName: string;
-  // ❌ capitalAllocationMode و fixedCapital حذف شدند — per-account در Detail
   targetCurrency: string | null;
   strengthMultiplier: number;
   minDeltaPercent: number;
@@ -23,7 +22,6 @@ export interface TradingRunInfoView {
 }
 
 export interface TradingRunSettingsDto {
-  // ❌ capitalAllocationMode و fixedCapitalAmount حذف شدند
   stopLossPercentage?: number | null;
   stopLossPrice?: number | null;
   takeProfitPercentage?: number | null;

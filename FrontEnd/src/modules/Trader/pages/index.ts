@@ -28,3 +28,5 @@ export { CreateCollectionModal } from "./HistoricalData/CreateCollectionModal";
 
 export { HistoricalDataCollectionPage } from "./HistoricalData/HistoricalDataCollectionPage";
 export { RiskDashboardPage } from "./Risk/RiskDashboardPage";
+export { PriceSourcesManagementPage } from "./PriceSources/PriceSourcesManagementPage";
+export { PriceCollectionJobsPage } from "./PriceCollectionJobs/PriceCollectionJobsPage";
