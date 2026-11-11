@@ -249,7 +249,23 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
                 break;
             }
 
-            if (batch.Count == 0) break;
+            if (batch.Count == 0)
+            {
+                _logger.LogDebug(
+                    "Batch fetch returned 0 candles; end of data: isin={Isin} tf={Tf} currentTo={To}",
+                    isin, tf, currentTo);
+                break;
+            }
+
+            // Guard: fewer than requested → oldest chunk available from provider
+            if (batch.Count < BatchSize)
+            {
+                _logger.LogDebug(
+                    "Batch returned {Count} < {BatchSize} — end of data: isin={Isin} tf={Tf} oldest={Oldest}",
+                    batch.Count, BatchSize, isin, tf,
+                    batch.Min(c => c.OpenTime));
+                break;
+            }
 
             var filtered = batch
                 .Where(c => c.OpenTime >= from && c.OpenTime <= to)
