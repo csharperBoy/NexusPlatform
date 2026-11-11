@@ -211,6 +211,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Price source management and collection jobs",
                             DisplayOrder = 3018,
                             Icon = "dollar-sign",
+                        },new()
+                        {
+                            Key = "trader.order",
+                            Name = "Order Management",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Broker orders and order intents",
+                            DisplayOrder = 3019,
+                            Icon = "list",
                         },
                     }
                 }
@@ -257,6 +266,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.historicaldata", roleId, "Full access to Historical Data Collection"),
                 FullAccess("trader.risk", roleId, "Full access to Risk Management"),
                 FullAccess("trader.pricecollection", roleId, "Full access to Price Collection"),
+                FullAccess("trader.order", roleId, "Full access to Order Management"),
             };
         }
 
@@ -469,6 +479,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.pricecollection",
                             ParentKey = "trader",
                             Path = "/trader/price-collection"
+                        },new()
+                        {
+                            Title = "مدیریت سفارش‌ها",
+                            Description = "BrokerOrders و OrderIntents",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 117,
+                            Key = "trader.order",
+                            ParentKey = "trader",
+                            Path = "/trader/orders"
                         },
                     }
                 }

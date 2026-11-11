@@ -14,6 +14,7 @@ using Trader.Application.Abstractions.HistoricalData;
 using Trader.Application.Abstractions.Indicators;
 using Trader.Application.Abstractions.Logging;
 using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Abstractions.Orders;
 using Trader.Application.Abstractions.Positions;
 using Trader.Application.Abstractions.PriceCollection;
 using Trader.Application.Abstractions.Reconciliation;
@@ -40,6 +41,7 @@ using Trader.Infrastructure.Execution;
 using Trader.Infrastructure.HistoricalData;
 using Trader.Infrastructure.Logging;
 using Trader.Infrastructure.MarketData;
+using Trader.Infrastructure.Orders;
 using Trader.Infrastructure.Positions;
 using Trader.Infrastructure.PriceCollection;
 using Trader.Infrastructure.PriceCollection.Tgju;
@@ -298,6 +300,8 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddSingleton<IOrderFillSimulator, OrderFillSimulator>();
             services.AddScoped<IBacktestEngine, BacktestEngine>();
             // ─── Backtest Run Service (Command + Query) ───
+            services.AddScoped<IBrokerOrderQueryService, BrokerOrderQueryService>();
+            services.AddScoped<IOrderIntentQueryService, OrderIntentQueryService>();
             services.AddScoped<BacktestRunService>();
             services.AddScoped<IBacktestRunCommandService>(
                 sp => sp.GetRequiredService<BacktestRunService>());
