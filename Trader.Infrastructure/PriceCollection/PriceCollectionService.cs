@@ -259,19 +259,25 @@ public sealed class PriceCollectionService
 
         // Persist با sanity + dedupe
         var (inserted, skipped) = await PersistAsync(
-            source, fetch.Points, job, isBackfill, ct);
+    source, fetch.Points, job, isBackfill, ct);
 
         job.RecordRun(inserted, skipped, DateTime.UtcNow);
 
-        if (isBackfill && fetch.HitBoundary)
+        // Backfill: fetchAllPages=true always ran to completion (loop ended on
+        // short/empty page, no exception). Whether points were new, existing, or
+        // zero, the job is DONE. HitBoundary is Recurring-only (semantic: "stopped
+        // early because we hit already-known data").
+        if (isBackfill)
             job.MarkCompleted(DateTime.UtcNow);
 
         await _uow.PriceCollectionJobs.UpdateAsync(job);
         await _uow.SaveChangesAsync(ct);
 
         _logger.LogInformation(
-            "Job {Id} source={Code} inserted={Ins} skipped={Skp} mode={Mode}",
-            jobId, source.Code, inserted, skipped, isBackfill ? "Backfill" : "Recurring");
+            "Job {Id} source={Code} mode={Mode} inserted={Ins} skipped={Skp} " +
+            "state={State}",
+            jobId, source.Code, isBackfill ? "Backfill" : "Recurring",
+            inserted, skipped, job.State);
     }
 
     /* ═══════════════════ Persist + Sanity ═══════════════════ */
