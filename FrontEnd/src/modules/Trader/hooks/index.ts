@@ -12,3 +12,4 @@ export { usePriceCollectionJobManagement } from "./usePriceCollectionJobManageme
 export { useHistoricalDataCollectionManagement } from "./useHistoricalDataCollectionManagement";
 export { useBrokerOrdersManagement } from "./useBrokerOrdersManagement";
 export { useOrderIntentsManagement } from "./useOrderIntentsManagement";
+export { useOrderPresetsManagement } from "./useOrderPresetsManagement";

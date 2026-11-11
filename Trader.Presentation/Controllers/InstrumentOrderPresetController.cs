@@ -13,6 +13,13 @@ namespace Trader.Presentation.Controller;
 public class InstrumentOrderPresetController : BaseController
 {
     /* ═══════════ Queries ═══════════ */
+    [HttpGet("GetList")]
+    [AuthorizeResource("trader.orderpreset", "View")]
+    public async Task<IActionResult> GetList()
+    {
+        var result = await Mediator.Send(new GetOrderPresetListQuery());
+        return HandleResult(result);
+    }
 
     [HttpGet("GetByInstrument/{isin}")]
     [AuthorizeResource("trader.orderpreset", "View")]

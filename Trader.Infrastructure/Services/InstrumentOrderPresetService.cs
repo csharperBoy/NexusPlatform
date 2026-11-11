@@ -22,8 +22,46 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
         _logger = logger;
     }
 
+    public async Task<IReadOnlyList<OrderPresetView>> GetListAsync()
+    {
+        var presets = await _uow.InstrumentOrderPresets.GetAllAsync(
+            q => q.OrderBy(p => p.Name));
+
+        var instruments = (await _uow.Instruments.GetAllAsync(
+                q => q.OrderBy(i => i.SymbolName)))
+            .ToDictionary(i => i.Id);
+
+        return presets.Select(p => MapToView(p, instruments.GetValueOrDefault(p.InstrumentId)))
+            .ToList();
+    }
+
+    public async Task<OrderPresetView?> GetByIdAsync(Guid id)
+    {
+        var preset = await _uow.InstrumentOrderPresets.GetByIdAsync(id);
+        if (preset is null) return null;
+
+        var instrument = await _uow.Instruments.GetByIdAsync(preset.InstrumentId);
+        return MapToView(preset, instrument);
+    }
+
+    public async Task<OrderPresetView?> GetByInstrumentAsync(string isin)
+    {
+        var instrumentSpec = new InstrumentByIsinSpec(isin);
+        var instrument = await _uow.InstrumentSpecs.GetBySpecAsync(instrumentSpec);
+        if (instrument is null) return null;
+
+        var presetSpec = new InstrumentOrderPresetByInstrumentSpec(instrument.Id);
+        var preset = await _uow.InstrumentOrderPresetSpecs.GetBySpecAsync(presetSpec);
+
+        return preset is null ? null : MapToView(preset, instrument);
+    }
+
     public async Task<Guid> CreateAsync(CreateOrderPresetModel model)
     {
+        var instrument = await _uow.Instruments.GetByIdAsync(model.InstrumentId)
+            ?? throw new InvalidOperationException(
+                $"Instrument {model.InstrumentId} not found.");
+
         var preset = InstrumentOrderPreset.Create(
             model.InstrumentId,
             model.Name,
@@ -38,8 +76,8 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
         await _uow.SaveChangesAsync();
 
         _logger.LogInformation(
-            "Created InstrumentOrderPreset {Id} for instrument {InstrumentId}",
-            preset.Id, model.InstrumentId);
+            "Created OrderPreset {Id} for instrument {InstrumentId} ({Symbol})",
+            preset.Id, model.InstrumentId, instrument.SymbolName);
 
         return preset.Id;
     }
@@ -75,26 +113,18 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
         _logger.LogInformation("Deleted InstrumentOrderPreset {Id}", id);
     }
 
-    public async Task<OrderPresetView?> GetByInstrumentAsync(string isin)
-    {
-        var instrumentSpec = new InstrumentByIsinSpec(isin);
-        var instrument = await _uow.InstrumentSpecs.GetBySpecAsync(instrumentSpec);
-        if (instrument is null) return null;
-
-        var presetSpec = new InstrumentOrderPresetByInstrumentSpec(instrument.Id);
-        var preset = await _uow.InstrumentOrderPresetSpecs.GetBySpecAsync(presetSpec);
-
-        return preset is null ? null : MapToView(preset);
-    }
-
-    private static OrderPresetView MapToView(InstrumentOrderPreset p) => new(
-        p.Id,
-        p.InstrumentId,
-        p.Name,
-        p.DefaultPrice.Value,
-        p.DefaultQuantity.Value,
-        (int)p.DefaultSide,
-        p.ValidityType,
-        p.Commission,
-        (int)p.DefaultOrderMode);
+    private static OrderPresetView MapToView(
+        InstrumentOrderPreset p, Instrument? instrument) => new(
+        Id: p.Id,
+        InstrumentId: p.InstrumentId,
+        InstrumentIsin: instrument?.Isin ?? "",
+        InstrumentSymbolName: instrument?.SymbolName ?? "",
+        Name: p.Name,
+        DefaultPrice: p.DefaultPrice.Value,
+        DefaultQuantity: p.DefaultQuantity.Value,
+        DefaultSide: (int)p.DefaultSide,
+        ValidityType: p.ValidityType,
+        Commission: p.Commission,
+        DefaultOrderMode: (int)p.DefaultOrderMode,
+        CreatedAt: p.CreatedAt);
 }

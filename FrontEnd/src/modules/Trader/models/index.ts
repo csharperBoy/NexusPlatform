@@ -233,3 +233,17 @@ export {
   INTENT_STATE_OPTIONS,
   PAPER_OPTIONS,
 } from "./Orders";
+
+// ─── Order Presets (C-lite.2) ───
+export type {
+  OrderPresetView,
+  CreateOrderPresetCommand,
+  UpdateOrderPresetCommand,
+} from "./OrderPresets";
+
+export {
+  DEFAULT_SIDE_OPTIONS,
+  DEFAULT_ORDER_MODE_OPTIONS,
+  VALIDITY_TYPE_OPTIONS,
+  labelOf,
+} from "./OrderPresets";

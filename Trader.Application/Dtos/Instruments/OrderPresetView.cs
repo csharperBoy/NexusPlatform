@@ -3,10 +3,13 @@
 public sealed record OrderPresetView(
     Guid Id,
     Guid InstrumentId,
+    string InstrumentIsin,
+    string InstrumentSymbolName,
     string Name,
     decimal DefaultPrice,
     long DefaultQuantity,
     int DefaultSide,
     int ValidityType,
     decimal Commission,
-    int DefaultOrderMode);
+    int DefaultOrderMode,
+    DateTime CreatedAt);

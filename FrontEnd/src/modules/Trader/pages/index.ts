@@ -32,3 +32,4 @@ export { PriceCollectionPage } from "./PriceCollection/PriceCollectionPage";
 export { PriceSourcesManagementPage } from "./PriceSources/PriceSourcesManagementPage";
 export { PriceCollectionJobsPage } from "./PriceCollectionJobs/PriceCollectionJobsPage";
 export { OrdersManagementPage } from "./Orders/OrdersManagementPage";
+export { OrderPresetsManagementPage } from "./OrderPresets/OrderPresetsManagementPage";
