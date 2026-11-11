@@ -10,3 +10,5 @@ export { useBacktestManagement } from "./useBacktestManagement";
 export { usePriceSourceManagement, priceSourceCrudApi } from "./usePriceSourceManagement";
 export { usePriceCollectionJobManagement } from "./usePriceCollectionJobManagement";
 export { useHistoricalDataCollectionManagement } from "./useHistoricalDataCollectionManagement";
+export { useBrokerOrdersManagement } from "./useBrokerOrdersManagement";
+export { useOrderIntentsManagement } from "./useOrderIntentsManagement";

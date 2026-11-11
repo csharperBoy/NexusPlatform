@@ -212,3 +212,24 @@ export {
   buildRecurrencePattern,
   formatRecurrencePattern,
 } from "./PriceCollection";
+
+// ─── Orders (C-lite.1) ───
+export type {
+  BrokerOrderView,
+  BrokerOrderDetailView,
+  OrderTradeView,
+  OrderIntentView,
+  BrokerOrderQuery,
+  OrderIntentQuery,
+} from "./Orders";
+
+export {
+  OrderSide,
+  OrderStateKind,
+  OrderIntentState,
+  ORDER_STATE_COLORS,
+  INTENT_STATE_COLORS,
+  ORDER_STATE_OPTIONS,
+  INTENT_STATE_OPTIONS,
+  PAPER_OPTIONS,
+} from "./Orders";
