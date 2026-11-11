@@ -578,25 +578,6 @@ Cron Library: Cronos 0.8.4 (MIT، used by Hangfire itself، DST-aware).
 
 Superseded: پیشنهاد قبلی D48 ("Sub-Daily در B2 via BackgroundService جدا") — Void. Sub-Daily native در Scheduler.
 
-text
-
-### C2 — `docs/HANDOFF.md`
-
-**تغییر ۱ — Header (بالای فایل):**
-
-```markdown
-> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۱۹ — Scheduler Extension (Minutely/Hourly/Cron) + Scheduler.Tests
-> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler Extension ✅ | Phase B1 🚧 (Design) | 163 + 28 Tests ✅ | CI ✅
-> **گام بعدی:** PR B1 — PriceCollection (design D34-D48 locked, ready to code)
-تغییر ۲ — Section 8 (Phase Status):
-
-بعد از D9 (Risk Seed) در Phase D، یک Section جدید اضافه کن:
-
-markdown
-### Phase B1 Pre-work — ✅ COMPLETE
-
-**Scheduler Extension (D48)** — Minutely/Houly/Cron native.
-
 | # | Feature | Status |
 |---|---|---|
 | **B1.0** | `RecurrenceType.Minutely/Houly/Cron` | ✅ |
@@ -609,6 +590,56 @@ markdown
 - Scheduler Platform باید این را بومی بدهد، نه هر Module با BackgroundService جدا
 - Backward-compatible: enum values 0/1/2 حفظ شدند، ردیف‌های DB بدون Migration
 
+### D49 — Historical Data Collection: هم‌ساختار با PriceCollection (Mode / State / Scheduler)
+
+**تصمیم:** `HistoricalDataCollectionJob` از الگوی `PriceCollectionJob` تبعیت می‌کند:
+- دو Mode: `Backfill` (یک‌بار، DateFrom..DateTo) و `Recurring` (Scheduler، از max(OpenTime) هر (Isin, TF) تا now)
+- State Machine مشترک: `Created / Running / Stopped / Completed / Faulted`
+- Scheduler Integration: `ScheduleAsync` برای Backfill، `ScheduleRecurringAsync` برای Recurring
+- Handler جدا: `CollectCandleJobHandler` با idempotent guard (State≠Running → return)، Mode dispatch، MarkFaulted+rethrow
+- Boundary per (Isin, TimeFrame) در Recurring — نه global
+- `batch.Count < BatchSize` **نباید** trigger break باشد (API ممکن است batch میانی کوتاه برگرداند)؛ به‌جایش `previousOldest` guard برای no-progress → break
+
+**دلیل:** حفظ پارادایم یکسان در Trader برای هر Collection Job (Learning curve، UX consistency، Testing pattern).
+
+**پیامد:** `HistoricalDataCollectionWorker` و `HistoricalWorkerHealthCheck` حذف شدند — Scheduler جایگزین Worker pattern برای polling شد. `HistoricalDataCollectionJob.Status` (قدیمی) → `State` (جدید) با Migration data conversion.
+
+---
+
+### D50 — Collection Job boilerplate: تکرار عمدی تا سومین use-case (Rule of Three)
+
+**تصمیم:** با وجود دو Collection Job موجود (`PriceCollectionJob`, `HistoricalDataCollectionJob`) که ~۷۰٪ boilerplate مشترک دارند (state machine، Start/Stop، Handler، Frontend table)، abstraction نمی‌کنیم تا **سومین** Collection Job ساخته شود.
+
+**دلیل (Rule of Three):**
+- با ۲ نمونه، نمی‌توان محدوده‌ی abstraction را دقیق تعریف کرد. Third use-case معمولاً variation جدیدی نشان می‌دهد (مثلاً boundary semantics متفاوت، mode اضافه، tracking متفاوت)
+- هزینه‌ی refactor premature > هزینه‌ی refactor بعدی (بعدی = ۱ migration + تغییر دو entity؛ premature = ۲ migration + تثبیت B1 که همین امروز stable شد)
+- Paper Trading Week (milestone بعدی) از B1 stable بیشترین سود را می‌برد — DRY نباید در این مقطع وقت بگیرد
+
+**Trigger برای abstraction:** ساخت سومین Collection Job (مثلاً `FundamentalCollectionJob`, `NewsCollectionJob`) با رفتار مشترک اثبات‌شده.
+
+**پس از trigger، سه سطح تصمیم:**
+- **L1 (Frontend):** `GenericScheduledJobPage<TConfig>` — ریسک صفر (بدون EF/Migration)، ارزش فوری حتی با ۲ نمونه
+- **L2 (Backend):** Base entity + helper service — ریسک متوسط (migration polymorphic schema: TPT vs TPH)، بعد از trigger
+- **L3 (Full generic framework):** ریسک بالا، over-engineering، اجتناب تا ۴+ use-case
+
+**Frontend L1 آزاد است حتی الان، ولی Backend L2/L3 تا trigger ممنوع.**
+
+---
+
+### D51 — Scheduler مرز پلتفرمی است، نه Trader
+
+**تصمیم:** `Scheduler.Domain` / `Scheduler.Application` / `Scheduler.Infrastructure` یک **ماژول مستقل از Trader** است که در NexusPlatform در اختیار همه ماژول‌ها (Trader، HR، Finance، Identity، ...) و در آینده در پروژه‌های دیگر استفاده می‌شود. طراحی Scheduler باید **فراتر از نیازهای Trader** باشد:
+- `IScheduledJobHandler<TPayload>` برای هر ماژول باز است — Trader فقط یکی از consumers است
+- `RecurrencePattern` (Minutely/Hourly/Daily/Weekly/Monthly/Cron) و `Scheduler` lifecycle (Recurring/Paused/Completed/Cancelled، Idempotent dispatch، Startup recovery) باید در سطح platform کامل باشد
+- اگر روزی abstraction سطح D50 (L2/L3) به trigger رسید، **باید در `Scheduler` پیاده شود، نه در `Trader`**. پیشنهاد: یک Sub-module جدید `Scheduler.Collection` که `IScheduledCollectionJob` + base entity + helper service فراهم کند. Trader (و ماژول‌های آینده) از آن consume می‌کنند
+- Trader-level boilerplate امروز (`PriceCollectionService.StartJobAsync`، `CollectCandleJobHandler`، ...) به‌عنوان **Precedent برای Scheduler design** مستند است — وقتی abstraction وقتش رسید، design از همین دو نمونه استخراج می‌شود ولی در Scheduler مستقر می‌شود
+
+**دلیل این محدودیت:**
+- Scheduler مثل `Cache`، `Event`، `Audit` است — Cross-cutting، not domain-specific
+- اگر abstraction در Trader بماند، ماژول‌های دیگر باید دوباره boilerplate بسازند یا به Trader وابسته شوند (نقض module boundaries)
+- Scheduler باید idiom استاندارد پلتفرم باشد، نه Trader-owned
+
+**پیامد فوری:** هیچ تغییری در Trader لازم نیست. این ADR صرفاً سند مرز و تصمیم آینده است.
 ### Phase B1 (PriceCollection / TGJU) — 🚧 DESIGN LOCKED, CODE PENDING
 
 **Approved: D34-D42 + D43-D48**

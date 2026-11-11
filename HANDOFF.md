@@ -1,6 +1,6 @@
-> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۱۹ — Phase B1 Design Approved
-> **وضعیت:** Phase A ✅ | Phase D ✅ | Phase B1 🚧 (Design) | 163 Tests ✅ | CI ✅
-> **گام بعدی:** PR B1 — TGJU Import (code pending on PriceSource design D34-D42)
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۱ — Phase B1 ✅ (TGJU Import + Historical Data Refactor)
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler Extension ✅ | Phase B1 ✅ | 256 Tests ✅ | CI ✅
+> **گام بعدی:** Phase C-lite — Order Management UI + Preset UI + Dashboard (پیش‌نیاز Paper Trading Week)
 ---
 
 ## 1. PROJECT OVERVIEW
@@ -411,21 +411,33 @@ src/modules/Trader/
 | **D8** | Risk Dashboard UI | ✅ PR 21 |
 | **D9** | Risk Seed (Resource/Permission/Menu) | ✅ |
 
-### Phase B1 (Price Collection / TGJU Import) — 🚧 DESIGN APPROVED, CODE PENDING
+> **نکته:** Risk Guards (D31-D33) در Live و Paper هردو فعال هستند (ApplyToPaper flag)، پس Paper Week از همان محافظت‌ها بهره‌مند می‌شود — تنها استثنا `DailyLossLimit.ApplyToPaper=false` و `CircuitBreaker.ApplyToPaper=false` که در Paper صرف‌نظر می‌شوند (چون BuyPower واقعی Paper tracked نیست).
+### Phase B1 — ✅ COMPLETE
 
-**Approved Design: D34-D42 in `TRADING-DECISIONS.md`**
+**Scope تحویل‌شده:**
 
-**Scope:**
-- `PriceSource` Entity + `PriceCollectionJob` Entity
-- `TgjuPriceSourceProvider` (B1 = only provider)
-- Scheduler Module (Recurring + Backfill)
-- USD/IRR only (B2 = more assets)
-- Endpoints: PriceSource CRUD + Job CRUD + Start/Stop + Status
-- 20+ tests
+| PR | Feature | Status |
+|---|---|---|
+| Pre-B1 | `CurrencyCode` extended: GOLD, SILVER, COPPER, PLATINUM, OIL (D37) | ✅ |
+| B1.1 | `PriceSource` + `PriceCollectionJob` Domain + Migration | ✅ |
+| B1.2 | `TgjuApiClient` (ExternalApiClient layer) + `TgjuPriceSourceProvider` | ✅ |
+| B1.3 | `PriceCollectionService` + `CollectPriceJobHandler` + Scheduler integration | ✅ |
+| B1.4 | `PriceSourceController` + `PriceCollectionJobController` + Seed (tgju-usd) | ✅ |
+| B1.5 | Unit tests (Mock-first pattern): Domain (13) + Infra (28) | ✅ |
+| B1 FE | Frontend `PriceCollectionPage` (Tabs: Jobs / Sources) + CreateJobModal | ✅ |
 
-**Dependencies needed before code:**
-- `Scheduler` Module code (for D12/D39 clarification)
-- Confirmations on `RecurringPattern` API
+**Bugs found & fixed during B1:**
+1. **`minRate=100,000` در seed config** → همه‌ی USD/IRR قبل از ۲۰۱۸ (< ۱۰۰K ریال) skip → ۱۶۷۳ رکورد گم‌شده. Fix: حذف `minRate` از seed (rate > 0 کافی است)
+2. **TGJU API sort order (oldest-first)** → Recurring (`maxPages=1`) صفحه‌ی اول = قدیمی‌ترین‌ها → filter = 0. Fix: `fetchAllPages: bool` + Recurring = probe `recordsTotal` + fetch last page
+3. **Backfill `HitBoundary` guard** → `MarkCompleted` هرگز trigger نمی‌شد (HitBoundary فقط Recurring). Fix: Backfill = `MarkCompleted` بی‌قید HitBoundary
+4. **`GetMaxEffectiveAtAsync` بدون Source** → اگر Source دیگر همان Pair را تا تاریخ جلوتر پر کرده بود، Backfill این Source از دست می‌رفت. Fix: `LatestCurrencyRateBySourceSpec`
+
+**Refactor جانبی (H1-H3):** Historical Data Collection هم‌ساختار با PriceCollection شد (Backfill/Recurring، Scheduler-only، حذف Worker). Bugs found & fixed:
+1. **`FetchAsync` maxPages → fetchAllPages** (int → bool) — interface consistency
+2. **`HistoricalDataCollector` بدون `UpdateAsync` قبل از `SaveChangesAsync`** → job State (MarkCompleted) و progress در DB persist نمی‌شد. Fix: ۶ call site
+3. **`batch.Count < BatchSize` premature break** در `CollectComboAsync` → داده‌ی قدیمی‌تر گم می‌شد. Fix: `previousOldest` no-progress guard
+
+**تصمیمات جدید:** D49 (Historical Refactor), D50 (Collection Job boilerplate — Rule of Three، defer), D51 (Scheduler = پلتفرم، نه Trader).
 
 ### Phase B2/B3, Phase C, Phase E — آینده
 (B2: Telegram + more assets + Frontend; C: Operations; E: Advanced)
@@ -564,29 +576,81 @@ src/modules/Trader/
 
 ## 13. NEXT STEPS
 
-### بلافاصله (بعد از این PR)
-1. **Risk Dashboard UI** (Frontend Batch 2) — Kill Switch + Circuit Breaker + Active Circuits
-   - `models/Risk.ts` + `api/riskApi.ts`
-   - `pages/Risk/RiskDashboardPage.tsx`
-   - Add route در `routes.tsx` + export در `pages/index.ts`
+### بلافاصله — Phase C-lite (پیش‌نیاز Paper Trading Week) — ~۲-۳ روز
 
-### کوتاه‌مدت
-2. **Paper Trading Week** — یک هفته Paper با تمام Guards فعال، قبل از Phase B/C/D
-3. **Bug bash** — هر Issue که در Paper هفته کشف شد
+| # | Feature | دلیل |
+|---|---|---|
+| **C-lite.1** | **Order Management UI** — BrokerOrders + OrderIntents list/detail + Cancel Endpoint | بدون این، Paper Week کور است. باید بتوانی ببینی چه سفارشی رفت و بتوانی Cancel کنی |
+| **C-lite.2** | **Order Preset UI** — `InstrumentOrderPreset` CRUD | Manual test order از UI |
+| **C-lite.3** | **Dashboard / Daily PnL Widget** | نگاه سریع به وضعیت روزانه |
 
-### میان‌مدت
-4. **Phase B:** TGJU USD Import، Data Completeness
-5. **Phase C:** Order Management UI، Order Preset UI، Daily PnL
-6. **Phase E:** Strategy Ensemble، Trailing Stop، AI/ML Pipeline
+### بعد از C-lite — Paper Trading Week (~۱ هفته)
+
+- یک Run ساده روی ۲-۳ نماد با بودجه‌ی محدود
+- Recurring TGJU Job فعال (نرخ تازه)
+- Kill Switch Global حاضر (نه از دست، نه panic)
+- هر روز صبح: چک Events (`/trader/events`) برای Critical/Error
+- هر Bug → اول یادداشت، بعد fix
+
+**معیار موفقیت Paper Week:** No `PositionOvershoot` (D9 Critical)، No `KillSwitchActivated` غیرمنتظره، No `CircuitBreakerTriggered` غیرمنتظره، Reconciliation پاک، PnL منطقی.
+
+### بعد از Paper Week — Phase B2 (~۲-۳ روز)
+
+- B2.1 Telegram Channel PriceSourceProvider
+- B2.2 Multi-asset (EUR, AED, GOLD, SILVER, COPPER — config only)
+- B2.3 Data Completeness Monitoring
+- B2.4 Frontend refinement (Backfill progress bar واقعی)
+
+### میان‌مدت — Phase C کامل (~۱ هفته)
+
+- C.4 Source Filter در Currency Transform (D40 ext)
+- C.5 Multi-Account Coordination Policy (D5 ext)
+- C.6 Order Modifications (Modify Price/Quantity)
+- C.7 Partial Fill Handling UI
+
+### بلندمدت — Phase E (پس از C، ~۲ هفته)
+
+- E.1 Strategy Ensemble (D27)
+- E.2 Trailing Stop / Laddered Exit
+- E.3 AI/ML Pipeline (D28)
+- E.4 Multi-Instance Prep (Redis session cache، D20)
+
+### Technical Debt (هر وقت به فایل مربوطه دست زدی)
+
+- TD1 `UseQuerySplittingBehavior` commented (D-Something)
+- TD2 `ITraderUnitOfWork` = Registry، نه UoW واقعی — Rename در آینده
+- TD3 `TraderSymbol` Legacy — بعد از Migration کامل Instrument، حذف
+- TD4 `SchedulePlan` / `ScheduledOrder` Legacy — Overlap با TradingRun
+- TD5 `ExecutionLogService.Skip/Take` در memory — SQL-side fix
+- TD6 `CandleRecord.TimeFrame` enum → int cast در بعضی Queryها
+
+### Free ADRs (آزاد، هر وقت شد)
+
+- **D50 L1 (Frontend):** `GenericScheduledJobPage<TConfig>` — ریسک صفر، ارزش فوری
+- **D50 L2/L3 (Backend):** مؤکول به ساخت سومین Collection Job (Rule of Three)
 
 ---
 
 ## 14. RECENT COMPLETED WORK
 
-1. **PR 21** — Risk Dashboard UI (`/trader/risk`). Kill Switch Card (Global + per-Account با ConfirmActionModal + reason)، CircuitBreaker Card (Active list + Reset per-row + Reset All)، Auto-refresh 15s. Frontend-only.
-2. **Risk Seed** — `TraderSeedData` اضافه شد: `trader.risk` Resource (DisplayOrder 3017, Icon shield) + FullAccess Permission + "مدیریت ریسک" Menu (Order 115, Path `/trader/risk`). `RiskController` از `trader.tradingrun` به `trader.risk` منتقل شد (RBAC دقیق).
-3. **PR 20** — Kill Switch Events Hotfix. `ActivateKillSwitchCommandHandler` و `DeactivateKillSwitchCommandHandler` حالا `ITradingEventLogger` تزریق می‌کنند و بعد از state change، `KillSwitchActivated`/`KillSwitchDeactivated` emit + Flush می‌کنند. +۵ تست.
-4. **PR 19 (Frontend)** — Trading Runs sync با per-account capital. `TradingRunAccountEditor` بازنویسی (checkbox + mode toggle + amount/percent)، حذف `Section تخصیص سرمایه`، حذف Run-level capital column.
-5. **PR 19 (Backend)** — Per-Account Capital Allocation. `AccountCapitalAllocation` VO (Fixed/Dynamic)، `TradingRunAccount.CapitalAllocation` (Owned)، حذف `TradingRun.CapitalAllocation`، Migration با Data copy. `FixedCapitalAllocator` per-account (رفع باگ "100M per Account"). 158 tests.
+1. **Phase B1 — TGJU Import (PRs Pre-B1, B1.1-B1.5, B1-FE)** ✅
+   - `PriceSource` + `PriceCollectionJob` (Entity, Migration, DTOs, Controllers)
+   - `TgjuApiClient` (ExternalApiClient layer) + `TgjuPriceSourceProvider` (Infrastructure)
+   - `PriceCollectionService` + `CollectPriceJobHandler` + Scheduler integration
+   - Frontend: `/trader/price-collection` با Tabs (Jobs / Sources) + CreateJobModal (Recurring/Backfill + Recurrence pattern picker)
+   - 22 unit tests + 4 bugs fixed
 
-**Next:** PR B1 (TGJU Import) — code pending on Scheduler module API confirmation.
+2. **Historical Data Refactor — هم‌ساختار با PriceCollection (PRs H1, H2, H3)** ✅
+   - `HistoricalCollectionMode` (Backfill/Recurring), `HistoricalJobState` (5-state)
+   - `IHistoricalDataCollector`: `CollectBackfillAsync` / `CollectRecurringAsync`
+   - `CollectCandleJobHandler` (idempotent، Mode dispatch، MarkFaulted)
+   - Removal: `HistoricalDataCollectionWorker`, `HistoricalWorkerHealthCheck`, `PendingHistoricalJobsSpec`
+   - Migration: `RefactorHistoricalDataCollection` (Status→State با data mapping، ProgressPercent→BackfillProgressPercent nullable، Add Mode/SchedulerIds/RecurrencePatternJson)
+   - Frontend: HistoricalDataCollectionPage بازنویسی (Mode-aware Modal، Progress bar، Auto-poll 5s حین Running، Start/Stop)
+   - 41 unit tests + 3 bugs fixed
+
+3. **ADR Documentations** — D49 (Historical Refactor), D50 (Collection Job boilerplate — Rule of Three / defer), D51 (Scheduler = پلتفرم، نه Trader)
+
+4. **Earlier (PR 21, Risk Seed, PR 20, PR 19):** Risk Dashboard UI، `trader.risk` resource، Kill Switch Events، per-Account Capital. → مراجعه به commit history.
+
+**Next:** Phase C-lite — Order Management UI + Preset UI + Dashboard (پیش‌نیاز Paper Trading Week).
