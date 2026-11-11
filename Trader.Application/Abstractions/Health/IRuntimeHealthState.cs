@@ -8,9 +8,7 @@ public interface IRuntimeHealthState
 {
     DateTime? LastTickAt { get; }
     DateTime? LastBacktestPollAt { get; }
-    DateTime? LastHistoricalPollAt { get; }
 
     void MarkTickNow();
     void MarkBacktestPollNow();
-    void MarkHistoricalPollNow();
 }

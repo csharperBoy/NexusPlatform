@@ -53,9 +53,7 @@ namespace Trader.Infrastructure.Data
                 .AddCheck<RuntimeWorkerHealthCheck>(
                     "RuntimeWorker", tags: new[] { "runtime" })
                 .AddCheck<BacktestWorkerHealthCheck>(
-                    "BacktestWorker", tags: new[] { "backtest" })
-                .AddCheck<HistoricalWorkerHealthCheck>(
-                    "HistoricalWorker", tags: new[] { "historical" })
+                    "BacktestWorker", tags: new[] { "backtest" })                
                 .AddCheck<BrokerSessionHealthCheck>(
                     "BrokerSession", tags: new[] { "broker" })
                 .AddCheck<MarketDataFreshnessHealthCheck>(

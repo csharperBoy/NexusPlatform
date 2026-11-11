@@ -2,6 +2,9 @@
 
 public interface IHistoricalDataCollector
 {
-    /// <summary>اجرای یک CollectionJob با Id مشخص.</summary>
-    Task RunAsync(Guid jobId, CancellationToken ct = default);
+    /// <summary>Backfill — از DateFrom تا DateTo، سپس MarkCompleted.</summary>
+    Task CollectBackfillAsync(Guid jobId, CancellationToken ct = default);
+
+    /// <summary>Recurring — یک tick: از boundary هر (Isin, TF) تا now، بدون تغییر State.</summary>
+    Task CollectRecurringAsync(Guid jobId, CancellationToken ct = default);
 }

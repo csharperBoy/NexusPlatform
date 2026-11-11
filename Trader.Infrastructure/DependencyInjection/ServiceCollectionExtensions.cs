@@ -291,7 +291,7 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
                 sp => sp.GetRequiredService<HistoricalDataCollectionService>());
 
             services.AddScoped<IHistoricalDataCollector, HistoricalDataCollector>();
-            services.AddHostedService<HistoricalDataCollectionWorker>();
+            services.AddScheduledJobHandler<CollectCandlePayload, CollectCandleJobHandler>();
 
             // ─── Backtest Engine ───
             services.AddScoped<ISubCandleResolver, SubCandleResolver>();

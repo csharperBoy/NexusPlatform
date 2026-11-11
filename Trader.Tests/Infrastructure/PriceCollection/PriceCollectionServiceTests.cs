@@ -264,8 +264,8 @@ public class PriceCollectionServiceTests
         await sut.CollectBackfillAsync(job.Id);
 
         deps.Providers[0].Verify(x => x.FetchAsync(
-            It.IsAny<PriceSource>(), It.IsAny<DateTime?>(),
-            It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    It.IsAny<PriceSource>(), It.IsAny<DateTime?>(),
+    It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public class PriceCollectionServiceTests
         deps.Sources.Setup(x => x.GetByIdAsync(source.Id)).ReturnsAsync(source);
 
         deps.Providers[0].Setup(x => x.FetchAsync(
-                source, It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            source, It.IsAny<DateTime?>(), true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PriceFetchResult(Array.Empty<PricePoint>(), 1, true));
 
         await sut.CollectBackfillAsync(job.Id);
@@ -308,8 +308,8 @@ public class PriceCollectionServiceTests
 
         var effectiveAt = new DateTime(2026, 11, 1, 20, 30, 0, DateTimeKind.Utc);
         deps.Providers[0].Setup(x => x.FetchAsync(
-                source, It.IsAny<DateTime?>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new PriceFetchResult(
+             source, It.IsAny<DateTime?>(), true, It.IsAny<CancellationToken>()))
+             .ReturnsAsync(new PriceFetchResult(
                 new[] { new PricePoint(2_500_000m, effectiveAt, "x") },
                 PagesFetched: 1,
                 HitBoundary: true));

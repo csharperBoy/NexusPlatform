@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Trader.ExternalApiClient\Trader.ExternalApiClient.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Specifications\HistoricalData\" />
+  </ItemGroup>
+
 </Project>

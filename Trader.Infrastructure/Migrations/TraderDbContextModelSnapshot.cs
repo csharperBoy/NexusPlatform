@@ -780,6 +780,10 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("BackfillProgressPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -805,23 +809,35 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<DateTime>("DateFrom")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DateTo")
+                    b.Property<DateTime?>("DateTo")
                         .HasColumnType("datetime2");
 
                     b.Property<long?>("DurationMs")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("ErrorMessage")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
                     b.Property<string>("IsinsJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("LastRunAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LastRunInserted")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LastRunSkipped")
+                        .HasColumnType("int");
+
                     b.Property<string>("LogMessagesJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Mode")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("ModifiedAt")
                         .HasColumnType("datetime2");
@@ -835,15 +851,23 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<decimal>("ProgressPercent")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<string>("RecurrencePatternJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("SchedulerJobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SchedulerRecurringId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
+                    b.Property<int>("State")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("StoppedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("TimeFramesJson")
                         .IsRequired()
@@ -867,14 +891,25 @@ namespace Trader.Infrastructure.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
+                    b.HasIndex("Mode")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_Mode");
+
                     b.HasIndex("ModifiedAt")
                         .HasDatabaseName("IX_HistoricalDataCollectionJob_ModifiedAt");
 
                     b.HasIndex("ModifiedBy")
                         .HasDatabaseName("IX_HistoricalDataCollectionJob_ModifiedBy");
 
-                    b.HasIndex("Status")
-                        .HasDatabaseName("IX_HistoricalDataCollectionJob_Status");
+                    b.HasIndex("SchedulerJobId")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_SchedulerJobId")
+                        .HasFilter("[SchedulerJobId] IS NOT NULL");
+
+                    b.HasIndex("SchedulerRecurringId")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_SchedulerRecurringId")
+                        .HasFilter("[SchedulerRecurringId] IS NOT NULL");
+
+                    b.HasIndex("State")
+                        .HasDatabaseName("IX_HistoricalDataCollectionJob_State");
 
                     b.ToTable("HistoricalDataCollectionJobs", "trader");
                 });

@@ -67,7 +67,6 @@ namespace Trader.Infrastructure.Data
         ///   GET /health/trader/db
         ///   GET /health/trader/runtime
         ///   GET /health/trader/backtest
-        ///   GET /health/trader/historical
         ///   GET /health/trader/broker
         ///   GET /health/trader/marketdata
         /// All anonymous (intended for K8s/Docker probes).
@@ -89,7 +88,6 @@ namespace Trader.Infrastructure.Data
             Map($"{basePattern}/db", c => c.Tags.Contains("db"));
             Map($"{basePattern}/runtime", c => c.Tags.Contains("runtime"));
             Map($"{basePattern}/backtest", c => c.Tags.Contains("backtest"));
-            Map($"{basePattern}/historical", c => c.Tags.Contains("historical"));
             Map($"{basePattern}/broker", c => c.Tags.Contains("broker"));
             Map($"{basePattern}/marketdata", c => c.Tags.Contains("marketdata"));
 

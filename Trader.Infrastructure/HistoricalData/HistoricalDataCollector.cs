@@ -5,6 +5,9 @@ using Microsoft.Extensions.Options;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.HistoricalData;
 using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Specifications.Candles;
+using Trader.Application.Specifications.CurrencyRates;
+using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Infrastructure.Data;
 
@@ -28,166 +31,189 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
         _logger = logger;
     }
 
-    public async Task RunAsync(Guid jobId, CancellationToken ct = default)
+    /* ═══════════════ Backfill ═══════════════ */
+
+    public async Task CollectBackfillAsync(Guid jobId, CancellationToken ct = default)
     {
-        // ─── ۱. Load + Mark Running ───
-        using (var scope = _scopeFactory.CreateScope())
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+
+        var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId)
+            ?? throw new InvalidOperationException($"Job {jobId} not found.");
+
+        if (job.Mode != HistoricalCollectionMode.Backfill)
+            throw new InvalidOperationException("CollectBackfillAsync requires Mode=Backfill.");
+
+        if (job.State != HistoricalJobState.Running)
         {
-            var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-            var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-            if (job is null)
-            {
-                _logger.LogWarning("Job {JobId} not found.", jobId);
-                return;
-            }
-
-            if (job.Status != CollectionJobStatus.Pending)
-            {
-                _logger.LogWarning("Job {JobId} status is {Status}, expected Pending.",
-                    jobId, job.Status);
-                return;
-            }
-
-            job.MarkRunning();
-            await uow.SaveChangesAsync();
+            _logger.LogDebug("Job {Id} state={State}; skip.", jobId, job.State);
+            return;
         }
 
-        _logger.LogInformation("Collection job {JobId} started.", jobId);
+        var isins = JsonSerializer.Deserialize<List<string>>(job.IsinsJson) ?? new();
+        var tfs = JsonSerializer.Deserialize<List<int>>(job.TimeFramesJson) ?? new();
+        var from = job.DateFrom;
+        var to = job.DateTo ?? DateTime.UtcNow;
 
-        // ─── ۲. Process ───
+        _logger.LogInformation(
+            "Backfill start: job={Id} isins={I} tfs={T} range={From}→{To}",
+            jobId, isins.Count, tfs.Count, from, to);
+
         try
         {
-            List<string> isins;
-            List<int> timeFrames;
-            DateTime dateFrom, dateTo;
-
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-                var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId)!;
-                isins = JsonSerializer.Deserialize<List<string>>(job!.IsinsJson)!;
-                timeFrames = JsonSerializer.Deserialize<List<int>>(job.TimeFramesJson)!;
-                dateFrom = job.DateFrom;
-                dateTo = job.DateTo;
-            }
-
-            int completed = 0;
-            int totalCandles = 0;
+            var totalCombinations = isins.Count * tfs.Count;
+            var completed = 0;
+            var totalInserted = 0;
 
             foreach (var isin in isins)
             {
-                foreach (var tfInt in timeFrames)
+                foreach (var tfInt in tfs)
                 {
-                    if (await IsCancelledAsync(jobId, ct))
-                    {
-                        _logger.LogInformation("Job {JobId} cancelled by user.", jobId);
-                        return;
-                    }
-
                     ct.ThrowIfCancellationRequested();
-
                     var tf = (TimeFrame)tfInt;
 
                     try
                     {
-                        using var comboScope = _scopeFactory.CreateScope();
-                        var collected = await CollectComboAsync(
-                            comboScope.ServiceProvider, isin, tf, dateFrom, dateTo, ct);
+                        var (inserted, skipped) = await CollectComboAsync(
+                            scope.ServiceProvider, isin, tf, from, to, ct);
 
-                        totalCandles += collected;
+                        totalInserted += inserted;
                         completed++;
 
-                        using (var progressScope = _scopeFactory.CreateScope())
-                        {
-                            var uow = progressScope.ServiceProvider
-                                .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-                            var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-                            if (job is null) return;
-
-                            job.UpdateProgress(isin, tfInt, completed, totalCandles);
-                            await uow.SaveChangesAsync();
-                        }
+                        job.RecordBackfillProgress(isin, tfInt, completed, totalInserted);
+                        await uow.SaveChangesAsync(ct);
 
                         _logger.LogInformation(
-                            "Collected {Count} candles: isin={Isin} tf={Tf} ({Done}/{Total})",
-                            collected, isin, tf, completed, isins.Count * timeFrames.Count);
+                            "Combo done: job={JobId} isin={Isin} tf={Tf} " +
+                            "inserted={Ins} skipped={Skp} ({Done}/{Total})",
+                            jobId, isin, tf, inserted, skipped, completed, totalCombinations);
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex,
-                            "Failed to collect {Isin} tf={Tf}. Continuing.",
-                            isin, tf);
+                            "Combo failed: job={JobId} isin={Isin} tf={Tf}. Continuing.",
+                            jobId, isin, tf);
 
-                        completed++;   // still count as attempted
-
-                        using (var progressScope = _scopeFactory.CreateScope())
-                        {
-                            var uow = progressScope.ServiceProvider
-                                .GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-                            var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-                            if (job is null) return;
-
-                            job.UpdateProgress(isin, tfInt, completed, totalCandles);
-                            await uow.SaveChangesAsync();
-                        }
+                        completed++;
+                        job.RecordBackfillProgress(isin, tfInt, completed, totalInserted);
+                        await uow.SaveChangesAsync(ct);
                     }
                 }
             }
 
-            // ─── ۳. Mark Completed ───
-            using (var scope = _scopeFactory.CreateScope())
-            {
-                var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-                var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-                if (job is null) return;
-
-                job.MarkCompleted();
-                await uow.SaveChangesAsync();
-            }
+            job.MarkCompleted(DateTime.UtcNow);
+            await uow.SaveChangesAsync(ct);
 
             _logger.LogInformation(
-                "Job {JobId} completed. Total candles: {Total}.",
-                jobId, totalCandles);
+                "Backfill completed: job={Id} totalInserted={Total}",
+                jobId, totalInserted);
         }
         catch (OperationCanceledException)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-            var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-            job?.MarkCancelled();
-            await uow.SaveChangesAsync();
+            job.MarkStopped(DateTime.UtcNow);
+            await uow.SaveChangesAsync(CancellationToken.None);
             throw;
         }
         catch (Exception ex)
         {
-            using var scope = _scopeFactory.CreateScope();
-            var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-            var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-            if (job is not null)
-            {
-                job.MarkFailed(ex.Message);
-                await uow.SaveChangesAsync();
-            }
+            job.MarkFaulted(ex.Message);
+            await uow.SaveChangesAsync(CancellationToken.None);
             throw;
         }
     }
 
-    /* ═══════════════════ Helpers ═══════════════════ */
+    /* ═══════════════ Recurring ═══════════════ */
 
-    private async Task<bool> IsCancelledAsync(Guid jobId, CancellationToken ct)
+    public async Task CollectRecurringAsync(Guid jobId, CancellationToken ct = default)
     {
         using var scope = _scopeFactory.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
-        var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId);
-        return job?.Status == CollectionJobStatus.Cancelled;
+
+        var job = await uow.HistoricalDataCollectionJobs.GetByIdAsync(jobId)
+            ?? throw new InvalidOperationException($"Job {jobId} not found.");
+
+        if (job.Mode != HistoricalCollectionMode.Recurring)
+            throw new InvalidOperationException("CollectRecurringAsync requires Mode=Recurring.");
+
+        if (job.State != HistoricalJobState.Running)
+        {
+            _logger.LogDebug("Job {Id} state={State}; skip.", jobId, job.State);
+            return;
+        }
+
+        var isins = JsonSerializer.Deserialize<List<string>>(job.IsinsJson) ?? new();
+        var tfs = JsonSerializer.Deserialize<List<int>>(job.TimeFramesJson) ?? new();
+        var fallbackFrom = job.DateFrom;
+        var now = DateTime.UtcNow;
+
+        var totalInserted = 0;
+        var totalSkipped = 0;
+
+        try
+        {
+            foreach (var isin in isins)
+            {
+                foreach (var tfInt in tfs)
+                {
+                    ct.ThrowIfCancellationRequested();
+                    var tf = (TimeFrame)tfInt;
+
+                    try
+                    {
+                        // Boundary: max(OpenTime) برای این (Isin, TF) در DB
+                        var boundary = await GetMaxCandleTimeAsync(uow, isin, tf, ct)
+                            ?? fallbackFrom;
+
+                        var (inserted, skipped) = await CollectComboAsync(
+                            scope.ServiceProvider, isin, tf, boundary, now, ct);
+
+                        totalInserted += inserted;
+                        totalSkipped += skipped;
+
+                        _logger.LogDebug(
+                            "Recurring tick combo: job={JobId} isin={Isin} tf={Tf} " +
+                            "boundary={Boundary} inserted={Ins} skipped={Skp}",
+                            jobId, isin, tf, boundary, inserted, skipped);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "Recurring tick combo failed: job={JobId} isin={Isin} tf={Tf}. Continuing.",
+                            jobId, isin, tf);
+                    }
+                }
+            }
+
+            job.RecordRecurringRun(totalInserted, totalSkipped, DateTime.UtcNow);
+            await uow.SaveChangesAsync(ct);
+
+            _logger.LogInformation(
+                "Recurring tick completed: job={Id} inserted={Ins} skipped={Skp}",
+                jobId, totalInserted, totalSkipped);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Recurring: خطای یک tick نباید Job را MarkFaulted کند
+            // (Scheduler خودش بعد از 10 failure Pause می‌کند)
+            _logger.LogError(ex,
+                "Recurring tick failed: job={Id}. Job remains Running; will retry next tick.",
+                jobId);
+            throw;
+        }
     }
 
-    private async Task<int> CollectComboAsync(
+    /* ═══════════════ Shared — per combo ═══════════════ */
+
+    private async Task<(int inserted, int skipped)> CollectComboAsync(
         IServiceProvider sp,
         string isin,
-        TimeFrame timeFrame,
-        DateTime dateFrom,
-        DateTime dateTo,
+        TimeFrame tf,
+        DateTime from,
+        DateTime to,
         CancellationToken ct)
     {
         var providerResolver = sp.GetRequiredService<IMarketDataProviderResolver>();
@@ -196,56 +222,66 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
         var provider = providerResolver.Resolve(MarketType.IranStock)
             ?? throw new InvalidOperationException("No provider for IranStock.");
 
-        var collected = 0;
-        var to = dateTo;
-        var batchCount = 0;
+        var totalInserted = 0;
+        var totalAttempted = 0;
+        var currentTo = to;
 
-        while (to > dateFrom)
+        while (currentTo > from)
         {
             ct.ThrowIfCancellationRequested();
 
             IReadOnlyList<Trader.Application.Runtime.Candle> batch;
             try
             {
-                batch = await provider.GetCandlesAsync(isin, timeFrame, BatchSize, ct, to);
+                batch = await provider.GetCandlesAsync(isin, tf, BatchSize, ct, currentTo);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex,
-                    "Batch fetch failed: isin={Isin} tf={Tf} to={To:O}. Stopping this combo.",
-                    isin, timeFrame, to);
+                    "Batch fetch failed: isin={Isin} tf={Tf} to={To:O}. Stopping combo.",
+                    isin, tf, currentTo);
                 break;
             }
 
             if (batch.Count == 0) break;
 
-            batchCount++;
-
             var filtered = batch
-                .Where(c => c.OpenTime >= dateFrom && c.OpenTime <= dateTo)
+                .Where(c => c.OpenTime >= from && c.OpenTime <= to)
                 .ToList();
+
+            totalAttempted += filtered.Count;
 
             if (filtered.Count > 0)
             {
                 var inserted = await persister.PersistAsync(
-                    isin, (int)timeFrame, filtered, provider.ProviderName, ct);
-                collected += inserted;
+                    isin, (int)tf, filtered, provider.ProviderName, ct);
+                totalInserted += inserted;
             }
 
             var oldest = batch.Min(c => c.OpenTime);
-            if (oldest <= dateFrom) break;
+            if (oldest <= from) break;
 
-            to = oldest.AddTicks(-1);
+            currentTo = oldest.AddTicks(-1);
 
             if (_options.RateLimitMs > 0)
                 await Task.Delay(_options.RateLimitMs, ct);
         }
 
-        _logger.LogDebug(
-            "Combo done: isin={Isin} tf={Tf} batches={Batches} collected={Collected}",
-            isin, timeFrame, batchCount, collected);
+        return (totalInserted, totalAttempted - totalInserted);
+    }
 
-        return collected;
+    private static async Task<DateTime?> GetMaxCandleTimeAsync(
+        ITraderUnitOfWork<TraderDbContext> uow,
+        string isin,
+        TimeFrame tf,
+        CancellationToken ct)
+    {
+        var rows = await uow.CandleRecords.GetAllAsync(q =>
+            q.Where(c => c.Isin == isin && c.TimeFrame == tf)
+             .OrderByDescending(c => c.OpenTime)
+             .Take(1));
+
+        return rows.FirstOrDefault()?.OpenTime;
     }
 }
 

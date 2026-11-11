@@ -26,14 +26,7 @@ public sealed class RuntimeHealthState : IRuntimeHealthState
         }
     }
 
-    public DateTime? LastHistoricalPollAt
-    {
-        get
-        {
-            var t = Interlocked.Read(ref _lastHistoricalPollAtTicks);
-            return t > 0 ? new DateTime(t, DateTimeKind.Utc) : null;
-        }
-    }
+
 
     public void MarkTickNow()
         => Interlocked.Exchange(ref _lastTickAtTicks, DateTime.UtcNow.Ticks);
@@ -41,6 +34,4 @@ public sealed class RuntimeHealthState : IRuntimeHealthState
     public void MarkBacktestPollNow()
         => Interlocked.Exchange(ref _lastBacktestPollAtTicks, DateTime.UtcNow.Ticks);
 
-    public void MarkHistoricalPollNow()
-        => Interlocked.Exchange(ref _lastHistoricalPollAtTicks, DateTime.UtcNow.Ticks);
 }
