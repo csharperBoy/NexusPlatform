@@ -230,11 +230,14 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
 
         var totalInserted = 0;
         var totalAttempted = 0;
+        var batchCount = 0;
         var currentTo = to;
+        DateTime? previousOldest = null;
 
         while (currentTo > from)
         {
             ct.ThrowIfCancellationRequested();
+            batchCount++;
 
             IReadOnlyList<Trader.Application.Runtime.Candle> batch;
             try
@@ -252,19 +255,22 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
             if (batch.Count == 0)
             {
                 _logger.LogDebug(
-                    "Batch fetch returned 0 candles; end of data: isin={Isin} tf={Tf} currentTo={To}",
+                    "Batch returned 0 candles; end of data: isin={Isin} tf={Tf} to={To:O}",
                     isin, tf, currentTo);
                 break;
             }
 
-            // Guard: fewer than requested → oldest chunk available from provider
+            // Informational: broker returned fewer than requested.
+            // NOT end-of-data — continue to see if older chunks exist.
+            // (Previously this used to `break`, causing premature termination
+            //  when broker returned short batches for mid-range due to data
+            //  gaps, quotas, or UDF quirks.)
             if (batch.Count < BatchSize)
             {
-                _logger.LogDebug(
-                    "Batch returned {Count} < {BatchSize} — end of data: isin={Isin} tf={Tf} oldest={Oldest}",
-                    batch.Count, BatchSize, isin, tf,
-                    batch.Min(c => c.OpenTime));
-                break;
+                _logger.LogInformation(
+                    "Batch returned {Count}/{BatchSize} (short batch, continuing): " +
+                    "isin={Isin} tf={Tf} to={To:O}",
+                    batch.Count, BatchSize, isin, tf, currentTo);
             }
 
             var filtered = batch
@@ -281,13 +287,38 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
             }
 
             var oldest = batch.Min(c => c.OpenTime);
-            if (oldest <= from) break;
+
+            // Reached requested start date
+            if (oldest <= from)
+            {
+                _logger.LogDebug(
+                    "Reached 'from' boundary: isin={Isin} tf={Tf} oldest={Oldest} from={From}",
+                    isin, tf, oldest, from);
+                break;
+            }
+
+            // Guard: no data progress — broker returned same oldest as last batch
+            // (infinite-loop protection). This catches both true end-of-data
+            // (broker returns same tail) and broker misbehavior.
+            if (previousOldest.HasValue && oldest >= previousOldest.Value)
+            {
+                _logger.LogWarning(
+                    "No data progress (oldest={Oldest} >= prev={PrevOldest}): " +
+                    "isin={Isin} tf={Tf}. Breaking to avoid infinite loop.",
+                    oldest, previousOldest.Value, isin, tf);
+                break;
+            }
+            previousOldest = oldest;
 
             currentTo = oldest.AddTicks(-1);
 
             if (_options.RateLimitMs > 0)
                 await Task.Delay(_options.RateLimitMs, ct);
         }
+
+        _logger.LogDebug(
+            "Combo loop done: isin={Isin} tf={Tf} batches={Batches} inserted={Ins} attempted={Att}",
+            isin, tf, batchCount, totalInserted, totalAttempted);
 
         return (totalInserted, totalAttempted - totalInserted);
     }
