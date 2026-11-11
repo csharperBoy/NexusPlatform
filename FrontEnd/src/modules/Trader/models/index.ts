@@ -141,16 +141,24 @@ export {
 export type {
   HistoricalDataCollectionJobSummaryView,
   HistoricalDataCollectionJobDetailView,
-  CollectHistoricalDataCommand,
+  CreateHistoricalBackfillCommand,
+  CreateHistoricalRecurringCommand,
 } from "./HistoricalDataCollection";
 
 export {
-  CollectionJobStatus,
-  COLLECTION_STATUS_LABELS,
-  COLLECTION_STATUS_COLORS,
+  HistoricalCollectionMode,
+  HistoricalJobState,
+  HISTORICAL_MODE_LABELS,
+  HISTORICAL_MODE_COLORS,
+  HISTORICAL_JOB_STATE_LABELS,
+  HISTORICAL_JOB_STATE_COLORS,
   COLLECTION_TIMEFRAME_OPTIONS,
   TIMEFRAME_LABEL_MAP,
+  toEndOfDayUtc,
+  toStartOfDayUtc,
+  toDateInputValue,
 } from "./HistoricalDataCollection";
+
 export type { BacktestEventView, BacktestEventQuery } from "./BacktestEvent";
 export {
   BacktestEventType,

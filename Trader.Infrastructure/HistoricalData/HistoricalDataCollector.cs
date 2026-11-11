@@ -81,6 +81,7 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
                         completed++;
 
                         job.RecordBackfillProgress(isin, tfInt, completed, totalInserted);
+                        await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
                         await uow.SaveChangesAsync(ct);
 
                         _logger.LogInformation(
@@ -96,12 +97,14 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
 
                         completed++;
                         job.RecordBackfillProgress(isin, tfInt, completed, totalInserted);
+                        await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
                         await uow.SaveChangesAsync(ct);
                     }
                 }
             }
 
             job.MarkCompleted(DateTime.UtcNow);
+            await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
             await uow.SaveChangesAsync(ct);
 
             _logger.LogInformation(
@@ -111,12 +114,14 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
         catch (OperationCanceledException)
         {
             job.MarkStopped(DateTime.UtcNow);
+            await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
             await uow.SaveChangesAsync(CancellationToken.None);
             throw;
         }
         catch (Exception ex)
         {
             job.MarkFaulted(ex.Message);
+            await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
             await uow.SaveChangesAsync(CancellationToken.None);
             throw;
         }
@@ -185,6 +190,7 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
             }
 
             job.RecordRecurringRun(totalInserted, totalSkipped, DateTime.UtcNow);
+            await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
             await uow.SaveChangesAsync(ct);
 
             _logger.LogInformation(

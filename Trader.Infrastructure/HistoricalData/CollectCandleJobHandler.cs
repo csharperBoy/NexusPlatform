@@ -66,6 +66,7 @@ public sealed class CollectCandleJobHandler : IScheduledJobHandler<CollectCandle
                 && fresh.Mode == HistoricalCollectionMode.Backfill)
             {
                 fresh.MarkFaulted(ex.Message);
+                await uow.HistoricalDataCollectionJobs.UpdateAsync(fresh);
                 await uow.SaveChangesAsync(CancellationToken.None);
             }
 

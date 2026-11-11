@@ -1,7 +1,7 @@
-//src/modules/Trader/api/historicalDataCollectionApi.ts
 import getAPI from "@/core/api/axiosClient";
 import type {
-  CollectHistoricalDataCommand,
+  CreateHistoricalBackfillCommand,
+  CreateHistoricalRecurringCommand,
   HistoricalDataCollectionJobSummaryView,
   HistoricalDataCollectionJobDetailView,
 } from "../models";
@@ -11,33 +11,69 @@ const API_MODULE = "trader";
 const USE_MOCK = import.meta.env.VITE_TRADER_USE_MOCK === "true";
 
 export const historicalDataCollectionApi = {
-  Collect: async (cmd: CollectHistoricalDataCommand): Promise<string> => {
+  /* ═══════════════ Commands ═══════════════ */
+
+  CreateBackfill: async (
+    cmd: CreateHistoricalBackfillCommand,
+  ): Promise<string> => {
     if (USE_MOCK) {
       await mockDelay(300);
       return crypto.randomUUID();
     }
     const api = getAPI(API_MODULE);
     const response = await api.post<string>(
-      "/api/Trader/HistoricalDataCollection/Collect",
+      "/api/Trader/HistoricalDataCollection/Backfill",
       cmd,
       { withCredentials: true },
     );
     return response.data;
   },
 
-  Cancel: async (id: string): Promise<boolean> => {
+  CreateRecurring: async (
+    cmd: CreateHistoricalRecurringCommand,
+  ): Promise<string> => {
     if (USE_MOCK) {
-      await mockDelay(150);
+      await mockDelay(300);
+      return crypto.randomUUID();
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<string>(
+      "/api/Trader/HistoricalDataCollection/Recurring",
+      cmd,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  Start: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
       return true;
     }
     const api = getAPI(API_MODULE);
     const response = await api.post<boolean>(
-      `/api/Trader/HistoricalDataCollection/Cancel/${id}`,
+      `/api/Trader/HistoricalDataCollection/Start/${id}`,
       {},
       { withCredentials: true },
     );
     return response.data;
   },
+
+  Stop: async (id: string): Promise<boolean> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      return true;
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<boolean>(
+      `/api/Trader/HistoricalDataCollection/Stop/${id}`,
+      {},
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  /* ═══════════════ Queries ═══════════════ */
 
   GetList: async (
     take = 50,

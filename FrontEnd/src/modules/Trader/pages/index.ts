@@ -22,11 +22,10 @@ export { BacktestsListPage } from "./Backtests/BacktestsListPage";
 
 export { BacktestComparePage } from "./Backtests/BacktestComparePage";
 
-export { CollectionStatusBadge } from "./HistoricalData/CollectionStatusBadge";
-
-export { CreateCollectionModal } from "./HistoricalData/CreateCollectionModal";
-
 export { HistoricalDataCollectionPage } from "./HistoricalData/HistoricalDataCollectionPage";
+export { CreateJobModal as CreateCollectionModal } from "./HistoricalData/CreateJobModal";
+export { JobStateBadge as CollectionStatusBadge } from "./HistoricalData/components/JobStateBadge";
+
 export { RiskDashboardPage } from "./Risk/RiskDashboardPage";
 
 export { PriceCollectionPage } from "./PriceCollection/PriceCollectionPage";
