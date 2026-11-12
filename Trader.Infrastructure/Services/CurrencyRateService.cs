@@ -53,10 +53,14 @@ public sealed class CurrencyRateService : ICurrencyRateService
         return rate?.Rate;
     }
 
+    /// <summary>سقف absolute برای GetList — جلوگیری از DoS. برای همه‌ی رکوردها از CheckRange
+    /// برای existence و برای داده‌ی حجیم از pagination (future) استفاده کنید.</summary>
+    private const int MaxGetListLimit = 10_000;
+
     public async Task<IReadOnlyList<CurrencyRateView>> GetRecentAsync(
-    string? fromCurrency, string? toCurrency, int limit = 100)
+        string? fromCurrency, string? toCurrency, int limit = 100)
     {
-        var takeClamped = Math.Clamp(limit, 1, 500);
+        var takeClamped = Math.Clamp(limit, 1, MaxGetListLimit);
 
         // ─── SQL-side filter + order + take ───
         var rates = await _uow.CurrencyRates.GetAllAsync(q =>
@@ -84,4 +88,31 @@ public sealed class CurrencyRateService : ICurrencyRateService
                 r.EffectiveAt, r.Source, r.CreatedAt))
             .ToList();
     }
+    public async Task<bool> CheckRangeExistsAsync(
+    string fromCurrency,
+    string toCurrency,
+    DateTime fromDate,
+    DateTime toDate)
+    {
+        var from = fromCurrency.Trim().ToUpperInvariant();
+        var to = toCurrency.Trim().ToUpperInvariant();
+
+        if (from == to) return true; // identity pair
+
+        var fromUtc = ToUtc(fromDate);
+        var toUtc = ToUtc(toDate);
+
+        // Direct pair
+        var direct = await _uow.CurrencyRateSpecs.ListBySpecAsync(
+            new CurrencyRatesPairRangeSpec(from, to, fromUtc, toUtc));
+        if (direct.Count() > 0) return true;
+
+        // Reverse pair
+        var reverse = await _uow.CurrencyRateSpecs.ListBySpecAsync(
+            new CurrencyRatesPairRangeSpec(to, from, fromUtc, toUtc));
+        return reverse.Count() > 0;
+    }
+
+    private static DateTime ToUtc(DateTime dt) =>
+        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 }

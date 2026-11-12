@@ -2,7 +2,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Trader.Application.Abstractions;
-using Trader.Application.Specifications.CurrencyRates;
 
 namespace Trader.Application.Queries.CurrencyRate;
 
@@ -15,14 +14,14 @@ public record CheckCurrencyRateRangeQuery(
 public class CheckCurrencyRateRangeQueryHandler
     : IRequestHandler<CheckCurrencyRateRangeQuery, Result<bool>>
 {
-    private readonly ITraderUnitOfWork<Trader.Infrastructure.Data.TraderDbContext> _uow;
+    private readonly ICurrencyRateService _service;
     private readonly ILogger<CheckCurrencyRateRangeQueryHandler> _logger;
 
     public CheckCurrencyRateRangeQueryHandler(
-        ITraderUnitOfWork<Trader.Infrastructure.Data.TraderDbContext> uow,
+        ICurrencyRateService service,
         ILogger<CheckCurrencyRateRangeQueryHandler> logger)
     {
-        _uow = uow;
+        _service = service;
         _logger = logger;
     }
 
@@ -31,21 +30,13 @@ public class CheckCurrencyRateRangeQueryHandler
     {
         try
         {
-            var from = request.FromCurrency.Trim().ToUpperInvariant();
-            var to = request.ToCurrency.Trim().ToUpperInvariant();
-            var fromUtc = ToUtc(request.From);
-            var toUtc = ToUtc(request.To);
+            var exists = await _service.CheckRangeExistsAsync(
+                request.FromCurrency,
+                request.ToCurrency,
+                request.From,
+                request.To);
 
-            // direct pair
-            var direct = await _uow.CurrencyRateSpecs.ListBySpecAsync(
-                new CurrencyRatesPairRangeSpec(from, to, fromUtc, toUtc));
-            if (direct.Count > 0)
-                return Result<bool>.Ok(true);
-
-            // reverse pair
-            var reverse = await _uow.CurrencyRateSpecs.ListBySpecAsync(
-                new CurrencyRatesPairRangeSpec(to, from, fromUtc, toUtc));
-            return Result<bool>.Ok(reverse.Count > 0);
+            return Result<bool>.Ok(exists);
         }
         catch (Exception ex)
         {
@@ -53,7 +44,4 @@ public class CheckCurrencyRateRangeQueryHandler
             return Result<bool>.Fail(ex.Message);
         }
     }
-
-    private static DateTime ToUtc(DateTime dt) =>
-        dt.Kind == DateTimeKind.Utc ? dt : DateTime.SpecifyKind(dt, DateTimeKind.Utc);
 }

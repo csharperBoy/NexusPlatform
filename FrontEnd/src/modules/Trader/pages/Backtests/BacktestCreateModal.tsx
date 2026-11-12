@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/BacktestCreateModal.tsx
 import React, { useEffect, useState } from "react";
 import { tradingRunApi } from "../../api/tradingRunApi";
 import { backtestApi } from "../../api/backtestApi";
@@ -48,8 +49,7 @@ export const BacktestCreateModal: React.FC<Props> = ({
   const [subCandleTf, setSubCandleTf] = useState("1");
 const [targetCurrency, setTargetCurrency] = useState("");
 const [currencyRateStatus, setCurrencyRateStatus] =
-  useState<"idle" | "checking" | "ok" | "missing">("idle");
-const [currencyRateCount, setCurrencyRateCount] = useState(0);
+  useState<"idle" | "checking" | "ok" | "late-start" | "missing">("idle");
   // Virtual config
   const [strategyKey, setStrategyKey] = useState("rsi");
   const [strategyConfigJson, setStrategyConfigJson] = useState(
@@ -82,7 +82,6 @@ const [currencyRateCount, setCurrencyRateCount] = useState(0);
     setName("");
     setTargetCurrency("");
     setCurrencyRateStatus("idle");
-    setCurrencyRateCount(0);
     setError(null);
   }
 }, [isOpen]);
@@ -93,40 +92,42 @@ useEffect(() => {
   const cur = targetCurrency.trim().toUpperCase();
   if (!cur || cur === "IRR") {
     setCurrencyRateStatus("idle");
-    setCurrencyRateCount(0);
     return;
   }
 
   let cancelled = false;
   setCurrencyRateStatus("checking");
-  setCurrencyRateCount(0);
 
   (async () => {
     try {
-      // تاریخ شروع Backtest
-      const fromDate = new Date(dateFrom).toISOString();
-
-      // درخواست همه‌ی نرخ‌ها
-      const rates = await currencyRateApi.GetList(cur, "IRR", 50000);
+      // آیا نرخی قبل از شروع Backtest وجود دارد؟ (baseline rate)
+      const hasBaseline = await currencyRateApi.CheckRange(
+        cur,
+        "IRR",
+        "1900-01-01",
+        dateFrom,
+      );
 
       if (cancelled) return;
 
-      const usable = rates.filter((r) => {
-        const effectiveAt = new Date(
-          /[Zz]|[+-]\d{2}:?\d{2}$/.test(r.effectiveAt)
-            ? r.effectiveAt
-            : r.effectiveAt + "Z",
-        );
-        // نرخ‌هایی که قبل از شروع Backtest ثبت شده‌اند
-        return effectiveAt <= new Date(dateFrom);
-      });
-
-      if (usable.length === 0) {
-        setCurrencyRateStatus("missing");
-      } else {
+      if (hasBaseline) {
         setCurrencyRateStatus("ok");
-        setCurrencyRateCount(usable.length);
+        return;
       }
+
+      // baseline نیست؛ آیا هیچ نرخی تا پایان بازه وجود دارد؟
+      // اگر بله → backend کار می‌کند ولی کندل‌های اولیه از baseline (اولین نرخ)
+      // تخمین زده می‌شوند. اگر نه → backend کاملاً fail می‌شود.
+      const hasAny = await currencyRateApi.CheckRange(
+        cur,
+        "IRR",
+        "1900-01-01",
+        dateTo,
+      );
+
+      if (cancelled) return;
+
+      setCurrencyRateStatus(hasAny ? "late-start" : "missing");
     } catch {
       if (!cancelled) setCurrencyRateStatus("missing");
     }
@@ -135,7 +136,7 @@ useEffect(() => {
   return () => {
     cancelled = true;
   };
-}, [targetCurrency, isOpen, dateFrom]);
+}, [targetCurrency, isOpen, dateFrom, dateTo]);
 
   const buildVirtualConfig = (): RunBacktestConfigModel => {
     return {
@@ -193,7 +194,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
   }
-
+  if (targetCurrency && currencyRateStatus === "missing") {
+    setError(
+      "نرخ ارز برای بازه‌ی انتخابی موجود نیست. ابتدا از صفحه‌ی «نرخ‌های ارز» ثبت کنید.",
+    );
+    return;
+  }
   // ─── Build Model ───
   // configOverride فقط برای Virtual Mode
   const model: RunBacktestModel = {
@@ -386,23 +392,29 @@ const handleSubmit = async (e: React.FormEvent) => {
       <option value="TRY">لیر ترکیه (TRY)</option>
       <option value="CNY">یوان چین (CNY)</option>
     </select>
-    {currencyRateStatus === "checking" && (
-      <span className="whitespace-nowrap text-xs text-gray-500">⏳</span>
+       {currencyRateStatus === "checking" && (
+      <span className="whitespace-nowrap text-xs text-gray-500">⏳ بررسی...</span>
     )}
     {currencyRateStatus === "ok" && (
-      <span className="whitespace-nowrap text-xs text-emerald-600">
-        ✓ {currencyRateCount}
+      <span className="whitespace-nowrap text-xs text-emerald-600">✓</span>
+    )}
+    {currencyRateStatus === "late-start" && (
+      <span
+        className="whitespace-nowrap text-xs text-amber-600"
+        title="نرخ‌ها بعد از تاریخ شروع بازه ثبت شده‌اند. کندل‌های اولیه با اولین نرخ (baseline) تخمین زده می‌شوند."
+      >
+        ⚠️ شروع دیرتر
       </span>
     )}
     {currencyRateStatus === "missing" && (
-      <span className="whitespace-nowrap text-xs text-amber-600">
-        ⚠️ نرخ تاریخی نیست
+      <span className="whitespace-nowrap text-xs text-red-600">
+        ❌ نرخی موجود نیست
       </span>
     )}
   </div>
-  <p className="mt-1 text-[10px] text-gray-500">
-    اگر خالی باشد یا IRR، تحلیل روی قیمت ریالی انجام می‌شود. نیاز به نرخ‌های
-    تاریخی ارز در بازه‌ی Backtest دارید.
+   <p className="mt-1 text-[10px] text-gray-500">
+    اگر خالی باشد یا IRR، تحلیل روی قیمت ریالی انجام می‌شود. برای ارز دیگر،
+    باید حداقل یک نرخ قبل از شروع بازه در صفحه‌ی «نرخ‌های ارز» ثبت شده باشد.
   </p>
 </div>
                 <div>
