@@ -938,6 +938,12 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<decimal>("DailyPriceRangePercent")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(3.0m);
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1048,15 +1054,15 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("DefaultOrderMode")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("DefaultPrice")
+                    b.Property<int>("DefaultSide")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("FixedPrice")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
-                    b.Property<long>("DefaultQuantity")
+                    b.Property<long?>("FixedQuantity")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("DefaultSide")
-                        .HasColumnType("int");
 
                     b.Property<Guid>("InstrumentId")
                         .HasColumnType("uniqueidentifier");
@@ -1072,6 +1078,16 @@ namespace Trader.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PriceStrategy")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("QuantityStrategy")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<int>("ValidityType")
                         .HasColumnType("int");
