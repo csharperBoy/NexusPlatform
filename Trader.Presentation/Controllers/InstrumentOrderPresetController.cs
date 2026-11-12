@@ -40,8 +40,9 @@ public class InstrumentOrderPresetController : BaseController
 
     [HttpPost("Create")]
     [AuthorizeResource("trader.orderpreset", "Create")]
-    public async Task<IActionResult> Create([FromBody] CreateOrderPresetCommand command)
+    public async Task<IActionResult> Create([FromBody] CreateOrderPresetModel model)
     {
+        var command = new CreateOrderPresetCommand(model);
         var result = await Mediator.Send(command);
         return HandleResult(result);
     }

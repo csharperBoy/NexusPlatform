@@ -4,11 +4,15 @@ import {
   DEFAULT_SIDE_OPTIONS,
   DEFAULT_ORDER_MODE_OPTIONS,
   VALIDITY_TYPE_OPTIONS,
+  OrderPriceStrategy,
+  OrderQuantityStrategy,
+  ORDER_PRICE_STRATEGY_OPTIONS,
+  ORDER_QUANTITY_STRATEGY_OPTIONS,
   type CreateOrderPresetCommand,
   type OrderPresetView,
   type UpdateOrderPresetCommand,
 } from "../../../models";
-import type { SelectionListDto } from "@/core/models/SelectionListDto";
+import type { InstrumentInfoView } from "../../../models";
 
 interface Props {
   isOpen: boolean;
@@ -32,44 +36,52 @@ export const OrderPresetModal: React.FC<Props> = ({
   /* ─── Form state ─── */
   const [instrumentId, setInstrumentId] = useState("");
   const [name, setName] = useState("");
-  const [defaultPrice, setDefaultPrice] = useState("");
-  const [defaultQuantity, setDefaultQuantity] = useState("");
+  const [priceStrategy, setPriceStrategy] = useState<number>(OrderPriceStrategy.Fixed);
+  const [fixedPrice, setFixedPrice] = useState("");
+  const [quantityStrategy, setQuantityStrategy] = useState<number>(
+    OrderQuantityStrategy.Fixed,
+  );
+  const [fixedQuantity, setFixedQuantity] = useState("");
   const [defaultSide, setDefaultSide] = useState(0);
   const [validityType, setValidityType] = useState(0);
   const [commission, setCommission] = useState("0.0037");
   const [defaultOrderMode, setDefaultOrderMode] = useState(0);
 
-  /* ─── Instrument options ─── */
-  const [instruments, setInstruments] = useState<SelectionListDto[]>([]);
+  /* ─── Instrument options (full data) ─── */
+  const [instruments, setInstruments] = useState<InstrumentInfoView[]>([]);
   const [loadingInstruments, setLoadingInstruments] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
-  /* ─── Load instruments (create only) ─── */
+  /* ─── Load instruments ─── */
   useEffect(() => {
-    if (!isOpen || mode === "edit") return;
+    if (!isOpen) return;
     setLoadingInstruments(true);
     (async () => {
       try {
-        const list = await instrumentApi.GetSelectionList();
-        setInstruments(list);
+        // GetList returns InstrumentInfoView[] with id (Guid) and range info
+        // (GetSelectionList returns ISIN in .value — wrong for instrumentId)
+        const list = await instrumentApi.GetList();
+        setInstruments(list.filter((i) => i.isActive));
       } catch {
         setInstruments([]);
       } finally {
         setLoadingInstruments(false);
       }
     })();
-  }, [isOpen, mode]);
+  }, [isOpen]);
 
-  /* ─── Init from `initial` (edit) or reset (create) ─── */
+  /* ─── Init form ─── */
   useEffect(() => {
     if (!isOpen) return;
 
     if (mode === "edit" && initial) {
       setInstrumentId(initial.instrumentId);
       setName(initial.name);
-      setDefaultPrice(initial.defaultPrice.toString());
-      setDefaultQuantity(initial.defaultQuantity.toString());
+      setPriceStrategy(initial.priceStrategy);
+      setFixedPrice(initial.fixedPrice?.toString() ?? "");
+      setQuantityStrategy(initial.quantityStrategy);
+      setFixedQuantity(initial.fixedQuantity?.toString() ?? "");
       setDefaultSide(initial.defaultSide);
       setValidityType(initial.validityType);
       setCommission(initial.commission.toString());
@@ -81,8 +93,10 @@ export const OrderPresetModal: React.FC<Props> = ({
     /* create */
     setInstrumentId("");
     setName("");
-    setDefaultPrice("");
-    setDefaultQuantity("");
+    setPriceStrategy(OrderPriceStrategy.Fixed);
+    setFixedPrice("");
+    setQuantityStrategy(OrderQuantityStrategy.Fixed);
+    setFixedQuantity("");
     setDefaultSide(0);
     setValidityType(0);
     setCommission("0.0037");
@@ -91,6 +105,29 @@ export const OrderPresetModal: React.FC<Props> = ({
   }, [isOpen, mode, initial]);
 
   if (!isOpen) return null;
+
+  /* ─── Range hint lookup ─── */
+  const selectedInstrument = instruments.find((i) => i.id === instrumentId);
+  const editInstrument =
+    mode === "edit" && initial
+      ? instruments.find((i) => i.id === initial.instrumentId)
+      : null;
+  const lookupInstrument = selectedInstrument ?? editInstrument;
+
+  const showRangeHint =
+    priceStrategy === OrderPriceStrategy.HighAllowed ||
+    priceStrategy === OrderPriceStrategy.LowAllowed;
+
+  const relevantRangePercent = lookupInstrument
+    ? priceStrategy === OrderPriceStrategy.HighAllowed
+      ? lookupInstrument.dailyPriceRangeUpPercent
+      : priceStrategy === OrderPriceStrategy.LowAllowed
+        ? lookupInstrument.dailyPriceRangeDownPercent
+        : null
+    : null;
+
+  const rangeDirectionLabel =
+    priceStrategy === OrderPriceStrategy.HighAllowed ? "بالا" : "پایین";
 
   /* ─── Submit ─── */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,15 +141,19 @@ export const OrderPresetModal: React.FC<Props> = ({
       setError("نام Preset الزامی است");
       return;
     }
-    const price = Number(defaultPrice);
-    if (!price || price <= 0) {
-      setError("قیمت باید بزرگ‌تر از صفر باشد");
-      return;
+    if (priceStrategy === OrderPriceStrategy.Fixed) {
+      const price = Number(fixedPrice);
+      if (!price || price <= 0) {
+        setError("قیمت ثابت باید بزرگ‌تر از صفر باشد");
+        return;
+      }
     }
-    const qty = Number(defaultQuantity);
-    if (!qty || qty <= 0 || !Number.isInteger(qty)) {
-      setError("تعداد باید عدد صحیح مثبت باشد");
-      return;
+    if (quantityStrategy === OrderQuantityStrategy.Fixed) {
+      const qty = Number(fixedQuantity);
+      if (!qty || qty <= 0 || !Number.isInteger(qty)) {
+        setError("تعداد ثابت باید عدد صحیح مثبت باشد");
+        return;
+      }
     }
     const comm = Number(commission);
     if (isNaN(comm) || comm < 0 || comm > 0.1) {
@@ -120,30 +161,25 @@ export const OrderPresetModal: React.FC<Props> = ({
       return;
     }
 
+    const baseCmd = {
+      name: name.trim(),
+      priceStrategy,
+      fixedPrice: priceStrategy === OrderPriceStrategy.Fixed ? Number(fixedPrice) : null,
+      quantityStrategy,
+      fixedQuantity:
+        quantityStrategy === OrderQuantityStrategy.Fixed ? Number(fixedQuantity) : null,
+      defaultSide,
+      validityType,
+      commission: comm,
+      defaultOrderMode,
+    };
+
     try {
       setError(null);
       if (mode === "create") {
-        await onCreate({
-          instrumentId,
-          name: name.trim(),
-          defaultPrice: price,
-          defaultQuantity: qty,
-          defaultSide,
-          validityType,
-          commission: comm,
-          defaultOrderMode,
-        });
+        await onCreate({ instrumentId, ...baseCmd });
       } else if (initial) {
-        await onUpdate({
-          id: initial.id,
-          name: name.trim(),
-          defaultPrice: price,
-          defaultQuantity: qty,
-          defaultSide,
-          validityType,
-          commission: comm,
-          defaultOrderMode,
-        });
+        await onUpdate({ id: initial.id, ...baseCmd });
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "خطای نامشخص");
@@ -190,8 +226,8 @@ export const OrderPresetModal: React.FC<Props> = ({
                   {loadingInstruments ? "در حال بارگذاری..." : "انتخاب نماد..."}
                 </option>
                 {instruments.map((i) => (
-                  <option key={i.value} value={i.value}>
-                    {i.display || i.label}
+                  <option key={i.id} value={i.id}>
+                    {i.displayName} ({i.symbolName})
                   </option>
                 ))}
               </select>
@@ -224,38 +260,98 @@ export const OrderPresetModal: React.FC<Props> = ({
             />
           </div>
 
-          {/* Price × Qty */}
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                قیمت پیش‌فرض <span className="text-red-500">*</span>
-              </label>
+          {/* Price Strategy */}
+          <div className="space-y-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              قیمت <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={priceStrategy}
+              onChange={(e) => setPriceStrategy(Number(e.target.value))}
+              className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+              {ORDER_PRICE_STRATEGY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            {priceStrategy === OrderPriceStrategy.Fixed ? (
               <input
                 type="number"
-                value={defaultPrice}
-                onChange={(e) => setDefaultPrice(e.target.value)}
+                value={fixedPrice}
+                onChange={(e) => setFixedPrice(e.target.value)}
                 dir="ltr"
                 min={1}
                 step={1}
-                placeholder="ریال"
+                placeholder="قیمت ثابت (ریال)"
                 className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                تعداد پیش‌فرض <span className="text-red-500">*</span>
-              </label>
+            ) : (
+              <p className="rounded bg-blue-50 p-2 text-[11px] text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                ℹ️ قیمت در لحظه‌ی ارسال از API بروکر خوانده می‌شود. برای پیش‌نمایش،
+                دکمه‌ی 👁 در لیست استفاده کن.
+              </p>
+            )}
+
+            {/* Range hint */}
+            {showRangeHint && lookupInstrument && (
+              <>
+                {relevantRangePercent == null ? (
+                  <p className="rounded bg-amber-50 p-2 text-[11px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                    ⚠️ این نماد بازه‌ی روزانه‌ی {rangeDirectionLabel} ندارد
+                    (unlimited). اگر API لحظه‌ای مقدار ندهد، Resolve خطا می‌دهد.
+                    برای استفاده از fallback، بازه را در صفحه‌ی «نمادها» تنظیم کن.
+                  </p>
+                ) : (
+                  <p className="rounded bg-emerald-50 p-2 text-[11px] text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                    ✓ بازه‌ی {rangeDirectionLabel}: ±{relevantRangePercent}٪ از
+                    قیمت پایانی. اگر API مقدار نداد، از این بازه تخمین زده
+                    می‌شود.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Quantity Strategy */}
+          <div className="space-y-2 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              تعداد <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={quantityStrategy}
+              onChange={(e) => setQuantityStrategy(Number(e.target.value))}
+              className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+              {ORDER_QUANTITY_STRATEGY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            {quantityStrategy === OrderQuantityStrategy.Fixed ? (
               <input
                 type="number"
-                value={defaultQuantity}
-                onChange={(e) => setDefaultQuantity(e.target.value)}
+                value={fixedQuantity}
+                onChange={(e) => setFixedQuantity(e.target.value)}
                 dir="ltr"
                 min={1}
                 step={1}
-                placeholder="تعداد سهم"
+                placeholder="تعداد ثابت"
                 className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
-            </div>
+            ) : (
+              <p className="rounded bg-blue-50 p-2 text-[11px] text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                ℹ️ تعداد از تنظیمات نماد (
+                {quantityStrategy === OrderQuantityStrategy.MaxOrderQuantity
+                  ? "حداکثر مجاز"
+                  : "حداقل مجاز"}
+                ) خوانده می‌شود.
+              </p>
+            )}
           </div>
 
           {/* Side × OrderMode */}

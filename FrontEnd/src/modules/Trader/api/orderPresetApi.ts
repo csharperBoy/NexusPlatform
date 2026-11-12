@@ -1,6 +1,7 @@
 import getAPI from "@/core/api/axiosClient";
 import type {
   OrderPresetView,
+  ResolvedOrderPresetView,
   CreateOrderPresetCommand,
   UpdateOrderPresetCommand,
 } from "../models";
@@ -77,8 +78,10 @@ export const orderPresetApi = {
       `/api/Trader/InstrumentOrderPreset/${data.id}`,
       {
         name: data.name,
-        defaultPrice: data.defaultPrice,
-        defaultQuantity: data.defaultQuantity,
+        priceStrategy: data.priceStrategy,
+        fixedPrice: data.fixedPrice,
+        quantityStrategy: data.quantityStrategy,
+        fixedQuantity: data.fixedQuantity,
         defaultSide: data.defaultSide,
         validityType: data.validityType,
         commission: data.commission,
@@ -97,6 +100,20 @@ export const orderPresetApi = {
     const api = getAPI(API_MODULE);
     const response = await api.delete<boolean>(
       `/api/Trader/InstrumentOrderPreset/${id}`,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+
+  Resolve: async (id: string): Promise<ResolvedOrderPresetView> => {
+    if (USE_MOCK) {
+      await mockDelay(200);
+      throw new Error("Mock not implemented");
+    }
+    const api = getAPI(API_MODULE);
+    const response = await api.post<ResolvedOrderPresetView>(
+      `/api/Trader/InstrumentOrderPreset/Resolve/${id}`,
+      {},
       { withCredentials: true },
     );
     return response.data;

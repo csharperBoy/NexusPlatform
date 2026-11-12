@@ -234,14 +234,19 @@ export {
   PAPER_OPTIONS,
 } from "./Orders";
 
-// ─── Order Presets (C-lite.2) ───
+// ─── Order Presets (C-lite.2 + strategy refactor) ───
 export type {
   OrderPresetView,
+  ResolvedOrderPresetView,
   CreateOrderPresetCommand,
   UpdateOrderPresetCommand,
 } from "./OrderPresets";
 
 export {
+  OrderPriceStrategy,
+  OrderQuantityStrategy,
+  ORDER_PRICE_STRATEGY_OPTIONS,
+  ORDER_QUANTITY_STRATEGY_OPTIONS,
   DEFAULT_SIDE_OPTIONS,
   DEFAULT_ORDER_MODE_OPTIONS,
   VALIDITY_TYPE_OPTIONS,

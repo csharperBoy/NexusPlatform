@@ -10,6 +10,7 @@ import {
   type UpdateOrderPresetCommand,
 } from "../../models";
 import { OrderPresetModal } from "./components/OrderPresetModal";
+import { ResolvePreviewDrawer } from "./components/ResolvePreviewDrawer";
 
 export const OrderPresetsManagementPage: React.FC = () => {
   const {
@@ -28,6 +29,7 @@ export const OrderPresetsManagementPage: React.FC = () => {
   const [modalMode, setModalMode] = useState<"create" | "edit">("create");
   const [modalInitial, setModalInitial] = useState<OrderPresetView | null>(null);
   const [saving, setSaving] = useState(false);
+  const [resolveId, setResolveId] = useState<string | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<OrderPresetView | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -118,8 +120,9 @@ export const OrderPresetsManagementPage: React.FC = () => {
       </div>
 
       <div className="rounded-lg border border-blue-700 bg-blue-900/20 p-3 text-xs text-blue-200">
-        ℹ️ Preset سفارش فقط برای ارسال دستی و سرخطی (SchedulePlan) استفاده
-        می‌شود. برای اجرای الگوریتمی، تنظیمات از TradingRun گرفته می‌شود.
+        ℹ️ Preset سفارش فقط برای ارسال دستی و سرخطی استفاده می‌شود. برای اجرای
+        الگوریتمی، تنظیمات از TradingRun گرفته می‌شود. دکمه‌ی 👁 مقدار لحظه‌ای
+        قیمت و تعداد را از API بروکر resolve می‌کند.
       </div>
 
       {error && (
@@ -145,8 +148,8 @@ export const OrderPresetsManagementPage: React.FC = () => {
               <th className="p-3">نام</th>
               <th className="p-3">نماد</th>
               <th className="p-3">جهت</th>
-              <th className="p-3">قیمت</th>
-              <th className="p-3">تعداد</th>
+              <th className="p-3">قیمت (استراتژی)</th>
+              <th className="p-3">تعداد (استراتژی)</th>
               <th className="p-3">کمیسیون</th>
               <th className="p-3">اعتبار</th>
               <th className="p-3">نوع سفارش</th>
@@ -187,14 +190,24 @@ export const OrderPresetsManagementPage: React.FC = () => {
                           : "bg-red-900/40 text-red-300"
                       }`}
                     >
-                      {labelOf(DEFAULT_SIDE_OPTIONS, p.defaultSide)}
+                      {p.defaultSideName || labelOf(DEFAULT_SIDE_OPTIONS, p.defaultSide)}
                     </span>
                   </td>
-                  <td className="p-3 font-mono text-xs">
-                    {p.defaultPrice.toLocaleString("en-US")}
+                  <td className="p-3 text-xs">
+                    <div>{p.priceStrategyName}</div>
+                    {p.fixedPrice != null && (
+                      <div className="font-mono text-[10px] text-gray-500">
+                        {p.fixedPrice.toLocaleString("en-US")}
+                      </div>
+                    )}
                   </td>
-                  <td className="p-3 font-mono text-xs">
-                    {p.defaultQuantity.toLocaleString("en-US")}
+                  <td className="p-3 text-xs">
+                    <div>{p.quantityStrategyName}</div>
+                    {p.fixedQuantity != null && (
+                      <div className="font-mono text-[10px] text-gray-500">
+                        {p.fixedQuantity.toLocaleString("en-US")}
+                      </div>
+                    )}
                   </td>
                   <td className="p-3 font-mono text-xs">
                     {(p.commission * 100).toFixed(2)}%
@@ -203,10 +216,18 @@ export const OrderPresetsManagementPage: React.FC = () => {
                     {labelOf(VALIDITY_TYPE_OPTIONS, p.validityType)}
                   </td>
                   <td className="p-3 text-xs">
-                    {labelOf(DEFAULT_ORDER_MODE_OPTIONS, p.defaultOrderMode)}
+                    {p.defaultOrderModeName || labelOf(DEFAULT_ORDER_MODE_OPTIONS, p.defaultOrderMode)}
                   </td>
                   <td className="p-3">
                     <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setResolveId(p.id)}
+                        title="Resolve لحظه‌ای"
+                        className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                      >
+                        👁
+                      </button>
                       <button
                         type="button"
                         disabled={busyId === p.id}
@@ -241,6 +262,13 @@ export const OrderPresetsManagementPage: React.FC = () => {
         onCreate={submitCreate}
         onUpdate={submitUpdate}
         saving={saving}
+      />
+
+      {/* Resolve Drawer */}
+      <ResolvePreviewDrawer
+        isOpen={resolveId !== null}
+        presetId={resolveId}
+        onClose={() => setResolveId(null)}
       />
 
       {/* Delete Confirm */}

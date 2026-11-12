@@ -281,26 +281,28 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
         }
 
         return new ResolvedOrderPresetView(
-            PresetId: preset.Id,
-            InstrumentId: preset.InstrumentId,
-            InstrumentIsin: instrument.Isin,
-            InstrumentSymbolName: instrument.SymbolName,
-            Price: price,
-            PriceSource: priceSource,
-            Quantity: quantity,
-            QuantitySource: quantitySource,
-            Side: (int)preset.DefaultSide,
-            SideName: preset.DefaultSide == OrderSide.Buy ? "خرید" : "فروش",
-            DefaultOrderMode: (int)preset.DefaultOrderMode,
-            Commission: preset.Commission,
-            LiveHighAllowed: liveHigh,
-            LiveLowAllowed: liveLow,
-            LiveLastTraded: liveLast,
-            LiveClosing: liveClose,
-            LiveFirstTraded: liveFirst,
-            UsedAccountId: usedAccountId,
-            UsedAccountName: usedAccountName,
-            Warning: warning);
+    PresetId: preset.Id,
+    InstrumentId: preset.InstrumentId,
+    InstrumentIsin: instrument.Isin,
+    InstrumentSymbolName: instrument.SymbolName,
+    Price: price,
+    PriceSource: priceSource,
+    Quantity: quantity,
+    QuantitySource: quantitySource,
+    Side: (int)preset.DefaultSide,
+    SideName: preset.DefaultSide == OrderSide.Buy ? "خرید" : "فروش",
+    DefaultOrderMode: (int)preset.DefaultOrderMode,
+    Commission: preset.Commission,
+    LiveHighAllowed: liveHigh,
+    LiveLowAllowed: liveLow,
+    LiveLastTraded: liveLast,
+    LiveClosing: liveClose,
+    LiveFirstTraded: liveFirst,
+    InstrumentRangeUpPercent: instrument.DailyPriceRangeUpPercent,      // ← جدید
+    InstrumentRangeDownPercent: instrument.DailyPriceRangeDownPercent,  // ← جدید
+    UsedAccountId: usedAccountId,
+    UsedAccountName: usedAccountName,
+    Warning: warning);
     }
 
     /* ═══════════ Helpers ═══════════ */

@@ -23,6 +23,9 @@ public sealed record ResolvedOrderPresetView(
     long? LiveClosing,
     long? LiveFirstTraded,
 
+    decimal? InstrumentRangeUpPercent,      // ← جدید
+    decimal? InstrumentRangeDownPercent,    // ← جدید
+
     Guid? UsedAccountId,
     string? UsedAccountName,
     string? Warning);
