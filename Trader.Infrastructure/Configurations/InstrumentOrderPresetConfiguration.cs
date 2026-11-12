@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Trader.Domain.Entities;
+using Trader.Domain.Enums;
 
 namespace Trader.Infrastructure.Configurations;
 
@@ -18,9 +19,8 @@ public class InstrumentOrderPresetConfiguration : BaseConfiguration<InstrumentOr
         builder.Property(x => x.DefaultOrderMode).HasConversion<int>().IsRequired();
         builder.Property(x => x.ValidityType).IsRequired();
         builder.Property(x => x.Commission).HasPrecision(18, 4);
-        
-        builder.Property(x => x.PriceStrategy)
-            .HasConversion<int>().IsRequired().HasDefaultValue(0);
+
+       
 
         builder.Property(x => x.FixedPrice)
             .HasConversion(
@@ -29,8 +29,15 @@ public class InstrumentOrderPresetConfiguration : BaseConfiguration<InstrumentOr
             .HasPrecision(18, 4)
             .IsRequired(false);
 
+        builder.Property(x => x.PriceStrategy)
+     .HasConversion<int>()
+     .IsRequired()
+     .HasDefaultValue(OrderPriceStrategy.Fixed);
+
         builder.Property(x => x.QuantityStrategy)
-            .HasConversion<int>().IsRequired().HasDefaultValue(0);
+            .HasConversion<int>()
+            .IsRequired()
+            .HasDefaultValue(OrderQuantityStrategy.Fixed);
 
         builder.Property(x => x.FixedQuantity)
             .HasConversion(
