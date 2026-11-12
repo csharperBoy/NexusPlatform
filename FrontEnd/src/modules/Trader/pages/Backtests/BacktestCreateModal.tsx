@@ -107,7 +107,7 @@ useEffect(() => {
       const fromDate = new Date(dateFrom).toISOString();
 
       // درخواست همه‌ی نرخ‌ها
-      const rates = await currencyRateApi.GetList(cur, "IRR", 500);
+      const rates = await currencyRateApi.GetList(cur, "IRR", 50000);
 
       if (cancelled) return;
 

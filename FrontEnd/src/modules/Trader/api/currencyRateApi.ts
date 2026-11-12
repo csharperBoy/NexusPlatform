@@ -85,5 +85,23 @@ export const currencyRateApi = {
       { withCredentials: true },
     );
     return response.data;
-  },
+  },CheckRange: async (
+  fromCurrency: string,
+  toCurrency: string,
+  from: string,
+  to: string,
+): Promise<boolean> => {
+  const api = getAPI(API_MODULE);
+  const params = new URLSearchParams({
+    fromCurrency,
+    toCurrency,
+    from,
+    to,
+  });
+  const response = await api.get<boolean>(
+    `/api/Trader/CurrencyRate/CheckRange?${params}`,
+    { withCredentials: true },
+  );
+  return response.data;
+},
 };

@@ -11,6 +11,18 @@ namespace Trader.Presentation.Controller;
 [Route("api/Trader/[controller]")]
 public class CurrencyRateController : BaseController
 {
+    [HttpGet("CheckRange")]
+    [AuthorizeResource("trader.instrument", "View")]
+    public async Task<IActionResult> CheckRange(
+    [FromQuery] string fromCurrency,
+    [FromQuery] string toCurrency,
+    [FromQuery] DateTime from,
+    [FromQuery] DateTime to)
+    {
+        var result = await Mediator.Send(
+            new CheckCurrencyRateRangeQuery(fromCurrency, toCurrency, from, to));
+        return HandleResult(result);
+    }
     [HttpGet("GetList")]
     [AuthorizeResource("trader.instrument", "View")]
     public async Task<IActionResult> GetList(
