@@ -438,7 +438,37 @@ src/modules/Trader/
 3. **`batch.Count < BatchSize` premature break** در `CollectComboAsync` → داده‌ی قدیمی‌تر گم می‌شد. Fix: `previousOldest` no-progress guard
 
 **تصمیمات جدید:** D49 (Historical Refactor), D50 (Collection Job boilerplate — Rule of Three، defer), D51 (Scheduler = پلتفرم، نه Trader).
+### Phase C-lite.1 — ✅ COMPLETE (Order Management UI)
 
+| # | Feature | Status |
+|---|---|---|
+| **C-lite.1a** | BrokerOrder/OrderIntent `Query` + `GetById` endpoints | ✅ |
+| **C-lite.1a** | `BrokerOrderQueryService`, `OrderIntentQueryService` (EF-side filters, batched account/symbol map) | ✅ |
+| **C-lite.1a** | Seed: `trader.order` resource + permission + menu `/trader/orders` | ✅ |
+| **C-lite.1b** | `models/Orders.ts` (enums, views, colors, options) | ✅ |
+| **C-lite.1b** | `OrdersManagementPage` (Tabs: BrokerOrders / OrderIntents) | ✅ |
+| **C-lite.1b** | `BrokerOrderDrawer` (Summary + Trades list), `OrderIntentDrawer` (incl. RiskBlocked reason) | ✅ |
+| **C-lite.1b** | Filters: Isin, State, Paper/Live, Search; Load-More pagination | ✅ |
+
+**Cancel deferred to C.6:** `IBrokerTradingCommands` فاقد Cancel، EasyTrader فاقد endpoint. برای Paper Week (Fill فوری) لازم نیست.
+
+### Phase C-lite.2 + Preset Strategy — ✅ COMPLETE
+
+| # | Feature | Status |
+|---|---|---|
+| **C-lite.2** | Backend `GetList` + enriched `OrderPresetView` (Isin, SymbolName, CreatedAt) | ✅ |
+| **C-lite.2** | OrderPreset CRUD UI (`/trader/order-presets`) | ✅ |
+| **Preset Strategy** | `OrderPriceStrategy` (Fixed/HighAllowed/LowAllowed/LastTraded/Closing/FirstTraded) | ✅ |
+| **Preset Strategy** | `OrderQuantityStrategy` (Fixed/Max/Min) | ✅ |
+| **Preset Strategy** | `ResolveAsync` با live API + fallback | ✅ |
+| **Preset Strategy** | `ResolvePreviewDrawer` (نتیجه + raw API + range context + warning) | ✅ |
+| **Range Split (D53)** | `DailyPriceRangeUpPercent` + `DailyPriceRangeDownPercent` (nullable = unlimited) | ✅ |
+| **Range Split** | `Instrument` form + columns + Resolve sanity | ✅ |
+
+**Bugs found & fixed in C-lite:**
+1. `CreateOrderPresetCommand(Model)` wrapper → 400 Bad Request (D54 pattern)
+2. `HasDefaultValue(0)` روی enum property → EF model creation failure → ۱۰ تست شکست
+3. `OrderPresetModal` داشت ISIN (از `GetSelectionList().value`) به‌جای Guid می‌فرستاد → Preset با instrument نامعتبر
 ### Phase B2/B3, Phase C, Phase E — آینده
 (B2: Telegram + more assets + Frontend; C: Operations; E: Advanced)
 
@@ -576,81 +606,93 @@ src/modules/Trader/
 
 ## 13. NEXT STEPS
 
-### بلافاصله — Phase C-lite (پیش‌نیاز Paper Trading Week) — ~۲-۳ روز
+### بلافاصله — C-lite.3 Dashboard — ~۱ روز
 
-| # | Feature | دلیل |
-|---|---|---|
-| **C-lite.1** | **Order Management UI** — BrokerOrders + OrderIntents list/detail + Cancel Endpoint | بدون این، Paper Week کور است. باید بتوانی ببینی چه سفارشی رفت و بتوانی Cancel کنی |
-| **C-lite.2** | **Order Preset UI** — `InstrumentOrderPreset` CRUD | Manual test order از UI |
-| **C-lite.3** | **Dashboard / Daily PnL Widget** | نگاه سریع به وضعیت روزانه |
+**Scope پیشنهادی:**
+- Backend: `GET /api/Trader/Dashboard/Summary` — یک endpoint که همه را aggregate می‌کند
+- Frontend: `/trader` (root) → `DashboardPage`
+- Cards:
+  - **Kill Switch** (Global + Active Accounts) — reuse از `RiskDashboard` pattern
+  - **Runs** (Running/Ready/Stopped counts + link به `/trader/trading-runs`)
+  - **Orders Today** (Paper/Live split, link به `/trader/orders`)
+  - **Positions Open** (count + unrealized PnL estimation از snapshot)
+  - **Recent Critical Events** (last 10 از `/trader/events` فیلتر `Severity>=Warning`)
+  - **Accounts Session** (valid/expired/empty counts)
 
-### بعد از C-lite — Paper Trading Week (~۱ هفته)
+**چرا قبل از Paper Week:**
+- Paper Week نیاز به یک صفحه دارد که صبح‌ها با یک نگاه وضعیت را ببینی
+- بدون این، باید بین ۶ صفحه سوییچ کنی
+
+### بعد از C-lite.3 — Paper Trading Week (~۱ هفته)
 
 - یک Run ساده روی ۲-۳ نماد با بودجه‌ی محدود
 - Recurring TGJU Job فعال (نرخ تازه)
-- Kill Switch Global حاضر (نه از دست، نه panic)
-- هر روز صبح: چک Events (`/trader/events`) برای Critical/Error
-- هر Bug → اول یادداشت، بعد fix
+- Kill Switch Global در دسترس
+- هر روز صبح: چک Dashboard + Events
+- هر Bug → اول یادداشت، بعد fix (نه در حین Paper)
 
-**معیار موفقیت Paper Week:** No `PositionOvershoot` (D9 Critical)، No `KillSwitchActivated` غیرمنتظره، No `CircuitBreakerTriggered` غیرمنتظره، Reconciliation پاک، PnL منطقی.
+**معیار موفقیت:** No `PositionOvershoot`، No `KillSwitchActivated` غیرمنتظره، No `CircuitBreakerTriggered` غیرمنتظره، Reconciliation پاک، PnL منطقی.
 
 ### بعد از Paper Week — Phase B2 (~۲-۳ روز)
 
 - B2.1 Telegram Channel PriceSourceProvider
-- B2.2 Multi-asset (EUR, AED, GOLD, SILVER, COPPER — config only)
+- B2.2 Multi-asset (EUR, AED, GOLD, SILVER, COPPER)
 - B2.3 Data Completeness Monitoring
 - B2.4 Frontend refinement (Backfill progress bar واقعی)
 
 ### میان‌مدت — Phase C کامل (~۱ هفته)
 
-- C.4 Source Filter در Currency Transform (D40 ext)
-- C.5 Multi-Account Coordination Policy (D5 ext)
-- C.6 Order Modifications (Modify Price/Quantity)
+- C.4 Source Filter in Currency Transform (D40 ext)
+- C.5 SchedulePlan integration با Preset Strategy (از HighAllowed جاری استفاده می‌کند)
+- C.6 Order Modify + Cancel (نیازمند EasyTrader cancel endpoint)
 - C.7 Partial Fill Handling UI
 
-### بلندمدت — Phase E (پس از C، ~۲ هفته)
+### بلندمدت — Phase E (~۲ هفته)
 
 - E.1 Strategy Ensemble (D27)
 - E.2 Trailing Stop / Laddered Exit
 - E.3 AI/ML Pipeline (D28)
-- E.4 Multi-Instance Prep (Redis session cache، D20)
+- E.4 Multi-Instance Prep (Redis session cache, D20)
 
 ### Technical Debt (هر وقت به فایل مربوطه دست زدی)
 
-- TD1 `UseQuerySplittingBehavior` commented (D-Something)
-- TD2 `ITraderUnitOfWork` = Registry، نه UoW واقعی — Rename در آینده
-- TD3 `TraderSymbol` Legacy — بعد از Migration کامل Instrument، حذف
-- TD4 `SchedulePlan` / `ScheduledOrder` Legacy — Overlap با TradingRun
-- TD5 `ExecutionLogService.Skip/Take` در memory — SQL-side fix
-- TD6 `CandleRecord.TimeFrame` enum → int cast در بعضی Queryها
+- TD1 `UseQuerySplittingBehavior` commented
+- TD2 `ITraderUnitOfWork` = Registry نه UoW
+- TD3 `TraderSymbol` Legacy
+- TD4 `SchedulePlan`/`ScheduledOrder` Legacy
+- TD5 `ExecutionLogService.Skip/Take` در memory
+- TD6 `CandleRecord.TimeFrame` enum → int cast
+- **TD7 (new)** `SchedulePlan`/`PlanExecutor` از HighAllowed/LowAllowed جاری استفاده می‌کند، نه Preset Strategy — C.5 این را fix می‌کند
+- **TD8 (new)** `OrderPresetView` هنوز `InstrumentRangeUpPercent`/`DownPercent` ندارد (فقط `ResolvedView` دارد) — در C-lite.2 نیازی نبود
 
-### Free ADRs (آزاد، هر وقت شد)
+### Free / Deferred ADRs
 
-- **D50 L1 (Frontend):** `GenericScheduledJobPage<TConfig>` — ریسک صفر، ارزش فوری
-- **D50 L2/L3 (Backend):** مؤکول به ساخت سومین Collection Job (Rule of Three)
-
----
+- **D50 L1 (Frontend)**: `GenericScheduledJobPage<TConfig>` — ریسک صفر
+- **D50 L2/L3 (Backend)**: مؤکول به سومین Collection Job (Rule of Three)
 
 ## 14. RECENT COMPLETED WORK
 
-1. **Phase B1 — TGJU Import (PRs Pre-B1, B1.1-B1.5, B1-FE)** ✅
-   - `PriceSource` + `PriceCollectionJob` (Entity, Migration, DTOs, Controllers)
-   - `TgjuApiClient` (ExternalApiClient layer) + `TgjuPriceSourceProvider` (Infrastructure)
-   - `PriceCollectionService` + `CollectPriceJobHandler` + Scheduler integration
-   - Frontend: `/trader/price-collection` با Tabs (Jobs / Sources) + CreateJobModal (Recurring/Backfill + Recurrence pattern picker)
-   - 22 unit tests + 4 bugs fixed
+1. **Phase C-lite.1 — Order Management (PR C-lite.1a + C-lite.1b)** ✅
+   - Backend: `BrokerOrderController`, `OrderIntentController` (Query + GetById)
+   - Service: `BrokerOrderQueryService`, `OrderIntentQueryService` — EF filters + batched account/symbol enrichment
+   - Frontend: `/trader/orders` (Tabs BrokerOrders/OrderIntents) + 2 drawers + filters + Load More
+   - Cancel deferred to C.6
 
-2. **Historical Data Refactor — هم‌ساختار با PriceCollection (PRs H1, H2, H3)** ✅
-   - `HistoricalCollectionMode` (Backfill/Recurring), `HistoricalJobState` (5-state)
-   - `IHistoricalDataCollector`: `CollectBackfillAsync` / `CollectRecurringAsync`
-   - `CollectCandleJobHandler` (idempotent، Mode dispatch، MarkFaulted)
-   - Removal: `HistoricalDataCollectionWorker`, `HistoricalWorkerHealthCheck`, `PendingHistoricalJobsSpec`
-   - Migration: `RefactorHistoricalDataCollection` (Status→State با data mapping، ProgressPercent→BackfillProgressPercent nullable، Add Mode/SchedulerIds/RecurrencePatternJson)
-   - Frontend: HistoricalDataCollectionPage بازنویسی (Mode-aware Modal، Progress bar، Auto-poll 5s حین Running، Start/Stop)
-   - 41 unit tests + 3 bugs fixed
+2. **Phase C-lite.2 + Preset Strategy (PR C-lite.2 + Preset Strategy Ext)** ✅
+   - Backend: `GetList` endpoint + enriched `OrderPresetView`
+   - Strategy: `OrderPriceStrategy` + `OrderQuantityStrategy` enums
+   - `InstrumentOrderPreset` restructured: `PriceStrategy` + `FixedPrice?`, `QuantityStrategy` + `FixedQuantity?`
+   - `ResolveAsync`: live API + fallback (Closing × range) + sanity warning
+   - Frontend: `OrderPresetModal` (strategy dropdowns), `ResolvePreviewDrawer`, strategy columns
+   - Bugs fixed: Model wrapper, EF enum default, Guid/ISIN mismatch
 
-3. **ADR Documentations** — D49 (Historical Refactor), D50 (Collection Job boilerplate — Rule of Three / defer), D51 (Scheduler = پلتفرم، نه Trader)
+3. **Range Split (D53)** ✅
+   - `Instrument.DailyPriceRangePercent` (one) → `UpPercent` + `DownPercent` (two nullable)
+   - Instrument form: two independent inputs (empty = unlimited)
+   - Resolve: independent fallback logic + sanity check with HasValue
 
-4. **Earlier (PR 21, Risk Seed, PR 20, PR 19):** Risk Dashboard UI، `trader.risk` resource، Kill Switch Events، per-Account Capital. → مراجعه به commit history.
+4. **ADR Documents** — D52 (Preset Strategy Resolution), D53 (Range Split), D54 (Command Wrapping pattern)
 
-**Next:** Phase C-lite — Order Management UI + Preset UI + Dashboard (پیش‌نیاز Paper Trading Week).
+5. **Earlier (B1, Historical Refactor, H1-H3)** — TGJU Import + Backfill/Recurring patterns
+
+**Next:** C-lite.3 (Dashboard) → Paper Trading Week

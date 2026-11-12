@@ -654,6 +654,72 @@ Superseded: پیشنهاد قبلی D48 ("Sub-Daily در B2 via BackgroundServic
 تغییر ۳ — Section 14 (Recent Work):
 
 markdown
+
+### D52 — Order Preset Strategy Resolution: Pure domain logic, I/O در Service
+
+**تصمیم:** `InstrumentOrderPreset` فقط "چه استراتژی و چه مقدار ثابت" را نگه می‌دارد. `ResolveAsync` (I/O برای live API) در `InstrumentOrderPresetService` است. Enum‌های `OrderPriceStrategy` / `OrderQuantityStrategy` در Domain هستند، منطق fallback (Closing×Range) در Service.
+
+**دلیل:**
+- Domain باید Pure باشد — فراخوانی broker API نباید در Entity باشد
+- Resolve خروجی جدید (ResolvedOrderPresetView) برمی‌گرداند بدون تغییر state → می‌شود چند بار با Refresh فراخوانی کرد
+- Preset state (`PriceStrategy`, `FixedPrice`) از resolve result مستقل است — شکست در resolve، preset را خراب نمی‌کند
+
+**Fallback semantics (D52.1):**
+- `HighAllowed`/`LowAllowed`: از live API → اگر null و Range set → `Closing × (1 ± Range%)` + warning → اگر هیچ‌کدام → **throw** با پیام واضح
+- `LastTraded`/`Closing`/`FirstTraded`: از live API → اگر null → throw (هیچ fallback ندارند، چون ارزش ذاتاً متفاوت است)
+- `QuantityStrategy`: `MaxOrderQuantity`/`MinOrderQuantity` از `Instrument` در همان transaction خوانده می‌شوند
+- Sanity: اگر قیمت resolve شده خارج از range باشد، در `Warning` گزارش می‌شود (block نمی‌کند — Broker تصمیم می‌گیرد)
+
+**Trade-off:** ترتیب استراتژی `Fixed` اول، سپس live، سپس fallback. اگر کاربر بخواهد `Live:HighAllowed` را حتی وقتی `Closing` هم null است (نباید اتفاق بیفتد چون Closing از session قبلی باقی می‌ماند) → خطا می‌گیرد. **این درست است** — سکوت خطرناک‌تر است.
+
+---
+
+### D53 — Range Up/Down جدا + nullable = unlimited
+
+**تصمیم:** `Instrument.DailyPriceRangePercent` (یکی) → `DailyPriceRangeUpPercent` + `DailyPriceRangeDownPercent` (دو nullable).
+
+**دلیل:**
+- بازار واقعی نامتقارن است (+۵٪/-۲٪ در برخی نمادها)
+- برخی نمادها هیچ محدودیتی ندارند (تازه‌عرضه, ETF با اهرم) — `null` = unlimited
+- nullable با `HasValue` منطق fallback را در Resolve ساده می‌کند (بدون magic number 0)
+
+**Migration:** بدون داده‌ی قبلی در DB (frontend اعمال نشده بود) — column drop/create.
+
+**پیامد:** `ResolveAsync` logic و `Sanity` check باید `HasValue` را respect کنند — پیاده شد.
+
+---
+
+### D54 — Command Wrapping در Controller: pattern برای unwrap
+
+**تصمیم (اصلاحیه):** Commandهایی که Model در خود wrap می‌کنند (مثل `CreateOrderPresetCommand(Model)`) نباید مستقیم با `[FromBody] Command` bind شوند. Controller باید Model را از body بگیرد و Command را در خود بسازد — مثل `Update` endpoint که از قبل همین کار را می‌کرد.
+
+**دلیل:**
+- فرانت با بدنه‌ی flat (`{name, priceStrategy, ...}`) می‌فرستد، ولی ASP.NET انتظار `{"model": {...}}` دارد
+- خروجی: `The Model field is required` — پیام گمراه‌کننده
+- تفاوت بین Create (wrap در body) و Update (unwrap در controller) inconsistent بود
+
+**الگو:**
+```csharp
+[HttpPost("Create")]
+public async Task<IActionResult> Create([FromBody] CreateOrderPresetModel model)
+{
+    var command = new CreateOrderPresetCommand(model);
+    ...
+}
+
+Trigger for future: هر وقت Command یک Model property دارد → Controller unwrap می‌کند. یا در بدنه {"model":{...}} (درست ولی نه convention فرانت). این تصمیم: unwrap در Controller.
+
+text
+
+---
+
+## ۲. `docs/HANDOFF.md` — Header (جایگزین)
+
+```markdown
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۲ — Phase C-lite.1 + C-lite.2 + Preset Strategy
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler ✅ | Phase B1 ✅ | C-lite.1/2 ✅ | 258 Tests ✅ | CI ✅
+> **گام بعدی:** C-lite.3 (Dashboard) → Paper Trading Week
+
 ## 14. RECENT COMPLETED WORK
 
 1. **Scheduler Extension** — `RecurrenceType.Minutely=3, Hourly=4, Cron=5` + Factories + `GetNextOccurrence` handling. Cronos 0.8.4. Backward compat (enum append). 28 tests در `Scheduler.Tests`. ⭐ New project.
