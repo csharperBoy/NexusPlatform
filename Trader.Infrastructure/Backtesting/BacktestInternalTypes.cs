@@ -30,12 +30,21 @@ internal sealed record PendingOrder(
     long Quantity,
     DateTime SignalTime);
 
-/// <summary>یک رخداد در Timeline شبیه‌سازی (candle + sub-candles).
-/// نام «BacktestCandleEvent» تا با Domain Entity اشتباه نشود.</summary>
+/// <summary>
+/// یک رخداد در Timeline شبیه‌سازی (candle + sub-candles).
+///
+/// دو candle stream:
+///   • Candle (IRR) — برای fill، SL/TP resolution، sizing، equity tracking
+///   • StrategyCandle (transformed, مثلاً USD) — فقط برای strategy input
+///
+/// اگر TargetCurrency=IRR یا null بود، StrategyCandle = null و consumer
+/// از Candle استفاده می‌کند. SubCandles همیشه IRR (برای SL/TP).
+/// </summary>
 internal sealed record BacktestCandleEvent(
     DateTime Time,
     string Isin,
     Candle Candle,
+    Candle? StrategyCandle,
     IReadOnlyList<Candle>? SubCandles);
 
 /// <summary>وضعیت جاری Backtest.</summary>

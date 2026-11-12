@@ -47,7 +47,16 @@ public sealed class CurrencyCandleTransformer : ICandleTransformer
         }
 
         var lastCandleTime = irrCandles[^1].OpenTime;
-        var cacheKey = $"{isin}:{target}:{lastCandleTime:yyyyMMddHHmm}";
+        var firstCandleTime = irrCandles[0].OpenTime;
+        // Cache key must include the FULL span (first, last, count) — otherwise two
+        // calls with different ranges ending at the same minute collide and the
+        // shorter result is returned for the longer request. This caused
+        // "Index was out of range" in BacktestEngine when a shorter prior
+        // transform (e.g., from live pipeline or a smaller backtest) had cached
+        // a 100-candle result under the same last-minute key as a 5040-candle
+        // backtest.
+        var cacheKey =
+            $"{isin}:{target}:{firstCandleTime:yyyyMMddHHmm}:{lastCandleTime:yyyyMMddHHmm}:{irrCandles.Count}";
 
         if (_cache.TryGetValue(cacheKey, out var entry)
             && DateTime.UtcNow < entry.ExpiresAt)

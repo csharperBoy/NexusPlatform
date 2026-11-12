@@ -250,56 +250,75 @@ public sealed class BacktestEngine : IBacktestEngine
     isin: s.Isin);
         }
 
-        // ─── Candles ───
-        var primaryCandles = new Dictionary<string, List<Candle>>();
+        // ─── Candles — TWO STREAMS (IRR + transformed) ───
+        // IRR stream: for fill, SL/TP, sizing, cash, PnL (D57)
+        // Strategy stream: for IStrategy.Evaluate (RSI, MACD, ...)
+        var primaryCandlesIrr = new Dictionary<string, List<Candle>>();
+        var primaryCandlesStrategy = new Dictionary<string, List<Candle>>();
         var subCandles = subTimeFrame.HasValue
             ? new Dictionary<string, List<Candle>>()
             : null;
 
+        var needsTransform =
+            !string.IsNullOrWhiteSpace(run.TargetCurrency)
+            && run.TargetCurrency != "IRR";
+
         foreach (var s in symbolAllocations)
         {
-            var primary = await LoadCandlesAsync(
+            var primaryIrr = await LoadCandlesAsync(
                 uow, s.Isin, timeFrame, run.DateFrom, run.DateTo, ct);
 
-            if (primary.Count < strategy.RequiredCandleCount + 1)
+            if (primaryIrr.Count < strategy.RequiredCandleCount + 1)
                 throw new InvalidOperationException(
-                    $"Not enough candles for {s.Isin}: have {primary.Count}, " +
+                    $"Not enough candles for {s.Isin}: have {primaryIrr.Count}, " +
                     $"need {strategy.RequiredCandleCount + 1}.");
 
-            if (!string.IsNullOrWhiteSpace(run.TargetCurrency)
-                && run.TargetCurrency != "IRR")
+            // Transform for strategy (keeps same count and order)
+            List<Candle> primaryStrategy = primaryIrr;
+            if (needsTransform)
             {
                 var tr = await transformer.TransformAsync(
-                    s.Isin, primary, run.TargetCurrency, run.DateTo, ct);
-                primary = tr.Candles.ToList();
+                    s.Isin, primaryIrr, run.TargetCurrency!, run.DateTo, ct);
+                primaryStrategy = tr.Candles.ToList();
+
+                // Defensive: transform must return same count as input.
+                // If not — cache collision in CurrencyCandleTransformer (old code
+                // keyed only by last-candle minute). Fail fast with clear message.
+                if (primaryStrategy.Count != primaryIrr.Count)
+                {
+                    throw new InvalidOperationException(
+                        $"Currency transform count mismatch for {s.Isin}: " +
+                        $"IRR={primaryIrr.Count} vs Strategy={primaryStrategy.Count}. " +
+                        $"Likely a stale cache entry in CurrencyCandleTransformer — " +
+                        $"restart the process (Singleton cache) or wait 60s for TTL, " +
+                        $"then retry.");
+                }
             }
 
-            primaryCandles[s.Isin] = primary;
+            primaryCandlesIrr[s.Isin] = primaryIrr;
+            primaryCandlesStrategy[s.Isin] = primaryStrategy;
+
             eventLogger.Log(run.Id, BacktestEventType.CandlesLoaded, BacktestEventSeverity.Info,
-    $"کندل‌های {s.Isin} لود شدند: {primary.Count} کندل " +
-    $"({primary[0].OpenTime:yyyy-MM-dd} تا {primary[^1].OpenTime:yyyy-MM-dd})",
-    payload: new
-    {
-        isin = s.Isin,
-        timeFrame = timeFrame.ToString(),
-        count = primary.Count,
-        firstCandle = primary[0].OpenTime,
-        lastCandle = primary[^1].OpenTime
-    },
-    isin: s.Isin);
+                $"کندل‌های {s.Isin} لود شدند: {primaryIrr.Count} کندل " +
+                $"({primaryIrr[0].OpenTime:yyyy-MM-dd} تا {primaryIrr[^1].OpenTime:yyyy-MM-dd})" +
+                (needsTransform ? $" [استراتژی: {run.TargetCurrency}]" : ""),
+                payload: new
+                {
+                    isin = s.Isin,
+                    timeFrame = timeFrame.ToString(),
+                    count = primaryIrr.Count,
+                    firstCandle = primaryIrr[0].OpenTime,
+                    lastCandle = primaryIrr[^1].OpenTime,
+                    targetCurrency = needsTransform ? run.TargetCurrency : null,
+                },
+                isin: s.Isin);
+
             if (subCandles is not null)
             {
+                // Sub-candles: NO transform — used only for SL/TP resolution
+                // (SL/TP prices are IRR, comparison must be against IRR Low/High)
                 var sub = await LoadCandlesAsync(
                     uow, s.Isin, subTimeFrame!.Value, run.DateFrom, run.DateTo, ct);
-
-                if (!string.IsNullOrWhiteSpace(run.TargetCurrency)
-                    && run.TargetCurrency != "IRR")
-                {
-                    var tr = await transformer.TransformAsync(
-                        s.Isin, sub, run.TargetCurrency, run.DateTo, ct);
-                    sub = tr.Candles.ToList();
-                }
-
                 subCandles[s.Isin] = sub;
             }
         }
@@ -360,33 +379,40 @@ public sealed class BacktestEngine : IBacktestEngine
             Cash = run.InitialCapital
         };
 
-        // ─── Build Events ───
+        // ─── Build Events — IRR + Strategy candles paired by index ───
         var events = new List<BacktestCandleEvent>();
         var tfDuration = timeFrame.ToDuration();
 
         foreach (var s in symbolAllocations)
         {
-            var primList = primaryCandles[s.Isin];
+            var primIrr = primaryCandlesIrr[s.Isin];
+            var primStrategy = primaryCandlesStrategy[s.Isin];
 
-            for (int i = 0; i < primList.Count; i++)
+            for (int i = 0; i < primIrr.Count; i++)
             {
-                var c = primList[i];
-                if (c.OpenTime < run.DateFrom || c.OpenTime > run.DateTo)
+                var cIrr = primIrr[i];
+                if (cIrr.OpenTime < run.DateFrom || cIrr.OpenTime > run.DateTo)
                     continue;
+
+                // StrategyCandle: null if no transform, else the paired transformed candle
+                Candle? cStrategy = needsTransform && i < primStrategy.Count
+     ? primStrategy[i]
+     : null;
 
                 IReadOnlyList<Candle>? subs = null;
                 if (subCandles is not null && subCandles.ContainsKey(s.Isin))
                 {
-                    var end = c.OpenTime + tfDuration;
+                    var end = cIrr.OpenTime + tfDuration;
                     subs = subCandles[s.Isin]
-                        .Where(sc => sc.OpenTime >= c.OpenTime && sc.OpenTime < end)
+                        .Where(sc => sc.OpenTime >= cIrr.OpenTime && sc.OpenTime < end)
                         .ToList();
                 }
 
                 events.Add(new BacktestCandleEvent(
-                    Time: c.OpenTime,
+                    Time: cIrr.OpenTime,
                     Isin: s.Isin,
-                    Candle: c,
+                    Candle: cIrr,
+                    StrategyCandle: cStrategy,
                     SubCandles: subs));
             }
         }
@@ -425,51 +451,54 @@ public sealed class BacktestEngine : IBacktestEngine
             var ev = events[eventIdx];
 
             var isin = ev.Isin;
-            var candle = ev.Candle;
+            var candleIrr = ev.Candle;                        // ← IRR: fill, SL/TP, sizing
+            var candleStrategy = ev.StrategyCandle ?? ev.Candle;  // ← transformed: strategy input
             var instrument = instruments[isin];
             var allocPct = symbolAllocations.First(s => s.Isin == isin).AllocationPercentage;
 
-            state.LastPrices[isin] = candle.Close;
-            runningCandles[isin].Add(candle);
+            // LastPrices must be IRR (for equity valuation)
+            state.LastPrices[isin] = candleIrr.Close;
 
-            // Trim to bounded history
+            // runningCandles feeds strategy → use transformed
+            runningCandles[isin].Add(candleStrategy);
+
             if (runningCandles[isin].Count > maxHistoryToKeep)
             {
                 runningCandles[isin].RemoveRange(
                     0, runningCandles[isin].Count - maxHistoryToKeep);
             }
 
-            // ─── 1. Execute pending fill ───
+            // ─── 1. Execute pending fill (IRR) ───
             if (state.PendingOrders.TryGetValue(isin, out var pending))
             {
-                ExecuteFill(state, pending, candle, instrument, run, isin, eventLogger);
+                ExecuteFill(state, pending, candleIrr, instrument, run, isin, eventLogger);
                 state.PendingOrders.Remove(isin);
             }
 
-            // ─── 2. Check SL/TP on open position ───
+            // ─── 2. Check SL/TP (IRR candle + IRR sub-candles + IRR SL/TP) ───
             if (state.Positions.TryGetValue(isin, out var pos))
             {
                 var resolution = _sltpResolver.Resolve(
-                    pos.StopLoss, pos.TakeProfit, candle, ev.SubCandles);
+                    pos.StopLoss, pos.TakeProfit, candleIrr, ev.SubCandles);
 
                 if (resolution.Triggered)
                 {
                     ClosePosition(state, isin, resolution.Price,
-                        resolution.Reason, candle.OpenTime, instrument, run, eventLogger);
+                        resolution.Reason, candleIrr.OpenTime, instrument, run, eventLogger);
                 }
             }
 
-            // ─── 3. Evaluate strategy at Close (if no pending) ───
+            // ─── 3. Evaluate strategy (transformed candles, sizing with IRR candle) ───
             if (!state.PendingOrders.ContainsKey(isin))
             {
-                var histCandles = runningCandles[isin];
+                var histCandles = runningCandles[isin];  // transformed
                 if (histCandles.Count >= strategy.RequiredCandleCount)
                 {
                     // Build ExtraTimeFrames dict for this event
                     IReadOnlyDictionary<TimeFrame, IReadOnlyList<Candle>>? extraForStrategy = null;
                     if (strategyReqs.Count > 0)
                     {
-                        var windowEnd = candle.OpenTime + tfDuration;
+                        var windowEnd = candleIrr.OpenTime + tfDuration;
                         var dict = new Dictionary<TimeFrame, IReadOnlyList<Candle>>();
 
                         foreach (var req in strategyReqs)
@@ -489,30 +518,31 @@ public sealed class BacktestEngine : IBacktestEngine
                     }
 
                     var input = new StrategyInput(
-                        Isin: isin,
-                        LatestSnapshot: null,
-                        Candles: histCandles,
-                        ExtraTimeFrames: extraForStrategy,    // ← NEW
-                        Configuration: strategyConfig,
-                        TimeFrame: timeFrame,
-                        EvaluatedAt: candle.OpenTime);
+              Isin: isin,
+              LatestSnapshot: null,
+              Candles: histCandles,                // transformed
+              ExtraTimeFrames: extraForStrategy,
+              Configuration: strategyConfig,
+              TimeFrame: timeFrame,
+              EvaluatedAt: candleIrr.OpenTime);    // ← IRR time (same as strategy)
 
                     StrategyEvaluationResult evalResult;
-                    try
-                    {
-                        evalResult = strategy.Evaluate(input);
+                    try { 
+                        evalResult = strategy.Evaluate(input); 
                     }
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex,
                             "Strategy evaluate failed at {Time} for {Isin}.",
-                            candle.OpenTime, isin);
+                            candleIrr.OpenTime, isin);
                         evalResult = StrategyEvaluationResult.Empty();
                     }
 
+
                     foreach (var sig in evalResult.Signals)
                     {
-                        HandleSignal(state, sig, isin, candle, instrument,
+                        // Sizing uses IRR candle Close (matches Live's snapshot IRR)
+                        HandleSignal(state, sig, isin, candleIrr, instrument,
                             allocPct, run, sizeCalc, eventLogger);
                     }
                 }
@@ -522,7 +552,7 @@ public sealed class BacktestEngine : IBacktestEngine
             // candle.OpenTime is UTC; convert to Tehran trading date to avoid off-by-one
             // (BC6 fix). Tehran midnight → prev day 20:30 UTC, so .Date on raw UTC
             // would attribute the day's equity to the previous day.
-            var tradingDate = TehranDate.FromUtc(candle.OpenTime);
+            var tradingDate = TehranDate.FromUtc(candleIrr.OpenTime);
             var dayOfCandle = tradingDate.ToDateTime(TimeOnly.MinValue);
             if (currentDay != dayOfCandle)
             {
@@ -549,10 +579,10 @@ public sealed class BacktestEngine : IBacktestEngine
         if (currentDay.HasValue)
             RecordEquity(state, run.Id, currentDay.Value, lastEquity);
 
-        // ─── Close all remaining at last close ───
+        // ─── Close all remaining at last IRR close ───
         foreach (var (isin, pos) in state.Positions.ToList())
         {
-            var lastCandle = primaryCandles[isin].Last();
+            var lastCandle = primaryCandlesIrr[isin].Last();
             ClosePosition(state, isin, lastCandle.Close,
                 BacktestExitReason.EndOfBacktest,
                 lastCandle.OpenTime, instruments[isin], run, eventLogger);
