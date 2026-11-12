@@ -3,8 +3,10 @@
 public sealed record CreateOrderPresetModel(
     Guid InstrumentId,
     string Name,
-    decimal DefaultPrice,
-    long DefaultQuantity,
+    int PriceStrategy,              // OrderPriceStrategy
+    decimal? FixedPrice,            // null unless Fixed
+    int QuantityStrategy,           // OrderQuantityStrategy
+    long? FixedQuantity,            // null unless Fixed
     int DefaultSide,
     int ValidityType,
     decimal Commission,
@@ -12,8 +14,10 @@ public sealed record CreateOrderPresetModel(
 
 public sealed record UpdateOrderPresetModel(
     string Name,
-    decimal DefaultPrice,
-    long DefaultQuantity,
+    int PriceStrategy,
+    decimal? FixedPrice,
+    int QuantityStrategy,
+    long? FixedQuantity,
     int DefaultSide,
     int ValidityType,
     decimal Commission,

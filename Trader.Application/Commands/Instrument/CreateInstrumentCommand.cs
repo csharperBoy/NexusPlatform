@@ -18,8 +18,9 @@ public record CreateInstrumentCommand(
     decimal SellCommissionRate,
     long MinOrderQuantity,
     long MaxOrderQuantity,
-    long? MinOrderValueRial,
-    OptionContractModel? OptionContract
+    long? MinOrderValueRial, 
+    OptionContractModel? OptionContract,
+    decimal DailyPriceRangePercent = 3.0m
 ) : IRequest<Result<Guid>>;
 
 public class CreateInstrumentCommandHandler
@@ -55,7 +56,8 @@ public class CreateInstrumentCommandHandler
                 request.MinOrderQuantity,
                 request.MaxOrderQuantity,
                 request.MinOrderValueRial,
-                request.OptionContract);
+                request.OptionContract,
+                request.DailyPriceRangePercent);
 
             var id = await _service.CreateAsync(model);
             return Result<Guid>.Ok(id);

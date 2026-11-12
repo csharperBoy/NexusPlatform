@@ -18,5 +18,6 @@ public sealed record InstrumentInfoView(
     long MinOrderQuantity,
     long MaxOrderQuantity,
     long? MinOrderValueRial,
-    bool IsActive,
+    decimal DailyPriceRangePercent,
+    bool IsActive, 
     DateTime CreatedAt);

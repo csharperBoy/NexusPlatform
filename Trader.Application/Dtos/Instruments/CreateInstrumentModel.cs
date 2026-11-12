@@ -13,7 +13,8 @@ public sealed record CreateInstrumentModel(
     long MinOrderQuantity,
     long MaxOrderQuantity,
     long? MinOrderValueRial,
-    OptionContractModel? OptionContract);
+    OptionContractModel? OptionContract,
+    decimal DailyPriceRangePercent = 3.0m);   // ← جدید
 
 public sealed record OptionContractModel(
     int OptionType,

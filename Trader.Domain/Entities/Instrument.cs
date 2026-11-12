@@ -34,6 +34,12 @@ public class Instrument : BaseEntity, IAuditableEntity
     /// <summary>حداقل ارزش ریالی یک سفارش خرید (اختیاری — مثلاً برای اهرم).</summary>
     public long? MinOrderValueRial { get; private set; }
 
+    /// <summary>بازه‌ی روزانه‌ی مجاز قیمت (درصد). پیش‌فرض ۳٪ (بورس تهران).
+    /// برای ETF/صندوق اهرمی/عرضه اولیه متفاوت است — کاربر موقع ساخت تنظیم می‌کند.
+    /// کاربرد: fallback برای محاسبه‌ی HighAllowed/LowAllowed وقتی live API صفر می‌دهد،
+    /// و نمایش informational در UI.</summary>
+    public decimal DailyPriceRangePercent { get; private set; } = 3.0m;
+
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -56,7 +62,8 @@ public class Instrument : BaseEntity, IAuditableEntity
         decimal sellCommissionRate = 0.0037m,
         long minOrderQuantity = 1,
         long maxOrderQuantity = 100000,
-        long? minOrderValueRial = null)
+        long? minOrderValueRial = null,
+    decimal dailyPriceRangePercent = 3.0m)   // ← جدید
     {
         if (string.IsNullOrWhiteSpace(isin))
             throw new ArgumentException("ISIN is required.", nameof(isin));
@@ -68,6 +75,12 @@ public class Instrument : BaseEntity, IAuditableEntity
         ValidateCommission(buyCommissionRate, nameof(buyCommissionRate));
         ValidateCommission(sellCommissionRate, nameof(sellCommissionRate));
         ValidateOrderLimits(minOrderQuantity, maxOrderQuantity, minOrderValueRial);
+
+
+        if (dailyPriceRangePercent <= 0m || dailyPriceRangePercent > 50m)
+            throw new ArgumentOutOfRangeException(nameof(dailyPriceRangePercent),
+                "Daily price range must be between 0 and 50 percent.");
+
 
         return new Instrument
         {
@@ -85,6 +98,7 @@ public class Instrument : BaseEntity, IAuditableEntity
             MaxOrderQuantity = maxOrderQuantity,
             MinOrderValueRial = minOrderValueRial,
             IsActive = true,
+            DailyPriceRangePercent = dailyPriceRangePercent,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -98,7 +112,8 @@ public class Instrument : BaseEntity, IAuditableEntity
         Optional<decimal> sellCommissionRate,
         Optional<long> minOrderQuantity,
         Optional<long> maxOrderQuantity,
-        Optional<long?> minOrderValueRial)
+        Optional<long?> minOrderValueRial,
+    Optional<decimal> dailyPriceRangePercent)
     {
         bool hasChange = false;
 
@@ -146,6 +161,18 @@ public class Instrument : BaseEntity, IAuditableEntity
             if (sellCommissionRate.Value != SellCommissionRate)
             {
                 SellCommissionRate = sellCommissionRate.Value;
+                hasChange = true;
+            }
+        }
+
+        if (dailyPriceRangePercent.IsSet)
+        {
+            var v = dailyPriceRangePercent.Value;
+            if (v <= 0m || v > 50m)
+                throw new ArgumentOutOfRangeException(nameof(dailyPriceRangePercent));
+            if (v != DailyPriceRangePercent)
+            {
+                DailyPriceRangePercent = v;
                 hasChange = true;
             }
         }

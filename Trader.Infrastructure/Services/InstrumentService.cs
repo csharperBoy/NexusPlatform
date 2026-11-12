@@ -59,7 +59,7 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             model.SellCommissionRate,
             model.MinOrderQuantity,
             model.MaxOrderQuantity,
-            model.MinOrderValueRial);
+            model.MinOrderValueRial,model.DailyPriceRangePercent);
 
         await _uow.Instruments.AddAsync(instrument);
         await _uow.SaveChangesAsync();
@@ -85,7 +85,8 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
     Optional<decimal> sellCommissionRate,
     Optional<long> minOrderQuantity,
     Optional<long> maxOrderQuantity,
-    Optional<long?> minOrderValueRial)
+    Optional<long?> minOrderValueRial,
+    Optional<decimal> dailyPriceRangePercent)
     {
         var instrument = await _uow.Instruments.GetByIdAsync(id)
             ?? throw new InvalidOperationException($"Instrument {id} not found.");
@@ -99,7 +100,7 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             sellCommissionRate,
             minOrderQuantity,
             maxOrderQuantity,
-            minOrderValueRial);
+            minOrderValueRial,dailyPriceRangePercent);
 
         if (!hasChange)
         {
@@ -202,6 +203,7 @@ public class InstrumentService : IInstrumentCommandService, IInstrumentQueryServ
             i.MinOrderQuantity,
             i.MaxOrderQuantity,
             i.MinOrderValueRial,
+            i.DailyPriceRangePercent,
             i.IsActive,
             i.CreatedAt);
     }

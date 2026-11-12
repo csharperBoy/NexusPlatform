@@ -12,6 +12,13 @@ namespace Trader.Presentation.Controller;
 [Route("api/Trader/[controller]")]
 public class InstrumentOrderPresetController : BaseController
 {
+    [HttpPost("Resolve/{id:guid}")]
+    [AuthorizeResource("trader.orderpreset", "View")]
+    public async Task<IActionResult> Resolve(Guid id)
+    {
+        var result = await Mediator.Send(new ResolveOrderPresetCommand(id));
+        return HandleResult(result);
+    }
     /* ═══════════ Queries ═══════════ */
     [HttpGet("GetList")]
     [AuthorizeResource("trader.orderpreset", "View")]
