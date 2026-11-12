@@ -1,3 +1,4 @@
+//src/modules/Trader/api/instrumentApi.ts
 import getAPI from "@/core/api/axiosClient";
 import type {
   InstrumentInfoView,
@@ -30,6 +31,9 @@ interface MockInstrument {
   minOrderQuantity: number;
   maxOrderQuantity: number;
   minOrderValueRial?: number | null;
+  
+dailyPriceRangeUpPercent: number | null;
+dailyPriceRangeDownPercent: number | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -53,6 +57,8 @@ function toView(m: MockInstrument): InstrumentInfoView {
     minOrderQuantity: m.minOrderQuantity,
     maxOrderQuantity: m.maxOrderQuantity,
     minOrderValueRial: m.minOrderValueRial ?? null,
+    dailyPriceRangeUpPercent: m.dailyPriceRangeUpPercent ?? null,
+    dailyPriceRangeDownPercent: m.dailyPriceRangeDownPercent ?? null,
     isActive: m.isActive,
     createdAt: m.createdAt,
   };
@@ -136,6 +142,8 @@ export const instrumentApi = {
       minOrderQuantity: data.minOrderQuantity,
       maxOrderQuantity: data.maxOrderQuantity,
       minOrderValueRial: data.minOrderValueRial ?? null,
+      dailyPriceRangeUpPercent: data.dailyPriceRangeUpPercent ?? null,
+      dailyPriceRangeDownPercent: data.dailyPriceRangeDownPercent ?? null,
       isActive: true,
       createdAt: new Date().toISOString(),
     };
@@ -171,6 +179,8 @@ export const instrumentApi = {
       minOrderQuantity: data.minOrderQuantity,
       maxOrderQuantity: data.maxOrderQuantity,
       minOrderValueRial: data.minOrderValueRial ?? null,
+            dailyPriceRangeUpPercent: data.dailyPriceRangeUpPercent,
+      dailyPriceRangeDownPercent: data.dailyPriceRangeDownPercent,
     };
     mockSave(MOCK_KEY, items);
     return true;
@@ -190,6 +200,8 @@ export const instrumentApi = {
       minOrderQuantity: data.minOrderQuantity,
       maxOrderQuantity: data.maxOrderQuantity,
       minOrderValueRial: data.minOrderValueRial ?? null,
+              dailyPriceRangeUpPercent: data.dailyPriceRangeUpPercent,
+        dailyPriceRangeDownPercent: data.dailyPriceRangeDownPercent,
     },
     { withCredentials: true },
   );

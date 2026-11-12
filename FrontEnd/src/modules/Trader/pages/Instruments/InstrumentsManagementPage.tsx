@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Instruments/InstrumentsManagementPage.tsx
 import React from "react";
 import { GenericCrudPage } from "@/core/components/crud/components/GenericCrudPage";
 import type { GenericColumnDef } from "@/core/components/crud/types";
@@ -140,7 +141,26 @@ const columns: GenericColumnDef<InstrumentInfoView>[] = [
     render: (v: number | null) =>
       v != null ? v.toLocaleString("fa-IR") : "—",
   },
-
+  {
+    key: "dailyPriceRangeUpPercent",
+    label: "سقف روزانه (٪)",
+    type: "number",
+    required: false,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number | null) =>
+      v != null ? `+${v}%` : "—",
+  },
+  {
+    key: "dailyPriceRangeDownPercent",
+    label: "کف روزانه (٪)",
+    type: "number",
+    required: false,
+    valueType: "number",
+    dir: "ltr",
+    render: (v: number | null) =>
+      v != null ? `-${v}%` : "—",
+  },
   {
     key: "isActive",
     label: "وضعیت",
@@ -196,11 +216,22 @@ export const InstrumentsManagementPage: React.FC = () => {
             sellCommissionRate: Number(formData.sellCommissionRate ?? 0) / 100,
             minOrderQuantity: Number(formData.minOrderQuantity ?? 1),
             maxOrderQuantity: Number(formData.maxOrderQuantity ?? 100000),
-            minOrderValueRial:
+                        minOrderValueRial:
               formData.minOrderValueRial == null ||
               formData.minOrderValueRial === ""
                 ? null
                 : Number(formData.minOrderValueRial),
+
+            dailyPriceRangeUpPercent:
+              formData.dailyPriceRangeUpPercent == null ||
+              formData.dailyPriceRangeUpPercent === ""
+                ? null
+                : Number(formData.dailyPriceRangeUpPercent),
+            dailyPriceRangeDownPercent:
+              formData.dailyPriceRangeDownPercent == null ||
+              formData.dailyPriceRangeDownPercent === ""
+                ? null
+                : Number(formData.dailyPriceRangeDownPercent),
 
             optionContract: null,
           }),
@@ -214,8 +245,10 @@ export const InstrumentsManagementPage: React.FC = () => {
             buyCommissionRate: item.buyCommissionRate,
             sellCommissionRate: item.sellCommissionRate,
             minOrderQuantity: item.minOrderQuantity,
-            maxOrderQuantity: item.maxOrderQuantity,
+            maxOrderQuantity: item.maxOrderQuantity,            
             minOrderValueRial: item.minOrderValueRial ?? null,
+            dailyPriceRangeUpPercent: item.dailyPriceRangeUpPercent,
+            dailyPriceRangeDownPercent: item.dailyPriceRangeDownPercent,
           }),
 
          tableFeatures: {
@@ -237,6 +270,12 @@ export const InstrumentsManagementPage: React.FC = () => {
           },
         }}
       />
+
+            <div className="mx-6 mb-3 rounded-lg border border-blue-700 bg-blue-900/20 p-3 text-xs text-blue-300">
+        ℹ️ <strong>سقف/کف روزانه</strong>: مقدار عددی = درصد مجاز نسبت به قیمت پایانی دیروز.
+        خالی گذاشتن = بدون محدودیت در آن جهت (مثلاً سهم تازه‌عرضه).
+        مثال: سقف ۵ + کف ۲ → ±۵٪/۲٪. برای نامتقارن (۳٪ بالا، ۲٪ پایین) هر کدام را جدا وارد کنید.
+      </div>
 
       <div className="mx-6 mb-6 rounded-lg border border-amber-700 bg-amber-900/20 p-3 text-xs text-amber-300">
         ⚠️ نمادهای <strong>اختیار معامله</strong> در این صفحه پشتیبانی

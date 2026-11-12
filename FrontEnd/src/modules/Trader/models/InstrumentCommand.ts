@@ -22,6 +22,10 @@ export interface CreateInstrumentCommand {
   minOrderValueRial?: number | null;
 
   optionContract?: OptionContractModel | null;
+
+  
+dailyPriceRangeUpPercent?: number | null;
+dailyPriceRangeDownPercent?: number | null;
 }
 
 export interface UpdateInstrumentCommand {
@@ -36,4 +40,7 @@ export interface UpdateInstrumentCommand {
   minOrderQuantity: number;
   maxOrderQuantity: number;
   minOrderValueRial?: number | null;
+  
+dailyPriceRangeUpPercent: number | null;
+dailyPriceRangeDownPercent: number | null;
 }

@@ -18,7 +18,8 @@ public interface IInstrumentCommandService
     Optional<long> minOrderQuantity,
     Optional<long> maxOrderQuantity,
     Optional<long?> minOrderValueRial,
-    Optional<decimal> dailyPriceRangePercent);   // ← جدید
+    Optional<decimal?> dailyPriceRangeUpPercent,
+    Optional<decimal?> dailyPriceRangeDownPercent);
 
     Task DeactivateAsync(Guid id);
 }

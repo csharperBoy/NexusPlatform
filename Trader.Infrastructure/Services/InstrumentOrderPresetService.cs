@@ -162,27 +162,52 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
             switch (preset.PriceStrategy)
             {
                 case OrderPriceStrategy.HighAllowed:
-                    if (liveHigh is > 0) { price = liveHigh.Value; priceSource = "Live:HighAllowed"; }
+                    if (liveHigh is > 0)
+                    {
+                        price = liveHigh.Value;
+                        priceSource = "Live:HighAllowed";
+                    }
+                    else if (liveClose is > 0 && instrument.DailyPriceRangeUpPercent.HasValue)
+                    {
+                        price = RoundPrice(liveClose.Value * (1m + instrument.DailyPriceRangeUpPercent.Value / 100m));
+                        priceSource = $"Fallback:Closing×(1+{instrument.DailyPriceRangeUpPercent}%)";
+                        warning = "قیمت سقف مجاز از API در دسترس نبود — از قیمت پایانی × بازه بالا تخمین زده شد.";
+                    }
                     else if (liveClose is > 0)
                     {
-                        price = RoundPrice(liveClose.Value * (1m + instrument.DailyPriceRangePercent / 100m));
-                        priceSource = $"Fallback:Closing×(1+{instrument.DailyPriceRangePercent}%)";
-                        warning = "قیمت سقف مجاز از API در دسترس نبود — از قیمت پایانی × بازه تخمین زده شد.";
+                        throw new InvalidOperationException(
+                            "قیمت سقف مجاز از API در دسترس نیست و بازه بالا برای این نماد تعریف نشده (unlimited). " +
+                            "برای پیش‌بینی از RangeUp، آن را در تنظیمات Instrument مقداردهی کنید.");
                     }
-                    else throw new InvalidOperationException(
-                        "قیمت سقف مجاز و قیمت پایانی در دسترس نیست (بازار بسته و API داده نمی‌دهد).");
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            "قیمت سقف مجاز و قیمت پایانی در دسترس نیست (بازار بسته و API داده نمی‌دهد).");
+                    }
                     break;
 
                 case OrderPriceStrategy.LowAllowed:
-                    if (liveLow is > 0) { price = liveLow.Value; priceSource = "Live:LowAllowed"; }
+                    if (liveLow is > 0)
+                    {
+                        price = liveLow.Value;
+                        priceSource = "Live:LowAllowed";
+                    }
+                    else if (liveClose is > 0 && instrument.DailyPriceRangeDownPercent.HasValue)
+                    {
+                        price = RoundPrice(liveClose.Value * (1m - instrument.DailyPriceRangeDownPercent.Value / 100m));
+                        priceSource = $"Fallback:Closing×(1-{instrument.DailyPriceRangeDownPercent}%)";
+                        warning = "قیمت کف مجاز از API در دسترس نبود — از قیمت پایانی × بازه پایین تخمین زده شد.";
+                    }
                     else if (liveClose is > 0)
                     {
-                        price = RoundPrice(liveClose.Value * (1m - instrument.DailyPriceRangePercent / 100m));
-                        priceSource = $"Fallback:Closing×(1-{instrument.DailyPriceRangePercent}%)";
-                        warning = "قیمت کف مجاز از API در دسترس نبود — از قیمت پایانی × بازه تخمین زده شد.";
+                        throw new InvalidOperationException(
+                            "قیمت کف مجاز از API در دسترس نیست و بازه پایین برای این نماد تعریف نشده (unlimited).");
                     }
-                    else throw new InvalidOperationException(
-                        "قیمت کف مجاز و قیمت پایانی در دسترس نیست.");
+                    else
+                    {
+                        throw new InvalidOperationException(
+                            "قیمت کف مجاز و قیمت پایانی در دسترس نیست.");
+                    }
                     break;
 
                 case OrderPriceStrategy.LastTraded:
@@ -205,15 +230,27 @@ public class InstrumentOrderPresetService : IInstrumentOrderPresetService
                     throw new InvalidOperationException($"Unknown PriceStrategy {preset.PriceStrategy}.");
             }
 
-            // Sanity: price must be within daily range if we have closing
-            if (liveClose is > 0 && instrument.DailyPriceRangePercent > 0)
+            // Sanity: price must be within daily range if bounds are defined
+            if (liveClose is > 0)
             {
-                var maxAllowed = liveClose.Value * (1m + instrument.DailyPriceRangePercent / 100m);
-                var minAllowed = liveClose.Value * (1m - instrument.DailyPriceRangePercent / 100m);
-                if (price > maxAllowed || price < minAllowed)
+                decimal? maxAllowed = instrument.DailyPriceRangeUpPercent.HasValue
+                    ? liveClose.Value * (1m + instrument.DailyPriceRangeUpPercent.Value / 100m)
+                    : (decimal?)null;
+
+                decimal? minAllowed = instrument.DailyPriceRangeDownPercent.HasValue
+                    ? liveClose.Value * (1m - instrument.DailyPriceRangeDownPercent.Value / 100m)
+                    : (decimal?)null;
+
+                var outsideBounds =
+                    (maxAllowed.HasValue && price > maxAllowed.Value) ||
+                    (minAllowed.HasValue && price < minAllowed.Value);
+
+                if (outsideBounds)
                 {
+                    var minStr = minAllowed.HasValue ? minAllowed.Value.ToString("N0") : "∞";
+                    var maxStr = maxAllowed.HasValue ? maxAllowed.Value.ToString("N0") : "∞";
                     warning = (warning is null ? "" : warning + " ") +
-                        $"قیمت resolve شده ({price:N0}) خارج از بازه‌ی روزانه ({minAllowed:N0}..{maxAllowed:N0}) است — ممکن است Broker رد کند.";
+                        $"قیمت resolve شده ({price:N0}) خارج از بازه‌ی روزانه ({minStr}..{maxStr}) است — ممکن است Broker رد کند.";
                 }
             }
         }

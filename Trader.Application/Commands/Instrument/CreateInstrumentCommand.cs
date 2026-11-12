@@ -20,7 +20,8 @@ public record CreateInstrumentCommand(
     long MaxOrderQuantity,
     long? MinOrderValueRial, 
     OptionContractModel? OptionContract,
-    decimal DailyPriceRangePercent = 3.0m
+    decimal? DailyPriceRangeUpPercent = 3.0m,
+decimal? DailyPriceRangeDownPercent = 3.0m
 ) : IRequest<Result<Guid>>;
 
 public class CreateInstrumentCommandHandler
@@ -57,7 +58,8 @@ public class CreateInstrumentCommandHandler
                 request.MaxOrderQuantity,
                 request.MinOrderValueRial,
                 request.OptionContract,
-                request.DailyPriceRangePercent);
+                request.DailyPriceRangeUpPercent,
+                request.DailyPriceRangeDownPercent);
 
             var id = await _service.CreateAsync(model);
             return Result<Guid>.Ok(id);

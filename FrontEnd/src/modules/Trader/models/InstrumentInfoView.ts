@@ -20,6 +20,8 @@ export interface InstrumentInfoView {
   maxOrderQuantity: number;
   minOrderValueRial?: number | null;
 
+dailyPriceRangeUpPercent: number | null;
+dailyPriceRangeDownPercent: number | null;
   isActive: boolean;
   createdAt: string;
 }

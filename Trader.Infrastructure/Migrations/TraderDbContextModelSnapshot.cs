@@ -938,7 +938,13 @@ namespace Trader.Infrastructure.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<decimal>("DailyPriceRangePercent")
+                    b.Property<decimal?>("DailyPriceRangeDownPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasDefaultValue(3.0m);
+
+                    b.Property<decimal?>("DailyPriceRangeUpPercent")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)")

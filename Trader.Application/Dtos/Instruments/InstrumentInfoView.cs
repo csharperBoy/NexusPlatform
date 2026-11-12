@@ -17,7 +17,8 @@ public sealed record InstrumentInfoView(
     decimal SellCommissionRate,
     long MinOrderQuantity,
     long MaxOrderQuantity,
-    long? MinOrderValueRial,
-    decimal DailyPriceRangePercent,
+    long? MinOrderValueRial, 
+    decimal? DailyPriceRangeUpPercent,
+decimal? DailyPriceRangeDownPercent,
     bool IsActive, 
     DateTime CreatedAt);

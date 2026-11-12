@@ -34,11 +34,17 @@ public class Instrument : BaseEntity, IAuditableEntity
     /// <summary>حداقل ارزش ریالی یک سفارش خرید (اختیاری — مثلاً برای اهرم).</summary>
     public long? MinOrderValueRial { get; private set; }
 
-    /// <summary>بازه‌ی روزانه‌ی مجاز قیمت (درصد). پیش‌فرض ۳٪ (بورس تهران).
-    /// برای ETF/صندوق اهرمی/عرضه اولیه متفاوت است — کاربر موقع ساخت تنظیم می‌کند.
-    /// کاربرد: fallback برای محاسبه‌ی HighAllowed/LowAllowed وقتی live API صفر می‌دهد،
-    /// و نمایش informational در UI.</summary>
-    public decimal DailyPriceRangePercent { get; private set; } = 3.0m;
+    /// <summary>
+    /// سقف بازه‌ی روزانه (درصد افزایش از قیمت پایانی). null = بدون محدودیت بالا.
+    /// مثال: 5 یعنی حداکثر +۵٪. برای سهم‌های تازه‌عرضه یا صندوق‌های بدون دامنه = null.
+    /// </summary>
+    public decimal? DailyPriceRangeUpPercent { get; private set; }
+
+    /// <summary>
+    /// کف بازه‌ی روزانه (درصد کاهش از قیمت پایانی). null = بدون محدودیت پایین.
+    /// مستقل از RangeUp — مثلاً +۵/-۲ ممکن است.
+    /// </summary>
+    public decimal? DailyPriceRangeDownPercent { get; private set; }
 
     // IAuditableEntity
     public DateTime CreatedAt { get; set; }
@@ -63,7 +69,8 @@ public class Instrument : BaseEntity, IAuditableEntity
         long minOrderQuantity = 1,
         long maxOrderQuantity = 100000,
         long? minOrderValueRial = null,
-    decimal dailyPriceRangePercent = 3.0m)   // ← جدید
+decimal? dailyPriceRangeUpPercent = 3.0m,
+decimal? dailyPriceRangeDownPercent = 3.0m) // ← جدید
     {
         if (string.IsNullOrWhiteSpace(isin))
             throw new ArgumentException("ISIN is required.", nameof(isin));
@@ -77,9 +84,9 @@ public class Instrument : BaseEntity, IAuditableEntity
         ValidateOrderLimits(minOrderQuantity, maxOrderQuantity, minOrderValueRial);
 
 
-        if (dailyPriceRangePercent <= 0m || dailyPriceRangePercent > 50m)
-            throw new ArgumentOutOfRangeException(nameof(dailyPriceRangePercent),
-                "Daily price range must be between 0 and 50 percent.");
+        ValidateRange(dailyPriceRangeUpPercent, nameof(dailyPriceRangeUpPercent));
+        ValidateRange(dailyPriceRangeDownPercent, nameof(dailyPriceRangeDownPercent));
+
 
 
         return new Instrument
@@ -98,7 +105,8 @@ public class Instrument : BaseEntity, IAuditableEntity
             MaxOrderQuantity = maxOrderQuantity,
             MinOrderValueRial = minOrderValueRial,
             IsActive = true,
-            DailyPriceRangePercent = dailyPriceRangePercent,
+            DailyPriceRangeUpPercent = dailyPriceRangeUpPercent,
+            DailyPriceRangeDownPercent = dailyPriceRangeDownPercent,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -112,8 +120,9 @@ public class Instrument : BaseEntity, IAuditableEntity
         Optional<decimal> sellCommissionRate,
         Optional<long> minOrderQuantity,
         Optional<long> maxOrderQuantity,
-        Optional<long?> minOrderValueRial,
-    Optional<decimal> dailyPriceRangePercent)
+        Optional<long?> minOrderValueRial, 
+        Optional<decimal?> dailyPriceRangeUpPercent,
+Optional<decimal?> dailyPriceRangeDownPercent)
     {
         bool hasChange = false;
 
@@ -165,14 +174,22 @@ public class Instrument : BaseEntity, IAuditableEntity
             }
         }
 
-        if (dailyPriceRangePercent.IsSet)
+        if (dailyPriceRangeUpPercent.IsSet)
         {
-            var v = dailyPriceRangePercent.Value;
-            if (v <= 0m || v > 50m)
-                throw new ArgumentOutOfRangeException(nameof(dailyPriceRangePercent));
-            if (v != DailyPriceRangePercent)
+            ValidateRange(dailyPriceRangeUpPercent.Value, nameof(dailyPriceRangeUpPercent));
+            if (dailyPriceRangeUpPercent.Value != DailyPriceRangeUpPercent)
             {
-                DailyPriceRangePercent = v;
+                DailyPriceRangeUpPercent = dailyPriceRangeUpPercent.Value;
+                hasChange = true;
+            }
+        }
+
+        if (dailyPriceRangeDownPercent.IsSet)
+        {
+            ValidateRange(dailyPriceRangeDownPercent.Value, nameof(dailyPriceRangeDownPercent));
+            if (dailyPriceRangeDownPercent.Value != DailyPriceRangeDownPercent)
+            {
+                DailyPriceRangeDownPercent = dailyPriceRangeDownPercent.Value;
                 hasChange = true;
             }
         }
@@ -202,7 +219,13 @@ public class Instrument : BaseEntity, IAuditableEntity
     }
 
     /* ═══════════════ Validation Helpers ═══════════════ */
-
+    private static void ValidateRange(decimal? value, string paramName)
+    {
+        if (value is null) return;
+        if (value.Value <= 0m || value.Value > 50m)
+            throw new ArgumentOutOfRangeException(paramName,
+                "Daily price range must be null (unlimited) or between 0 (exclusive) and 50 (inclusive).");
+    }
     private static void ValidateCommission(decimal rate, string paramName)
     {
         if (rate < 0m || rate > 0.1m)

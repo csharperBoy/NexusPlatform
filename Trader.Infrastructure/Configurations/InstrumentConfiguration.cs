@@ -27,10 +27,15 @@ public class InstrumentConfiguration : BaseConfiguration<Instrument>
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(x => x.DailyPriceRangePercent)
+        builder.Property(x => x.DailyPriceRangeUpPercent)
     .HasPrecision(5, 2)
-    .IsRequired()
+    .IsRequired(false)
     .HasDefaultValue(3.0m);
+
+        builder.Property(x => x.DailyPriceRangeDownPercent)
+            .HasPrecision(5, 2)
+            .IsRequired(false)
+            .HasDefaultValue(3.0m);
 
         builder.Property(x => x.Type).HasConversion<int>().IsRequired();
         builder.Property(x => x.Market).HasConversion<int>().IsRequired();

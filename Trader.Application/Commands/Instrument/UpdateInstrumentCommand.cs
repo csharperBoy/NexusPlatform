@@ -16,8 +16,9 @@ public record UpdateInstrumentCommand(
     Optional<decimal> SellCommissionRate,
     Optional<long> MinOrderQuantity,
     Optional<long> MaxOrderQuantity,
-    Optional<long?> MinOrderValueRial,
-    Optional<decimal> DailyPriceRangePercent
+    Optional<long?> MinOrderValueRial, 
+    Optional<decimal?> DailyPriceRangeUpPercent,
+Optional<decimal?> DailyPriceRangeDownPercent
 ) : IRequest<Result<bool>>;
 
 public class UpdateInstrumentCommandHandler
@@ -51,7 +52,8 @@ public class UpdateInstrumentCommandHandler
                 request.MinOrderQuantity,
                 request.MaxOrderQuantity,
                 request.MinOrderValueRial,
-                request.DailyPriceRangePercent);
+                request.DailyPriceRangeUpPercent,
+                request.DailyPriceRangeDownPercent);
 
             return Result<bool>.Ok(hasChange);
         }
