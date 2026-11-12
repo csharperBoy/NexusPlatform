@@ -274,31 +274,24 @@ public sealed class BacktestRunService
             var ov = model.ConfigOverride;
 
             return new EffectiveConfig(
-                StrategyKey: ov?.StrategyKey ?? sourceRun.StrategyKey,
-                StrategyConfigJson: ov?.StrategyConfigJson ?? sourceRun.StrategyConfigJson,
-                PrimaryTimeFrame: ov?.PrimaryTimeFrame ?? (int)sourceRun.PrimaryTimeFrame,
-                TargetCurrency: ov is not null ? ov.TargetCurrency : sourceRun.TargetCurrency,
-                // CapitalAllocationMode و FixedCapitalAmount از ConfigOverride یا پیش‌فرض:
-                CapitalAllocationMode: (int)CapitalAllocationMode.Fixed,
-                FixedCapitalAmount: suggestedCapital,
-                StrengthMultiplier: ov?.StrengthMultiplier ?? sourceRun.StrengthMultiplier,
-                MinDeltaPercent: ov?.MinDeltaPercent ?? sourceRun.MinDeltaPercent,
-                StopLossPercentage: ov is not null
-                    ? ov.StopLossPercentage
-                    : sourceRun.StopLoss?.Percentage,
-                StopLossPrice: ov is not null
-                    ? ov.StopLossPrice
-                    : sourceRun.StopLoss?.AbsolutePrice?.Value,
-                TakeProfitPercentage: ov is not null
-                    ? ov.TakeProfitPercentage
-                    : sourceRun.TakeProfit?.Percentage,
-                TakeProfitPrice: ov is not null
-                    ? ov.TakeProfitPrice
-                    : sourceRun.TakeProfit?.AbsolutePrice?.Value,
-                DefaultOrderMode: ov?.DefaultOrderMode ?? (int)sourceRun.DefaultOrderMode,
-                OnMarketClose: ov?.OnMarketClose ?? (int)sourceRun.OnMarketClose,
-                OnStop: ov?.OnStop ?? (int)sourceRun.OnStop,
-                Symbols: symbols);
+    StrategyKey: ov?.StrategyKey ?? sourceRun.StrategyKey,
+    StrategyConfigJson: ov?.StrategyConfigJson ?? sourceRun.StrategyConfigJson,
+    PrimaryTimeFrame: ov?.PrimaryTimeFrame ?? (int)sourceRun.PrimaryTimeFrame,
+    // BC8 fix: use ?? not `is not null ? :` — so that an override with
+    // TargetCurrency=null falls back to source (not silently nullifies it)
+    TargetCurrency: ov?.TargetCurrency ?? sourceRun.TargetCurrency,
+    CapitalAllocationMode: (int)CapitalAllocationMode.Fixed,
+    FixedCapitalAmount: suggestedCapital,
+    StrengthMultiplier: ov?.StrengthMultiplier ?? sourceRun.StrengthMultiplier,
+    MinDeltaPercent: ov?.MinDeltaPercent ?? sourceRun.MinDeltaPercent,
+    StopLossPercentage: ov?.StopLossPercentage ?? sourceRun.StopLoss?.Percentage,
+    StopLossPrice: ov?.StopLossPrice ?? sourceRun.StopLoss?.AbsolutePrice?.Value,
+    TakeProfitPercentage: ov?.TakeProfitPercentage ?? sourceRun.TakeProfit?.Percentage,
+    TakeProfitPrice: ov?.TakeProfitPrice ?? sourceRun.TakeProfit?.AbsolutePrice?.Value,
+    DefaultOrderMode: ov?.DefaultOrderMode ?? (int)sourceRun.DefaultOrderMode,
+    OnMarketClose: ov?.OnMarketClose ?? (int)sourceRun.OnMarketClose,
+    OnStop: ov?.OnStop ?? (int)sourceRun.OnStop,
+    Symbols: symbols);
         }
 
         // ─── Mode 2: Virtual ───

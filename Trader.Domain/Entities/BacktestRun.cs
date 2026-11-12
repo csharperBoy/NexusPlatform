@@ -173,8 +173,8 @@ public class BacktestRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             OnMarketClose = onMarketClose,
             OnStop = onStop,
             ConfigSnapshotJson = configSnapshotJson,
-            DateFrom = dateFrom.Kind == DateTimeKind.Utc ? dateFrom : DateTime.SpecifyKind(dateFrom, DateTimeKind.Utc),
-            DateTo = dateTo.Kind == DateTimeKind.Utc ? dateTo : DateTime.SpecifyKind(dateTo, DateTimeKind.Utc),
+            DateFrom = EnsureUtc(dateFrom),
+            DateTo = EnsureUtc(dateTo),
             InitialCapital = initialCapital,
             SlippagePercent = slippagePercent,
             SubCandleTimeFrame = subCandleTimeFrame,
@@ -265,4 +265,10 @@ public class BacktestRun : BaseEntity, IAuditableEntity, IOwnerableEntity
             : null;
         Touch();
     }
+    private static DateTime EnsureUtc(DateTime dt) => dt.Kind switch
+    {
+        DateTimeKind.Utc => dt,
+        DateTimeKind.Local => dt.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc), // Unspecified → assume UTC
+    };
 }

@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.MarketData;
+using Trader.Application.Abstractions.Risk;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Runtime;
 using Trader.Application.Specifications.Backtests;
@@ -13,6 +15,7 @@ using Trader.Application.Specifications.Instruments;
 using Trader.Domain.Calculations;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
+using Trader.Domain.ValueObjects;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Backtesting;
@@ -23,16 +26,19 @@ public sealed class BacktestEngine : IBacktestEngine
     private readonly ISubCandleResolver _sltpResolver;
     private readonly IOrderFillSimulator _fillSimulator;
     private readonly ILogger<BacktestEngine> _logger;
+    private readonly IOptionsMonitor<TradingRiskOptions> _riskOptions;
 
     public BacktestEngine(
         IServiceScopeFactory scopeFactory,
         ISubCandleResolver sltpResolver,
         IOrderFillSimulator fillSimulator,
+    IOptionsMonitor<TradingRiskOptions> riskOptions,
         ILogger<BacktestEngine> logger)
     {
         _scopeFactory = scopeFactory;
         _sltpResolver = sltpResolver;
         _fillSimulator = fillSimulator;
+        _riskOptions = riskOptions;
         _logger = logger;
     }
 
@@ -81,6 +87,20 @@ public sealed class BacktestEngine : IBacktestEngine
         {
             var state = await SimulateAsync(run, uow, eventLogger, ct);
 
+            // Check if user cancelled during simulation (via CancelBacktestCommand
+            // in another scope). Reload to see the current DB status.
+            await uow.Context.Entry(run).ReloadAsync(ct);
+            if (run.Status != BacktestStatus.Running)
+            {
+                _logger.LogInformation(
+                    "BacktestRun {Id} status is {Status} — cancelled during simulation; " +
+                    "discarding {TradeCount} trades and {EquityCount} daily equities",
+                    run.Id, run.Status, state.Trades.Count, state.DailyEquities.Count);
+
+                await eventLogger.FlushAsync(ct);
+                return;
+            }
+
             var metrics = BacktestMetricsCalculator.Calculate(
                 state.InitialCapital, state.Cash, state.Trades, state.DailyEquities);
 
@@ -111,6 +131,7 @@ public sealed class BacktestEngine : IBacktestEngine
             _logger.LogInformation(
                 "BacktestRun {Id} completed. return={ReturnPct:0.##}% trades={Trades} duration={Dur}ms",
                 run.Id, metrics.TotalReturnPct, metrics.TotalTrades, run.DurationMs);
+
             eventLogger.Log(run.Id, BacktestEventType.MetricsComputed, BacktestEventSeverity.Info,
                     $"متریک‌ها محاسبه شدند. بازده: {metrics.TotalReturnPct:0.##}%, " +
                     $"تریدها: {metrics.TotalTrades} (برد: {metrics.WinningTrades}, باخت: {metrics.LosingTrades})",
@@ -130,22 +151,36 @@ public sealed class BacktestEngine : IBacktestEngine
         }
         catch (OperationCanceledException)
         {
-            run.MarkCancelled();
-            await uow.BacktestRuns.UpdateAsync(run);
-            await uow.SaveChangesAsync(CancellationToken.None);
+            await uow.Context.Entry(run).ReloadAsync(CancellationToken.None);
+            if (run.Status == BacktestStatus.Running)
+            {
+                run.MarkCancelled();
+                await uow.BacktestRuns.UpdateAsync(run);
+                await uow.SaveChangesAsync(CancellationToken.None);
+            }
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "BacktestRun {Id} failed.", run.Id);
 
-            eventLogger.Log(run.Id, BacktestEventType.RunFailed, BacktestEventSeverity.Error,
-                $"بکتست ناموفق بود: {ex.Message}",
-                payload: new { exceptionType = ex.GetType().Name, exceptionMessage = ex.Message });
+            await uow.Context.Entry(run).ReloadAsync(CancellationToken.None);
+            if (run.Status == BacktestStatus.Running)
+            {
+                eventLogger.Log(run.Id, BacktestEventType.RunFailed, BacktestEventSeverity.Error,
+                    $"بکتست ناموفق بود: {ex.Message}",
+                    payload: new { exceptionType = ex.GetType().Name, exceptionMessage = ex.Message });
 
-            run.MarkFailed(ex.Message);
-            await uow.BacktestRuns.UpdateAsync(run);
-            await uow.SaveChangesAsync(CancellationToken.None);
+                run.MarkFailed(ex.Message);
+                await uow.BacktestRuns.UpdateAsync(run);
+                await uow.SaveChangesAsync(CancellationToken.None);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "BacktestRun {Id} exception but status is {Status}; not marking failed",
+                    run.Id, run.Status);
+            }
 
             await eventLogger.FlushAsync(CancellationToken.None);
             throw;
@@ -484,7 +519,11 @@ public sealed class BacktestEngine : IBacktestEngine
             }
 
             // ─── 4. End-of-day equity ───
-            var dayOfCandle = candle.OpenTime.Date;
+            // candle.OpenTime is UTC; convert to Tehran trading date to avoid off-by-one
+            // (BC6 fix). Tehran midnight → prev day 20:30 UTC, so .Date on raw UTC
+            // would attribute the day's equity to the previous day.
+            var tradingDate = TehranDate.FromUtc(candle.OpenTime);
+            var dayOfCandle = tradingDate.ToDateTime(TimeOnly.MinValue);
             if (currentDay != dayOfCandle)
             {
                 if (currentDay.HasValue)
@@ -561,6 +600,15 @@ public sealed class BacktestEngine : IBacktestEngine
             if (state.Positions.TryGetValue(isin, out var existing))
                 committed = existing.Quantity * existing.WeightedAvgEntryPrice;
 
+            // Apply MaxPositionSize risk cap (align with live) — D55
+            decimal? maxPositionValue = null;
+            var maxPosOpts = _riskOptions.CurrentValue.MaxPositionSize;
+            if (maxPosOpts.Enabled)
+            {
+                // Backtest always applies (no separate ExecutionMode)
+                maxPositionValue = state.InitialCapital * (maxPosOpts.MaxPercentPerSymbol / 100m);
+            }
+
             var result = sizeCalc.CalculateBuy(
                 new Trader.Application.Abstractions.Execution.BuySizeInput(
                     AllocatedCapital: targetCapital,
@@ -573,7 +621,8 @@ public sealed class BacktestEngine : IBacktestEngine
                     BuyCommissionRate: instrument.BuyCommissionRate,
                     MinOrderQuantity: instrument.MinOrderQuantity,
                     MaxOrderQuantity: instrument.MaxOrderQuantity,
-                    MinOrderValueRial: instrument.MinOrderValueRial));
+                    MinOrderValueRial: instrument.MinOrderValueRial,
+                    MaxPositionValue: maxPositionValue));
 
             if (result.Quantity > 0)
             {
@@ -645,20 +694,13 @@ public sealed class BacktestEngine : IBacktestEngine
 
         if (fillPrice <= 0m) return;
 
-        // slippage amount
-        var expected = pending.Side == OrderSide.Buy
-            ? fillCandle.Open
-            : fillCandle.Open;
-        state.TotalSlippage += Math.Abs(fillPrice - expected) * pending.Quantity;
+        // Slippage: computed per-branch after quantity is known (BC5 fix)
+        var expected = fillCandle.Open;
 
         if (pending.Side == OrderSide.Buy)
         {
             var commissionRate = instrument.BuyCommissionRate;
 
-            // ─── حداکثر قابل خرید با cash موجود (فرمول دقیق از FillMath) ───
-            // M9: قبلاً دو بار cash check می‌شد (یکی برای clamp، یکی defensive).
-            // با CalculateMaxBuyQuantity، فرمول دقیقاً همان است که cash را
-            // تضمین می‌کند — چک دوم defensive نیست، dead است. حذف شد.
             var affordableQty = FillMath.CalculateMaxBuyQuantity(
                 state.Cash, fillPrice, commissionRate);
 
@@ -666,11 +708,15 @@ public sealed class BacktestEngine : IBacktestEngine
 
             if (qty < instrument.MinOrderQuantity) return;
 
+            // Slippage after clamp (BC5 fix)
+            state.TotalSlippage += Math.Abs(fillPrice - expected) * qty;
+
             var commission = FillMath.CalculateCommission(fillPrice, qty, commissionRate);
             var totalCost = fillPrice * qty + commission;
 
             state.Cash -= totalCost;
             state.TotalCommission += commission;
+
             eventLogger.Log(run.Id, BacktestEventType.FillExecuted, BacktestEventSeverity.Info,
                 $"خرید انجام شد: {qty:N0} سهم {isin} @ {fillPrice:N0}",
                 payload: new
@@ -683,9 +729,9 @@ public sealed class BacktestEngine : IBacktestEngine
                 },
                 isin: isin,
                 candleTime: fillCandle.OpenTime);
+
             if (state.Positions.TryGetValue(isin, out var existingPos))
             {
-                // ─── Weighted Average از FillMath ───
                 var newAvg = FillMath.CalculateWeightedAveragePrice(
                     currentQty: existingPos.Quantity,
                     currentAvgPrice: existingPos.WeightedAvgEntryPrice,
@@ -695,6 +741,16 @@ public sealed class BacktestEngine : IBacktestEngine
                 existingPos.Quantity += qty;
                 existingPos.WeightedAvgEntryPrice = newAvg;
                 existingPos.TotalBuyCommission += commission;
+
+                // SL/TP recomputed from new avg (BC4 fix).
+                // ResolveStopLoss returns absolute price if AbsolutePrice is set,
+                // so absolute-price mode is unaffected — only percentage mode re-computes.
+                //existingPos.StopLoss = ResolveStopLoss(run, newAvg);
+                //existingPos.TakeProfit = ResolveTakeProfit(run, newAvg);
+                existingPos.Quantity += qty;
+                existingPos.WeightedAvgEntryPrice = newAvg;
+                existingPos.TotalBuyCommission += commission;
+                // SL/TP unchanged — matches Position.ApplyBuyFill behavior
                 existingPos.EntryFills.Add(new EntryFill(
                     fillCandle.OpenTime, fillPrice, qty, commission));
             }
@@ -716,6 +772,7 @@ public sealed class BacktestEngine : IBacktestEngine
                 pos.EntryFills.Add(new EntryFill(
                     fillCandle.OpenTime, fillPrice, qty, commission));
                 state.Positions[isin] = pos;
+
                 eventLogger.Log(run.Id, BacktestEventType.PositionOpened, BacktestEventSeverity.Info,
                     $"موقعیت باز شد: {qty:N0} سهم {isin} @ {fillPrice:N0}" +
                     (sl.HasValue ? $" (SL: {sl.Value:N0})" : "") +
@@ -735,35 +792,38 @@ public sealed class BacktestEngine : IBacktestEngine
         else // Sell
         {
             if (!state.Positions.TryGetValue(isin, out var pos)) return;
+
             var sellQty = Math.Min(pending.Quantity, pos.Quantity);
             if (sellQty <= 0) return;
 
-            var commissionRate = instrument.SellCommissionRate;
+            // Slippage after clamp (BC5 fix)
+            state.TotalSlippage += Math.Abs(fillPrice - expected) * sellQty;
 
-            // ─── Commission از FillMath؛ proceeds = gross - commission ───
-            // توجه: قبلاً بود fillPrice * sellQty * (1m - commissionRate)
-            // ریاضی معادل: fillPrice*sellQty - fillPrice*sellQty*rate = gross - commission
+            var commissionRate = instrument.SellCommissionRate;
             var commission = FillMath.CalculateCommission(fillPrice, sellQty, commissionRate);
             var proceeds = fillPrice * sellQty - commission;
 
             state.Cash += proceeds;
-
             state.TotalCommission += commission;
+
+            // Proportional share of buy commission for this partial exit (BC1/BC2 fix)
+            var proportionalBuyCommission = pos.Quantity > 0
+                ? pos.TotalBuyCommission * sellQty / pos.Quantity
+                : 0m;
 
             var entryFillsJson = JsonSerializer.Serialize(
                 pos.EntryFills,
                 new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
-            // BacktestTrade.Create خودش FillMath.CalculateRealizedPnL را
-            // برای grossPnL صدا می‌زند (بعد از PR 5 تغییر کرد).
+            // Trade captures ONLY the slice being closed — not the entire position
             var trade = Domain.Entities.BacktestTrade.Create(
                 backtestRunId: run.Id,
                 isin: isin,
                 entryTime: pos.EntryTime,
                 lastEntryTime: pos.EntryFills[^1].Time,
-                totalEntryQuantity: pos.Quantity,
+                totalEntryQuantity: sellQty,                       // ← BC1 fix
                 weightedAvgEntryPrice: pos.WeightedAvgEntryPrice,
-                totalBuyCommission: pos.TotalBuyCommission,
+                totalBuyCommission: proportionalBuyCommission,     // ← BC1/BC2 fix
                 entryFillsJson: entryFillsJson,
                 exitTime: fillCandle.OpenTime,
                 exitPrice: fillPrice,
@@ -778,13 +838,25 @@ public sealed class BacktestEngine : IBacktestEngine
                     quantity = sellQty,
                     exitPrice = fillPrice,
                     commission = commission,
-                    exitReason = "Signal"
+                    exitReason = "Signal",
+                    isPartial = sellQty < pos.Quantity
                 },
                 isin: isin,
                 candleTime: fillCandle.OpenTime,
                 tradeId: trade.Id);
+
             state.Trades.Add(trade);
-            state.Positions.Remove(isin);
+
+            // Only remove when fully sold — otherwise reduce in place (BC1 fix)
+            if (sellQty >= pos.Quantity)
+            {
+                state.Positions.Remove(isin);
+            }
+            else
+            {
+                pos.Quantity -= sellQty;
+                pos.TotalBuyCommission -= proportionalBuyCommission;
+            }
         }
     }
 
@@ -861,17 +933,21 @@ public sealed class BacktestEngine : IBacktestEngine
 
     private static decimal? ResolveStopLoss(BacktestRun run, decimal entryPrice)
     {
-        if (run.StopLossPrice.HasValue) return run.StopLossPrice.Value;
+        if (run.StopLossPrice.HasValue)
+            return run.StopLossPrice.Value;
         if (run.StopLossPercentage.HasValue)
-            return entryPrice * (1m - run.StopLossPercentage.Value / 100m);
+            return StopLossConfig.FromPercentage(run.StopLossPercentage.Value)
+                .ResolveForEntry(new Price(entryPrice)).Value;
         return null;
     }
 
     private static decimal? ResolveTakeProfit(BacktestRun run, decimal entryPrice)
     {
-        if (run.TakeProfitPrice.HasValue) return run.TakeProfitPrice.Value;
+        if (run.TakeProfitPrice.HasValue)
+            return run.TakeProfitPrice.Value;
         if (run.TakeProfitPercentage.HasValue)
-            return entryPrice * (1m + run.TakeProfitPercentage.Value / 100m);
+            return TakeProfitConfig.FromPercentage(run.TakeProfitPercentage.Value)
+                .ResolveForEntry(new Price(entryPrice)).Value;
         return null;
     }
 
