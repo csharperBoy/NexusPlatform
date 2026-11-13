@@ -1,6 +1,6 @@
-> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۱ — Phase B1 ✅ (TGJU Import + Historical Data Refactor)
-> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler Extension ✅ | Phase B1 ✅ | 256 Tests ✅ | CI ✅
-> **گام بعدی:** Phase C-lite — Order Management UI + Preset UI + Dashboard (پیش‌نیاز Paper Trading Week)
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۳ — Phase C-lite.1 + C-lite.2 + Backtest Correctness + Runtime Fixes
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler ✅ | Phase B1 ✅ | C-lite.1/2 ✅ | Runtime Fixes ✅ | 258 Tests ✅ | CI ✅
+> **گام بعدی:** C-lite.3 (Dashboard) → Paper Trading Week
 ---
 
 ## 1. PROJECT OVERVIEW
@@ -413,7 +413,37 @@ src/modules/Trader/
 
 > **نکته:** Risk Guards (D31-D33) در Live و Paper هردو فعال هستند (ApplyToPaper flag)، پس Paper Week از همان محافظت‌ها بهره‌مند می‌شود — تنها استثنا `DailyLossLimit.ApplyToPaper=false` و `CircuitBreaker.ApplyToPaper=false` که در Paper صرف‌نظر می‌شوند (چون BuyPower واقعی Paper tracked نیست).
 ### Phase B1 — ✅ COMPLETE
+### Runtime Correctness — ✅ COMPLETE (D59)
 
+**B1. PositionCloser Paper/Live Segregation**
+- قبلاً `IBrokerOrderDispatcher` (default=Live) inject می‌کرد → Stop Paper Run با ClosePositions، سفارش **واقعی** به Broker می‌فرستاد
+- Fix: `IOrderDispatcherResolver` + `OrderIntent.Create(isPaper: pos.IsPaper)` + skip session for Paper
+
+**B2. OrderLifecycleStage Throttle Singleton**
+- `_lastRunAt` instance field روی AddScoped → reset هر tick → throttle بی‌اثر
+- Fix: `IRuntimeThrottleState` Singleton با Interlocked.CompareExchange
+
+**B3. ExecutionCoordinator SaveChanges Failure**
+- قبلاً swallow می‌شد → Signal unconsumed در DB → StartupRecovery re-push → duplicate dispatch
+- Fix: rethrow بعد از log
+
+### Backtest Correctness — ✅ COMPLETE (D55-D58)
+
+**BC1-BC8 (از Backtest deep review):**
+- BC1: Partial Sell — Position state و BacktestTrade slice درست (قبلاً کل position گم می‌شد)
+- BC2: NetPnLPct با proportional commission
+- BC3: Cancel در حین Running → MarkCancelled درست (قبلاً MarkFailed overwrite می‌کرد)
+- BC4: SL/TP on Add — revert به Live behavior (D56)
+- BC5: Slippage after clamp
+- BC6: Daily equity با `TehranDate.FromUtc` (قبلاً UTC `.Date` → off-by-one)
+- BC7: `BacktestRun.Create` از `EnsureUtc` (قبلاً `SpecifyKind` روی Local corrupted instant)
+- BC8: `ConfigOverride` با `??` (قبلاً null override → nullify source)
+
+**Additional (کشف در حین تست):**
+- **781% bug** — duplicate `Quantity += qty` در ExecuteFill buy-add path → phantom proceeds (D58). Fix: ۳ خط + integrity check
+- **TargetCurrency leak** — Backtest همه‌ی محاسبات را در USD انجام می‌داد (D57). Fix: Two-Stream Architecture
+- **Recurring 0-insert** — TGJU API oldest-first (D60). Fix: `fetchAllPages` bool + last-page fetch
+- **2024 currency missing** — `GetList` clamp 500 رکورد (D61). Fix: `CheckRange` endpoint
 **Scope تحویل‌شده:**
 
 | PR | Feature | Status |
@@ -608,91 +638,99 @@ src/modules/Trader/
 
 ### بلافاصله — C-lite.3 Dashboard — ~۱ روز
 
-**Scope پیشنهادی:**
-- Backend: `GET /api/Trader/Dashboard/Summary` — یک endpoint که همه را aggregate می‌کند
+**Scope:**
+- Backend: `GET /api/Trader/Dashboard/Summary` (aggregate)
 - Frontend: `/trader` (root) → `DashboardPage`
 - Cards:
-  - **Kill Switch** (Global + Active Accounts) — reuse از `RiskDashboard` pattern
-  - **Runs** (Running/Ready/Stopped counts + link به `/trader/trading-runs`)
-  - **Orders Today** (Paper/Live split, link به `/trader/orders`)
-  - **Positions Open** (count + unrealized PnL estimation از snapshot)
-  - **Recent Critical Events** (last 10 از `/trader/events` فیلتر `Severity>=Warning`)
+  - **Kill Switch** (Global + Active Accounts)
+  - **Runs** (Running/Ready/Stopped counts)
+  - **Orders Today** (Paper/Live split)
+  - **Positions Open** (count + unrealized PnL)
+  - **Recent Critical Events** (last 10، Severity>=Warning)
   - **Accounts Session** (valid/expired/empty counts)
+- Auto-refresh 15s
 
-**چرا قبل از Paper Week:**
-- Paper Week نیاز به یک صفحه دارد که صبح‌ها با یک نگاه وضعیت را ببینی
-- بدون این، باید بین ۶ صفحه سوییچ کنی
+**Permission:** `trader.dashboard` (new resource) — یا استفاده از `trader.tradingrun` (View).
 
-### بعد از C-lite.3 — Paper Trading Week (~۱ هفته)
+### Paper Trading Week (~۱ هفته)
 
-- یک Run ساده روی ۲-۳ نماد با بودجه‌ی محدود
-- Recurring TGJU Job فعال (نرخ تازه)
+- Run ساده ۲-۳ نماد با بودجه‌ی محدود
+- Recurring TGJU Job فعال
 - Kill Switch Global در دسترس
-- هر روز صبح: چک Dashboard + Events
-- هر Bug → اول یادداشت، بعد fix (نه در حین Paper)
+- هر روز صبح: Dashboard + Events
+- هر Bug → یادداشت، بعد fix
 
 **معیار موفقیت:** No `PositionOvershoot`، No `KillSwitchActivated` غیرمنتظره، No `CircuitBreakerTriggered` غیرمنتظره، Reconciliation پاک، PnL منطقی.
 
-### بعد از Paper Week — Phase B2 (~۲-۳ روز)
+**Reality check:** تست‌های Backtest اخیر نشان دادند RSI ساده با `MinSignalStrength=0.1` روی M1 اهرم بازنده است (−۳۶٪). برای Paper Week: `MinSignalStrength>=0.6` یا timeframe بالاتر (M5/M15) با سهم غیر اهرم.
+
+### Phase B2 (~۲-۳ روز)
 
 - B2.1 Telegram Channel PriceSourceProvider
 - B2.2 Multi-asset (EUR, AED, GOLD, SILVER, COPPER)
 - B2.3 Data Completeness Monitoring
-- B2.4 Frontend refinement (Backfill progress bar واقعی)
+- B2.4 Frontend refinement (Backfill progress bar)
 
-### میان‌مدت — Phase C کامل (~۱ هفته)
+### Phase C کامل (~۱ هفته)
 
 - C.4 Source Filter in Currency Transform (D40 ext)
-- C.5 SchedulePlan integration با Preset Strategy (از HighAllowed جاری استفاده می‌کند)
-- C.6 Order Modify + Cancel (نیازمند EasyTrader cancel endpoint)
+- C.5 SchedulePlan integration با Preset Strategy
+- C.6 Order Modify + Cancel (نیازمند EasyTrader endpoint)
 - C.7 Partial Fill Handling UI
 
-### بلندمدت — Phase E (~۲ هفته)
+### Phase E (~۲ هفته)
 
 - E.1 Strategy Ensemble (D27)
 - E.2 Trailing Stop / Laddered Exit
 - E.3 AI/ML Pipeline (D28)
-- E.4 Multi-Instance Prep (Redis session cache, D20)
+- E.4 Multi-Instance Prep (Redis، D20)
 
-### Technical Debt (هر وقت به فایل مربوطه دست زدی)
+### Technical Debt
 
 - TD1 `UseQuerySplittingBehavior` commented
 - TD2 `ITraderUnitOfWork` = Registry نه UoW
 - TD3 `TraderSymbol` Legacy
 - TD4 `SchedulePlan`/`ScheduledOrder` Legacy
-- TD5 `ExecutionLogService.Skip/Take` در memory
+- TD5 `ExecutionLogService.Skip/Take` memory
 - TD6 `CandleRecord.TimeFrame` enum → int cast
-- **TD7 (new)** `SchedulePlan`/`PlanExecutor` از HighAllowed/LowAllowed جاری استفاده می‌کند، نه Preset Strategy — C.5 این را fix می‌کند
-- **TD8 (new)** `OrderPresetView` هنوز `InstrumentRangeUpPercent`/`DownPercent` ندارد (فقط `ResolvedView` دارد) — در C-lite.2 نیازی نبود
+- TD7 `SchedulePlan`/`PlanExecutor` از HighAllowed/LowAllowed hardcoded، نه Preset
+- TD8 `OrderPresetView` فاقد Range fields (فقط ResolvedView)
+- **TD9 (new)** `CurrencyCandleTransformer` cache key شامل first+last+count (قبلاً فقط last-minute → collision در backtest طولانی) — fix اعمال شد ولی تست dedicated ندارد
 
 ### Free / Deferred ADRs
 
-- **D50 L1 (Frontend)**: `GenericScheduledJobPage<TConfig>` — ریسک صفر
-- **D50 L2/L3 (Backend)**: مؤکول به سومین Collection Job (Rule of Three)
+- **D50 L1**: `GenericScheduledJobPage<TConfig>` frontend (ریسک صفر)
+- **D50 L2/L3**: Backend abstraction مؤکول به سومین Collection Job
 
 ## 14. RECENT COMPLETED WORK
 
-1. **Phase C-lite.1 — Order Management (PR C-lite.1a + C-lite.1b)** ✅
-   - Backend: `BrokerOrderController`, `OrderIntentController` (Query + GetById)
-   - Service: `BrokerOrderQueryService`, `OrderIntentQueryService` — EF filters + batched account/symbol enrichment
-   - Frontend: `/trader/orders` (Tabs BrokerOrders/OrderIntents) + 2 drawers + filters + Load More
+1. **Backtest Correctness (D55-D58)** — ۸+ باگ Critical/High
+   - BC1 Partial Sell، BC2 Proportional PnL، BC3 Cancel، BC4 SL/TP on Add (revert)، BC5 Slippage clamp، BC6 Tehran date، BC7 UTC conversion، BC8 ConfigOverride `??`
+   - **781% bug** — duplicate quantity mutation → phantom proceeds → integrity check added
+   - **TargetCurrency leak** — Two-Stream Architecture (strategy stream vs execution stream)
+   - **Recurring 0-insert** — TGJU oldest-first API → last-page fetch
+   - **2024 currency check** — `CheckRange` endpoint (server-side)
+   - تست‌های واقعی: بعد از fix، RSI M1 اهرم با MinSignalStrength=0.1 → −۳۶٪ (ProfitFactor 0.45، WinRate 49.76%، Sharpe −4.57). با tune config → −۱.۵٪.
+
+2. **Runtime Fixes (D59)** — B1+B2+B3
+   - PositionCloser: Paper/Live segregation (خطر مال واقعی در Paper Week رفع شد)
+   - OrderLifecycleStage: Throttle Singleton (IRuntimeThrottleState)
+   - ExecutionCoordinator: No-swallow Persist
+
+3. **Phase C-lite.2 + Preset Strategy** ✅
+   - `OrderPriceStrategy` (Fixed/HighAllowed/LowAllowed/LastTraded/Closing/FirstTraded)
+   - `OrderQuantityStrategy` (Fixed/Max/Min)
+   - `ResolveAsync` با live API + fallback (Closing × Range Up/Down)
+   - `ResolvePreviewDrawer` frontend
+   - Range Split (D53): Up/Down nullable، unlimited
+
+4. **Phase C-lite.1 Order Management** ✅
+   - `BrokerOrderController` + `OrderIntentController` (Query + GetById)
+   - `/trader/orders` UI (Tabs + drawers + filters + Load More)
    - Cancel deferred to C.6
 
-2. **Phase C-lite.2 + Preset Strategy (PR C-lite.2 + Preset Strategy Ext)** ✅
-   - Backend: `GetList` endpoint + enriched `OrderPresetView`
-   - Strategy: `OrderPriceStrategy` + `OrderQuantityStrategy` enums
-   - `InstrumentOrderPreset` restructured: `PriceStrategy` + `FixedPrice?`, `QuantityStrategy` + `FixedQuantity?`
-   - `ResolveAsync`: live API + fallback (Closing × range) + sanity warning
-   - Frontend: `OrderPresetModal` (strategy dropdowns), `ResolvePreviewDrawer`, strategy columns
-   - Bugs fixed: Model wrapper, EF enum default, Guid/ISIN mismatch
+5. **Phase B1 TGJU Import** ✅ — ۴ باگ fixed (minRate seed، sort order، Backfill completion، per-source boundary) + Historical Data Refactor (D49)
 
-3. **Range Split (D53)** ✅
-   - `Instrument.DailyPriceRangePercent` (one) → `UpPercent` + `DownPercent` (two nullable)
-   - Instrument form: two independent inputs (empty = unlimited)
-   - Resolve: independent fallback logic + sanity check with HasValue
+6. **ADR Documents** — D52-D61 (10 new)
 
-4. **ADR Documents** — D52 (Preset Strategy Resolution), D53 (Range Split), D54 (Command Wrapping pattern)
-
-5. **Earlier (B1, Historical Refactor, H1-H3)** — TGJU Import + Backfill/Recurring patterns
-
-**Next:** C-lite.3 (Dashboard) → Paper Trading Week
+**Next:** C-lite.3 Dashboard → Paper Trading Week

@@ -242,7 +242,106 @@ IBrokerAccountReader    ──→ Cash Balance
 - StopLossPrice, TakeProfitPrice
 - OpenedAt, ClosedAt
 ```
+#### `InstrumentOrderPresets` (Phase C-lite.2)
+InstrumentId (FK)
 
+Name
+
+PriceStrategy (enum: Fixed/HighAllowed/LowAllowed/LastTraded/Closing/FirstTraded)
+
+FixedPrice: decimal? (فقط Fixed)
+
+QuantityStrategy (enum: Fixed/MaxOrderQuantity/MinOrderQuantity)
+
+FixedQuantity: long? (فقط Fixed)
+
+DefaultSide, ValidityType, Commission, DefaultOrderMode
+
+CreatedAt
+
+#### `PriceSources` (Phase B1 — D34)
+Code (unique), DisplayName, Type (enum: Tgju/TelegramChannel/CustomApi)
+
+ConfigJson ({"indicator":"price_dollar_rl","maxRate":...,"maxDailyChangePct":20})
+
+DefaultFromAsset, DefaultToAsset
+
+IsActive
+
+#### `PriceCollectionJobs` (Phase B1 — D35)
+Name, Mode (Recurring/Backfill), State (Created/Running/Stopped/Completed/Faulted)
+
+PriceSourceId (FK), FromAsset, ToAsset
+
+RecurrencePatternJson (Recurring)
+
+SchedulerRecurringId (Recurring), SchedulerJobId (Backfill)
+
+StartedAt, StoppedAt, LastRunAt
+
+LastRunInserted, LastRunSkipped, TotalInserted
+
+BackfillProgressPercent (nullable, Backfill only)
+
+LastError
+
+
+
+#### `Instruments` — Range Split (D53)
+DailyPriceRangeUpPercent: decimal? (null = unlimited)
+
+DailyPriceRangeDownPercent: decimal? (null = unlimited)
+
+Independent up/down (asymmetric: +5%/-2% valid)
+
+
+
+#### `HistoricalDataCollectionJobs` — Refactor (D49)
+Mode (Backfill/Recurring), State (Created/Running/Stopped/Completed/Faulted)
+
+SchedulerRecurringId (Recurring), SchedulerJobId (Backfill)
+
+RecurrencePatternJson (Recurring)
+
+BackfillProgressPercent, CurrentIsin, CurrentTimeFrame (Backfill only)
+
+LastRunAt, LastRunInserted, LastRunSkipped, TotalInserted
+
+DateFrom, DateTo (nullable — Recurring = null)
+
+
+
+#### Backtest Entities (D55-D57)
+BacktestRun:
+
+TargetCurrency فقط بر StrategyInput اثر دارد (D57)
+
+همیشه execution در IRR
+
+BacktestCandleEvent (internal):
+
+Candle (IRR) ← برای fill, SL/TP, sizing, equity
+
+StrategyCandle (nullable) ← transformed, فقط برای IStrategy.Evaluate
+
+SubCandles (همیشه IRR)
+
+Config Snapshot (D22):
+
+Run config کامل Snapshot می‌شود
+
+SourceRunId فقط Reference
+
+
+
+### `Value Objects` — Update:
+
+**در لیست Value Objects، اضافه کن:**
+
+```markdown
+- `AccountCapitalAllocation` (per-account, PR 19)
+- `DailyPriceRangeUpPercent` + `DailyPriceRangeDownPercent` (nullable = unlimited، D53)
+- `OrderPriceStrategy` + `OrderQuantityStrategy` (enum، نه VO، ولی Semantic مشابه)
 #### `Candles`
 
 ```
@@ -358,7 +457,25 @@ Slow tick: total=1250ms stage1=800ms stage2=150ms stage3=200ms stage4=100ms
 ```
 
 ---
+### Scheduler Integration (Phase B1 — D39)
 
+Runtime pipeline (Stage 1-4) برای **Trade Execution** است. Jobهای Collection (Price، Historical Candles) از `Scheduler` Module پلتفرم استفاده می‌کنند:
+Scheduler (Hangfire + RecurrencePattern)
+├─→ trader.price-collect → CollectPriceJobHandler
+│ ├─→ Recurring (Minutely/Hourly/Daily/Cron)
+│ └─→ Backfill (one-off)
+│
+└─→ trader.historical-collect → CollectCandleJobHandler
+├─→ Recurring (from max(OpenTime) per Isin,TF)
+└─→ Backfill (DateFrom..DateTo)
+
+
+**چرا Scheduler جدا:**
+- Runtime Stageها Scoped-per-tick هستند (DbContext + UoW fresh)
+- Jobها ممکن است ۳۵ ثانیه (Backfill) یا ۲-۳ ساعت (Historical) طول بکشند
+- Scheduler خودش Retry، Persistence، Recovery، Pause@10 را دارد
+
+**OrderLifecycleStage Throttle (D59 B2):** `IRuntimeThrottleState` Singleton با `Interlocked.CompareExchange` — بدون lock، atomic claim. جایگزین `_lastRunAt` instance field (که در Scoped service reset می‌شد).
 ## 6. Stage 1 — Market Data Ingestion
 
 ### مسئولیت
@@ -1515,7 +1632,25 @@ T=10:15:30  Worker Tick ...
 - **`RealizedPnL`:** از `FillMath.CalculateRealizedPnL` می‌آید (D10)
 
 ---
+### Backtest Two-Stream (D57)
 
+Live و Backtest از همان `IStrategy`, `FillMath`, `IOrderSizeCalculator` استفاده می‌کنند، ولی:
+
+| Live Stream | Backtest Two-Stream |
+|---|---|
+| Snapshot (IRR) → sizing | `Candle` (IRR) → sizing |
+| Candle (transformed) → strategy | `StrategyCandle` (transformed) → strategy |
+| IRR fill، IRR cash، IRR PnL | IRR fill، IRR cash، IRR PnL |
+
+**در `SimulateAsync`:**
+- `primaryCandlesIrr` و `primaryCandlesStrategy` جدا نگه‌داری می‌شوند
+- `BacktestCandleEvent` هر دو candle را دارد (paired by index)
+- `state.LastPrices` و `ExecuteFill` و `_sltpResolver` فقط از `Candle` (IRR) استفاده می‌کنند
+- `runningCandles` (ورودی Strategy) از `StrategyCandle ?? Candle`
+- `SubCandles` (فقط برای SL/TP) — بدون transform، IRR
+- Final close از `primaryCandlesIrr`
+
+**پیامد:** `TargetCurrency=USD` فقط RSI روی قیمت دلاری محاسبه می‌کند، ولی خرید/فروش در ریال انجام می‌شود. تجربه‌ی واقعی: قبل از این fix، Backtest با سرمایه ۱۰۰M IRR و TargetCurrency=USD، Entry/Exit Price را ۰.۰۰۰۴ نمایش می‌داد (dollar price) — یعنی سرمایه‌ی ریالی به‌عنوان USD تفسیر می‌شد.
 ## 18. Lifecycle یک معامله
 
 ```
@@ -1643,50 +1778,49 @@ Action: 1. Fill اعمال نمی‌شود (Position در known good state)
 ✅ Risk Dashboard UI (PR 21) — Kill Switch + Circuit Breaker + Active Circuits
 ✅ Risk Resource Seed (Resource + Permission + Menu)
 
-### Phase B — 🚧 In Progress
+### Phase B — ✅ B1 Complete، B2 Pending
 
-**B1 (TGJU Import) — Design Approved, Code Pending**
+**B1 (TGJU Import + Historical Refactor) — ✅ Complete (D49, D60, D61)**
+- `PriceSource` + `PriceCollectionJob` (Backfill/Recurring، Scheduler-only)
+- `TgjuApiClient` در ExternalApiClient layer (نه Infrastructure — D38 extension)
+- `CollectPriceJobHandler` (idempotent، Mode dispatch، MarkFaulted+rethrow)
+- Historical Data Refactor همگام (D49)
+- Bug fixes: minRate seed، sort order (oldest-first)، `HitBoundary` Backfill، per-source boundary، `SaveChangesAsync` بدون `UpdateAsync`، `batch.Count < BatchSize` premature break
+- **B2 (پس از Paper Week):** Telegram + Multi-asset
 
-- `PriceSource` Entity (D34): هر TGJU indicator یک Instance
-- `PriceCollectionJob` Entity (D35): شبیه TradingRun با Start/Stop
-- Scheduler Module (D39): Recurring + Backfill
-- Provider pattern (D38): `TgjuPriceSourceProvider` در B1
-- Sanity skip+log (D41)، Most Recent (D40)، Idempotent (D42)
+### Phase C-lite.1 + C-lite.2 — ✅ Complete (D52, D53, D54)
+- Order Management UI (`/trader/orders`)
+- Order Preset با Strategy Resolution (Fixed/HighAllowed/LowAllowed/LastTraded/Closing/FirstTraded، Fixed/Max/Min Quantity)
+- Resolve با live API + fallback (Closing × Range)
+- Range Split (Up/Down nullable = unlimited)
 
-Scope B1:
-- فقط `TgjuPriceSourceProvider` (Telegram/Custom API در B2)
-- فقط USD (بقیه در B2 با Config)
-- هر دو Mode: Recurring + Backfill
-- Endpoints: CRUD PriceSource/Job + Start/Stop + Status
-- ۲۰+ تست
+### Runtime Correctness — ✅ Complete (D59)
+- PositionCloser Paper/Live Segregation
+- OrderLifecycleStage Throttle Singleton
+- ExecutionCoordinator No-Swallow Persist
 
-**B2 (B3 — آینده):**
-- Telegram Channel Provider
-- EUR، AED، GOLD، SILVER، COPPER
-- Data Completeness Monitoring
-- Frontend UI (Price Sources + Jobs)
+### Backtest Correctness — ✅ Complete (D55-D58)
+- 8 باگ Critical/High (BC1-BC8)
+- 4 باگ اضافی کشف در حین تست (781% bug، TargetCurrency leak، Recurring 0-insert، 2024 currency)
+- Two-Stream Architecture
+- Backtest Parity Checklist در `docs/BACKTEST-PARITY.md`
 
-### Phase C — آینده
-- Order Management UI، Order Preset UI
-- Daily PnL Widget، Dashboard
-- Source Filter در Backtest (D40 extension)
-- `AssetPrice` rename (D36 extension)
+### Phase C (کامل) — آینده
+- Source Filter، SchedulePlan Preset Integration، Order Modify/Cancel، Partial Fill UI
 
 ### Phase E — آینده
-- Multi-Indicator Strategies، Strategy Ensemble (D27)
-- Trailing Stop، Laddered Exit
-- AI/ML Pipeline (D28)
-- Multi-Instance Prep (Redis BrokerSessionCache، D20)
+- Ensemble، Trailing SL، AI/ML Pipeline، Multi-Instance
 
 ### محدودیت‌های فعلی
 
-⚠️ **Cash مشترک بین Runها** — یک Account در چند Run، BuyPower مشترک است (D30)
-⚠️ **Cash Cache Manual Trade** — تا ۳۰ دقیقه تأخیر (D33)
-⚠️ **Multi-Currency Triangulation** — Pair مستقیم یا معکوس فقط (USD→EUR via IRR پشتیبانی نمی‌شود)
-⚠️ **Bonus/StockRight در Reconciliation** — نادیده (Mismatch کاذب)
-⚠️ **Paper Trading Fill** — فوری، بدون Partial Fill (D23)
-⚠️ **PriceCollection بدون Source Filter در Transformer** — D40 (Source filter → Phase C)
-
+⚠️ **Cash مشترک بین Runها** — D30
+⚠️ **Cash Cache Manual Trade** — تا ۳۰ دقیقه (D33)
+⚠️ **Multi-Currency Triangulation** — Pair مستقیم/معکوس فقط
+⚠️ **Bonus/StockRight Reconciliation** — نادیده
+⚠️ **Paper Fill فوری** — بدون Partial Fill (D23)
+⚠️ **PriceCollection Source Filter در Transformer** — D40 ext → Phase C
+⚠️ **Backtest Risk Guards** — KillSwitch/DailyLoss/CircuitBreaker/RateLimiter اجرا نمی‌شوند (D55)
+⚠️ **Backtest SL/TP on Add** — SL/TP از avg اولیه (D56)
 ### نکات مهم عملیاتی
 
 🔸 **Logs:** همه‌چیز در `Logs/app-*.log` با CorrelationId

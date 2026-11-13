@@ -498,97 +498,106 @@ text
 
 ---
 
-### D44 — Handler: Polly 3× → Throw → Scheduler Fail → Pause @ 10
+### D44 — Handler Resilience: Polly 3× → Throw → Scheduler Fail
 
 **تصمیم:** `CollectPriceJobHandler.ExecuteAsync`:
-1. Polly Retry 3× (1s, 3s, 9s backoff) روی `ITgjuClient` call
-2. Transient error (5xx, timeout, network) → after 3 tries → **Throw**
-3. Structural error (parse, schema, config invalid) → بدون Retry، فوری Throw
+1. Polly Retry 3× (1s، 3s، 9s backoff) روی `ITgjuClient` call
+2. Transient error (5xx، timeout، network) → after 3 tries → **Throw**
+3. Structural error (parse، schema، config invalid) → بدون Retry، فوری Throw
 
-**Implied:** `PriceCollectionJob.LastError` پر می‌شود. بعد از 10 fail، Scheduler خودش Pause می‌کند؛ Handler تشخیص می‌دهد و `Job.MarkFaulted()` هم می‌زند.
+**پیامد:** `PriceCollectionJob.LastError` پر می‌شود. بعد از 10 consecutive failure، Scheduler خودش Recurring را Pause می‌کند؛ Handler تشخیص می‌دهد و `Job.MarkFaulted()` هم می‌زند.
 
-**دلیل:**
-- Silent skip در Daily Job = 24h تأخیر — غیرقابل قبول
-- Polly 3× پوشش ~90% transient errors
-- Pause @ 10 = Signal واضح برای کاربر در UI
+**دلیل:** Silent skip در Daily Job = 24h تأخیر — غیرقابل قبول. Pause @ 10 = Signal واضح برای کاربر.
 
 ---
 
 ### D45 — Handler Dispatch بر اساس Mode، Idempotent Guard
 
-**تصمیم:** `ExecuteAsync`:
+**تصمیم:** `ExecuteAsync` ابتدا Job را reload می‌کند:
 ```csharp
 var job = await _uow.PriceCollectionJobs.GetByIdAsync(payload.JobId);
-if (job is null || job.State != Running) return;   // idempotent
+if (job is null || job.State != PriceCollectionJobState.Running) return;
 
 if (job.Mode == Recurring) await _collectionService.CollectOnceAsync(job.Id, ct);
 else                       await _collectionService.CollectBackfillAsync(job.Id, ct);
-دلیل Idempotent: اگر Job در DB Stopped/Faulted است (کاربر Stop کرده)، Handler پیام را نادیده می‌گیرد. Race Safe.
+دلیل (Idempotent): اگر Job در DB Stopped/Faulted است (کاربر Stop کرده)، Handler پیام Scheduler را نادیده می‌گیرد. Race-safe: کاربر Stop می‌زند، Scheduler job cancel می‌کند، ولی اگر در همین بین tick اجرا شود، guard آن را no-op می‌کند.
 
 D46 — Start/Stop Flow + State Mirror
-Start (Recurring):
+تصمیم — Start (Recurring):
 
 text
 1. Validate: Source exists، Active، FromAsset/ToAsset set
 2. Parse RecurrencePatternJson
 3. SchedulerRecurringId = ScheduleRecurringAsync(
        name: $"price-collect-{job.Id}",
-       pattern, startAt=now+1min, maxFailures=10, tz=Asia/Tehran)
-4. Job.MarkRunning(SchedulerRecurringId, StartedAt=now)
+       pattern, startAt: now+1min, maxFailures: 10, tz: Asia/Tehran)
+4. Job.MarkRunningRecurring(SchedulerRecurringId, StartedAt: now)
 5. SaveChanges
 Stop (Recurring):
 
 text
 1. CancelRecurringAsync(job.SchedulerRecurringId)
-2. Job.MarkStopped(StoppedAt=now, SchedulerRecurringId=null)
+2. Job.MarkStopped(StoppedAt: now, SchedulerRecurringId: null)
 3. SaveChanges
-Start (Backfill): ScheduleAsync(payload, fireAt=now, queue="scheduler") → Job.MarkRunning(SchedulerJobId, StartedAt).
+Start (Backfill): ScheduleAsync(payload, fireAt: now, queue: "scheduler") → Job.MarkRunningBackfill(SchedulerJobId, StartedAt).
 
 State Mirror:
 
-On Handler success → LastRunAt=now, LastRunInserted=N, TotalInserted += N
+هر Handler success → RecordRun(inserted, skipped) → LastRunAt, LastRunInserted, LastRunSkipped, TotalInserted += N
 
-On Backfill success → MarkCompleted() (State=Stopped، BackfillProgressPercent=100)
+Backfill success → MarkCompleted() → State=Completed، BackfillProgressPercent=100
 
-On Recurring success → Job stays Running
+Recurring success → Job در Running می‌ماند
 
-On Handler throw + Scheduler paused → MarkFaulted()
+Handler throw + Scheduler paused → MarkFaulted()
 
-D47 — AddScheduledJobHandler
+D47 — AddScheduledJobHandler Pattern
 تصمیم: services.AddScheduledJobHandler<CollectPricePayload, CollectPriceJobHandler>(); در Trader_AddInfrastructure.
 
-CollectPricePayload در Trader.Application (که JobTypeRegistry.ScanAllAssemblies پیدا کند). [ScheduledJob("trader.price-collect")] روی Record.
+پیامد: CollectPricePayload باید در Trader.Application باشد (که JobTypeRegistry.ScanAllAssemblies پیدا کند). [ScheduledJob("trader.price-collect")] روی Record.
+
+همین الگو برای CollectCandlePayload (trader.historical-collect) هم اعمال شد (D49).
 
 D48 — Scheduler Extension: Minutely / Hourly / Cron
-تصمیم: Scheduler.Domain.RecurrenceType اضافه شد:
+تصمیم: Scheduler.Domain.RecurrenceType گسترش یافت:
 
 Minutely = 3 (append)
 
-Hourly = 4
+Hourly = 4 (append)
 
-Cron = 5
+Cron = 5 (append)
 
-RecurrencePattern Factories جدید: Minutely(interval), Hourly(interval), Cron(expression). CronExpression field (nullable، فقط برای Type=Cron). GetNextOccurrence پیاده‌سازی Sub-Daily (interval-based، DST-free) + Cron (via Cronos 0.8.4، DST-aware).
+Factories جدید در RecurrencePattern:
 
-دلیل: Sub-Daily native در Scheduler، نه Workaround در Trader. Scenarios: هر ۵ دقیقه Telegram، هر ۳۰ دقیقه USD Live، هر ساعت Cache Refresh، هر ۵ دقیقه Session Refresh. هر Module آینده از این مزیت بهره‌مند می‌شود.
+Minutely(int interval)
 
-Backward Compat: enum values appended (0/1/2 = Daily/Weekly/Monthly بدون تغییر). ردیف‌های موجود {"type":0|1|2} در DB بدون Migration Parse می‌شوند. Constructor [JsonConstructor] با cronExpression: string? = null optional — JSON قدیمی بدون این فیلد Parse می‌شود.
+Hourly(int interval)
+
+Cron(string expression)
+
+فیلد جدید: CronExpression (nullable، فقط برای Type=Cron).
+
+GetNextOccurrence:
+
+Sub-Daily (Minutely/Hourly): interval-based، DST-free
+
+Cron: via Cronos 0.8.4، DST-aware
+
+دلیل: Sub-Daily native در Scheduler، نه Workaround در Trader. Scenarios: هر ۵ دقیقه Telegram (B2)، هر ۳۰ دقیقه USD Live، هر ساعت Cache Refresh، هر ۵ دقیقه Session Refresh. هر Module آینده از این مزیت بهره‌مند می‌شود.
+
+Backward Compat:
+
+enum values 0/1/2 (Daily/Weekly/Monthly) بدون تغییر
+
+ردیف‌های موجود {"type":0|1|2} در DB بدون Migration Parse می‌شوند
+
+Constructor [JsonConstructor] با cronExpression: string? = null optional
 
 Cron Library: Cronos 0.8.4 (MIT، used by Hangfire itself، DST-aware).
 
-Superseded: پیشنهاد قبلی D48 ("Sub-Daily در B2 via BackgroundService جدا") — Void. Sub-Daily native در Scheduler.
+Superseded: پیشنهاد قبلی D48 («Sub-Daily در B2 via BackgroundService جدا») — Void. Sub-Daily native در Scheduler.
 
-| # | Feature | Status |
-|---|---|---|
-| **B1.0** | `RecurrenceType.Minutely/Houly/Cron` | ✅ |
-| **B1.0** | `RecurrencePattern.Minutely/Hourly/Cron` factories | ✅ |
-| **B1.0** | Cron via Cronos 0.8.4 (DST-aware) | ✅ |
-| **B1.0** | `Scheduler.Tests` project (28 tests) | ✅ |
-
-**چرا Sub-Daily native:**
-- Trader (B1) به Pollingهای دقیقه‌ای نیاز دارد (Telegram، USD Live، Cache Refresh)
-- Scheduler Platform باید این را بومی بدهد، نه هر Module با BackgroundService جدا
-- Backward-compatible: enum values 0/1/2 حفظ شدند، ردیف‌های DB بدون Migration
+Scheduler.Tests: 28 تست (Minutely/Hourly/Cron + Daily/Weekly/Monthly regression + JSON compat).
 
 ### D49 — Historical Data Collection: هم‌ساختار با PriceCollection (Mode / State / Scheduler)
 
@@ -712,7 +721,156 @@ Trigger for future: هر وقت Command یک Model property دارد → Control
 text
 
 ---
+---
 
+### D55 — Backtest/Live: Shared Domain، Separate Orchestration
+
+**تصمیم:** Backtest و Live دو engine جدا هستند که در **Domain** مشترک‌اند (Strategy، FillMath، OrderSizeCalculator، StopLossConfig، TakeProfitConfig، ICandleTransformer) ولی orchestration، position tracking، و risk guards جدا هستند.
+
+**Drift policy:**
+- هر تغییر در Domain logic خودکار به Backtest می‌رسد (مطلوب)
+- هر تغییر در orchestration یا risk config **باید دستی به Backtest منتقل شود** (پذیرفته)
+- **Backtest Parity Checklist** در `docs/BACKTEST-PARITY.md` هر PR بک‌تست را چک می‌کند
+
+**Critical drift fixes (این PR):**
+1. `BacktestEngine.ResolveStopLoss`/`ResolveTakeProfit` حالا از `StopLossConfig.FromPercentage().ResolveForEntry()` / `TakeProfitConfig` استفاده می‌کنند — تغییر در VO خودکار propagate
+2. `BacktestEngine.HandleSignal` حالا `MaxPositionValue` از `TradingRiskOptions.MaxPositionSize` را به `CalculateBuy` پاس می‌دهد — همان که `OrderIntentBuilder` (Live) می‌دهد
+
+**Trade-off پذیرفته‌شده (Live-only، در Backtest اجرا نمی‌شود):**
+- `KillSwitchGuard`, `DailyLossLimitGuard`, `CircuitBreakerGuard`, `RateLimiterGuard` — چون Backtest مفهوم «روز» و «consecutive loss» realtime ندارد (کندل‌ها سریع‌اند)
+- Order lifecycle (Channel + Stage 4 polling)
+- Broker Rejections / Partial fills
+
+**Phase E trigger:** اگر AI/ML real money شد → Full refactor با `IClock` abstraction + `IPositionTracker` interface + `BacktestBrokerDispatcher`.
+
+---
+
+### D56 — SL/TP on Add to Position: Live unchanged، Backtest aligned
+
+**تصمیم:** `Position.ApplyBuyFill` (Live) SL/TP را تغییر نمی‌دهد — intent اول set می‌کند، Add fill از intent خودش (که شاید SL/TP نداشته باشد) تبعیت می‌کند. **Backtest هم همان رفتار را دنبال می‌کند** (BC4 fix از ۲۰۲۶/۰۸/۲۰ revert شد).
+
+**دلیل:** user intent = `StopLossPercentage=5` یعنی «۵٪ زیر اولین entry». Add کردن، intent را نقض نمی‌کند. اگر کاربر می‌خواست SL با avg حرکت کند، feature جدید است (Trailing SL، E.2) که باید صریحاً در **هر دو** Live و Backtest پیاده شود.
+
+**پیامد:** Backtest و Live در رفتار SL/TP روی Add همگام‌اند.
+
+---
+
+### D57 — Backtest `TargetCurrency`: فقط Strategy Input، نه Execution
+
+**تصمیم:** `BacktestRun.TargetCurrency` فقط بر ورودی Strategy اثر می‌گذارد (RSI/MACD روی کندل‌های USD-adjusted برای کاهش اثر تورم). اجرای سفارش، fill، SL/TP resolution، Cash، Position، PnL همه در **IRR** باقی می‌مانند.
+
+**دلیل:** بازار سرمایه ایران همه‌ی قیمت‌گذاری‌ها را در ریال انجام می‌دهد. `TargetCurrency` ابزار تحلیلی است، نه تغییر واحد معامله. Live از ابتدا این‌طور بود (`OrderIntentBuilder` از `snapshotStore` IRR می‌خواند) — Backtest باید هم‌راستا شود.
+
+**Implementation (Two-Stream):**
+- `BacktestCandleEvent` دو candle دارد: `Candle` (IRR) + `StrategyCandle` (transformed، nullable)
+- `state.LastPrices`, `ExecuteFill`, `_sltpResolver.Resolve`, `HandleSignal` (sizing) — همه از `Candle` (IRR)
+- `runningCandles` (ورودی Strategy) از `StrategyCandle ?? Candle`
+- `SubCandles` (فقط برای SL/TP resolution) — بدون transform، IRR
+- Final close از `primaryCandlesIrr`
+
+**پیامد:** گزارش نهایی (Entry/Exit price، PnL، Final Equity) همه IRR — همان که کاربر انتظار دارد. `TargetCurrency` صرفاً در `StrategyConfig` اثر دارد.
+
+**تجربه‌ی واقعی:** قبل از این fix، Backtest با `TargetCurrency=USD` و سرمایه ۱۰۰M IRR، همه‌ی محاسبات را در USD انجام می‌داد → Entry/Exit Price در حدود ۰.۰۰۰۴ و PnL ≈ ۰.
+
+
+
+### D58 — Backtest Position Quantity: One-Shot Mutation + Integrity Check
+
+**تصمیم:** در `ExecuteFill` (buy-add path)، هر fill **دقیقاً یک بار** روی `Position.Quantity`, `WeightedAvgEntryPrice`, `TotalBuyCommission` effect می‌گذارد. یک integrity check در انتهای `ExecuteFill` این invariant را تضمین می‌کند: `Position.Quantity == sum(EntryFills.Quantity)` (وقتی Position باز است).
+
+**Context (این باگ را کشف کرد):** بعد از BC4 fix و revert، سه خط duplicate در `if (state.Positions.TryGetValue(...))` باقی ماند:
+```csharp
+existingPos.Quantity += qty;              // ← خط ۱
+existingPos.WeightedAvgEntryPrice = newAvg;
+existingPos.TotalBuyCommission += commission;
+// ... کامنت BC4 ...
+existingPos.Quantity += qty;              // ← خط تکراری
+existingPos.WeightedAvgEntryPrice = newAvg;
+existingPos.TotalBuyCommission += commission;
+
+پیامد: Buy دوم (261 + 185 → Quantity=631 نه 446)، Sell از pos.Quantity استفاده می‌کرد → ۱۸۵ سهم phantom proceeds به state.Cash اضافه می‌شد → بازده ۷۸۱٪ با ProfitFactor ۰.۲۸ (تناقض ریاضی).
+
+Fix:
+
+حذف سه خط تکراری
+
+Integrity check:
+
+csharp
+if (state.Positions.TryGetValue(isin, out var checkPos))
+{
+    var expectedQty = checkPos.EntryFills.Sum(f => f.Quantity);
+    if (checkPos.Quantity != expectedQty)
+        throw new InvalidOperationException(
+            $"Position integrity violated for {isin}: " +
+            $"Quantity={checkPos.Quantity}, SumOfFills={expectedQty}");
+}
+Regression evidence: با حذف duplicateها، بازده از ۷۸۱٪ به −۳۶٪ رسید (ProfitFactor ۰.۴۵، Sharpe −۴.۵۷، MaxDD ۳۷.۵۵٪) — منطبق با WinRate ۴۹.۷۶٪ و استراتژی RSI M1 با MinSignalStrength=0.1.
+
+D59 — Runtime Correctness: Paper/Live Segregation، Throttle Singleton، No-Swallow Persist
+تصمیم — سه اصلاح:
+
+B1. PositionCloser باید Paper/Live را رعایت کند
+
+PositionCloser.CloseInternalAsync قبلاً IBrokerOrderDispatcher را inject می‌کرد (همیشه Live = BrokerOrderDispatcher) و OrderIntent.Create را بدون isPaper صدا می‌زد (default=false). نتیجه: هر Stop با ClosePositions روی Paper Run، سفارش Sell واقعی به Broker می‌فرستاد.
+
+Fix:
+
+IOrderDispatcherResolver inject شود (به‌جای IBrokerOrderDispatcher)
+
+dispatcherResolver.Resolve(pos.IsPaper) per-position
+
+OrderIntent.Create(..., isPaper: pos.IsPaper)
+
+Session acquisition فقط برای Live (Paper dispatcher session را ignore می‌کند)
+
+B2. OrderLifecycleStage throttle باید Singleton باشد
+
+_lastRunAt یک instance field روی AddScoped بود → instance در هر tick عوض → reset به MinValue → throttle همیشه pass. Stage 4 در هر tick اجرا می‌شد، نه هر OrderLifecycleInterval.
+
+Fix: IRuntimeThrottleState (Application) + RuntimeThrottleState (Infrastructure، Singleton) با TryClaimOrderLifecycle(TimeSpan) atomic (Interlocked.CompareExchange).
+
+B3. ExecutionCoordinator نباید SaveChanges failure را swallow کند
+
+قبلاً:
+
+csharp
+try { await _uow.SaveChangesAsync(ct); }
+catch (Exception ex) { _logger.LogError(ex, ...); }   // ← no rethrow
+Signal.MarkConsumed() در memory ConsumedAt را ست می‌کرد، ولی DB unchanged. Signal از Channel خارج شده → startup recovery آن را unconsumed می‌بیند → Re-push → duplicate dispatch.
+
+Fix: throw; بعد از log — Stage 3 catch می‌کند، Signal در tick بعدی retry می‌شود، recovery با OrderIntentsBySignalId check کار خودش را می‌کند.
+
+D60 — TGJU Recurring: Last-Page Fetch (API oldest-first)
+تصمیم: IPriceSourceProvider.FetchAsync پارامتر maxPages: int را به fetchAllPages: bool تغییر داد. برای Recurring (fetchAllPages: false): probe recordsTotal (صفحه ۱ رکورد ۱) + fetch آخرین صفحه (start = recordsTotal - PageSize).
+
+دلیل: TGJU API با وجود order_dir=asc در URL، در عمل ascending (oldest-first) برمی‌گرداند. Recurring که maxPages=1 می‌داد، فقط صفحه ۱ = قدیمی‌ترین (۲۰۱۳-۲۰۱۵) را می‌دید. بعد از حذف ۳ رکورد آخر از DB و اجرای Recurring، sinceEffectiveAt = ۴ روز پیش بود، و همه‌ی صفحه ۱ قدیمی‌تر → filter = ۰ → ۰ درج، ۰ skip، لاگ در سطح Info.
+
+چرا probe + last-page به‌جای order_dir=desc: پارامتر API قابل اعتماد نیست (تجربی نشان داد ignore می‌شود). start = total - PageSize کاملاً مستقل از sort order است. هزینه: ۱ API call اضافی در هر tick — برای Recurring روزانه ~۲۴ call/day اضافه، قابل قبول.
+
+Backfill بدون تغییر — از start=0 تا انتها fetch می‌کند (fetchAllPages: true).
+
+تجربه‌ی واقعی: قبل از این fix، Backfill ۳ رکورد insert کرد ولی Recurring ۰؛ ریشه در همین دوگانگی page-range بود نه در دوگانگی کد.
+
+D61 — Currency Rate CheckRange: Server-Side Validation
+تصمیم: Frontend برای validation «نرخ ارز در بازه‌ی Backtest موجود است؟» از endpoint جدید GET /api/Trader/CurrencyRate/CheckRange?fromCurrency&toCurrency&from&to استفاده می‌کند که توسط ICurrencyRateService.CheckRangeExistsAsync سرو می‌شود (direct pair → reverse pair → bool).
+
+دلیل:
+
+GetList clamp داشت (Math.Clamp(limit, 1, 500) → raise به 10_000) — کاربر limit=50000 می‌فرستاد ولی ۵۰۰ رکورد می‌گرفت
+
+Filter سمت Frontend (effectiveAt <= dateFrom) روی ۵۰۰ رکورد اخیر (۲۰۲۵-۲۰۲۶) → برای ۲۰۲۴ هیچ رکورد → false «missing» حتی با ۴۰۰۰ رکورد موجود از ۲۰۱۱
+
+راه تمیز: server-side existence check در SQL، بدون انتقال داده
+
+Handler → Service → UoW (convention): CheckRangeExistsAsync در CurrencyRateService (Infrastructure) پیاده شد — نه مستقیم _uow در Handler (نقض D-Conventions که Handler → Service).
+
+Frontend usage:
+
+hasBaseline = CheckRange(cur, "IRR", "1900-01-01", dateFrom) → ok
+
+else hasAny = CheckRange(cur, "IRR", "1900-01-01", dateTo) → late-start (warning، submit مجاز) یا missing (block)
+---
 ## ۲. `docs/HANDOFF.md` — Header (جایگزین)
 
 ```markdown
