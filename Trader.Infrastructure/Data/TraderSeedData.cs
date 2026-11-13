@@ -220,6 +220,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Broker orders and order intents",
                             DisplayOrder = 3019,
                             Icon = "list",
+                        },new()
+                        {
+                            Key = "trader.dashboard",
+                            Name = "Dashboard",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Aggregated view of runs, orders, positions, events",
+                            DisplayOrder = 3020,
+                            Icon = "home",
                         },
                     }
                 }
@@ -267,6 +276,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.risk", roleId, "Full access to Risk Management"),
                 FullAccess("trader.pricecollection", roleId, "Full access to Price Collection"),
                 FullAccess("trader.order", roleId, "Full access to Order Management"),
+                FullAccess("trader.dashboard", roleId, "Full access to Dashboard"),
             };
         }
 
@@ -488,6 +498,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.order",
                             ParentKey = "trader",
                             Path = "/trader/orders"
+                        },new()
+                        {
+                            Title = "داشبورد",
+                            Description = "نمای کلی وضعیت سیستم",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 100,
+                            Key = "trader.dashboard",
+                            ParentKey = "trader",
+                            Path = "/trader"
                         },
                     }
                 }

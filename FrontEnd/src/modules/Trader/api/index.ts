@@ -20,3 +20,4 @@ export { riskApi } from "./riskApi";
 export { priceSourceApi, priceCollectionJobApi } from "./priceCollectionApi";
 export { brokerOrderApi, orderIntentApi } from "./ordersApi";
 export { orderPresetApi } from "./orderPresetApi";
+export { dashboardApi } from "./dashboardApi";

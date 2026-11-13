@@ -9,6 +9,7 @@ using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
+using Trader.Application.Abstractions.Dashboard;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.HistoricalData;
 using Trader.Application.Abstractions.Indicators;
@@ -54,6 +55,7 @@ using Trader.Infrastructure.Runtime.Services;
 using Trader.Infrastructure.Runtime.Stages;
 using Trader.Infrastructure.Scheduler;
 using Trader.Infrastructure.Services;
+using Trader.Infrastructure.Services.Dashboard;
 using Trader.Infrastructure.Services.Retention;
 namespace Trader.Infrastructure.DependencyInjection
 {
@@ -286,6 +288,7 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.Configure<HistoricalDataCollectionOptions>(
                 configuration.GetSection(HistoricalDataCollectionOptions.SectionName));
             services.AddSingleton<IRuntimeThrottleState, RuntimeThrottleState>();
+            services.AddScoped<IDashboardQueryService, DashboardQueryService>();
 
             services.AddScoped<HistoricalDataCollectionService>();
             services.AddScoped<IHistoricalDataCollectionCommandService>(

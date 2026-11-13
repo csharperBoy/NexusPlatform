@@ -19,7 +19,8 @@ import {
   RiskDashboardPage,
   PriceCollectionPage,
   OrdersManagementPage,
-  OrderPresetsManagementPage} from "./pages";
+  OrderPresetsManagementPage,
+  DashboardPage} from "./pages";
 
 export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/accounts",       element: <AccountsManagementPage /> },
@@ -42,6 +43,8 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/price-collection", element: <PriceCollectionPage /> },
   { path: "trader/orders",            element: <OrdersManagementPage /> },
   { path: "trader/order-presets",     element: <OrderPresetsManagementPage /> },
+  
+  { path: "trader",                   element: <DashboardPage /> },
 
 ];
 

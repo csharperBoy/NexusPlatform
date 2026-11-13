@@ -252,3 +252,16 @@ export {
   VALIDITY_TYPE_OPTIONS,
   labelOf,
 } from "./OrderPresets";
+
+// ─── Dashboard (C-lite.3) ───
+export type {
+  DashboardSummaryView,
+  KillSwitchSummary,
+  KillSwitchAccountView,
+  RunsSummary,
+  OrdersTodaySummary,
+  PositionsSummary,
+  PositionBriefView,
+  CriticalEventView,
+  AccountsSessionSummary,
+} from "./Dashboard";
