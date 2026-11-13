@@ -1,39 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { dashboardApi } from "../api/dashboardApi";
 import type { DashboardSummaryView } from "../models";
 
+export const DASHBOARD_SUMMARY_KEY = ["trader", "dashboard", "summary"] as const;
+
 const AUTO_REFRESH_MS = 15_000;
 
-export function useDashboard() {
-  const [data, setData] = useState<DashboardSummaryView | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const summary = await dashboardApi.GetSummary();
-      setData(summary);
-      setLastRefreshAt(new Date());
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "خطا در دریافت داشبورد");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      void load();
-    }, AUTO_REFRESH_MS);
-    return () => clearInterval(interval);
-  }, [load]);
-
-  return { data, loading, error, refresh: load, lastRefreshAt };
+/**
+ * Shared via TanStack Query across all 6 Trader widgets.
+ * Each widget calls useDashboardSummary() independently — React Query
+ * deduplicates to ONE HTTP call per 15s interval, regardless of how many
+ * widgets are mounted.
+ */
+export function useDashboardSummary() {
+  return useQuery<DashboardSummaryView>({
+    queryKey: DASHBOARD_SUMMARY_KEY,
+    queryFn: () => dashboardApi.GetSummary(),
+    refetchInterval: AUTO_REFRESH_MS,
+    staleTime: 10_000,
+    retry: 2,
+  });
 }

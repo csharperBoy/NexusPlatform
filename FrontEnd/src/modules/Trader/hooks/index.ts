@@ -13,4 +13,5 @@ export { useHistoricalDataCollectionManagement } from "./useHistoricalDataCollec
 export { useBrokerOrdersManagement } from "./useBrokerOrdersManagement";
 export { useOrderIntentsManagement } from "./useOrderIntentsManagement";
 export { useOrderPresetsManagement } from "./useOrderPresetsManagement";
-export { useDashboard } from "./useDashboard";
+
+export { useDashboardSummary, DASHBOARD_SUMMARY_KEY } from "./useDashboard";

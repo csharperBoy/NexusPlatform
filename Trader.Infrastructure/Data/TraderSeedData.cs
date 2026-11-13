@@ -498,16 +498,7 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.order",
                             ParentKey = "trader",
                             Path = "/trader/orders"
-                        },new()
-                        {
-                            Title = "داشبورد",
-                            Description = "نمای کلی وضعیت سیستم",
-                            Icon = Icon.Folder.GetIconString(),
-                            Order = 100,
-                            Key = "trader.dashboard",
-                            ParentKey = "trader",
-                            Path = "/trader"
-                        },
+                        }
                     }
                 }
             };

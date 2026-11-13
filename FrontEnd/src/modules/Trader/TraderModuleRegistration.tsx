@@ -1,30 +1,87 @@
-//src/modules/Trader/TraderModuleRegistration.tsx
-import { useEffect } from 'react';
-import { useMenu, usePlugin } from '@/modules/DashboardCore';
-import { lazy } from 'react';
+import { lazy, useEffect } from "react";
+import { usePlugin } from "@/modules/DashboardCore";
 
-const SymbolStatsWidget = lazy(() => import('./widgets/SymbolStatsWidget'));
+const TraderKillSwitchWidget = lazy(() => import("./widgets/TraderKillSwitchWidget"));
+const TraderRunsWidget = lazy(() => import("./widgets/TraderRunsWidget"));
+const TraderOrdersTodayWidget = lazy(() => import("./widgets/TraderOrdersTodayWidget"));
+const TraderPositionsWidget = lazy(() => import("./widgets/TraderPositionsWidget"));
+const TraderSessionsWidget = lazy(() => import("./widgets/TraderSessionsWidget"));
+const TraderEventsWidget = lazy(() => import("./widgets/TraderEventsWidget"));
+const SymbolStatsWidget = lazy(() => import("./widgets/SymbolStatsWidget"));
 
-const HrIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
-
+/**
+ * Priority contract (for cross-module ordering):
+ *   10   KillSwitch    (safety-critical، first)
+ *   20   Runs          (execution context)
+ *   30   SymbolStats   (existing، unchanged)
+ *   40   OrdersToday   (execution activity)
+ *   50   Positions     (open exposure)
+ *   60   Sessions      (infrastructure)
+ *   70   Events        (diagnostic)
+ *
+ * Gap of 10 between modules allows other modules to interleave.
+ */
 export const TraderModuleRegistration = () => {
   const { registerWidget } = usePlugin();
 
   useEffect(() => {
-    
-    // ثبت ویجت
     registerWidget({
-      id: 'trader-symbol-stats',
-      area: 'widgets',
+      id: "trader-kill-switch",
+      area: "widgets",
+      priority: 10,
+      component: TraderKillSwitchWidget,
+      title: "Kill Switch",
+      permissions: ["trader.dashboard"],
+    });
+    registerWidget({
+      id: "trader-runs",
+      area: "widgets",
+      priority: 20,
+      component: TraderRunsWidget,
+      title: "Trading Runs",
+      permissions: ["trader.dashboard"],
+    });
+    registerWidget({
+      id: "trader-symbol-stats",
+      area: "widgets",
       priority: 30,
       component: SymbolStatsWidget,
-      title: 'آمار تعداد نمادها',
+      title: "آمار تعداد نمادها",
+      permissions: ["trader.dashboard"],
     });
-  }, []);
+    registerWidget({
+      id: "trader-orders-today",
+      area: "widgets",
+      priority: 40,
+      component: TraderOrdersTodayWidget,
+      title: "سفارش‌های امروز",
+      permissions: ["trader.dashboard"],
+    });
+    registerWidget({
+      id: "trader-positions",
+      area: "widgets",
+      priority: 50,
+      component: TraderPositionsWidget,
+      title: "موقعیت‌های باز",
+      permissions: ["trader.dashboard"],
+    });
+    registerWidget({
+      id: "trader-sessions",
+      area: "widgets",
+      priority: 60,
+      component: TraderSessionsWidget,
+      title: "حساب‌های کارگزاری",
+      permissions: ["trader.dashboard"],
+    });
+    registerWidget({
+      id: "trader-events",
+      area: "widgets",
+      priority: 70,
+      component: TraderEventsWidget,
+      title: "رویدادهای مهم",
+      permissions: ["trader.dashboard"],
+    });
+  }, [registerWidget]);
 
   return null;
 };
