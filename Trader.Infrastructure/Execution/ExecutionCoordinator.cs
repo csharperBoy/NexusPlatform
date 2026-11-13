@@ -131,9 +131,18 @@ public sealed class ExecutionCoordinator : IExecutionCoordinator
             }
             catch (Exception ex)
             {
+                // B3 fix — rethrow so ExecutionStage logs and the Signal remains
+                // recoverable. If we swallow, the in-memory ConsumedAt mark is lost
+                // (DB unchanged) → Signal stays unconsumed → StartupRecovery re-pushes
+                // → duplicate dispatch possible. Recovery already checks
+                // OrderIntentsBySignalId before re-pushing; rethrowing lets that path
+                // work. Failure means DB is unreachable — a tick-level failure is
+                // correct; the next tick retries the Signal.
                 _logger.LogError(ex,
-                    "Failed to persist execution results for signal {SignalId}.",
+                    "Failed to persist execution results for signal {SignalId}. " +
+                    "Signal will be re-delivered on recovery.",
                     envelope.Signal.Id);
+                throw;
             }
         }
     }

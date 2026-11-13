@@ -29,7 +29,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
     private const int MaxPagesPerAccount = 10;
     private const int HistoryPageSize = 100;
     private readonly IAccountCashCache _cashCache;
-    private DateTime _lastRunAt = DateTime.MinValue;
+    private readonly IRuntimeThrottleState _throttle;
 
     private readonly IRunExecutionContextCache _runCache;
     private readonly ITraderUnitOfWork<TraderDbContext> _uow;
@@ -57,6 +57,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         UserDataContext userContext,
         IOptions<TradingRuntimeOptions> options,
     ITradingEventLogger eventLogger,
+    IRuntimeThrottleState throttle,
         ILogger<OrderLifecycleStage> logger)
     {
         _runCache = runCache;
@@ -68,6 +69,7 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
         _userContextCache = userContextCache;
         _userContext = userContext;
         _options = options.Value;
+        _throttle = throttle;
         _snapshotStore = snapshotStore;
         _dispatcherResolver = dispatcherResolver;
         _eventLogger = eventLogger;
@@ -76,10 +78,8 @@ public sealed class OrderLifecycleStage : IOrderLifecycleStage
 
     public async Task RunOnceAsync(CancellationToken ct = default)
     {
-        var now = DateTime.UtcNow;
-        if (now - _lastRunAt < _options.OrderLifecycleInterval)
+        if (!_throttle.TryClaimOrderLifecycle(_options.OrderLifecycleInterval))
             return;
-        _lastRunAt = now;
 
         var contexts = _runCache.GetAllActive();
         if (contexts.Count == 0) return;

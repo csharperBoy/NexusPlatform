@@ -12,6 +12,7 @@ using Trader.Application.Specifications.Positions;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Domain.ValueObjects;
+using Trader.ExternalApiClient;
 using Trader.Infrastructure.Data;
 
 namespace Trader.Infrastructure.Positions;
@@ -28,6 +29,7 @@ public sealed class PositionCloser : IPositionCloser
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
+
     public async Task<int> CloseRunPositionsAsync(
         Guid runId, string reason, CancellationToken ct = default)
     {
@@ -48,9 +50,10 @@ public sealed class PositionCloser : IPositionCloser
         await SetUserContextAsync(sp, runId, ct);
         return await CloseInternalAsync(sp, positions, reason, ct);
     }
+
     public async Task<int> ClosePositionsAsync(
-    IReadOnlyList<Guid> positionIds, string reason,
-    CancellationToken ct = default)
+        IReadOnlyList<Guid> positionIds, string reason,
+        CancellationToken ct = default)
     {
         if (positionIds.Count == 0) return 0;
 
@@ -85,7 +88,8 @@ public sealed class PositionCloser : IPositionCloser
         var uow = sp.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
         var snapshotStore = sp.GetRequiredService<IMarketSnapshotStore>();
         var sessionProvider = sp.GetRequiredService<IBrokerSessionProvider>();
-        var dispatcher = sp.GetRequiredService<IBrokerOrderDispatcher>();
+        // B1 fix — route via resolver per-position (paper → paper, live → live)
+        var dispatcherResolver = sp.GetRequiredService<IOrderDispatcherResolver>();
 
         var closed = 0;
 
@@ -134,7 +138,7 @@ public sealed class PositionCloser : IPositionCloser
                 var account = await uow.Accounts.GetByIdAsync(pos.TraderAccountId);
                 if (account is null) continue;
 
-                // ─── OrderIntent ───
+                // ─── B1 fix: propagate IsPaper from Position to OrderIntent ───
                 var intent = OrderIntent.Create(
                     runId: pos.RunId,
                     traderAccountId: pos.TraderAccountId,
@@ -144,21 +148,31 @@ public sealed class PositionCloser : IPositionCloser
                     price: sellPrice,
                     quantity: pos.Quantity,
                     orderMode: OrderMode.Quantity,
-                    reason: reason);
+                    reason: reason,
+                    isPaper: pos.IsPaper);
 
                 await uow.OrderIntents.AddAsync(intent);
 
-                // ─── Dispatch ───
-                var session = await sessionProvider.GetSessionAsync(
-                    pos.TraderAccountId, ct);
+                // ─── B1 fix: Paper must NOT touch broker; skip session for paper ───
+                ExternalSystemSession? session = null;
+                if (!pos.IsPaper)
+                {
+                    session = await sessionProvider.GetSessionAsync(
+                        pos.TraderAccountId, ct);
+                }
 
-                await dispatcher.DispatchAsync(intent, account.Broker, session, ct);
+                // ─── B1 fix: dispatcher via resolver ───
+                var dispatcher = dispatcherResolver.Resolve(pos.IsPaper);
+
+                // PaperBrokerOrderDispatcher ignores session; null is safe.
+                await dispatcher.DispatchAsync(intent, account.Broker, session!, ct);
                 closed++;
 
                 _logger.LogInformation(
-                    "Close dispatched: run={RunId} isin={Isin} qty={Qty} price={Price} reason={Reason}",
+                    "Close dispatched: run={RunId} isin={Isin} qty={Qty} price={Price} " +
+                    "reason={Reason} paper={IsPaper}",
                     pos.RunId, pos.Isin, pos.Quantity.Value,
-                    sellPriceValue, reason);
+                    sellPriceValue, reason, pos.IsPaper);
             }
             catch (Exception ex)
             {
@@ -179,8 +193,9 @@ public sealed class PositionCloser : IPositionCloser
 
         return closed;
     }
+
     private async Task SetUserContextAsync(
-    IServiceProvider sp, Guid runId, CancellationToken ct)
+        IServiceProvider sp, Guid runId, CancellationToken ct)
     {
         try
         {

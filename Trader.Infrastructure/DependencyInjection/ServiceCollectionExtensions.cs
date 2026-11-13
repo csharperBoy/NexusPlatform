@@ -285,6 +285,7 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             // ─── Historical Data ───
             services.Configure<HistoricalDataCollectionOptions>(
                 configuration.GetSection(HistoricalDataCollectionOptions.SectionName));
+            services.AddSingleton<IRuntimeThrottleState, RuntimeThrottleState>();
 
             services.AddScoped<HistoricalDataCollectionService>();
             services.AddScoped<IHistoricalDataCollectionCommandService>(
