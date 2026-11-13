@@ -768,19 +768,13 @@ public sealed class BacktestEngine : IBacktestEngine
                     fillQty: qty,
                     fillPrice: fillPrice);
 
-                existingPos.Quantity += qty;
+                existingPos.Quantity += qty;               // ← فقط یک بار
                 existingPos.WeightedAvgEntryPrice = newAvg;
                 existingPos.TotalBuyCommission += commission;
 
-                // SL/TP recomputed from new avg (BC4 fix).
-                // ResolveStopLoss returns absolute price if AbsolutePrice is set,
-                // so absolute-price mode is unaffected — only percentage mode re-computes.
-                //existingPos.StopLoss = ResolveStopLoss(run, newAvg);
-                //existingPos.TakeProfit = ResolveTakeProfit(run, newAvg);
-                existingPos.Quantity += qty;
-                existingPos.WeightedAvgEntryPrice = newAvg;
-                existingPos.TotalBuyCommission += commission;
-                // SL/TP unchanged — matches Position.ApplyBuyFill behavior
+                // SL/TP unchanged — matches Position.ApplyBuyFill (live) behavior (D56).
+                // Trailing SL/TP is E.2 — implement in both live and backtest if needed.
+
                 existingPos.EntryFills.Add(new EntryFill(
                     fillCandle.OpenTime, fillPrice, qty, commission));
             }
