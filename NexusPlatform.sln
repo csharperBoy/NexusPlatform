@@ -233,6 +233,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{93E86E81-5
 	ProjectSection(SolutionItems) = preProject
 		BACKTEST-PARITY.md = BACKTEST-PARITY.md
 		HANDOFF.md = HANDOFF.md
+		Trader-PromptForStartNewChatWithChatBot.md = Trader-PromptForStartNewChatWithChatBot.md
 		TRADING-ARCHITECTURE.md = TRADING-ARCHITECTURE.md
 		TRADING-DECISIONS.md = TRADING-DECISIONS.md
 		TRADING-STORY.md = TRADING-STORY.md
