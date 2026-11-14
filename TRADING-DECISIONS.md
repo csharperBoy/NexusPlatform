@@ -887,6 +887,37 @@ else hasAny = CheckRange(cur, "IRR", "1900-01-01", dateTo) → late-start (warni
 5. **PR 20** — Kill Switch Events Hotfix. `ActivateKillSwitchCommandHandler`/`DeactivateKillSwitchCommandHandler` حالا `KillSwitchActivated`/`KillSwitchDeactivated` emit می‌کنند + Flush. +۵ تست.
 
 **Next:** PR B1 — TGJU Import (design locked D34-D48).
+### D62 — Dashboard: Widget-based (DashboardCore) نه Trader-Only Page
+
+**تصمیم:** Trader dashboard به‌جای یک `DashboardPage` مستقل، از مکانیزم Widget Registration در `DashboardCore` استفاده می‌کند. ۶ widget در `TraderModuleRegistration` ثبت می‌شوند:
+
+| Widget | Priority | Data Source |
+|---|---|---|
+| `trader-kill-switch` | 10 | `DashboardSummary.KillSwitch` |
+| `trader-runs` | 20 | `DashboardSummary.Runs` |
+| `trader-symbol-stats` | 30 (legacy) | موجود — خودش |
+| `trader-orders-today` | 40 | `DashboardSummary.OrdersToday` |
+| `trader-positions` | 50 | `DashboardSummary.Positions` |
+| `trader-sessions` | 60 | `DashboardSummary.AccountsSessions` |
+| `trader-events` | 70 | `DashboardSummary.RecentCriticalEvents` |
+
+**دلیل:**
+- `DashboardCore` از قبل به‌عنوان root `/` (شامل `MainLayout` + widget grid) وجود داشت — یک `DashboardPage` مستقل، duplicate بود
+- Widget registration امکان interleaving با widgetهای سایر moduleها (HR، Identity، ...) در root grid را می‌دهد
+- Priority gap ۱۰ بین widgetها، فضای درج برای moduleهای دیگر می‌گذارد
+
+**Backend aggregation:**
+- یک endpoint واحد: `GET /api/Trader/Dashboard/Summary`
+- ۶ widget از یک query key مشترک (`['trader','dashboard','summary']`) در TanStack Query استفاده می‌کنند → **یک HTTP call هر ۱۵s**، نه ۶
+- Read-only — تنها side effect: `IRiskStateTracker.RefreshAsync` (برای دقت Kill Switch)
+
+**پیامد:**
+- Menu "داشبورد" از Seed حذف شد (`/trader` یک صفحه‌ی مستقل نیست، root `/` است)
+- Resource `trader.dashboard` + Permission باقی ماندند (`DashboardController` به آن گیت می‌شود)
+- `QueryClientProvider` در `main.tsx` اضافه شد (HANDOFF قبلاً TanStack را در stack داشت ولی هیچ‌جا استفاده نمی‌شد — این اولین استفاده است)
+- App.tsx hooks order fix شد (`useRoutes` همیشه صدا زده می‌شود، `loading` داخل route tree)
+
+**Phase C trigger:** اگر widgetها بیشتر از ~۱۲ شدند و performance grid قابل قبول نبود، layout دستی (per-module tabs) — الآن premature.
 ---
 
 ## خلاصه D34-D42

@@ -1,6 +1,6 @@
-> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۳ — Phase C-lite.1 + C-lite.2 + Backtest Correctness + Runtime Fixes
-> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler ✅ | Phase B1 ✅ | C-lite.1/2 ✅ | Runtime Fixes ✅ | 258 Tests ✅ | CI ✅
-> **گام بعدی:** C-lite.3 (Dashboard) → Paper Trading Week
+> **آخرین به‌روزرسانی:** ۱۴۰۴/۰۹/۲۳ — Phase C-lite.3 (Dashboard as Widgets)
+> **وضعیت:** Phase A ✅ | Phase D ✅ | Scheduler ✅ | Phase B1 ✅ | C-lite.1/2/3 ✅ | Runtime Fixes ✅ | Backtest Correctness ✅ | 258 Tests ✅
+> **گام بعدی:** Paper Trading Week (after prep checklist)
 ---
 
 ## 1. PROJECT OVERVIEW
@@ -359,11 +359,11 @@ ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
 ```
 src/modules/Trader/
 ├── api/                    (account، instrument، tradingRun، currencyRate، ...)
-├── models/                 (TradingRun، Risk (pending)، enums، labels)
-├── hooks/                  (management hooks per entity)
+├── models/                 (TradingRun، Risk، Dashboard، Orders، OrderPresets، ...)
+├── hooks/                  (management hooks per entity، useDashboardSummary)
 ├── pages/
 │   ├── Accounts/           ✅ (Login-all button)
-│   ├── Instruments/        ✅ (TradingSchedule، Commission، Min/Max)
+│   ├── Instruments/        ✅ (TradingSchedule، Commission، Min/Max، Range Up/Down)
 │   ├── Strategies/         ✅
 │   ├── TradingRuns/        ✅ (per-account capital via TradingRunAccountEditor)
 │   ├── CurrencyRates/      ✅
@@ -371,14 +371,73 @@ src/modules/Trader/
 │   ├── Signals/            ✅
 │   ├── Events/             ✅ (TradingEvents log viewer + drawer)
 │   ├── Backtests/          ✅ (Create/List/Detail/Compare + LogsTab)
-│   ├── HistoricalData/     ✅ (Collection Jobs)
-│   ├── Risk/               ⏳ Next (Kill Switch + Circuit Breaker + Active)
+│   ├── HistoricalData/     ✅ (Collection Jobs — Backfill/Recurring)
+│   ├── Orders/             ✅ (BrokerOrders + OrderIntents tabs)
+│   ├── OrderPresets/       ✅ (Strategy-based price/qty resolution)
+│   ├── PriceCollection/    ✅ (Tabs: Jobs / Sources)
+│   ├── PriceSources/       ✅ (GenericCrudPage)
+│   ├── PriceCollectionJobs/ ✅
+│   ├── Risk/               ✅ (Kill Switch + Circuit Breaker + Active)
 │   ├── SchedulePlans/      ✅ (legacy)
 │   ├── ServerClock/        ✅ (legacy)
 │   └── Logs/               ✅ (ExecutionLog legacy)
+├── widgets/                # Dashboard widgets (D62)
+│   ├── TraderKillSwitchWidget.tsx
+│   ├── TraderRunsWidget.tsx
+│   ├── TraderOrdersTodayWidget.tsx
+│   ├── TraderPositionsWidget.tsx
+│   ├── TraderSessionsWidget.tsx
+│   ├── TraderEventsWidget.tsx
+│   ├── SymbolStatsWidget.tsx
+│   └── _shared/WidgetShell.tsx
+├── TraderModuleRegistration.tsx   # ثبت widgetها در DashboardCore
 ├── routes.tsx
 └── index.ts
 ```
+
+### Core Components
+- `GenericCrudPage` — با `tableFeatures`: `horizontalScroll`، `stickyAction`، `classNames`
+- `GenericAddModal`، `useGenericCrud`، `SearchableMultiSelect`، `TagInput`
+
+### DashboardCore Integration (D62)
+
+Trader dashboard از مکانیزم Widget Registration در `DashboardCore` استفاده می‌کند — نه صفحه‌ی مستقل.
+
+**جریان:**
+
+```
+main.tsx
+  └── <TraderModuleRegistration />  (وقتی Trader module active)
+        └── usePlugin().registerWidget(6 widgets)
+              └── DashboardCore.PluginProvider (in-memory registry)
+                    └── Root "/" → DashboardCore renders widgets by priority
+```
+
+**۶ widget با priority:**
+
+| Widget | Priority | Data |
+|---|---|---|
+| `trader-kill-switch` | 10 | DashboardSummary.KillSwitch |
+| `trader-runs` | 20 | DashboardSummary.Runs |
+| `trader-symbol-stats` | 30 (legacy) | خودش (بدون DashboardSummary) |
+| `trader-orders-today` | 40 | DashboardSummary.OrdersToday |
+| `trader-positions` | 50 | DashboardSummary.Positions |
+| `trader-sessions` | 60 | DashboardSummary.AccountsSessions |
+| `trader-events` | 70 | DashboardSummary.RecentCriticalEvents |
+
+**Priority gap ۱۰** بین widgetها → سایر moduleها (HR، Identity) می‌توانند interleave کنند.
+
+**Data flow (dedupe):**
+
+- هر widget مستقل `useDashboardSummary()` صدا می‌زند
+- `useDashboardSummary` یک `useQuery` با `queryKey: ['trader','dashboard','summary']` است
+- TanStack Query `queryKey` یکسان → **یک HTTP call هر ۱۵s** برای همه‌ی ۶ widget
+- Backend: `GET /api/Trader/Dashboard/Summary` یک aggregate می‌دهد
+
+**پیامد:**
+- Menu "داشبورد" از Seed حذف شد (`/trader` یک route مستقل نیست — root `/` است)
+- Resource `trader.dashboard` + Permission باقی ماند (`DashboardController` گیت می‌کند)
+- `QueryClientProvider` در `main.tsx` اضافه شد (اولین استفاده از TanStack Query در پروژه)
 
 ### Core Components
 - `GenericCrudPage` — با `tableFeatures`: `horizontalScroll`، `stickyAction`، `classNames`
@@ -501,7 +560,18 @@ src/modules/Trader/
 3. `OrderPresetModal` داشت ISIN (از `GetSelectionList().value`) به‌جای Guid می‌فرستاد → Preset با instrument نامعتبر
 ### Phase B2/B3, Phase C, Phase E — آینده
 (B2: Telegram + more assets + Frontend; C: Operations; E: Advanced)
+### Phase C-lite.3 — ✅ COMPLETE (Dashboard as Widgets — D62)
 
+| # | Feature |
+|---|---|
+| **Backend** | `GET /api/Trader/Dashboard/Summary` (aggregate، single call) |
+| **Backend** | `IDashboardQueryService` + `DashboardQueryService` (read-only) |
+| **Backend** | Resource `trader.dashboard` + Permission؛ Menu "داشبورد" حذف شد |
+| **Frontend** | ۶ Widget در `TraderModuleRegistration`: KillSwitch/Runs/OrdersToday/Positions/Sessions/Events |
+| **Frontend** | `useDashboardSummary()` (TanStack Query، 15s refetch، shared key → 1 call) |
+| **Frontend** | `QueryClientProvider` در `main.tsx` (اولین استفاده از TanStack Query) |
+| **Frontend** | App.tsx hooks-order fix (`useRoutes` همیشه صدا زده می‌شود) |
+| **حذف** | `pages/Dashboard/DashboardPage.tsx` + `DashboardCards.tsx` (redundant) |
 ---
 
 ## 9. KEY DECISIONS RECAP
@@ -636,33 +706,23 @@ src/modules/Trader/
 
 ## 13. NEXT STEPS
 
-### بلافاصله — C-lite.3 Dashboard — ~۱ روز
+### بلافاصله — Paper Trading Week Prep — ~۲-۳ ساعت
 
-**Scope:**
-- Backend: `GET /api/Trader/Dashboard/Summary` (aggregate)
-- Frontend: `/trader` (root) → `DashboardPage`
-- Cards:
-  - **Kill Switch** (Global + Active Accounts)
-  - **Runs** (Running/Ready/Stopped counts)
-  - **Orders Today** (Paper/Live split)
-  - **Positions Open** (count + unrealized PnL)
-  - **Recent Critical Events** (last 10، Severity>=Warning)
-  - **Accounts Session** (valid/expired/empty counts)
-- Auto-refresh 15s
+قبل از شروع هفته:
+1. `dotnet test` — همه ۲۵۸+ تست پاس
+2. `/health/trader/*` — همه green
+3. `POST /api/Trader/Reconciliation/Run` — دستی، چک mismatch = 0
+4. Recurring TGJU Job فعال (نرخ ارز تازه)
+5. Kill Switch Global یک بار activation/deactivation تست
+6. یک Run ساده بساز: `MinSignalStrength >= 0.6`، Timeframe `M15` یا `D1` (نه M1)، ۲-۳ نماد غیر اهرم، `ExecutionMode=Paper`، Budget کوچک
+7. `/trader` (root) باز کن — widgetها همه data نشان می‌دهند
 
-**Permission:** `trader.dashboard` (new resource) — یا استفاده از `trader.tradingrun` (View).
+### سپس — Paper Trading Week (~۱ هفته)
 
-### Paper Trading Week (~۱ هفته)
-
-- Run ساده ۲-۳ نماد با بودجه‌ی محدود
-- Recurring TGJU Job فعال
-- Kill Switch Global در دسترس
-- هر روز صبح: Dashboard + Events
+- هر روز صبح: `/trader` (widget dashboard) + `/trader/events`
 - هر Bug → یادداشت، بعد fix
 
 **معیار موفقیت:** No `PositionOvershoot`، No `KillSwitchActivated` غیرمنتظره، No `CircuitBreakerTriggered` غیرمنتظره، Reconciliation پاک، PnL منطقی.
-
-**Reality check:** تست‌های Backtest اخیر نشان دادند RSI ساده با `MinSignalStrength=0.1` روی M1 اهرم بازنده است (−۳۶٪). برای Paper Week: `MinSignalStrength>=0.6` یا timeframe بالاتر (M5/M15) با سهم غیر اهرم.
 
 ### Phase B2 (~۲-۳ روز)
 
