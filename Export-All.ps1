@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    ابزار جامع صادرسازی ساختار و کد پروژه
+    ابزار جامع صادرسازی ساختار و کد پروژه (بک‌اند + فرانت‌اند)
 .DESCRIPTION
     4 کار را انجام می‌دهد:
       1) ساختار درختی پروژه را در فایل متنی ذخیره می‌کند
@@ -31,31 +31,31 @@ powershell
 
 param(
     [string]$RootPath = "",
-    [string]$TreeOutput = "",
     [string]$ExportFolder = "exports",
     [string[]]$ExcludedFolders = @("bin","obj",".vs","node_modules","packages","TestResults","Debug","Release"),
     [switch]$SkipTree,
     [switch]$SkipAllProjects,
     [switch]$SkipPerProject,
-    [switch]$SkipModules
+    [switch]$SkipModules,
+    [switch]$SkipFront
 )
 
-# اگر RootPath داده نشده بود، از محل اسکریپت استفاده کن
-if ([string]::IsNullOrWhiteSpace($RootPath)) {
-    $RootPath = $PSScriptRoot
-}
-$RootPath = $RootPath.Trim()  # حذف فاصله اضافی احتمالی
+if ([string]::IsNullOrWhiteSpace($RootPath)) { $RootPath = $PSScriptRoot }
+$RootPath = $RootPath.Trim()
 
-if ([string]::IsNullOrWhiteSpace($TreeOutput)) {
-    $TreeOutput = Join-Path $RootPath "DirectoryTree.txt"
-}
-
+# پوشه خروجی
 $ExportPath = Join-Path $RootPath $ExportFolder
 if (!(Test-Path $ExportPath)) {
     New-Item -ItemType Directory -Path $ExportPath | Out-Null
 }
 
-# ---------- تابع کمکی: فیلتر فایل‌های مهم (.cs و appsettings*.json) ----------
+# exports هم از درخت حذف شود تا خودش را نشان ندهد
+if ($ExcludedFolders -notcontains $ExportFolder) { $ExcludedFolders += $ExportFolder }
+
+# خروجی درخت حالا داخل exports است
+$TreeOutput = Join-Path $ExportPath "DirectoryTree.txt"
+
+# ---------- تابع کمکی: فایل‌های مهم بک‌اند (.cs و appsettings*.json) ----------
 function Get-ImportantFiles {
     param([string]$Path)
     Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
@@ -68,40 +68,67 @@ function Get-ImportantFiles {
         }
 }
 
-# ---------- 1) درخت پوشه‌ها ----------
-function Export-DirectoryTree {
-    param([string]$Path, [string]$OutFile, [int]$Level = 0)
-
-    $indent = "│   " * $Level
-    $name = Split-Path $Path -Leaf
-    if ([string]::IsNullOrEmpty($name)) { $name = $Path }
-    Add-Content -Path $OutFile -Value "$indent$name"
-
-    Get-ChildItem -Path $Path -File -ErrorAction SilentlyContinue | ForEach-Object {
-        Add-Content -Path $OutFile -Value "$indent│   $($_.Name)"
-    }
-
-    Get-ChildItem -Path $Path -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $ExcludedFolders -notcontains $_.Name } |
-        ForEach-Object {
-            Export-DirectoryTree -Path $_.FullName -OutFile $OutFile -Level ($Level + 1)
+# ---------- تابع کمکی: فایل‌های سورس فرانت‌اند ----------
+function Get-FrontEndFiles {
+    param([string]$Path)
+    $includeExt = @(".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".sass", ".less", ".html", ".json")
+    $excludeNames = @("package-lock.json", "pnpm-lock.yaml", "yarn.lock", "tsconfig.tsbuildinfo", ".DS_Store")
+    Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $includeExt -contains $_.Extension.ToLower() -and
+            $excludeNames -notcontains $_.Name -and
+            $_.FullName -notmatch "\\node_modules\\" -and
+            $_.FullName -notmatch "\\dist\\" -and
+            $_.FullName -notmatch "\\build\\"
         }
 }
 
-if (-not $SkipTree) {
-    if (Test-Path $TreeOutput) { Remove-Item $TreeOutput -Force }
-    Export-DirectoryTree -Path $RootPath -OutFile $TreeOutput -Level 0
-    Write-Host "✅ درخت پروژه ذخیره شد: $TreeOutput"
+# ---------- تابع بازگشتی درخت (سبک کلاسیک) ----------
+function Export-DirectoryTree {
+    param(
+        [string]$Path,
+        [string]$Prefix = "",
+        [string]$OutFile
+    )
+
+    $folders = @(Get-ChildItem -Path $Path -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $ExcludedFolders -notcontains $_.Name } |
+        Sort-Object Name)
+    $files = @(Get-ChildItem -Path $Path -File -ErrorAction SilentlyContinue |
+        Sort-Object Name)
+
+    # ترتیب کلاسیک: اول فولدرها، بعد فایل‌ها
+    $all = @($folders) + @($files)
+    $count = $all.Count
+
+    for ($i = 0; $i -lt $count; $i++) {
+        $item = $all[$i]
+        $isLast = ($i -eq $count - 1)
+        $branch = if ($isLast) { "└── " } else { "├── " }
+        Add-Content -Path $OutFile -Value ("{0}{1}{2}" -f $Prefix, $branch, $item.Name) -Encoding utf8
+
+        if ($item.PSIsContainer) {
+            $newPrefix = $Prefix + $(if ($isLast) { "    " } else { "│   " })
+            Export-DirectoryTree -Path $item.FullName -Prefix $newPrefix -OutFile $OutFile
+        }
+    }
 }
 
-# لیست پروژه‌ها (فولدرهای سطح اول، به جز پوشه خروجی و پوشه‌های مستثنی)
-$projects = Get-ChildItem -Path $RootPath -Directory |
-    Where-Object {
-        $_.Name -ne $ExportFolder -and
-        $ExcludedFolders -notcontains $_.Name
-    }
+# ---------- 1) درخت ----------
+if (-not $SkipTree) {
+    if (Test-Path $TreeOutput) { Remove-Item $TreeOutput -Force }
+    $rootName = Split-Path $RootPath -Leaf
+    if ([string]::IsNullOrEmpty($rootName)) { $rootName = $RootPath }
+    Add-Content -Path $TreeOutput -Value $rootName -Encoding utf8
+    Export-DirectoryTree -Path $RootPath -Prefix "" -OutFile $TreeOutput
+    Write-Host "[OK] Directory tree saved: $TreeOutput"
+}
 
-# ---------- 2) همه پروژه‌ها در یک فایل ----------
+# ---------- لیست پروژه‌های بک‌اند (فولدرهای سطح اول) ----------
+$projects = @(Get-ChildItem -Path $RootPath -Directory -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne $ExportFolder -and $ExcludedFolders -notcontains $_.Name })
+
+# ---------- 2) همه پروژه‌ها در AllProjects.cs ----------
 if (-not $SkipAllProjects) {
     $outFile = Join-Path $ExportPath "AllProjects.cs"
     "" | Out-File $outFile -Encoding utf8
@@ -118,7 +145,7 @@ if (-not $SkipAllProjects) {
                 "`n" | Out-File $outFile -Append -Encoding utf8
             }
     }
-    Write-Host "✅ همه پروژه‌ها تجمیع شدند: $outFile"
+    Write-Host "[OK] All projects merged: $outFile"
 }
 
 # ---------- 3) هر پروژه جداگانه ----------
@@ -137,11 +164,11 @@ if (-not $SkipPerProject) {
                 Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
                 "`n" | Out-File $outFile -Append -Encoding utf8
             }
-        Write-Host "✅ $($proj.Name) صادر شد: $outFile"
+        Write-Host "[OK] $($proj.Name) exported: $outFile"
     }
 }
 
-# ---------- 4) گروه‌بندی ماژول‌ها ----------
+# ---------- 4) گروه‌بندی ماژول‌های بک‌اند (Core.cs، HR.cs، ...) ----------
 if (-not $SkipModules) {
     $modules = $projects |
         ForEach-Object {
@@ -169,9 +196,37 @@ if (-not $SkipModules) {
                     "`n" | Out-File $outFile -Append -Encoding utf8
                 }
         }
-        Write-Host "✅ ماژول $moduleName صادر شد: $outFile"
+        Write-Host "[OK] Backend module $moduleName exported: $outFile"
+    }
+}
+
+# ---------- 5) ماژول‌های فرانت‌اند (ModuleName.Front.txt) ----------
+if (-not $SkipFront) {
+    $frontModulesPath = Join-Path $RootPath "FrontEnd\src\modules"
+    if (Test-Path $frontModulesPath) {
+        $frontModules = @(Get-ChildItem -Path $frontModulesPath -Directory -ErrorAction SilentlyContinue)
+        foreach ($mod in $frontModules) {
+            $moduleName = $mod.Name
+            $outFile = Join-Path $ExportPath "$moduleName.Front.txt"
+            "" | Out-File $outFile -Encoding utf8
+
+            "//// FRONTEND MODULE: $moduleName" | Out-File $outFile -Append -Encoding utf8
+            "`n" | Out-File $outFile -Append -Encoding utf8
+
+            Get-FrontEndFiles -Path $mod.FullName |
+                Sort-Object FullName |
+                ForEach-Object {
+                    $relPath = $_.FullName.Substring($mod.FullName.Length).TrimStart('\', '/')
+                    "//// FILE: $relPath" | Out-File $outFile -Append -Encoding utf8
+                    Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
+                    "`n" | Out-File $outFile -Append -Encoding utf8
+                }
+            Write-Host "[OK] Frontend module $moduleName exported: $outFile"
+        }
+    } else {
+        Write-Host "[SKIP] FrontEnd/src/modules not found: $frontModulesPath"
     }
 }
 
 Write-Host ""
-Write-Host "🎉 همه عملیات انجام شد. پوشه خروجی: $ExportPath"
+Write-Host "Done. Output folder: $ExportPath"
