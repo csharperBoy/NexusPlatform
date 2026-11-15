@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    ابزار جامع صادرسازی ساختار و کد پروژه (بک‌اند + فرانت‌اند)
+    ابزار جامع صادرسازی ساختار و کد پروژه (بک‌اند + فرانت‌اند) - اصلاح انکودینگ
 .DESCRIPTION
     4 کار را انجام می‌دهد:
       1) ساختار درختی پروژه را در فایل متنی ذخیره می‌کند
@@ -49,13 +49,34 @@ if (!(Test-Path $ExportPath)) {
     New-Item -ItemType Directory -Path $ExportPath | Out-Null
 }
 
-# exports هم از درخت حذف شود تا خودش را نشان ندهد
 if ($ExcludedFolders -notcontains $ExportFolder) { $ExcludedFolders += $ExportFolder }
 
-# خروجی درخت حالا داخل exports است
 $TreeOutput = Join-Path $ExportPath "DirectoryTree.txt"
 
-# ---------- تابع کمکی: فایل‌های مهم بک‌اند (.cs و appsettings*.json) ----------
+# ---------- انکودینگ استاندارد برای همه نوشتن‌ها (UTF-8 با BOM) ----------
+$script:Utf8Bom = New-Object System.Text.UTF8Encoding($true)
+
+# ---------- توابع کمکی انکودینگ ----------
+
+# خواندن فایل با تشخیص خودکار BOM، پیش‌فرض UTF-8
+function Read-FileContent {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return "" }
+    try {
+        return [System.IO.File]::ReadAllText($Path)
+    } catch {
+        Write-Warning "خواندن ناموفق: $Path"
+        return ""
+    }
+}
+
+# نوشتن کل محتوا با UTF-8 BOM (یک‌جا، بدون append)
+function Write-FileContent {
+    param([string]$Path, [string]$Content)
+    [System.IO.File]::WriteAllText($Path, $Content, $script:Utf8Bom)
+}
+
+# ---------- فیلتر فایل‌های بک‌اند ----------
 function Get-ImportantFiles {
     param([string]$Path)
     Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
@@ -68,7 +89,7 @@ function Get-ImportantFiles {
         }
 }
 
-# ---------- تابع کمکی: فایل‌های سورس فرانت‌اند ----------
+# ---------- فیلتر فایل‌های فرانت‌اند ----------
 function Get-FrontEndFiles {
     param([string]$Path)
     $includeExt = @(".ts", ".tsx", ".js", ".jsx", ".css", ".scss", ".sass", ".less", ".html", ".json")
@@ -83,21 +104,19 @@ function Get-FrontEndFiles {
         }
 }
 
-# ---------- تابع بازگشتی درخت (سبک کلاسیک) ----------
-function Export-DirectoryTree {
+# ---------- درخت بازگشتی (Builder-based، بدون I/O درونی) ----------
+function Add-TreeLines {
     param(
         [string]$Path,
-        [string]$Prefix = "",
-        [string]$OutFile
+        [string]$Prefix,
+        [System.Text.StringBuilder]$Sb
     )
-
     $folders = @(Get-ChildItem -Path $Path -Directory -ErrorAction SilentlyContinue |
         Where-Object { $ExcludedFolders -notcontains $_.Name } |
         Sort-Object Name)
     $files = @(Get-ChildItem -Path $Path -File -ErrorAction SilentlyContinue |
         Sort-Object Name)
 
-    # ترتیب کلاسیک: اول فولدرها، بعد فایل‌ها
     $all = @($folders) + @($files)
     $count = $all.Count
 
@@ -105,46 +124,71 @@ function Export-DirectoryTree {
         $item = $all[$i]
         $isLast = ($i -eq $count - 1)
         $branch = if ($isLast) { "└── " } else { "├── " }
-        Add-Content -Path $OutFile -Value ("{0}{1}{2}" -f $Prefix, $branch, $item.Name) -Encoding utf8
+        [void]$Sb.AppendLine("$Prefix$branch$($item.Name)")
 
         if ($item.PSIsContainer) {
             $newPrefix = $Prefix + $(if ($isLast) { "    " } else { "│   " })
-            Export-DirectoryTree -Path $item.FullName -Prefix $newPrefix -OutFile $OutFile
+            Add-TreeLines -Path $item.FullName -Prefix $newPrefix -Sb $Sb
         }
     }
 }
 
+# ---------- ساخت محتوا برای یک مجموعه فایل (با هدر PROJECT/MODULE/FILE) ----------
+function Build-ContentBlock {
+    param(
+        [object[]]$Files,
+        [string]$HeaderLine = "",
+        [string]$BasePath = ""   # اگر داده شود، مسیرها نسبی می‌شوند
+    )
+    $sb = New-Object System.Text.StringBuilder
+    if ($HeaderLine) {
+        [void]$sb.AppendLine($HeaderLine)
+        [void]$sb.AppendLine()
+    }
+    foreach ($f in $Files) {
+        $displayPath = if ($BasePath) { $f.FullName.Substring($BasePath.Length).TrimStart('\', '/') } else { $f.FullName }
+        [void]$sb.AppendLine("//// FILE: $displayPath")
+        $text = Read-FileContent -Path $f.FullName
+        if ($text.Length -gt 0) { [void]$sb.Append($text) }
+        if (-not $text.EndsWith("`n")) { [void]$sb.AppendLine() }
+        [void]$sb.AppendLine()
+    }
+    return $sb.ToString()
+}
+
 # ---------- 1) درخت ----------
 if (-not $SkipTree) {
-    if (Test-Path $TreeOutput) { Remove-Item $TreeOutput -Force }
+    $sb = New-Object System.Text.StringBuilder
     $rootName = Split-Path $RootPath -Leaf
     if ([string]::IsNullOrEmpty($rootName)) { $rootName = $RootPath }
-    Add-Content -Path $TreeOutput -Value $rootName -Encoding utf8
-    Export-DirectoryTree -Path $RootPath -Prefix "" -OutFile $TreeOutput
+    [void]$sb.AppendLine($rootName)
+    Add-TreeLines -Path $RootPath -Prefix "" -Sb $sb
+    Write-FileContent -Path $TreeOutput -Content $sb.ToString()
     Write-Host "[OK] Directory tree saved: $TreeOutput"
 }
 
-# ---------- لیست پروژه‌های بک‌اند (فولدرهای سطح اول) ----------
+# ---------- لیست پروژه‌های بک‌اند ----------
 $projects = @(Get-ChildItem -Path $RootPath -Directory -ErrorAction SilentlyContinue |
     Where-Object { $_.Name -ne $ExportFolder -and $ExcludedFolders -notcontains $_.Name })
 
 # ---------- 2) همه پروژه‌ها در AllProjects.cs ----------
 if (-not $SkipAllProjects) {
     $outFile = Join-Path $ExportPath "AllProjects.cs"
-    "" | Out-File $outFile -Encoding utf8
+    $sb = New-Object System.Text.StringBuilder
 
     foreach ($proj in $projects) {
-        "//// PROJECT: $($proj.Name)" | Out-File $outFile -Append -Encoding utf8
-        "`n" | Out-File $outFile -Append -Encoding utf8
-
-        Get-ImportantFiles -Path $proj.FullName |
-            Sort-Object FullName |
-            ForEach-Object {
-                "//// FILE: $($_.FullName)" | Out-File $outFile -Append -Encoding utf8
-                Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
-                "`n" | Out-File $outFile -Append -Encoding utf8
-            }
+        [void]$sb.AppendLine("//// PROJECT: $($proj.Name)")
+        [void]$sb.AppendLine()
+        $files = @(Get-ImportantFiles -Path $proj.FullName | Sort-Object FullName)
+        foreach ($f in $files) {
+            [void]$sb.AppendLine("//// FILE: $($f.FullName)")
+            $text = Read-FileContent -Path $f.FullName
+            if ($text.Length -gt 0) { [void]$sb.Append($text) }
+            if (-not $text.EndsWith("`n")) { [void]$sb.AppendLine() }
+            [void]$sb.AppendLine()
+        }
     }
+    Write-FileContent -Path $outFile -Content $sb.ToString()
     Write-Host "[OK] All projects merged: $outFile"
 }
 
@@ -152,23 +196,14 @@ if (-not $SkipAllProjects) {
 if (-not $SkipPerProject) {
     foreach ($proj in $projects) {
         $outFile = Join-Path $ExportPath "$($proj.Name).cs"
-        "" | Out-File $outFile -Encoding utf8
-
-        "//// PROJECT: $($proj.Name)" | Out-File $outFile -Append -Encoding utf8
-        "`n" | Out-File $outFile -Append -Encoding utf8
-
-        Get-ImportantFiles -Path $proj.FullName |
-            Sort-Object FullName |
-            ForEach-Object {
-                "//// FILE: $($_.FullName)" | Out-File $outFile -Append -Encoding utf8
-                Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
-                "`n" | Out-File $outFile -Append -Encoding utf8
-            }
+        $files = @(Get-ImportantFiles -Path $proj.FullName | Sort-Object FullName)
+        $content = Build-ContentBlock -Files $files -HeaderLine "//// PROJECT: $($proj.Name)"
+        Write-FileContent -Path $outFile -Content $content
         Write-Host "[OK] $($proj.Name) exported: $outFile"
     }
 }
 
-# ---------- 4) گروه‌بندی ماژول‌های بک‌اند (Core.cs، HR.cs، ...) ----------
+# ---------- 4) گروه‌بندی ماژول‌های بک‌اند ----------
 if (-not $SkipModules) {
     $modules = $projects |
         ForEach-Object {
@@ -182,25 +217,25 @@ if (-not $SkipModules) {
     foreach ($group in $modules) {
         $moduleName = $group.Name
         $outFile = Join-Path $ExportPath "$moduleName.cs"
-        "" | Out-File $outFile -Encoding utf8
-
+        $sb = New-Object System.Text.StringBuilder
         foreach ($proj in $group.Group) {
-            "//// PROJECT: $($proj.Name)" | Out-File $outFile -Append -Encoding utf8
-            "`n" | Out-File $outFile -Append -Encoding utf8
-
-            Get-ImportantFiles -Path $proj.Path |
-                Sort-Object FullName |
-                ForEach-Object {
-                    "//// FILE: $($_.FullName)" | Out-File $outFile -Append -Encoding utf8
-                    Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
-                    "`n" | Out-File $outFile -Append -Encoding utf8
-                }
+            [void]$sb.AppendLine("//// PROJECT: $($proj.Name)")
+            [void]$sb.AppendLine()
+            $files = @(Get-ImportantFiles -Path $proj.Path | Sort-Object FullName)
+            foreach ($f in $files) {
+                [void]$sb.AppendLine("//// FILE: $($f.FullName)")
+                $text = Read-FileContent -Path $f.FullName
+                if ($text.Length -gt 0) { [void]$sb.Append($text) }
+                if (-not $text.EndsWith("`n")) { [void]$sb.AppendLine() }
+                [void]$sb.AppendLine()
+            }
         }
+        Write-FileContent -Path $outFile -Content $sb.ToString()
         Write-Host "[OK] Backend module $moduleName exported: $outFile"
     }
 }
 
-# ---------- 5) ماژول‌های فرانت‌اند (ModuleName.Front.txt) ----------
+# ---------- 5) ماژول‌های فرانت‌اند ----------
 if (-not $SkipFront) {
     $frontModulesPath = Join-Path $RootPath "FrontEnd\src\modules"
     if (Test-Path $frontModulesPath) {
@@ -208,19 +243,13 @@ if (-not $SkipFront) {
         foreach ($mod in $frontModules) {
             $moduleName = $mod.Name
             $outFile = Join-Path $ExportPath "$moduleName.Front.txt"
-            "" | Out-File $outFile -Encoding utf8
-
-            "//// FRONTEND MODULE: $moduleName" | Out-File $outFile -Append -Encoding utf8
-            "`n" | Out-File $outFile -Append -Encoding utf8
-
-            Get-FrontEndFiles -Path $mod.FullName |
-                Sort-Object FullName |
-                ForEach-Object {
-                    $relPath = $_.FullName.Substring($mod.FullName.Length).TrimStart('\', '/')
-                    "//// FILE: $relPath" | Out-File $outFile -Append -Encoding utf8
-                    Get-Content $_.FullName -ErrorAction SilentlyContinue | Out-File $outFile -Append -Encoding utf8
-                    "`n" | Out-File $outFile -Append -Encoding utf8
-                }
+            $files = @(Get-FrontEndFiles -Path $mod.FullName | Sort-Object FullName)
+            # مسیرها نسبت به پوشه ماژول
+            $content = Build-ContentBlock `
+                -Files $files `
+                -HeaderLine "//// FRONTEND MODULE: $moduleName" `
+                -BasePath $mod.FullName
+            Write-FileContent -Path $outFile -Content $content
             Write-Host "[OK] Frontend module $moduleName exported: $outFile"
         }
     } else {

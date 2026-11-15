@@ -1,5 +1,6 @@
-﻿using Trader.Domain.Enums;
-using Trader.Application.Runtime;
+﻿using Trader.Application.Runtime;
+using Trader.Domain.Enums;
+using Trader.Domain.ValueObjects;
 
 namespace Trader.Infrastructure.Backtesting;
 
@@ -28,7 +29,9 @@ internal sealed record PendingOrder(
     string Isin,
     OrderSide Side,
     long Quantity,
-    DateTime SignalTime);
+    DateTime SignalTime,
+    Price? StopLoss = null,
+    Price? TakeProfit = null);
 
 /// <summary>
 /// یک رخداد در Timeline شبیه‌سازی (candle + sub-candles).

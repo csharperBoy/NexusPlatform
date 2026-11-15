@@ -4,10 +4,6 @@ using Trader.Domain.ValueObjects;
 
 namespace Trader.Domain.Entities;
 
-/// <summary>
-/// خروجی تحلیل یک Strategy برای یک Instrument در یک لحظه.
-/// به هیچ Account یا Broker وابسته نیست.
-/// </summary>
 public class Signal : BaseEntity
 {
     public Guid RunId { get; private set; }
@@ -19,16 +15,25 @@ public class Signal : BaseEntity
     public string? MetadataJson { get; private set; }
     public DateTime? ConsumedAt { get; private set; }
     public Guid? SourceEvaluationId { get; private set; }
+
+    /// <summary>پیشنهاد Strategy برای SL. اگر null بود، Run-level اعمال می‌شه.</summary>
+    public Price? StopLossPrice { get; private set; }
+
+    /// <summary>پیشنهاد Strategy برای TP. اگر null بود، Run-level اعمال می‌شه.</summary>
+    public Price? TakeProfitPrice { get; private set; }
+
     private Signal() { } // EF
 
     public static Signal Create(
-     Guid runId,
-     string isin,
-     string strategyKey,
-     SignalAction action,
-     SignalStrength strength,
-     string? metadataJson = null,
-     Guid? sourceEvaluationId = null)      // ← جدید
+        Guid runId,
+        string isin,
+        string strategyKey,
+        SignalAction action,
+        SignalStrength strength,
+        string? metadataJson = null,
+        Guid? sourceEvaluationId = null,
+        Price? stopLossPrice = null,
+        Price? takeProfitPrice = null)
     {
         return new Signal
         {
@@ -39,7 +44,9 @@ public class Signal : BaseEntity
             Strength = strength,
             ProducedAt = DateTime.UtcNow,
             MetadataJson = metadataJson,
-            SourceEvaluationId = sourceEvaluationId
+            SourceEvaluationId = sourceEvaluationId,
+            StopLossPrice = stopLossPrice,
+            TakeProfitPrice = takeProfitPrice,
         };
     }
 

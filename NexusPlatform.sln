@@ -282,6 +282,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Exporter", "Exporter", "{2C
 		Export-All.ps1 = Export-All.ps1
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Strategies", "Strategies", "{C5C24201-E0C9-40B2-A61D-7F008175EF1D}"
+	ProjectSection(SolutionItems) = preProject
+		STRATEGY-MTF-COMPOSITE.md = STRATEGY-MTF-COMPOSITE.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -745,6 +750,7 @@ Global
 		{1B209CC0-D0FF-4A24-922F-7C34ED013847} = {466A7369-AC41-4C61-9F23-E8995A6875F1}
 		{1A8FACB9-A71F-4207-963D-54FD2F671DEC} = {B5322981-F9F4-4D0E-9D72-19BFC6A13809}
 		{2CC5B419-ACD1-4411-8F52-D3837479FCD4} = {8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}
+		{C5C24201-E0C9-40B2-A61D-7F008175EF1D} = {93E86E81-5D93-4F96-AAB1-B97CB3287288}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3305909-76C1-4298-B275-0C2A8F896D26}

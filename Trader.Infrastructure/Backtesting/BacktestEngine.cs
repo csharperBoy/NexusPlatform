@@ -325,9 +325,8 @@ public sealed class BacktestEngine : IBacktestEngine
 
         // ─── Extra TimeFrames (Strategy requirements + SL/TP sub) ───
         var strategyReqs = strategy.ExtraCandleRequirements
-            .Where(r => r.TimeFrame != timeFrame
-                     && (int)r.TimeFrame < (int)timeFrame)
-            .ToList();
+    .Where(r => r.TimeFrame != timeFrame)
+    .ToList();
 
         // Union of all needed extra TFs
         var neededExtraTfs = new HashSet<TimeFrame>();
@@ -657,7 +656,9 @@ public sealed class BacktestEngine : IBacktestEngine
             if (result.Quantity > 0)
             {
                 state.PendingOrders[isin] = new PendingOrder(
-                    isin, OrderSide.Buy, result.Quantity, candle.OpenTime);
+    isin, OrderSide.Buy, result.Quantity, candle.OpenTime,
+    StopLoss: sig.StopLoss,
+    TakeProfit: sig.TakeProfit);
 
                 eventLogger.Log(run.Id, BacktestEventType.SignalGenerated, BacktestEventSeverity.Info,
                     $"سیگنال خرید {isin}: {result.Quantity:N0} سهم @ {candle.Close:N0} " +
@@ -690,7 +691,7 @@ public sealed class BacktestEngine : IBacktestEngine
             if (result.Quantity > 0)
             {
                 state.PendingOrders[isin] = new PendingOrder(
-                    isin, OrderSide.Sell, result.Quantity, candle.OpenTime);
+    isin, OrderSide.Sell, result.Quantity, candle.OpenTime);
 
                 eventLogger.Log(run.Id, BacktestEventType.SignalGenerated, BacktestEventSeverity.Info,
                     $"سیگنال فروش {isin}: {result.Quantity:N0} سهم @ {candle.Close:N0} " +
@@ -780,8 +781,8 @@ public sealed class BacktestEngine : IBacktestEngine
             }
             else
             {
-                var sl = ResolveStopLoss(run, fillPrice);
-                var tp = ResolveTakeProfit(run, fillPrice);
+                var sl = ResolveStopLoss(run, fillPrice, pending.StopLoss);
+                var tp = ResolveTakeProfit(run, fillPrice, pending.TakeProfit);
 
                 var pos = new OpenPosition
                 {
@@ -955,24 +956,26 @@ public sealed class BacktestEngine : IBacktestEngine
 
     /* ═══════════════════ Helpers ═══════════════════ */
 
-    private static decimal? ResolveStopLoss(BacktestRun run, decimal entryPrice)
+    private static decimal? ResolveStopLoss(
+    BacktestRun run, decimal entryPrice, Price? signalSL)
     {
         if (run.StopLossPrice.HasValue)
             return run.StopLossPrice.Value;
         if (run.StopLossPercentage.HasValue)
             return StopLossConfig.FromPercentage(run.StopLossPercentage.Value)
                 .ResolveForEntry(new Price(entryPrice)).Value;
-        return null;
+        return signalSL?.Value;
     }
 
-    private static decimal? ResolveTakeProfit(BacktestRun run, decimal entryPrice)
+    private static decimal? ResolveTakeProfit(
+        BacktestRun run, decimal entryPrice, Price? signalTP)
     {
         if (run.TakeProfitPrice.HasValue)
             return run.TakeProfitPrice.Value;
         if (run.TakeProfitPercentage.HasValue)
             return TakeProfitConfig.FromPercentage(run.TakeProfitPercentage.Value)
                 .ResolveForEntry(new Price(entryPrice)).Value;
-        return null;
+        return signalTP?.Value;
     }
 
     private static decimal ComputeEquity(BacktestState state)

@@ -2100,6 +2100,10 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<Guid?>("SourceEvaluationId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("StopLossPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
                     b.Property<string>("StrategyKey")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -2108,6 +2112,10 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<decimal>("Strength")
                         .HasPrecision(9, 4)
                         .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal?>("TakeProfitPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
 
                     b.HasKey("Id")
                         .HasName("PK_Signal");

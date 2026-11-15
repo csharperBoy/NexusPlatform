@@ -251,8 +251,7 @@ public sealed class StrategyEvaluationService : IStrategyEvaluationService
 
             foreach (var req in requirements)
             {
-                if (req.TimeFrame == ctx.PrimaryTimeFrame
-                    || (int)req.TimeFrame >= (int)ctx.PrimaryTimeFrame)
+                if (req.TimeFrame == ctx.PrimaryTimeFrame)
                 {
                     _logger.LogDebug(
                         "Skipping extra TF {TF} for {Isin}: >= primary {Primary}.",
@@ -447,13 +446,15 @@ public sealed class StrategyEvaluationService : IStrategyEvaluationService
             if (s.Action == SignalAction.Hold) continue;
 
             var signal = Signal.Create(
-                runId: ctx.RunId,
-                isin: s.Isin,
-                strategyKey: ctx.StrategyKey,
-                action: s.Action,
-                strength: s.Strength,
-                metadataJson: s.MetadataJson,
-                sourceEvaluationId: evalEntity?.Id);
+    runId: ctx.RunId,
+    isin: s.Isin,
+    strategyKey: ctx.StrategyKey,
+    action: s.Action,
+    strength: s.Strength,
+    metadataJson: s.MetadataJson,
+    sourceEvaluationId: evalEntity?.Id,
+    stopLossPrice: s.StopLoss,
+    takeProfitPrice: s.TakeProfit);
 
             signal.AddDomainEvent(new SignalGeneratedEvent(
                 signal.Id,

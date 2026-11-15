@@ -371,6 +371,12 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
 
             // ─── Indicators ───
             services.AddSingleton<IIndicator<RsiConfig, decimal?>, RsiIndicator>();
+            services.AddSingleton<IIndicator<Trader.Application.Indicators.Ema.EmaConfig, decimal?>,
+    Trader.Application.Indicators.Ema.EmaIndicator>();
+            services.AddSingleton<IIndicator<Trader.Application.Indicators.Macd.MacdConfig, Trader.Application.Indicators.Macd.MacdResult?>,
+                Trader.Application.Indicators.Macd.MacdIndicator>();
+            services.AddSingleton<IIndicator<Trader.Application.Indicators.Atr.AtrConfig, decimal?>,
+                Trader.Application.Indicators.Atr.AtrIndicator>();
             // ─── Market Session ───
             services.AddSingleton<ITradingScheduleCache, TradingScheduleCache>();
             services.AddSingleton<IMarketSessionProvider, IranMarketSessionProvider>();

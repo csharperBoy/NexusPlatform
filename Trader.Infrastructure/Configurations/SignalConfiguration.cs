@@ -19,11 +19,28 @@ public class SignalConfiguration : BaseConfiguration<Signal>
         builder.Property(x => x.SourceEvaluationId).IsRequired(false);
         builder.HasIndex(x => x.SourceEvaluationId)
             .HasDatabaseName("IX_Signal_SourceEvaluationId");
+
         builder.Property(x => x.Strength)
             .HasConversion(
                 s => s.Value,
                 v => new Trader.Domain.ValueObjects.SignalStrength(v))
             .HasPrecision(9, 4);
+
+        builder.Property(x => x.StopLossPrice)
+            .HasConversion(
+                p => p.HasValue ? p.Value.Value : (decimal?)null,
+                v => v.HasValue ? new Trader.Domain.ValueObjects.Price(v.Value)
+                                : (Trader.Domain.ValueObjects.Price?)null)
+            .HasPrecision(18, 4)
+            .IsRequired(false);
+
+        builder.Property(x => x.TakeProfitPrice)
+            .HasConversion(
+                p => p.HasValue ? p.Value.Value : (decimal?)null,
+                v => v.HasValue ? new Trader.Domain.ValueObjects.Price(v.Value)
+                                : (Trader.Domain.ValueObjects.Price?)null)
+            .HasPrecision(18, 4)
+            .IsRequired(false);
 
         builder.Property(x => x.ProducedAt).IsRequired();
         builder.Property(x => x.ConsumedAt).IsRequired(false);

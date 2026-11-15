@@ -193,8 +193,9 @@ public sealed class OrderIntentBuilder : IOrderIntentBuilder
 
         if (signal.Action == SignalAction.Buy)
         {
-            sl = context.StopLoss?.ResolveForEntry(entryPrice);
-            tp = context.TakeProfit?.ResolveForEntry(entryPrice);
+            // Run-level override; fallback to strategy-provided
+            sl = context.StopLoss?.ResolveForEntry(entryPrice) ?? signal.StopLossPrice;
+            tp = context.TakeProfit?.ResolveForEntry(entryPrice) ?? signal.TakeProfitPrice;
         }
 
         var intent = OrderIntent.Create(
