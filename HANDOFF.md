@@ -95,6 +95,9 @@ Algorithmic Trading System برای بازار سرمایه ایران:
 │   - SL/TP Monitoring (مستقل از Order activity)           │
 └──────────────────────────────────────────────────────────┘
 ```
+Active Strategies:
+  • "rsi"             — RSI(14), single-layer (baseline/demo)
+  • "mtf-composite"   — Multi-TimeFrame Composite (Trend+Momentum+Micro)
 
 ### Risk Pipeline (بین Intent و Dispatch)
 ```
@@ -573,7 +576,22 @@ main.tsx
 | **Frontend** | App.tsx hooks-order fix (`useRoutes` همیشه صدا زده می‌شود) |
 | **حذف** | `pages/Dashboard/DashboardPage.tsx` + `DashboardCards.tsx` (redundant) |
 ---
+### MtfCompositeStrategy — ✅ COMPLETE (Phase C-strategy)
 
+| # | Feature | Status |
+|---|---|---|
+| 3 Indicators | EMA, MACD, ATR (pure, unit-tested) | ✅ |
+| Strategy | mtf-composite (3-layer, weighted composite) | ✅ |
+| Symmetric Bull/Bear | strength ≥ threshold + MinDiff anti flip-flop | ✅ |
+| ATR-based SL/TP | signal-level، Run-level override wins | ✅ |
+| Intra-Candle | SubCandleAnalyzer، M5 in H1، time-scaled baseline | ✅ |
+| Dual Volume Baseline | IntraDay + Opening (30-day) — opening anomaly handled correctly | ✅ |
+| Framework | StrategySignal.StopLoss/TakeProfit + Signal columns | ✅ |
+| Framework | ExtraCandleRequirements ≥ primary allowed | ✅ |
+| Tests | +25 (Ema/Macd/Atr/SubCandleAnalyzer/Strategy) | ✅ |
+| Docs | docs/STRATEGY-MTF-COMPOSITE.md | ✅ |
+
+**Next:** Backtest tuning → Parameter lock-in → Paper Week
 ## 9. KEY DECISIONS RECAP
 
 ### از Master Prompt
@@ -764,6 +782,12 @@ main.tsx
 
 ## 14. RECENT COMPLETED WORK
 
+0. **MtfCompositeStrategy** — Phase C-strategy
+   - 3 new indicators (EMA/MACD/ATR) + composite strategy
+   - Intra-candle decision with sub-candles
+   - Dual baseline for opening-candle anomaly
+   - ATR-based SL/TP with Run-level override
+   - 
 1. **Backtest Correctness (D55-D58)** — ۸+ باگ Critical/High
    - BC1 Partial Sell، BC2 Proportional PnL، BC3 Cancel، BC4 SL/TP on Add (revert)، BC5 Slippage clamp، BC6 Tehran date، BC7 UTC conversion، BC8 ConfigOverride `??`
    - **781% bug** — duplicate quantity mutation → phantom proceeds → integrity check added

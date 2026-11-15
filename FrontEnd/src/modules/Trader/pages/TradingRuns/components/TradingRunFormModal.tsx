@@ -240,23 +240,33 @@ setCurrencyRateValue(null);
       return;
     }
     const init: Record<string, any> = {};
-    strategy.configFields.forEach((f) => {
-      if (f.defaultValue == null) return;
-      const t = f.typeName.toLowerCase();
-      if (
-        t.includes("int") ||
-        t.includes("decimal") ||
-        t.includes("double") ||
-        t.includes("float") ||
-        t.includes("long")
-      ) {
-        init[f.name] = Number(f.defaultValue);
-      } else if (t === "boolean" || t === "bool") {
-        init[f.name] = f.defaultValue === "true";
-      } else {
-        init[f.name] = f.defaultValue;
-      }
-    });
+strategy.configFields.forEach((f) => {
+  if (f.defaultValue == null) return;
+  const t = f.typeName.toLowerCase();
+
+  if (
+    t.includes("int") ||
+    t.includes("decimal") ||
+    t.includes("double") ||
+    t.includes("float") ||
+    t.includes("long")
+  ) {
+    init[f.name] = Number(f.defaultValue);
+  } else if (t === "boolean" || t === "bool") {
+    init[f.name] = f.defaultValue === "true";
+  } else if (t === "timeframe") {
+    // ← NEW: enum name → int
+    const raw = f.defaultValue;
+    const asNum = (TimeFrame as any)[raw];
+    init[f.name] = typeof raw === "number"
+      ? raw
+      : typeof asNum === "number"
+        ? asNum
+        : null;
+  } else {
+    init[f.name] = f.defaultValue;
+  }
+});
     setStrategyConfig(init);
   }, [strategyKey, strategies, isOpen, mode]);
 
@@ -328,7 +338,8 @@ for (const a of accounts) {
     setError(null);
     const sm = Number(strengthMultiplier);
     if (isNaN(sm) || sm < 0.1 || sm > 5) {
-      return "ضریب قدرت باید بین 0.1 تا 5 باشد";
+      setError("ضریب قدرت باید بین 0.1 تا 5 باشد");
+      return;
     }
     const md = Number(minDeltaPercent);
     if (isNaN(md) || md < 0 || md > 100) {
@@ -707,7 +718,14 @@ for (const a of accounts) {
               </div>
             </div>
           </Section>
-
+{(slMode === "none" || tpMode === "none") && selectedStrategy?.key === "mtf-composite" && (
+  <div className="mt-3 rounded-lg border border-blue-700 bg-blue-900/20 p-3 text-[10px] text-blue-300">
+    ℹ️ برای استراتژی <strong>mtf-composite</strong>، اگر حد ضرر یا حد سود را
+    خالی بگذارید، از مقدار پیشنهادی استراتژی (بر اساس ATR و ضریب تنظیم‌شده در
+    پارامترها) استفاده می‌شود. اگر مقدار ثابت بدهید، آن مقدار اعمال می‌شود
+    (Override).
+  </div>
+)}
           {/* ۵. Behavior */}
           <Section title="رفتار اجرا">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
