@@ -2,7 +2,7 @@
 
 namespace Trader.Application.Strategies.MtfComposite;
 
-internal sealed record SubCandleAnalysisResult(
+public sealed record SubCandleAnalysisResult(
     bool Triggered,
     decimal VolumeRatio,
     decimal CurrentVolume,
@@ -21,7 +21,7 @@ internal sealed record SubCandleAnalysisResult(
 ///   • IntraDay: کندل‌های primary غیر-اول-روز
 ///   • Opening: کندل‌های primary اول-روز (فاصله > ۶ ساعت از قبلی)
 /// </summary>
-internal static class SubCandleAnalyzer
+public static class SubCandleAnalyzer
 {
     public static SubCandleAnalysisResult? Analyze(
         IReadOnlyList<Candle> subCandles,

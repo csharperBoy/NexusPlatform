@@ -92,7 +92,7 @@ public class SubCandleAnalyzerTests
             triggerThreshold: 2.0m);
 
         result.Should().NotBeNull();
-        result!.Value.Triggered.Should().BeFalse();
+        result!.Triggered.Should().BeFalse();
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class SubCandleAnalyzerTests
             triggerThreshold: 2.0m);
 
         result.Should().NotBeNull();
-        result!.Value.Triggered.Should().BeTrue();
+        result!.Triggered.Should().BeTrue();
     }
 
     [Fact]

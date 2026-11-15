@@ -2,7 +2,7 @@
     using global::Trader.Application.Indicators.Macd;
     using Xunit;
 
-    namespace Trader.Tests.Application.Indicators
+    namespace Trader.Tests.Application.Indicators;
 
     public class MacdCalculatorTests
     {
