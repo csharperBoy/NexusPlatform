@@ -621,6 +621,7 @@ for (const a of accounts) {
                   پارامترهای {selectedStrategy.displayName}
                 </p>
                 <StrategyConfigEditor
+                  strategyKey={strategyKey}
                   fields={selectedStrategy.configFields}
                   values={strategyConfig}
                   onChange={(n, v) =>
