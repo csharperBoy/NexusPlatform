@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/components/BacktestStatusBadge.tsx
 import React from "react";
 import {
   BacktestStatus,

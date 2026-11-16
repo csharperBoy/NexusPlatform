@@ -1,16 +1,21 @@
-//src/modules/Trader/pages/Backtests/BacktestCreateModal.tsx
+// src/modules/Trader/pages/Backtests/BacktestCreateModal.tsx
 import React, { useEffect, useState } from "react";
 import { tradingRunApi } from "../../api/tradingRunApi";
 import { backtestApi } from "../../api/backtestApi";
+import { strategyApi } from "../../api/strategyApi";
+import { currencyRateApi } from "../../api/currencyRateApi";
 import type {
   TradingRunInfoView,
   RunBacktestModel,
   RunBacktestConfigModel,
+  TradingRunSymbolModel,
+  StrategyInfoView,
 } from "../../models";
-import { TimeFrame, TIMEFRAME_LABELS } from "../../models";
+import { TimeFrame } from "../../models";
 import { SymbolAllocationEditor } from "../TradingRuns/components/SymbolAllocationEditor";
-import type { TradingRunSymbolModel } from "../../models";
-import { currencyRateApi } from "../../api/currencyRateApi";
+import { StrategyConfigSection } from "../../components/StrategyConfigSection";
+import { buildDefaultStrategyConfig } from "../../utils/strategyDefaults";
+
 interface Props {
   isOpen: boolean;
   initialSourceRunId?: string | null;
@@ -37,6 +42,7 @@ export const BacktestCreateModal: React.FC<Props> = ({
     initialSourceRunId ? "existing" : "virtual",
   );
   const [runs, setRuns] = useState<TradingRunInfoView[]>([]);
+  const [strategies, setStrategies] = useState<StrategyInfoView[]>([]);
 
   const [name, setName] = useState("");
   const [sourceRunId, setSourceRunId] = useState<string>(
@@ -47,14 +53,13 @@ export const BacktestCreateModal: React.FC<Props> = ({
   const [initialCapital, setInitialCapital] = useState("10000000");
   const [slippage, setSlippage] = useState("0.1"); // percent
   const [subCandleTf, setSubCandleTf] = useState("1");
-const [targetCurrency, setTargetCurrency] = useState("");
-const [currencyRateStatus, setCurrencyRateStatus] =
-  useState<"idle" | "checking" | "ok" | "late-start" | "missing">("idle");
+  const [targetCurrency, setTargetCurrency] = useState("");
+  const [currencyRateStatus, setCurrencyRateStatus] =
+    useState<"idle" | "checking" | "ok" | "late-start" | "missing">("idle");
+
   // Virtual config
-  const [strategyKey, setStrategyKey] = useState("rsi");
-  const [strategyConfigJson, setStrategyConfigJson] = useState(
-    '{"Period":14,"OversoldThreshold":30,"OverboughtThreshold":70,"MinSignalStrength":0.6}',
-  );
+  const [strategyKey, setStrategyKey] = useState("");
+  const [strategyConfig, setStrategyConfig] = useState<Record<string, unknown>>({});
   const [primaryTimeFrame, setPrimaryTimeFrame] = useState<number>(TimeFrame.M5);
   const [strengthMultiplier, setStrengthMultiplier] = useState("1.5");
   const [minDeltaPercent, setMinDeltaPercent] = useState("3");
@@ -65,6 +70,7 @@ const [currencyRateStatus, setCurrencyRateStatus] =
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* ─── Fetch trading runs ─── */
   useEffect(() => {
     if (!isOpen) return;
     (async () => {
@@ -77,71 +83,82 @@ const [currencyRateStatus, setCurrencyRateStatus] =
     })();
   }, [isOpen]);
 
+  /* ─── Fetch strategies + auto-select first ─── */
   useEffect(() => {
-  if (isOpen) {
-    setName("");
-    setTargetCurrency("");
-    setCurrencyRateStatus("idle");
-    setError(null);
-  }
-}, [isOpen]);
-
-useEffect(() => {
-  if (!isOpen) return;
-
-  const cur = targetCurrency.trim().toUpperCase();
-  if (!cur || cur === "IRR") {
-    setCurrencyRateStatus("idle");
-    return;
-  }
-
-  let cancelled = false;
-  setCurrencyRateStatus("checking");
-
-  (async () => {
-    try {
-      // آیا نرخی قبل از شروع Backtest وجود دارد؟ (baseline rate)
-      const hasBaseline = await currencyRateApi.CheckRange(
-        cur,
-        "IRR",
-        "1900-01-01",
-        dateFrom,
-      );
-
-      if (cancelled) return;
-
-      if (hasBaseline) {
-        setCurrencyRateStatus("ok");
-        return;
+    if (!isOpen) return;
+    (async () => {
+      try {
+        const list = await strategyApi.GetList();
+        setStrategies(list);
+        if (list.length > 0 && !strategyKey) {
+          setStrategyKey(list[0].key);
+          setStrategyConfig(buildDefaultStrategyConfig(list[0].configFields));
+        }
+      } catch {
+        setStrategies([]);
       }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
-      // baseline نیست؛ آیا هیچ نرخی تا پایان بازه وجود دارد؟
-      // اگر بله → backend کار می‌کند ولی کندل‌های اولیه از baseline (اولین نرخ)
-      // تخمین زده می‌شوند. اگر نه → backend کاملاً fail می‌شود.
-      const hasAny = await currencyRateApi.CheckRange(
-        cur,
-        "IRR",
-        "1900-01-01",
-        dateTo,
-      );
-
-      if (cancelled) return;
-
-      setCurrencyRateStatus(hasAny ? "late-start" : "missing");
-    } catch {
-      if (!cancelled) setCurrencyRateStatus("missing");
+  /* ─── Reset on open ─── */
+  useEffect(() => {
+    if (isOpen) {
+      setName("");
+      setTargetCurrency("");
+      setCurrencyRateStatus("idle");
+      setError(null);
     }
-  })();
+  }, [isOpen]);
 
-  return () => {
-    cancelled = true;
+  /* ─── Strategy change handler ─── */
+  const handleStrategyKeyChange = (k: string) => {
+    setStrategyKey(k);
+    const s = strategies.find((x) => x.key === k);
+    if (s) setStrategyConfig(buildDefaultStrategyConfig(s.configFields));
+    else setStrategyConfig({});
   };
-}, [targetCurrency, isOpen, dateFrom, dateTo]);
 
-  const buildVirtualConfig = (): RunBacktestConfigModel => {
-    return {
+  /* ─── Currency rate availability check ─── */
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const cur = targetCurrency.trim().toUpperCase();
+    if (!cur || cur === "IRR") {
+      setCurrencyRateStatus("idle");
+      return;
+    }
+
+    let cancelled = false;
+    setCurrencyRateStatus("checking");
+
+    (async () => {
+      try {
+        const hasBaseline = await currencyRateApi.CheckRange(
+          cur, "IRR", "1900-01-01", dateFrom,
+        );
+        if (cancelled) return;
+        if (hasBaseline) {
+          setCurrencyRateStatus("ok");
+          return;
+        }
+        const hasAny = await currencyRateApi.CheckRange(
+          cur, "IRR", "1900-01-01", dateTo,
+        );
+        if (cancelled) return;
+        setCurrencyRateStatus(hasAny ? "late-start" : "missing");
+      } catch {
+        if (!cancelled) setCurrencyRateStatus("missing");
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [targetCurrency, isOpen, dateFrom, dateTo]);
+
+  /* ─── Build virtual config ─── */
+  const buildVirtualConfig = (): RunBacktestConfigModel => ({
     strategyKey,
-    strategyConfigJson,
+    strategyConfigJson: JSON.stringify(strategyConfig),
     primaryTimeFrame,
     targetCurrency: targetCurrency.trim().toUpperCase() || null,
     strengthMultiplier: Number(strengthMultiplier),
@@ -154,77 +171,66 @@ useEffect(() => {
     onMarketClose: 0,
     onStop: 0,
     symbols: symbols.map((s) => ({
-        isin: s.isin,
-        allocationPercentage: s.allocationPercentage,
+      isin: s.isin,
+      allocationPercentage: s.allocationPercentage,
     })),
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!name.trim()) { setError("نام بکتست الزامی است."); return; }
+    if (new Date(dateTo) <= new Date(dateFrom)) {
+      setError("تاریخ پایان باید بعد از تاریخ شروع باشد."); return;
+    }
+    const ic = Number(initialCapital);
+    if (!ic || ic <= 0) {
+      setError("سرمایه‌ی اولیه باید بزرگ‌تر از صفر باشد."); return;
+    }
+    if (mode === "existing" && !sourceRunId) {
+      setError("یک Run انتخاب کنید."); return;
+    }
+    if (mode === "virtual") {
+      if (!strategyKey) { setError("یک استراتژی انتخاب کنید."); return; }
+      if (symbols.length === 0) {
+        setError("حداقل یک نماد انتخاب کنید."); return;
+      }
+      const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
+      if (Math.abs(total - 100) > 0.01) {
+        setError("مجموع درصد تخصیص نمادها باید ۱۰۰ باشد."); return;
+      }
+    }
+    if (targetCurrency && currencyRateStatus === "missing") {
+      setError(
+        "نرخ ارز برای بازه‌ی انتخابی موجود نیست. ابتدا از صفحه‌ی «نرخ‌های ارز» ثبت کنید.",
+      );
+      return;
+    }
+
+    const model: RunBacktestModel = {
+      name: name.trim(),
+      sourceRunId: mode === "existing" ? sourceRunId : null,
+      configOverride: mode === "virtual" ? buildVirtualConfig() : null,
+      dateFrom: new Date(dateFrom).toISOString(),
+      dateTo: new Date(dateTo + "T23:59:59Z").toISOString(),
+      initialCapital: ic,
+      slippagePercent: Number(slippage) / 100,
+      subCandleTimeFrame: subCandleTf ? Number(subCandleTf) : null,
+      timeZoneId: "Asia/Tehran",
     };
-};
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setError(null);
 
-  if (!name.trim()) {
-    setError("نام بکتست الزامی است.");
-    return;
-  }
-  if (new Date(dateTo) <= new Date(dateFrom)) {
-    setError("تاریخ پایان باید بعد از تاریخ شروع باشد.");
-    return;
-  }
-  const ic = Number(initialCapital);
-  if (!ic || ic <= 0) {
-    setError("سرمایه‌ی اولیه باید بزرگ‌تر از صفر باشد.");
-    return;
-  }
-
-  if (mode === "existing" && !sourceRunId) {
-    setError("یک Run انتخاب کنید.");
-    return;
-  }
-
-  if (mode === "virtual") {
-    if (symbols.length === 0) {
-      setError("حداقل یک نماد انتخاب کنید.");
-      return;
+    setSubmitting(true);
+    try {
+      const id = await backtestApi.Run(model);
+      onCreated(id);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطا در اجرا");
+    } finally {
+      setSubmitting(false);
     }
-
-    const total = symbols.reduce((s, x) => s + x.allocationPercentage, 0);
-    if (Math.abs(total - 100) > 0.01) {
-      setError("مجموع درصد تخصیص نمادها باید ۱۰۰ باشد.");
-      return;
-    }
-  }
-  if (targetCurrency && currencyRateStatus === "missing") {
-    setError(
-      "نرخ ارز برای بازه‌ی انتخابی موجود نیست. ابتدا از صفحه‌ی «نرخ‌های ارز» ثبت کنید.",
-    );
-    return;
-  }
-  // ─── Build Model ───
-  // configOverride فقط برای Virtual Mode
-  const model: RunBacktestModel = {
-    name: name.trim(),
-    sourceRunId: mode === "existing" ? sourceRunId : null,
-    configOverride: mode === "virtual" ? buildVirtualConfig() : null,
-    dateFrom: new Date(dateFrom).toISOString(),
-    dateTo: new Date(dateTo + "T23:59:59Z").toISOString(),
-    initialCapital: ic,
-    slippagePercent: Number(slippage) / 100,
-    subCandleTimeFrame: subCandleTf ? Number(subCandleTf) : null,
-    timeZoneId: "Asia/Tehran",
   };
-
-  setSubmitting(true);
-  try {
-    const id = await backtestApi.Run(model);
-    onCreated(id);
-    onClose();
-  } catch (e) {
-    setError(e instanceof Error ? e.message : "خطا در اجرا");
-  } finally {
-    setSubmitting(false);
-  }
-};
 
   if (!isOpen) return null;
 
@@ -316,49 +322,27 @@ const handleSubmit = async (e: React.FormEvent) => {
                 Config دلخواه
               </p>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                    استراتژی
-                  </label>
-                  <input
-                    type="text"
-                    value={strategyKey}
-                    onChange={(e) => setStrategyKey(e.target.value)}
-                    dir="ltr"
-                    className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  />
+              {strategies.length === 0 ? (
+                <div className="rounded bg-slate-100 p-3 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                  در حال بارگذاری استراتژی‌ها...
                 </div>
-                <div>
-                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                    تایم‌فریم
-                  </label>
-                  <select
-                    value={primaryTimeFrame}
-                    onChange={(e) => setPrimaryTimeFrame(Number(e.target.value))}
-                    className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  >
-                    {Object.entries(TIMEFRAME_LABELS).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-                  Config JSON
-                </label>
-                <textarea
-                  value={strategyConfigJson}
-                  onChange={(e) => setStrategyConfigJson(e.target.value)}
-                  rows={3}
-                  dir="ltr"
-                  className="w-full rounded border border-gray-300 p-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              ) : (
+                <StrategyConfigSection
+                  strategies={strategies}
+                  strategyKey={strategyKey}
+                  strategyConfig={strategyConfig}
+                  primaryTimeFrame={primaryTimeFrame}
+                  showPrimaryTimeFrame={true}
+                  onStrategyKeyChange={handleStrategyKeyChange}
+                  onConfigChange={setStrategyConfig}
+                  onPrimaryTimeFrameChange={setPrimaryTimeFrame}
+                  strategyHint={
+                    strategyKey === "mtf-composite"
+                      ? "این استراتژی به کندل‌های D1 (برای Trend) و M5 (برای Intra-Candle) نیاز دارد — خودکار لود می‌شوند."
+                      : undefined
+                  }
                 />
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -375,48 +359,45 @@ const handleSubmit = async (e: React.FormEvent) => {
                   />
                 </div>
                 <div>
-  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
-    ارز تحلیل (اختیاری)
-  </label>
-  <div className="flex items-center gap-2">
-    <select
-      value={targetCurrency}
-      onChange={(e) => setTargetCurrency(e.target.value)}
-      className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-    >
-      <option value="">IRR (پایه)</option>
-      <option value="USD">دلار آمریکا (USD)</option>
-      <option value="EUR">یورو (EUR)</option>
-      <option value="GBP">پوند انگلیس (GBP)</option>
-      <option value="AED">درهم امارات (AED)</option>
-      <option value="TRY">لیر ترکیه (TRY)</option>
-      <option value="CNY">یوان چین (CNY)</option>
-    </select>
-       {currencyRateStatus === "checking" && (
-      <span className="whitespace-nowrap text-xs text-gray-500">⏳ بررسی...</span>
-    )}
-    {currencyRateStatus === "ok" && (
-      <span className="whitespace-nowrap text-xs text-emerald-600">✓</span>
-    )}
-    {currencyRateStatus === "late-start" && (
-      <span
-        className="whitespace-nowrap text-xs text-amber-600"
-        title="نرخ‌ها بعد از تاریخ شروع بازه ثبت شده‌اند. کندل‌های اولیه با اولین نرخ (baseline) تخمین زده می‌شوند."
-      >
-        ⚠️ شروع دیرتر
-      </span>
-    )}
-    {currencyRateStatus === "missing" && (
-      <span className="whitespace-nowrap text-xs text-red-600">
-        ❌ نرخی موجود نیست
-      </span>
-    )}
-  </div>
-   <p className="mt-1 text-[10px] text-gray-500">
-    اگر خالی باشد یا IRR، تحلیل روی قیمت ریالی انجام می‌شود. برای ارز دیگر،
-    باید حداقل یک نرخ قبل از شروع بازه در صفحه‌ی «نرخ‌های ارز» ثبت شده باشد.
-  </p>
-</div>
+                  <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                    ارز تحلیل (اختیاری)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={targetCurrency}
+                      onChange={(e) => setTargetCurrency(e.target.value)}
+                      className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="">IRR (پایه)</option>
+                      <option value="USD">دلار آمریکا (USD)</option>
+                      <option value="EUR">یورو (EUR)</option>
+                      <option value="GBP">پوند انگلیس (GBP)</option>
+                      <option value="AED">درهم امارات (AED)</option>
+                      <option value="TRY">لیر ترکیه (TRY)</option>
+                      <option value="CNY">یوان چین (CNY)</option>
+                    </select>
+                    {currencyRateStatus === "checking" && (
+                      <span className="whitespace-nowrap text-xs text-gray-500">⏳</span>
+                    )}
+                    {currencyRateStatus === "ok" && (
+                      <span className="whitespace-nowrap text-xs text-emerald-600">✓</span>
+                    )}
+                    {currencyRateStatus === "late-start" && (
+                      <span
+                        className="whitespace-nowrap text-xs text-amber-600"
+                        title="نرخ‌ها بعد از تاریخ شروع بازه ثبت شده‌اند. کندل‌های اولیه با اولین نرخ تخمین زده می‌شوند."
+                      >
+                        ⚠️
+                      </span>
+                    )}
+                    {currencyRateStatus === "missing" && (
+                      <span className="whitespace-nowrap text-xs text-red-600">❌</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[10px] text-gray-500">
+                    برای ارز غیر از IRR، باید حداقل یک نرخ قبل از شروع بازه ثبت شده باشد.
+                  </p>
+                </div>
                 <div>
                   <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
                     MinDelta (%)
@@ -460,13 +441,10 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               <div>
                 <label className="mb-2 block text-xs text-gray-600 dark:text-gray-400">
-                    نمادها و تخصیص سرمایه *
+                  نمادها و تخصیص سرمایه *
                 </label>
-                <SymbolAllocationEditor
-                    symbols={symbols}
-                    onChange={setSymbols}
-                />
-                </div>
+                <SymbolAllocationEditor symbols={symbols} onChange={setSymbols} />
+              </div>
             </div>
           )}
 
@@ -496,7 +474,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
           </div>
 
-          {/* Capital + Slippage */}
+          {/* Capital + Slippage + Sub-Candle */}
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -525,18 +503,21 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-                Sub-Candle
+                دقت شبیه‌سازی SL/TP
               </label>
               <select
                 value={subCandleTf}
                 onChange={(e) => setSubCandleTf(e.target.value)}
                 className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               >
-                <option value="">Pessimistic</option>
+                <option value="">Pessimistic (بدون Sub)</option>
                 <option value={TimeFrame.M1}>M1</option>
                 <option value={TimeFrame.M5}>M5</option>
                 <option value={TimeFrame.M15}>M15</option>
               </select>
+              <p className="mt-1 text-[10px] text-gray-500">
+                فقط برای رفع ابهام SL/TP داخل کندل. Sub-Candle استراتژی جداست.
+              </p>
             </div>
           </div>
 

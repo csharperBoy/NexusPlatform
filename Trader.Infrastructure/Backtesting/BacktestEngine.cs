@@ -325,8 +325,8 @@ public sealed class BacktestEngine : IBacktestEngine
 
         // ─── Extra TimeFrames (Strategy requirements + SL/TP sub) ───
         var strategyReqs = strategy.ExtraCandleRequirements
-    .Where(r => r.TimeFrame != timeFrame)
-    .ToList();
+            .Where(r => r.TimeFrame != timeFrame)
+            .ToList();
 
         // Union of all needed extra TFs
         var neededExtraTfs = new HashSet<TimeFrame>();
@@ -341,15 +341,32 @@ public sealed class BacktestEngine : IBacktestEngine
         {
             foreach (var tf in neededExtraTfs)
             {
-                var extra = await LoadCandlesAsync(
-                    uow, s.Isin, tf, run.DateFrom, run.DateTo, ct);
+                // ─── NEW: Reuse already-loaded sub-candles if same TF ───
+                // Previously this caused M5 to be loaded twice when both:
+                //   (a) user picked Sub-Candle = M5 for SL/TP resolution
+                //   (b) MTF config's SubCandleTimeFrame = M5 for strategy ExtraTimeFrames
+                List<Candle> extraIrr;
+                if (subCandles is not null
+                    && subTimeFrame == tf
+                    && subCandles.TryGetValue(s.Isin, out var existingSub)
+                    && existingSub.Count > 0)
+                {
+                    extraIrr = existingSub;
+                }
+                else
+                {
+                    extraIrr = await LoadCandlesAsync(
+                        uow, s.Isin, tf, run.DateFrom, run.DateTo, ct);
+                }
 
+                // Transform for strategy use (ExtraTimeFrames needs transformed candles)
+                var extra = extraIrr;
                 if (!string.IsNullOrWhiteSpace(run.TargetCurrency)
                     && run.TargetCurrency != "IRR"
-                    && extra.Count > 0)
+                    && extraIrr.Count > 0)
                 {
                     var tr = await transformer.TransformAsync(
-                        s.Isin, extra, run.TargetCurrency, run.DateTo, ct);
+                        s.Isin, extraIrr, run.TargetCurrency, run.DateTo, ct);
                     extra = tr.Candles.ToList();
                 }
 

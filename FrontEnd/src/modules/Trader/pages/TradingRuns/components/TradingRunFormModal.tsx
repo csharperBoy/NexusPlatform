@@ -21,7 +21,9 @@ import {
   StopRunBehavior,
   STOP_BEHAVIOR_LABELS,
 } from "../../../models";
-import { StrategyConfigEditor } from "./StrategyConfigEditor";
+
+import { StrategyConfigSection } from "../../../components/StrategyConfigSection";
+import { buildDefaultStrategyConfig, parseStrategyConfig } from "../../../utils/strategyDefaults";
 import { SymbolAllocationEditor } from "./SymbolAllocationEditor";
 import { TradingRunAccountEditor } from "./TradingRunAccountEditor";
 import { currencyRateApi } from "@/modules/Trader/api";
@@ -94,11 +96,17 @@ const [currencyRateValue, setCurrencyRateValue] = useState<number | null>(null);
 
   const [symbols, setSymbols] = useState<TradingRunSymbolModel[]>([]);
   const [accounts, setAccounts] = useState<TradingRunAccountModel[]>([]);
-
+const handleStrategyKeyChange = (k: string) => {
+  setStrategyKey(k);
+  const s = strategies.find((x) => x.key === k);
+  if (s) setStrategyConfig(buildDefaultStrategyConfig(s.configFields));
+  else setStrategyConfig({});
+};
   const [error, setError] = useState<string | null>(null);
 useEffect(() => {
   if (!isOpen) return;
 
+  
   const cur = targetCurrency.trim().toUpperCase();
   if (!cur || cur === "IRR") {
     setCurrencyRateStatus("idle");
@@ -199,17 +207,25 @@ setAccounts(
 );
       setError(null);
 
-      try {
-        setStrategyConfig(JSON.parse(initialDetail.strategyConfigJson));
-      } catch {
-        setStrategyConfig({});
-      }
+      // try {
+      //   setStrategyConfig(JSON.parse(initialDetail.strategyConfigJson));
+      // } catch {
+      //   setStrategyConfig({});
+      // }
+      
+setStrategyConfig(parseStrategyConfig(initialDetail.strategyConfigJson));
       return;
     }
 
     /* ─── Create ─── */
     setName("");
-    setStrategyKey(strategies[0]?.key ?? "");
+    // setStrategyKey(strategies[0]?.key ?? "");
+    const firstStrategy = strategies[0];
+setStrategyKey(firstStrategy?.key ?? "");
+setStrategyConfig(
+  firstStrategy ? buildDefaultStrategyConfig(firstStrategy.configFields) : {},
+);
+
     setPrimaryTimeFrame(TimeFrame.D1);
     setTargetCurrency("");
     setStrengthMultiplier("1.5");
@@ -231,44 +247,6 @@ setCurrencyRateValue(null);
     setError(null);
   }, [isOpen, mode, initialDetail, strategies]);
 
-  /* ─── Strategy config: init from defaults when strategy changes (Create) ─── */
-  useEffect(() => {
-    if (!isOpen || mode !== "create") return;
-    const strategy = strategies.find((s) => s.key === strategyKey);
-    if (!strategy) {
-      setStrategyConfig({});
-      return;
-    }
-    const init: Record<string, any> = {};
-strategy.configFields.forEach((f) => {
-  if (f.defaultValue == null) return;
-  const t = f.typeName.toLowerCase();
-
-  if (
-    t.includes("int") ||
-    t.includes("decimal") ||
-    t.includes("double") ||
-    t.includes("float") ||
-    t.includes("long")
-  ) {
-    init[f.name] = Number(f.defaultValue);
-  } else if (t === "boolean" || t === "bool") {
-    init[f.name] = f.defaultValue === "true";
-  } else if (t === "timeframe") {
-    // ← NEW: enum name → int
-    const raw = f.defaultValue;
-    const asNum = (TimeFrame as any)[raw];
-    init[f.name] = typeof raw === "number"
-      ? raw
-      : typeof asNum === "number"
-        ? asNum
-        : null;
-  } else {
-    init[f.name] = f.defaultValue;
-  }
-});
-    setStrategyConfig(init);
-  }, [strategyKey, strategies, isOpen, mode]);
 
   if (!isOpen) return null;
 
@@ -474,163 +452,117 @@ for (const a of accounts) {
   )}
 </Section>
           {/* ۲. Strategy */}
-          <Section title="استراتژی">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {/* Currency */}
-<div className="mt-3">
-  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-    ارز تحلیل (اختیاری)
-  </label>
-  <div className="flex items-center gap-2">
-    <select
-      value={targetCurrency || ""}
-      onChange={(e) => setTargetCurrency(e.target.value)}
-      className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-    >
-      <option value="">— بدون تبدیل (ریال) —</option>
-      <option value="USD">دلار آمریکا (USD)</option>
-      <option value="EUR">یورو (EUR)</option>
-      <option value="GBP">پوند انگلیس (GBP)</option>
-      <option value="AED">درهم امارات (AED)</option>
-      <option value="TRY">لیر ترکیه (TRY)</option>
-      <option value="CNY">یوان چین (CNY)</option>
-      <option value="JPY">ین ژاپن (JPY)</option>
-      <option value="CHF">فرانک سوئیس (CHF)</option>
-      <option value="GOLD">طلا (GOLD)</option>
-    </select>
-    {currencyRateStatus === "checking" && (
-      <span className="whitespace-nowrap text-xs text-gray-500">
-        ⏳ بررسی...
-      </span>
-    )}
-    {currencyRateStatus === "ok" && currencyRateValue != null && (
-      <span className="whitespace-nowrap text-xs text-emerald-500">
-        ✓ {currencyRateValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
-      </span>
-    )}
-    {currencyRateStatus === "missing" && (
-      <span className="whitespace-nowrap text-xs text-red-500">
-        ❌ نرخ ثبت نشده
-      </span>
-    )}
-  </div>
-  <p className="mt-1 text-[10px] text-gray-500">
-    اگر خالی باشد، تحلیل روی قیمت ریالی انجام می‌شود. 
-    برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
-  </p>
-</div>
-{/* Strength Multiplier */}
-<div className="mt-3">
-  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-    ضریب قدرت سیگنال (Stepped Buying)
-  </label>
-  <div className="flex items-center gap-2">
-    <input
-      type="number"
-      value={strengthMultiplier}
-      onChange={(e) => setStrengthMultiplier(e.target.value)}
-      dir="ltr"
-      min={0.1}
-      max={5}
-      step={0.1}
-      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-    />
-    <span className="text-xs text-gray-500">
-      {Number(strengthMultiplier) > 0
-        ? `مثال: RSI=36 → ${(
-            Number(strengthMultiplier) *
-            0.1 *
-            100
-          ).toFixed(1)}% سرمایه`
-        : "—"}
-    </span>
-  </div>
-  <p className="mt-1 text-[10px] text-gray-500">
-    سرمایه‌ی هدف = سرمایه‌ی Symbol × قدرت سیگنال × این ضریب.
-    مقدار بالاتر → خرید بزرگ‌تر. پیش‌فرض ۱.۵.
-  </p>
-</div>
-{/* Min Delta Percent */}
-<div className="mt-3">
-  <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
-    حداقل تغییر سرمایه برای خرید مجدد (%)
-  </label>
-  <div className="flex items-center gap-2">
-    <input
-      type="number"
-      value={minDeltaPercent}
-      onChange={(e) => setMinDeltaPercent(e.target.value)}
-      dir="ltr"
-      min={0}
-      max={100}
-      step={0.5}
-      className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-    />
-    <span className="text-xs text-gray-500">
-      {Number(minDeltaPercent) > 0
-        ? `خرید مجدد فقط وقتی سهمی از سرمایه‌ی نماد بیش از ${Number(minDeltaPercent).toFixed(1)}٪ تغییر کند`
-        : "بدون آستانه — هر افت کوچک باعث خرید می‌شود"}
-    </span>
-  </div>
-  <p className="mt-1 text-[10px] text-gray-500">
-    مثال: با ۳٪، در سرمایه‌ی ۱۰ میلیون ریالی، فقط خریدهای بیش از ۳۰۰٬۰۰۰ ریال
-    اجرا می‌شوند. از خریدهای کوچک پشت‌سرهم جلوگیری می‌کند.
-  </p>
-</div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  استراتژی <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={strategyKey}
-                  onChange={(e) => setStrategyKey(e.target.value)}
-                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                >
-                  <option value="">انتخاب کنید...</option>
-                  {strategies.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+        <Section title="استراتژی">
+  <StrategyConfigSection
+    strategies={strategies}
+    strategyKey={strategyKey}
+    strategyConfig={strategyConfig}
+    primaryTimeFrame={primaryTimeFrame}
+    showPrimaryTimeFrame={true}
+    onStrategyKeyChange={handleStrategyKeyChange}
+    onConfigChange={setStrategyConfig}
+    onPrimaryTimeFrameChange={setPrimaryTimeFrame}
+    strategyHint={
+      strategyKey === "mtf-composite"
+        ? "این استراتژی به کندل‌های D1 (برای Trend) و M5 (برای Intra-Candle) نیاز دارد — در Runtime و Backtest خودکار لود می‌شوند."
+        : undefined
+    }
+  />
 
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  تایم‌فریم
-                </label>
-                <select
-                  value={primaryTimeFrame}
-                  onChange={(e) =>
-                    setPrimaryTimeFrame(Number(e.target.value))
-                  }
-                  className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                >
-                  {Object.entries(TIMEFRAME_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+  {/* Currency */}
+  <div className="mt-3">
+    <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+      ارز تحلیل (اختیاری)
+    </label>
+    <div className="flex items-center gap-2">
+      <select
+        value={targetCurrency || ""}
+        onChange={(e) => setTargetCurrency(e.target.value)}
+        className="w-full rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+      >
+        <option value="">— بدون تبدیل (ریال) —</option>
+        <option value="USD">دلار آمریکا (USD)</option>
+        <option value="EUR">یورو (EUR)</option>
+        <option value="GBP">پوند انگلیس (GBP)</option>
+        <option value="AED">درهم امارات (AED)</option>
+        <option value="TRY">لیر ترکیه (TRY)</option>
+        <option value="CNY">یوان چین (CNY)</option>
+        <option value="JPY">ین ژاپن (JPY)</option>
+        <option value="CHF">فرانک سوئیس (CHF)</option>
+        <option value="GOLD">طلا (GOLD)</option>
+      </select>
+      {currencyRateStatus === "checking" && (
+        <span className="whitespace-nowrap text-xs text-gray-500">⏳ بررسی...</span>
+      )}
+      {currencyRateStatus === "ok" && currencyRateValue != null && (
+        <span className="whitespace-nowrap text-xs text-emerald-500">
+          ✓ {currencyRateValue.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+        </span>
+      )}
+      {currencyRateStatus === "missing" && (
+        <span className="whitespace-nowrap text-xs text-red-500">❌ نرخ ثبت نشده</span>
+      )}
+    </div>
+    <p className="mt-1 text-[10px] text-gray-500">
+      اگر خالی باشد، تحلیل روی قیمت ریالی انجام می‌شود.
+      برای ارز دیگر، ابتدا از صفحه‌ی «نرخ‌های ارز» نرخ ثبت کنید.
+    </p>
+  </div>
 
-            {selectedStrategy && (
-              <div className="mt-3">
-                <p className="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                  پارامترهای {selectedStrategy.displayName}
-                </p>
-                <StrategyConfigEditor
-                  strategyKey={strategyKey}
-                  fields={selectedStrategy.configFields}
-                  values={strategyConfig}
-                  onChange={(n, v) =>
-                    setStrategyConfig((prev) => ({ ...prev, [n]: v }))
-                  }
-                />
-              </div>
-            )}
-          </Section>
+  {/* Strength Multiplier */}
+  <div className="mt-3">
+    <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+      ضریب قدرت سیگنال (Stepped Buying)
+    </label>
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        value={strengthMultiplier}
+        onChange={(e) => setStrengthMultiplier(e.target.value)}
+        dir="ltr"
+        min={0.1}
+        max={5}
+        step={0.1}
+        className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+      />
+      <span className="text-xs text-gray-500">
+        {Number(strengthMultiplier) > 0
+          ? `مثال: RSI=36 → ${(Number(strengthMultiplier) * 0.1 * 100).toFixed(1)}% سرمایه`
+          : "—"}
+      </span>
+    </div>
+    <p className="mt-1 text-[10px] text-gray-500">
+      سرمایه‌ی هدف = سرمایه‌ی Symbol × قدرت سیگنال × این ضریب.
+    </p>
+  </div>
+
+  {/* Min Delta Percent */}
+  <div className="mt-3">
+    <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+      حداقل تغییر سرمایه برای خرید مجدد (%)
+    </label>
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        value={minDeltaPercent}
+        onChange={(e) => setMinDeltaPercent(e.target.value)}
+        dir="ltr"
+        min={0}
+        max={100}
+        step={0.5}
+        className="w-32 rounded border border-gray-300 p-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+      />
+      <span className="text-xs text-gray-500">
+        {Number(minDeltaPercent) > 0
+          ? `خرید مجدد فقط وقتی سهمی از سرمایه‌ی نماد بیش از ${Number(minDeltaPercent).toFixed(1)}٪ تغییر کند`
+          : "بدون آستانه"}
+      </span>
+    </div>
+    <p className="mt-1 text-[10px] text-gray-500">
+      از خریدهای کوچک پشت‌سرهم جلوگیری می‌کند.
+    </p>
+  </div>
+</Section>
 
 
           {/* ۴. SL/TP */}

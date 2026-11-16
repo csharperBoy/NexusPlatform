@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/components/BacktestLogsTab.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { backtestApi } from "../../../api/backtestApi";
 import type { BacktestEventView, BacktestEventQuery } from "../../../models";
