@@ -10,7 +10,10 @@ import type {
   RunBacktestConfigModel,
   TradingRunSymbolModel,
   StrategyInfoView,
+  BacktestRunDetailView, 
 } from "../../models";
+
+import { parseStrategyConfig } from "../../utils/strategyDefaults";  
 import { TimeFrame } from "../../models";
 import { SymbolAllocationEditor } from "../TradingRuns/components/SymbolAllocationEditor";
 import { StrategyConfigSection } from "../../components/StrategyConfigSection";
@@ -19,6 +22,7 @@ import { buildDefaultStrategyConfig } from "../../utils/strategyDefaults";
 interface Props {
   isOpen: boolean;
   initialSourceRunId?: string | null;
+  initialDetail?: BacktestRunDetailView | null;   // ← NEW
   onClose: () => void;
   onCreated: (backtestRunId: string) => void;
 }
@@ -35,6 +39,7 @@ const monthAgoISO = (): string => {
 export const BacktestCreateModal: React.FC<Props> = ({
   isOpen,
   initialSourceRunId,
+  initialDetail,
   onClose,
   onCreated,
 }) => {
@@ -48,6 +53,13 @@ export const BacktestCreateModal: React.FC<Props> = ({
   const [sourceRunId, setSourceRunId] = useState<string>(
     initialSourceRunId ?? "",
   );
+  // فیلدهای بدون UI در فرم، ولی باید در کپی حفظ بشن
+const [stopLossPrice, setStopLossPrice] = useState("");      // ← NEW
+const [takeProfitPrice, setTakeProfitPrice] = useState("");  // ← NEW
+const [defaultOrderMode, setDefaultOrderMode] = useState(0); // ← NEW
+const [onMarketClose, setOnMarketClose] = useState(0);       // ← NEW
+const [onStop, setOnStop] = useState(0);                     // ← NEW
+
   const [dateFrom, setDateFrom] = useState(monthAgoISO());
   const [dateTo, setDateTo] = useState(todayISO());
   const [initialCapital, setInitialCapital] = useState("10000000");
@@ -102,14 +114,98 @@ export const BacktestCreateModal: React.FC<Props> = ({
   }, [isOpen]);
 
   /* ─── Reset on open ─── */
-  useEffect(() => {
-    if (isOpen) {
-      setName("");
-      setTargetCurrency("");
-      setCurrencyRateStatus("idle");
-      setError(null);
+  /* ─── Init: reset OR copy from initialDetail ─── */
+useEffect(() => {
+  if (!isOpen) return;
+
+  setError(null);
+  setCurrencyRateStatus("idle");
+
+  if (initialDetail) {
+    // ─── Copy mode ───
+    setName(`${initialDetail.name} - کپی`);
+    setSourceRunId(initialDetail.sourceRunId ?? "");
+    setMode(initialDetail.sourceRunId ? "existing" : "virtual");
+
+    // dates: ISO datetime → YYYY-MM-DD
+    setDateFrom(initialDetail.dateFrom.slice(0, 10));
+    setDateTo(initialDetail.dateTo.slice(0, 10));
+
+    setInitialCapital(String(initialDetail.initialCapital));
+    setSlippage(String(initialDetail.slippagePercent * 100));
+    setSubCandleTf(
+      initialDetail.subCandleTimeFrame != null
+        ? String(initialDetail.subCandleTimeFrame)
+        : "",
+    );
+    setTargetCurrency(initialDetail.targetCurrency ?? "");
+
+    // Strategy
+    setStrategyKey(initialDetail.strategyKey);
+    setStrategyConfig(parseStrategyConfig(initialDetail.strategyConfigJson));
+    setPrimaryTimeFrame(initialDetail.primaryTimeFrame);
+    setStrengthMultiplier(String(initialDetail.strengthMultiplier));
+    setMinDeltaPercent(String(initialDetail.minDeltaPercent * 100));
+
+    // SL — price وازن percentage
+    if (initialDetail.stopLossPrice != null) {
+      setStopLossPrice(String(initialDetail.stopLossPrice));
+      setStopLossPct("");
+    } else {
+      setStopLossPrice("");
+      setStopLossPct(
+        initialDetail.stopLossPercentage != null
+          ? String(initialDetail.stopLossPercentage)
+          : "",
+      );
     }
-  }, [isOpen]);
+    // TP — مشابه
+    if (initialDetail.takeProfitPrice != null) {
+      setTakeProfitPrice(String(initialDetail.takeProfitPrice));
+      setTakeProfitPct("");
+    } else {
+      setTakeProfitPrice("");
+      setTakeProfitPct(
+        initialDetail.takeProfitPercentage != null
+          ? String(initialDetail.takeProfitPercentage)
+          : "",
+      );
+    }
+
+    // Behavior (بدون UI، ولی حفظ می‌شن)
+    setDefaultOrderMode(initialDetail.defaultOrderMode);
+    setOnMarketClose(initialDetail.onMarketClose);
+    setOnStop(initialDetail.onStop);
+
+    // Symbols
+    setSymbols(
+      initialDetail.symbols.map((s) => ({
+        isin: s.isin,
+        allocationPercentage: s.allocationPercentage,
+      })),
+    );
+    return;
+  }
+
+  // ─── Fresh mode ───
+  setName("");
+  setSourceRunId(initialSourceRunId ?? "");
+  setMode(initialSourceRunId ? "existing" : "virtual");
+  setDateFrom(monthAgoISO());
+  setDateTo(todayISO());
+  setInitialCapital("10000000");
+  setSlippage("0.1");
+  setSubCandleTf("1");
+  setTargetCurrency("");
+  setStopLossPct("20");
+  setTakeProfitPct("50");
+  setStopLossPrice("");
+  setTakeProfitPrice("");
+  setDefaultOrderMode(0);
+  setOnMarketClose(0);
+  setOnStop(0);
+  setSymbols([]);
+}, [isOpen, initialDetail, initialSourceRunId]);
 
   /* ─── Strategy change handler ─── */
   const handleStrategyKeyChange = (k: string) => {
@@ -118,7 +214,24 @@ export const BacktestCreateModal: React.FC<Props> = ({
     if (s) setStrategyConfig(buildDefaultStrategyConfig(s.configFields));
     else setStrategyConfig({});
   };
-
+useEffect(() => {
+  if (!isOpen) return;
+  (async () => {
+    try {
+      const list = await strategyApi.GetList();
+      setStrategies(list);
+      // در حالت کپی، init effect خودش استراتژی رو ست می‌کنه
+      if (initialDetail) return;
+      if (list.length > 0 && !strategyKey) {
+        setStrategyKey(list[0].key);
+        setStrategyConfig(buildDefaultStrategyConfig(list[0].configFields));
+      }
+    } catch {
+      setStrategies([]);
+    }
+  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isOpen, initialDetail]);
   /* ─── Currency rate availability check ─── */
   useEffect(() => {
     if (!isOpen) return;
@@ -157,24 +270,24 @@ export const BacktestCreateModal: React.FC<Props> = ({
 
   /* ─── Build virtual config ─── */
   const buildVirtualConfig = (): RunBacktestConfigModel => ({
-    strategyKey,
-    strategyConfigJson: JSON.stringify(strategyConfig),
-    primaryTimeFrame,
-    targetCurrency: targetCurrency.trim().toUpperCase() || null,
-    strengthMultiplier: Number(strengthMultiplier),
-    minDeltaPercent: Number(minDeltaPercent) / 100,
-    stopLossPercentage: stopLossPct ? Number(stopLossPct) : null,
-    stopLossPrice: null,
-    takeProfitPercentage: takeProfitPct ? Number(takeProfitPct) : null,
-    takeProfitPrice: null,
-    defaultOrderMode: 0,
-    onMarketClose: 0,
-    onStop: 0,
-    symbols: symbols.map((s) => ({
-      isin: s.isin,
-      allocationPercentage: s.allocationPercentage,
-    })),
-  });
+  strategyKey,
+  strategyConfigJson: JSON.stringify(strategyConfig),
+  primaryTimeFrame,
+  targetCurrency: targetCurrency.trim().toUpperCase() || null,
+  strengthMultiplier: Number(strengthMultiplier),
+  minDeltaPercent: Number(minDeltaPercent) / 100,
+  stopLossPercentage: stopLossPct ? Number(stopLossPct) : null,
+  stopLossPrice: stopLossPrice ? Number(stopLossPrice) : null,       // ← NEW
+  takeProfitPercentage: takeProfitPct ? Number(takeProfitPct) : null,
+  takeProfitPrice: takeProfitPrice ? Number(takeProfitPrice) : null, // ← NEW
+  defaultOrderMode,                                                  // ← NEW
+  onMarketClose,                                                     // ← NEW
+  onStop,                                                            // ← NEW
+  symbols: symbols.map((s) => ({
+    isin: s.isin,
+    allocationPercentage: s.allocationPercentage,
+  })),
+});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +352,8 @@ export const BacktestCreateModal: React.FC<Props> = ({
       <div className="my-8 w-full max-w-2xl rounded-xl bg-white shadow-xl dark:bg-gray-800">
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-3 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            بکتست جدید
+           
+            {initialDetail ? "کپی بک‌تست" : "بکتست جدید"}   {/* ← NEW */}
           </h3>
           <button
             type="button"
@@ -418,7 +532,11 @@ export const BacktestCreateModal: React.FC<Props> = ({
                   <input
                     type="number"
                     value={stopLossPct}
-                    onChange={(e) => setStopLossPct(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setStopLossPct(v);
+                      if (v) setStopLossPrice("");   // ← NEW: وارد کردن % → پاک کردن price
+                    }}
                     step={1}
                     dir="ltr"
                     className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -431,7 +549,11 @@ export const BacktestCreateModal: React.FC<Props> = ({
                   <input
                     type="number"
                     value={takeProfitPct}
-                    onChange={(e) => setTakeProfitPct(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setTakeProfitPct(v);
+                      if (v) setTakeProfitPrice("");   // ← NEW: وارد کردن % → پاک کردن price
+                    }}
                     step={1}
                     dir="ltr"
                     className="w-full rounded border border-gray-300 p-2 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white"

@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/components/TradesTable.tsx
 import React, { useState } from "react";
 import type { BacktestTradeView } from "../../../models";
 import { EXIT_REASON_LABELS, BacktestExitReason } from "../../../models";

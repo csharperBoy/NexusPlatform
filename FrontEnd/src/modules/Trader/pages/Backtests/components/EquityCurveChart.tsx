@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/components/EquityCurveChart.tsx
 import React, { useMemo } from "react";
 import {
   LineChart,

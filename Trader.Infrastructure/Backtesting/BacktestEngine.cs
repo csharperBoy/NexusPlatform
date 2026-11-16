@@ -12,6 +12,7 @@ using Trader.Application.Runtime;
 using Trader.Application.Specifications.Backtests;
 using Trader.Application.Specifications.Candles;
 using Trader.Application.Specifications.Instruments;
+using Trader.Application.Strategies;
 using Trader.Domain.Calculations;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
@@ -557,8 +558,19 @@ public sealed class BacktestEngine : IBacktestEngine
 
                     foreach (var sig in evalResult.Signals)
                     {
+                        // ─── D55/D57: Strategy runs on transformed candles (USD),
+                        // but fills/SL-TP monitoring operate on IRR. Scale SL/TP
+                        // back to IRR before HandleSignal, otherwise TP=0.044 USD
+                        // is compared against High=22,000 IRR → immediate false TP.
+                        var sigForFill = needsTransform
+                            ? SignalCurrencyHelper.ScaleSlTpToIrr(
+                                sig,
+                                strategyClose: candleStrategy.Close,
+                                irrClose: candleIrr.Close)
+                            : sig;
+
                         // Sizing uses IRR candle Close (matches Live's snapshot IRR)
-                        HandleSignal(state, sig, isin, candleIrr, instrument,
+                        HandleSignal(state, sigForFill, isin, candleIrr, instrument,
                             allocPct, run, sizeCalc, eventLogger);
                     }
                 }

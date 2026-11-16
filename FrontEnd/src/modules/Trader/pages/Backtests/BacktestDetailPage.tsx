@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/BacktestDetailPage.tsx
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { backtestApi } from "../../api/backtestApi";

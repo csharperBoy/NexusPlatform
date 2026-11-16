@@ -1,3 +1,4 @@
+//src/modules/Trader/pages/Backtests/BacktestsListPage.tsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useBacktestManagement } from "../../hooks/useBacktestManagement";
@@ -5,6 +6,12 @@ import { BacktestStatusBadge } from "./components/BacktestStatusBadge";
 import { BacktestCreateModal } from "./BacktestCreateModal";
 import { BacktestStatus } from "../../models";
 import { useNavigate } from "react-router-dom";
+
+import type {
+  BacktestRunDetailView,   // ← NEW
+} from "../../models";
+import { backtestApi } from "../../api";
+
 const fmtMoney = (v: number): string =>
   v.toLocaleString("fa-IR", { maximumFractionDigits: 0 });
 
@@ -26,6 +33,30 @@ const toggleId = (id: string) => {
   });
 };
 
+const [copyDetail, setCopyDetail] = useState<BacktestRunDetailView | null>(null);
+const [copyLoadingId, setCopyLoadingId] = useState<string | null>(null);
+const handleNew = () => {
+  setCopyDetail(null);
+  setCreateOpen(true);
+};
+
+const handleCopy = async (id: string) => {
+  setCopyLoadingId(id);
+  try {
+    const detail = await backtestApi.GetById(id);
+    setCopyDetail(detail);
+    setCreateOpen(true);
+  } catch (e) {
+    alert(e instanceof Error ? e.message : "خطا در کپی بک‌تست");
+  } finally {
+    setCopyLoadingId(null);
+  }
+};
+
+const handleCloseModal = () => {
+  setCreateOpen(false);
+  setCopyDetail(null);
+};
 const clearSelection = () => setSelectedIds(new Set());
 
 const handleCompare = () => {
@@ -80,12 +111,12 @@ const handleCompare = () => {
   </button>
 )}
           <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            ➕ بکتست جدید
-          </button>
+                type="button"
+                onClick={handleNew}                    
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                ➕ بکتست جدید
+                </button>
         </div>
       </div>
 
@@ -180,25 +211,34 @@ const handleCompare = () => {
                     {r.totalTrades} ({r.winningTrades}W/{r.losingTrades}L)
                   </td>
                   <td className="p-3">
-                    <div className="flex justify-end gap-1">
-                      <Link
-                        to={`/trader/backtests/${r.id}`}
-                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
-                      >
-                        جزئیات
-                      </Link>
-                      {(r.status === BacktestStatus.Pending ||
-                        r.status === BacktestStatus.Running) && (
-                        <button
-                          type="button"
-                          onClick={() => handleCancel(r.id)}
-                          className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
-                        >
-                          لغو
-                        </button>
-                      )}
-                    </div>
-                  </td>
+  <div className="flex justify-end gap-1">
+    <Link
+      to={`/trader/backtests/${r.id}`}
+      className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+    >
+      جزئیات
+    </Link>
+    <button
+      type="button"
+      onClick={() => handleCopy(r.id)}
+      disabled={copyLoadingId !== null}
+      className="rounded bg-slate-600 px-2 py-1 text-xs text-white hover:bg-slate-700 disabled:opacity-50"
+      title="ایجاد بک‌تست جدید با همین تنظیمات"
+    >
+      {copyLoadingId === r.id ? "..." : "کپی"}
+    </button>
+    {(r.status === BacktestStatus.Pending ||
+      r.status === BacktestStatus.Running) && (
+      <button
+        type="button"
+        onClick={() => handleCancel(r.id)}
+        className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+      >
+        لغو
+      </button>
+    )}
+  </div>
+</td>
                 </tr>
               ))
             )}
@@ -207,10 +247,14 @@ const handleCompare = () => {
       </div>
 
       <BacktestCreateModal
-        isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => refresh()}
-      />
+  isOpen={createOpen}
+  initialDetail={copyDetail}                
+  onClose={handleCloseModal}               
+  onCreated={() => {
+    handleCloseModal();                      
+    refresh();
+  }}
+/>
     </div>
   );
 };

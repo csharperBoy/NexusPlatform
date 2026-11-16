@@ -5,6 +5,7 @@ using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Abstractions.Runtime;
 using Trader.Application.Abstractions.Strategies;
 using Trader.Application.Runtime;
+using Trader.Application.Strategies;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.Domain.Events;
@@ -167,8 +168,14 @@ public sealed class StrategyEvaluationService : IStrategyEvaluationService
         int? ratePointCount = null;
 
         var needsCurrencyTransform =
-            !string.IsNullOrWhiteSpace(ctx.TargetCurrency)
-            && ctx.TargetCurrency.Trim().ToUpperInvariant() != "IRR";
+        !string.IsNullOrWhiteSpace(ctx.TargetCurrency)
+        && ctx.TargetCurrency.Trim().ToUpperInvariant() != "IRR";
+
+        // ─── Capture IRR close BEFORE transform overwrites `candles` ───
+        // Needed later for SignalCurrencyHelper.ScaleSlTpToIrr: strategy
+        // produces SL/TP in TargetCurrency, but we persist them in IRR
+        // (D55/D57 Two-Stream Architecture). See SignalCurrencyHelper docs.
+        var irrLastClose = candles.Count > 0 ? candles[^1].Close : 0m;
 
         if (needsCurrencyTransform && candles.Count > 0)
         {
@@ -445,16 +452,30 @@ public sealed class StrategyEvaluationService : IStrategyEvaluationService
         {
             if (s.Action == SignalAction.Hold) continue;
 
+            // ─── D55/D57: Scale SL/TP from TargetCurrency (e.g. USD) to IRR ───
+            // Strategy evaluated on transformed candles, so its SL/TP are in
+            // TargetCurrency. Persisting them raw would cause Position's
+            // ShouldTriggerStopLoss/TakeProfit to compare USD values against
+            // IRR current price → immediate false trigger (same bug as backtest).
+            var sigForPersist = (needsCurrencyTransform
+                                 && irrLastClose > 0m
+                                 && candles.Count > 0)
+                ? SignalCurrencyHelper.ScaleSlTpToIrr(
+                    s,
+                    strategyClose: candles[^1].Close,
+                    irrClose: irrLastClose)
+                : s;
+
             var signal = Signal.Create(
     runId: ctx.RunId,
-    isin: s.Isin,
+    isin: sigForPersist.Isin,
     strategyKey: ctx.StrategyKey,
-    action: s.Action,
-    strength: s.Strength,
-    metadataJson: s.MetadataJson,
+    action: sigForPersist.Action,
+    strength: sigForPersist.Strength,
+    metadataJson: sigForPersist.MetadataJson,
     sourceEvaluationId: evalEntity?.Id,
-    stopLossPrice: s.StopLoss,
-    takeProfitPrice: s.TakeProfit);
+    stopLossPrice: sigForPersist.StopLoss,
+    takeProfitPrice: sigForPersist.TakeProfit);
 
             signal.AddDomainEvent(new SignalGeneratedEvent(
                 signal.Id,
