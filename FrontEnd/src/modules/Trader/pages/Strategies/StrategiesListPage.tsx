@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { strategyApi } from "../../api/strategyApi";
 import type { StrategyInfoView } from "../../models";
+import { useNavigate } from "react-router-dom";
 
 export const StrategiesListPage: React.FC = () => {
   const [strategies, setStrategies] = useState<StrategyInfoView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+const navigate = useNavigate();
   useEffect(() => {
     (async () => {
       try {
@@ -96,6 +98,11 @@ export const StrategiesListPage: React.FC = () => {
                   ))
                 )}
               </div>
+              
+<button onClick={() => navigate(`/trader/tuning?strategyKey=${s.key}`)}
+  className="rounded bg-emerald-600 px-2 py-1 text-xs text-white hover:bg-emerald-700">
+  Tune
+</button>
             </div>
           ))}
         </div>

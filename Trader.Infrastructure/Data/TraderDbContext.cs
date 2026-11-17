@@ -60,6 +60,11 @@ public class TraderDbContext : Base_DbContext
     /* ═══════════ Price Collection (B1) ═══════════ */
     public virtual DbSet<PriceSource> PriceSources { get; set; } = default!;
     public virtual DbSet<PriceCollectionJob> PriceCollectionJobs { get; set; } = default!;
+
+    public virtual DbSet<StrategyTuningRun> StrategyTuningRuns { get; set; }
+    public virtual DbSet<StrategyTuningResult> StrategyTuningResults { get; set; }
+
+
     public override void EnsureViews(CancellationToken cancellationToken = default) { }
     public override void EnsureTriggers(CancellationToken cancellationToken = default) { }
 
@@ -110,5 +115,8 @@ public class TraderDbContext : Base_DbContext
         modelBuilder.ApplyConfiguration(new RunAccountLossStreakConfiguration());
         modelBuilder.ApplyConfiguration(new PriceSourceConfiguration());
         modelBuilder.ApplyConfiguration(new PriceCollectionJobConfiguration());
+        modelBuilder.ApplyConfiguration(new StrategyTuningRunConfiguration());
+        modelBuilder.ApplyConfiguration(new StrategyTuningResultConfiguration());
+
     }
 }

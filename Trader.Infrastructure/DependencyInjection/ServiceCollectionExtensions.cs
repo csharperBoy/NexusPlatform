@@ -29,7 +29,9 @@ using Trader.Application.Scheduler;
 using Trader.Application.Scheduler.Services;
 using Trader.Application.Services;
 using Trader.Application.Strategies;
+using Trader.Application.Strategies.MtfComposite;
 using Trader.Application.Strategies.Rsi;
+using Trader.Application.Strategies.Tuning;
 using Trader.Domain.Entities;
 using Trader.Domain.Enums;
 using Trader.ExternalApiClient.DependencyInjection;
@@ -150,7 +152,18 @@ namespace Trader.Infrastructure.DependencyInjection
             services.AddScoped<IRepository<TraderDbContext, RunAccountLossStreak, Guid>,
                 EfRepository<TraderDbContext, RunAccountLossStreak, Guid>>();
 
+            services.AddScoped<IRepository<TraderDbContext, StrategyTuningRun, Guid>,
+                EfRepository<TraderDbContext, StrategyTuningRun, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, StrategyTuningResult, Guid>,
+                EfRepository<TraderDbContext, StrategyTuningResult, Guid>>();
+
             /* ═══════════ Repositories — Specification ═══════════ */
+            services.AddScoped<ISpecificationRepository<StrategyTuningRun, Guid>,
+EfSpecificationRepository<TraderDbContext, StrategyTuningRun, Guid>>();
+            services.AddScoped<ISpecificationRepository<StrategyTuningResult, Guid>,
+EfSpecificationRepository<TraderDbContext, StrategyTuningResult, Guid>>();
+
+
             services.AddScoped<ISpecificationRepository<RunAccountLossStreak, Guid>,
 EfSpecificationRepository<TraderDbContext, RunAccountLossStreak, Guid>>();
             services.AddScoped<ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid>,
@@ -237,7 +250,19 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddScoped<IPriceCollectionService>(sp => sp.GetRequiredService<PriceCollectionService>());
             services.AddScoped<IPriceSourceQueryService>(sp => sp.GetRequiredService<PriceCollectionService>());
             services.AddScoped<IPriceCollectionJobQueryService>(sp => sp.GetRequiredService<PriceCollectionService>());
+            // در ServiceCollectionExtensions.cs — Trader.Infrastructure/DependencyInjection
+            services.AddScoped<IStrategyTuningCommandService, StrategyTuningCommandService>();
+            services.AddScoped<IStrategyTuningQueryService, StrategyTuningQueryService>();
 
+            // Tuner registry
+            services.AddSingleton<MtfCompositeStrategyTuner>();
+            services.AddSingleton<IStrategyTuner>(sp => sp.GetRequiredService<MtfCompositeStrategyTuner>());
+
+            // Executor
+            services.AddScoped<IStrategyTunerExecutor, GeneticTunerExecutor>();
+
+            // Worker
+            services.AddHostedService<StrategyTuningWorker>();
             services.AddScheduledJobHandler<CollectPricePayload, CollectPriceJobHandler>();
 
             services.AddScoped<IRepository<TraderDbContext, PriceSource, Guid>,

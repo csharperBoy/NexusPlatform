@@ -265,3 +265,4 @@ export type {
   CriticalEventView,
   AccountsSessionSummary,
 } from "./Dashboard";
+export * from "./StrategyTuning";

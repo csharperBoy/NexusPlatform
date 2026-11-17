@@ -2211,6 +2211,242 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("StrategyEvaluations", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.StrategyTuningResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("AvgReturnArithmeticMonthly")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnArithmeticQuarter")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnArithmeticSemi")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnArithmeticYearly")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnCompoundMonthly")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnCompoundQuarter")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnCompoundSemi")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("AvgReturnCompoundYearly")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ConfigJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Generation")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsTop10InMonthly")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTop10InQuarterly")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTop10InSemi")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsTop10InYearly")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("RuntimeMs")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalTradesMonthly")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalTradesQuarter")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalTradesSemi")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TotalTradesYearly")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TuningRunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("ValidWindowsMonthly")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ValidWindowsQuarter")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ValidWindowsSemi")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ValidWindowsYearly")
+                        .HasColumnType("int");
+
+                    b.Property<string>("WindowResultsJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Generation");
+
+                    b.HasIndex("TuningRunId", "AvgReturnCompoundYearly");
+
+                    b.HasIndex("TuningRunId", "IsTop10InYearly", "IsTop10InSemi", "IsTop10InQuarterly", "IsTop10InMonthly");
+
+                    b.ToTable("StrategyTuningResults", "trader");
+                });
+
+            modelBuilder.Entity("Trader.Domain.Entities.StrategyTuningRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Algorithm")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("BestResultIdMonthly")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BestResultIdQuarterly")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BestResultIdSemi")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("BestResultIdYearly")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CompletedEvaluations")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<decimal>("CrossoverRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<DateTime>("DateFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DateTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("Generations")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("InitialCapital")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<int>("MinTradesPerWindow")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<decimal>("MutationRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("PopulationSize")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrimaryScale")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrimaryTimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SelectedScales")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SlippagePercent")
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StrategyKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int?>("SubCandleTimeFrame")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetCurrency")
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
+
+                    b.Property<int>("TotalEvaluations")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Isin", "StrategyKey", "Status");
+
+                    b.ToTable("StrategyTuningRuns", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.TraderAccount", b =>
                 {
                     b.Property<Guid>("Id")

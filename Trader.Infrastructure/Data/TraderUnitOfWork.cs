@@ -35,6 +35,8 @@ IRepository<TraderDbContext, RiskKillSwitch, Guid> riskKillSwitches,
 IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> runDailyEquitySnapshots,
 IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> runAccountDailyEquitySnapshots,
 IRepository<TraderDbContext, RunAccountLossStreak, Guid> runAccountLossStreaks,
+IRepository<TraderDbContext, StrategyTuningRun, Guid> strategyTuningRuns,
+IRepository<TraderDbContext, StrategyTuningResult, Guid> strategyTuningResults,
 ISpecificationRepository<RunAccountLossStreak, Guid> runAccountLossStreakSpecs,
 ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> runAccountDailyEquitySnapshotSpecs,
 ISpecificationRepository<RunDailyEquitySnapshot, Guid> runDailyEquitySnapshotSpecs,
@@ -70,6 +72,8 @@ IRepository<TraderDbContext, PriceSource, Guid> priceSources,
 IRepository<TraderDbContext, PriceCollectionJob, Guid> priceCollectionJobs,
 ISpecificationRepository<PriceSource, Guid> priceSourceSpecs,
 ISpecificationRepository<PriceCollectionJob, Guid> priceCollectionJobSpecs,
+ISpecificationRepository<StrategyTuningRun, Guid> strategyTuningRunSpecs,
+ISpecificationRepository<StrategyTuningResult, Guid> strategyTuningResultSpecs,
         ILogger<EfUnitOfWork<TraderDbContext>> logger)
         : base(dbContext, outboxService, logger)
     {
@@ -128,7 +132,14 @@ ISpecificationRepository<PriceCollectionJob, Guid> priceCollectionJobSpecs,
         RunAccountDailyEquitySnapshotSpecs = runAccountDailyEquitySnapshotSpecs;
         RunAccountLossStreaks = runAccountLossStreaks;
         RunAccountLossStreakSpecs = runAccountLossStreakSpecs;
+
+        StrategyTuningRuns = strategyTuningRuns;
+        StrategyTuningResults = strategyTuningResults;
+        StrategyTuningRunSpecs = strategyTuningRunSpecs;
+        StrategyTuningResultSpecs = strategyTuningResultSpecs;
     }
+    public IRepository<TraderDbContext, StrategyTuningRun, Guid> StrategyTuningRuns { get; }
+    public IRepository<TraderDbContext, StrategyTuningResult, Guid> StrategyTuningResults { get; }
     public IRepository<TraderDbContext, OrderTrade, Guid> OrderTrades { get; }
     public ISpecificationRepository<OrderTrade, Guid> OrderTradeSpecs { get; }
     public IRepository<TraderDbContext, TraderAccount, Guid> Accounts { get; }
@@ -162,6 +173,9 @@ ISpecificationRepository<PriceCollectionJob, Guid> priceCollectionJobSpecs,
     public IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshots { get; }
     public IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshots { get; }
     public IRepository<TraderDbContext, RunAccountLossStreak, Guid> RunAccountLossStreaks { get; }
+    
+    public ISpecificationRepository<StrategyTuningRun, Guid> StrategyTuningRunSpecs { get; }
+    public ISpecificationRepository<StrategyTuningResult, Guid> StrategyTuningResultSpecs { get; }
     public ISpecificationRepository<RunAccountLossStreak, Guid> RunAccountLossStreakSpecs { get; }
     public ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshotSpecs { get; }
     public ISpecificationRepository<RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshotSpecs { get; }

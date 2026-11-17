@@ -20,6 +20,8 @@ import {
   PriceCollectionPage,
   OrdersManagementPage,
   OrderPresetsManagementPage} from "./pages";
+import { StrategyTuningDetailPage } from "./pages/StrategyTuning/StrategyTuningDetailPage";
+import { StrategyTuningListPage } from "./pages/StrategyTuning/StrategyTuningListPage";
 
 export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/accounts",       element: <AccountsManagementPage /> },
@@ -44,6 +46,8 @@ export const TraderShotgunRoutes: RouteObject[] = [
   { path: "trader/order-presets",     element: <OrderPresetsManagementPage /> },
   
 
+{ path: "trader/tuning", element: <StrategyTuningListPage /> },
+{ path: "trader/tuning/:id", element: <StrategyTuningDetailPage /> },
 ];
 
 export const traderPanelRoutes: RouteObject[] = [

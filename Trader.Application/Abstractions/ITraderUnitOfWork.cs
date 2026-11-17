@@ -39,7 +39,11 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, RunAccountLossStreak, Guid> RunAccountLossStreaks { get; }
     IRepository<TDbContext, PriceSource, Guid> PriceSources { get; }
     IRepository<TDbContext, PriceCollectionJob, Guid> PriceCollectionJobs { get; }
+    IRepository<TDbContext, StrategyTuningRun, Guid> StrategyTuningRuns { get; }
+    IRepository<TDbContext, StrategyTuningResult, Guid> StrategyTuningResults { get; }
     // Spec Repositories
+    ISpecificationRepository<StrategyTuningRun, Guid> StrategyTuningRunSpecs { get; }
+    ISpecificationRepository<StrategyTuningResult, Guid> StrategyTuningResultSpecs { get; }
     ISpecificationRepository<PriceSource, Guid> PriceSourceSpecs { get; }
     ISpecificationRepository<PriceCollectionJob, Guid> PriceCollectionJobSpecs { get; }
     ISpecificationRepository<RunAccountLossStreak, Guid> RunAccountLossStreakSpecs { get; }

@@ -1,5 +1,6 @@
-﻿using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 using Trader.Application.Abstractions;
 using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.MarketData;
@@ -13,8 +14,17 @@ namespace Trader.Infrastructure.Backtesting;
 
 public sealed class BacktestDataCache : IBacktestDataCache
 {
-    private readonly ITraderUnitOfWork<TraderDbContext> _uow;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ICandleTransformer _transformer;
+
+    public BacktestDataCache(
+        IServiceScopeFactory scopeFactory,
+        ICandleTransformer transformer)
+    {
+        _scopeFactory = scopeFactory;
+        _transformer = transformer;
+    }
+    private readonly ITraderUnitOfWork<TraderDbContext> _uow;
 
     private readonly ConcurrentDictionary<(string, TimeFrame, DateTime, DateTime),
         Lazy<Task<IReadOnlyList<Candle>>>> _candles = new();
@@ -24,13 +34,7 @@ public sealed class BacktestDataCache : IBacktestDataCache
 
     private readonly ConcurrentDictionary<string, Lazy<Task<Instrument>>> _instruments = new();
 
-    public BacktestDataCache(
-        ITraderUnitOfWork<TraderDbContext> uow,
-        ICandleTransformer transformer)
-    {
-        _uow = uow;
-        _transformer = transformer;
-    }
+    
 
     public Task<IReadOnlyList<Candle>> GetCandlesAsync(
         string isin, TimeFrame timeFrame,
@@ -66,11 +70,13 @@ public sealed class BacktestDataCache : IBacktestDataCache
 
     /* ═══════════════════ Internal ═══════════════════ */
 
+
     private async Task<IReadOnlyList<Candle>> LoadCandlesAsync(
         string isin, TimeFrame tf, DateTime from, DateTime to, CancellationToken ct)
     {
-        // Read-only، بدون tracking (هم‌ارز رفتار فعلی BacktestEngine.SimulateAsync)
-        var rows = await _uow.Context.Candles
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+        var rows = await uow.Context.Candles
             .AsNoTracking()
             .Where(c => c.Isin == isin
                      && (int)c.TimeFrame == (int)tf
@@ -78,17 +84,17 @@ public sealed class BacktestDataCache : IBacktestDataCache
                      && c.OpenTime <= to)
             .OrderBy(c => c.OpenTime)
             .ToListAsync(ct);
+        return rows.Select(r => new Candle(
+            r.OpenTime, r.Open, r.High, r.Low, r.Close, r.Volume)).ToList();
+    }
 
-        var list = new List<Candle>(rows.Count);
-        foreach (var r in rows)
-            list.Add(new Candle(
-                OpenTime: r.OpenTime,
-                Open: r.Open,
-                High: r.High,
-                Low: r.Low,
-                Close: r.Close,
-                Volume: r.Volume));
-        return list;
+    private async Task<Instrument> LoadInstrumentAsync(string isin, CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var uow = scope.ServiceProvider.GetRequiredService<ITraderUnitOfWork<TraderDbContext>>();
+        var inst = await uow.InstrumentSpecs.GetBySpecAsync(new InstrumentByIsinSpec(isin));
+        return inst ?? throw new InvalidOperationException(
+            $"Instrument '{isin}' not found.");
     }
 
     private async Task<IReadOnlyList<Candle>> LoadAndTransformAsync(
@@ -102,11 +108,4 @@ public sealed class BacktestDataCache : IBacktestDataCache
         return tr.Candles;
     }
 
-    private async Task<Instrument> LoadInstrumentAsync(string isin, CancellationToken ct)
-    {
-        var inst = await _uow.InstrumentSpecs.GetBySpecAsync(
-            new InstrumentByIsinSpec(isin));
-        return inst ?? throw new InvalidOperationException(
-            $"Instrument '{isin}' not found.");
-    }
 }

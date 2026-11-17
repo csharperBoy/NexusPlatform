@@ -229,6 +229,15 @@ namespace Trader.Infrastructure.Data
                             Description = "Aggregated view of runs, orders, positions, events",
                             DisplayOrder = 3020,
                             Icon = "home",
+                        },new()
+                        {
+                            Key = "trader.tuning",
+                            Name = "Strategy Tuning",
+                            Type = ResourceType.Data,
+                            Category = ResourceCategory.System,
+                            Description = "Strategy tuning run and result",
+                            DisplayOrder = 3021,
+                            Icon = "home",
                         },
                     }
                 }
@@ -277,6 +286,7 @@ namespace Trader.Infrastructure.Data
                 FullAccess("trader.pricecollection", roleId, "Full access to Price Collection"),
                 FullAccess("trader.order", roleId, "Full access to Order Management"),
                 FullAccess("trader.dashboard", roleId, "Full access to Dashboard"),
+                FullAccess("trader.tuning", roleId, "Full access to Strategy Tuning"),
             };
         }
 
@@ -498,6 +508,15 @@ namespace Trader.Infrastructure.Data
                             Key = "trader.order",
                             ParentKey = "trader",
                             Path = "/trader/orders"
+                        },new()
+                        {
+                            Title = "مدیریت بهینه سازی‌ها",
+                            Description = "Strategy tuning run and result",
+                            Icon = Icon.Folder.GetIconString(),
+                            Order = 118,
+                            Key = "trader.tuning",
+                            ParentKey = "trader",
+                            Path = "/trader/tuning"
                         }
                     }
                 }
