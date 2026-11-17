@@ -396,7 +396,9 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddScoped<ISignalQueryService, SignalQueryService>();
             services.AddScoped<IPositionQueryService, PositionQueryService>();
             services.AddScoped<IStrategyQueryService, StrategyQueryService>();
-
+            // ─── C-lite.4a: Backtest simulator + data cache ───
+            services.AddScoped<IBacktestDataCache, BacktestDataCache>();
+            services.AddScoped<IBacktestSimulator, BacktestSimulator>();
             // ─── Unit of Work ───
             services.AddScoped<ITraderUnitOfWork<TraderDbContext>, TraderUnitOfWork>();
 
