@@ -1,6 +1,0 @@
-@AkSteel_Welfare_Platform_HostAddress = http://localhost:5004
-
-GET {{AkSteel_Welfare_Platform_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
