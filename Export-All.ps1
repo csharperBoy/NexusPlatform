@@ -27,6 +27,13 @@ powershell
 
 # همه به جز ماژول‌ها
 .\Export-All.ps1 -SkipModules
+
+
+# اگر خطای دسترسی داد با دستور زیر دسترسی رو اوکی کن بعد اجرا کن
+#Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass # موقت
+#Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned # دائم
+
+
 #>
 
 param(
