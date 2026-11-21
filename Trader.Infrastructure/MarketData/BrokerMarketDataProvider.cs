@@ -144,7 +144,7 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
     }
     public async Task<IReadOnlyList<Candle>> GetCandlesAsync(
     string isin, TimeFrame timeFrame, int count,
-    CancellationToken ct = default, DateTime? toTime = null)
+    CancellationToken ct = default, DateTime? fromTime = null, DateTime? toTime = null)
     {
         if (count <= 0) return Array.Empty<Candle>();
 
@@ -166,7 +166,7 @@ public sealed class BrokerMarketDataProvider : IMarketDataProvider
         try
         {
             raw = await reader.GetCandlesUntilAsync(
-                session, isin, resolution, count, toTime ?? DateTime.UtcNow, ct);
+                session, isin, resolution, count, fromTime, toTime , ct);
         }
         catch (Exception ex)
         {

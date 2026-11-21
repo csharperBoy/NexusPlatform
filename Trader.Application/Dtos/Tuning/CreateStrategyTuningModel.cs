@@ -20,4 +20,7 @@ public sealed class CreateStrategyTuningModel
     public int Generations { get; set; } = 50;
     public decimal MutationRate { get; set; } = 0.1m;
     public decimal CrossoverRate { get; set; } = 0.8m;
+
+    /// نام پارامترهایی که tune می‌شوند. null/empty = همه (backward compat).
+    public List<string>? SelectedParameters { get; set; }
 }

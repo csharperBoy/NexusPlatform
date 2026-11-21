@@ -41,6 +41,20 @@ public class StrategyTuningRun : BaseEntity, IAuditableEntity
     public string? ModifiedBy { get; set; }
     public void Touch() => ModifiedAt = DateTime.UtcNow;
 
+    public string SelectedParametersJson { get; private set; } = "[]";
+
+    public IReadOnlyList<string> GetSelectedParameters()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedParametersJson) || SelectedParametersJson == "[]")
+            return Array.Empty<string>();
+        try
+        {
+            return System.Text.Json.JsonSerializer
+                .Deserialize<List<string>>(SelectedParametersJson) ?? new();
+        }
+        catch { return Array.Empty<string>(); }
+    }
+
     private StrategyTuningRun() { }
 
     public static StrategyTuningRun Create(
@@ -49,7 +63,9 @@ public class StrategyTuningRun : BaseEntity, IAuditableEntity
         DateTime dateFrom, DateTime dateTo, decimal initialCapital, decimal slippagePercent,
         TuningScale selectedScales, TuningScale primaryScale, int minTradesPerWindow,
         SearchAlgorithm algorithm, int populationSize, int generations,
-        decimal mutationRate, decimal crossoverRate)
+
+        decimal mutationRate, decimal crossoverRate,
+    IReadOnlyList<string>? selectedParameters = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name required.", nameof(name));
@@ -90,6 +106,10 @@ public class StrategyTuningRun : BaseEntity, IAuditableEntity
             Status = TuningStatus.Pending,
             TotalEvaluations = populationSize * generations,
             CompletedEvaluations = 0,
+
+            SelectedParametersJson = System.Text.Json.JsonSerializer
+            .Serialize(selectedParameters?.ToList() ?? new List<string>()),
+
             CreatedAt = DateTime.UtcNow,
         };
     }

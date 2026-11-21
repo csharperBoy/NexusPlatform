@@ -15,5 +15,5 @@ public interface IMarketDataProvider
 
     Task<IReadOnlyList<Candle>> GetCandlesAsync(
         string isin, TimeFrame timeFrame, int count, CancellationToken ct = default,
-        DateTime? toTime = null);
+        DateTime? fromTime = null, DateTime? toTime = null);
 }

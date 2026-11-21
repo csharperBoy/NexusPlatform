@@ -146,6 +146,23 @@ public sealed class StrategyTuningWorker : BackgroundService
 
         try
         {
+            // بعد از load tuner، قبل از build request:
+            var allParams = tuner.GetParameterSpace(run.PrimaryTimeFrame);
+            var selected = run.GetSelectedParameters();
+
+            IReadOnlyList<ParameterDefinition> tunable = selected.Count == 0
+                ? allParams.Where(p => p.Importance != ParameterImportance.Structural).ToList()
+                : allParams.Where(p => selected.Contains(p.Name)).ToList();
+
+            if (tunable.Count == 0)
+            {
+                run.MarkFailed("هیچ پارامتر قابل تنظیمی انتخاب نشده.");
+                await uow.StrategyTuningRuns.UpdateAsync(run);
+                await uow.SaveChangesAsync(ct);
+                return;
+            }
+
+            // build request with TunableParameters: tunable
             var request = new GeneticTuningRequest(
                 TuningRunId: run.Id,
                 Tuner: tuner,
@@ -164,7 +181,8 @@ public sealed class StrategyTuningWorker : BackgroundService
                 Generations: run.Generations,
                 MutationRate: run.MutationRate,
                 CrossoverRate: run.CrossoverRate,
-                RequiredCandleCount: 200);
+                RequiredCandleCount: 200,
+                tunable);
 
             // Progress reporter — fire-and-forget per generation
             var runIdCapture = run.Id;

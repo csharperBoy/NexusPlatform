@@ -10,6 +10,25 @@ export const TUNING_STATUS_LABELS: Record<TuningStatus, string> = {
   [TuningStatus.Cancelled]: "لغو",
 };
 
+export interface ParameterDefinitionView {
+  name: string;
+  displayName: string;
+  typeName: string;
+  importance: number;      // 0-4
+  importanceLabel: string;
+  description: string | null;
+  minValue: number | string | null;
+  maxValue: number | string | null;
+  allowedValues: (string | number | boolean)[] | null;
+}
+
+export const IMPORTANCE_COLORS: Record<number, string> = {
+  4: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  3: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  2: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  1: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
+  0: "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400",
+};
 export const TUNING_SCALE_LABELS: Record<number, string> = {
   1: "سالانه", 2: "۶ ماهه", 4: "۳ ماهه", 8: "۱ ماهه",
 };
@@ -32,6 +51,8 @@ export interface CreateStrategyTuningModel {
   generations: number;
   mutationRate: number;
   crossoverRate: number;
+  
+  selectedParameters: string[] | null;
 }
 
 export interface StrategyTuningRunSummaryView {
@@ -75,4 +96,5 @@ export interface StrategyTuningRunDetailView extends StrategyTuningRunSummaryVie
   bestResultIdMonthly: string | null;
   errorMessage: string | null;
   topResults: StrategyTuningResultView[];
+  selectedParameters: string[] | null;
 }

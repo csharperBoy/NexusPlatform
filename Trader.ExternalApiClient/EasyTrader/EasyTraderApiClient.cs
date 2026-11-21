@@ -622,7 +622,8 @@ namespace Trader.ExternalApiClient.EasyTrader
             string resolution,
             int countback,
             CancellationToken ct = default,
-    DateTime? toTime = null)
+            DateTime? fromTime = null, 
+            DateTime? toTime = null)
         {
             if (string.IsNullOrWhiteSpace(symbolIsin))
                 return new();
@@ -636,12 +637,13 @@ namespace Trader.ExternalApiClient.EasyTrader
 
             //var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
+            var fromUnix = (fromTime == null ? 0 : (fromTime ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds());
             var toUnix = (toTime ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds();
 
             var url = _options.BaseUrl.TrimEnd('/') + EasyTraderEndpoints.ChartHistoryV2
                 + $"?symbol={Uri.EscapeDataString(symbolParam)}"
                 + $"&resolution={Uri.EscapeDataString(resolution)}"
-                + $"&from=0"
+                + $"&from={fromUnix}"
                 + $"&to={toUnix}"
                 + $"&countback={countback}";
 

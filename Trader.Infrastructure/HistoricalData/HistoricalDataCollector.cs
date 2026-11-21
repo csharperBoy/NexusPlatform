@@ -242,7 +242,7 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
             IReadOnlyList<Trader.Application.Runtime.Candle> batch;
             try
             {
-                batch = await provider.GetCandlesAsync(isin, tf, BatchSize, ct, currentTo);
+                batch = await provider.GetCandlesAsync(isin, tf, BatchSize, ct, from, currentTo);
             }
             catch (Exception ex)
             {

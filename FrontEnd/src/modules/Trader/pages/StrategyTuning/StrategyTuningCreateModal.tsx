@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import { strategyApi } from "../../api/strategyApi";
 import { instrumentApi } from "../../api/instrumentApi";
 import { strategyTuningApi } from "../../api/strategyTuningApi";
-import type { StrategyInfoView, CreateStrategyTuningModel } from "../../models";
-import { TimeFrame, TIMEFRAME_LABELS } from "../../models";
+import type { StrategyInfoView, CreateStrategyTuningModel, ParameterDefinitionView } from "../../models";
+import { IMPORTANCE_COLORS, TimeFrame, TIMEFRAME_LABELS } from "../../models";
 
 interface Props { isOpen: boolean; onClose: () => void; onCreated: (id: string) => void; }
 
@@ -37,6 +37,29 @@ export const StrategyTuningCreateModal: React.FC<Props> = ({ isOpen, onClose, on
   const [cross, setCross] = useState("0.8");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+const [paramSpace, setParamSpace] = useState<ParameterDefinitionView[]>([]);
+const [paramLoading, setParamLoading] = useState(false);
+const [selectedParams, setSelectedParams] = useState<Set<string>>(new Set());
+
+// بعد از تغییر strategyKey یا primaryTf:
+useEffect(() => {
+  if (!isOpen || !strategyKey) { setParamSpace([]); return; }
+  let cancelled = false;
+  setParamLoading(true);
+  strategyTuningApi.GetParameterSpace(strategyKey, primaryTf)
+    .then(space => {
+      if (cancelled) return;
+      setParamSpace(space);
+      // پیش‌فرض: Critical + Important
+      const defaults = space
+        .filter(p => p.importance >= 3 && p.importance !== 0)
+        .map(p => p.name);
+      setSelectedParams(new Set(defaults));
+    })
+    .catch(() => { if (!cancelled) setParamSpace([]); })
+    .finally(() => { if (!cancelled) setParamLoading(false); });
+  return () => { cancelled = true; };
+}, [isOpen, strategyKey, primaryTf]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -91,6 +114,8 @@ export const StrategyTuningCreateModal: React.FC<Props> = ({ isOpen, onClose, on
       generations: g,
       mutationRate: Number(mut),
       crossoverRate: Number(cross),
+      
+  selectedParameters: Array.from(selectedParams),
     };
 
     setSubmitting(true);
@@ -203,7 +228,75 @@ export const StrategyTuningCreateModal: React.FC<Props> = ({ isOpen, onClose, on
               کل evaluations: {Number(popSize) * Number(gens)}
             </p>
           </details>
-
+{strategyKey && (
+  <div className="rounded border border-gray-200 p-3 dark:border-gray-700">
+    <div className="mb-2 flex items-center justify-between">
+      <p className="text-xs font-semibold">
+        پارامترهای قابل تنظیم ({selectedParams.size}/{paramSpace.length})
+      </p>
+      <div className="flex gap-2 text-[10px]">
+        <button type="button" onClick={() => {
+          const critical = paramSpace.filter(p => p.importance >= 3).map(p => p.name);
+          setSelectedParams(new Set(critical));
+        }} className="text-blue-600 hover:underline">پیش‌فرض</button>
+        <button type="button" onClick={() => setSelectedParams(new Set())}
+          className="text-red-600 hover:underline">پاک کردن</button>
+      </div>
+    </div>
+    {paramLoading ? (
+      <p className="text-xs text-gray-500">بارگذاری پارامترها...</p>
+    ) : (
+      <div className="max-h-96 overflow-y-auto space-y-1">
+        {paramSpace.map(p => {
+          const isStructural = p.importance === 0;
+          const isChecked = selectedParams.has(p.name);
+          return (
+            <label key={p.name}
+              className={`flex items-start gap-2 rounded p-2 text-xs ${
+                isStructural ? "opacity-60" : "hover:bg-gray-50 dark:hover:bg-gray-700/30"
+              }`}>
+              <input type="checkbox" checked={isChecked}
+                disabled={isStructural}
+                onChange={() => {
+                  const s = new Set(selectedParams);
+                  if (s.has(p.name)) s.delete(p.name); else s.add(p.name);
+                  setSelectedParams(s);
+                }}
+                className="mt-0.5" />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-medium">{p.displayName}</span>
+                  <span className={`rounded px-1 py-0.5 text-[9px] ${IMPORTANCE_COLORS[p.importance]}`}>
+                    {p.importanceLabel}
+                  </span>
+                  {isStructural && <span className="text-[9px] text-amber-600">⚠️</span>}
+                </div>
+                {p.description && (
+                  <p className="mt-0.5 text-[10px] text-gray-500">{p.description}</p>
+                )}
+                {(p.minValue !== null || p.allowedValues) && (
+                  <p className="mt-0.5 text-[9px] text-gray-400 font-mono" dir="ltr">
+                    {p.allowedValues
+                      ? `allowed: [${p.allowedValues.join(", ")}]`
+                      : `range: [${p.minValue}, ${p.maxValue}]`}
+                  </p>
+                )}
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    )}
+    {selectedParams.size === 0 && (
+      <p className="mt-2 text-[10px] text-red-600">⚠️ حداقل یک پارامتر انتخاب کن</p>
+    )}
+    {selectedParams.size > 15 && (
+      <p className="mt-2 text-[10px] text-amber-600">
+        ⚠️ {selectedParams.size} پارامتر برای ۲۰۰۰ evaluation زیاده — نتیجه ممکنه نویزی باشه.
+      </p>
+    )}
+  </div>
+)}
           <div className="flex justify-end gap-2 border-t border-gray-200 pt-3 dark:border-gray-700">
             <button type="button" onClick={onClose}
               className="rounded border px-4 py-2 text-sm dark:border-gray-600 dark:text-gray-300">انصراف</button>

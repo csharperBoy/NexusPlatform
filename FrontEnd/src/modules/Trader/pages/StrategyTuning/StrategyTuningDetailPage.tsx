@@ -62,7 +62,12 @@ export const StrategyTuningDetailPage: React.FC = () => {
           <button onClick={refresh} className="mt-2 text-xs text-blue-600">🔄</button>
         </div>
       </div>
-
+{run.selectedParameters && run.selectedParameters.length > 0 && (
+  <div className="rounded border border-gray-200 p-2 text-xs dark:border-gray-700">
+    <span className="text-gray-500">پارامترهای تنظیم‌شده: </span>
+    <span className="font-mono">{run.selectedParameters.join(", ")}</span>
+  </div>
+)}
       {run.errorMessage && (
         <div className="rounded bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30">⚠️ {run.errorMessage}</div>
       )}

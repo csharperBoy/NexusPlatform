@@ -40,16 +40,16 @@ namespace Trader.Infrastructure.Brokers.EasyTrader.Capabilities
     ExternalSystemSession session, string symbolIsin, string resolution,
     int countback, CancellationToken ct = default)
     => GetCandlesUntilAsync(session, symbolIsin, resolution, countback,
-        DateTime.UtcNow, ct);
+        null,null, ct);
 
         public async Task<List<CandleDto>> GetCandlesUntilAsync(
             ExternalSystemSession session, string symbolIsin, string resolution,
-            int countback, DateTime toTime, CancellationToken ct = default)
+            int countback, DateTime? fromTime, DateTime? toTime, CancellationToken ct = default)
         {
             var s = AsSession(session);
 
             var wire = await Api.GetChartHistoryV2Async(
-                s.AccessToken, symbolIsin, resolution, countback, ct, toTime);
+                s.AccessToken, symbolIsin, resolution, countback, ct, fromTime, toTime);
 
             if (wire is null
                 || wire.Time is null

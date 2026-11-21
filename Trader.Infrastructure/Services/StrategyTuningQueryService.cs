@@ -52,7 +52,7 @@ public sealed class StrategyTuningQueryService : IStrategyTuningQueryService
             run.BestResultIdYearly, run.BestResultIdSemi,
             run.BestResultIdQuarterly, run.BestResultIdMonthly,
             run.ErrorMessage,
-            run.StartedAt, run.CompletedAt, run.CreatedAt, topResults);
+            run.StartedAt, run.CompletedAt, run.CreatedAt, topResults, run.GetSelectedParameters());
     }
 
     public async Task<IReadOnlyList<StrategyTuningResultView>> GetResultsAsync(

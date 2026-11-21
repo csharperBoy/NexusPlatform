@@ -15,4 +15,5 @@ public sealed record StrategyTuningRunDetailView(
     Guid? BestResultIdQuarterly, Guid? BestResultIdMonthly,
     string? ErrorMessage,
     DateTime? StartedAt, DateTime? CompletedAt, DateTime CreatedAt,
-    IReadOnlyList<StrategyTuningResultView> TopResults);
+    IReadOnlyList<StrategyTuningResultView> TopResults,
+IReadOnlyList<string> SelectedParameters);

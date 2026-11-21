@@ -2410,6 +2410,10 @@ namespace Trader.Infrastructure.Migrations
                     b.Property<int>("PrimaryTimeFrame")
                         .HasColumnType("int");
 
+                    b.Property<string>("SelectedParametersJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SelectedScales")
                         .HasColumnType("int");
 

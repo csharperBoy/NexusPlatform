@@ -5,11 +5,14 @@ import type {
   StrategyTuningRunSummaryView,
   StrategyTuningRunDetailView,
   StrategyTuningResultView,
+  ParameterDefinitionView,
 } from "../models";
 
 const API_MODULE = "trader";
 
 export const strategyTuningApi = {
+
+  
   Run: async (model: CreateStrategyTuningModel): Promise<string> => {
     const api = getAPI(API_MODULE);
     const r = await api.post<string>("/api/Trader/StrategyTuning/Run", model,
@@ -40,4 +43,12 @@ export const strategyTuningApi = {
       `/api/Trader/StrategyTuning/Results/${id}?topOnly=${topOnly}`, { withCredentials: true });
     return r.data;
   },
+GetParameterSpace: async (strategyKey: string, primaryTf: number):
+  Promise<ParameterDefinitionView[]> => {
+  const api = getAPI(API_MODULE);
+  const r = await api.get<ParameterDefinitionView[]>(
+    `/api/Trader/StrategyTuning/ParameterSpace/${strategyKey}?primaryTimeFrame=${primaryTf}`,
+    { withCredentials: true });
+  return r.data;
+},
 };

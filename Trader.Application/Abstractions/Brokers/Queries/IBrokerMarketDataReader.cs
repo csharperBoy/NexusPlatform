@@ -28,7 +28,8 @@ namespace Trader.Application.Abstractions.Brokers.Queries
             string symbolIsin,
             string resolution,
             int countback,
-            DateTime toTime,
+            DateTime? fromTime,
+            DateTime? toTime,
             CancellationToken ct = default);
 
             Task<List<BatchMarketDataItemDto>> GetBatchMarketDataAsync(

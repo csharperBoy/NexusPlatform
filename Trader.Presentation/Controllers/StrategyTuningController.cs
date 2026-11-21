@@ -3,8 +3,11 @@ using Core.Presentation.Filters;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Trader.Application.Abstractions;
 using Trader.Application.Dtos.Tuning;
+using Trader.Application.Strategies.Tuning;
+using Trader.Domain.Enums;
 
 namespace Trader.Presentation.Controllers;
 
@@ -66,4 +69,50 @@ public sealed class StrategyTuningController : ControllerBase
         Guid id, [FromQuery] bool topOnly = false, [FromQuery] int take = 100,
         CancellationToken ct = default)
         => Ok(await _qry.GetResultsAsync(id, topOnly, take, ct));
+
+    // در StrategyTuningController.cs
+
+    [HttpGet("ParameterSpace/{strategyKey}")]
+    public ActionResult<IReadOnlyList<ParameterDefinitionView>> GetParameterSpace(
+        string strategyKey, [FromQuery] int primaryTimeFrame = 1440)
+    {
+        var tuner = HttpContext.RequestServices
+            .GetServices<IStrategyTuner>()
+            .FirstOrDefault(t => t.TunerKey == strategyKey);
+        if (tuner is null) return NotFound();
+
+        var space = tuner.GetParameterSpace((TimeFrame)primaryTimeFrame);
+        var views = space.Select(p => new ParameterDefinitionView(
+            Name: p.Name,
+            DisplayName: p.EffectiveDisplayName,
+            TypeName: p switch
+            {
+                IntParameter => "int",
+                DecimalParameter => "decimal",
+                BoolParameter => "bool",
+                TimeFrameParameter => "timeframe",
+                _ => "unknown",
+            },
+            Importance: (int)p.Importance,
+            ImportanceLabel: p.Importance.GetLabel(),
+            Description: p.Description,
+            MinValue: p switch
+            {
+                IntParameter i => i.Min,
+                DecimalParameter d => d.Min,
+                _ => null,
+            },
+            MaxValue: p switch
+            {
+                IntParameter i => i.Max,
+                DecimalParameter d => d.Max,
+                _ => null,
+            },
+            AllowedValues: p is TimeFrameParameter tfp
+                ? tfp.AllowedValues.Cast<object>().ToList()
+                : (p is BoolParameter ? new List<object> { true, false } : null)
+        )).OrderByDescending(v => v.Importance).ToList();
+
+        return Ok(views);
+    }
 }

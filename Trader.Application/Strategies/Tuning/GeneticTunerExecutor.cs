@@ -27,7 +27,8 @@ public sealed record GeneticTuningRequest(
     int Generations,
     decimal MutationRate,
     decimal CrossoverRate,
-    int RequiredCandleCount);
+    int RequiredCandleCount,
+    IReadOnlyList<ParameterDefinition> TunableParameters);
 
 public sealed record TuningProgress(int CompletedEvals, int TotalEvals, int Generation);
 
@@ -83,7 +84,7 @@ public sealed class GeneticTunerExecutor : IStrategyTunerExecutor
         var windows = TuningWindowBuilder.BuildAll(
             req.DateFrom, req.DateTo, req.SelectedScales, req.TuningRunId);
 
-        var space = req.Tuner.GetParameterSpace(req.PrimaryTimeFrame);
+        var space = req.TunableParameters;
         var defaults = req.Tuner.GetDefaults(req.PrimaryTimeFrame);
 
         // ─── Initialize population ───
