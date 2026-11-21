@@ -722,6 +722,7 @@ namespace Trader.ExternalApiClient.EasyTrader
 
             return wire;
         }
+        
         /* ══════════════════════════════════════════════════
            ANALYSIS
            ══════════════════════════════════════════════════ */
@@ -1190,6 +1191,108 @@ namespace Trader.ExternalApiClient.EasyTrader
                 receivedAt);
         }
 
+        /// <summary>
+        /// دریافت رویدادهای نمودار نماد (تقسیم سود نقدی، افزایش سرمایه، ...).
+        /// TradingView UDF marks endpoint.
+        ///
+        /// - از همان symbol=ISIN:1 استفاده می‌کند (بدون :N سرور «Symbol is invalid» می‌دهد).
+        /// - آرایه‌ی خالی = نماد بدون رویداد در بازه. این خطا نیست، خروجی خالی برمی‌گردد.
+        /// - text حاوی HTML است — دست‌نخورده برمی‌گردد.
+        /// </summary>
+        public async Task<TradingViewMarksResponse> GetChartMarksAsync(
+            string accessToken,
+            string symbolIsin,
+            string resolution,
+            long fromUnix,
+            long toUnix,
+            CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(symbolIsin))
+                return new();
+
+            if (fromUnix < 0 || toUnix <= 0 || toUnix <= fromUnix)
+            {
+                throw new EasyTraderException(
+                    $"GetChartMarks: invalid range from={fromUnix} to={toUnix}.");
+            }
+
+            // ─── همان قرارداد V2: بدون :N خطا می‌دهد ───
+            var symbolParam = symbolIsin.Contains(':') ? symbolIsin : $"{symbolIsin}:1";
+
+            var url = _options.BaseUrl.TrimEnd('/') + EasyTraderEndpoints.ChartMarks
+                + $"?symbol={Uri.EscapeDataString(symbolParam)}"
+                + $"&from={fromUnix}"
+                + $"&to={toUnix}"
+                + $"&resolution={Uri.EscapeDataString(resolution)}";
+
+            var client = CreateSharedClient();
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            AttachAuth(req, accessToken);
+
+            using var res = await client.SendAsync(req, ct);
+            var body = await res.Content.ReadAsStringAsync(ct);
+            var contentType = res.Content.Headers.ContentType?.MediaType ?? "?";
+
+            // ─── WAF / HTML detection ───
+            var trimmed = body.TrimStart();
+            if (trimmed.StartsWith("<"))
+            {
+                throw new EasyTraderException(
+                    $"Chart marks returned HTML (WAF/block) for " +
+                    $"{symbolIsin} resolution={resolution}. " +
+                    $"ContentType={contentType}. Preview: {Truncate(trimmed, 300)}",
+                    (int)res.StatusCode, body);
+            }
+
+            if (!res.IsSuccessStatusCode)
+            {
+                throw new EasyTraderException(
+                    $"Chart marks failed {(int)res.StatusCode} for " +
+                    $"{symbolIsin} resolution={resolution} from={fromUnix} to={toUnix}. " +
+                    $"ContentType={contentType}. Body: {Truncate(body, 400)}",
+                    (int)res.StatusCode, body);
+            }
+
+            if (string.IsNullOrWhiteSpace(body))
+                return new();
+
+            TradingViewMarksResponse? wire;
+            try
+            {
+                wire = JsonSerializer.Deserialize<TradingViewMarksResponse>(body, JsonOpts);
+            }
+            catch (JsonException jex)
+            {
+                throw new EasyTraderException(
+                    $"Chart marks JSON parse failed for {symbolIsin}. " +
+                    $"URL={url}. Preview: {Truncate(body, 400)}. Inner: {jex.Message}");
+            }
+
+            if (wire is null) return new();
+
+            // آرایه‌ی خالی/نبود time = نماد بدون رویداد. خطا نیست.
+            if (wire.Time is null || wire.Time.Length == 0)
+                return wire;
+
+            // ─── اعتبارسنجی آرایه‌های هم‌طول (الگوی V2) ───
+            var n = wire.Time.Length;
+            if (wire.Id?.Length != n
+                || wire.Color?.Length != n
+                || wire.Text?.Length != n
+                || wire.Label?.Length != n
+                || wire.LabelFontColor?.Length != n
+                || wire.MinSize?.Length != n)
+            {
+                throw new EasyTraderException(
+                    $"Chart marks returned inconsistent array lengths for " +
+                    $"{symbolIsin} resolution={resolution}. " +
+                    $"time={n}, id={wire.Id?.Length}, color={wire.Color?.Length}, " +
+                    $"text={wire.Text?.Length}, label={wire.Label?.Length}, " +
+                    $"labelFontColor={wire.LabelFontColor?.Length}, minSize={wire.MinSize?.Length}.");
+            }
+
+            return wire;
+        }
         /* ══════════════════════════════════════════════════
            PRIVATE HELPERS
            ══════════════════════════════════════════════════ */

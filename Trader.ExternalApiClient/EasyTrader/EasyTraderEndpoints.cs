@@ -40,6 +40,8 @@
         /// پارامترها: symbol=ISIN:1&amp;resolution=N&amp;from=0&amp;to=UNIX&amp;countback=N
         /// </summary>
         public const string ChartHistoryV2 = "/chart/api/v2/datafeed/history";
+
+     
         /* ═══ Analysis ═══ */
         public const string IndInstAnalysis = "/easy/api/symbol-analysis/ind-inst";
         public const string TechnicalAnalysis = "/easy/api/symbol-analysis/technical-analysis";
@@ -71,5 +73,14 @@
         public const string Payments = "/finance/api/payments";
         public const string PaymentAccountBalances = "/finance/api/payment-account-balances";
         public const string PaymentCancel = "/finance/api/payments/{0}/cancel";
+
+
+        /* ═══ Chart Marks — V2 (TradingView UDF, رویدادهای نمودار) ═══ */
+        /// <summary>
+        /// رویدادهای نمودار (تقسیم سود نقدی، افزایش سرمایه، ...).
+        /// پارامترها: symbol=ISIN:1&amp;from=UNIX&amp;to=UNIX&amp;resolution=N
+        /// resolutionها: 1, 5, 15, 30, 60, 1D, 1W, 1M
+        /// </summary>
+        public const string ChartMarks = "/chart/api/v2/datafeed/marks";
     }
 }

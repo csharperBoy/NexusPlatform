@@ -55,7 +55,7 @@ namespace Trader.ExternalApiClient.EasyTrader
         [JsonPropertyName("tradeDate")]
         public string? TradeDate { get; set; }
     }
-
+   
     /* ═══ Order Request (camelCase — این رو ما می‌فرستیم) ═══ */
     public class EasyTraderOrderRequest
     {
@@ -786,5 +786,23 @@ namespace Trader.ExternalApiClient.EasyTrader
     {
         [JsonPropertyName("title")] public string? Title { get; set; }
         [JsonPropertyName("score")] public double Score { get; set; }
+    }
+
+    /// <summary>
+    /// پاسخ TradingView UDF از endpoint /chart/api/v2/datafeed/marks.
+    /// هر index در همه‌ی آرایه‌ها یک mark/رویداد است (آرایه‌ها هم‌طول هستند).
+    /// 
+    /// ⚠️ فیلد <see cref="Text"/> حاوی HTML است (نه plain text) — دقیقاً همان‌طور
+    /// که سرور می‌دهد، بدون هیچ پردازشی. parse و sanitize به عهده‌ی مصرف‌کننده.
+    /// </summary>
+    public class TradingViewMarksResponse
+    {
+        [JsonPropertyName("time")] public long[]? Time { get; set; }
+        [JsonPropertyName("id")] public string[]? Id { get; set; }
+        [JsonPropertyName("color")] public string[]? Color { get; set; }
+        [JsonPropertyName("text")] public string[]? Text { get; set; }
+        [JsonPropertyName("label")] public string[]? Label { get; set; }
+        [JsonPropertyName("labelFontColor")] public string[]? LabelFontColor { get; set; }
+        [JsonPropertyName("minSize")] public int[]? MinSize { get; set; }
     }
 }

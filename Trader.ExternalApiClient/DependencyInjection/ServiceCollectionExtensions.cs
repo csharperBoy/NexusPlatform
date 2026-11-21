@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Trader.ExternalApiClient.EasyTrader;
 using Trader.ExternalApiClient.Tgju;
+using Trader.ExternalApiClient.Tsetmc;
 
 namespace Trader.ExternalApiClient.DependencyInjection
 {
@@ -61,6 +62,47 @@ namespace Trader.ExternalApiClient.DependencyInjection
             });
 
             services.AddSingleton<TgjuApiClient>();
+
+
+            // ─── TSETMC ───
+            services.Configure<TsetmcOptions>(
+                configuration.GetSection(TsetmcOptions.SectionName));
+
+            services.AddHttpClient("Tsetmc", (sp, client) =>
+            {
+                var opts = sp.GetRequiredService<IOptions<TsetmcOptions>>().Value;
+
+                client.BaseAddress = new Uri(opts.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
+
+                client.DefaultRequestHeaders.UserAgent.ParseAdd(opts.UserAgent);
+                client.DefaultRequestHeaders.Accept
+                    .ParseAdd("application/json, text/plain, */*");
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "Accept-Language", opts.AcceptLanguage);
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "Referer", opts.Referer);
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "Cache-Control", "no-cache");
+                client.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "Pragma", "no-cache");
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                // نگه‌داشتن connection برای پرفورمنس بالا (این endpointها حجم زیاد برمی‌گردانند)
+                PooledConnectionLifetime = TimeSpan.FromSeconds(30),
+                PooledConnectionIdleTimeout = TimeSpan.FromSeconds(20),
+                MaxConnectionsPerServer = 20,
+                AutomaticDecompression = System.Net.DecompressionMethods.All,
+                ConnectTimeout = TimeSpan.FromSeconds(10),
+                AllowAutoRedirect = true,
+                MaxAutomaticRedirections = 3,
+            });
+
+            services.AddSingleton<TsetmcApiClient>();
+
+
+
             return services;
         }
     }
