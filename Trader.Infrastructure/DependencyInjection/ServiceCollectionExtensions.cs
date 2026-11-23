@@ -159,6 +159,8 @@ namespace Trader.Infrastructure.DependencyInjection
                 EfRepository<TraderDbContext, StrategyTuningRun, Guid>>();
             services.AddScoped<IRepository<TraderDbContext, StrategyTuningResult, Guid>,
                 EfRepository<TraderDbContext, StrategyTuningResult, Guid>>();
+            services.AddScoped<IRepository<TraderDbContext, CorporateAction, Guid>,
+                EfRepository<TraderDbContext, CorporateAction, Guid>>();
 
             /* ═══════════ Repositories — Specification ═══════════ */
             services.AddScoped<ISpecificationRepository<StrategyTuningRun, Guid>,
@@ -220,6 +222,8 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
                 EfSpecificationRepository<TraderDbContext, BacktestRun, Guid>>();
             services.AddScoped<ISpecificationRepository<BacktestTrade, Guid>,
                 EfSpecificationRepository<TraderDbContext, BacktestTrade, Guid>>();
+            services.AddScoped<ISpecificationRepository<CorporateAction, Guid>,
+                EfSpecificationRepository<TraderDbContext, CorporateAction, Guid>>();
 
             services.AddScoped<ICandlePersistenceService, CandlePersistenceService>();
 
