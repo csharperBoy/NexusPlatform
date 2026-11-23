@@ -9,6 +9,7 @@ using Trader.Application.Abstractions.Backtesting;
 using Trader.Application.Abstractions.Brokers;
 using Trader.Application.Abstractions.Brokers.Commands;
 using Trader.Application.Abstractions.Brokers.Queries;
+using Trader.Application.Abstractions.CorporateActions;
 using Trader.Application.Abstractions.Dashboard;
 using Trader.Application.Abstractions.Execution;
 using Trader.Application.Abstractions.HistoricalData;
@@ -39,6 +40,8 @@ using Trader.ExternalApiClient.EasyTrader;
 using Trader.Infrastructure.Backtesting;
 using Trader.Infrastructure.Brokers;
 using Trader.Infrastructure.Brokers.EasyTrader;
+using Trader.Infrastructure.Brokers.EasyTrader.Capabilities;
+using Trader.Infrastructure.CorporateActions;
 using Trader.Infrastructure.Data;
 using Trader.Infrastructure.Execution;
 using Trader.Infrastructure.HistoricalData;
@@ -237,6 +240,14 @@ EfSpecificationRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid>>
             services.AddScoped<ICapitalAllocator, CompositeCapitalAllocator>();
             services.AddSingleton<IRateLimiterTracker, InMemoryRateLimiterTracker>();
             services.AddScoped<IRiskGuard, RateLimiterGuard>();
+            // کنار ثبت‌های مربوط به Backtesting/HistoricalData اضافه کن:
+            services.Configure<CorporateActionsOptions>(
+                configuration.GetSection(CorporateActionsOptions.SectionName));
+
+            services.AddScoped<ICorporateActionService, CorporateActionService>();
+            services.AddScoped<IBrokerCorporateActionReader, EasyTraderCorporateActionReader>();
+            services.AddKeyedScoped<IBrokerCorporateActionReader, EasyTraderCorporateActionReader>(
+    BrokerType.EasyTrader);
             /* ═══════════ Price Collection (B1) ═══════════ */
             services.Configure<PriceCollectionOptions>(
                 configuration.GetSection(PriceCollectionOptions.SectionName));

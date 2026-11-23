@@ -31,9 +31,12 @@ public class HistoricalDataCollectorTests
 
         await sut.CollectBackfillAsync(job.Id);
 
+       
+
         deps.Provider.Verify(x => x.GetCandlesAsync(
             It.IsAny<string>(), It.IsAny<TimeFrame>(),
-            It.IsAny<int>(), It.IsAny<CancellationToken>(), It.IsAny<DateTime?>()),
+            It.IsAny<int>(), It.IsAny<CancellationToken>(),
+            It.IsAny<DateTime?>(), It.IsAny<DateTime?>()),
             Times.Never);
     }
 
@@ -48,7 +51,8 @@ public class HistoricalDataCollectorTests
 
         deps.Provider.Verify(x => x.GetCandlesAsync(
             It.IsAny<string>(), It.IsAny<TimeFrame>(),
-            It.IsAny<int>(), It.IsAny<CancellationToken>(), It.IsAny<DateTime?>()),
+            It.IsAny<int>(), It.IsAny<CancellationToken>(),
+            It.IsAny<DateTime?>(), It.IsAny<DateTime?>()),
             Times.Never);
     }
 
@@ -98,7 +102,8 @@ public class HistoricalDataCollectorTests
         var candleTime = new DateTime(2024, 1, 15, 0, 0, 0, DateTimeKind.Utc);
         deps.Provider.SetupSequence(x => x.GetCandlesAsync(
                 "TEST", TimeFrame.D1, It.IsAny<int>(),
-                It.IsAny<CancellationToken>(), It.IsAny<DateTime?>()))
+                It.IsAny<CancellationToken>(),
+                It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .ReturnsAsync(new[]
             {
                 new Candle(candleTime, 100m, 110m, 90m, 105m, 1000L),

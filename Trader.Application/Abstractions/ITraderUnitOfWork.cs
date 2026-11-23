@@ -27,6 +27,7 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, CurrencyRate, Guid> CurrencyRates { get; }
     IRepository<TDbContext, TradingEvent, Guid> TradingEvents { get; }
     IRepository<TDbContext, BacktestEvent, Guid> BacktestEvents { get; }
+
     // Backtest
     IRepository<TDbContext, BacktestRun, Guid> BacktestRuns { get; }
     IRepository<TDbContext, BacktestSymbol, Guid> BacktestSymbols { get; }
@@ -41,7 +42,9 @@ public interface ITraderUnitOfWork<TDbContext> : IUnitOfWork<TDbContext>
     IRepository<TDbContext, PriceCollectionJob, Guid> PriceCollectionJobs { get; }
     IRepository<TDbContext, StrategyTuningRun, Guid> StrategyTuningRuns { get; }
     IRepository<TDbContext, StrategyTuningResult, Guid> StrategyTuningResults { get; }
+    IRepository<TDbContext, CorporateAction, Guid> CorporateActions { get; }
     // Spec Repositories
+    ISpecificationRepository<CorporateAction, Guid> CorporateActionSpecs { get; }
     ISpecificationRepository<StrategyTuningRun, Guid> StrategyTuningRunSpecs { get; }
     ISpecificationRepository<StrategyTuningResult, Guid> StrategyTuningResultSpecs { get; }
     ISpecificationRepository<PriceSource, Guid> PriceSourceSpecs { get; }

@@ -666,6 +666,69 @@ namespace Trader.Infrastructure.Migrations
                     b.ToTable("Candles", "trader");
                 });
 
+            modelBuilder.Entity("Trader.Domain.Entities.CorporateAction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("Amount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("ExDateUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime?>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<decimal?>("Ratio")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<string>("RawText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceId")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<decimal?>("SubscriptionPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Isin", "ActionType");
+
+                    b.HasIndex("Isin", "ExDateUtc");
+
+                    b.ToTable("CorporateActions", "trader");
+                });
+
             modelBuilder.Entity("Trader.Domain.Entities.CurrencyRate", b =>
                 {
                     b.Property<Guid>("Id")
@@ -789,6 +852,15 @@ namespace Trader.Infrastructure.Migrations
 
                     b.Property<int>("CompletedCombinations")
                         .HasColumnType("int");
+
+                    b.Property<int>("CorporateActionsFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CorporateActionsFetchedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CorporateActionsLastError")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()

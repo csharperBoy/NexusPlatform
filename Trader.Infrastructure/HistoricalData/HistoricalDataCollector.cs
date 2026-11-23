@@ -1,8 +1,9 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 using Trader.Application.Abstractions;
+using Trader.Application.Abstractions.CorporateActions;
 using Trader.Application.Abstractions.HistoricalData;
 using Trader.Application.Abstractions.MarketData;
 using Trader.Application.Specifications.Candles;
@@ -101,6 +102,26 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
                         await uow.SaveChangesAsync(ct);
                     }
                 }
+                // ─── NEW: Corporate Actions for this isin (after all TFs done) ───
+                try
+                {
+                    var caService = scope.ServiceProvider
+                        .GetRequiredService<ICorporateActionService>();
+                    var fetchedCount = await caService.FetchAndSaveAsync(isin, from, to, ct);
+                    job.RecordCorporateActions(fetchedCount, 0, null);
+
+                    _logger.LogInformation(
+                        "CA fetched for {Isin}: {Count} new.", isin, fetchedCount);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "CA fetch failed for {Isin}. Candles unaffected.", isin);
+                    job.RecordCorporateActions(0, 1, ex.Message);
+                }
+
+                await uow.HistoricalDataCollectionJobs.UpdateAsync(job);
+                await uow.SaveChangesAsync(ct);
             }
 
             job.MarkCompleted(DateTime.UtcNow);
@@ -186,6 +207,21 @@ public sealed class HistoricalDataCollector : IHistoricalDataCollector
                             "Recurring tick combo failed: job={JobId} isin={Isin} tf={Tf}. Continuing.",
                             jobId, isin, tf);
                     }
+                }
+                // ─── NEW: CA refresh for this isin ───
+                // از fallbackFrom (DateFrom) نه boundary — می‌خوایم همه‌ی CAs تاریخی هم داشته باشیم
+                try
+                {
+                    var caService = scope.ServiceProvider
+                        .GetRequiredService<ICorporateActionService>();
+                    var fetchedCount = await caService.FetchAndSaveAsync(isin, fallbackFrom, now, ct);
+                    job.RecordCorporateActions(fetchedCount, 0, null);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "CA refresh failed for {Isin} in recurring tick.", isin);
+                    job.RecordCorporateActions(0, 1, ex.Message);
                 }
             }
 

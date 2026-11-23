@@ -37,6 +37,12 @@ IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> runAccountDail
 IRepository<TraderDbContext, RunAccountLossStreak, Guid> runAccountLossStreaks,
 IRepository<TraderDbContext, StrategyTuningRun, Guid> strategyTuningRuns,
 IRepository<TraderDbContext, StrategyTuningResult, Guid> strategyTuningResults,
+
+IRepository<TraderDbContext, CorporateAction, Guid> corporateActions,
+
+
+ISpecificationRepository<CorporateAction, Guid> corporateActionSpecs,
+
 ISpecificationRepository<RunAccountLossStreak, Guid> runAccountLossStreakSpecs,
 ISpecificationRepository<RunAccountDailyEquitySnapshot, Guid> runAccountDailyEquitySnapshotSpecs,
 ISpecificationRepository<RunDailyEquitySnapshot, Guid> runDailyEquitySnapshotSpecs,
@@ -132,7 +138,8 @@ ISpecificationRepository<StrategyTuningResult, Guid> strategyTuningResultSpecs,
         RunAccountDailyEquitySnapshotSpecs = runAccountDailyEquitySnapshotSpecs;
         RunAccountLossStreaks = runAccountLossStreaks;
         RunAccountLossStreakSpecs = runAccountLossStreakSpecs;
-
+        CorporateActions = corporateActions;
+        CorporateActionSpecs = corporateActionSpecs;
         StrategyTuningRuns = strategyTuningRuns;
         StrategyTuningResults = strategyTuningResults;
         StrategyTuningRunSpecs = strategyTuningRunSpecs;
@@ -173,7 +180,10 @@ ISpecificationRepository<StrategyTuningResult, Guid> strategyTuningResultSpecs,
     public IRepository<TraderDbContext, RunDailyEquitySnapshot, Guid> RunDailyEquitySnapshots { get; }
     public IRepository<TraderDbContext, RunAccountDailyEquitySnapshot, Guid> RunAccountDailyEquitySnapshots { get; }
     public IRepository<TraderDbContext, RunAccountLossStreak, Guid> RunAccountLossStreaks { get; }
-    
+    public IRepository<TraderDbContext, CorporateAction, Guid> CorporateActions { get; }
+
+    // Spec Repositories
+    public ISpecificationRepository<CorporateAction, Guid> CorporateActionSpecs { get; }
     public ISpecificationRepository<StrategyTuningRun, Guid> StrategyTuningRunSpecs { get; }
     public ISpecificationRepository<StrategyTuningResult, Guid> StrategyTuningResultSpecs { get; }
     public ISpecificationRepository<RunAccountLossStreak, Guid> RunAccountLossStreakSpecs { get; }

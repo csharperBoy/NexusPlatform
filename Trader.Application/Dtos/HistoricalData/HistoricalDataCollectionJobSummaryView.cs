@@ -24,4 +24,7 @@ public sealed record HistoricalDataCollectionJobSummaryView(
     DateTime? CompletedAt,
     long? DurationMs,
     string? LastError,
+int CorporateActionsFetchedCount,
+int CorporateActionsFailedCount,
+string? CorporateActionsLastError,
     DateTime CreatedAt);

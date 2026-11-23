@@ -238,7 +238,11 @@ public sealed class HistoricalDataCollectionService
         j.StartedAt, j.StoppedAt, j.LastRunAt,
         j.LastRunInserted, j.LastRunSkipped,
         j.CompletedAt, j.DurationMs,
-        j.LastError, j.CreatedAt);
+        j.LastError,
+j.CorporateActionsFetchedCount,
+j.CorporateActionsFailedCount,
+j.CorporateActionsLastError, 
+j.CreatedAt);
 
     private static HistoricalDataCollectionJobDetailView MapToDetail(
         HistoricalDataCollectionJob j)
@@ -266,6 +270,11 @@ public sealed class HistoricalDataCollectionService
             j.StartedAt, j.StoppedAt, j.LastRunAt,
             j.LastRunInserted, j.LastRunSkipped,
             j.CompletedAt, j.DurationMs,
-            j.LastError, j.CreatedAt);
+            j.LastError,
+// در MapToSummary، قبل از j.CreatedAt:
+j.CorporateActionsFetchedCount,
+j.CorporateActionsFailedCount,
+j.CorporateActionsLastError,
+            j.CreatedAt);
     }
 }

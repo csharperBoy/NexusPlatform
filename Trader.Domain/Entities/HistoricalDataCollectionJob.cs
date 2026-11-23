@@ -84,6 +84,10 @@ public class HistoricalDataCollectionJob : BaseEntity, IAuditableEntity
     public string? ModifiedBy { get; set; }
     public void Touch() => ModifiedAt = DateTime.UtcNow;
 
+    // ─── Corporate Actions (C-lite.5a) ───
+    public int CorporateActionsFetchedCount { get; private set; }
+    public int CorporateActionsFailedCount { get; private set; }
+    public string? CorporateActionsLastError { get; private set; }
     private HistoricalDataCollectionJob() { } // EF
 
     /* ═══════════ Factories ═══════════ */
@@ -253,7 +257,13 @@ public class HistoricalDataCollectionJob : BaseEntity, IAuditableEntity
             : null;
         Touch();
     }
-
+    public void RecordCorporateActions(int fetched, int failed, string? lastError)
+    {
+        CorporateActionsFetchedCount += fetched;
+        CorporateActionsFailedCount += failed;
+        CorporateActionsLastError = lastError;
+        Touch();  // اگر متد Touch وجود داره؛ اگر نه این خط رو حذف کن
+    }
     public void MarkFaulted(string error)
     {
         State = HistoricalJobState.Faulted;
