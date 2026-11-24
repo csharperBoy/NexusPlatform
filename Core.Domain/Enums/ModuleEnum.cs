@@ -23,6 +23,7 @@ namespace Core.Domain.Enums
         Contact = 12,
         StreamBus=13,
         Scheduler= 14,
-        Trader= 15
+        Trader= 15,
+        Epm=16
     }
 }

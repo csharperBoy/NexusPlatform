@@ -1,0 +1,186 @@
+﻿using Core.Infrastructure.Database;
+using EPM.Infrastructure.Data;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+namespace EPM.Infrastructure.DependencyInjection
+{
+    /*
+     📌 ApplicationBuilderExtensions
+     --------------------------------
+     این کلاس یک Extension برای IApplicationBuilder است که وظیفه‌اش اجرای Migrationهای دیتابیس
+     در زمان راه‌اندازی برنامه (Startup) می‌باشد.
+
+     ✅ نکات کلیدی:
+     - متد اصلی: Sample_UseInfrastructure
+       → این متد در زمان راه‌اندازی برنامه فراخوانی می‌شود و متد RunSmartMigrations را اجرا می‌کند.
+     - متد RunSmartMigrations:
+       1. یک Scope جدید از DI Container ایجاد می‌کند.
+       2. سرویس IMigrationManager را دریافت می‌کند (مدیریت Migrationها).
+       3. محیط اجرا (Development/Production) را بررسی می‌کند.
+       4. تلاش می‌کند Migrationها را اجرا کند:
+          - اگر موفق بود → لاگ موفقیت ثبت می‌شود.
+          - اگر خطا رخ داد:
+            - در Development → Exception دوباره throw می‌شود (برای رفع سریع مشکل).
+            - در Production → فقط لاگ هشدار ثبت می‌شود و برنامه ادامه پیدا می‌کند.
+       5. در پایان لاگ موفقیت یا شکست ثبت می‌شود.
+
+     🛠 جریان کار:
+     1. برنامه در Startup یا Program.cs متد Sample_UseInfrastructure را فراخوانی می‌کند.
+     2. این متد RunSmartMigrations را اجرا می‌کند.
+     3. MigrationManager بررسی می‌کند که آیا Migrationهای جدید وجود دارند یا نه.
+     4. اگر وجود داشتند، آن‌ها را اعمال می‌کند.
+     5. لاگ‌ها وضعیت عملیات را ثبت می‌کنند.
+
+     📌 نتیجه:
+     این کلاس تضمین می‌کند که دیتابیس ماژول Sample همیشه به‌روز باشد
+     و Migrationها به صورت هوشمند (Smart) در زمان راه‌اندازی اعمال شوند،
+     بدون اینکه اجرای برنامه در Production به خاطر خطا متوقف شود.
+    */
+
+    public static class ApplicationBuilderExtensions
+    {
+        // 📌 متد اصلی برای استفاده در Startup
+        public static async Task<IApplicationBuilder> Epm_UseInfrastructure(this IApplicationBuilder app)
+        {
+            await app.RunSmartMigrations();
+
+            if (app is IEndpointRouteBuilder endpoints)
+            {
+                endpoints.Epm_MapHealthChecks();
+            }
+
+            return app;
+        }
+        /// <summary>
+        /// Maps Epm health check endpoints:
+        ///   GET /health/epm
+        ///   GET /health/epm/db
+        ///   GET /health/epm/runtime
+        ///   GET /health/epm/backtest
+        ///   GET /health/epm/broker
+        ///   GET /health/epm/marketdata
+        /// All anonymous (intended for K8s/Docker probes).
+        /// </summary>
+        public static IEndpointRouteBuilder Epm_MapHealthChecks(
+            this IEndpointRouteBuilder endpoints,
+            string basePattern = "/health/epm")
+        {
+            var writer = new Func<HttpContext, HealthReport, Task>(WriteResponse);
+
+            void Map(string pattern, Func<HealthCheckRegistration, bool> predicate)
+                => endpoints.MapHealthChecks(pattern, new HealthCheckOptions
+                {
+                    Predicate = predicate,
+                    ResponseWriter = writer,
+                });
+
+            Map(basePattern, _ => true);
+            Map($"{basePattern}/db", c => c.Tags.Contains("db"));
+            Map($"{basePattern}/runtime", c => c.Tags.Contains("runtime"));
+            Map($"{basePattern}/backtest", c => c.Tags.Contains("backtest"));
+            Map($"{basePattern}/broker", c => c.Tags.Contains("broker"));
+            Map($"{basePattern}/marketdata", c => c.Tags.Contains("marketdata"));
+
+            return endpoints;
+        }
+
+        private static readonly JsonSerializerOptions JsonOpts =
+            new(JsonSerializerDefaults.Web)
+            {
+                WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            };
+
+        private static Task WriteResponse(HttpContext context, HealthReport report)
+        {
+            context.Response.ContentType = "application/json; charset=utf-8";
+
+            var payload = new
+            {
+                status = report.Status.ToString(),
+                totalDurationMs = Math.Round(report.TotalDuration.TotalMilliseconds, 2),
+                timestamp = DateTime.UtcNow.ToString("o"),
+                entries = report.Entries.ToDictionary(
+                    e => e.Key,
+                    e => new
+                    {
+                        status = e.Value.Status.ToString(),
+                        description = e.Value.Description,
+                        durationMs = Math.Round(e.Value.Duration.TotalMilliseconds, 2),
+                        tags = e.Value.Tags.ToArray(),
+                        data = e.Value.Data.Count > 0 ? e.Value.Data : null,
+                        exception = e.Value.Exception?.Message,
+                    }),
+            };
+
+            return context.Response.WriteAsync(
+                JsonSerializer.Serialize(payload, JsonOpts));
+        }
+        // 📌 اجرای Migrationها به صورت هوشمند
+        private static async Task<IApplicationBuilder> RunSmartMigrations(this IApplicationBuilder app)
+        {
+            using var scope = app.ApplicationServices.CreateScope();
+
+            var migrationManager = scope.ServiceProvider.GetRequiredService<IMigrationManager>();
+            var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+
+            var dbContextType = typeof(EpmDbContext);
+            var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+            var logger = loggerFactory.CreateLogger($"Migrations.{dbContextType.Name}");
+
+            try
+            {
+                logger.LogInformation("🚀 Starting database migrations...");
+
+                try
+                {
+                    logger.LogInformation("🔧 Migrating {DbContext}...", dbContextType.Name);
+
+                    // 📌 اجرای متد Generic MigrateAsync برای SampleDbContext
+                    var method = typeof(IMigrationManager).GetMethod(nameof(IMigrationManager.MigrateAsync));
+                    var genericMethod = method!.MakeGenericMethod(dbContextType);
+                    await (Task)genericMethod.Invoke(migrationManager, new object[] { CancellationToken.None })!;
+
+                    logger.LogInformation("✅ {DbContext} migrated successfully", dbContextType.Name);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "❌ Failed to migrate {DbContext}", dbContextType.Name);
+
+                    if (env.IsDevelopment())
+                    {
+                        // در محیط Development خطا دوباره throw می‌شود
+                        throw;
+                    }
+                }
+
+                logger.LogInformation("🎉 All migrations completed successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "💥 Migration process failed");
+
+                if (env.IsProduction())
+                {
+                    // در Production برنامه ادامه پیدا می‌کند حتی اگر Migration شکست بخورد
+                    logger.LogWarning("Continuing in production despite migration failures");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return app;
+        }
+    }
+}
