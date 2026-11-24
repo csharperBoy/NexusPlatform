@@ -29,7 +29,7 @@ public sealed class StrategyTuningCommandService : IStrategyTuningCommandService
             m.DateFrom, m.DateTo, m.InitialCapital, m.SlippagePercent,
             (TuningScale)m.SelectedScales, (TuningScale)m.PrimaryScale,
             m.MinTradesPerWindow, SearchAlgorithm.Genetic,
-            m.PopulationSize, m.Generations, m.MutationRate, m.CrossoverRate);
+            m.PopulationSize, m.Generations, m.MutationRate, m.CrossoverRate,m.SelectedParameters);
         await _uow.StrategyTuningRuns.AddAsync(run);
         _logger.LogInformation("TuningRun {Id} queued: {Strategy} {Isin}",
             run.Id, m.StrategyKey, m.Isin);

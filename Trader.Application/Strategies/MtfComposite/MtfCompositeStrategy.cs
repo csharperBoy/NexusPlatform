@@ -253,6 +253,7 @@ public sealed class MtfCompositeStrategy : IStrategy
                     + _config.MomentumWeight * momBearish
                     + _config.MicroWeight * microBearish;
 
+        
         var diff = bullish - bearish;
 
         var features = BuildFeatures(

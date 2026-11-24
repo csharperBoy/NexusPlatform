@@ -52,7 +52,7 @@ public sealed record TuningResultData(
     };
 
     public decimal GetScore(TuningScale primary) =>
-        GetScale(primary)?.AvgCompound ?? decimal.MinValue;
+        GetScale(primary)?.EffectiveCompoundAll ?? decimal.MinValue;
 }
 // ─── Interface ───
 public sealed record GeneticTuningResult(
@@ -148,13 +148,23 @@ public sealed class GeneticTunerExecutor : IStrategyTunerExecutor
                 ct.ThrowIfCancellationRequested();
                 try
                 {
+                    // ─── NEW: compute warmup for window ───
+                    // MTF requires up to 200 D1 candles ≈ 1 year. Add buffer.
+                    // Data starts earlier than w.From; if not enough, simulator will throw
+                    // and the window will be skipped (caught below).
+                    //var warmupDays = req.RequiredCandleCount;
+                    var warmupDays =  400;
+                    var warmupFrom = w.From.AddDays(-warmupDays);
+                    
                     var sim = await _simulator.SimulateAsync(new BacktestSimulationRequest(
                         StrategyKey: req.Tuner.TunerKey,
                         StrategyConfigJson: configJson,
                         PrimaryTimeFrame: req.PrimaryTimeFrame,
                         SubCandleTimeFrame: req.SubCandleTimeFrame,
                         TargetCurrency: req.TargetCurrency,
-                        DateFrom: w.From, DateTo: w.To,
+                        DateFrom: w.From,
+                        WarmupDateFrom: warmupFrom,   // ← NEW
+                        DateTo: w.To,
                         InitialCapital: req.InitialCapital,
                         SlippagePercent: req.SlippagePercent,
                         StrengthMultiplier: 1.5m,
@@ -185,14 +195,20 @@ public sealed class GeneticTunerExecutor : IStrategyTunerExecutor
 
             if (returns.Count == 0)
             {
-                perScale[scale] = new ScaleMetrics(0m, 0m, 0, totalTrades);
+                perScale[scale] = new ScaleMetrics(0m, 0m, 0, totalTrades,0m);
                 perScaleWindows[scale] = windowDetails;
                 continue;
             }
 
             var avgArith = Math.Round(returns.Average(), 4);
             var avgComp = ComputeCompound(returns);
-            perScale[scale] = new ScaleMetrics(avgArith, avgComp, returns.Count, totalTrades);
+
+            // ─── NEW: "effective" CAGR treating excluded windows as 0% ───
+            // This is what the strategy would have actually made if run for the
+            // full scale duration (cash idle in non-trading windows).
+            var excludedCount = scaleWindows.Count - returns.Count;
+            var effectiveCompound = ComputeEffectiveCompound(returns, excludedCount, scaleWindows.Count);            
+            perScale[scale] = new ScaleMetrics(avgArith, avgComp, returns.Count, totalTrades, effectiveCompound);
             perScaleWindows[scale] = windowDetails;
         }
 
@@ -305,14 +321,18 @@ public sealed class GeneticTunerExecutor : IStrategyTunerExecutor
 
    
 
+    
     private static JsonObject Crossover(
-        JsonObject a, JsonObject b, IReadOnlyList<ParameterDefinition> space)
+    JsonObject a, JsonObject b, IReadOnlyList<ParameterDefinition> space)
     {
-        var child = new JsonObject();
+        // Start with parent A's complete config (preserves non-tunable fields)
+        var child = (JsonObject)a.DeepClone();
+
+        // Override tunable fields randomly from B
         foreach (var p in space)
         {
-            var src = Random.Shared.Next(2) == 0 ? a : b;
-            child[p.Name] = src[p.Name]?.DeepClone();
+            if (Random.Shared.Next(2) == 0 && b[p.Name] is not null)
+                child[p.Name] = b[p.Name]!.DeepClone();
         }
         return child;
     }
@@ -351,4 +371,30 @@ public sealed class GeneticTunerExecutor : IStrategyTunerExecutor
         JsonObject Config, int Generation,
         Dictionary<TuningScale, ScaleMetrics> MetricsByScale,
         string? Error);
+
+    /// <summary>
+    /// Compound return treating excluded windows as 0% (cash idle).
+    /// Example: 2 valid windows at 65% each, 14 excluded → 
+    ///   = (1.65)^(2/16) - 1 = 6.45% effective CAGR
+    /// This prevents GA from exploiting MinTradesPerWindow by
+    /// only trading in 2 lucky windows.
+    /// </summary>
+    private static decimal ComputeEffectiveCompound(
+        List<decimal> validReturns, int excludedCount, int totalCount)
+    {
+        if (totalCount == 0) return 0m;
+        if (validReturns.Count == 0) return 0m;
+
+        // Product of (1+r) for valid windows
+        decimal validProduct = 1m;
+        foreach (var r in validReturns)
+            validProduct *= (1m + r / 100m);
+
+        if (validProduct <= 0m) return -100m;
+
+        // (validProduct ^ (validCount/totalCount)) - 1
+        var exponent = (double)validReturns.Count / totalCount;
+        var effectiveMultiplier = Math.Pow((double)validProduct, exponent);
+        return (decimal)((effectiveMultiplier - 1.0) * 100.0);
+    }
 }

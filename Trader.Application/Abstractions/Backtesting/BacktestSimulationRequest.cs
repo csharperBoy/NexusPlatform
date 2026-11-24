@@ -29,7 +29,13 @@ public sealed record BacktestSimulationRequest(
     decimal? StopLossPrice,
     decimal? TakeProfitPercentage,
     decimal? TakeProfitPrice,
-    IReadOnlyList<BacktestSimulationSymbol> Symbols);
+    IReadOnlyList<BacktestSimulationSymbol> Symbols,
+    /// <summary>
+    /// اگر ست شده، کندل‌ها از این تاریخ لود می‌شن ولی معامله فقط از DateFrom شروع می‌شه.
+    /// استفاده: tuning با پنجره‌های کوتاه که نیاز به warmup دارند.
+    /// null = بدون warmup (رفتار پیش‌فرض، برای backtest #39 و بقیه).
+    /// </summary>
+    DateTime? WarmupDateFrom = null);
 
 public sealed record BacktestSimulationSymbol(
     string Isin,

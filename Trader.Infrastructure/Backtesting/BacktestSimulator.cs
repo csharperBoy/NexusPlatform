@@ -25,7 +25,8 @@ public sealed class BacktestSimulator : IBacktestSimulator
     private readonly IOrderFillSimulator _fillSimulator;
     private readonly IOptionsMonitor<TradingRiskOptions> _riskOptions;
     private readonly ILogger<BacktestSimulator> _logger;
-
+    private static DateTime loadFrom { get; set; }
+    
     public BacktestSimulator(
         IBacktestDataCache cache,
         IStrategyFactory strategyFactory,
@@ -88,7 +89,7 @@ public sealed class BacktestSimulator : IBacktestSimulator
         foreach (var s in request.Symbols)
         {
             var primaryIrr = (await _cache.GetCandlesAsync(
-                s.Isin, timeFrame, request.DateFrom, request.DateTo, ct)).ToList();
+                s.Isin, timeFrame, loadFrom, request.DateTo, ct)).ToList();
 
             if (primaryIrr.Count < strategy.RequiredCandleCount + 1)
                 throw new InvalidOperationException(
@@ -99,7 +100,7 @@ public sealed class BacktestSimulator : IBacktestSimulator
             if (needsTransform)
             {
                 primaryStrategy = (await _cache.GetTransformedCandlesAsync(
-                    s.Isin, timeFrame, request.DateFrom, request.DateTo,
+                    s.Isin, timeFrame, loadFrom, request.DateTo,
                     request.TargetCurrency!, ct)).ToList();
 
                 if (primaryStrategy.Count != primaryIrr.Count)
@@ -119,7 +120,7 @@ public sealed class BacktestSimulator : IBacktestSimulator
             if (subCandles is not null)
             {
                 subCandles[s.Isin] = (await _cache.GetCandlesAsync(
-                    s.Isin, subTimeFrame!.Value, request.DateFrom, request.DateTo, ct))
+                    s.Isin, subTimeFrame!.Value, loadFrom, request.DateTo, ct))
                     .ToList();
             }
         }
@@ -149,14 +150,14 @@ public sealed class BacktestSimulator : IBacktestSimulator
                 else
                 {
                     extraIrr = (await _cache.GetCandlesAsync(
-                        s.Isin, tf, request.DateFrom, request.DateTo, ct)).ToList();
+                        s.Isin, tf, loadFrom, request.DateTo, ct)).ToList();
                 }
 
                 List<Candle> extra = extraIrr;
                 if (needsTransform && extraIrr.Count > 0)
                 {
                     extra = (await _cache.GetTransformedCandlesAsync(
-                        s.Isin, tf, request.DateFrom, request.DateTo,
+                        s.Isin, tf, loadFrom, request.DateTo,
                         request.TargetCurrency!, ct)).ToList();
                 }
 
@@ -183,7 +184,7 @@ public sealed class BacktestSimulator : IBacktestSimulator
             for (int i = 0; i < primIrr.Count; i++)
             {
                 var cIrr = primIrr[i];
-                if (cIrr.OpenTime < request.DateFrom || cIrr.OpenTime > request.DateTo)
+                if (cIrr.OpenTime < loadFrom || cIrr.OpenTime > request.DateTo)
                     continue;
 
                 Candle? cStrategy = needsTransform && i < primStrategy.Count
@@ -228,9 +229,20 @@ public sealed class BacktestSimulator : IBacktestSimulator
         {
             ct.ThrowIfCancellationRequested();
             var ev = events[eventIdx];
-            var isin = ev.Isin;
             var candleIrr = ev.Candle;
+            var isin = ev.Isin;
             var candleStrategy = ev.StrategyCandle ?? ev.Candle;
+
+            // ─── Warmup phase: feed history but do NOT trade ───
+            if (candleIrr.OpenTime < request.DateFrom)
+            {
+                state.LastPrices[isin] = candleIrr.Close;
+                runningCandles[isin].Add(candleStrategy);
+                if (runningCandles[isin].Count > maxHistoryToKeep)
+                    runningCandles[isin].RemoveRange(
+                        0, runningCandles[isin].Count - maxHistoryToKeep);
+                continue;
+            }
             var instrument = instruments[isin];
             var allocPct = request.Symbols.First(s => s.Isin == isin).AllocationPercentage;
 
@@ -615,10 +627,11 @@ public sealed class BacktestSimulator : IBacktestSimulator
                 .ResolveForEntry(new Price(entryPrice)).Value;
         return signalSL?.Value;
     }
-
     private static decimal? ResolveTakeProfit(
         BacktestSimulationRequest request, decimal entryPrice, Price? signalTP)
     {
+         loadFrom = request.WarmupDateFrom ?? request.DateFrom;
+
         if (request.TakeProfitPrice.HasValue) return request.TakeProfitPrice.Value;
         if (request.TakeProfitPercentage.HasValue)
             return TakeProfitConfig.FromPercentage(request.TakeProfitPercentage.Value)

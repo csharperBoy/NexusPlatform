@@ -15,8 +15,8 @@ const ChampionCard: React.FC<{ label: string; result: StrategyTuningResultView |
     {result ? (
       <>
         <p className={`mt-1 text-2xl font-bold ${colorPct(result.avgReturnCompoundYearly)}`}>
-          {fmtPct(result.avgReturnCompoundYearly)}
-        </p>
+          {fmtPct(result.avgReturnCompoundYearly)} - ({fmtPct(result.avgReturnCompoundValidYearly)})
+        </p>        
         <p className="mt-1 text-[10px] text-gray-500">
           Trades: {result.totalTradesYearly ?? "—"} · Valid: {result.validWindowsYearly ?? "—"}
         </p>
@@ -101,7 +101,7 @@ export const StrategyTuningDetailPage: React.FC = () => {
                 <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                   <td className="p-2">{i + 1}</td>
                   <td className={`p-2 font-mono ${colorPct(r.avgReturnCompoundYearly)}`}>
-                    {fmtPct(r.avgReturnCompoundYearly)}
+                    {fmtPct(r.avgReturnCompoundYearly)} - ({fmtPct(r.avgReturnCompoundValidYearly)})
                   </td>
                   <td className={`p-2 font-mono ${colorPct(r.avgReturnCompoundSemi)}`}>
                     {fmtPct(r.avgReturnCompoundSemi)}

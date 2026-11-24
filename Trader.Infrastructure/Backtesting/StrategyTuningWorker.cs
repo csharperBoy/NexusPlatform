@@ -217,7 +217,9 @@ public sealed class StrategyTuningWorker : BackgroundService
                 run.Id, result.AllEvaluations.Count);
 
             // ─── Compute Top-10 per scale ───
-            var top10Yearly = TopIndices(result.AllEvaluations, r => r.Yearly?.AvgCompound, 10);
+            //var top10Yearly = TopIndices(result.AllEvaluations, r => r.Yearly?.AvgCompound, 10);
+
+            var top10Yearly = TopIndices(result.AllEvaluations, r => r.Yearly?.EffectiveCompoundAll, 10);
             var top10Semi = TopIndices(result.AllEvaluations, r => r.SemiAnnual?.AvgCompound, 10);
             var top10Quarterly = TopIndices(result.AllEvaluations, r => r.Quarterly?.AvgCompound, 10);
             var top10Monthly = TopIndices(result.AllEvaluations, r => r.Monthly?.AvgCompound, 10);

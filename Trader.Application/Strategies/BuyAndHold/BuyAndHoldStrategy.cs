@@ -19,12 +19,30 @@ public sealed class BuyAndHoldStrategy : IStrategy
     public IReadOnlyList<CandleRequirement> ExtraCandleRequirements
         => Array.Empty<CandleRequirement>();
 
+    //public StrategyEvaluationResult Evaluate(StrategyInput input)
+    //{
+    //    // Buy exactly once — on the very first valid evaluation
+    //    if (input.Candles.Count != RequiredCandleCount)
+    //        return StrategyEvaluationResult.Empty();
+
+    //    var sig = new StrategySignal(
+    //        Isin: input.Isin,
+    //        Action: SignalAction.Buy,
+    //        Strength: new SignalStrength(1.0m),
+    //        MetadataJson: null,
+    //        StopLoss: null,
+    //        TakeProfit: null);
+
+    //    return new StrategyEvaluationResult(new[] { sig }, Features: null);
+    //}
     public StrategyEvaluationResult Evaluate(StrategyInput input)
     {
-        // Buy exactly once — on the very first valid evaluation
-        if (input.Candles.Count != RequiredCandleCount)
+        // فقط نیاز به یک کندل برای trigger
+        if (input.Candles.Count < 1)
             return StrategyEvaluationResult.Empty();
 
+        // هر ارزیابی Buy سیگنال می‌ده — sizing logic خودش
+        // redundant buyها را با minDelta رد می‌کند
         var sig = new StrategySignal(
             Isin: input.Isin,
             Action: SignalAction.Buy,

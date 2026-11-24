@@ -67,6 +67,7 @@ export interface StrategyTuningRunSummaryView {
 export interface StrategyTuningResultView {
   id: string; generation: number; status: number; configJson: string;
   avgReturnCompoundYearly: number | null;
+  avgReturnCompoundValidYearly: number | null;  
   avgReturnCompoundSemi: number | null;
   avgReturnCompoundQuarterly: number | null;
   avgReturnCompoundMonthly: number | null;

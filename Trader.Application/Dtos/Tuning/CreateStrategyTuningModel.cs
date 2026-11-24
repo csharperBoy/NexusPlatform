@@ -15,7 +15,7 @@ public sealed class CreateStrategyTuningModel
     public decimal SlippagePercent { get; set; }
     public int SelectedScales { get; set; }       // flags
     public int PrimaryScale { get; set; }
-    public int MinTradesPerWindow { get; set; }
+    public int MinTradesPerWindow { get; set; } = 5;
     public int PopulationSize { get; set; } = 40;
     public int Generations { get; set; } = 50;
     public decimal MutationRate { get; set; } = 0.1m;

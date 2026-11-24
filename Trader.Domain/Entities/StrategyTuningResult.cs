@@ -14,7 +14,8 @@ public class StrategyTuningResult : BaseEntity
 
     // Yearly
     public decimal? AvgReturnArithmeticYearly { get; private set; }
-    public decimal? AvgReturnCompoundYearly { get; private set; }
+    public decimal? AvgReturnCompoundYearly { get; private set; }// effective
+    public decimal? AvgReturnCompoundValidYearly { get; private set; }// avg over valid only
     public int? ValidWindowsYearly { get; private set; }
     public int? TotalTradesYearly { get; private set; }
 
@@ -61,7 +62,9 @@ public class StrategyTuningResult : BaseEntity
             Status = status,
             RuntimeMs = runtimeMs,
             AvgReturnArithmeticYearly = yearly?.AvgArithmetic,
-            AvgReturnCompoundYearly = yearly?.AvgCompound,
+            AvgReturnCompoundYearly = yearly?.EffectiveCompoundAll,      // ranked
+            AvgReturnCompoundValidYearly = yearly?.AvgCompound,// reported
+
             ValidWindowsYearly = yearly?.ValidWindows,
             TotalTradesYearly = yearly?.TotalTrades,
             AvgReturnArithmeticSemi = semi?.AvgArithmetic,
@@ -94,4 +97,5 @@ public class StrategyTuningResult : BaseEntity
 }
 
 public sealed record ScaleMetrics(
-    decimal AvgArithmetic, decimal AvgCompound, int ValidWindows, int TotalTrades);
+    decimal AvgArithmetic, decimal AvgCompound, int ValidWindows, int TotalTrades,
+    decimal EffectiveCompoundAll);

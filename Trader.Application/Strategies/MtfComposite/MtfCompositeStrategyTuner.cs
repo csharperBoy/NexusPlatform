@@ -129,7 +129,7 @@ public sealed class MtfCompositeStrategyTuner : IStrategyTuner
             result["TrendWeight"] = tW;
             result["MomentumWeight"] = mW;
         }
-
+        result["MicroWeight"] = 1m - tW - mW;
         return result;
     }
 

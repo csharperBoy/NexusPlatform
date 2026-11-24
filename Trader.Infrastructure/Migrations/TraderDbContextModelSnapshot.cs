@@ -2317,6 +2317,9 @@ namespace Trader.Infrastructure.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<decimal?>("AvgReturnCompoundValidYearly")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal?>("AvgReturnCompoundYearly")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
